@@ -1,0 +1,28 @@
+:root {
+    --nlblue: #55769b;
+    --accent: #ff940036;
+    --font-normal: Regular;
+    --font-light: Light;
+    --font-taxon: Italic;
+    --gradient-background: linear-gradient(313deg, #1d2834, var(--nlblue));
+    --pad-small: 0.25em;
+    --pad-large: 0.5em;
+    --pad-large-negative: -0.5em;
+    --font-smaller: 75%;
+    --hover-background: #f1f1f1;
+}
+
+@font-face {
+    font-family: Regular;
+    src: url('../fonts/NotoSans-Regular.ttf');
+}
+
+@font-face {
+    font-family: Italic;
+    src: url('../fonts/NotoSans-Italic.ttf');
+}
+
+@font-face {
+    font-family: Light;
+    src: url('../fonts/NotoSans-Light.ttf');
+}

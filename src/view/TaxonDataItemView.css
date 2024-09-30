@@ -1,0 +1,70 @@
+span.simple-value {
+    user-select: text;
+}
+
+span.badge {
+    border-radius: var(--pad-large);
+    padding-left: var(--pad-small);
+    padding-right: var(--pad-small);
+    font-size: 85%;
+}
+
+span.simple-value p:first-child {
+    display: inline-block;
+}
+
+span.simple-value p {
+    margin-top: 0;
+    margin-bottom: var(--pad-small);
+}
+
+.data-item-title {
+    font-weight: bold;
+    color: hsl(212, 29%, 24%);
+    font-variant: small-caps;
+    margin-left: -0.5em;
+}
+
+.data-item-view {
+    margin-bottom: var(--pad-small);
+    margin-right: var(--pad-small);
+    margin-left: var(--pad-small);
+}
+
+.data-item-view span.bullet-list {
+    display: block;
+    list-style: disc;
+    padding-left: 1.5em;
+}
+
+.data-item-view span.bullet-list>span {
+    display: list-item;
+    padding: -1em;
+}
+
+.data-item-view ol.numbered-list {
+    display: block;
+    list-style: decimal;
+    padding-left: 2em;
+}
+
+.data-item-view ol.numbered-list>span {
+    display: list-item;
+}
+
+.data-item-view span.plain {
+    display: inline;
+}
+
+.data-item-view span.separator {
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+}
+
+.simple-value.found {
+    background-color: #ffa50047;
+    border-radius: var(--pad-large);
+    padding-left: var(--pad-small);
+    padding-right: var(--pad-small);
+}

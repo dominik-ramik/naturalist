@@ -1,0 +1,45 @@
+.about-view {
+    font-size: 90%;
+    user-select: text;
+    padding: var(--pad-large);
+}
+
+.about-view h1,
+.about-view h2,
+.about-view h3,
+.about-view h4 {
+    text-align: center;
+    color: #ffffffa3;
+    line-height: 120%;
+}
+
+.about-view h1 {
+    font-size: 270%;
+}
+
+.about-view p {
+    text-align: justify;
+    line-height: 125%;
+}
+
+.about-view p>img {
+    text-align: center;
+}
+
+.about-view img {
+    max-width: 20em;
+    max-height: 10em;
+    display: block;
+    margin: auto;
+    padding: 1em;
+}
+
+.about-view a {
+    display: inline-block;
+    background-color: #ffffff33;
+    color: #ffffffd9;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    border-radius: 0.25em;
+    text-decoration: none;
+}

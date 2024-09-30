@@ -1,0 +1,52 @@
+.app {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.app .app-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.app.mobile .app-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.app.mobile .floating-button {
+    background-color: #ffffffe6;
+    color: black;
+    bottom: 1em;
+    right: 1em;
+    height: 3em;
+    padding-left: 1em;
+    padding-right: 1em;
+    border-radius: 2em;
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 1em 0em #000000e0;
+}
+
+.app.mobile .floating-button.disabled {
+    opacity: 0.8;
+}
+
+.app.mobile .floating-button .label {
+    font-size: 85%;
+}
+
+.app.mobile .floating-button img {
+    margin-right: var(--pad-large);
+    height: 2.5em;
+}

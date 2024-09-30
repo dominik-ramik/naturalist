@@ -1,0 +1,145 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>NaturaList</title>
+    <meta name="description" content="">
+    <meta name="author" content="Dominik M. Ramík">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="../favicon.png">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="./docs.css">
+
+    <script src="docgen.js" type="module">
+    </script>
+</head>
+
+<body id="top">
+    <div class="app-menu">
+        <div class="menu-button clickable" onclick="window.location = '../'"><img src="../img/ui/menu/arrow_back.svg" class="menu-button-image">
+            <div class="menu-button-description">Back to NaturaList app</div>
+        </div>
+    </div>
+    <div id="toc"></div>
+    <div class="docs-content" id="docs-content">
+        <h1>Introduction</h1>
+        <p><strong>NaturaList</strong> is a web-based application which allows you to create taxonomic checklists based solely on data you supply in a spreadsheet file. The application itself is build as a <a href="https://en.wikipedia.org/wiki/Progressive_web_app">Progressive Web App<a>. It lives on a web
+                    server and can be viewed as a regular web page, but can be also installed on a mobile device or a
+                    personal computer and used offline as any other native app or program.</p>
+
+        <h1>How to start</h1>        
+        <ol>
+            <li>Unzip the downloaded <strong>NaturaList</strong> folder into a webhosting of your choice. This will give you an empty instance of the app, which you will need to fill with your data.</li>
+            <li>Open the address on which you installed the app. You will see a message saying you need to upload some data first. Download the blank spreadsheet which you can use to bootstrap your project.</li>
+            <li>Fill the spreadsheet with your data. Read the <a href="#docgen">documentation</a> below to learn more about different parts of the spreasheet you can <a href="#config">configure</a> and for a sample spreadsheet with a fully developed project
+            to explore.</li>
+            <li>Once done, upload your spreadsheet through <strong>NaturaList</strong>. Now whoever visits your <strong>NaturaList</strong> app address will see your checklist data appearing.</li>
+            <li>If you want to update your checklist later on, simply make the necessary edits in your spreadsheet. Then open your <strong>NaturaList</strong> app, head to the menu and click on 'Manage'. Then upload your spreadsheet to publish the update.</li>
+            </ol>
+
+            <h1 id="install">Installation</h1>
+            <p>In order to create a checklist with <strong>NaturaList</strong>, you need first to install the app on a webserver. You have the choice of using a PHP-enabled webhosting or a static webhosting. Whichever you chose, make sure the webserver provides
+                HTTPS as it is a core requirement for Progressive Web Apps and will enable among others the offline use of the checklist.</p>
+            <p>When you have a suitable hosting, simply head to <a href="https://naturalist.netlify.app/">naturalist.netlify.app</a>, download the app as a ZIP archive and unzip its content to a folder on your web server (e.g. folder "checklist" on domain
+                "example.com"). Now, you can visit the address (e.g. example.com/checklist). You will see an empty instance of the checklist inviting you to upload your data. Next, you will need to make ready a spreadsheet with data to be uploaded.
+                <a href="#config">Configuration</a> section will tell you how.</a>
+            </p>
+
+            <h2 id="php-hosting">PHP-enabled webhosting</h2>
+            <p>If you use <strong>NaturaList</strong> on a webserver with PHP enabled, you can take advantage of updating the checklist directly through the app.</p>
+            <p>in the installation folder locate the <strong>update.php</strong> file. Open it in a text editor and modify the user name and the password. You will be asked for them when you update the checklist data.</p>
+
+            <h2>Static webhosting</h2>
+            <p>If you use <strong>NaturaList</strong> on a static webhosting (e.g. Netlify, Cloudflare, GitHub, ...), the only difference is that you won't be able to update your checklist directly in the app (as PHP would be needed). Instead you can simply
+                download a data file generated during the update process and then upload it manually into the "data" folder in your app installtion folder using an FTP client or the file upload facility of your webhosting.</p>
+
+            <h2>Multiple installations on a single webhosting</h2>
+            <p>It is possible to host several <strong>NaturaList</strong> checklists on a single website. For this to work correctly, you will need to create separate subdomains on your hosting for each of the instances. Typically, you will install the app
+                into several separate folders (e.g. "spiders" and "ants") in your webhosting and then create subdomains like "spiders.example.com" and "ants.example.com" pointing to each of the directoires. This will ensure each of the checklists will
+                function correctly as a separate app without interference with the other instances.</p>
+
+            <h1 id="config">Configuration</h1>
+            <p>If you access a freshly installed instance of <strong>NaturaList</strong> through a browser, you will be prompted to upload some data to it first. <strong>NaturaList</strong> doesn't use a web-based database or online forms to fill in your
+                data. Rather, it lets you keep and manage your data in an Excel spreadsheet with two extra sheets, where you define how your data will be dsiplayed.</p>
+            <p>Download a <a href="blank-naturalist-spreadsheet.xlsx">blank checklist</a> to start with, or a sample fully developed <a href="us-birds.xlsx">Birds of the US checklist</a> to explore and experiment with. In the following text we will visit
+                all the parts of the spreadsheet configuration.</p>
+
+            <hr />
+
+            <div id="docgen"></div>
+
+            <hr />
+
+            <h1>Updating and curation</h1>
+            <p>Updating the checklist with new or revised data (or adding new types of data altogether) is as simple as updating your spreadsheet. The second step is to go to the <strong>NaturaList</strong> main menu and click to <b>Manage</b>. Use the upload
+                button to upload your spreadsheet and follow the process till the data update is complete. If you use a PHP-enabled webhosting, you will be able to update your data directly in the browser (see <a href="#php-hosting">PHP-enabled webhosting</a>                for information on user name and password settings for data updating). If you use a static webhosting, you will need to download the packaged data file during the update process and then upload it manually into the "data" folder in your
+                app installtion folder using an FTP client or the file upload facility of your webhosting.</p>
+            <h2>Collaboration online</h2>
+            <p>Currently only Microsoft Excel spreadsheets can be used to upload data to <strong>NaturaList</strong>. This should, however, by no means be limiting to you. It is completely possible to maintain your spreadsheet in form of Google Sheets or
+                on any other online collaboration platform and share it with your colleagues You can give each of them permission to appropriate parts of the checklist, which they are supposed to curate. You can then download the spreadsheet in format
+                of Microsoft Excel and upload it with the Manage button in the application main menu.</p>
+
+            <h1>Glossary</h1>
+            <h2 id="g-datapath">data path</h2>
+            <p>The <b>data path</b> is a special way of naming data columns in your checklist sheet. It allows
+                <strong>NaturaList</strong> to interpret column names and compose them into structured data like arrays (multiple items of the same kind, e.g. several kinds of habitats you want to link to a taxon) or structures (like a publication, for
+                which you want to fill year, author and web link in separate columns). Allowed characters in column names are uppercase and lowercase letters only - no numbers (they have special meaning for arrays), spaces, underscores, or other symbols.
+                You can see examples in the sample <a href="us-birds.xlsx">Birds of the US</a> checklist, which includes simple columns, arrays and structures employed.
+            </p>
+            <p>There are three main types:</p>
+            <ul>
+                <li> <b>simple column name:</b> e.g. 'redList' means that the data from the column will be presented as a standalone unit in the checklist.</li>
+                <li> <b>array:</b> you may need to enter more than one item of the same type for a taxon. For example your taxon may be recorded in several habitats or have several taxonomic synonyms. To capture this, you can use an 'array', where you have
+                    several columns of the same name suffixed with numbers from 1 on ... e.g. habitat1, habitat2, habitat3, as many as you need. Obviously you do not need to fill all the columns for all the taxa. It is perfectly alright in this case to
+                    have some taxa with only the first column filled in, if that taxon is only found in one habitat, or even have no entry at all in the habitat columns at that row. When you reference such a set of 'array columns' in the table <a href="#table-customDataDefinition">Custom data definiton</a>,
+                    instead of entering all the individual numbered columns (habitat1, habitat2, ...), you can simply enter 'habitat#', which stands for 'each of the numbered habitat columns'.</li>
+                <li><b>structure:</b> when you need to link together several items of different kind, such as the information about the author, title, year of publication and the publication web link, into a single data package displayed together (see the
+                    'origPub' columns in the sample <a href="us-birds.xlsx">Birds of the US</a> checklist), you can use a structure data path, where individual levels are separated with a period. In the example, there are columns in the checklist data
+                    sheet called 'origPub.author', 'origPub.year' etc. When displaying, depending on the 'Subitems separator' chosen on the 'origPub' line (table <a href="#table-customDataDefinition">Custom data definiton</a>), the subitems like 'origPub.author'
+                    or 'origPub.year' can be rendered as a bullet list, numbered list or a comma-separated list.</li>
+                <li><b>combinations:</b> different types of data path column names can be combined together. In the sample
+                    <a href="us-birds.xlsx">Birds of the US</a> checklist the 'names.spa' column could be turned into an array (names.spa1, names.spa2, ...) where more than one common name in Spanish could be entered. In the 'Custom data definiton' table
+                    there would be then an extra row just below 'names.spa' which would have 'names.spa#' in the 'Column name'. There is nearly no limit in how you mix multi-level structures with array, but for your checklist to be better readable and
+                    your data more easily maintained, it is suggested to keep things simple thought.</li>
+            </ul>
+            <p>Note: if you defined more than one language in the <a href="#table-supportedLanguages">Supported
+                languages</a> table, you can suffix any of the checklist data sheet columns with ":" and the language code. Columns without suffix will be considered as being in the default language.</p>
+
+            <h2 id="g-md">Markdown</h2>
+            <p>Markdown is a markup language you can use to create formatted text from plain text. If you set formatting to 'markdown' value in table <a href="#table-customDataDefinition">Custom data definition</a> (sheet
+                <b>nl_content</b>), you can enter Markdown content into the corresponding data column in the checklist sheet and have your data displayed with features like bold, italic, links or others. This is typically useful for longer texts (e.g.
+                notes, short descriptions). See <a href="https://www.markdownguide.org/">Markdown guide</a> for information about the syntax.
+            </p>
+
+            <h2 id="g-template">template</h2>
+            <p>Templates can be used in two situations. First, they are needed in linking media resources (sheet
+                <b>nl_content</b>, table <a href="#table-media">Media</a>) and maps of type <b>link</b> and <b>image</b> (sheet <b>nl_content</b>, table <a href="#table-maps">Maps</a>) and in generating links to search engines in sheet <b>nl_appearance</b>,
+                table <a href="#table-searchOnline">Search online</a>. The second way of using templates is to define a template with some of your checklist sheet data columns (sheet
+                <b>nl_content</b>, table <a href="#table-customDataDefinition">Custom data definition</a>, see column
+                <b>Template</b>). There you can use them to modify how the data from the given column are displayed.
+            </p>
+            <p>A template is a simple piece of plain text (or Markdown text if used in Custom data definition) which includes pairs of 'handlebars' braces {{ and }}. Enclosed between the braces are variables. You have the following choice:</p>
+            <ul>
+                <li><b>{{ value }}</b> will substitute the value of the given column. Let's say you have a column called 'birdLifeID' in your checklist data sheet. In <b>Custom data definition</b> table you define that column name and in the template column
+                    you enter <i>[BirdLife species account]( http://datazone.birdlife.org/species/factsheet/{{value}} )</i>. On each displayed taxon, the templating engine will replace the {{value}} with the appropriate value from the column 'birdLifeID',
+                    generating in fact a Markdown markup for a link. The result is a link to the BirdLife species factsheet, unique to each taxon.</li>
+                <li><b>{{ data.<i>some_other_column_name</i> }}</b> you can use the value of any other column of the current taxon by typing <b>data.</b> followed by the name of the column.</li>
+                <li><b>{{ taxon.name }}</b> can be used to substitute the simple name (without authority) of the current taxon. This is most useful in defining online search engines in <a href="#table-searchOnline">Search
+                    online</a> table. E.g. when filling the Search URL template for GBIF, one can use this template URL
+                    <i>https://www.gbif.org/search?q={{taxon.name}}</i> where {{ taxon.name }} will be replaced by the current taxon on which the user has clicked.
+                </li>
+                <li><b>{{ taxon.authority }}</b> is the same as {{ taxon.name }} but only substitutes the authority of the taxon
+                </li>
+                <li><b>{{ taxon.fullName }}</b> substitutes the name and the authority (separated by a space)</li>
+            </ul>
+            <h1>Contact</h1>
+            <p>If you have any question or comment, don't hesitate to write to the author, Dominik M. Ramík at <a href="http://dominicweb.eu">dominicweb.eu</a></p>
+            <p>Website of the <strong>NaturaList</strong> project is <a href="https://naturalist.netlify.app">naturalist.netlify.app</a></p>
+            <p><strong>NaturaList</strong> has been originally developed for the <a href="https://pvnh.net">Checklist of the
+                vascular flora of Vanuatu</a> under the <b>Plants mo Pipol blong Vanuatu</b> (Plants and People of Vanuatu) project.</p>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+.filter-crumbs {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 1em;
+    justify-content: space-between;
+    font-size: var(--font-smaller);
+    user-select: none;
+}
+
+.filter-crumbs .crumb {
+    padding: var(--pad-large);
+    padding-left: 1em;
+    padding-right: 1em;
+    margin: var(--pad-small);
+    border-radius: 3em;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 1.5em;
+    position: relative;
+}
+
+.filter-crumbs .crumb-text {
+    display: flex;
+    align-items: center;
+}
+
+.filter-crumbs .crumb-text .filter-category {
+    white-space: nowrap;
+    font-size: 90%;
+    opacity: 0.8;
+    text-align: center;
+    margin-right: 0.5em;
+}
+
+.filter-crumbs .crumb-text .filter-value {
+    white-space: nowrap;
+    text-align: center;
+}
+
+.filter-crumbs .crumb img {
+    height: 2em;
+    margin-right: var(--pad-large);
+}
+
+.filter-crumbs .crumb.reset-filter {
+    text-align: right;
+    border: 1px solid white;
+}
+
+.filter-crumbs .crumb.reset-filter img {
+    height: 2em;
+    margin-right: 0px;
+    margin-left: var(--pad-large);
+}
+
+.filter-crumbs .reset-filter-spacer {
+    flex-grow: 1;
+    min-width: 1em;
+}
+
+
+/*.filter-crumbs .crumb:hover .crumb-text {*/
+
+.filter-crumbs .crumb:hover .crumb-text {
+    visibility: hidden;
+}
+
+.filter-crumbs .crumb.crumb.reset-filter:hover .crumb-text {
+    visibility: visible;
+}
+
+.filter-crumbs .crumb-text {
+    visibility: visible;
+}
+
+.filter-crumbs .crumb-recycle-wrap {
+    display: none;
+}
+
+.filter-crumbs .crumb:hover .crumb-recycle-wrap {
+    position: absolute;
+    display: flex;
+    right: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}

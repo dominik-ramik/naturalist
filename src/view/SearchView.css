@@ -1,0 +1,30 @@
+ul.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 0;
+}
+
+ul.filter-buttons.taxa-filter li:first-child {
+    flex: 1 0 50%;
+}
+
+ul.filter-buttons li {
+    list-style: none;
+    flex-basis: 50%;
+}
+
+.app.mobile ul.filter-buttons li {
+    flex-basis: 50%;
+}
+
+.search-box {
+    padding: var(--pad-small);
+}
+
+#free-text {
+    padding: var(--pad-large);
+    font-family: var(--font-normal);
+    width: 100%;
+    border-radius: var(--small-pad);
+    border: 0px solid transparent;
+}

@@ -1,0 +1,58 @@
+.listed-taxa .card {
+    border-radius: var(--pad-large);
+    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+    background-color: #ffffff87;
+    border: 1px solid white !important;
+    padding-left: 0em;
+    list-style: none;
+    display: block;
+    margin: var(--pad-small);
+    margin-bottom: var(--pad-large);
+}
+
+.listed-taxa .taxon-level1:hover,
+.listed-taxa .taxon-level1:active {
+    border: 1px solid #54759a !important;
+    background-color: #ffffffb0;
+}
+
+.listed-taxa li.taxon {
+    margin-left: 1em;
+    margin-top: var(--pad-large);
+    margin-bottom: var(--pad-large);
+}
+
+.listed-taxa .taxon-name-stripe {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.listed-taxa .taxon-name-stripe .spacer {
+    flex-grow: 1;
+}
+
+.listed-taxa .taxon-name-stripe .show-all-of-taxon {
+    margin-right: var(--pad-large);
+    font-size: 85%;
+}
+
+.listed-taxa .taxon-name-stripe .parent-taxon-indicator {
+    margin-left: var(--pad-large);
+    font-size: 85%;
+}
+
+.listed-taxa .taxon-data-view {
+    margin-left: 1em;
+    margin-top: var(--pad-large);
+}
+
+.taxon .taxon-name {
+    font-weight: bold;
+}
+
+.taxon-name-stripe .copy-leaf-taxon img {
+    height: 1.5em;
+    margin-left: var(--pad-large);
+}

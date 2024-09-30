@@ -1,0 +1,40 @@
+.taxon-data-view {
+    display: flex;
+    flex-direction: column;
+}
+
+.middle-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.app.mobile .middle-row {
+    flex-direction: column;
+}
+
+.top-row {}
+
+.bottom-row {
+    margin-top: 1em
+}
+
+.column {
+    width: 33%;
+}
+
+.app.mobile .column {
+    width: auto;
+}
+
+.column:not(:first-child) {
+    border-left: 1px solid #d7d7d7;
+    padding-left: 1em;
+}
+
+.left-column {}
+
+.middle-column {}
+
+.right-column {}
+
+.bottom-row {}
