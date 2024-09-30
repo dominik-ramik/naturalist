@@ -6,11 +6,11 @@ _The flexible taxonomic checklist app_
 
 ## About
 
-NaturaList is a flexible taxonomic checklist web app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies. It doesn’t come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.
+NaturaList is an open source flexible taxonomic checklist web app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies. It doesn’t come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.
 
 ## Quick start
 
-- Copy or clone the NaturaList "src" folder into a webhosting of your choice. This will give you an empty instance of the app, which you will need to fill with your data.
+- Upload the content of NaturaList "src" folder into a webhosting of your choice. This will give you an empty instance of the app, which you will need to fill with your data.
 - Open the web address on which you installed the app. You will see a message saying you need to upload some data first. Download the blank spreadsheet which you can use to bootstrap your project.
 - Fill the spreadsheet with your data. Read the documentation to learn more about different parts of the spreasheet you can configure and for a sample spreadsheet with a fully developed project to explore.
 - Once done, upload your spreadsheet through NaturaList. Now whoever visits your NaturaList app address will see your checklist data appearing.
