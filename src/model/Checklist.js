@@ -5,7 +5,7 @@ import { Settings } from "./Settings.js";
 
 export let Checklist = {
 
-    getData: function() {
+    getData: function () {
         return Checklist._data.versions[Checklist.getCurrentLanguage()].dataset;
     },
 
@@ -19,18 +19,18 @@ export let Checklist = {
         data: {},
         text: "",
         delayCommitDataPath: "", //this data path is the one of the last used dropdown and will not update possibles of that dropdown untill the dropdown is hidden to allow for multiple selection
-        commit: function(specificRoute) {
+        commit: function (specificRoute) {
             if (specificRoute) {
                 routeTo(specificRoute);
             } else {
                 routeTo("/search");
             }
         },
-        setFromQuery: function(query) {
+        setFromQuery: function (query) {
             Checklist.filter.clear();
-            ["taxa", "data"].forEach(function(type) {
+            ["taxa", "data"].forEach(function (type) {
                 if (query[type]) {
-                    Object.keys(query[type]).forEach(function(dataPath) {
+                    Object.keys(query[type]).forEach(function (dataPath) {
                         if (Checklist.filter[type][dataPath].type == "text") {
                             Checklist.filter[type][dataPath].selected = query[type][dataPath];
                         } else if (Checklist.filter[type][dataPath].type == "number") {
@@ -45,11 +45,11 @@ export let Checklist = {
             });
             if (query.text && query.text.length > 0) Checklist.filter.text = query.text;
         },
-        clear: function() {
-            Object.keys(Checklist.filter.taxa).forEach(function(dataPath) {
+        clear: function () {
+            Object.keys(Checklist.filter.taxa).forEach(function (dataPath) {
                 Checklist.filter.taxa[dataPath].selected = [];
             });
-            Object.keys(Checklist.filter.data).forEach(function(dataPath) {
+            Object.keys(Checklist.filter.data).forEach(function (dataPath) {
                 Checklist.filter.data[dataPath].selected = [];
                 Checklist.filter.data[dataPath].numeric = {
                     threshold1: null,
@@ -59,10 +59,10 @@ export let Checklist = {
             });
             Checklist.filter.text = "";
         },
-        isEmpty: function() {
+        isEmpty: function () {
             let countFilters = 0;
-            ["taxa", "data"].forEach(function(type) {
-                Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
+            ["taxa", "data"].forEach(function (type) {
+                Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
                     if (Checklist.filter[type][dataPath].type == "text") {
                         countFilters += Checklist.filter[type][dataPath].selected.length;
                     } else if (Checklist.filter[type][dataPath].type == "number") {
@@ -77,7 +77,7 @@ export let Checklist = {
 
             return countFilters == 0;
         },
-        numericFilterToHumanReadable: function(dataPath, operation, threshold1, threshold2, formatPre, formatPost, ommitSearchCategory) {
+        numericFilterToHumanReadable: function (dataPath, operation, threshold1, threshold2, formatPre, formatPost, ommitSearchCategory) {
             let title = "";
             if (ommitSearchCategory) {
                 title += (formatPre ? formatPre : "") + Checklist.getMetaForDataPath(dataPath).searchCategory + (formatPost ? formatPost : "") + " ";
@@ -105,7 +105,7 @@ export let Checklist = {
                 operation: "equal",
                 icon: "equal",
                 values: 1,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest == threshold1;
                 }
             },
@@ -113,7 +113,7 @@ export let Checklist = {
                 operation: "lesser",
                 icon: "lesser",
                 values: 1,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest < threshold1;
                 }
             },
@@ -121,7 +121,7 @@ export let Checklist = {
                 operation: "lesserequal",
                 icon: "lesserequal",
                 values: 1,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest <= threshold1;
                 }
             },
@@ -129,7 +129,7 @@ export let Checklist = {
                 operation: "greater",
                 icon: "greater",
                 values: 1,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest > threshold1;
                 }
             },
@@ -137,7 +137,7 @@ export let Checklist = {
                 operation: "greaterequal",
                 icon: "greaterequal",
                 values: 1,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest >= threshold1;
                 }
             },
@@ -145,7 +145,7 @@ export let Checklist = {
                 operation: "between",
                 icon: "between",
                 values: 2,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest >= threshold1 && valueToTest <= threshold2;
                 }
             },
@@ -153,21 +153,21 @@ export let Checklist = {
                 operation: "around",
                 icon: "around",
                 values: 2,
-                comparer: function(valueToTest, threshold1, threshold2) {
+                comparer: function (valueToTest, threshold1, threshold2) {
                     return valueToTest >= threshold1 - threshold2 && valueToTest <= threshold1 + threshold2;
                 }
             },
         }
     },
 
-    getPreloadableAssets: function() {
+    getPreloadableAssets: function () {
         if (!this._isDataReady) {
             return [];
         }
         return Checklist._data.general.assets;
     },
 
-    getCurrentLanguage: function() {
+    getCurrentLanguage: function () {
         let lang = "";
 
         if (!this._isDataReady) {
@@ -187,27 +187,27 @@ export let Checklist = {
         return lang;
     },
 
-    getReferences: function() {
+    getReferences: function () {
         return Checklist.getData().references;
     },
 
-    getAllLanguages: function() {
-        return Object.keys(this._data.versions).map(function(code) {
+    getAllLanguages: function () {
+        return Object.keys(this._data.versions).map(function (code) {
             return { "code": code, "name": Checklist._data.versions[code].languageName, "fallbackUiLang": Checklist._data.versions[code].fallbackUiLang };
         });
     },
 
-    getDefaultLanguage: function() {
+    getDefaultLanguage: function () {
         return this._data.general.defaultVersion;
     },
-    getDefaultI18n: function() {
+    getDefaultI18n: function () {
         return this._data.general.default_i18n;
     },
 
     //precompiled Handlebars templates saved as dataPath key and template as a value ... precompiled during loadData
     handlebarsTemplates: {},
 
-    loadData: function(jsonData, isDraft) {
+    loadData: function (jsonData, isDraft) {
         if (jsonData === undefined || jsonData === null || jsonData.versions === undefined || Object.keys(jsonData.versions) == 0) {
             console.log("Data not present or malformed");
             this._isDataReady = false;
@@ -235,7 +235,7 @@ export let Checklist = {
 
             // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
             // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
-            Object.keys(Checklist.getTaxaMeta()).forEach(function(dataPath, index) {
+            Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
                 Checklist.filter.taxa[dataPath] = {
                     all: [],
                     possible: {},
@@ -246,7 +246,7 @@ export let Checklist = {
             });
 
             let customDatatypeDataPaths = [];
-            Object.keys(Checklist.getDataMeta()).forEach(function(dataPath, index) {
+            Object.keys(Checklist.getDataMeta()).forEach(function (dataPath, index) {
                 let meta = Checklist.getMetaForDataPath(dataPath)
 
                 if (meta.template && meta.template.length > 0) {
@@ -276,9 +276,9 @@ export let Checklist = {
             });
 
             //cleanup data-paths to only contain terminals
-            customDatatypeDataPaths = customDatatypeDataPaths.filter(function(item) {
+            customDatatypeDataPaths = customDatatypeDataPaths.filter(function (item) {
                 let isPrefixed = false;
-                customDatatypeDataPaths.forEach(function(testItem) {
+                customDatatypeDataPaths.forEach(function (testItem) {
                     if (testItem.startsWith(item + ".")) {
                         isPrefixed = true;
                     }
@@ -293,9 +293,9 @@ export let Checklist = {
             Checklist.calculatePossibleFilterValues(this.getData().checklist);
 
             //fill "all" data
-            Checklist.getData().checklist.forEach(function(taxon) {
-                ["taxa", "data"].forEach(function(dataType) {
-                    Object.keys(Checklist.filter[dataType]).forEach(function(dataPath) {
+            Checklist.getData().checklist.forEach(function (taxon) {
+                ["taxa", "data"].forEach(function (dataType) {
+                    Object.keys(Checklist.filter[dataType]).forEach(function (dataPath) {
                         let value = null;
 
                         if (dataType == "taxa") {
@@ -313,13 +313,13 @@ export let Checklist = {
 
                         let leafData = Checklist.getAllLeafData(value);
                         if (Checklist.filter[dataType][dataPath].type == "text") {
-                            leafData.forEach(function(value) {
+                            leafData.forEach(function (value) {
                                 if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {
                                     Checklist.filter[dataType][dataPath].all.push(value);
                                 }
                             });
                         } else if (Checklist.filter.data[dataPath].type == "number") {
-                            leafData.forEach(function(value) {
+                            leafData.forEach(function (value) {
                                 Checklist.filter[dataType][dataPath].all.push(value);
                             });
                         }
@@ -328,19 +328,19 @@ export let Checklist = {
             });
 
             //browse possible data and add necessary items into filter
-            Checklist.getAllLanguages().forEach(function(lang) {
+            Checklist.getAllLanguages().forEach(function (lang) {
                 Checklist._dataFulltextIndex[lang.code] = [];
-                Checklist._data.versions[lang.code].dataset.checklist.forEach(function(taxon, index) {
+                Checklist._data.versions[lang.code].dataset.checklist.forEach(function (taxon, index) {
                     Checklist._dataFulltextIndex[lang.code][index] = textLowerCaseAccentless(Checklist.primitiveKeysOfObject(taxon, customDatatypeDataPaths).join("\n"));
                 });
             });
 
             //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
-            Object.keys(Checklist.filter.taxa).forEach(function(dataPath, index) {
+            Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
                 Checklist.filter.taxa[dataPath].color = getGradedColor("taxa", index);
             });
 
-            Object.keys(Checklist.filter.data).forEach(function(dataPath, index) {
+            Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
                 Checklist.filter.data[dataPath].color = getGradedColor("data", index);
             });
 
@@ -360,16 +360,19 @@ export let Checklist = {
 
             this._isDataReady = true;
             console.timeEnd("Data loaded in");
-        } catch (ex) {
+        }
+
+        catch (ex) {
             console.log("Error loading data: " + ex);
             this._isDataReady = false;
             m.route.set("/manage");
             m.redraw();
             return false;
         }
+
     },
 
-    getDataObjectForHandlebars: function(currentValue, taxonData, taxonName, taxonAuthority) {
+    getDataObjectForHandlebars: function (currentValue, taxonData, taxonName, taxonAuthority) {
         return {
             value: currentValue.toString(),
             data: taxonData,
@@ -381,15 +384,15 @@ export let Checklist = {
         }
     },
 
-    getProjectName: function() {
-        return Checklist._data.versions[Checklist.getCurrentLanguage()].name;
+    getProjectName: function () {
+        return Checklist._data.versions[Checklist.getCurrentLanguage()].name || "";
     },
-    getProjectAbout: function() {
+    getProjectAbout: function () {
         let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
         return text;
     },
 
-    getThemeHsl: function(variant) {
+    getThemeHsl: function (variant) {
         let sl = "29%, 47%";
         if (variant == "dark") {
             sl = "29%, 16%";
@@ -401,10 +404,10 @@ export let Checklist = {
         return "hsl(" + Checklist._data.versions[Checklist.getCurrentLanguage()].colorThemeHue + "deg, " + sl + ")";
     },
 
-    calculatePossibleFilterValues: function(taxa) {
+    calculatePossibleFilterValues: function (taxa) {
         //clear filter possible data        
-        ["taxa", "data"].forEach(function(dataType) {
-            Object.keys(Checklist.filter[dataType]).forEach(function(dataPath) {
+        ["taxa", "data"].forEach(function (dataType) {
+            Object.keys(Checklist.filter[dataType]).forEach(function (dataPath) {
                 if (Checklist.filter.delayCommitDataPath == dataType + "." + dataPath) {
                     return; //delay this dataPath
                 } else {
@@ -420,9 +423,9 @@ export let Checklist = {
             });
         });
 
-        taxa.forEach(function(taxon, index) {
+        taxa.forEach(function (taxon, index) {
             //add number of occurrences of possible taxa items
-            Object.keys(Checklist.filter.taxa).forEach(function(dataPath, index) {
+            Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
                 if (Checklist.filter.delayCommitDataPath == "taxa." + dataPath) {
                     return; //delay this dataPath
                 }
@@ -438,7 +441,7 @@ export let Checklist = {
                 }
             });
             //add number of occurrences of possible data items
-            Object.keys(Checklist.filter.data).forEach(function(dataPath) {
+            Object.keys(Checklist.filter.data).forEach(function (dataPath) {
                 if (Checklist.filter.delayCommitDataPath == "data." + dataPath) {
                     return; //delay this dataPath
                 }
@@ -451,14 +454,14 @@ export let Checklist = {
 
                 let leafData = Checklist.getAllLeafData(value);
                 if (Checklist.filter.data[dataPath].type == "text") {
-                    leafData.forEach(function(value) {
+                    leafData.forEach(function (value) {
                         if (!Checklist.filter.data[dataPath].possible.hasOwnProperty(value)) {
                             Checklist.filter.data[dataPath].possible[value] = 0;
                         }
                         Checklist.filter.data[dataPath].possible[value]++;
                     });
                 } else if (Checklist.filter.data[dataPath].type == "number") {
-                    leafData.forEach(function(value) {
+                    leafData.forEach(function (value) {
                         if (Checklist.filter.data[dataPath].min === null || value < Checklist.filter.data[dataPath].min) {
                             Checklist.filter.data[dataPath].min = value;
                         }
@@ -472,7 +475,7 @@ export let Checklist = {
             });
         });
 
-        Object.keys(Checklist.filter.data).forEach(function(dataPath) {
+        Object.keys(Checklist.filter.data).forEach(function (dataPath) {
             if (Checklist.filter.data[dataPath].type == "number") {
                 if (Checklist.filter.data[dataPath].globalMin === undefined || Checklist.filter.data[dataPath].globalMin === null) {
                     Checklist.filter.data[dataPath].globalMin = Checklist.filter.data[dataPath].min;
@@ -484,21 +487,21 @@ export let Checklist = {
         });
     },
 
-    primitiveKeysOfObject: function(taxon, dataPathsToKeep) {
+    primitiveKeysOfObject: function (taxon, dataPathsToKeep) {
         let primitives = [];
 
-        taxon.t.forEach(function(scientificName) {
+        taxon.t.forEach(function (scientificName) {
             primitives.push(scientificName.n + " " + scientificName.a);
             if (scientificName.a) primitives.push(scientificName.a);
         });
 
-        dataPathsToKeep.forEach(function(dataPath) {
+        dataPathsToKeep.forEach(function (dataPath) {
             let currentData = Checklist.getDataFromDataPath(taxon.d, dataPath);
             if (!currentData) {
                 return;
             }
 
-            nestedPrimitives(currentData, dataPath).forEach(function(prim) {
+            nestedPrimitives(currentData, dataPath).forEach(function (prim) {
                 primitives.push(prim);
             });
 
@@ -509,9 +512,9 @@ export let Checklist = {
         function nestedPrimitives(currentData, dataPath) {
             let primitives = [];
 
-            //TODO-FUTURE add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
+            //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
             if (Array.isArray(currentData)) {
-                currentData.forEach(function(arrayMember, index) {
+                currentData.forEach(function (arrayMember, index) {
                     if (Checklist.getMetaForDataPath(dataPath + (index + 1)).contentType == "taxon") {
                         primitives.push(arrayMember.n + " " + arrayMember.a);
                         primitives.push(arrayMember.a);
@@ -523,9 +526,9 @@ export let Checklist = {
                 primitives.push(currentData.n);
                 primitives.push(currentData.a);
             } else if (typeof currentData === "object") {
-                Object.keys(currentData).forEach(function(key) {
+                Object.keys(currentData).forEach(function (key) {
                     if (currentData.hasOwnProperty(key)) {
-                        nestedPrimitives(currentData[key], dataPath + "." + key).forEach(function(prim) {
+                        nestedPrimitives(currentData[key], dataPath + "." + key).forEach(function (prim) {
                             primitives.push(prim);
                         });
                     }
@@ -538,18 +541,18 @@ export let Checklist = {
         }
     },
 
-    getAllLeafData: function(taxonData, includeAuthorities) {
+    getAllLeafData: function (taxonData, includeAuthorities) {
         let data = [];
 
         if (Array.isArray(taxonData)) {
-            taxonData.forEach(function(item) {
+            taxonData.forEach(function (item) {
                 data = data.concat(Checklist.getAllLeafData(item));
             });
         } else if (typeof taxonData === 'object') {
             if (taxonData.hasOwnProperty("n") && taxonData.hasOwnProperty("a")) {
                 data.push(taxonData.n + (includeAuthorities ? " " + taxonData.a : ""));
             } else {
-                Object.keys(taxonData).forEach(function(key) {
+                Object.keys(taxonData).forEach(function (key) {
                     data = data.concat(Checklist.getAllLeafData(taxonData[key]));
                 });
             }
@@ -563,7 +566,7 @@ export let Checklist = {
     getDataFromDataPath(dObject, dataPath) {
         let currentDataItem = dObject;
 
-        dataPath.split(".").forEach(function(item) {
+        dataPath.split(".").forEach(function (item) {
 
             if (currentDataItem == null) {
                 return;
@@ -578,20 +581,20 @@ export let Checklist = {
         return currentDataItem;
     },
 
-    getI18n: function() {
+    getI18n: function () {
         return this.getData().i18n;
     },
 
     _queryResultCache: {},
-    queryKey: function() {
+    queryKey: function () {
         let key = { "taxa": {}, "data": {} };
-        Object.keys(key).forEach(function(type) {
-            Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
+        Object.keys(key).forEach(function (type) {
+            Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
                 if (Checklist.filter[type][dataPath].type == "text") {
                     if (Checklist.filter[type][dataPath].selected.length > 0) {
                         key[type][dataPath] = [];
                     }
-                    Checklist.filter[type][dataPath].selected.forEach(function(selected) {
+                    Checklist.filter[type][dataPath].selected.forEach(function (selected) {
                         key[type][dataPath].push(selected);
                     });
                 } else if (Checklist.filter[type][dataPath].type == "number") {
@@ -623,13 +626,13 @@ export let Checklist = {
         return stringKey;
     },
     queryCache: {
-        cache: function(searchResults) {
+        cache: function (searchResults) {
             let queryKey = Checklist.queryKey();
             Checklist._queryResultCache[queryKey] = {};
             Checklist._queryResultCache[queryKey].taxa = searchResults;
             Checklist._queryResultCache[queryKey].filter = JSON.parse(JSON.stringify(Checklist.filter));
         },
-        retrieve: function() {
+        retrieve: function () {
             let queryKey = Checklist.queryKey();
 
             if (Checklist._queryResultCache.hasOwnProperty(queryKey)) {
@@ -640,15 +643,15 @@ export let Checklist = {
         }
     },
 
-    getTaxaForCurrentQuery: function() {
+    getTaxaForCurrentQuery: function () {
         if (!this._isDataReady) {
             return [];
         }
 
         //sanitize filter ... remove impossible selected (when in taxa selecting two higher units then one lower and then unchecking the one higher)
-        ["taxa", "data"].forEach(function(type) {
-            Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
-                Checklist.filter[type][dataPath].selected = Checklist.filter[type][dataPath].selected.filter(function(selectedItem) {
+        ["taxa", "data"].forEach(function (type) {
+            Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
+                Checklist.filter[type][dataPath].selected = Checklist.filter[type][dataPath].selected.filter(function (selectedItem) {
                     if (Object.keys(Checklist.filter[type][dataPath].possible).indexOf(selectedItem) < 0) {
                         console.log("Sanitized " + type + " - " + dataPath + " - " + selectedItem);
                         return false;
@@ -670,17 +673,17 @@ export let Checklist = {
         let textFilter = textLowerCaseAccentless(Checklist.filter.text).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); //escape for RegEx use
         let textFilterRegex = new RegExp("\\b" + textFilter);
 
-        let searchResults = this.getData().checklist.filter(function(item, itemIndex) {
+        let searchResults = this.getData().checklist.filter(function (item, itemIndex) {
             let found = true;
 
             if (!emptyFilter) {
-                Object.keys(Checklist.filter.taxa).forEach(function(dataPath, index) {
+                Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
                     if (Checklist.filter.taxa[dataPath].selected.length == 0) {
                         return;
                     }
 
                     let foundAny = false;
-                    Checklist.filter.taxa[dataPath].selected.forEach(function(selectedItem) {
+                    Checklist.filter.taxa[dataPath].selected.forEach(function (selectedItem) {
                         if (index < item.t.length && item.t[index].n == selectedItem) {
                             foundAny = true;
                         }
@@ -690,7 +693,7 @@ export let Checklist = {
                     }
                 });
 
-                Object.keys(Checklist.filter.data).forEach(function(dataPath, index) {
+                Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
                     if (Checklist.filter.data[dataPath].type == "text") {
                         if (Checklist.filter.data[dataPath].selected.length == 0) {
                             return;
@@ -703,14 +706,14 @@ export let Checklist = {
 
                     let foundAny = false;
                     if (Checklist.filter.data[dataPath].type == "text") {
-                        Checklist.filter.data[dataPath].selected.forEach(function(selectedItem) {
+                        Checklist.filter.data[dataPath].selected.forEach(function (selectedItem) {
                             let data = Checklist.getDataFromDataPath(item.d, dataPath);
                             if (!data) {
                                 return;
                             }
 
                             let leafData = Checklist.getAllLeafData(data, true);
-                            leafData.forEach(function(leafDataItem) {
+                            leafData.forEach(function (leafDataItem) {
                                 if (selectedItem == leafDataItem) {
                                     foundAny = true;
                                 }
@@ -750,14 +753,14 @@ export let Checklist = {
         return searchResults;
     },
 
-    getTaxaMeta: function() {
+    getTaxaMeta: function () {
         return this.getData().meta.taxa;
     },
 
-    getDataMeta: function() {
+    getDataMeta: function () {
         return this.getData().meta.data;
     },
-    getMapRegionsMeta: function(returnDefault) {
+    getMapRegionsMeta: function (returnDefault) {
         if (returnDefault) {
             return this.getData().meta.mapRegions.default;
         } else {
@@ -765,11 +768,11 @@ export let Checklist = {
         }
     },
 
-    getTaxonByName: function(taxonNameFind) {
+    getTaxonByName: function (taxonNameFind) {
 
         let reconstructedTaxonomy = [];
 
-        let found = this.getData().checklist.find(function(taxon) {
+        let found = this.getData().checklist.find(function (taxon) {
             for (let index = 0; index < taxon.t.length; index++) {
                 const taxonName = taxon.t[index];
                 if (taxonName.n == taxonNameFind) {
@@ -801,7 +804,7 @@ export let Checklist = {
         return found;
     },
 
-    treefiedTaxa: function(taxa) {
+    treefiedTaxa: function (taxa) {
 
         let treefied = {
             taxon: {},
@@ -809,9 +812,9 @@ export let Checklist = {
             children: {}
         };
 
-        taxa.forEach(function(taxon) {
+        taxa.forEach(function (taxon) {
             let currentParent = treefied;
-            taxon.t.forEach(function(taxonOfThisLevel, index) {
+            taxon.t.forEach(function (taxonOfThisLevel, index) {
                 if (!currentParent.children.hasOwnProperty(taxonOfThisLevel.n)) {
                     currentParent.children[taxonOfThisLevel.n] = {
                         taxon: taxonOfThisLevel,
@@ -832,7 +835,7 @@ export let Checklist = {
         // do sorting here according to custom rules in meta
         let meta = Checklist.getTaxaMeta();
         let orderByLevel = [];
-        Object.keys(meta).forEach(function(metaKey) {
+        Object.keys(meta).forEach(function (metaKey) {
             let order = meta[metaKey].order;
             orderByLevel.push(order);
         });
@@ -842,16 +845,16 @@ export let Checklist = {
         function orderLevel(level, subtree) {
             if (orderByLevel[level] == "alphabet") {
                 let keys = Object.keys(subtree.children);
-                keys = keys.sort(function(a, b) {
+                keys = keys.sort(function (a, b) {
                     return a.localeCompare(b, getCurrentLocaleBestGuess(), { ignorePunctuation: true });
                 });
                 let tmp = {};
-                keys.forEach(function(key) {
+                keys.forEach(function (key) {
                     tmp[key] = subtree.children[key];
                 });
                 subtree.children = tmp;
             }
-            Object.keys(subtree.children).forEach(function(key) {
+            Object.keys(subtree.children).forEach(function (key) {
                 if (subtree.children[key].children) {
                     orderLevel(level + 1, subtree.children[key]);
                 }
@@ -861,7 +864,7 @@ export let Checklist = {
         return treefied;
     },
 
-    getMetaForDataPath: function(dataPath) {
+    getMetaForDataPath: function (dataPath) {
         if (this.getData().meta.data.hasOwnProperty(dataPath)) {
             return this.getData().meta.data[dataPath];
         }
@@ -878,11 +881,11 @@ export let Checklist = {
         return taxonMeta.name;
     },
 
-    getTaxonLevel: function(taxonName) {
+    getTaxonLevel: function (taxonName) {
         return Object.keys(this.getData().meta.taxa).indexOf(taxonName);
     },
 
-    getChecklistDataCellsForTaxon: function(taxon) {
+    getChecklistDataCellsForTaxon: function (taxon) {
         let dataCells = {
             top: [],
             left: [],
@@ -891,7 +894,7 @@ export let Checklist = {
             bottom: []
         };
 
-        Object.keys(taxon.data).forEach(function(key) {
+        Object.keys(taxon.data).forEach(function (key) {
 
             let meta = Checklist.getMetaForDataPath(key);
 
@@ -930,7 +933,7 @@ export let Checklist = {
         return dataCells;
     },
 
-    getDetailsTabsForTaxon: function(taxonName) {
+    getDetailsTabsForTaxon: function (taxonName) {
 
         let taxon = Checklist.getTaxonByName(taxonName);
 
@@ -942,7 +945,7 @@ export let Checklist = {
             return tabs;
         }
 
-        Object.keys(Checklist.getDataMeta()).forEach(function(metaKey) {
+        Object.keys(Checklist.getDataMeta()).forEach(function (metaKey) {
             let meta = Checklist.getDataMeta()[metaKey];
             if (meta.hasOwnProperty("datatype") && meta.datatype != "custom") {
                 if (taxon.d.hasOwnProperty(metaKey)) {
@@ -952,7 +955,7 @@ export let Checklist = {
                     if (meta.datatype == "media") {
                         let cleanedMediaData = [];
 
-                        mediaData.forEach(function(item) {
+                        mediaData.forEach(function (item) {
                             if (item === undefined || item === null || item.source.trim() == "") {
                                 return;
                             }
@@ -972,7 +975,7 @@ export let Checklist = {
             }
         });
 
-        Object.keys(taxon.d).forEach(function(key) {
+        Object.keys(taxon.d).forEach(function (key) {
 
             let meta = Checklist.getMetaForDataPath(key);
 
@@ -985,7 +988,7 @@ export let Checklist = {
         return tabs;
     },
 
-    getTaxaNamesPerLevel: function(taxonLevel, topmostTaxon) {
+    getTaxaNamesPerLevel: function (taxonLevel, topmostTaxon) {
 
         if (!topmostTaxon) {
             topmostTaxon = "*";
@@ -993,7 +996,7 @@ export let Checklist = {
 
         let seen = {};
         let results = [];
-        Checklist.getData().checklist.forEach(function(taxon) {
+        Checklist.getData().checklist.forEach(function (taxon) {
             if (topmostTaxon == "*" || taxon.t[0].n == topmostTaxon) {
                 let taxonName = taxon.t[taxonLevel].n;
                 if (!seen.hasOwnProperty(taxonName)) {

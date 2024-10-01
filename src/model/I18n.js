@@ -495,6 +495,10 @@ let translations = {
         "en": "Warning",
         "fr": "Avertissement"
     },
+    dm_array_with_empty_cells_in_the_middle: {
+        "en": "Check the column $1$2 of the following row in the checklist sheet. There should be no empty cell at that index: $3",
+        "fr": "La colonne $1 du tableau $2 ne peut pas avoir d'indicateurs de langue ($3)"
+    },
     dm_cannot_have_language_indicators: {
         "en": "Column $1 in table $2 cannot have language indicators ($3)",
         "fr": "La colonne $1 du tableau $2 ne peut pas avoir d'indicateurs de langue ($3)"

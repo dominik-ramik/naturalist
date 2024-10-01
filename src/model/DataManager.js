@@ -2,7 +2,7 @@ import { cssColorNames, indexOfCaseInsensitive, isValidHttpUrl, pad } from "../c
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
 
-export let DataManager = function() {
+export let DataManager = function () {
     const data = nlDataStructure;
 
     function compileChecklist() {
@@ -18,7 +18,7 @@ export let DataManager = function() {
             versions: {}
         };
 
-        data.common.languages.supportedLanguages.forEach(function(lang) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
             checklist.versions[lang.code] = compileChecklistVersion(lang);
         });
 
@@ -27,9 +27,9 @@ export let DataManager = function() {
         function gatherPreloadableAssets() {
             let assets = [];
 
-            data.common.languages.supportedLanguages.forEach(function(lang) {
+            data.common.languages.supportedLanguages.forEach(function (lang) {
                 //all online search icons
-                data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(function(row) {
+                data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(function (row) {
                     let asset = "./usercontent/online_search_icons/" + row.icon;
                     if (assets.indexOf(asset) < 0) {
                         assets.push(asset);
@@ -37,7 +37,7 @@ export let DataManager = function() {
                 });
 
                 //all locally hosted maps
-                data.sheets.content.tables.maps.data[lang.code].forEach(function(row) {
+                data.sheets.content.tables.maps.data[lang.code].forEach(function (row) {
                     if (row.source.indexOf("{{") >= 0 && row.source.indexOf("}}") >= 0) {
                         return; //skip sources with templates
                     }
@@ -90,14 +90,14 @@ export let DataManager = function() {
                 externalSearchEngines: [],
             }
 
-            data.sheets.content.tables.taxa.data[lang.code].forEach(function(row) {
+            data.sheets.content.tables.taxa.data[lang.code].forEach(function (row) {
                 meta.taxa[row.columnName] = {
                     name: row.taxonName,
                     order: row.orderBy,
                     searchCategoryOrder: []
                 }
 
-                data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function(metaRow) {
+                data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function (metaRow) {
                     if (metaRow.columnName.toLowerCase() == row.columnName.toLowerCase()) {
                         meta.taxa[row.columnName].searchCategoryOrder.push(metaRow.values.toLowerCase());
                     }
@@ -105,7 +105,7 @@ export let DataManager = function() {
             });
 
 
-            data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(function(row) {
+            data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(function (row) {
                 meta.externalSearchEngines.push({
                     title: row.title,
                     icon: row.icon,
@@ -113,7 +113,7 @@ export let DataManager = function() {
                 });
             });
 
-            data.sheets.appearance.tables.mapRegions.data[lang.code].forEach(function(row) {
+            data.sheets.appearance.tables.mapRegions.data[lang.code].forEach(function (row) {
                 if (row.suffix.trim() == "") {
                     meta.mapRegions.default.suffix = row.suffix;
                     meta.mapRegions.default.fill = row.fillColor;
@@ -144,13 +144,13 @@ export let DataManager = function() {
                 placement: "bottom"
             };
 
-            data.common.getAllColumnInfos(lang.code).forEach(function(info) {
+            data.common.getAllColumnInfos(lang.code).forEach(function (info) {
                 // for each of allPaths which matches info.name
-                let matchingComputedDataPaths = allDataPaths.filter(function(path) {
+                let matchingComputedDataPaths = allDataPaths.filter(function (path) {
                     return dataPath.modify.itemNumbersToHash(path).toLowerCase() == dataPath.modify.itemNumbersToHash(info.name);
                 });
 
-                matchingComputedDataPaths.forEach(function(computedDataPath) {
+                matchingComputedDataPaths.forEach(function (computedDataPath) {
                     if (info.role == "taxon") {
                         return;
                     }
@@ -176,7 +176,7 @@ export let DataManager = function() {
                             meta[computedDataPath].searchCategory = info.fullRow.searchCategoryTitle;
                             meta[computedDataPath].searchCategoryOrder = [];
                             if (info.fullRow.searchCategoryTitle.trim() !== "") {
-                                data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function(row) {
+                                data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function (row) {
                                     if (row.columnName.toLowerCase() == computedDataPath.toLowerCase()) {
                                         meta[computedDataPath].searchCategoryOrder.push(row.values.toLowerCase());
                                     }
@@ -192,7 +192,7 @@ export let DataManager = function() {
 
                             if (info.fullRow.formatting.toLowerCase() == "badge") {
                                 meta[computedDataPath].badges = [];
-                                data.sheets.appearance.tables.badges.data[lang.code].forEach(function(badge) {
+                                data.sheets.appearance.tables.badges.data[lang.code].forEach(function (badge) {
                                     if (dataPath.modify.itemNumbersToHash(badge.columnName).toLowerCase() == dataPath.modify.itemNumbersToHash(computedDataPath).toLowerCase()) {
                                         meta[computedDataPath].badges.push({
                                             contains: badge.containsText.toLowerCase(),
@@ -231,8 +231,8 @@ export let DataManager = function() {
 
     function loadData(table) {
         //check if all map colums are present
-        data.common.languages.supportedLanguages.forEach(function(lang) {
-            data.sheets.content.tables.maps.data[lang.code].forEach(function(mapRow) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
+            data.sheets.content.tables.maps.data[lang.code].forEach(function (mapRow) {
                 let dataRow = table[0];
                 if (indexOfCaseInsensitive(dataRow, mapRow.columnName) < 0 && indexOfCaseInsensitive(dataRow, mapRow.columnName + ":" + lang.code) < 0) {
                     log("error", _tf("dm_column_defined_but_missing", [mapRow.columnName, data.sheets.content.tables.maps.name, data.sheets.content.tables.maps.name]));
@@ -243,18 +243,18 @@ export let DataManager = function() {
         //continue
 
         let allColumnInfos = data.common.getAllColumnInfos(data.common.languages.defaultLanguageCode);
-        let allColumnNames = allColumnInfos.map(function(item) { return item.name });
+        let allColumnNames = allColumnInfos.map(function (item) { return item.name });
 
         data.sheets.checklist.data = {};
         data.common.allUsedDataPaths = {};
-        data.common.languages.supportedLanguages.forEach(function(lang) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
             data.sheets.checklist.data[lang.code] = [];
             data.common.allUsedDataPaths[lang.code] = [];
 
-            let headers = table[0].map(function(item) { return item.toLowerCase() });
+            let headers = table[0].map(function (item) { return item.toLowerCase() });
             //check duplicates in headers
             let headersCache = [];
-            headers.forEach(function(header) {
+            headers.forEach(function (header) {
                 if (header.trim() == "") {
                     return;
                 }
@@ -271,7 +271,7 @@ export let DataManager = function() {
                 let rowObj = { t: [], d: {} };
                 let doneWithTaxa = false;
 
-                allColumnInfos.forEach(function(info) {
+                allColumnInfos.forEach(function (info) {
                     let position = dataPath.analyse.position(allColumnNames, info.name);
                     if (!position.isLeaf) {
                         return;
@@ -309,14 +309,19 @@ export let DataManager = function() {
             if (currentSegment == "#") {
                 let count = 0;
                 let possible = [];
+                let lastSuccesfullCount = 0; //retains the index of last valid (non empty) value entered into array, serves for skipping adding empty values so that we don't create nulls in malformed arrays such with empty strings as ['a', 'b', '', 'c']
+
+                let emptyCellsInArrayReported = false
+
                 do {
                     count++;
                     let countedComputedPath = computedPath + count;
-                    possible = headers.filter(function(header) {
+                    possible = headers.filter(function (header) {
                         if (header == countedComputedPath || header.startsWith(countedComputedPath + ".")) {
                             return true;
                         }
                     });
+
                     if (possible.length > 0) {
 
                         if (data.common.allUsedDataPaths[langCode].indexOf(countedComputedPath) < 0) {
@@ -330,13 +335,24 @@ export let DataManager = function() {
                             }
                             let genericData = getGenericData(headers, row, countedComputedPath, info, langCode);
                             if (genericData !== "") {
-                                rowObjData[count - 1] = genericData;
+
+                                //rowObjData[count - 1] = genericData;
+                                rowObjData[lastSuccesfullCount - 1] = genericData;
+                                lastSuccesfullCount++;
+
+                                if (!emptyCellsInArrayReported && count != lastSuccesfullCount) {
+                                    // lastSuccesfullCount must be as is and not with -1 to give the user a 1 based index and not a 0 based one
+                                    log("error", _tf("dm_array_with_empty_cells_in_the_middle", [computedPath, lastSuccesfullCount, row.join(", ")]))
+                                    emptyCellsInArrayReported = true;
+                                }
                             }
                         } else {
                             if (rowObjData.length < count) {
                                 rowObjData.push({});
                             }
-                            includeTreefiedData(rowObjData[count - 1], headers, row, pathSegments, pathPosition + 1, info, countedComputedPath, langCode);
+
+                            includeTreefiedData(rowObjData[lastSuccesfullCount - 1], headers, row, pathSegments, pathPosition + 1, info, countedComputedPath, langCode);
+                            lastSuccesfullCount++;
                         }
                     }
                 }
@@ -360,13 +376,13 @@ export let DataManager = function() {
                     //}
                     return;
                 } else
-                if (!rowObjData.hasOwnProperty(currentSegment)) {
-                    if (pathSegments[pathPosition + 1] == "#") {
-                        rowObjData[currentSegment] = [];
-                    } else {
-                        rowObjData[currentSegment] = {};
+                    if (!rowObjData.hasOwnProperty(currentSegment)) {
+                        if (pathSegments[pathPosition + 1] == "#") {
+                            rowObjData[currentSegment] = [];
+                        } else {
+                            rowObjData[currentSegment] = {};
+                        }
                     }
-                }
                 includeTreefiedData(rowObjData[currentSegment], headers, row, pathSegments, pathPosition + 1, info, computedPath, langCode);
             }
         }
@@ -379,7 +395,7 @@ export let DataManager = function() {
                     if (stringValue == null) {
                         let template = "";
                         if (info.table == data.sheets.content.tables.customDataDefinition.name) {
-                            let columnMeta = data.sheets.content.tables.customDataDefinition.data[langCode].find(function(row) {
+                            let columnMeta = data.sheets.content.tables.customDataDefinition.data[langCode].find(function (row) {
                                 if (dataPath.modify.itemNumbersToHash(row.columnName) == dataPath.modify.itemNumbersToHash(computedPath)) {
                                     return true;
                                 }
@@ -387,14 +403,14 @@ export let DataManager = function() {
                             template = (columnMeta ? columnMeta.template : "");
 
                         } else if (info.table == data.sheets.content.tables.maps.name) {
-                            let columnMeta = data.sheets.content.tables.maps.data[langCode].find(function(row) {
+                            let columnMeta = data.sheets.content.tables.maps.data[langCode].find(function (row) {
                                 if (dataPath.modify.itemNumbersToHash(row.columnName) == dataPath.modify.itemNumbersToHash(computedPath)) {
                                     return true;
                                 }
                             });
                             template = (columnMeta ? columnMeta.source : "");
                         } else if (info.table == data.sheets.content.tables.media.name) {
-                            let columnMeta = data.sheets.content.tables.media.data[langCode].find(function(row) {
+                            let columnMeta = data.sheets.content.tables.media.data[langCode].find(function (row) {
                                 if (dataPath.modify.itemNumbersToHash(row.columnName) == dataPath.modify.itemNumbersToHash(computedPath)) {
                                     return true;
                                 }
@@ -411,7 +427,7 @@ export let DataManager = function() {
                         return "";
                     }
                     if (stringValue.toString().length > 0) {
-                        let matchingMetaRow = data.sheets.content.tables.customDataDefinition.data[langCode].find(function(row) {
+                        let matchingMetaRow = data.sheets.content.tables.customDataDefinition.data[langCode].find(function (row) {
                             return row.columnName.toLowerCase() == dataPath.modify.itemNumbersToHash(computedPath).toLowerCase();
                         });
 
@@ -546,16 +562,16 @@ export let DataManager = function() {
 
     function checkMetaValidity() {
         // automatic check based on integrity data
-        Object.keys(data.sheets).forEach(function(sheetKey) {
+        Object.keys(data.sheets).forEach(function (sheetKey) {
             let sheet = data.sheets[sheetKey];
             if (sheet.type == "meta") {
-                Object.keys(sheet.tables).forEach(function(tableKey) {
+                Object.keys(sheet.tables).forEach(function (tableKey) {
                     let table = sheet.tables[tableKey];
-                    data.common.languages.supportedLanguages.forEach(function(lang) {
+                    data.common.languages.supportedLanguages.forEach(function (lang) {
                         let tableData = table.data[lang.code];
-                        tableData.forEach(function(dataRow) {
-                            Object.keys(table.columns).forEach(function(columnKey) {
-                                let entireColumn = tableData.map(function(row) {
+                        tableData.forEach(function (dataRow) {
+                            Object.keys(table.columns).forEach(function (columnKey) {
+                                let entireColumn = tableData.map(function (row) {
                                     return row[columnKey];
                                 });
                                 let column = table.columns[columnKey];
@@ -572,13 +588,13 @@ export let DataManager = function() {
                                         break;
                                     case "list":
                                         let found = false;
-                                        integrity.listItems.forEach(function(allowed) {
+                                        integrity.listItems.forEach(function (allowed) {
                                             if (!found && allowed.toLowerCase() == value.toLowerCase()) {
                                                 found = true;
                                             }
                                         });
                                         if (!found) {
-                                            log("error", _tf("dm_incorrect_list", [value, column.name, table.name, integrity.listItems.map(function(item) { return item == "" ? "(space)" : "'" + item + "'"; }).join(", ")]));
+                                            log("error", _tf("dm_incorrect_list", [value, column.name, table.name, integrity.listItems.map(function (item) { return item == "" ? "(space)" : "'" + item + "'"; }).join(", ")]));
                                         }
                                         break;
                                     case "columnName":
@@ -618,7 +634,7 @@ export let DataManager = function() {
 
                                 if (integrity.allowDuplicates !== "yes") {
                                     let count = 0;
-                                    entireColumn.forEach(function(item) {
+                                    entireColumn.forEach(function (item) {
                                         if (item.toLowerCase() == value.toLowerCase()) {
                                             if (value == "") {
                                                 if (integrity.allowDuplicates != "empty-only") {
@@ -647,7 +663,7 @@ export let DataManager = function() {
         //
 
         // Ensure all languages are displayable and proper fallback language is provided if translation is missing
-        data.common.languages.supportedLanguages.forEach(function(lang) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
             if (i18n.getSupportedLanguageCodes().indexOf(lang.code) < 0 && i18n.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0) {
                 log("warning", _tf("dm_specify_fallback_language", [lang.name, "Supported languages", data.sheets.appearance.name, i18n.getSupportedLanguageCodes().join(", ")]));
             }
@@ -655,7 +671,7 @@ export let DataManager = function() {
 
         // All column names through all tables should be unique
         let uniqueColumnNames = {};
-        data.common.getAllColumnInfos(data.common.languages.defaultLanguageCode).forEach(function(item) {
+        data.common.getAllColumnInfos(data.common.languages.defaultLanguageCode).forEach(function (item) {
             if (Object.keys(uniqueColumnNames).indexOf(item.name.toLowerCase()) < 0) {
                 uniqueColumnNames[item.name.toLowerCase()] = item;
             } else {
@@ -664,8 +680,8 @@ export let DataManager = function() {
         });
 
         // Hue has to be 0-360
-        data.common.languages.supportedLanguages.forEach(function(lang) {
-            let hueRow = data.sheets.appearance.tables.customization.data[lang.code].find(function(row) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
+            let hueRow = data.sheets.appearance.tables.customization.data[lang.code].find(function (row) {
                 if (row.item == "Color theme hue") {
                     return true;
                 }
@@ -678,11 +694,11 @@ export let DataManager = function() {
             }
         });
 
-        data.common.languages.supportedLanguages.forEach(function(lang) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
             let table = data.sheets.content.tables.customDataDefinition.data[lang.code];
-            let allColumnNames = table.map(function(row) { return row.columnName.toLowerCase(); });
+            let allColumnNames = table.map(function (row) { return row.columnName.toLowerCase(); });
 
-            table.forEach(function(row) {
+            table.forEach(function (row) {
                 let columnName = row.columnName;
                 let colPosition = dataPath.analyse.position(allColumnNames, columnName.toLowerCase());
 
@@ -721,7 +737,7 @@ export let DataManager = function() {
 
                 // Hidden cannot have any props (like title, template, ...)
                 if (row.hidden == "yes") {
-                    Object.keys(row).forEach(function(columnKey) {
+                    Object.keys(row).forEach(function (columnKey) {
                         if (columnKey != "columnName" && columnKey != "hidden" && row[columnKey].toString().trim() != "") {
                             if (columnKey == "searchCategoryTitle") {
                                 //skip search title, as this is allowed
@@ -741,14 +757,14 @@ export let DataManager = function() {
     function postprocessMetadata() {
         // Change checklist sheet name if needed
         let customChecklistName = "";
-        data.sheets.appearance.tables.customization.data[data.common.languages.defaultLanguageCode].forEach(function(row) {
+        data.sheets.appearance.tables.customization.data[data.common.languages.defaultLanguageCode].forEach(function (row) {
             if (row.item == "Name of checklist data sheet") {
                 customChecklistName = row.value;
             }
             return false;
         });
         let customChecklistDataStartRow = "";
-        data.sheets.appearance.tables.customization.data[data.common.languages.defaultLanguageCode].forEach(function(row) {
+        data.sheets.appearance.tables.customization.data[data.common.languages.defaultLanguageCode].forEach(function (row) {
             if (row.item == "Checklist data headers row") {
                 customChecklistDataStartRow = row.value;
             }
@@ -763,15 +779,15 @@ export let DataManager = function() {
 
         // set default values if needed
         //*
-        Object.keys(data.sheets).forEach(function(sheetKey) {
+        Object.keys(data.sheets).forEach(function (sheetKey) {
             let sheet = data.sheets[sheetKey];
             if (sheet.type == "meta") {
-                Object.keys(sheet.tables).forEach(function(tableKey) {
+                Object.keys(sheet.tables).forEach(function (tableKey) {
                     let table = sheet.tables[tableKey];
-                    data.common.languages.supportedLanguages.forEach(function(lang) {
+                    data.common.languages.supportedLanguages.forEach(function (lang) {
                         let tableData = table.data[lang.code];
-                        tableData.forEach(function(dataRow) {
-                            Object.keys(table.columns).forEach(function(columnKey) {
+                        tableData.forEach(function (dataRow) {
+                            Object.keys(table.columns).forEach(function (columnKey) {
                                 let column = table.columns[columnKey];
                                 let integrity = column.integrity;
 
@@ -797,15 +813,15 @@ export let DataManager = function() {
         //*/
 
         // make all column names and expressions inside {{ }} handlebars lowercase
-        Object.keys(data.sheets).forEach(function(sheetKey) {
+        Object.keys(data.sheets).forEach(function (sheetKey) {
             let sheet = data.sheets[sheetKey];
             if (sheet.type == "meta") {
-                Object.keys(sheet.tables).forEach(function(tableKey) {
+                Object.keys(sheet.tables).forEach(function (tableKey) {
                     let table = sheet.tables[tableKey];
-                    data.common.languages.supportedLanguages.forEach(function(lang) {
+                    data.common.languages.supportedLanguages.forEach(function (lang) {
                         let tableData = table.data[lang.code];
-                        tableData.forEach(function(dataRow) {
-                            Object.keys(table.columns).forEach(function(columnKey) {
+                        tableData.forEach(function (dataRow) {
+                            Object.keys(table.columns).forEach(function (columnKey) {
                                 let column = table.columns[columnKey];
                                 let integrity = column.integrity;
                                 let value = dataRow[columnKey];
@@ -815,7 +831,7 @@ export let DataManager = function() {
                                 }
 
                                 if (typeof value === "string" && value.trim() != "") {
-                                    dataRow[columnKey] = dataRow[columnKey].replace(/({{[^}}]*}})/g, function(m, p1) {
+                                    dataRow[columnKey] = dataRow[columnKey].replace(/({{[^}}]*}})/g, function (m, p1) {
                                         return (p1) ? p1.toLowerCase() : m.toLowerCase();
                                     });
                                 }
@@ -828,12 +844,12 @@ export let DataManager = function() {
             }
         });
 
-        data.common.languages.supportedLanguages.forEach(function(lang) {
+        data.common.languages.supportedLanguages.forEach(function (lang) {
             // verify that customDataDefinition column names present all data paths eg. without info.redlist missing between info and info.redlist.code
-            let allDataPaths = data.sheets.content.tables.customDataDefinition.data[lang.code].map(function(row) {
+            let allDataPaths = data.sheets.content.tables.customDataDefinition.data[lang.code].map(function (row) {
                 return dataPath.modify.itemNumbersToHash(row.columnName).toLowerCase();
             });
-            data.sheets.content.tables.customDataDefinition.data[lang.code].forEach(function(row) {
+            data.sheets.content.tables.customDataDefinition.data[lang.code].forEach(function (row) {
                 let current = dataPath.modify.itemNumbersToHash(row.columnName).toLowerCase();
 
                 if (!dataPath.validate.isDataPath(current)) {
@@ -855,7 +871,7 @@ export let DataManager = function() {
     }
 
     function log(level, message) {
-        let index = dataManager.loggedMessages.findIndex(function(msg) {
+        let index = dataManager.loggedMessages.findIndex(function (msg) {
             if (msg.level == "critical" || msg.level == "error") {
                 dataManager.hasErrors = true;
             }
@@ -875,7 +891,7 @@ export let DataManager = function() {
         loggedMessages: [],
         hasErrors: false,
 
-        loadData: function(extractor) {
+        loadData: function (extractor) {
             this.loggedMessages = [];
             this.hasErrors = false;
 
@@ -897,14 +913,14 @@ export let DataManager = function() {
 
 export let dataPath = {
     validate: {
-        isSimpleColumnName: function(value) {
+        isSimpleColumnName: function (value) {
             let simpleColumnName = new RegExp("^[a-zA-Z]+$", "gi");
             return simpleColumnName.test(value);
         },
         isDataPath(value) {
             let valueSplit = value.split(".");
             let correct = true;
-            valueSplit.forEach(function(columnSegment) {
+            valueSplit.forEach(function (columnSegment) {
                 if (!correct) {
                     return;
                 }
@@ -918,7 +934,7 @@ export let dataPath = {
         }
     },
     analyse: {
-        position: function(allDataPaths, thisDataPath) {
+        position: function (allDataPaths, thisDataPath) {
             let result = {
                 isLeaf: false,
                 isRoot: false,
@@ -926,7 +942,7 @@ export let dataPath = {
                 isSimpleItem: false,
             };
 
-            allDataPaths = allDataPaths.map(function(item) { return dataPath.modify.itemNumbersToHash(item).toLowerCase(); });
+            allDataPaths = allDataPaths.map(function (item) { return dataPath.modify.itemNumbersToHash(item).toLowerCase(); });
             thisDataPath = dataPath.modify.itemNumbersToHash(thisDataPath).toLowerCase();
 
             if (thisDataPath.indexOf(".") < 0 && thisDataPath.indexOf("#") < 0) {
@@ -962,7 +978,7 @@ export let dataPath = {
             parent = parent.toLowerCase();
             let children = [];
 
-            allDataPaths.forEach(function(othertDataPath) {
+            allDataPaths.forEach(function (othertDataPath) {
                 let other = othertDataPath.toLowerCase();
                 if (other.startsWith(parent + ".") || other.startsWith(parent + "#")) {
                     return children.push(other);
@@ -971,17 +987,17 @@ export let dataPath = {
 
             return children;
         },
-        hasChildren: function(allDataPaths, possibleParent) {
+        hasChildren: function (allDataPaths, possibleParent) {
             return dataPath.analyse.getChildrenOf(allDataPaths, possibleParent).length > 0;
         }
     },
     modify: {
-        itemNumbersToHash: function(value) {
+        itemNumbersToHash: function (value) {
             return value.replace(/(\d+)/g, "#");
         },
-        pathToSegments: function(path) {
+        pathToSegments: function (path) {
             let split = path.split(/\.|#/);
-            split = split.map(function(item) {
+            split = split.map(function (item) {
                 if (item == "") {
                     return "#";
                 } else {
@@ -990,7 +1006,7 @@ export let dataPath = {
             });
             return split;
         },
-        segmentsToPath: function(segments) {
+        segmentsToPath: function (segments) {
             let path = "";
 
             for (let index = 0; index < segments.length; index++) {
