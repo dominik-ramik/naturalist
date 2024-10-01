@@ -22,6 +22,7 @@
 }
 
 .manage-ui .log .log-item {
+    user-select: text;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
