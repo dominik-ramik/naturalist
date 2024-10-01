@@ -4,19 +4,19 @@ let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
 let userCacheName = "user";
 
-self.addEventListener("install", function(e) {
+self.addEventListener("install", function (e) {
     e.waitUntil(
-        caches.open(appCacheName).then(function(cache) {
+        caches.open(appCacheName).then(function (cache) {
             cache.addAll(staticResources);
         })
     );
 });
 
 //* Cache first
-self.addEventListener('fetch', function(e) {
+self.addEventListener('fetch', function (e) {
     if (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/checklist.json")) {
         let response = null;
-        e.respondWith((async function() {
+        e.respondWith((async function () {
             response = await fetch(e.request, { cache: "no-cache" });
             return response;
         })());
@@ -27,7 +27,7 @@ self.addEventListener('fetch', function(e) {
         return;
     }
 
-    e.respondWith((async function() {
+    e.respondWith((async function () {
 
         const r = await caches.match(e.request);
 
@@ -41,7 +41,7 @@ self.addEventListener('fetch', function(e) {
         if (e.request.url.toLowerCase().endsWith("/checklist.json")) {
             response = await fetch(e.request, { cache: "no-cache" });
         } else {
-            response = await fetch(e.request).then(function(response) {
+            response = await fetch(e.request).then(function (response) {
                 if (!response.ok) {
                     console.log("Fetching problems");
                     console.log(response);
@@ -60,9 +60,9 @@ self.addEventListener('fetch', function(e) {
             cache = await caches.open(appCacheName);
         }
 
-        console.log(`[SW] Caching new resource: ${e.request.url}`);
 
         if (cache !== null && response.status == 200 && e.request.method.toLowerCase() != "head") {
+            console.log(`[SW] Caching new resource: ${e.request.url}`);
             cache.put(e.request, response.clone());
         }
 
@@ -75,9 +75,9 @@ self.addEventListener('activate', (e) => {
 
     self.clients.claim();
 
-    e.waitUntil(caches.keys().then(function(keyList) {
+    e.waitUntil(caches.keys().then(function (keyList) {
         //console.log(keyList);
-        return Promise.all(keyList.map(function(key) {
+        return Promise.all(keyList.map(function (key) {
             if (key === appCacheName || key === userCacheName) {
                 return;
             }
@@ -97,12 +97,12 @@ function refreshCachedChecklistData() {
         cache: "reload"
     });
     fetch(dataRequest)
-        .then(function(response) {
-            caches.open(appCacheName).then(function(cache) {
+        .then(function (response) {
+            caches.open(appCacheName).then(function (cache) {
                 cache.put(dataRequest.clone(), response.clone());
             });
         })
-        .catch(function(err) {
+        .catch(function (err) {
             //failed to fetch
             console.log("Could not update the data. Fetch failed.");
         });
@@ -111,7 +111,7 @@ function refreshCachedChecklistData() {
 let communicationPort;
 
 //Save reference to port
-self.addEventListener('message', function(message) {
+self.addEventListener('message', function (message) {
     if (message.data && message.data.type === 'PORT_INITIALIZATION') {
         //console.log("SW side received PORT INIT");
         communicationPort = message.ports[0];
