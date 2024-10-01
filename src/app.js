@@ -10,7 +10,7 @@ import { compressor } from "./components/Utils.js";
 
 export let appVersion = ""; //will be loaded from SW
 
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     registerSW();
     //console.log("Return to PWA mode uncomment previous line")
     runApp();
@@ -41,7 +41,7 @@ function openComChannel(sw) {
     ]);
 
     //Listen to messages
-    messageChannel.port1.onmessage = function(message) {
+    messageChannel.port1.onmessage = function (message) {
         // Process message
 
         switch (message.data.type) {
@@ -49,7 +49,7 @@ function openComChannel(sw) {
                 console.log("Checklist data updated");
                 Settings.lastKnownVersion(message.data.lastModifiedTimestamp);
                 Toast.show(_t("checklist_data_updated"), {
-                    whenClosed: function() {
+                    whenClosed: function () {
                         window.location.href = window.location.origin + window.location.pathname;
                     }
                 });
@@ -71,7 +71,7 @@ function openComChannel(sw) {
 export function checkForChecklistUpdate(sw) {
     var checkDataUpdate = new XMLHttpRequest();
     checkDataUpdate.open("HEAD", "./data/checklist.json", true);
-    checkDataUpdate.onreadystatechange = function() {
+    checkDataUpdate.onreadystatechange = function () {
         if (checkDataUpdate.readyState === 2) {
             if (checkDataUpdate.status === 200) {
                 let lastModifiedString = checkDataUpdate.getResponseHeader("Last-Modified");
@@ -97,7 +97,7 @@ export function checkForChecklistUpdate(sw) {
             }
         }
     }
-    checkDataUpdate.onerror = function(e) {
+    checkDataUpdate.onerror = function (e) {
         console.log("Error trying to get checklist update: ", e);
     }
     checkDataUpdate.send();
@@ -111,9 +111,12 @@ function runApp() {
             "Content-Type": "text/plain; charset=utf-8",
             "Accept": "text/*"
         },
-        extract: function(xhr) {
-            let parsed = "";
+        extract: function (xhr) {
+            if (xhr.status != 200) {
+                return null;
+            }
 
+            let parsed = "";
             try {
                 parsed = JSON.parse(compressor.decompress(xhr.responseText));
             } catch (ex) {
@@ -121,9 +124,11 @@ function runApp() {
             }
             return parsed;
         }
-    }).then(function(checklistData) {
-        window.setTimeout(function() {
-            Checklist.loadData(checklistData, false);
+    }).then(function (checklistData) {
+        window.setTimeout(function () {
+            if (checklistData) {
+                Checklist.loadData(checklistData, false);
+            }
 
             let w = document.documentElement.clientWidth;
             let h = document.documentElement.clientHeight;
@@ -135,7 +140,7 @@ function runApp() {
 
             m.route(document.body, "/checklist", {
                 "/search": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "details";
                         return m(AppLayoutView, [
                             m(SearchView)
@@ -143,7 +148,7 @@ function runApp() {
                     },
                 },
                 "/checklist": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "checklist";
                         return m(AppLayoutView, [
                             m(SearchView)
@@ -151,7 +156,7 @@ function runApp() {
                     },
                 },
                 "/details/:taxon/:tab": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "details";
                         return m(AppLayoutView, [
                             m(DetailsView)
@@ -159,7 +164,7 @@ function runApp() {
                     },
                 },
                 "/about/checklist": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "details";
                         return m(AppLayoutView, [
                             m(AboutView, { text: Checklist.getProjectAbout() }),
@@ -167,7 +172,7 @@ function runApp() {
                     },
                 },
                 "/about/app": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "details";
                         return m(AppLayoutView, [
                             m(AboutView, { text: _t("about_app", appVersion) }),
@@ -175,7 +180,7 @@ function runApp() {
                     },
                 },
                 "/manage": {
-                    render: function() {
+                    render: function () {
                         AppLayoutView.display = "details";
                         return m(AppLayoutView, [
                             m(ManageView),
