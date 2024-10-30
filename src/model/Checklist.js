@@ -218,8 +218,9 @@ export let Checklist = {
         }
 
         console.time("Data loaded in");
-
-
+        if(this._isDataReady){
+            document.title = Checklist.getProjectName() + " | NaturaList";
+        }
 
         try {
             this._data = jsonData;
