@@ -171,7 +171,8 @@ export let Checklist = {
         let lang = "";
 
         if (!this._isDataReady) {
-            return "en";
+            let versions = Object.keys(this._data?.versions)
+            return versions?.length > 0 ? versions[0] : "en";
         }
 
         if (m.route.param("l")) {
@@ -217,6 +218,8 @@ export let Checklist = {
         }
 
         console.time("Data loaded in");
+
+
 
         try {
             this._data = jsonData;
