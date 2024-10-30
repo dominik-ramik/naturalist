@@ -4,12 +4,19 @@ let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
 let userCacheName = "user";
 
+let communicationPort;
+
 self.addEventListener("install", function (e) {
+    self.skipWaiting();
     e.waitUntil(
         caches.open(appCacheName).then(function (cache) {
             cache.addAll(staticResources);
         })
     );
+});
+
+self.addEventListener("updatefound", function (e) {
+    communicationPort.postMessage({ type: 'APP_UPDATED' });
 });
 
 //* Cache first
@@ -62,7 +69,7 @@ self.addEventListener('fetch', function (e) {
 
 
         if (cache !== null && response.status == 200 && e.request.method.toLowerCase() != "head") {
-            console.log(`[SW] Caching new resource: ${e.request.url}`);
+            //console.log(`[SW] Caching new resource: ${e.request.url}`);
             cache.put(e.request, response.clone());
         }
 
@@ -107,8 +114,6 @@ function refreshCachedChecklistData() {
             console.log("Could not update the data. Fetch failed.");
         });
 }
-
-let communicationPort;
 
 //Save reference to port
 self.addEventListener('message', function (message) {

@@ -45,6 +45,14 @@ function openComChannel(sw) {
         // Process message
 
         switch (message.data.type) {
+            case "APP_UPDATED":
+                console.log("App updated");
+                alert("UPDATE")
+                window.setTimeout(() => {
+                    location.reload();
+                }, 200);
+
+                break;
             case "CHECKLIST_UPDATED":
                 console.log("Checklist data updated");
                 Settings.lastKnownVersion(message.data.lastModifiedTimestamp);
