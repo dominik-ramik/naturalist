@@ -171,6 +171,9 @@ function runApp() {
                             m(SearchView)
                         ]);
                     },
+                    onmatch: function () {
+                        if (!checklistData) m.route.set("/manage")
+                    }
                 },
                 "/checklist": {
                     render: function () {
@@ -179,6 +182,9 @@ function runApp() {
                             m(SearchView)
                         ]);
                     },
+                    onmatch: function () {
+                        if (!checklistData) m.route.set("/manage")
+                    }
                 },
                 "/details/:taxon/:tab": {
                     render: function () {
@@ -187,6 +193,9 @@ function runApp() {
                             m(DetailsView)
                         ]);
                     },
+                    onmatch: function () {
+                        if (!checklistData) m.route.set("/manage")
+                    }
                 },
                 "/about/checklist": {
                     render: function () {
@@ -195,6 +204,9 @@ function runApp() {
                             m(AboutView, { text: Checklist.getProjectAbout() }),
                         ]);
                     },
+                    onmatch: function () {
+                        if (!checklistData) m.route.set("/manage")
+                    }
                 },
                 "/about/app": {
                     render: function () {
@@ -203,6 +215,9 @@ function runApp() {
                             m(AboutView, { text: _t("about_app", appVersion) }),
                         ]);
                     },
+                    onmatch: function () {
+                        if (!checklistData) m.route.set("/manage")
+                    }
                 },
                 "/manage": {
                     render: function () {
@@ -213,6 +228,7 @@ function runApp() {
                     },
                 },
             });
+            
         }, 50);
     });
 }
