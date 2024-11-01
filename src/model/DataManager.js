@@ -42,7 +42,7 @@ export let DataManager = function () {
                         return; //skip sources with templates
                     }
                     if (row.mapType == "regions") {
-                        let asset = window.location.origin + window.location.pathname + "usercontent/maps/" + row.source;
+                        let asset = "." + window.location.pathname + "usercontent/maps/" + row.source;
                         if (assets.indexOf(asset) < 0) {
                             assets.push(asset);
                         }

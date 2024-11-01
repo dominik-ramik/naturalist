@@ -17,6 +17,8 @@ window.addEventListener('load', function () {
 });
 
 async function registerSW() {
+    navigator.storage.persist()
+
     if ('serviceWorker' in navigator) {
         try {
             navigator.serviceWorker.register('serviceworker.js');
@@ -146,6 +148,8 @@ function runApp() {
                 AppLayoutView.mode = "mobile";
             }
 
+            readyPreloadableAssets()
+
             m.route(document.body, "/checklist", {
                 "/search": {
                     render: function () {
@@ -198,4 +202,13 @@ function runApp() {
             });
         }, 50);
     });
+}
+
+function readyPreloadableAssets()
+{
+    console.log("Readying preloadable assets")
+    Checklist.getPreloadableAssets()?.forEach(async (asset) => {
+        console.log("Fetching", asset)
+        await fetch(asset);
+    })
 }

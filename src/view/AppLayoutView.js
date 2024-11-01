@@ -35,9 +35,6 @@ export let AppLayoutView = {
                 )
             ]),
             m(Toast),
-            m(".assets-preload[style=display: none;]", Checklist.getPreloadableAssets().map(function (asset) {
-                return m("img[src=" + asset + "]");
-            }))
         ])
     },
 
