@@ -1,5 +1,7 @@
 # NaturaList
 
+<img src="./src/img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
+
 _The flexible taxonomic checklist app_
 
 [[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/demo/docs/)]
