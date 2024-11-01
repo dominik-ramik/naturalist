@@ -206,9 +206,7 @@ function runApp() {
 
 function readyPreloadableAssets()
 {
-    console.log("Readying preloadable assets")
     Checklist.getPreloadableAssets()?.forEach(async (asset) => {
-        console.log("Fetching", asset)
-        await fetch(asset);
+        await fetch(asset).onerror((result) => console.log("ERROR downloading assets", result));
     })
 }
