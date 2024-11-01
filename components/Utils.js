@@ -3,10 +3,10 @@ import { Toast } from "../view/AppLayoutView.js";
 import { _t } from "../model/I18n.js";
 
 export let compressor = {
-    compress: function(str) {
+    compress: function (str) {
         return LZString.compressToUTF16(str);
     },
-    decompress: function(str) {
+    decompress: function (str) {
         return LZString.decompressFromUTF16(str);
     },
 }
@@ -35,7 +35,7 @@ export function getCurrentLocaleBestGuess() {
             foundLocale = currentLang;
         } else {
             let found = false;
-            Checklist.getAllLanguages().forEach(function(lang) {
+            Checklist.getAllLanguages().forEach(function (lang) {
                 if (lang.code.toLowerCase() == currentLang) {
                     if (knownSubtags.indexOf(lang.fallbackUiLang) >= 0) {
                         foundLocale = lang.fallbackUiLang;
@@ -61,7 +61,12 @@ export function routeTo(destination, query, language) {
     if (lang === undefined || lang === null) {
         let routeLang = m.route.param("l");
         if (routeLang === undefined || routeLang === null) {
-            lang = Checklist.getDefaultLanguage();
+            if (Checklist._isDataReady) {
+                lang = Checklist.getDefaultLanguage();
+            }
+            else {
+                lang = "en"
+            }
         } else {
             lang = routeLang;
         }
@@ -74,7 +79,7 @@ export function routeTo(destination, query, language) {
 }
 
 export function isArrayOfEmptyStrings(arr) {
-    let someCellsFilled = arr.find(function(cell) {
+    let someCellsFilled = arr.find(function (cell) {
         return cell.length > 0;
     });
     return !someCellsFilled;
@@ -131,7 +136,7 @@ export function formatList(list, finalJoiner, preItem, postItem) {
         finalJoiner = _t("and_list_joiner");
     }
 
-    list = list.map(function(item) {
+    list = list.map(function (item) {
         return (preItem ? preItem : "") + item + (postItem ? postItem : "");
     });
 
@@ -144,8 +149,8 @@ export function textLowerCaseAccentless(text) {
     return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-export function filterMatches (data) {
-    if (Checklist.filter.text.trim() != "" && typeof(data) === "string" && data.toLowerCase().indexOf(Checklist.filter.text.toLowerCase()) >= 0) {
+export function filterMatches(data) {
+    if (Checklist.filter.text.trim() != "" && typeof (data) === "string" && data.toLowerCase().indexOf(Checklist.filter.text.toLowerCase()) >= 0) {
         return true;
     }
 
@@ -8750,7 +8755,7 @@ let ianaLocaleSubtags = {
     zzj: "Zuojiang Zhuang",
 }
 
-var LZString = (function() {
+var LZString = (function () {
     var f = String.fromCharCode;
     var keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     var keyStrUriSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$";
@@ -8767,49 +8772,49 @@ var LZString = (function() {
     }
 
     var LZString = {
-        compressToBase64: function(input) {
+        compressToBase64: function (input) {
             if (input == null) return "";
-            var res = LZString._compress(input, 6, function(a) {
+            var res = LZString._compress(input, 6, function (a) {
                 return keyStrBase64.charAt(a);
             });
             switch (res.length % 4) { // To produce valid Base64
                 default: // When could this happen ?
-                    case 0:
+                case 0:
                     return res;
                 case 1:
-                        return res + "===";
+                    return res + "===";
                 case 2:
-                        return res + "==";
+                    return res + "==";
                 case 3:
-                        return res + "=";
+                    return res + "=";
             }
         },
 
-        decompressFromBase64: function(input) {
+        decompressFromBase64: function (input) {
             if (input == null) return "";
             if (input == "") return null;
-            return LZString._decompress(input.length, 32, function(index) {
+            return LZString._decompress(input.length, 32, function (index) {
                 return getBaseValue(keyStrBase64, input.charAt(index));
             });
         },
 
-        compressToUTF16: function(input) {
+        compressToUTF16: function (input) {
             if (input == null) return "";
-            return LZString._compress(input, 15, function(a) {
+            return LZString._compress(input, 15, function (a) {
                 return f(a + 32);
             }) + " ";
         },
 
-        decompressFromUTF16: function(compressed) {
+        decompressFromUTF16: function (compressed) {
             if (compressed == null) return "";
             if (compressed == "") return null;
-            return LZString._decompress(compressed.length, 16384, function(index) {
+            return LZString._decompress(compressed.length, 16384, function (index) {
                 return compressed.charCodeAt(index) - 32;
             });
         },
 
         //compress into uint8array (UCS-2 big endian format)
-        compressToUint8Array: function(uncompressed) {
+        compressToUint8Array: function (uncompressed) {
             var compressed = LZString.compress(uncompressed);
             var buf = new Uint8Array(compressed.length * 2); // 2 bytes per character
 
@@ -8822,7 +8827,7 @@ var LZString = (function() {
         },
 
         //decompress from uint8array (UCS-2 big endian format)
-        decompressFromUint8Array: function(compressed) {
+        decompressFromUint8Array: function (compressed) {
             if (compressed === null || compressed === undefined) {
                 return LZString.decompress(compressed);
             } else {
@@ -8832,7 +8837,7 @@ var LZString = (function() {
                 }
 
                 var result = [];
-                buf.forEach(function(c) {
+                buf.forEach(function (c) {
                     result.push(f(c));
                 });
                 return LZString.decompress(result.join(''));
@@ -8843,29 +8848,29 @@ var LZString = (function() {
 
 
         //compress into a string that is already URI encoded
-        compressToEncodedURIComponent: function(input) {
+        compressToEncodedURIComponent: function (input) {
             if (input == null) return "";
-            return LZString._compress(input, 6, function(a) {
+            return LZString._compress(input, 6, function (a) {
                 return keyStrUriSafe.charAt(a);
             });
         },
 
         //decompress from an output of compressToEncodedURIComponent
-        decompressFromEncodedURIComponent: function(input) {
+        decompressFromEncodedURIComponent: function (input) {
             if (input == null) return "";
             if (input == "") return null;
             input = input.replace(/ /g, "+");
-            return LZString._decompress(input.length, 32, function(index) {
+            return LZString._decompress(input.length, 32, function (index) {
                 return getBaseValue(keyStrUriSafe, input.charAt(index));
             });
         },
 
-        compress: function(uncompressed) {
-            return LZString._compress(uncompressed, 16, function(a) {
+        compress: function (uncompressed) {
+            return LZString._compress(uncompressed, 16, function (a) {
                 return f(a);
             });
         },
-        _compress: function(uncompressed, bitsPerChar, getCharFromInt) {
+        _compress: function (uncompressed, bitsPerChar, getCharFromInt) {
             if (uncompressed == null) return "";
             var i, value,
                 context_dictionary = {},
@@ -9081,15 +9086,15 @@ var LZString = (function() {
             return context_data.join('');
         },
 
-        decompress: function(compressed) {
+        decompress: function (compressed) {
             if (compressed == null) return "";
             if (compressed == "") return null;
-            return LZString._decompress(compressed.length, 32768, function(index) {
+            return LZString._decompress(compressed.length, 32768, function (index) {
                 return compressed.charCodeAt(index);
             });
         },
 
-        _decompress: function(length, resetValue, getNextValue) {
+        _decompress: function (length, resetValue, getNextValue) {
             var dictionary = [],
                 next,
                 enlargeIn = 4,
@@ -9255,14 +9260,14 @@ var LZString = (function() {
 })();
 
 if (typeof define === 'function' && define.amd) {
-    define(function() {
+    define(function () {
         return LZString;
     });
 } else if (typeof module !== 'undefined' && module != null) {
     module.exports = LZString
 } else if (typeof angular !== 'undefined' && angular != null) {
     angular.module('LZString', [])
-        .factory('LZString', function() {
+        .factory('LZString', function () {
             return LZString;
         });
 }
