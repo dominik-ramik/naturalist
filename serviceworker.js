@@ -1,4 +1,4 @@
-let version = "1.2.6";
+let version = "1.2.7";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
