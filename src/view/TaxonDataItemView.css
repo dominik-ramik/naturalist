@@ -62,7 +62,7 @@ span.simple-value p {
     white-space: pre;
 }
 
-.simple-value.found {
+.found {
     background-color: #ffa50047;
     border-radius: var(--pad-large);
     padding-left: var(--pad-small);

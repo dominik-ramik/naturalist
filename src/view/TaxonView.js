@@ -3,6 +3,7 @@ import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { TaxonDataView } from "../view/TaxonDataView.js";
 import { _t } from "../model/I18n.js";
+import { filterMatches } from "../components/Utils.js";
 
 export let TaxonView = {
     view: function(vnode) {
@@ -71,12 +72,14 @@ export let ClickableTaxonName = {
             return null;
         }
 
+        let filterMatch = filterMatches(taxonTree.taxon.n + " " + taxonTree.taxon.a)
+
         return m("span.copiable.clickable", {
             onclick: function() {
                 routeTo('/details/' + taxonTree.taxon.n + '/' + Settings.currentDetailsTab());
             }
         }, [
-            m("i.taxon-name[style=font-size: " + vnode.attrs.fontSize + "%]", taxonTree.taxon.n),
+            m("i.taxon-name" + (filterMatch ? ".found" : "") + "[style=font-size: " + vnode.attrs.fontSize + "%]", taxonTree.taxon.n),
             taxonTree.taxon.a == "" ? null : m("span.taxon-authority[style=font-size: " + vnode.attrs.fontSize + "%]", " " + taxonTree.taxon.a),
         ]);
     }

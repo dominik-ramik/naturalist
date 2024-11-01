@@ -1,5 +1,5 @@
 import { Checklist } from "../model/Checklist.js";
-import { AppLayoutView, Toast } from "../view/AppLayoutView.js";
+import { Toast } from "../view/AppLayoutView.js";
 import { _t } from "../model/I18n.js";
 
 export let compressor = {
@@ -142,6 +142,14 @@ export function formatList(list, finalJoiner, preItem, postItem) {
 
 export function textLowerCaseAccentless(text) {
     return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+export function filterMatches (data) {
+    if (Checklist.filter.text.trim() != "" && typeof(data) === "string" && data.toLowerCase().indexOf(Checklist.filter.text.toLowerCase()) >= 0) {
+        return true;
+    }
+
+    return false;
 }
 
 export function getGradedColor(type, index) {

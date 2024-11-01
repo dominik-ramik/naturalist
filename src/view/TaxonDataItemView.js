@@ -1,5 +1,6 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/TaxonView.js";
+import { filterMatches } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
 
@@ -185,18 +186,9 @@ export let TaxonDataItemView = {
 
         return m("span", [
             title,
-            itemType == "simple" ? m("span.simple-value" + (this.filterMatches(data) ? ".found" : ""), data) : subitemsList
+            itemType == "simple" ? m("span.simple-value" + (filterMatches(data) ? ".found" : ""), data) : subitemsList
         ]);
     },
-
-    filterMatches: function(data) {
-        if (Checklist.filter.text.trim() != "" && typeof(data) === "string" && data.toLowerCase().indexOf(Checklist.filter.text.toLowerCase()) >= 0) {
-            return true;
-        }
-
-        return false; //TODO-future implement coloring of results
-    },
-
 
     view: function(vnode) {
         TaxonDataItemView.originalData = vnode.attrs.taxon.data;
