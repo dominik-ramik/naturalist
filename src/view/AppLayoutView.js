@@ -73,6 +73,7 @@ let SearchBoxImmediate = {
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + _t("free_text_search") + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
                     Checklist.filter.text = this.value;
+                    routeTo("checklist")
                 }
             })
         ));
