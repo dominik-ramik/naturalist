@@ -146,6 +146,7 @@ let staticResources = [
     "./img/ui/checklist/copy.svg",
     "./img/ui/checklist/search.svg",
     "./img/ui/checklist/results.svg",
+    "./img/ui/checklist/filter.svg",
     "./img/ui/manage/clean.svg",
     "./img/ui/manage/errors.svg",
     "./img/ui/manage/error.svg",

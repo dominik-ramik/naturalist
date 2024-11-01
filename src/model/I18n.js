@@ -83,9 +83,9 @@ let translations = {
         "en": "Checklist results",
         "fr": "Liste des résultats"
     },
-    float_search: {
-        "en": "Search",
-        "fr": "Rechercher"
+    float_filter: {
+        "en": "Advanced search",
+        "fr": "Recherche avancée"
     },
     float_results: {
         "en": "Show $1 results",

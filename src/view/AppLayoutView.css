@@ -22,31 +22,50 @@
     overflow: hidden;
 }
 
-.app.mobile .floating-button {
+.app.mobile .floating-search-container {
+    bottom: 1em;
+    left: 1em;
+    right: 1em;
+    height: 3em;
+    position: fixed;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: right;
+}
+
+.app.mobile .round-envelope {
     background-color: #ffffffe6;
     color: black;
-    bottom: 1em;
-    right: 1em;
     height: 3em;
     padding-left: 1em;
     padding-right: 1em;
     border-radius: 2em;
-    position: fixed;
+    box-shadow: 0 0 1em 0em #000000e0;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 1em 0em #000000e0;
 }
 
-.app.mobile .floating-button.disabled {
+.app.mobile .round-envelope input[type=search] {
+    background-color: transparent !important;
+}
+
+.app.mobile .rounded-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app.mobile .rounded-button.disabled {
     opacity: 0.8;
 }
 
-.app.mobile .floating-button .label {
+.app.mobile .rounded-button .label {
     font-size: 85%;
 }
 
-.app.mobile .floating-button img {
+.app.mobile .rounded-button img {
     margin-right: var(--pad-large);
-    height: 2.5em;
+    height: 1.75em;
 }
