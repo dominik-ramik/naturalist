@@ -49,7 +49,8 @@ self.addEventListener('fetch', function (e) {
             response = await fetch(e.request, { cache: "no-cache" });
         } else {
             response = await fetch(e.request).then(function (response) {
-                if (!response.ok) {
+                if (!response.ok && response.status != 304) {
+                    // Got werror response and status is not 304 (already cached)
                     console.log("Fetching problems");
                     console.log(response);
                     communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
