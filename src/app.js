@@ -17,7 +17,7 @@ window.addEventListener('load', function () {
 });
 
 async function registerSW() {
-    navigator.storage.persist()
+    makeStoragePersistent()
 
     if ('serviceWorker' in navigator) {
         try {
@@ -33,6 +33,19 @@ async function registerSW() {
             console.log('SW registration failed: ' + e.message);
         }
     }
+}
+
+function makeStoragePersistent()
+{
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then((persistent) => {
+          if (persistent) {
+            console.log("Storage will not be cleared except by explicit user action");
+          } else {
+            console.log("Storage may be cleared by the UA under storage pressure.");
+          }
+        });
+      }
 }
 
 const messageChannel = new MessageChannel();
@@ -207,6 +220,6 @@ function runApp() {
 function readyPreloadableAssets()
 {
     Checklist.getPreloadableAssets()?.forEach(async (asset) => {
-        await fetch(asset).onerror((result) => console.log("ERROR downloading assets", result));
+        await fetch(asset).catch((result) => console.log("ERROR downloading assets", result));
     })
 }
