@@ -1,0 +1,1 @@
+This folder is intentionally kept empty, this is where you will upload your checklist.json once compiled in the Manage window
