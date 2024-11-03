@@ -2,6 +2,9 @@ import { Checklist } from "../model/Checklist.js";
 import { Toast } from "../view/AppLayoutView.js";
 import { _t } from "../model/I18n.js";
 
+export const checklistURL = "./usercontent/data/checklist.json";
+export const checklistFileName = "checklist.json";
+
 export let compressor = {
     compress: function (str) {
         return LZString.compressToUTF16(str);
