@@ -1,4 +1,4 @@
-import { appVersion } from "../app.js";
+import { appVersion } from "../app/app.js";
 import { getCurrentLocaleBestGuess, getGradedColor, routeTo, textLowerCaseAccentless } from "../components/Utils.js";
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";

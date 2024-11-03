@@ -1,12 +1,12 @@
-import { _t } from "./model/I18n.js";
-import { AppLayoutView, Toast } from "./view/AppLayoutView.js"
-import { Checklist } from "./model/Checklist.js";
-import { SearchView } from "./view/SearchView.js";
-import { DetailsView } from "./view/DetailsView.js"
-import { AboutView } from "./view/AboutView.js";
-import { ManageView } from "./view/ManageView.js";
-import { Settings } from "./model/Settings.js";
-import { compressor, checklistURL } from "./components/Utils.js";
+import { _t } from "../model/I18n.js";
+import { AppLayoutView, Toast } from "../view/AppLayoutView.js"
+import { Checklist } from "../model/Checklist.js";
+import { SearchView } from "../view/SearchView.js";
+import { DetailsView } from "../view/DetailsView.js"
+import { AboutView } from "../view/AboutView.js";
+import { ManageView } from "../view/ManageView.js";
+import { Settings } from "../model/Settings.js";
+import { compressor, checklistURL } from "../components/Utils.js";
 
 export let appVersion = ""; //will be loaded from SW
 
