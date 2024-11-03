@@ -17,6 +17,11 @@ if ($username == "" || $password == "") {
     die;
 }
 
+if (!isset($_POST["username"]) || !isset($_POST["password"])) {
+    echo jsonState("error", "no credentials received");
+    die;
+}
+
 if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $password) == 0) {
     try {
         $checklistDirectory = "'./usercontent/data/";
