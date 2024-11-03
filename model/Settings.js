@@ -25,11 +25,11 @@ export let Settings = {
         }
     },
 
-    lastKnownUploadFormAvailability: function() {
-        if (!languageToSet) {
+    lastKnownUploadFormAvailability: function(value) {
+        if (value == undefined) {
             return window.localStorage.getItem("lastKnownUploadFormAvailability");
         } else {
-            window.localStorage.setItem("lastKnownUploadFormAvailability", languageToSet);
+            window.localStorage.setItem("lastKnownUploadFormAvailability", value);
         }
     },
 
