@@ -251,6 +251,14 @@ let translations = {
         "en": "Starting from a scratch? Download a <a href='./docs/blank-naturalist-spreadsheet.xlsx'>blank spreadsheet</a> and read the <a href='./docs/'>documentation</a> to see how to fill it in with your own data.",
         "fr": "Vous partez de zéro ? Téléchargez une <a href='./docs/blank-naturalist-spreadsheet.xlsx'>feuille de calcul vierge</a> et lisez la <a href='./docs/'>documentation</a> pour savoir comment la remplir avec vos propres données."
     },
+    starting_from_scratch_continued: {
+        "en": "Once your checklist spreadsheet is ready, upload it by clicking on the button below.",
+        "fr": "Une fois que votre feuille de calcul est prête, chargez-la en cliquant sur le bouton ci-dessous."
+    },
+    useful_links: {
+        "en": "You may also check out the [NaturaList web](https://naturalist.netlify.app/) and our [GitHub repo](https://github.com/dominik-ramik/naturalist) for more information",
+        "fr": "Vous pouvez également consulter le [site web NaturaList](https://naturalist.netlify.app/) et le [repo GitHub](https://github.com/dominik-ramik/naturalist) pour plus d'informations"
+    },
     review_draft_heading: {
         "en": "Review the draft",
         "fr": "Revoir le brouillon"
@@ -290,6 +298,14 @@ let translations = {
     or_drag_it: {
         "en": "or drag and drop it here",
         "fr": "ou faites-le glisser et déposez-le ici"
+    },
+    fresh_install_welcome: {
+        "en": "Welcome!",
+        "fr": ""
+    },
+    fresh_install_welcome_message: {
+        "en": "Looks like this is a fresh NaturaList. Glad to have you onboard.",
+        "fr": ""
     },
     no_data: {
         "en": "There is no data yet in this checklist. Publish your data using this form.",

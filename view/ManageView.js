@@ -104,7 +104,7 @@ export let ManageView = {
                                         throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
                                     }
                                 } catch (ex) {
-                                    result = { state: "error", details: [m("div", _t("server_returned_odd_message")), m("div[style=margin-top: 1em; text-align: left;]", _t("server_returned_odd_message_details") + ex)] };
+                                    result = { state: "error", details: [m("div", _t("server_returned_odd_message")), m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex)] };
                                 }
 
                                 if (result.state == "success") {
@@ -243,10 +243,16 @@ export let ManageView = {
 
             Checklist._isDataReady ? null :
                 m(".no-data", [
-                    //TODO make this nicer
-                    _t("no_data")
+                    m("div[style=text-align: center;]",
+                        m("img.upload-icon[src=img/icon_maskable.svg][style=width: auto; height: 15em; margin: 0px]"),
+                        m("h1", _t("fresh_install_welcome")),
+                        m("div", _t("fresh_install_welcome_message")),
+                        m(".manage-message", m.trust(marked.parse(_t("starting_from_scratch")))),
+                        m(".", _t("starting_from_scratch_continued")),
+                        m(".manage-message", m.trust(marked.parse(_t("useful_links")))),
+                    ),
                 ]),
-            m(".manage-message", _t("data_upload_waiting")),
+            Checklist._isDataReady ? m(".manage-message", _t("data_upload_waiting")) : null,
             m(".dropzone#dropzone", {
                 ondrag: function (e) {
                     preventDefaults(e);
@@ -289,8 +295,7 @@ export let ManageView = {
                         }
                     })
                 ]),
-            ])),
-            m(".manage-message", m.trust(_t("starting_from_scratch"))),
+            ]))
         ]);
     }
 }
