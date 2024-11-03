@@ -24,7 +24,7 @@ if (!isset($_POST["username"]) || !isset($_POST["password"])) {
 
 if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $password) == 0) {
     try {
-        $checklistDirectory = "'./usercontent/data/";
+        $checklistDirectory = "./usercontent/data/";
         if (!is_dir($checklistDirectory)) {
             // dir doesn't exist, make it
             mkdir($checklistDirectory);
