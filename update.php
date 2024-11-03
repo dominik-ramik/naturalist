@@ -1,6 +1,6 @@
 <?php
 
-$credentials_file = ".usercontent/data/credentials.php";
+$credentials_file = "./usercontent/data/credentials.php";
 
 if (file_exists($credentials_file)) {
    include $credentials_file;
