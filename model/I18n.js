@@ -301,11 +301,11 @@ let translations = {
     },
     fresh_install_welcome: {
         "en": "Welcome!",
-        "fr": ""
+        "fr": "Bienvenue!"
     },
     fresh_install_welcome_message: {
-        "en": "Looks like this is a fresh NaturaList. Glad to have you onboard.",
-        "fr": ""
+        "en": "Looks like a fresh NaturaList here. Glad to have you onboard.",
+        "fr": "On dirait un NaturaList tout frais. Contents de vous avoir à bord."
     },
     no_data: {
         "en": "There is no data yet in this checklist. Publish your data using this form.",
