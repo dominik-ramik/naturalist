@@ -12,14 +12,20 @@ $password = "N@tur5-gr8!"; // modify the password between the quotes "..." to a 
 // Do not modify the code below this line
 /////////////////////////////////////////
 
-if($username == "" || $password == ""){
+if ($username == "" || $password == "") {
     echo jsonState("error", "upload disabled by administrator");
     die;
 }
 
 if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $password) == 0) {
     try {
-        file_put_contents('./data/checklist.json', $_POST["checklist_data"]);
+        $checklistDirectory = "'./usercontent/data/";
+        if (!is_dir($checklistDirectory)) {
+            // dir doesn't exist, make it
+            mkdir($checklistDirectory);
+        }
+
+        file_put_contents($checklistDirectory . "checklist.json", $_POST["checklist_data"]);
         echo jsonState("success", "");
         die;
     } catch (Exception $ex) {
@@ -31,6 +37,7 @@ if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $pa
     die;
 }
 
-function jsonState($state, $details){
-    return '{"state": "'.$state.'", "details": "'.$details.'"}';
+function jsonState($state, $details)
+{
+    return '{"state": "' . $state . '", "details": "' . $details . '"}';
 }
