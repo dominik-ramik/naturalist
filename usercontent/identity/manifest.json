@@ -1,20 +1,21 @@
 {
     "name": "NaturaList",
     "short_name": "NaturaList",
-    "start_url": "index.html",
-    "display": "standalone",
+    "description": "A flexible taxonomic checklist app",
     "background_color": "#ffffff",
     "theme_color": "#55769b",
-    "scope": ".",
-    "description": "A flexible taxonomic checklist app",
-    "icons": [{
-            "src": "img/icon_maskable.svg",
+    "id": "../../",
+    "start_url": "../../index.html",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "../../img/icon_maskable.svg",
             "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
             "purpose": "maskable",
             "type": "image/svg+xml"
         },
         {
-            "src": "img/icon.svg",
+            "src": "../../img/icon.svg",
             "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
             "purpose": "any",
             "type": "image/svg+xml"
