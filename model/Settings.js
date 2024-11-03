@@ -25,6 +25,14 @@ export let Settings = {
         }
     },
 
+    lastKnownUploadFormAvailability: function() {
+        if (!languageToSet) {
+            return window.localStorage.getItem("lastKnownUploadFormAvailability");
+        } else {
+            window.localStorage.setItem("lastKnownUploadFormAvailability", languageToSet);
+        }
+    },
+
     _currentDetailsTab: "externalsearch",
     currentDetailsTab: function(value) {
         if (value) {
