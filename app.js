@@ -6,7 +6,7 @@ import { DetailsView } from "./view/DetailsView.js"
 import { AboutView } from "./view/AboutView.js";
 import { ManageView } from "./view/ManageView.js";
 import { Settings } from "./model/Settings.js";
-import { compressor } from "./components/Utils.js";
+import { compressor, checklistURL } from "./components/Utils.js";
 
 export let appVersion = ""; //will be loaded from SW
 
@@ -21,7 +21,7 @@ async function registerSW() {
 
     if ('serviceWorker' in navigator) {
         try {
-            navigator.serviceWorker.register('serviceworker.js');
+            navigator.serviceWorker.register('./serviceworker.js');
             navigator.serviceWorker.ready
                 .then((registration) => {
                     openComChannel(registration.active);
@@ -35,17 +35,16 @@ async function registerSW() {
     }
 }
 
-function makeStoragePersistent()
-{
+function makeStoragePersistent() {
     if (navigator.storage && navigator.storage.persist) {
         navigator.storage.persist().then((persistent) => {
-          if (persistent) {
-            console.log("Storage will not be cleared except by explicit user action");
-          } else {
-            console.log("Storage may be cleared by the UA under storage pressure.");
-          }
+            if (persistent) {
+                console.log("Storage will not be cleared except by explicit user action");
+            } else {
+                console.log("Storage may be cleared by the UA under storage pressure.");
+            }
         });
-      }
+    }
 }
 
 const messageChannel = new MessageChannel();
@@ -66,8 +65,8 @@ function openComChannel(sw) {
                 window.setTimeout(() => {
                     location.reload();
                 }, 200);
-
                 break;
+
             case "CHECKLIST_UPDATED":
                 console.log("Checklist data updated");
                 Settings.lastKnownVersion(message.data.lastModifiedTimestamp);
@@ -76,15 +75,15 @@ function openComChannel(sw) {
                         window.location.href = window.location.origin + window.location.pathname;
                     }
                 });
-
                 break;
 
-            case "FETCHING_RESSOURCE_FAILED":
-                console.log("FETCHING_RESSOURCE_FAILED");
-                Toast.show(_t("offline_fetch_failed"));
             case "VERSION":
                 console.log("Version " + message.data.version);
                 appVersion = message.data.version;
+                break;
+            case "FETCHING_RESSOURCE_FAILED":
+                console.log("FETCHING_RESSOURCE_FAILED");
+                Toast.show(_t("offline_fetch_failed"));
             default:
                 break;
         }
@@ -93,7 +92,7 @@ function openComChannel(sw) {
 
 export function checkForChecklistUpdate(sw) {
     var checkDataUpdate = new XMLHttpRequest();
-    checkDataUpdate.open("HEAD", "./data/checklist.json", true);
+    checkDataUpdate.open("HEAD", checklistURL, true);
     checkDataUpdate.onreadystatechange = function () {
         if (checkDataUpdate.readyState === 2) {
             if (checkDataUpdate.status === 200) {
@@ -129,7 +128,7 @@ export function checkForChecklistUpdate(sw) {
 function runApp() {
     m.request({
         method: "GET",
-        url: "./data/checklist.json",
+        url: checklistURL,
         headers: {
             "Content-Type": "text/plain; charset=utf-8",
             "Accept": "text/*"
@@ -172,7 +171,7 @@ function runApp() {
                         ]);
                     },
                     onmatch: function () {
-                        if (!checklistData) m.route.set("/manage")
+                        if (!isDataReady(checklistData)) m.route.set("/manage")
                     }
                 },
                 "/checklist": {
@@ -183,7 +182,7 @@ function runApp() {
                         ]);
                     },
                     onmatch: function () {
-                        if (!checklistData) m.route.set("/manage")
+                        if (!isDataReady(checklistData)) m.route.set("/manage")
                     }
                 },
                 "/details/:taxon/:tab": {
@@ -194,7 +193,7 @@ function runApp() {
                         ]);
                     },
                     onmatch: function () {
-                        if (!checklistData) m.route.set("/manage")
+                        if (!isDataReady(checklistData)) m.route.set("/manage")
                     }
                 },
                 "/about/checklist": {
@@ -205,7 +204,7 @@ function runApp() {
                         ]);
                     },
                     onmatch: function () {
-                        if (!checklistData) m.route.set("/manage")
+                        if (!isDataReady(checklistData)) m.route.set("/manage")
                     }
                 },
                 "/about/app": {
@@ -216,7 +215,7 @@ function runApp() {
                         ]);
                     },
                     onmatch: function () {
-                        if (!checklistData) m.route.set("/manage")
+                        if (!isDataReady(checklistData)) m.route.set("/manage")
                     }
                 },
                 "/manage": {
@@ -228,14 +227,22 @@ function runApp() {
                     },
                 },
             });
-            
+
         }, 50);
     });
 }
 
-function readyPreloadableAssets()
-{
+function isDataReady(checklistData) {
+    return checklistData || Checklist._isDataReady;
+}
+
+function readyPreloadableAssets() {
     Checklist.getPreloadableAssets()?.forEach(async (asset) => {
-        await fetch(asset).catch((result) => console.log("ERROR downloading assets", result));
+        try{
+            //await fetch(asset).catch((result) => console.log("ERROR downloading assets", result));
+        }
+        catch{
+            console.log("Problem fetching preloadable asset")
+        }
     })
 }
