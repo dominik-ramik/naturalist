@@ -1,4 +1,4 @@
-** !!! IMPORTANT !!!** If you are updating from another version below 2.0.0, follow the [update procedure](https://github.com/dominik-ramik/naturalist/releases/tag/v2.0.0)
+**!!! IMPORTANT !!!** If you are updating from another version below 2.0.0, follow the [update procedure](https://github.com/dominik-ramik/naturalist/releases/tag/v2.0.0)
 
 # NaturaList
 
