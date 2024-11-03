@@ -49,11 +49,11 @@
 
             <h2 id="php-hosting">PHP-enabled webhosting</h2>
             <p>If you use <strong>NaturaList</strong> on a webserver with PHP enabled, you can take advantage of updating the checklist directly through the app.</p>
-            <p>in the installation folder locate the <strong>update.php</strong> file. Open it in a text editor and modify the user name and the password. You will be asked for them when you update the checklist data.</p>
+            <p>in the installation folder go to <strong>usercontent/identity</strong> folder and locate the <strong>credentials.php</strong> file. Open it in a text editor and modify the user name and the password. You will be asked for them when you update the checklist data.</p>
 
             <h2>Static webhosting</h2>
             <p>If you use <strong>NaturaList</strong> on a static webhosting (e.g. Netlify, Cloudflare, GitHub, ...), the only difference is that you won't be able to update your checklist directly in the app (as PHP would be needed). Instead you can simply
-                download a data file generated during the update process and then upload it manually into the "data" folder in your app installtion folder using an FTP client or the file upload facility of your webhosting.</p>
+                download a data file generated during the update process and then upload it manually into the <strong>usercontent/data</strong> folder in your app installtion folder using an FTP client or the file upload facility of your webhosting.</p>
 
             <h2>Multiple installations on a single webhosting</h2>
             <p>It is possible to host several <strong>NaturaList</strong> checklists on a single website. For this to work correctly, you will need to create separate subdomains on your hosting for each of the instances. Typically, you will install the app
