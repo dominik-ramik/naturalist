@@ -216,10 +216,10 @@ function backButton() {
         onclick: function() {
             routeTo("/checklist");
         }
-    }, [
+    }, Checklist._isDataReady ? [
         m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
         m(".menu-button-description", AppLayoutView.mobile() ? _t("back_to_checklist") : _t("back_to_search"))
-    ]);
+    ] : null);
 }
 
 let ActionButtonWithMenu = function(initialVnode) {
