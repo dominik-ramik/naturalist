@@ -12,7 +12,7 @@ export let ManageView = {
     state: "waiting",
     stateDetails: "",
 
-    view: function(vnode) {
+    view: function (vnode) {
         let ui = [];
 
         return m(".manage-ui", [
@@ -27,21 +27,21 @@ export let ManageView = {
         ]);
     },
 
-    logList: function() {
-        return m(".log", dataman.loggedMessages.slice(0).reverse().map(function(logItem) {
+    logList: function () {
+        return m(".log", dataman.loggedMessages.slice(0).reverse().map(function (logItem) {
             return m(".log-item." + logItem.level, [
                 m(".message", m.trust("<strong>" + _t("log_" + logItem.level) + ": </strong>" + logItem.message)),
             ])
         }));
     },
 
-    done: function() {
+    done: function () {
         return m("div", [
             m("img[src=img/ui/manage/update_done.svg]"),
             m("h2", _t("done")),
             m(".manage-message", _t("update_published")),
             m("button.uploadbutton", {
-                onclick: function() {
+                onclick: function () {
                     ManageView.state = "waiting";
                     Checklist._isDraft = false;
                     console.log("Checking for checklist update");
@@ -51,31 +51,31 @@ export let ManageView = {
             }, _t("manage_back_to_search")),
         ]);
     },
-    uploadError: function() {
+    uploadError: function () {
         return [
             m("div", [
                 m("img[src=img/ui/manage/error.svg]"),
                 m("h2", _t("error_publishing")),
                 (
-                    (ManageView.stateMessageCode?.length > 0 && ManageView.stateMessageCode != "other_upload_error") ? 
-                    m(".manage-message", _t(ManageView.stateMessageCode)):
-                    m(".manage-message", ManageView.stateDetails)
+                    (ManageView.stateMessageCode?.length > 0 && ManageView.stateMessageCode != "other_upload_error") ?
+                        m(".manage-message", _t(ManageView.stateMessageCode)) :
+                        m(".manage-message", ManageView.stateDetails)
                 ),
                 m("button.uploadbutton", {
-                    onclick: function(e) {
-                        ManageView.state = "waiting";
+                    onclick: function (e) {
+                        ManageView.state = "tested";
                     }
                 }, _t("back_to_upload_after_error")),
             ]),
         ];
     },
 
-    uploadOrDownloadData: function() {
+    uploadOrDownloadData: function () {
         return [
             m("h2", _t("data_upload_integrate_data")),
             m(".manage-message", _t("enter_creds_to_publish")),
             m("form#updateform[method=post]", {
-                onsubmit: function(e) {
+                onsubmit: function (e) {
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -84,7 +84,7 @@ export let ManageView = {
                     formData.append("checklist_data", compressed);
                     const request = new XMLHttpRequest();
 
-                    request.onreadystatechange = function(event) {
+                    request.onreadystatechange = function (event) {
                         if (request.readyState === 4) {
                             if (request.status === 200) {
                                 let result = "";
@@ -95,9 +95,16 @@ export let ManageView = {
                                         throw "the POST Content-Length exceeds the limit";
                                     }
 
-                                    result = JSON.parse(request.responseText);
+                                    try {
+                                        result = JSON.parse(request.responseText);
+                                    }
+                                    catch {
+                                        //TODO remove entirely the upload form if static webhosting - detect static by having upload.php return some value upon request
+                                        //if the PHP file was served as-is (on static hosting) then we will get a JSON parse error
+                                        throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
+                                    }
                                 } catch (ex) {
-                                    result = { state: "error", details: _t("server_returned_odd_message") + request.responseText };
+                                    result = { state: "error", details: [m("div", _t("server_returned_odd_message")), m("div[style=margin-top: 1em; text-align: left;]", _t("server_returned_odd_message_details") + ex)] };
                                 }
 
                                 if (result.state == "success") {
@@ -138,7 +145,7 @@ export let ManageView = {
                 m("br"),
                 m("input[type=password][name=password][id=password]", ""),
                 m("br"), m("button.uploadbutton", {
-                    onclick: function(e) {
+                    onclick: function (e) {
                         document.getElementById("updateform").requestSubmit();
                     }
                 }, _t("publish_checklist")),
@@ -147,7 +154,7 @@ export let ManageView = {
                 m("h2", _t("download_data")),
                 m(".manage-message", m.trust(marked.parse(_t("download_for_manual_update")))),
                 m("button.uploadbutton", {
-                    onclick: function(e) {
+                    onclick: function (e) {
                         var blob = new Blob([compressor.compress(JSON.stringify(dataman.getCompiledChecklist()))], { type: "application/json;charset=utf-8" });
                         window.saveAs(blob, checklistFileName);
                     }
@@ -157,7 +164,7 @@ export let ManageView = {
         ];
     },
 
-    decideDraft: function() {
+    decideDraft: function () {
         return [
             m("h2", _t("review_draft_heading")),
             m(".manage-message", _t("review_draft")),
@@ -166,7 +173,7 @@ export let ManageView = {
                     m("img[src=img/ui/manage/errors.svg]"),
                     m("div", _t("not_all_good")),
                     m("button.uploadbutton", {
-                        onclick: function(e) {
+                        onclick: function (e) {
                             ManageView.state = "waiting";
                         }
                     }, _t("back_to_upload")),
@@ -175,7 +182,7 @@ export let ManageView = {
                     m("img[src=img/ui/manage/clean.svg]"),
                     m("div", _t("all_good")),
                     m("button.uploadbutton", {
-                        onclick: function(e) {
+                        onclick: function (e) {
                             ManageView.state = "tested";
                         }
                     }, _t("proceed_to_update")),
@@ -184,7 +191,7 @@ export let ManageView = {
         ];
     },
 
-    processingWaiter: function() {
+    processingWaiter: function () {
         return m("div", [
             m("h2", _t("processing")),
             m(".processing-wrapper", [
@@ -195,7 +202,7 @@ export let ManageView = {
         ]);
     },
 
-    uploader: function() {
+    uploader: function () {
         function processUpload(filepicker, file) {
             if (!file || !file.name) {
                 ManageView.state = "uploaderror";
@@ -235,35 +242,36 @@ export let ManageView = {
         return m("div", [
 
             Checklist._isDataReady ? null :
-            m(".no-data", [
-                _t("no_data")
-            ]),
+                m(".no-data", [
+                    //TODO make this nicer
+                    _t("no_data")
+                ]),
             m(".manage-message", _t("data_upload_waiting")),
             m(".dropzone#dropzone", {
-                ondrag: function(e) {
+                ondrag: function (e) {
                     preventDefaults(e);
                 },
-                ondragstart: function(e) {
-                    preventDefaults(e);
-                    document.getElementById("dropzone").classList.add("entered");
-                },
-                ondragend: function(e) {
+                ondragstart: function (e) {
                     preventDefaults(e);
                     document.getElementById("dropzone").classList.add("entered");
                 },
-                ondragover: function(e) {
+                ondragend: function (e) {
                     preventDefaults(e);
                     document.getElementById("dropzone").classList.add("entered");
                 },
-                ondragenter: function(e) {
+                ondragover: function (e) {
                     preventDefaults(e);
                     document.getElementById("dropzone").classList.add("entered");
                 },
-                ondragleave: function(e) {
+                ondragenter: function (e) {
+                    preventDefaults(e);
+                    document.getElementById("dropzone").classList.add("entered");
+                },
+                ondragleave: function (e) {
                     preventDefaults(e);
                     document.getElementById("dropzone").classList.remove("entered");
                 },
-                ondrop: function(e) {
+                ondrop: function (e) {
                     preventDefaults(e);
                     var dt = e.dataTransfer;
                     document.getElementById("dropzone").classList.remove("entered");
@@ -276,7 +284,7 @@ export let ManageView = {
                     m("br"),
                     m("label", _t("or_drag_it")),
                     m("input[type=file][id=excelupload][accept=.xlsx][style=display: none]", {
-                        onchange: function(e) {
+                        onchange: function (e) {
                             processUpload(this, e.target.files[0]);
                         }
                     })

@@ -376,8 +376,12 @@ let translations = {
         "fr": "Détendez-vous. Cela peut prendre un certain temps, surtout si votre feuille de calcul comporte des milliers d'entrées."
     },
     server_returned_odd_message: {
-        "en": "The server returned an unexpected response. You may need to change the configuration of your PHP server or contact the author of this app. Here are details: ",
-        "fr": "Le serveur a renvoyé une réponse inattendue. Vous devez peut-être modifier la configuration de votre serveur PHP ou contacter l'auteur de cette application. Voici les détails : "
+        "en": "The server returned an unexpected response. You may need to change the configuration of your PHP server or contact the author of this app.",
+        "fr": "Le serveur a renvoyé une réponse inattendue. Vous devez peut-être modifier la configuration de votre serveur PHP ou contacter l'auteur de cette application."
+    },
+    server_returned_odd_message_details: {
+        "en": "Here are details: ",
+        "fr": "Voici les détails : "
     },
     checklist_data_updated: {
         "en": "Checklist data updated",
