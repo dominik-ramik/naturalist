@@ -5,7 +5,7 @@ import { _t } from "./I18n.js";
 export let Settings = {
 
     lastKnownVersion(timestampToSet) {
-        if (!timestampToSet) {
+        if (timestampToSet === undefined) {
             let timestamp = localStorage.getItem("lastKnownDataVersion");
             if (!timestamp) {
                 return 0;
@@ -18,7 +18,7 @@ export let Settings = {
     },
 
     language: function(languageToSet) {
-        if (!languageToSet) {
+        if (languageToSet === undefined) {
             return window.localStorage.getItem("language");
         } else {
             window.localStorage.setItem("language", languageToSet);
