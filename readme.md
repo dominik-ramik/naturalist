@@ -14,7 +14,7 @@ NaturaList is an open source flexible taxonomic checklist web app capable of vis
 
 ## Quick start
 
-- Download the latest release (or clone this repository) and upload it into a webhosting of your choice. Static webhosting is enough but HTTPS needs to be enabled for the app to work offline. 
+- Download the [latest release](https://github.com/dominik-ramik/naturalist/releases/latest) and upload it into a webhosting of your choice. Static webhosting is enough but HTTPS needs to be enabled for the app to work offline. 
 - This will give you an empty instance of the app, which you will need to fill with your data.
 - Open the web address on which you installed the app. You will see a message saying you need to upload some data first. Download the blank spreadsheet which you can use to bootstrap your project.
 - Fill the spreadsheet with your data. Read the documentation to learn more about different parts of the spreasheet you can configure and for a sample spreadsheet with a fully developed project to explore.
