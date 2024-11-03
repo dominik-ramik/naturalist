@@ -352,8 +352,8 @@ let translations = {
         "fr": "Erreur de réseau"
     },
     upload_disabled: {
-        "en": "Direct upload has been disabled by the administrator (or you are experiencing a temporary issue with connectivity). You may opt for downloading the data and manually upload them to the server.",
-        "fr": "Le chargement direct a été désactivé par l'administrateur (ou vous rencontrez un problème temporaire de connectivité). Vous pouvez opter pour le téléchargement des données et les charger manuellement sur le serveur."
+        "en": "Direct upload has been disabled by the administrator (or you are experiencing a temporary issue with connectivity). You may opt for downloading the data and manually upload them to the server e.g. through FTP.",
+        "fr": "Le chargement direct a été désactivé par l'administrateur (ou vous rencontrez un problème temporaire de connectivité). Vous pouvez opter pour le téléchargement des données et les charger manuellement sur le serveur par ex. via FTP."
     },
     back_to_upload_after_error: {
         "en": "Back to spreadsheet upload",
