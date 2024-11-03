@@ -1,4 +1,8 @@
-let version = "1.2.7";
+//This duplicates the externalised contsnts of the same name in Utils but Chrome would not allow the SW to register even in module mode so we have to repeat them here
+const checklistURL = "./usercontent/data/checklist.json";
+const checklistFileName = "checklist.json";
+
+let version = "1.3.0";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
@@ -10,7 +14,14 @@ self.addEventListener("install", function (e) {
     self.skipWaiting();
     e.waitUntil(
         caches.open(appCacheName).then(function (cache) {
-            cache.addAll(staticResources);
+            staticResources.forEach(async (resource) => {
+                try {
+                    await cache.add(resource).catch((response) => console.log("Caught error fetching", response));
+                }
+                catch {
+                    console.log("Error fetching", resource)
+                }
+            })
         })
     );
 });
@@ -21,7 +32,7 @@ self.addEventListener("updatefound", function (e) {
 
 //* Cache first
 self.addEventListener('fetch', function (e) {
-    if (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/checklist.json")) {
+    if (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
         let response = null;
         e.respondWith((async function () {
             response = await fetch(e.request, { cache: "no-cache" });
@@ -45,12 +56,12 @@ self.addEventListener('fetch', function (e) {
 
         //make sure we always have a fresh reply for checklist data
         let response = null;
-        if (e.request.url.toLowerCase().endsWith("/checklist.json")) {
+        if (e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
             response = await fetch(e.request, { cache: "no-cache" });
         } else {
             response = await fetch(e.request).then(function (response) {
                 if (!response.ok && response.status != 304) {
-                    // Got werror response and status is not 304 (already cached)
+                    // Got error response and status is not 304 (already cached)
                     console.log("Fetching problems");
                     console.log(response);
                     communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
@@ -62,14 +73,17 @@ self.addEventListener('fetch', function (e) {
         //
         let cache = null;
 
-        if (e.request.url.toLowerCase().indexOf("/usercontent/") > 0) {
+        function urlForUserCache(url) {
+            return url.includes("/usercontent/") && !url.includes("/usercontent/identity")
+        }
+
+        if (urlForUserCache(e.request.url.toLowerCase())) {
             cache = await caches.open(userCacheName);
         } else if (e.request.url.toLowerCase().startsWith(self.location.origin.toLowerCase())) {
             cache = await caches.open(appCacheName);
         }
 
-
-        if (cache !== null && response.status == 200 && e.request.method.toLowerCase() != "head") {
+        if (cache !== null && response?.status == 200 && e.request.method.toLowerCase() != "head") {
             //console.log(`[SW] Caching new resource: ${e.request.url}`);
             cache.put(e.request, response.clone());
         }
@@ -100,7 +114,7 @@ self.addEventListener('activate', (e) => {
 
 function refreshCachedChecklistData() {
     console.log("Fetching fresh data");
-    let dataRequest = new Request('./data/checklist.json', {
+    let dataRequest = new Request(checklistURL, {
         method: 'GET',
         cache: "reload"
     });
@@ -138,8 +152,8 @@ let staticResources = [
     "./docs/docs.css",
     "./docs/us-birds.xlsx",
     "./docs/blank-naturalist-spreadsheet.xlsx",
-    "./favicon.png",
-    "./manifest.json",
+    "./usercontent/identity/favicon.png",
+    "./usercontent/identity/manifest.json",
     "./img/icon.svg",
     "./img/icon_maskable.svg",
     "./img/icon_transparent_dark.svg",

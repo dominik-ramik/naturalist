@@ -4,6 +4,7 @@ import { compressor, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
 import { _t } from "../model/I18n.js";
+import { checklistFileName } from "../components/Utils.js";
 
 let dataman = new DataManager();
 
@@ -143,7 +144,7 @@ export let ManageView = {
                 m("button.uploadbutton", {
                     onclick: function(e) {
                         var blob = new Blob([compressor.compress(JSON.stringify(dataman.getCompiledChecklist()))], { type: "application/json;charset=utf-8" });
-                        window.saveAs(blob, "checklist.json");
+                        window.saveAs(blob, checklistFileName);
                     }
                 }, _t("download_checklist")),
             ])
