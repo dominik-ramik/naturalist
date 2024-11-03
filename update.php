@@ -31,7 +31,7 @@ if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $pa
         echo jsonState("success", "", "");
         die;
     } catch (Exception $ex) {
-        echo jsonState("error", "other", $ex->getMessage());
+        echo jsonState("error", "other_upload_error", $ex->getMessage());
         die;
     }
 } else {

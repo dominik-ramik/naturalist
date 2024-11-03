@@ -56,7 +56,11 @@ export let ManageView = {
             m("div", [
                 m("img[src=img/ui/manage/error.svg]"),
                 m("h2", _t("error_publishing")),
-                m(".manage-message", ManageView.stateDetails),
+                (
+                    (ManageView.stateMessageCode?.length > 0 && ManageView.stateMessageCode != "other_upload_error") ? 
+                    m(".manage-message", _t(ManageView.stateMessageCode)):
+                    m(".manage-message", ManageView.stateDetails)
+                ),
                 m("button.uploadbutton", {
                     onclick: function(e) {
                         ManageView.state = "waiting";
@@ -103,6 +107,7 @@ export let ManageView = {
                                 } else {
                                     ManageView.state = "uploaderror";
                                     ManageView.stateDetails = result.details;
+                                    ManageView.stateMessageCode = result.messageCode;
                                     m.redraw();
                                     return;
                                 }
