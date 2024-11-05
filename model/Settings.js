@@ -17,7 +17,7 @@ export let Settings = {
         }
     },
 
-    language: function(languageToSet) {
+    language: function (languageToSet) {
         if (languageToSet === undefined) {
             return window.localStorage.getItem("language");
         } else {
@@ -25,8 +25,8 @@ export let Settings = {
         }
     },
 
-    lastKnownUploadFormAvailability: function(value) {
-        if (value == undefined) {
+    lastKnownUploadFormAvailability: function (value) {
+        if (value === undefined) {
             return window.localStorage.getItem("lastKnownUploadFormAvailability");
         } else {
             window.localStorage.setItem("lastKnownUploadFormAvailability", value);
@@ -34,7 +34,7 @@ export let Settings = {
     },
 
     _currentDetailsTab: "externalsearch",
-    currentDetailsTab: function(value) {
+    currentDetailsTab: function (value) {
         if (value) {
             this._currentDetailsTab = value;
         } else {
@@ -43,7 +43,7 @@ export let Settings = {
     },
 
     pinnedSearches: {
-        getAll: function() {
+        getAll: function () {
             let storedItem = window.localStorage.getItem("pinned");
             if (!storedItem) {
                 storedItem = "[]";
@@ -54,7 +54,7 @@ export let Settings = {
             let current = null;
             let others = [];
 
-            pinned.forEach(function(pinnedItem) {
+            pinned.forEach(function (pinnedItem) {
                 if (JSON.stringify(pinnedItem) == currentSearchKey) {
                     current = pinnedItem;
                 } else {
@@ -72,7 +72,7 @@ export let Settings = {
 
             return sortedPinned;
         },
-        addCurrent: function() {
+        addCurrent: function () {
             if (this.isCurrentSearchPinned()) {
                 return;
             }
@@ -82,16 +82,16 @@ export let Settings = {
 
             window.localStorage.setItem("pinned", JSON.stringify(pinned));
         },
-        getHumanNameForPinnedItem: function(itemObject) {
+        getHumanNameForPinnedItem: function (itemObject) {
             if (Object.keys(itemObject).length == 0) {
                 return "All taxa";
             }
 
             let names = [];
 
-            ["taxa", "data"].forEach(function(type) {
+            ["taxa", "data"].forEach(function (type) {
                 if (itemObject.hasOwnProperty(type)) {
-                    Object.keys(itemObject[type]).forEach(function(dataPath) {
+                    Object.keys(itemObject[type]).forEach(function (dataPath) {
                         let categoryName = "";
                         if (type == "taxa") {
                             categoryName = Checklist.getNameOfTaxonLevel(dataPath)
@@ -125,11 +125,11 @@ export let Settings = {
 
             return formatList(names);
         },
-        isCurrentSearchPinned: function() {
+        isCurrentSearchPinned: function () {
             let current = Checklist.queryKey();
             let isCurrentPinned = false;
 
-            this.getAll().forEach(function(pinnedItem) {
+            this.getAll().forEach(function (pinnedItem) {
                 if (JSON.stringify(pinnedItem) == current) {
                     isCurrentPinned = true;
                 }
@@ -137,10 +137,10 @@ export let Settings = {
 
             return isCurrentPinned;
         },
-        remove: function(itemObject) {
+        remove: function (itemObject) {
             let toRemove = JSON.stringify(itemObject);
 
-            let withoutItemToRemove = this.getAll().filter(function(pinnedItem) {
+            let withoutItemToRemove = this.getAll().filter(function (pinnedItem) {
                 if (JSON.stringify(pinnedItem) == toRemove) {
                     return false;
                 }
