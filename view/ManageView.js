@@ -1,10 +1,11 @@
-import { checkForChecklistUpdate } from "../app/app.js";
+import { checkForChecklistUpdate } from "../app.js";
 import { ExcelBridge } from "../components/ExcelBridge.js";
 import { compressor, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
 import { _t } from "../model/I18n.js";
 import { checklistFileName } from "../components/Utils.js";
+import { Settings } from "../model/Settings.js";
 
 let dataman = new DataManager();
 
@@ -70,17 +71,43 @@ export let ManageView = {
         ];
     },
 
-    shouldShowUploadForm: false,
+    oncreate: function (vnode) {
+        async function checkPHPPresent() {
+            let phpUrl = "../update.php?ping";
+            let phpPresent = false;
 
-    isPHPUploadAvailable: function () {
+            await fetch(phpUrl).then(async (result) => {
+                try {
+                    let json = await result.json();
+                    if (json.state == "online") {
+                        phpPresent = true;
+                    }
+                    else {
+                        phpPresent = false;
+                    }
+                }
+                catch (ex) {
+                    phpPresent = false;
+                }
+            }).catch((result) => {
+                phpPresent = false;
+            })
 
+            return phpPresent;
+        }
+
+        checkPHPPresent().then((result) => {
+            this.shouldShowUploadForm = result;
+            Settings.lastKnownUploadFormAvailability(result);
+            m.redraw();
+        });
     },
+
+    shouldShowUploadForm: Settings.lastKnownUploadFormAvailability(),
 
     uploadOrDownloadData: function () {
         return [
-            m("h2", _t("data_upload_integrate_data")),
-            m(".manage-message", _t("enter_creds_to_publish")),
-            this.isPHPUploadAvailable() ? this.uploadForm() : null,
+            (this.shouldShowUploadForm === true ? this.uploadForm() : null),
             m(".static-download", [
                 m("h2", _t("download_data")),
                 m(".manage-message", m.trust(marked.parse(_t("download_for_manual_update")))),
@@ -96,82 +123,85 @@ export let ManageView = {
     },
 
     uploadForm: function () {
-        return m("form#updateform[method=post]", {
-            onsubmit: function (e) {
-                e.preventDefault();
-                e.stopPropagation();
+        return [
+            m("h2", _t("data_upload_integrate_data")),
+            m(".manage-message", _t("enter_creds_to_publish")),
+            m("form#updateform[method=post]", {
+                onsubmit: function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                const formData = new FormData(this);
-                let compressed = compressor.compress(JSON.stringify(dataman.getCompiledChecklist()));
-                formData.append("checklist_data", compressed);
-                const request = new XMLHttpRequest();
+                    const formData = new FormData(this);
+                    let compressed = compressor.compress(JSON.stringify(dataman.getCompiledChecklist()));
+                    formData.append("checklist_data", compressed);
+                    const request = new XMLHttpRequest();
 
-                request.onreadystatechange = function (event) {
-                    if (request.readyState === 4) {
-                        if (request.status === 200) {
-                            let result = "";
-                            try {
-                                //console.log(request.responseText);
-
-                                if (request.responseText.indexOf("POST Content-Length") >= 0 && request.responseText.indexOf("exceeds") >= 0) {
-                                    throw "the POST Content-Length exceeds the limit";
-                                }
-
+                    request.onreadystatechange = function (event) {
+                        if (request.readyState === 4) {
+                            if (request.status === 200) {
+                                let result = "";
                                 try {
-                                    result = JSON.parse(request.responseText);
-                                }
-                                catch {
-                                    //TODO remove entirely the upload form if static webhosting - detect static by having upload.php return some value upon request
-                                    //if the PHP file was served as-is (on static hosting) then we will get a JSON parse error
-                                    throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
-                                }
-                            } catch (ex) {
-                                result = { state: "error", details: [m("div", _t("server_returned_odd_message")), m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex)] };
-                            }
+                                    //console.log(request.responseText);
 
-                            if (result.state == "success") {
-                                ManageView.state = "done";
-                                m.redraw();
-                                return;
+                                    if (request.responseText.indexOf("POST Content-Length") >= 0 && request.responseText.indexOf("exceeds") >= 0) {
+                                        throw "the POST Content-Length exceeds the limit";
+                                    }
+
+                                    try {
+                                        result = JSON.parse(request.responseText);
+                                    }
+                                    catch {
+                                        //TODO remove entirely the upload form if static webhosting - detect static by having update.php return some value upon request
+                                        //if the PHP file was served as-is (on static hosting) then we will get a JSON parse error
+                                        throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
+                                    }
+                                } catch (ex) {
+                                    result = { state: "error", details: [m("div", _t("server_returned_odd_message")), m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex)] };
+                                }
+
+                                if (result.state == "success") {
+                                    ManageView.state = "done";
+                                    m.redraw();
+                                    return;
+                                } else {
+                                    ManageView.state = "uploaderror";
+                                    ManageView.stateDetails = result.details;
+                                    ManageView.stateMessageCode = result.messageCode;
+                                    m.redraw();
+                                    return;
+                                }
                             } else {
                                 ManageView.state = "uploaderror";
-                                ManageView.stateDetails = result.details;
-                                ManageView.stateMessageCode = result.messageCode;
+
+                                if (request.statusText.toLowerCase() == "not found") {
+                                    ManageView.stateDetails = _t("upload_disabled");
+                                } else {
+                                    ManageView.stateDetails = _t("network_error") + " " + request.statusText;
+                                }
+
                                 m.redraw();
                                 return;
                             }
-                        } else {
-                            ManageView.state = "uploaderror";
-
-                            if (request.statusText.toLowerCase() == "not found") {
-                                ManageView.stateDetails = _t("upload_disabled");
-                            } else {
-                                ManageView.stateDetails = _t("network_error") + " " + request.statusText;
-                            }
-
-                            m.redraw();
-                            return;
                         }
-                    }
-                };
-                request.open("POST", "../app/update.php");
-                request.send(formData);
+                    };
+                    request.open("POST", "../update.php");
+                    request.send(formData);
 
-            }
-        }, [
-            m("label", _t("user_name")),
-            m("br"),
-            m("input[type=text][name=username][id=username]", ""),
-            m("br"),
-            m("label", _t("password")),
-            m("br"),
-            m("input[type=password][name=password][id=password]", ""),
-            m("br"), m("button.uploadbutton", {
-                onclick: function (e) {
-                    document.getElementById("updateform").requestSubmit();
                 }
-            }, _t("publish_checklist")),
-        ]);
+            }, [
+                m("label", _t("user_name")),
+                m("br"),
+                m("input[type=text][name=username][id=username]", ""),
+                m("br"),
+                m("label", _t("password")),
+                m("br"),
+                m("input[type=password][name=password][id=password]", ""),
+                m("br"), m("button.uploadbutton", {
+                    onclick: function (e) {
+                        document.getElementById("updateform").requestSubmit();
+                    }
+                }, _t("publish_checklist")),
+            ])];
     },
 
     decideDraft: function () {

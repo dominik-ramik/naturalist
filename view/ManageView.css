@@ -135,14 +135,17 @@
     color: white;
     margin-top: 1em;
     text-align: center;
-    margin-bottom: 1em;
-    padding-bottom: 1em;
 }
 
 .manage-ui .static-download {
-    border-top: 1px solid white;
     margin-top: var(--pad-large);
     padding-top: var(--pad-large);
+}
+
+#updateform {
+    border-bottom: 1px solid white;
+    margin-bottom: 1em;
+    padding-bottom: 1em;
 }
 
 #updateform input[type=text],

@@ -32,16 +32,15 @@ self.addEventListener("updatefound", function (e) {
 
 //* Cache first
 self.addEventListener('fetch', function (e) {
-    if (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
+    let isChecklistHeadReques = e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName);
+    let isUpdatePHPRequest = e.request.url.toLowerCase().includes("/update.php");
+
+    if (isChecklistHeadReques || isUpdatePHPRequest) {
         let response = null;
         e.respondWith((async function () {
             response = await fetch(e.request, { cache: "no-cache" });
             return response;
         })());
-        return;
-    }
-    if (e.request.url.toLowerCase().endsWith("/update.php")) {
-        //skip API calls
         return;
     }
 

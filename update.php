@@ -1,16 +1,28 @@
 <?php
 
+if (isset($_GET["ping"])){
+    echo jsonState("online", "", "");
+}
+
 $credentials_file = "./usercontent/identity/credentials.php";
 
+$upload_disabled = true;
+
 if (file_exists($credentials_file)) {
-   include $credentials_file;
+    include $credentials_file;
+
+    if ($username != "" && $password != "") {
+        $upload_disabled = false;
+    }
+    else{
+        $upload_disabled = true;
+    }
 }
-else {
-    echo jsonState("error", "upload_disabled", "upload disabled by administrator");
-    die;
+else{
+    $upload_disabled = true;
 }
 
-if ($username == "" || $password == "") {
+if ($upload_disabled) {
     echo jsonState("error", "upload_disabled", "upload disabled by administrator");
     die;
 }
@@ -41,5 +53,6 @@ if (strcmp($_POST["username"], $username) == 0 && strcmp($_POST["password"], $pa
 
 function jsonState($state, $messageCode, $fallbackMessage)
 {
-    return '{"state": "' . $state . '", "messageCode": "' . $messageCode . '", "details": "' . $fallbackMessage . '"}';
+    echo '{"state": "' . $state . '", "messageCode": "' . $messageCode . '", "details": "' . $fallbackMessage . '"}';
+    die;
 }

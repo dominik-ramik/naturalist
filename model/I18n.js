@@ -288,8 +288,8 @@ let translations = {
         "fr": "Certains problèmes de votre feuille de calcul doivent être réglés avant que vous puissiez continuer :"
     },
     data_upload_integrate_data: {
-        "en": "Publish the update",
-        "fr": "Publier la mise à jour"
+        "en": "Publish the update directly",
+        "fr": "Publier la mise à jour directement"
     },
     click_to_upload: {
         "en": "Click to upload a checklist spreadsheet",
