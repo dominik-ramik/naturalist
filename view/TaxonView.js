@@ -34,7 +34,7 @@ export let TaxonView = {
                         }
                     }, "(" + _t("in_taxon_group", [Checklist.getNameOfTaxonLevel(vnode.attrs.currentLevel - 1).toLowerCase(), vnode.attrs.parent.taxon.n]) + ")") : null,
                     m(".spacer"),
-                    vnode.attrs.taxonTree && inverseTaxonLevel > 1 ? m(".show-all-of-taxon.clickable", {
+                    (vnode.attrs.taxonTree && inverseTaxonLevel > 1 && Object.keys(vnode.attrs.taxonTree.children).length > 0) ? m(".show-all-of-taxon.clickable", {
                         onclick: function(e) {
                             Checklist.filter.clear();
                             let taxonLevelKey = Object.keys(Checklist.filter.taxa)[vnode.attrs.currentLevel];
