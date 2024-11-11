@@ -899,25 +899,26 @@ export let Checklist = {
 
         let currentTaxonMeta = Checklist.getTaxaMeta()[currentDataPath];
         let targetDataPath = currentTaxonMeta.parentTaxonIndication;
-        
+
         if (targetDataPath === "none") {
             return null;
         }
-        
-        
+
         let offset = 1;
-        if(targetDataPath === ""){
+        if (targetDataPath === "") {
             targetDataPath = Object.keys(Checklist.getTaxaMeta()).at(currentLevel - offset);
         }
-        else{
+        else {
             offset = currentLevel - Object.keys(Checklist.getTaxaMeta()).indexOf(targetDataPath);
         }
-        
+
         let targetTaxonMeta = Checklist.getTaxaMeta()[targetDataPath];
 
-        let parentInfo = { rank: targetTaxonMeta.name, taxon: parents.at(-1 * offset), offset: offset };
+        if (targetTaxonMeta === undefined) {
+            return null;
+        }
 
-        //console.log(parentInfo);
+        let parentInfo = { rank: targetTaxonMeta.name, taxon: parents.at(-1 * offset), offset: offset };
 
         return parentInfo;
     },
