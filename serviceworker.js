@@ -38,7 +38,13 @@ self.addEventListener('fetch', function (e) {
     if (isChecklistHeadReques || isUpdatePHPRequest) {
         let response = null;
         e.respondWith((async function () {
-            response = await fetch(e.request, { cache: "no-cache" });
+            try{
+                response = await fetch(e.request, { cache: "no-cache" });
+            }
+            catch(ex){
+                console.error("[SW] Fetching error", e.request.url, ex);
+            }
+
             return response;
         })());
         return;
