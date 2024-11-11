@@ -54,7 +54,6 @@ export let DataManager = function () {
         }
 
         function compileChecklistVersion(lang) {
-            console.log(data.sheets.appearance.tables.customization.data)
 
             let hue = data.common.getItem(data.sheets.appearance.tables.customization.data, "Color theme hue", lang.code, 212);
             let name = data.common.getItem(data.sheets.appearance.tables.customization.data, "Checklist name", lang.code, "Checklist");
@@ -106,6 +105,7 @@ export let DataManager = function () {
                     order: row.orderBy,
                     searchCategoryOrder: [],
                     parentTaxonIndication: row.parentTaxonIndication,
+                    italicize: row.italicize,
                 }
 
                 data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function (metaRow) {
@@ -936,7 +936,7 @@ export let DataManager = function () {
         });
 
         //only log critical errors if there is no other critical error yet
-        if (!hasCritical && level == "critical" && index < 0) {
+        if (level != "critical" || (level == "critical" && !hasCritical && index < 0)) {
             dataManager.loggedMessages.push({ level: level, message: message });
         }
     };

@@ -391,6 +391,7 @@ export let Checklist = {
     getProjectName: function () {
         return Checklist._data.versions[Checklist.getCurrentLanguage()].name || "";
     },
+
     getProjectAbout: function () {
         let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
         return text;
@@ -876,15 +877,19 @@ export let Checklist = {
         return this.getData().meta.data["$$default-custom$$"];
     },
 
-    getNameOfTaxonLevel(levelOrDataPath) {
+    getTaxonLevelMeta(levelOrDataPath) {
         if (Number.isInteger(levelOrDataPath)) {
             levelOrDataPath = Object.keys(Checklist.getTaxaMeta())[levelOrDataPath];
         }
 
         let taxonMeta = Checklist.getTaxaMeta()[levelOrDataPath];
-        return taxonMeta.name;
+        return taxonMeta;
     },
 
+    getNameOfTaxonLevel(levelOrDataPath) {
+        return Checklist.getTaxonLevelMeta(levelOrDataPath)?.name;
+    },
+    
     getParentTaxonIndicator(currentLevel, parents) {
 
         let inverseTaxonLevel = Object.keys(Checklist.getTaxaMeta()).length - (currentLevel);
@@ -921,6 +926,17 @@ export let Checklist = {
         let parentInfo = { rank: targetTaxonMeta.name, rankColumnName: targetDataPath, taxon: parents.at(-1 * offset), offset: offset };
 
         return parentInfo;
+    },
+
+    shouldItalicizeTaxon(levelOrDataPath){
+        let italicize = Checklist.getTaxonLevelMeta(levelOrDataPath)?.italicize;
+
+        if(italicize === undefined || italicize === null || italicize === "" || italicize === "yes"){
+            return true;
+        }
+        else{
+            return false;
+        }
     },
 
     getTaxonLevel: function (taxonName) {

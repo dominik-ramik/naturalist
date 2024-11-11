@@ -20,7 +20,8 @@ export let TaxonView = {
                 m(".taxon-name-stripe", [
                     m(ClickableTaxonName, {
                         taxonTree: vnode.attrs.taxonTree,
-                        fontSize: fontSize
+                        fontSize: fontSize,
+                        currentTaxonLevel: vnode.attrs.currentLevel
                     }),
                     inverseTaxonLevel >= 1 ? m(".copy-leaf-taxon.clickable", {
                         onclick: function () {
@@ -66,7 +67,9 @@ export let TaxonView = {
 }
 
 export let ClickableTaxonName = {
+
     view: function (vnode) {
+        let nameTag = Checklist.shouldItalicizeTaxon(vnode.attrs.currentTaxonLevel) ? "i" : "span";
         let taxonTree = vnode.attrs.taxonTree;
 
         if (taxonTree.taxon.n == "" && taxonTree.taxon.a == "") {
@@ -80,7 +83,7 @@ export let ClickableTaxonName = {
                 routeTo('/details/' + taxonTree.taxon.n + '/' + Settings.currentDetailsTab());
             }
         }, [
-            m("i.taxon-name" + (filterMatch ? ".found" : "") + "[style=font-size: " + vnode.attrs.fontSize + "%]", taxonTree.taxon.n),
+            m(nameTag + ".taxon-name" + (filterMatch ? ".found" : "") + "[style=font-size: " + vnode.attrs.fontSize + "%]", taxonTree.taxon.n),
             taxonTree.taxon.a == "" ? null : m("span.taxon-authority[style=font-size: " + vnode.attrs.fontSize + "%]", " " + taxonTree.taxon.a),
         ]);
     }
