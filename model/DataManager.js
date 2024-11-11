@@ -95,7 +95,7 @@ export let DataManager = function () {
 
                 if (row.parentTaxonIndication !== "" && row.parentTaxonIndication !== "none") {
                     if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
-                        log("error", "Wrong value in Parent taxon indication: " + row.parentTaxonIndication)
+                        log("warning", "Wrong value in Parent taxon indication will be ignored: " + row.parentTaxonIndication)
                         row.parentTaxonIndication = ""
                     }
                 }
