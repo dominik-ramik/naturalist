@@ -30,11 +30,10 @@ export let TaxonView = {
                     (vnode.attrs.currentLevel > 0 && inverseTaxonLevel >= 1 && parentTaxonIndicator !== null) ? m(".parent-taxon-indicator.clickable", {
                         onclick: function (e) {
                             Checklist.filter.clear();
-                            let taxonLevelKey = Object.keys(Checklist.filter.taxa)[vnode.attrs.currentLevel - 1];
-                            Checklist.filter.taxa[taxonLevelKey].selected = [vnode.attrs.parent.taxon.n];
+                            Checklist.filter.taxa[parentTaxonIndicator.rankColumnName].selected = [parentTaxonIndicator.taxon.n];
                             Checklist.filter.commit("/checklist");
                         }
-                    }, _t("in_taxon_group", [parentTaxonIndicator.rank, parentTaxonIndicator.taxon.n])) : null,
+                    }, _t("in_taxon_group", [parentTaxonIndicator.rank.toLowerCase(), parentTaxonIndicator.taxon.n])) : null,
                     m(".spacer"),
                     (vnode.attrs.taxonTree && inverseTaxonLevel > 1 && Object.keys(vnode.attrs.taxonTree.children).length > 0) ? m(".show-all-of-taxon.clickable", {
                         onclick: function (e) {

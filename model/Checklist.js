@@ -918,7 +918,7 @@ export let Checklist = {
             return null;
         }
 
-        let parentInfo = { rank: targetTaxonMeta.name, taxon: parents.at(-1 * offset), offset: offset };
+        let parentInfo = { rank: targetTaxonMeta.name, rankColumnName: targetDataPath, taxon: parents.at(-1 * offset), offset: offset };
 
         return parentInfo;
     },
