@@ -39,9 +39,9 @@ function makeStoragePersistent() {
     if (navigator.storage && navigator.storage.persist) {
         navigator.storage.persist().then((persistent) => {
             if (persistent) {
-                console.log("Storage will not be cleared except by explicit user action");
+                console.log("Storage is persistent");
             } else {
-                console.log("Storage may be cleared by the UA under storage pressure.");
+                console.log("No persistency for storage granted by UA");
             }
         });
     }
