@@ -74,7 +74,7 @@ export let ChecklistView = {
                 m(".listed-taxa", [
                     Object.keys(treeTaxa.children).map(function(taxonLevel) {
                         return m(TaxonView, {
-                            parent: null,
+                            parents: [],
                             taxonKey: taxonLevel,
                             taxonTree: treeTaxa.children[taxonLevel],
                             currentLevel: 0,

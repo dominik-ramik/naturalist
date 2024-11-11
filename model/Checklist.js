@@ -218,7 +218,7 @@ export let Checklist = {
         }
 
         console.time("Data loaded in");
-        if(this._isDataReady){
+        if (this._isDataReady) {
             document.title = Checklist.getProjectName() + " | NaturaList";
         }
 
@@ -883,6 +883,43 @@ export let Checklist = {
 
         let taxonMeta = Checklist.getTaxaMeta()[levelOrDataPath];
         return taxonMeta.name;
+    },
+
+    getParentTaxonIndicator(currentLevel, parents) {
+
+        let inverseTaxonLevel = Object.keys(Checklist.getTaxaMeta()).length - (currentLevel);
+
+        if (currentLevel <= 0 && inverseTaxonLevel <= 1) {
+            //Nothing to show for topmost taxa
+            return null;
+        }
+
+        let currentDataPath = currentLevel;
+        currentDataPath = Object.keys(Checklist.getTaxaMeta())[currentDataPath];
+
+        let currentTaxonMeta = Checklist.getTaxaMeta()[currentDataPath];
+        let targetDataPath = currentTaxonMeta.parentTaxonIndication;
+        
+        if (targetDataPath === "none") {
+            return null;
+        }
+        
+        
+        let offset = 1;
+        if(targetDataPath === ""){
+            targetDataPath = Object.keys(Checklist.getTaxaMeta()).at(currentLevel - offset);
+        }
+        else{
+            offset = currentLevel - Object.keys(Checklist.getTaxaMeta()).indexOf(targetDataPath);
+        }
+        
+        let targetTaxonMeta = Checklist.getTaxaMeta()[targetDataPath];
+
+        let parentInfo = { rank: targetTaxonMeta.name, taxon: parents.at(-1 * offset), offset: offset };
+
+        //console.log(parentInfo);
+
+        return parentInfo;
     },
 
     getTaxonLevel: function (taxonName) {

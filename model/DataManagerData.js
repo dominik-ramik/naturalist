@@ -1,6 +1,6 @@
 let dataModel = {}
 
-await fetch('./model//DataModel.json')
+await fetch('./model/DataModel.json')
     .then(response => response.json())
     .then(obj => dataModel = obj)
 
@@ -33,6 +33,11 @@ export let nlDataStructure = {
                                 type = "media" //can have .source and .title
                             }
 
+                            if(row[columnKey] === undefined){
+                                console.log(row, columnKey, table.name, type, role, row)
+                                return;
+                            }
+
                             result.push({
                                 name: row[columnKey].toLowerCase(),
                                 table: table.name,
@@ -45,6 +50,21 @@ export let nlDataStructure = {
                 });
             });
             return result;
+        },
+        getItem: function (tableData, itemName, langCode, defaultValue) {
+            let item = tableData[langCode].find(function (row) {
+                return row.item == itemName;
+            });
+            
+            if(item === undefined){
+                return defaultValue;
+            }
+
+            let value = item.value;
+            if (value === null || value === undefined) {
+                return defaultValue;
+            }
+            return value;
         }
     },
     sheets: dataModel
