@@ -10,7 +10,7 @@ import { Settings } from "../model/Settings.js";
 let dataman = new DataManager();
 
 export let ManageView = {
-    state: "tested",
+    state: "waiting",
     stateDetails: "",
 
     view: function (vnode) {
@@ -151,8 +151,6 @@ export let ManageView = {
                                         result = JSON.parse(request.responseText);
                                     }
                                     catch {
-                                        //TODO remove entirely the upload form if static webhosting - detect static by having update.php return some value upon request
-                                        //if the PHP file was served as-is (on static hosting) then we will get a JSON parse error
                                         throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
                                     }
                                 } catch (ex) {
