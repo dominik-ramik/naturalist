@@ -6,7 +6,7 @@ import { TaxonView } from "../view/TaxonView.js";
 import { AppLayoutView } from "./AppLayoutView.js";
 
 export let ChecklistView = {
-    itemsNumberStep: 100,
+    itemsNumberStep: 50,
     totalItemsToShow: 0,
     lastQuery: "",
     displayMode: "", // either "" (display all) or name of any taxon level
