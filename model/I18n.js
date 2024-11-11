@@ -216,8 +216,8 @@ let translations = {
         "fr": "Vous visualisez une version brouillon de la liste qui n'est visible que par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles."
     },
     in_taxon_group: {
-        "en": "$1: $2",
-        "fr": "$1 : $2"
+        "en": "($1 $2)",
+        "fr": "($1 $2)"
     },
     list_of_taxa: {
         "en": "List of $1 taxa",
