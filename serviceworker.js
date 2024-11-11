@@ -2,7 +2,7 @@
 const checklistURL = "./usercontent/data/checklist.json";
 const checklistFileName = "checklist.json";
 
-let version = "2.0.0";
+let version = "2.1.0";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
