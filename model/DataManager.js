@@ -54,10 +54,12 @@ export let DataManager = function () {
         }
 
         function compileChecklistVersion(lang) {
-            let hue = data.sheets.appearance.tables.customization.getItem("Color theme hue", lang.code, 212);
-            let name = data.sheets.appearance.tables.customization.getItem("Checklist name", lang.code, "Checklist");
-            let about = data.sheets.appearance.tables.customization.getItem("About section", lang.code, _t("generic_about"));
-            let dateFormat = data.sheets.appearance.tables.customization.getItem("Date format", lang.code, "YYYY-MM-DD");
+            console.log(data.sheets.appearance.tables.customization.data)
+
+            let hue = data.common.getItem(data.sheets.appearance.tables.customization.data, "Color theme hue", lang.code, 212);
+            let name = data.common.getItem(data.sheets.appearance.tables.customization.data, "Checklist name", lang.code, "Checklist");
+            let about = data.common.getItem(data.sheets.appearance.tables.customization.data, "About section", lang.code, _t("generic_about"));
+            let dateFormat = data.common.getItem(data.sheets.appearance.tables.customization.data, "Date format", lang.code, "YYYY-MM-DD");
 
             let version = {
                 languageName: lang.name,
@@ -91,10 +93,19 @@ export let DataManager = function () {
             }
 
             data.sheets.content.tables.taxa.data[lang.code].forEach(function (row) {
+
+                if (row.parentTaxonIndication !== "" && row.parentTaxonIndication !== "none") {
+                    if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
+                        log("error", "Wrong value in Parent taxon indication: " + row.parentTaxonIndication)
+                        row.parentTaxonIndication = ""
+                    }
+                }
+
                 meta.taxa[row.columnName] = {
                     name: row.taxonName,
                     order: row.orderBy,
-                    searchCategoryOrder: []
+                    searchCategoryOrder: [],
+                    parentTaxonIndication: row.parentTaxonIndication,
                 }
 
                 data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(function (metaRow) {
@@ -166,7 +177,6 @@ export let DataManager = function () {
 
                     let placement = info.fullRow.placement;
                     if (placement === undefined || placement === null || placement.trim() == "") {
-                        //TODO Future dev - use some heuristic to distribute the data into columns
                         placement = data.sheets.content.tables.customDataDefinition.columns.placement.integrity.defaultValue;
                     }
 
@@ -230,6 +240,10 @@ export let DataManager = function () {
     }
 
     function loadData(table) {
+        if (table == null) {
+            log("error", _tf("Problem loading data"));
+        }
+
         //check if all map colums are present
         data.common.languages.supportedLanguages.forEach(function (lang) {
             data.sheets.content.tables.maps.data[lang.code].forEach(function (mapRow) {
@@ -460,7 +474,7 @@ export let DataManager = function () {
                             case "date":
                                 let date = stringValue;
 
-                                let dateFormat = data.sheets.appearance.tables.customization.getItem("Date format", langCode, "YYYY-MM-DD");
+                                let dateFormat = data.common.getItem(data.sheets.appearance.tables.customization.data, "Date format", lang.code, "YYYY-MM-DD");
 
                                 date = dayjs(stringValue).format(dateFormat);
 
@@ -562,6 +576,7 @@ export let DataManager = function () {
 
     function checkMetaValidity() {
         // automatic check based on integrity data
+        console.log(data.sheets)
         Object.keys(data.sheets).forEach(function (sheetKey) {
             let sheet = data.sheets[sheetKey];
             if (sheet.type == "meta") {
@@ -569,6 +584,23 @@ export let DataManager = function () {
                     let table = sheet.tables[tableKey];
                     data.common.languages.supportedLanguages.forEach(function (lang) {
                         let tableData = table.data[lang.code];
+                        if (tableData == null) {
+                            log("critical", "Missing table " + table.name)
+                            return;
+                        }
+
+                        //verify presence of all required columns
+                        for (const row of tableData) {
+                            for (const key in row) {
+                                let value = row[key];
+                                if (value === undefined) {
+                                    //value was not read, this means the column is missing
+                                    log("critical", "Missing required column " + table.columns[key].name + " in table " + table.name + ". " + _t("dm_verify_doc"))
+                                    return;
+                                }
+                            }
+                        }
+
                         tableData.forEach(function (dataRow) {
                             Object.keys(table.columns).forEach(function (columnKey) {
                                 let entireColumn = tableData.map(function (row) {
@@ -577,6 +609,11 @@ export let DataManager = function () {
                                 let column = table.columns[columnKey];
                                 let integrity = column.integrity;
                                 let value = dataRow[columnKey];
+
+                                if (value === undefined) {
+                                    log("critical", "Missing column name " + column.name + " in table " + table.name + " " + _t("dm_verify_doc"))
+                                    return;
+                                }
 
                                 if (!integrity.allowEmpty && (value === undefined || value.trim() == "")) {
                                     log("error", _tf("dm_value_cannot_be_empty", [column.name, table.name]));
@@ -681,6 +718,7 @@ export let DataManager = function () {
 
         // Hue has to be 0-360
         data.common.languages.supportedLanguages.forEach(function (lang) {
+
             let hueRow = data.sheets.appearance.tables.customization.data[lang.code].find(function (row) {
                 if (row.item == "Color theme hue") {
                     return true;
@@ -696,10 +734,21 @@ export let DataManager = function () {
 
         data.common.languages.supportedLanguages.forEach(function (lang) {
             let table = data.sheets.content.tables.customDataDefinition.data[lang.code];
-            let allColumnNames = table.map(function (row) { return row.columnName.toLowerCase(); });
+            if (table === null) {
+                log("critical", "Cannot find custom data def")
+                return;
+            }
 
-            table.forEach(function (row) {
+            let allColumnNames = table.map(function (row) { return row.columnName?.toLowerCase(); }).filter((value) => value !== undefined);
+
+            for (const row of table) {
                 let columnName = row.columnName;
+
+                if (columnName === undefined) {
+                    log("critical", "Not found column " + columnName)
+                    return null;
+                }
+
                 let colPosition = dataPath.analyse.position(allColumnNames, columnName.toLowerCase());
 
                 // Only root column can have "placement"
@@ -750,7 +799,7 @@ export let DataManager = function () {
                         }
                     });
                 }
-            });
+            };
         });
     }
 
@@ -871,16 +920,23 @@ export let DataManager = function () {
     }
 
     function log(level, message) {
+        let hasCritical = false;
+
         let index = dataManager.loggedMessages.findIndex(function (msg) {
             if (msg.level == "critical" || msg.level == "error") {
                 dataManager.hasErrors = true;
+            }
+            if (msg.level == "critical") {
+                hasCritical = true;
             }
 
             if (msg.level + "-" + msg.message.toLowerCase() == level + "-" + message.toLowerCase()) {
                 return true;
             }
         });
-        if (index < 0) {
+
+        //only log critical errors if there is no other critical error yet
+        if (!hasCritical && level == "critical" && index < 0) {
             dataManager.loggedMessages.push({ level: level, message: message });
         }
     };
@@ -897,9 +953,13 @@ export let DataManager = function () {
 
             extractor.loadMeta(data, log);
             checkMetaValidity();
-            postprocessMetadata();
+            if (!this.hasErrors) {
+                postprocessMetadata();
+            }
 
-            loadData(extractor.getRawChecklistData());
+            if (!this.hasErrors) {
+                loadData(extractor.getRawChecklistData());
+            }
         },
 
         getCompiledChecklist() {
