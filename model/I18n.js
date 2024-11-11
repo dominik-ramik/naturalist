@@ -6,10 +6,10 @@ export function _tf(tag, substitute) {
 }
 
 export let i18n = {
-    getDefaultTranslationLanguage: function() {
+    getDefaultTranslationLanguage: function () {
         return defaultLanguage;
     },
-    getSupportedLanguageCodes: function() {
+    getSupportedLanguageCodes: function () {
         return supportedLanguages;
     }
 }
@@ -43,7 +43,7 @@ function translate(tag, substitute, preFormat, postFormat) {
             substitute = [substitute];
         }
         if (substitute.length > 0) {
-            substitute.forEach(function(subs, index) {
+            substitute.forEach(function (subs, index) {
                 translated = translated.replaceAll("$" + (index + 1), (preFormat ? preFormat : "") + subs + (postFormat ? postFormat : ""));
             });
         }
@@ -216,8 +216,8 @@ let translations = {
         "fr": "Vous visualisez une version brouillon de la liste qui n'est visible que par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles."
     },
     in_taxon_group: {
-        "en": "$1 $2",
-        "fr": "$1 $2"
+        "en": "$1: $2",
+        "fr": "$1 : $2"
     },
     list_of_taxa: {
         "en": "List of $1 taxa",
@@ -348,8 +348,8 @@ let translations = {
         "fr": "Télécharger les données"
     },
     download_for_manual_update: {
-        "en": "You can download the checklist data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published checklist unless you upload the data file to the 'data' folder on your site. See the [documentation](./docs/) for more information.",
-        "fr": "Vous pouvez télécharger le fichier de données de la liste et l'utiliser pour une mise à jour manuelle si vous utilisez un hébergement web statique, ou le conserver à des fins d'archivage. Aucune modification ne sera apportée à la liste de contrôle actuellement publiée si vous ne chargez pas le fichier de données dans le dossier 'data' de votre site. Consultez la [documentation](./docs/) pour plus d'informations."
+        "en": "You can download the checklist data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published checklist unless you upload the data file to the **usercontent/data** folder on your site. See the [documentation](./docs/) for more information.",
+        "fr": "Vous pouvez télécharger le fichier de données de la liste et l'utiliser pour une mise à jour manuelle si vous utilisez un hébergement web statique, ou le conserver à des fins d'archivage. Aucune modification ne sera apportée à la liste de contrôle actuellement publiée si vous ne chargez pas le fichier de données dans le dossier **usercontent/data** de votre site. Consultez la [documentation](./docs/) pour plus d'informations."
     },
     download_checklist: {
         "en": "Download checklist data file",
@@ -515,6 +515,10 @@ let translations = {
         "en": "Distinct values",
         "fr": "Valeurs distinctes"
     },
+    log_critical: {
+        "en": "Critical error",
+        "fr": "Erreur critique"
+    },
     log_error: {
         "en": "Error",
         "fr": "Erreur"
@@ -535,9 +539,21 @@ let translations = {
         "en": "Language $1 in table $2 (sheet $3) doesn not have any existing fallback language, enter on of the following language codes into the fallback language column to ensure proper displaying, or else the application interface will fall back to English",
         "fr": "Si la langue $1 du tableau $2 (feuille $3) n'a pas de langue de repli, entrez l'un des codes de langue suivants dans la colonne de langue de repli pour garantir un affichage correct, sinon l'interface de l'application reviendra à l'anglais"
     },
+    dm_cannot_load_languages: {
+        "en": "Cannot load language table from sheet $1",
+        "fr": "Impossible de trouver le tableau de langues sur la feuille $1"
+    },
     dm_cannot_find_sheet: {
         "en": "Cannot find the sheet $1 in your file",
         "fr": "Impossible de trouver la feuille $1 dans votre fichier"
+    },
+    dm_verify_doc: {
+        en: "Verify the documentation to be on the same page with the latest format of the configuration sheets.",
+        fr: "Vérifiez la documentation pour être à jour avec le dernier format des feuilles de configuration.",
+    },
+    dm_cannot_find_table_in_worksheet: {
+        "en": "'Cannot find table $1 in the worksheet $2.",
+        "fr": "Impossible de trouver le tableau $1 dans la feuille $2.",
     },
     dm_column_defined_but_missing: {
         "en": "Column $1 is defined in the $2 table but it is missing in your checklist sheet; you need to add it into the checklist sheet or remove it from the $3 table",
