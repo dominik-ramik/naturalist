@@ -8,7 +8,7 @@ import { filterMatches } from "../components/Utils.js";
 export let TaxonView = {
     view: function (vnode) {
         let inverseTaxonLevel = Object.keys(Checklist.getTaxaMeta()).length - (vnode.attrs.currentLevel);
-        let fontSize = 100 + (8 * inverseTaxonLevel - 1);
+        let fontSize = 100 + (10 * inverseTaxonLevel - 1);
         if (fontSize > 200) {
             fontSize = 200;
         }
