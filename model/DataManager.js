@@ -93,6 +93,8 @@ export let DataManager = function () {
 
             data.sheets.content.tables.taxa.data[lang.code].forEach(function (row) {
 
+                row.parentTaxonIndication = row.parentTaxonIndication.toLowerCase().trim();
+
                 if (row.parentTaxonIndication !== "" && row.parentTaxonIndication !== "none") {
                     if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
                         log("warning", "Wrong value in Parent taxon indication will be ignored: " + row.parentTaxonIndication)
