@@ -207,10 +207,6 @@ let translations = {
         "en": "contains text",
         "fr": "contient le texte"
     },
-    show_all_of_taxon: {
-        "en": "Show all $1",
-        "fr": "Afficher tout $1"
-    },
     draft_notice: {
         "en": "You are viewing a draft version of the checklist only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
         "fr": "Vous visualisez une version brouillon de la liste qui n'est visible que par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles."
