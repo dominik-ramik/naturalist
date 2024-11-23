@@ -1,8 +1,9 @@
+
 //This duplicates the externalised contsnts of the same name in Utils but Chrome would not allow the SW to register even in module mode so we have to repeat them here
 const checklistURL = "./usercontent/data/checklist.json";
 const checklistFileName = "checklist.json";
 
-let version = "2.2.2";
+let version = "2.3.1";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
@@ -32,7 +33,7 @@ self.addEventListener("updatefound", function (e) {
 
 //* Cache first
 self.addEventListener('fetch', function (e) {
-    let isChecklistHeadReques = e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName);
+    let isChecklistHeadReques = (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName));
     let isUpdatePHPRequest = e.request.url.toLowerCase().includes("/update.php");
 
     if (isChecklistHeadReques || isUpdatePHPRequest) {
@@ -47,6 +48,7 @@ self.addEventListener('fetch', function (e) {
 
             return response;
         })());
+
         return;
     }
 
