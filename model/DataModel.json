@@ -104,12 +104,7 @@
               "allowEmpty": false,
               "allowDuplicates": "yes",
               "allowedContent": "filename",
-              "allowedExtensions": [
-                ".jpg",
-                ".png",
-                "webp",
-                ".svg"
-              ],
+              "allowedExtensions": [".jpg", ".png", "webp", ".svg"],
               "supportsMultilingual": true
             }
           },
@@ -303,11 +298,7 @@
               "allowDuplicates": "yes",
               "defaultValue": "alphabet",
               "allowedContent": "list",
-              "listItems": [
-                "as is",
-                "alphabet",
-                ""
-              ],
+              "listItems": ["as is", "alphabet", ""],
               "supportsMultilingual": false
             }
           },
@@ -332,11 +323,7 @@
               "allowDuplicates": "yes",
               "defaultValue": "",
               "allowedContent": "list",
-              "listItems": [
-                "yes",
-                "no",
-                ""
-              ],
+              "listItems": ["yes", "no", ""],
               "supportsMultilingual": false
             }
           }
@@ -403,13 +390,7 @@
               "defaultValue": "text",
               "allowDuplicates": "yes",
               "allowedContent": "list",
-              "listItems": [
-                "text",
-                "number",
-                "taxon",
-                "date",
-                ""
-              ],
+              "listItems": ["text", "number", "taxon", "date", ""],
               "supportsMultilingual": false
             }
           },
@@ -434,14 +415,7 @@
               "allowDuplicates": "yes",
               "defaultValue": "top",
               "allowedContent": "list",
-              "listItems": [
-                "top",
-                "bottom",
-                "left",
-                "middle",
-                "right",
-                ""
-              ],
+              "listItems": ["top", "bottom", "left", "middle", "right", ""],
               "supportsMultilingual": false
             }
           },
@@ -453,12 +427,7 @@
               "allowEmpty": true,
               "allowDuplicates": "yes",
               "allowedContent": "list",
-              "listItems": [
-                "markdown",
-                "badge",
-                "none",
-                ""
-              ],
+              "listItems": ["markdown", "badge", "none", ""],
               "defaultValue": "none",
               "supportsMultilingual": false
             }
@@ -471,11 +440,7 @@
               "allowEmpty": true,
               "allowDuplicates": "yes",
               "allowedContent": "list",
-              "listItems": [
-                "yes",
-                "no",
-                ""
-              ],
+              "listItems": ["yes", "no", ""],
               "defaultValue": "no",
               "supportsMultilingual": false
             }
@@ -517,10 +482,7 @@
               "allowEmpty": false,
               "allowDuplicates": "yes",
               "allowedContent": "list",
-              "listItems": [
-                "image",
-                "sound"
-              ],
+              "listItems": ["image", "sound"],
               "supportsMultilingual": false
             }
           },
@@ -561,11 +523,7 @@
               "allowEmpty": false,
               "allowDuplicates": "yes",
               "allowedContent": "list",
-              "listItems": [
-                "regions",
-                "image",
-                "link"
-              ],
+              "listItems": ["regions", "image", "link"],
               "supportsMultilingual": false
             }
           },
@@ -618,6 +576,59 @@
               "allowEmpty": false,
               "allowedContent": "any",
               "supportsMultilingual": true
+            }
+          }
+        },
+        "data": []
+      },
+      "citations": {
+        "name": "Citations",
+        "description": "Fill this table with sources you are citing in any format which suits you. Simply mentioning a key preceded by symbol @ inside any text in your checklist will replace it by a clickable link which will make appear the full reference. For example if you have an entry with key <i>ramik2024</i> then you can mention it in a text such as '... a checklist app described in (@ramik2024) ...'. If your In-text citation for <i>ramik2024</i> is <i>Ramík and Plunkett (2024)</i> the this will substitute the text <i>@ramik2024</i> with a clickable link showing the full citation which you enter under Reference entry and optionally a link (e.g. to a DOI or other online presence of the material) under URL.",
+        "columns": {
+          "columnName": {
+            "name": "Key",
+            "description": "The key which you will mention in text.",
+            "integrity": {
+              "description": "The key should only be composed of letters, numbers, underscore and dash characters.",
+              "allowDuplicates": "no",
+              "allowEmpty": false,
+              "allowedContent": "regex",
+              "regex": "[A-Za-z0-9_\\-]+",
+              "regexExplanation": "Letters a-z, numbers 0-9, _ and -",
+              "supportsMultilingual": false
+            }
+          },
+          "inTextCitation": {
+            "name": "In-text citation",
+            "description": "When you mention a key preceded with @ in the text, this will replace the @ mention.",
+            "integrity": {
+              "description": "Short in-text citation, e.g. Ramík and Plunkett (2024)",
+              "allowDuplicates": "no",
+              "allowEmpty": false,
+              "allowedContent": "any",
+              "supportsMultilingual": false
+            }
+          },
+          "referenceEntry": {
+            "name": "Reference entry",
+            "description": "Full citation. You can use plain text or format it through Markdown.",
+            "integrity": {
+              "description": "Full reference following your preferred style, e.g. Ramík, D.M., Plunkett, G.M. NaturaList, a flexible app for creating taxonomic checklists. Brittonia (2024). https://doi.org/10.1007/s12228-024-09805-y.",
+              "allowDuplicates": "no",
+              "allowEmpty": false,
+              "allowedContent": "any",
+              "supportsMultilingual": false
+            }
+          },
+          "url": {
+            "name": "URL",
+            "description": "Optional link to an online version of the cited work.",
+            "integrity": {
+              "description": "A valid URL, e.g. https://doi.org/10.1007/s12228-024-09805-y.",
+              "allowDuplicates": "yes",
+              "allowEmpty": true,
+              "allowedContent": "url",
+              "supportsMultilingual": false
             }
           }
         },
