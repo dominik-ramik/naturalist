@@ -134,6 +134,9 @@ function renderColumnIntegrityInfo(column) {
         case "dataPath":
             doc += "<td>a <a href=\"#g-datapath\">data path</a> describing a generalized name of a column in the checklist sheet, e.g. \"info.habit#\" will match the checklist sheet columns \"info.habit1\", \"info.habit2\" etc.</td>";
             break;
+        case "regex":
+            doc += "<td>" + column.integrity.regexExplanation + ". The entry must satisfy the following regular expression: " + column.integrity.regex + ".</td>";
+            break;
 
         default:
             break;
