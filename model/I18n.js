@@ -522,7 +522,7 @@ let translations = {
     log_warning: {
         "en": "Warning",
         "fr": "Avertissement"
-    },
+    },    
     dm_array_with_empty_cells_in_the_middle: {
         "en": "Check the column $1$2 of the following row in the checklist sheet. There should be no empty cell at that index: $3",
         "fr": "La colonne $1 du tableau $2 ne peut pas avoir d'indicateurs de langue ($3)"
@@ -598,6 +598,10 @@ let translations = {
     dm_incorrect_http: {
         "en": "Incorrect value $1 in column $2 (table $3); The value should be a valid URL begining with HTTP or HTTPS",
         "fr": "Valeur incorrecte $1 dans la colonne $2 (table $3) ; La valeur doit être une URL valide commençant par HTTP ou HTTPS"
+    },
+    dm_regex_failed: {
+        "en": "Incorrect value $1 in column $2 (table $3). The value should be formatted as follows: $4. It has to satisfy the following regular expression: $5",
+        "fr": "Valeur $1 incorrecte dans la colonne $2 (table $3). La valeur doit être formatée comme suit: $4. Elle doit satisfaire à l'expression régulière suivante: $5"
     },
     dm_incorrect_datapath: {
         "en": "Incorrect value $1 in column $2 (table $3); The column name should be a valid data path (see documentation)",
