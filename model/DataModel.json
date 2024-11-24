@@ -585,7 +585,7 @@
         "name": "Citations",
         "description": "Fill this table with sources you are citing in any format which suits you. Simply mentioning a key preceded by symbol @ inside any text in your checklist will replace it by a clickable link which will make appear the full reference. For example if you have an entry with key <i>ramik2024</i> then you can mention it in a text such as '... a checklist app described in (@ramik2024) ...'. If your In-text citation for <i>ramik2024</i> is <i>Ramík and Plunkett (2024)</i> the this will substitute the text <i>@ramik2024</i> with a clickable link showing the full citation which you enter under Reference entry and optionally a link (e.g. to a DOI or other online presence of the material) under URL.",
         "columns": {
-          "columnName": {
+          "key": {
             "name": "Key",
             "description": "The key which you will mention in text.",
             "integrity": {
@@ -594,7 +594,7 @@
               "allowEmpty": false,
               "allowedContent": "regex",
               "regex": "[A-Za-z0-9_\\-]+",
-              "regexExplanation": "Letters a-z, numbers 0-9, _ and -",
+              "regexExplanation": "letters a-z, numbers 0-9, _ and -",
               "supportsMultilingual": false
             }
           },
