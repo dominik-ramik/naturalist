@@ -143,7 +143,7 @@ function runApp() {
     url: checklistURL,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      Accept: "text/*",
+      Accept: "*/*",
     },
     extract: function (xhr) {
       if (xhr.status != 200) {
