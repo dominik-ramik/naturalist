@@ -265,7 +265,7 @@ export let DataManager = function () {
               meta[computedDataPath].searchCategory =
                 info.fullRow.searchCategoryTitle;
               meta[computedDataPath].searchCategoryOrder = [];
-              console.log(info.fullRow, info.fullRow.searchCategoryTitle);
+                            
               if (info.fullRow.searchCategoryTitle.trim() !== "") {
                 data.sheets.appearance.tables.searchOrder.data[
                   lang.code
@@ -835,7 +835,6 @@ export let DataManager = function () {
 
   function checkMetaValidity() {
     // automatic check based on integrity data
-    console.log(data.sheets);
     Object.keys(data.sheets).forEach(function (sheetKey) {
       let sheet = data.sheets[sheetKey];
       if (sheet.type == "meta") {
