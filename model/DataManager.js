@@ -95,6 +95,12 @@ export let DataManager = function () {
         lang.code,
         "YYYY-MM-DD"
       );
+      let citationStyle = data.common.getItem(
+        data.sheets.appearance.tables.customization.data,
+        "Citation style",
+        lang.code,
+        "apa"
+      )?.toLowerCase();
 
       let version = {
         languageName: lang.name,
@@ -103,6 +109,7 @@ export let DataManager = function () {
         name: name,
         about: about,
         dateFormat: dateFormat,
+        citationStyle: citationStyle,
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],
@@ -234,7 +241,7 @@ export let DataManager = function () {
             dataType = "map";
           if (info.table == data.sheets.content.tables.accompanyingText.name)
             dataType = "text";
-          if (info.table == data.sheets.content.tables.citations.name)
+          if (info.table == data.sheets.content.tables.citations?.name)
             dataType = "citations";
 
           meta[computedDataPath] = {
