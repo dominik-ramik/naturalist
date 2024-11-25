@@ -168,7 +168,9 @@ export let TaxonDataItemView = {
                 let badgeMeta = meta.badges;
 
                 let badgeFormat = badgeMeta.find(function(possibleFormat) {
-                    var reg = new RegExp(possibleFormat.contains.toLowerCase(), "gi");
+                    let possibleFormatCured = possibleFormat.contains.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); //escape characters for RegEx
+
+                    var reg = new RegExp(possibleFormatCured, "gi");
                     return reg.test(data.toLowerCase());
                 });
                 if (badgeFormat) {
