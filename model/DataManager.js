@@ -493,7 +493,7 @@ export let DataManager = function () {
               );
               if (genericData !== "") {
                 //rowObjData[count - 1] = genericData;
-                rowObjData[lastSuccesfullCount - 1] = genericData;
+                rowObjData[lastSuccesfullCount] = genericData;
                 lastSuccesfullCount++;
 
                 if (
@@ -518,7 +518,7 @@ export let DataManager = function () {
               }
 
               includeTreefiedData(
-                rowObjData[lastSuccesfullCount - 1],
+                rowObjData[lastSuccesfullCount],
                 headers,
                 row,
                 pathSegments,
