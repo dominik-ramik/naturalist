@@ -203,6 +203,19 @@ export let nlDataStructure = {
                 supportsMultilingual: true,
               },
             },
+            restrictToTaxon: {
+              name: "Restrict to taxon",
+              description:
+                "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa.",
+              integrity: {
+                description:
+                  'A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)',
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false,
+              },
+            },
           },
           data: [],
         },
