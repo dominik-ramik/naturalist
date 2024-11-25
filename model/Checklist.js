@@ -546,8 +546,6 @@ export let Checklist = {
       });
     });
 
-    console.log("FF", Checklist.filter);
-
     Object.keys(Checklist.filter.data).forEach(function (dataPath) {
       if (Checklist.filter.data[dataPath].type == "number") {
         if (
