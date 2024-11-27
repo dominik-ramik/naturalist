@@ -103,6 +103,10 @@ let translations = {
         "en": "About this checklist",
         "fr": "Par rapport à cette liste taxonomique"
     },
+    literature: {
+        "en": "References",
+        "fr": "Références"
+    },
     about_nl: {
         "en": "About NaturaList app",
         "fr": "Par rapport à l'appli NaturaList"

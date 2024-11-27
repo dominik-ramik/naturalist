@@ -28,6 +28,7 @@ export let DataManager = function () {
         lastUpdate: currentDateString,
         defaultVersion: data.common.languages.defaultLanguageCode,
         assets: gatherPreloadableAssets(),
+        bibliography: gatherBibliography(),
       },
       versions: {},
     };
@@ -37,6 +38,16 @@ export let DataManager = function () {
     });
 
     return checklist;
+
+    function gatherBibliography() {
+      let collatedBibTeX = "";
+
+      data.sheets.content.tables.citations.data[
+        data.common.languages.defaultLanguageCode
+      ].forEach((entry) => (collatedBibTeX += entry.bibtex + "\n"));
+
+      return collatedBibTeX;
+    }
 
     function gatherPreloadableAssets() {
       let assets = [];
@@ -95,12 +106,14 @@ export let DataManager = function () {
         lang.code,
         "YYYY-MM-DD"
       );
-      let citationStyle = data.common.getItem(
-        data.sheets.appearance.tables.customization.data,
-        "Citation style",
-        lang.code,
-        "apa"
-      )?.toLowerCase();
+      let citationStyle = data.common
+        .getItem(
+          data.sheets.appearance.tables.customization.data,
+          "Citation style",
+          lang.code,
+          "apa"
+        )
+        ?.toLowerCase();
 
       let version = {
         languageName: lang.name,
@@ -265,7 +278,7 @@ export let DataManager = function () {
               meta[computedDataPath].searchCategory =
                 info.fullRow.searchCategoryTitle;
               meta[computedDataPath].searchCategoryOrder = [];
-                            
+
               if (info.fullRow.searchCategoryTitle.trim() !== "") {
                 data.sheets.appearance.tables.searchOrder.data[
                   lang.code

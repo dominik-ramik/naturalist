@@ -7,6 +7,7 @@ import {
 } from "../components/Utils.js";
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
+import { TinyBibRender } from "../lib/TinyBibRender.js";
 
 export let Checklist = {
   getData: function () {
@@ -182,11 +183,31 @@ export let Checklist = {
     },
   },
 
+  _bibRender: null,
+
+  getBibRender: function () {
+    if (this._bibRender === null) {
+      this._bibRender = new TinyBibRender(Checklist.getBibliography(), {
+        style: "harvard",
+        format: "html",
+      });
+    }
+
+    return this._bibRender
+  },
+
   getPreloadableAssets: function () {
     if (!this._isDataReady) {
       return [];
     }
     return Checklist._data.general.assets;
+  },
+
+  getBibliography: function () {
+    if (!this._isDataReady) {
+      return "";
+    }
+    return Checklist._data.general.bibliography;
   },
 
   getCurrentLanguage: function () {

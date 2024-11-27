@@ -209,7 +209,7 @@ export let nlDataStructure = {
                 "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa.",
               integrity: {
                 description:
-                  'A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)',
+                  "A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 allowedContent: "any",
@@ -733,6 +733,35 @@ export let nlDataStructure = {
                 allowEmpty: false,
                 allowedContent: "any",
                 supportsMultilingual: true,
+              },
+            },
+          },
+          data: [],
+        },
+        citations: {
+          name: "Citations",
+          description: `Fill this table with sources you are citing in BibTeX format. To use it in your checklist, make sure that the column into which you enter citations has <b>Formatting</b> set to markdown on <b>nl_appearance</b> sheet in <b>Custom data definition</b> table. Anywhere in the text simply mention a citation key of any of the BibTeX sources preceded by symbol @ and it will be replaced it by a clickable link which will make appear the full reference. For example if you have a BibTeX entry with citation key <i>ramik2024</i>, then you can mention it in a text such as '... a checklist app described in @ramik2024 ...' the this will substitute the text <i>@ramik2024</i> with <i>Ramík and Plunkett (2024)</i> making it a clickable link showing the full citation. You can select your preferred citation style in <b>nl_appearance</b> on <b>Customization</b> table under <b>Citation style</b> option - either <b>apa</b> or <b>harvard</b>.
+          You can use the following citation formats (expecting <b>author1984</b> and <b>author1989</b> being valid citation keys in your BibTeX column)
+          <ul>
+<li>[@author1984] → (<u>Author, 1984</u>) (parenthetical citation)</li>
+<li>[-@author1984] → (<u>1984</u>) (year only)</li>
+<li>[@author1984; -@author1989]  → (<u>Author, 1984; 1989</u>) (several citations from the same author using year-only format for the second)</li>
+<li>[e.g. @author1984, pg. 22]  → (<u>e.g. Author 1984, pg. 22</u>) (with prefix and suffix)</li>
+<li>[e.g. @author1984, pg. 22; cf. @author1989, chap. 6]  → (<u>e.g. Author, 1984, pg. 22</u>; <u>cf. Author, 1989, chap. 6</u>) (multiple citations with prefix and suffix)</li>
+<li>@author1984  → <u>Author (1984)</u> (narrative citation)</li>
+<li>@author1984[pg. 22] → <u>Author (1984, pg. 22)</u> (narrative with suffix)</li>
+<li>@author1984 [pg. 22] → <u>Author (1984, pg. 22)</u> (narrative, suffix can be separated by at most one space)</li>
+</ul>`,
+          columns: {
+            bibtex: {
+              name: "BibTeX",
+              description: `A BibTeX formatted text. You can enter several publications into a single cell but for management and clarity it may be better to enter each publication into a separate cell. You may need to select Text or similar as the format of the cell as e.g. in Excel entering a text begining with @ has a special meaning - forcing Text format on the cell will allow you to paste BibTeX. Alternatively you can add a single space in the cell before your @ in BibTeX.`,
+              integrity: {
+                description: "A valid BibTeX entry.",
+                allowDuplicates: "no",
+                allowEmpty: false,
+                allowedContent: "any",
+                supportsMultilingual: false,
               },
             },
           },
