@@ -5,6 +5,7 @@ import { SearchView } from "./view/SearchView.js";
 import { DetailsView } from "./view/DetailsView.js";
 import { AboutView } from "./view/AboutView.js";
 import { ManageView } from "./view/ManageView.js";
+import { LiteratureView } from "./view/LiteratureView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
 
@@ -84,7 +85,7 @@ function openComChannel(sw) {
         console.log("FETCHING_RESSOURCE_FAILED");
         Toast.show(_t("offline_fetch_failed"));
         break;
-        
+
       default:
         break;
     }
@@ -153,6 +154,7 @@ function runApp() {
       let parsed = "";
       try {
         parsed = JSON.parse(compressor.decompress(xhr.responseText));
+        //console.log(parsed);
       } catch (ex) {
         console.log("Error parsing: ", ex);
       }
@@ -207,6 +209,17 @@ function runApp() {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
               m(AboutView, { text: Checklist.getProjectAbout() }),
+            ]);
+          },
+          onmatch: function () {
+            if (!isDataReady(checklistData)) m.route.set("/manage");
+          },
+        },
+        "/about/literature": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(LiteratureView),
             ]);
           },
           onmatch: function () {
