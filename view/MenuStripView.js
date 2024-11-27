@@ -40,6 +40,14 @@ function menuPanel() {
                     icon: "about",
                     title: _t("about_this")
                 }),
+                Checklist.getBibRender().citeKeys.length > 0 ? m(MenuItem, {
+                    onclick: function() {
+                        MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                        routeTo("/about/literature");
+                    },
+                    icon: "literature",
+                    title: _t("literature")
+                }) : null,
                 m(MenuDivider),
                 Checklist.getAllLanguages().length > 1 ? m(MenuExpandable, { title: _t("languages") }, [
                     Checklist.getAllLanguages().map(function(lang) {
