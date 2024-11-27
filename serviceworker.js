@@ -3,7 +3,7 @@
 const checklistURL = "./usercontent/data/checklist.json";
 const checklistFileName = "checklist.json";
 
-let version = "2.3.4";
+let version = "2.4.0";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
@@ -175,6 +175,7 @@ let staticResources = [
     "./img/ui/manage/update_done.svg",
     "./img/ui/manage/upload.svg",
     "./img/ui/menu/about.svg",
+    "./img/ui/menu/literature.svg",
     "./img/ui/menu/arrow_back.svg",
     "./img/ui/menu/expand_less.svg",
     "./img/ui/menu/expand_more.svg",
