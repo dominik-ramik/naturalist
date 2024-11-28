@@ -21,6 +21,16 @@ NaturaList is an open source flexible taxonomic checklist web app capable of vis
 - Once done, upload your spreadsheet through NaturaList. Now whoever visits your NaturaList app address will see your checklist data appearing.
 - If you want to update your checklist later on, simply make the necessary edits in your spreadsheet. Then open your NaturaList app, head to the menu and click on 'Manage'. Then upload your spreadsheet to publish the update.
 
+## Who uses it
+
+### Flora of Vanuatu
+- Plunkett, G.M., T.R. Ranker, C. Sam, M.J. Balick, and D.M. Ramík. 2022. Vanuatu's Plant List: An Interactive Checklist of the Vascular Plants of Vanuatu.
+- [checklist.pvnh.net](https://checklist.pvnh.net/)
+
+### Plants & Fungi of Niue
+- Heenan PB. 2024. Plants & Fungi of Niue NaturaList: An Interactive Checklist of the Vascular Plants and Fungi of Niue.
+- [plantsniue.nu](https://plantsniue.nu/)
+
 ## Licence
 NaturaList is available under [Creative Commons BY-NC-SA licence](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
