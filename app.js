@@ -215,7 +215,18 @@ function runApp() {
             if (!isDataReady(checklistData)) m.route.set("/manage");
           },
         },
-        "/about/literature": {
+        "/references": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(LiteratureView),
+            ]);
+          },
+          onmatch: function () {
+            if (!isDataReady(checklistData)) m.route.set("/manage");
+          },
+        },
+        "/references/:citekey": {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [

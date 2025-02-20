@@ -3,45 +3,31 @@ import { Checklist } from "../model/Checklist.js";
 
 export let LiteratureView = {
   view: function (vnode) {
-    let text = "<h2>" + _t("literature") + "</h2>";
+    let citeKey = m.route.param("citekey");
 
-    const details = Checklist.getBibRender()
-      .citeKeys.map((key) => Checklist.getBibRender().getDetails(key))
-      .sort((a, b) => {
-        let comp = a.details.author.localeCompare(b.details.author);
-        if (comp == 0) {
-          comp = a.details.year.localeCompare(b.details.year);
-        }
-        return comp;
-      });
+    let citeKeysToProcess = [];
 
-    const references = details.map((r) => {
-      let ref =
-        r.details.author +
-        " (" +
-        r.details.year +
-        "). " +
-        r.details.title +
-        (r.details.doi
-          ? ' <a href="' +
-            r.details.doi +
-            '" target="_blank">' +
-            r.details.doi +
-            "</a>"
-          : "");
+    let text = ''
 
-      return (
-        "<li style='text-indent: -2em; line-height: 150%; margin-left: 2em; margin-bottom: 0.5em'>" +
-        ref +
-        "</li>"
-      );
-    });
+    if (citeKey && Checklist.getBibliographyKeys().includes(citeKey)) {
+      citeKeysToProcess = [citeKey];
+    } else {
+      text += "<h2>" + _t("literature") + "</h2>";
+      citeKeysToProcess = Checklist.getBibliographyKeys();
+    }
+
+    const references = citeKeysToProcess.map((key) =>
+      Checklist.getBibFormatter().getFullReferenceApa(key)
+    ).sort((a, b) => a.localeCompare(b));
 
     text +=
-      "<br/><br/><ul style='list-style: none; font-size: 90%;'>" +
-      references.join("") +
+      "<div class='biblio'>" +
+      marked.parse(references.map((r) => "- " + r).join("\n")) +
       "</ul>";
 
-    return m(".literature-view[style=background-color: white; color: black; padding: 1em; border-radius: 0.5em]", m.trust(text));
+    return m(
+      ".literature-view[style=background-color: white; color: black; padding: 1em; border-radius: 0.5em]",
+      m.trust(text)
+    );
   },
 };

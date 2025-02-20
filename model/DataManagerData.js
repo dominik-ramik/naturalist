@@ -138,6 +138,7 @@ export let nlDataStructure = {
                   "Name of checklist data sheet",
                   "Checklist data headers row",
                   "Date format",
+                  "References BibTeX file URL",
                   "Citation style",
                 ],
                 supportsMultilingual: false,
@@ -148,8 +149,7 @@ export let nlDataStructure = {
               description:
                 "Define the values for each of the items here. As this column is multilingual, you can have sevaral Value colums in this table (e.g. Value:en, Value:es and Value:fr side by side if you defined English, Spanish and French as languages of your checklist).",
               integrity: {
-                description:
-                  '<ul><li><b>Color theme hue</b>: a number from 0 to 360 representing a hue of the color theme of the app. The default deep blue hue is 212. If you want to pick your own, find the hue with an online tool like <a href="https://hslpicker.com">hslpicker.com</a> (use the value of the topmost slider). You can visually separate different language mutations of your checklist (if you make a multilingual one) by assigning different hues to different translations</li><li><b>Checklist name</b>: A short name which will appear in the header of the checklist app. E.g. Vascular flora of Vanuatu</li><li><b>About section</b>: a free-form text which will appear in the About section in the checklist menu. You can write there a short description of the checklist, contacts to its author or any other information. You can use <a href="#g-md">Markdown<a/> to format your text including different heading levels, links, images (in folder \'usercontent\' or hosted elsewhere), lists or other. If your text is more complex, you may wish to prepare it first in a text editor and when you are happy with the result, copy-paste it into the appropriate cell in this table</li><li><b>Name of checklist data sheet</b>: name of the sheet which contains the checklist data. By default this is called "checklist", but you can modify that if you need the sheet be called otherwise</li><li><b>Checklist data headers row</b>: By default the headers row is on line 1, but in case your data are designed otherwise and the checklist data headers are on any other row (e.g. headers are on row 2 because row 1 is occupied by supplementary infor for curators or any other data), put the row number here.</li><li><b>Date format</b>: If you dates in your checklist data sheet, you can determine here how the date will be shown in your checklist. Available formats, see: <a href="https://day.js.org/docs/en/display/format">day.js.org</a>. You can define different formats for different language mutations (e.g. if you have English (en) and French (fr) defined as the checklist languages, you can have in the column Value:en a value MMM D, YYYY while the column Value:fr can have the more common French format YYYY/MM/DD). By default or if left empty the format is YYYY-MM-DD.</li><li><b>Citation style</b>: If you use citations, you can set citation style here. Default is APA, allowed values are APA or HARVARD</li></ul>',
+                description: '<ul><li><b>Color theme hue</b>: a number from 0 to 360 representing a hue of the color theme of the app. The default deep blue hue is 212. If you want to pick your own, find the hue with an online tool like <a href="https://hslpicker.com">hslpicker.com</a> (use the value of the topmost slider). You can visually separate different language mutations of your checklist (if you make a multilingual one) by assigning different hues to different translations</li><li><b>Checklist name</b>: A short name which will appear in the header of the checklist app. E.g. Vascular flora of Vanuatu</li><li><b>About section</b>: a free-form text which will appear in the About section in the checklist menu. You can write there a short description of the checklist, contacts to its author or any other information. You can use <a href="#g-md">Markdown<a/> to format your text including different heading levels, links, images (in folder \'usercontent\' or hosted elsewhere), lists or other. If your text is more complex, you may wish to prepare it first in a text editor and when you are happy with the result, copy-paste it into the appropriate cell in this table</li><li><b>Name of checklist data sheet</b>: name of the sheet which contains the checklist data. By default this is called "checklist", but you can modify that if you need the sheet be called otherwise</li><li><b>Checklist data headers row</b>: By default the headers row is on line 1, but in case your data are designed otherwise and the checklist data headers are on any other row (e.g. headers are on row 2 because row 1 is occupied by supplementary infor for curators or any other data), put the row number here.</li><li><b>Date format</b>: If you dates in your checklist data sheet, you can determine here how the date will be shown in your checklist. Available formats, see: <a href="https://day.js.org/docs/en/display/format">day.js.org</a>. You can define different formats for different language mutations (e.g. if you have English (en) and French (fr) defined as the checklist languages, you can have in the column Value:en a value MMM D, YYYY while the column Value:fr can have the more common French format YYYY/MM/DD). By default or if left empty the format is YYYY-MM-DD.</li><li><b>References BibTeX file URL</b>: An URL to publically available text file containing BibTeX formatted list of sources which will get displayed in your References page and which you can reference with short codes in your checklist. See the documentation for usage tips. Leave empty if you don\'t want to use the bibliography function.</li><li><b>Citation style</b>: If you use citations, you can set citation style here. Default is APA, allowed values are APA or HARVARD</li></ul>',
                 allowDuplicates: "yes",
                 allowEmpty: true,
                 allowedContent: "any",
@@ -733,35 +733,6 @@ export let nlDataStructure = {
                 allowEmpty: false,
                 allowedContent: "any",
                 supportsMultilingual: true,
-              },
-            },
-          },
-          data: [],
-        },
-        citations: {
-          name: "Citations",
-          description: `Fill this table with sources you are citing in BibTeX format. To use it in your checklist, make sure that the column into which you enter citations has <b>Formatting</b> set to markdown on <b>nl_appearance</b> sheet in <b>Custom data definition</b> table. Anywhere in the text simply mention a citation key of any of the BibTeX sources preceded by symbol @ and it will be replaced it by a clickable link which will make appear the full reference. For example if you have a BibTeX entry with citation key <i>ramik2024</i>, then you can mention it in a text such as '... a checklist app described in @ramik2024 ...' the this will substitute the text <i>@ramik2024</i> with <i>Ramík and Plunkett (2024)</i> making it a clickable link showing the full citation. You can select your preferred citation style in <b>nl_appearance</b> on <b>Customization</b> table under <b>Citation style</b> option - either <b>apa</b> or <b>harvard</b>.
-          You can use the following citation formats (expecting <b>author1984</b> and <b>author1989</b> being valid citation keys in your BibTeX column)
-          <ul>
-<li>[@author1984] → (<u>Author, 1984</u>) (parenthetical citation)</li>
-<li>[-@author1984] → (<u>1984</u>) (year only)</li>
-<li>[@author1984; -@author1989]  → (<u>Author, 1984; 1989</u>) (several citations from the same author using year-only format for the second)</li>
-<li>[e.g. @author1984, pg. 22]  → (<u>e.g. Author 1984, pg. 22</u>) (with prefix and suffix)</li>
-<li>[e.g. @author1984, pg. 22; cf. @author1989, chap. 6]  → (<u>e.g. Author, 1984, pg. 22</u>; <u>cf. Author, 1989, chap. 6</u>) (multiple citations with prefix and suffix)</li>
-<li>@author1984  → <u>Author (1984)</u> (narrative citation)</li>
-<li>@author1984[pg. 22] → <u>Author (1984, pg. 22)</u> (narrative with suffix)</li>
-<li>@author1984 [pg. 22] → <u>Author (1984, pg. 22)</u> (narrative, suffix can be separated by at most one space)</li>
-</ul>`,
-          columns: {
-            bibtex: {
-              name: "BibTeX",
-              description: `A BibTeX formatted text. You can enter several publications into a single cell but for management and clarity it may be better to enter each publication into a separate cell. You may need to select Text or similar as the format of the cell as e.g. in Excel entering a text begining with @ has a special meaning - forcing Text format on the cell will allow you to paste BibTeX. Alternatively you can add a single space in the cell before your @ in BibTeX.`,
-              integrity: {
-                description: "A valid BibTeX entry.",
-                allowDuplicates: "no",
-                allowEmpty: false,
-                allowedContent: "any",
-                supportsMultilingual: false,
               },
             },
           },

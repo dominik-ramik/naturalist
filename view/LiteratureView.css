@@ -1,0 +1,12 @@
+.biblio ul {
+  list-style: none !important;
+  font-size: 80%;
+  padding-left: 0;
+}
+
+.biblio ul li {
+  margin-bottom: 0.5em;
+  text-indent: -1em;
+  margin-left: 1em;
+  user-select: text;
+}

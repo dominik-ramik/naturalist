@@ -6,6 +6,7 @@ import {
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
+import { TinyBibReader } from "../lib/TinyBibMD.js";
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -28,7 +29,7 @@ export let DataManager = function () {
         lastUpdate: currentDateString,
         defaultVersion: data.common.languages.defaultLanguageCode,
         assets: gatherPreloadableAssets(),
-        bibliography: gatherBibliography(),
+        bibliography: gatherReferences(),
       },
       versions: {},
     };
@@ -39,14 +40,37 @@ export let DataManager = function () {
 
     return checklist;
 
-    function gatherBibliography() {
-      let collatedBibTeX = "";
+    async function gatherReferences() {
+      const bibtexUrl = data.common.getItem(
+        data.sheets.appearance.tables.customization.data,
+        "References BibTeX file URL",
+        lang.code,
+        ""
+      );
 
-      data.sheets.content.tables.citations.data[
-        data.common.languages.defaultLanguageCode
-      ].forEach((entry) => (collatedBibTeX += entry.bibtex + "\n"));
+      if (bibtexUrl == "") {
+        return {};
+      }
 
-      return collatedBibTeX;
+      let dataRequest = new Request(bibtexUrl, {
+        method: "GET",
+        cache: "reload",
+      });
+
+      const response = await fetch(dataRequest);
+      const bibtexfile = await response.json();
+      console.log("BIB", bibtexfile);
+
+      let bibReader = null;
+      try {
+        bibReader = new TinyBibReader(bibtexfile);
+      } catch (e) {
+        console.log(e);
+        log("error", "Error processing references: " + e);
+        return {};
+      }
+
+      return bibReader.bibliography;
     }
 
     function gatherPreloadableAssets() {
@@ -122,7 +146,8 @@ export let DataManager = function () {
         name: name,
         about: about,
         dateFormat: dateFormat,
-        citationStyle: citationStyle,
+        bibtexUrl: bibtexUrl,
+        citationStyle: citationStyle.toLowerCase(),
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],
@@ -254,8 +279,8 @@ export let DataManager = function () {
             dataType = "map";
           if (info.table == data.sheets.content.tables.accompanyingText.name)
             dataType = "text";
-          if (info.table == data.sheets.content.tables.citations?.name)
-            dataType = "citations";
+          if (info.table == data.sheets.content.tables.references?.name)
+            dataType = "references";
 
           meta[computedDataPath] = {
             datatype: dataType,
@@ -422,7 +447,7 @@ export let DataManager = function () {
           if (info.role == "taxon") {
             let taxon = readTaxon(headers, row, info.name, lang.code);
 
-            let taxonIsEmpty = taxon.n.trim() == "" && taxon.a.trim() == "";
+            let taxonIsEmpty = taxon?.n?.trim() == "" && taxon?.a?.trim() == "";
 
             if (taxonIsEmpty) {
               doneWithTaxa = true;
@@ -810,7 +835,7 @@ export let DataManager = function () {
       if (name === null || (name !== null && authority === null)) {
         log(
           "error",
-          _tf("dn_taxon_column_names", [
+          _tf("dm_taxon_column_names", [
             path,
             path,
             path + ".name",

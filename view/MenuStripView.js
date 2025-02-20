@@ -40,10 +40,10 @@ function menuPanel() {
                     icon: "about",
                     title: _t("about_this")
                 }),
-                Checklist.getBibRender().citeKeys.length > 0 ? m(MenuItem, {
+                Checklist.getBibliographyKeys().length > 0 ? m(MenuItem, {
                     onclick: function() {
                         MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                        routeTo("/about/literature");
+                        routeTo("/references");
                     },
                     icon: "literature",
                     title: _t("literature")

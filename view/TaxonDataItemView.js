@@ -1,6 +1,6 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/TaxonView.js";
-import { filterMatches } from "../components/Utils.js";
+import { filterMatches, routeTo } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -192,31 +192,29 @@ export let TaxonDataItemView = {
 
       //process markdown and items with templates
       if (meta.format == "markdown" || (meta.template && meta.template != "")) {
-        data = marked.parse(data);
-        //in case markdown introduced some dirt, purify it again
-        data = DOMPurify.sanitize(data);
-        data = data + (tailingSeparator ? tailingSeparator : "");
-
         //process bibliography
-        //*
         try {
-          data = Checklist.getBibRender().transformInTextCitations(
+          data = Checklist.getBibFormatter().transformInTextCitations(
             data,
             (citeKey) => {
               return {
                 prefix:
-                  '<a class="citation" onClick="alert(\'' +
-                  citeKey +
-                  "'); return false\">",
+                  '<a class="citation" data-citekey="' +
+                  citeKey.toLowerCase() +
+                  '">',
                 suffix: "</a>",
               };
             }
           );
         } catch (ex) {
-          console.log("Error matching ctiation in:", data)
+          console.log("Error matching ctiation in:", data, ex);
         }
         //*/
 
+        data = marked.parse(data);
+        //in case markdown introduced some dirt, purify it again
+        data = DOMPurify.sanitize(data);
+        data = data + (tailingSeparator ? tailingSeparator : "");
         data = m.trust(data);
       } else if (meta.format == "badge") {
         let badgeMeta = meta.badges;
@@ -272,6 +270,14 @@ export let TaxonDataItemView = {
         ? m("span.simple-value" + (filterMatches(data) ? ".found" : ""), data)
         : subitemsList,
     ]);
+  },
+
+  onupdate: function () {
+    document.querySelectorAll("a[data-citekey]").forEach((e) => {
+      e.onclick = () => {
+        routeTo("references/" + e.getAttribute("data-citekey"));
+      };
+    });
   },
 
   view: function (vnode) {

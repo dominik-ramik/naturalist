@@ -13,6 +13,7 @@
 @import "../view/TaxonView.css";
 @import "../view/AboutView.css";
 @import "../view/ManageView.css";
+@import "../view/LiteratureView.css";
 html,
 body {
     font-family: var(--font-normal);
