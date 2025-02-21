@@ -39,6 +39,8 @@ export let DataManager = function () {
       checklist.versions[lang.code] = compileChecklistVersion(lang);
     });
 
+    console.log(checklist);
+
     return checklist;
 
     function gatherReferences() {
@@ -173,7 +175,14 @@ export let DataManager = function () {
     function compileMeta(lang) {
       let meta = {
         taxa: {},
-        data: compileDataMeta(lang),
+        data: compileDataMeta(lang, [
+          data.sheets.content.tables.customDataDefinition.name,
+        ]),
+        media: compileDataMeta(lang, [data.sheets.content.tables.media.name]),
+        maps: compileDataMeta(lang, [data.sheets.content.tables.maps.name]),
+        accompanyingText: compileDataMeta(lang, [
+          data.sheets.content.tables.accompanyingText.name,
+        ]),
         mapRegions: {
           default: {
             suffix: "",
@@ -254,19 +263,26 @@ export let DataManager = function () {
       return meta;
     }
 
-    function compileDataMeta(lang) {
+    function compileDataMeta(lang, expectedDataTypes) {
       let allDataPaths = data.common.allUsedDataPaths[lang.code].sort();
 
       let meta = {};
-      meta["$$default-custom$$"] = {
-        datatype: "custom",
-        title: "",
-        searchCategory: "",
-        separator: "bullet list",
-        contentType: "text",
-        template: "",
-        placement: "bottom",
-      };
+
+      if (
+        expectedDataTypes.includes(
+          data.sheets.content.tables.customDataDefinition.name
+        )
+      ) {
+        meta["$$default-custom$$"] = {
+          datatype: "custom",
+          title: "",
+          searchCategory: "",
+          separator: "bullet list",
+          contentType: "text",
+          template: "",
+          placement: "bottom",
+        };
+      }
 
       data.common.getAllColumnInfos(lang.code).forEach(function (info) {
         // for each of allPaths which matches info.name
@@ -277,23 +293,27 @@ export let DataManager = function () {
           );
         });
 
+        if (!expectedDataTypes.includes(info.table)) {
+          return;
+        }
+
         matchingComputedDataPaths.forEach(function (computedDataPath) {
           if (info.role == "taxon") {
             return;
           }
           let dataType = "custom";
+
           if (
             info.table == data.sheets.content.tables.customDataDefinition.name
-          )
+          ) {
             dataType = "custom";
+          }
           if (info.table == data.sheets.content.tables.media.name)
             dataType = "media";
           if (info.table == data.sheets.content.tables.maps.name)
             dataType = "map";
           if (info.table == data.sheets.content.tables.accompanyingText.name)
             dataType = "text";
-          if (info.table == data.sheets.content.tables.references?.name)
-            dataType = "references";
 
           meta[computedDataPath] = {
             datatype: dataType,
@@ -310,17 +330,15 @@ export let DataManager = function () {
                 .integrity.defaultValue;
           }
 
-          switch (dataType) {
-            case "custom":
-              meta[computedDataPath].title = info.fullRow.title;
-              meta[computedDataPath].searchCategory =
-                info.fullRow.searchCategoryTitle;
-              meta[computedDataPath].searchCategoryOrder = [];
+          if (dataType == "custom") {
+            meta[computedDataPath].title = info.fullRow.title;
+            meta[computedDataPath].searchCategory =
+              info.fullRow.searchCategoryTitle;
+            meta[computedDataPath].searchCategoryOrder = [];
 
-              if (info.fullRow.searchCategoryTitle.trim() !== "") {
-                data.sheets.appearance.tables.searchOrder.data[
-                  lang.code
-                ].forEach(function (row) {
+            if (info.fullRow.searchCategoryTitle.trim() !== "") {
+              data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(
+                function (row) {
                   if (
                     row.columnName.toLowerCase() ==
                     computedDataPath.toLowerCase()
@@ -329,55 +347,52 @@ export let DataManager = function () {
                       row.values.toLowerCase()
                     );
                   }
-                });
-              }
+                }
+              );
+            }
 
-              meta[computedDataPath].separator = info.fullRow.subitemsSeparator;
-              meta[computedDataPath].contentType = info.fullRow.contentType;
-              meta[computedDataPath].template = info.fullRow.template;
-              meta[computedDataPath].placement = placement;
-              meta[computedDataPath].hidden = info.fullRow.hidden == "yes";
-              meta[computedDataPath].format = info.fullRow.formatting;
+            meta[computedDataPath].separator = info.fullRow.subitemsSeparator;
+            meta[computedDataPath].contentType = info.fullRow.contentType;
+            meta[computedDataPath].template = info.fullRow.template;
+            meta[computedDataPath].placement = placement;
+            meta[computedDataPath].hidden = info.fullRow.hidden == "yes";
+            meta[computedDataPath].format = info.fullRow.formatting;
 
-              if (info.fullRow.formatting.toLowerCase() == "badge") {
-                meta[computedDataPath].badges = [];
-                data.sheets.appearance.tables.badges.data[lang.code].forEach(
-                  function (badge) {
-                    if (
-                      dataPath.modify
-                        .itemNumbersToHash(badge.columnName)
-                        .toLowerCase() ==
-                      dataPath.modify
-                        .itemNumbersToHash(computedDataPath)
-                        .toLowerCase()
-                    ) {
-                      meta[computedDataPath].badges.push({
-                        contains: badge.containsText.toLowerCase(),
-                        background: badge.backgroundColor,
-                        text: badge.textColor,
-                        border: badge.borderColor,
-                      });
-                    }
+            if (info.fullRow.formatting.toLowerCase() == "badge") {
+              meta[computedDataPath].badges = [];
+              data.sheets.appearance.tables.badges.data[lang.code].forEach(
+                function (badge) {
+                  if (
+                    dataPath.modify
+                      .itemNumbersToHash(badge.columnName)
+                      .toLowerCase() ==
+                    dataPath.modify
+                      .itemNumbersToHash(computedDataPath)
+                      .toLowerCase()
+                  ) {
+                    meta[computedDataPath].badges.push({
+                      contains: badge.containsText.toLowerCase(),
+                      background: badge.backgroundColor,
+                      text: badge.textColor,
+                      border: badge.borderColor,
+                    });
                   }
-                );
-              }
-              break;
-            case "media":
-              meta[computedDataPath].type = info.fullRow.typeOfData;
-              meta[computedDataPath].title = info.fullRow.title;
-              meta[computedDataPath].link = info.fullRow.linkBase;
-              break;
-            case "map":
-              meta[computedDataPath].type = info.fullRow.mapType;
-              meta[computedDataPath].source = info.fullRow.source;
-              meta[computedDataPath].title = info.fullRow.mapTitle;
-              break;
-            case "text":
-              meta[computedDataPath].title = info.fullRow.title;
-              break;
-
-            default:
-              break;
+                }
+              );
+            }
+          }
+          if (dataType == "media") {
+            meta[computedDataPath].type = info.fullRow.typeOfData;
+            meta[computedDataPath].title = info.fullRow.title;
+            meta[computedDataPath].link = info.fullRow.linkBase;
+          }
+          if (dataType == "map") {
+            meta[computedDataPath].type = info.fullRow.mapType;
+            meta[computedDataPath].source = info.fullRow.source;
+            meta[computedDataPath].title = info.fullRow.mapTitle;
+          }
+          if (dataType == "text") {
+            meta[computedDataPath].title = info.fullRow.title;
           }
         });
       });
@@ -397,10 +412,12 @@ export let DataManager = function () {
         mapRow
       ) {
         let dataRow = table[0];
-        console.log(dataRow, mapRow.columnName)
+
         if (
           indexOfCaseInsensitive(dataRow, mapRow.columnName) < 0 &&
-          dataRow.findIndex((item) => item.toLowerCase().startsWith(mapRow.columnName.toLowerCase() + ".")) < 0 &&
+          dataRow.findIndex((item) =>
+            item.toLowerCase().startsWith(mapRow.columnName.toLowerCase() + ".")
+          ) < 0 &&
           indexOfCaseInsensitive(dataRow, mapRow.columnName + ":" + lang.code) <
             0
         ) {
@@ -1151,13 +1168,16 @@ export let DataManager = function () {
       }
     });
 
+    /*
     // All column names through all tables should be unique
+    //!!! this can be relaxed, no real reason to enforce this
     let uniqueColumnNames = {};
     data.common
       .getAllColumnInfos(data.common.languages.defaultLanguageCode)
       .forEach(function (item) {
         if (
-          Object.keys(uniqueColumnNames).indexOf(item.name.toLowerCase()) < 0
+          Object.keys(uniqueColumnNames).indexOf(item.name.toLowerCase()) < 0 ||
+          item.table == uniqueColumnNames[item.name.toLowerCase()].table
         ) {
           uniqueColumnNames[item.name.toLowerCase()] = item;
         } else {
@@ -1193,6 +1213,7 @@ export let DataManager = function () {
         );
       }
     });
+    */
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
       let table =

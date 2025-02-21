@@ -262,8 +262,7 @@ export let Checklist = {
   //precompiled Handlebars templates saved as dataPath key and template as a value ... precompiled during loadData
   handlebarsTemplates: {},
 
-  loadData: function (jsonData, isDraft) {    
-
+  loadData: function (jsonData, isDraft) {
     if (
       jsonData === undefined ||
       jsonData === null ||
@@ -917,8 +916,11 @@ export let Checklist = {
     return this.getData().meta.taxa;
   },
 
-  getDataMeta: function () {
-    return this.getData().meta.data;
+  getDataMeta: function (dataType) {
+    if (dataType === undefined) {
+      return this.getData().meta.data;
+    }
+    return this.getData().meta[dataType];
   },
   getMapRegionsMeta: function (returnDefault) {
     if (returnDefault) {
@@ -1171,38 +1173,46 @@ export let Checklist = {
       return tabs;
     }
 
-    Object.keys(Checklist.getDataMeta()).forEach(function (metaKey) {
-      let meta = Checklist.getDataMeta()[metaKey];
-      if (meta.hasOwnProperty("datatype") && meta.datatype != "custom") {
-        if (taxon.d.hasOwnProperty(metaKey)) {
-          let mediaData = taxon.d[metaKey];
+    const metaToConsider = ["media", "maps", "accompanyingText"]
 
-          if (meta.datatype == "media") {
-            let cleanedMediaData = [];
+    metaToConsider.forEach(function(metaId){
 
-            mediaData.forEach(function (item) {
-              if (
-                item === undefined ||
-                item === null ||
-                item.source.trim() == ""
-              ) {
+      const currentMeta = Checklist.getDataMeta(metaId)
+
+      Object.keys(currentMeta).forEach(function (metaKey) {
+        let meta = currentMeta[metaKey];
+        if (meta.hasOwnProperty("datatype") && meta.datatype != "custom") {
+          if (taxon.d.hasOwnProperty(metaKey)) {
+            let mediaData = taxon.d[metaKey];
+  
+            if (meta.datatype == "media") {
+              let cleanedMediaData = [];
+  
+              mediaData.forEach(function (item) {
+                if (
+                  item === undefined ||
+                  item === null ||
+                  item.source.trim() == ""
+                ) {
+                  return;
+                }
+                cleanedMediaData.push(item);
+              });
+  
+              if (cleanedMediaData.length == 0) {
                 return;
               }
-              cleanedMediaData.push(item);
-            });
-
-            if (cleanedMediaData.length == 0) {
-              return;
             }
+  
+            if (Object.keys(tabs).indexOf(meta.datatype) < 0) {
+              tabs[meta.datatype] = [];
+            }
+            tabs[meta.datatype].push(metaKey);
           }
-
-          if (Object.keys(tabs).indexOf(meta.datatype) < 0) {
-            tabs[meta.datatype] = [];
-          }
-          tabs[meta.datatype].push(metaKey);
         }
-      }
-    });
+      });
+    })
+
 
     Object.keys(taxon.d).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);

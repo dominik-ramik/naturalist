@@ -94,6 +94,8 @@
 .image-wrap.fullscreen object {
     max-height: 100vh !important;
     max-width: 100vw !important;
+    height: 100vh !important;
+    width: 100vw !important;
     margin: auto !important;
     z-index: 999;
 }
@@ -203,8 +205,8 @@
 
 .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
     min-height: 5em;
-    max-height: 20em;
-    max-width: 24em;
+    max-height: 25em;
+    max-width: 25em;
 }
 
 .app.mobile .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
