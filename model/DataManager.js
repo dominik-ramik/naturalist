@@ -42,9 +42,10 @@ export let DataManager = function () {
 
     async function gatherReferences() {
       const bibtexUrl = data.common.getItem(
+        log,
         data.sheets.appearance.tables.customization.data,
         "References BibTeX file URL",
-        lang.code,
+        lang,
         ""
       );
 
@@ -107,37 +108,52 @@ export let DataManager = function () {
 
     function compileChecklistVersion(lang) {
       let hue = data.common.getItem(
+        log,
         data.sheets.appearance.tables.customization.data,
         "Color theme hue",
         lang.code,
         212
       );
       let name = data.common.getItem(
+        log,
         data.sheets.appearance.tables.customization.data,
         "Checklist name",
         lang.code,
         "Checklist"
       );
       let about = data.common.getItem(
+        log,
         data.sheets.appearance.tables.customization.data,
         "About section",
         lang.code,
         _t("generic_about")
       );
       let dateFormat = data.common.getItem(
+        log,
         data.sheets.appearance.tables.customization.data,
         "Date format",
         lang.code,
         "YYYY-MM-DD"
       );
+      let bibtexUrl = data.common
+        .getItem(
+          log,
+          data.sheets.appearance.tables.customization.data,
+          "References BibTeX file URL",
+          lang.code,
+          ""
+        )
+        ?.toLowerCase();
       let citationStyle = data.common
         .getItem(
+          log,
           data.sheets.appearance.tables.customization.data,
           "Citation style",
           lang.code,
           "apa"
         )
         ?.toLowerCase();
+
 
       let version = {
         languageName: lang.name,
@@ -731,6 +747,7 @@ export let DataManager = function () {
                 let date = stringValue;
 
                 let dateFormat = data.common.getItem(
+                  log,
                   data.sheets.appearance.tables.customization.data,
                   "Date format",
                   lang.code,
