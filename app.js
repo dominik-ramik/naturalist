@@ -154,7 +154,7 @@ function runApp() {
       let parsed = "";
       try {
         parsed = JSON.parse(compressor.decompress(xhr.responseText));
-        //console.log(parsed);
+        console.log(parsed);
       } catch (ex) {
         console.log("Error parsing: ", ex);
       }

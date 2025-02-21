@@ -13,6 +13,7 @@ export let DataManager = function () {
 
   function compileChecklist() {
     let currentDate = new Date();
+
     let currentDateString =
       currentDate.getFullYear() +
       "-" +
@@ -40,12 +41,12 @@ export let DataManager = function () {
 
     return checklist;
 
-    async function gatherReferences() {
+    function gatherReferences() {
       const bibtexUrl = data.common.getItem(
         log,
         data.sheets.appearance.tables.customization.data,
         "References BibTeX file URL",
-        lang,
+        data.common.languages.defaultLanguageCode, //only support bibtex in default language code
         ""
       );
 
@@ -53,14 +54,21 @@ export let DataManager = function () {
         return {};
       }
 
-      let dataRequest = new Request(bibtexUrl, {
-        method: "GET",
-        cache: "reload",
-      });
+      let bibtexfile = "";
 
-      const response = await fetch(dataRequest);
-      const bibtexfile = await response.json();
-      console.log("BIB", bibtexfile);
+      try {
+        //not using fetch here to keep this simple and synchronous
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", bibtexUrl, false);
+        xhr.send(null);
+        if (xhr.status === 200) {
+          bibtexfile = xhr.responseText;
+        } else {
+          throw new Error("Request failed: " + xhr.statusText);
+        }
+      } catch (error) {
+        console.error("Error:", error.message);
+      }
 
       let bibReader = null;
       try {
@@ -135,15 +143,6 @@ export let DataManager = function () {
         lang.code,
         "YYYY-MM-DD"
       );
-      let bibtexUrl = data.common
-        .getItem(
-          log,
-          data.sheets.appearance.tables.customization.data,
-          "References BibTeX file URL",
-          lang.code,
-          ""
-        )
-        ?.toLowerCase();
       let citationStyle = data.common
         .getItem(
           log,
@@ -154,7 +153,6 @@ export let DataManager = function () {
         )
         ?.toLowerCase();
 
-
       let version = {
         languageName: lang.name,
         fallbackUiLang: lang.fallbackLanguage,
@@ -162,7 +160,6 @@ export let DataManager = function () {
         name: name,
         about: about,
         dateFormat: dateFormat,
-        bibtexUrl: bibtexUrl,
         citationStyle: citationStyle.toLowerCase(),
         dataset: {
           meta: compileMeta(lang),
@@ -400,8 +397,10 @@ export let DataManager = function () {
         mapRow
       ) {
         let dataRow = table[0];
+        console.log(dataRow, mapRow.columnName)
         if (
           indexOfCaseInsensitive(dataRow, mapRow.columnName) < 0 &&
+          dataRow.findIndex((item) => item.toLowerCase().startsWith(mapRow.columnName.toLowerCase() + ".")) < 0 &&
           indexOfCaseInsensitive(dataRow, mapRow.columnName + ":" + lang.code) <
             0
         ) {

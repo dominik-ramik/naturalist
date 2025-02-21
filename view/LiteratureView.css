@@ -6,7 +6,9 @@
 
 .biblio ul li {
   margin-bottom: 0.5em;
-  text-indent: -1em;
-  margin-left: 1em;
+  text-indent: -2em;
+  margin-left: 2em;
   user-select: text;
+  font-size: 120%;
+  line-height: 140%;
 }

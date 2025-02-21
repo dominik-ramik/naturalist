@@ -185,14 +185,16 @@ export let Checklist = {
 
   _bibFormatter: null,
 
-  getBibliographyKeys: function(){
-    return Object.keys(this._data.general.bibliography)
+  getBibliographyKeys: function () {
+    return Object.keys(this._data.general.bibliography);
   },
 
   getBibFormatter: function () {
     if (this._bibFormatter === null) {
       const formatter = new TinyBibFormatter(this._data.general.bibliography, {
-        style: Checklist._data.versions[Checklist.getCurrentLanguage()].citationStyle,
+        style:
+          Checklist._data.versions[Checklist.getCurrentLanguage()]
+            .citationStyle,
         format: "markdown",
       });
       this._bibFormatter = formatter;
@@ -260,7 +262,8 @@ export let Checklist = {
   //precompiled Handlebars templates saved as dataPath key and template as a value ... precompiled during loadData
   handlebarsTemplates: {},
 
-  loadData: function (jsonData, isDraft) {
+  loadData: function (jsonData, isDraft) {    
+
     if (
       jsonData === undefined ||
       jsonData === null ||
