@@ -62,6 +62,13 @@ span.simple-value p {
   white-space: pre;
 }
 
+.data-item-view .map-regions-data {
+  display: inline;
+}
+.data-item-view .map-regions-data p {
+  display: inline;
+}
+
 .found {
   background-color: #ffa50047;
   border-radius: var(--pad-large);

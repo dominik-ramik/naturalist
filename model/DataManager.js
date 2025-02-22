@@ -255,6 +255,7 @@ export let DataManager = function () {
               suffix: row.suffix,
               fill: row.fillColor,
               legend: row.legend,
+              appendedLegend: row.appendedLegend
             });
           }
         }

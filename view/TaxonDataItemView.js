@@ -27,6 +27,25 @@ export let TaxonDataItemView = {
       });
     }
 
+    if (meta.contentType == "map regions") {
+      const mapRegionsSuffixes = Checklist.getDataMeta("mapRegions").suffixes;
+
+      const renderedRegions = Object.keys(data)
+        .filter((key) => data[key] != "")
+        .map((key) => {
+          const regionData = data[key];
+          const appendedLegend = mapRegionsSuffixes.find(
+            (item) => item.suffix == regionData
+          ).appendedLegend;
+
+          let meta = Checklist.getMetaForDataPath(dataPath + "." + key);
+
+          return "**" + meta.title + "**" + appendedLegend;
+        });
+
+      return m(".map-regions-data", m.trust(marked.parse(renderedRegions.join(", "))));
+    }
+
     let listDisplayType = "span.bullet-list";
     let listSeparator = "";
     let isRealList = true;
@@ -72,19 +91,21 @@ export let TaxonDataItemView = {
 
       let result = m(
         listDisplayType,
-        data.filter(item => item !== null && item != "").map(function (item, counter) {
-          let titleValue = TaxonDataItemView.titleValuePair(
-            item,
-            dataPath + (counter + 1),
-            taxon,
-            isRealList || counter == dataLength - 1 ? null : listSeparator
-          );
-          if (titleValue === null) {
-            nullValuesCount++;
-          }
-          totalValuesCount++;
-          return titleValue;
-        })
+        data
+          .filter((item) => item !== null && item != "")
+          .map(function (item, counter) {
+            let titleValue = TaxonDataItemView.titleValuePair(
+              item,
+              dataPath + (counter + 1),
+              taxon,
+              isRealList || counter == dataLength - 1 ? null : listSeparator
+            );
+            if (titleValue === null) {
+              nullValuesCount++;
+            }
+            totalValuesCount++;
+            return titleValue;
+          })
       );
       if (nullValuesCount == totalValuesCount) {
         return null;
@@ -96,20 +117,21 @@ export let TaxonDataItemView = {
 
       let result = m(
         listDisplayType,
-        Object.getOwnPropertyNames(data).filter(key => data[key] !== null && data[key] != "").map(function (item, counter) {
-          
-          let titleValue = TaxonDataItemView.titleValuePair(
-            data[item],
-            dataPath + "." + item,
-            taxon,
-            isRealList || counter == dataLength - 1 ? null : listSeparator
-          );
-          if (titleValue === null) {
-            nullValuesCount++;
-          }
-          totalValuesCount++;
-          return titleValue;
-        })
+        Object.getOwnPropertyNames(data)
+          .filter((key) => data[key] !== null && data[key] != "")
+          .map(function (item, counter) {
+            let titleValue = TaxonDataItemView.titleValuePair(
+              data[item],
+              dataPath + "." + item,
+              taxon,
+              isRealList || counter == dataLength - 1 ? null : listSeparator
+            );
+            if (titleValue === null) {
+              nullValuesCount++;
+            }
+            totalValuesCount++;
+            return titleValue;
+          })
       );
       if (nullValuesCount == totalValuesCount) {
         return null;
