@@ -13,6 +13,11 @@ export let TaxonDataItemView = {
   ) {
     let meta = Checklist.getMetaForDataPath(dataPath);
 
+    if (meta == null) {
+      console.log("null", dataPath);
+      return null;
+    }
+
     if (meta.contentType == "taxon") {
       if (data.n.trim() == "") {
         return null;
@@ -43,7 +48,14 @@ export let TaxonDataItemView = {
           return "**" + meta.title + "**" + appendedLegend;
         });
 
-      return m(".map-regions-data", m.trust(marked.parse(renderedRegions.join(", "))));
+      if (renderedRegions.length == 0) {
+        return null;
+      }
+
+      return m(
+        ".map-regions-data",
+        m.trust(marked.parse(renderedRegions.join(", ")))
+      );
     }
 
     let listDisplayType = "span.bullet-list";

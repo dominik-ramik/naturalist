@@ -269,6 +269,7 @@ export let DataManager = function () {
 
       let meta = {};
 
+      /*
       if (
         expectedDataTypes.includes(
           data.sheets.content.tables.customDataDefinition.name
@@ -284,6 +285,7 @@ export let DataManager = function () {
           placement: "bottom",
         };
       }
+        */
 
       data.common.getAllColumnInfos(lang.code).forEach(function (info) {
         // for each of allPaths which matches info.name

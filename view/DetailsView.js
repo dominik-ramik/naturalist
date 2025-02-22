@@ -341,7 +341,10 @@ function TabMap(tabData, taxon, taxonName) {
                     let presentRegionsMetaSuffixes = [];
                     let mapRegionsSplit = [];
 
-                    if (!Array.isArray(media.regions) && typeof media.regions === "object") {
+                    if (
+                      !Array.isArray(media.regions) &&
+                      typeof media.regions === "object"
+                    ) {
                       let reformattedMediaRegions = "";
                       //transform to linear notation
                       for (const [key, value] of Object.entries(
@@ -357,6 +360,11 @@ function TabMap(tabData, taxon, taxonName) {
 
                     if (media.regions && media.regions.split(" ").length > 0) {
                       mapRegionsSplit = media.regions.split(" ");
+                    }
+
+                    if (mapRegionsSplit.length == 0) {
+                      //dont' show any map if there is no region data
+                      return null;
                     }
 
                     []

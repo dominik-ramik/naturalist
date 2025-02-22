@@ -1059,8 +1059,10 @@ export let Checklist = {
     if (this.getData().meta.data.hasOwnProperty(dataPath)) {
       return this.getData().meta.data[dataPath];
     }
-    console.log("Metadata not found for " + dataPath);
-    return this.getData().meta.data["$$default-custom$$"];
+    
+    //data not intended to be shown in view
+    return null
+    //return this.getData().meta.data["$$default-custom$$"];
   },
 
   getTaxonLevelMeta(levelOrDataPath) {
@@ -1153,6 +1155,10 @@ export let Checklist = {
     Object.keys(taxon.data).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);
 
+      if(meta === null){
+        return
+      }
+
       if (meta.hasOwnProperty("datatype") && meta.datatype === "custom") {
         if (meta.hasOwnProperty("placement")) {
           if (meta.placement == "auto") {
@@ -1215,14 +1221,17 @@ export let Checklist = {
 
             if (
               meta.datatype == "map" &&
-              typeof mediaData === "object" &&
+              (typeof mediaData === "object" || typeof mediaData == "string") &&
               !Array.isArray(mediaData)
             ) {
               let cleanedMediaData = [];
-
+              
+              if(typeof mediaData == "string" && mediaData.trim() == ""){
+                return;
+              }
+              
               Object.keys(mediaData).forEach(function (key) {
                 const item = mediaData[key];
-
                 if (item === undefined || item === null || item.trim() == "") {
                   return;
                 }
@@ -1264,6 +1273,10 @@ export let Checklist = {
 
     Object.keys(taxon.d).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);
+
+      if(meta === null){
+        return
+      }
 
       if (meta.hasOwnProperty("datatype") && meta.datatype !== "custom") {
       }
