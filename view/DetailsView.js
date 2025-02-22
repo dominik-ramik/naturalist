@@ -37,8 +37,8 @@ export let DetailsView = {
     }
 
     return m(".details", [
-      m(".details-taxon-zone", DetailsView.taxonName),
       m(".details-taxon-crumbs-zone", taxonomyCrumbs(DetailsView.taxonName)),
+      m(".details-taxon-zone", DetailsView.taxonName),
       m(TabsContainer, {
         tabs: TabsForDetails(
           Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
@@ -59,11 +59,13 @@ function taxonomyCrumbs(taxonName) {
       return null;
     }
     return m(".details-taxon-crumb", [
+      /* Experimental hide names
       m(
         ".crumb-taxon-level",
         Checklist.getTaxaMeta()[Object.keys(Checklist.getTaxaMeta())[index]]
           .name
       ),
+      */
       m(".crumb-taxon-name-wrap", [
         m(".crumb-taxon-name", taxonName.n),
         taxonName.a == "" ? null : m(".crumb-taxon-authority", taxonName.a),
