@@ -193,7 +193,7 @@
 
 /* MAPS TAB */
 
-.tabs-container-content-map .media-map-set {
+.tabs-container-content-map .media-map-set:not(:last-child) {
     padding-bottom: var(--pad-large);
     margin-bottom: var(--pad-large);
     border-bottom: 1px solid #c9c9c9;
@@ -205,8 +205,8 @@
 
 .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
     min-height: 5em;
-    max-height: 25em;
-    max-width: 25em;
+    max-height: 28em;
+    max-width: 28em;
 }
 
 .app.mobile .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
@@ -229,6 +229,7 @@
     width: 100%;
     padding: var(--pad-large);
     font-size: 75%;
+    justify-content: center;
 }
 
 .tabs-container-content-map .legend .legend-item {

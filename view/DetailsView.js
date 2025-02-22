@@ -339,9 +339,7 @@ function TabMap(tabData, taxon, taxonName) {
                     let presentRegionsMetaSuffixes = [];
                     let mapRegionsSplit = [];
 
-                    console.log(media.regions);
-
-                    if (typeof media.regions === "object") {
+                    if (!Array.isArray(media.regions) && typeof media.regions === "object") {
                       let reformattedMediaRegions = "";
                       //transform to linear notation
                       for (const [key, value] of Object.entries(
@@ -353,7 +351,6 @@ function TabMap(tabData, taxon, taxonName) {
                       }
 
                       media.regions = reformattedMediaRegions.trim();
-                      console.log(media.regions);
                     }
 
                     if (media.regions && media.regions.split(" ").length > 0) {
@@ -447,8 +444,6 @@ function TabMap(tabData, taxon, taxonName) {
                             objectElement.contentDocument.getElementsByClassName(
                               suffixlessRegionCode
                             );
-
-                          console.log(suffixlessRegionCode);
 
                           if (regionElements.length > 0) {
                             for (

@@ -214,7 +214,7 @@ export let TaxonDataItemView = {
         data = marked.parse(data);
         //in case markdown introduced some dirt, purify it again
         data = DOMPurify.sanitize(data);
-        data = data + (tailingSeparator ? tailingSeparator : "");
+        data = data.trim() + (tailingSeparator ? tailingSeparator : "");
         data = m.trust(data);
       } else if (meta.format == "badge") {
         let badgeMeta = meta.badges;
@@ -250,7 +250,7 @@ export let TaxonDataItemView = {
           );
         }
       } else {
-        data = data + (tailingSeparator ? tailingSeparator : "");
+        data = data.trim() + (tailingSeparator ? tailingSeparator : "");
       }
     }
 
