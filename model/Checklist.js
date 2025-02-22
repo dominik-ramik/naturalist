@@ -677,26 +677,6 @@ export let Checklist = {
             return;
           }
 
-          const template =
-            Checklist.getDataMeta()[currentPath + "." + key]?.template;
-
-          if (template && taxonData[key] && taxonData[key] != "") {
-            const cacheKey = currentPath + "." + key + ":" + taxonData[key];
-
-            if (Checklist.leafDataRenderCache[cacheKey] === undefined) {
-              let dataObject = Checklist.getDataObjectForHandlebars(
-                taxonData[key]
-              );
-              const transformedData = Handlebars.compile(template)(dataObject);
-
-              Checklist.leafDataRenderCache[cacheKey] = transformedData;
-            }
-
-            const transformed = Checklist.leafDataRenderCache[cacheKey];
-            data.push(transformed);
-            return;
-          }
-
           data = data.concat(
             Checklist.getAllLeafData(
               taxonData[key],

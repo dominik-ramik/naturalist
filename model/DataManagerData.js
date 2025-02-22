@@ -21,6 +21,9 @@ export let nlDataStructure = {
               if (row.contentType == "taxon") {
                 type = "taxon";
               }
+              if (row.contentType == "map regions") {
+                type = "map regions";
+              }
               if (tableKey == "taxa") {
                 type = "taxon"; //can have .name and .authority
                 role = "taxon";
@@ -343,6 +346,19 @@ export let nlDataStructure = {
                 supportsMultilingual: true,
               },
             },
+            appendedLegend: {
+              name: "Appended legend",
+              description:
+                "The content of this column will appended directly after the 'Title' field of subitems if you chose the 'map regions' content type in 'Custom data definition'.",
+              integrity: {
+                description:
+                  "Any text",
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: true,
+              },
+            },
           },
         },
         searchOrder: {
@@ -531,7 +547,7 @@ export let nlDataStructure = {
                 defaultValue: "text",
                 allowDuplicates: "yes",
                 allowedContent: "list",
-                listItems: ["text", "number", "taxon", "date", ""],
+                listItems: ["text", "number", "taxon", "date", "map regions", ""],
                 supportsMultilingual: false,
               },
             },
