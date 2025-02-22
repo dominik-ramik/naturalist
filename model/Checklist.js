@@ -39,7 +39,7 @@ export let Checklist = {
       ["taxa", "data"].forEach(function (type) {
         if (query[type]) {
           Object.keys(query[type]).forEach(function (dataPath) {
-            if (Checklist.filter[type][dataPath].type == "text") {
+            if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
               Checklist.filter[type][dataPath].selected = query[type][dataPath];
             } else if (Checklist.filter[type][dataPath].type == "number") {
               Checklist.filter[type][dataPath].numeric.operation =
@@ -75,7 +75,7 @@ export let Checklist = {
       let countFilters = 0;
       ["taxa", "data"].forEach(function (type) {
         Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-          if (Checklist.filter[type][dataPath].type == "text") {
+          if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
             countFilters += Checklist.filter[type][dataPath].selected.length;
           } else if (Checklist.filter[type][dataPath].type == "number") {
             if (Checklist.filter[type][dataPath].numeric.operation != "") {
@@ -381,7 +381,8 @@ export let Checklist = {
             }
 
             let leafData = Checklist.getAllLeafData(value, false, dataPath);
-            if (Checklist.filter[dataType][dataPath].type == "text") {
+
+            if (Checklist.filter[dataType][dataPath].type == "text" || Checklist.filter[dataType][dataPath].type == "map regions") {
               leafData.forEach(function (value) {
                 if (
                   Checklist.filter[dataType][dataPath].all.indexOf(value) < 0
@@ -501,7 +502,7 @@ export let Checklist = {
         if (Checklist.filter.delayCommitDataPath == dataType + "." + dataPath) {
           return; //delay this dataPath
         } else {
-          if (Checklist.filter[dataType][dataPath].type == "text") {
+          if (Checklist.filter[dataType][dataPath].type == "text" || Checklist.filter[dataType][dataPath].type == "map regions") {
             Checklist.filter[dataType][dataPath].possible = {};
           }
           if (Checklist.filter[dataType][dataPath].type == "number") {
@@ -523,7 +524,7 @@ export let Checklist = {
           return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
         }
         let value = taxon.t[index].n; // !!! we suppose here that in filter taxa keys are ordered in order of appearance in "t" section
-        if (Checklist.filter.taxa[dataPath].type == "text") {
+        if (Checklist.filter.taxa[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
           if (!Checklist.filter.taxa[dataPath].possible.hasOwnProperty(value)) {
             Checklist.filter.taxa[dataPath].possible[value] = 0;
           }
@@ -543,7 +544,7 @@ export let Checklist = {
         }
 
         let leafData = Checklist.getAllLeafData(value, false, dataPath);
-        if (Checklist.filter.data[dataPath].type == "text") {
+        if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
           leafData.forEach(function (value) {
             if (value.trim() == "") {
               return;
@@ -661,6 +662,11 @@ export let Checklist = {
 
   getAllLeafData: function (taxonData, includeAuthorities, currentPath = "") {
     let data = [];
+    
+    if(Checklist.getDataMeta()[currentPath]?.contentType == "map regions"){
+      data = Object.keys(taxonData).filter(item => taxonData[item] != "").map(item => Checklist.getDataMeta()[currentPath + "." + item].title)
+      return data;
+    }
 
     if (Array.isArray(taxonData)) {
       taxonData.forEach(function (item) {
@@ -719,7 +725,7 @@ export let Checklist = {
     let key = { taxa: {}, data: {} };
     Object.keys(key).forEach(function (type) {
       Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-        if (Checklist.filter[type][dataPath].type == "text") {
+        if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
           if (Checklist.filter[type][dataPath].selected.length > 0) {
             key[type][dataPath] = [];
           }
@@ -850,7 +856,7 @@ export let Checklist = {
         });
 
         Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
-          if (Checklist.filter.data[dataPath].type == "text") {
+          if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
             if (Checklist.filter.data[dataPath].selected.length == 0) {
               return;
             }
@@ -861,7 +867,7 @@ export let Checklist = {
           }
 
           let foundAny = false;
-          if (Checklist.filter.data[dataPath].type == "text") {
+          if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
             Checklist.filter.data[dataPath].selected.forEach(function (
               selectedItem
             ) {

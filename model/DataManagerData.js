@@ -349,7 +349,7 @@ export let nlDataStructure = {
             appendedLegend: {
               name: "Appended legend",
               description:
-                "The content of this column will appended directly after the 'Title' field of subitems if you chose the 'map regions' content type in 'Custom data definition'.",
+                "The content of this column will appended directly after the 'Title' field of subitems if you chose the 'map regions' content type in 'Custom data definition'. Field supports markdown.",
               integrity: {
                 description:
                   "Any text",

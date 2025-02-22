@@ -54,10 +54,6 @@ export let FilterDropdown = function(initialVnode) {
             this.attachMenuClosingEventListener();
         },
         view: function(vnode) {
-            if (dataPath == "size.wingspan.male") {
-                //_open = true;
-            }
-
             let detectedUiType = "text";
 
             if (type == "data" && Checklist.getDataMeta()[dataPath].contentType == "number") {
@@ -140,6 +136,7 @@ let Dropdown = function(initialVnode) {
         },
         view: function(vnode) {
             let innerDropdown = null;
+
             switch (vnode.attrs.ui) {
                 case "text":
                     innerDropdown = m(DropdownText, { openHandler: vnode.attrs.openHandler, type: type, dataPath: dataPath, color: vnode.attrs.color, dropdownId: dropdownId });
