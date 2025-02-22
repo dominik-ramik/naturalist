@@ -1173,21 +1173,48 @@ export let Checklist = {
       return tabs;
     }
 
-    const metaToConsider = ["media", "maps", "accompanyingText"]
+    const metaToConsider = ["media", "maps", "accompanyingText"];
 
-    metaToConsider.forEach(function(metaId){
-
-      const currentMeta = Checklist.getDataMeta(metaId)
+    metaToConsider.forEach(function (metaId) {
+      const currentMeta = Checklist.getDataMeta(metaId);
 
       Object.keys(currentMeta).forEach(function (metaKey) {
         let meta = currentMeta[metaKey];
         if (meta.hasOwnProperty("datatype") && meta.datatype != "custom") {
           if (taxon.d.hasOwnProperty(metaKey)) {
             let mediaData = taxon.d[metaKey];
-  
+
+            console.log(meta);
+            console.log(mediaData);
+
+            if (
+              meta.datatype == "map" &&
+              typeof mediaData === "object" &&
+              !Array.isArray(mediaData)
+            ) {
+              let cleanedMediaData = [];
+
+              Object.keys(mediaData).forEach(function (key) {
+                const item = mediaData[key];
+
+                if (
+                  item === undefined ||
+                  item === null ||
+                  item.trim() == ""
+                ) {
+                  return;
+                }
+                cleanedMediaData.push(item);
+              });
+
+              if (cleanedMediaData.length == 0) {
+                return;
+              }
+            }
+
             if (meta.datatype == "media") {
               let cleanedMediaData = [];
-  
+
               mediaData.forEach(function (item) {
                 if (
                   item === undefined ||
@@ -1198,12 +1225,12 @@ export let Checklist = {
                 }
                 cleanedMediaData.push(item);
               });
-  
+
               if (cleanedMediaData.length == 0) {
                 return;
               }
             }
-  
+
             if (Object.keys(tabs).indexOf(meta.datatype) < 0) {
               tabs[meta.datatype] = [];
             }
@@ -1211,8 +1238,7 @@ export let Checklist = {
           }
         }
       });
-    })
-
+    });
 
     Object.keys(taxon.d).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);
