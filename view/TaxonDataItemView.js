@@ -180,7 +180,7 @@ export let TaxonDataItemView = {
             taxon = current taxon with convenience rendering
             data = current data of this taxon
             */
-      if (meta.template != "") {
+      if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
         let templateData = Checklist.getDataObjectForHandlebars(
           data,
           TaxonDataItemView.originalData,

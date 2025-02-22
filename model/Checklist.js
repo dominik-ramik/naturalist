@@ -8,6 +8,9 @@ import {
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
 import { TinyBibFormatter } from "../lib/TinyBibMD.js";
+import { dataPath } from "./DataManager.js";
+
+const templateResultSuffix = "$$templateresult";
 
 export let Checklist = {
   getData: function () {
@@ -377,7 +380,7 @@ export let Checklist = {
               return;
             }
 
-            let leafData = Checklist.getAllLeafData(value);
+            let leafData = Checklist.getAllLeafData(value, false, dataPath);
             if (Checklist.filter[dataType][dataPath].type == "text") {
               leafData.forEach(function (value) {
                 if (
@@ -539,12 +542,8 @@ export let Checklist = {
           return; //when there is no data associated with the dataPath
         }
 
-        let leafData = Checklist.getAllLeafData(value);
+        let leafData = Checklist.getAllLeafData(value, false, dataPath);
         if (Checklist.filter.data[dataPath].type == "text") {
-          if (dataPath == "biostatus" && 1 == 2) {
-            console.log("FF", dataPath, value, leafData);
-          }
-
           leafData.forEach(function (value) {
             if (value.trim() == "") {
               return;
@@ -658,22 +657,56 @@ export let Checklist = {
     }
   },
 
-  getAllLeafData: function (taxonData, includeAuthorities) {
+  leafDataRenderCache: {},
+
+  getAllLeafData: function (taxonData, includeAuthorities, currentPath = "") {
     let data = [];
 
     if (Array.isArray(taxonData)) {
       taxonData.forEach(function (item) {
-        data = data.concat(Checklist.getAllLeafData(item));
+        data = data.concat(
+          Checklist.getAllLeafData(item, includeAuthorities, currentPath + "#")
+        );
       });
     } else if (typeof taxonData === "object") {
       if (taxonData.hasOwnProperty("n") && taxonData.hasOwnProperty("a")) {
         data.push(taxonData.n + (includeAuthorities ? " " + taxonData.a : ""));
       } else {
         Object.keys(taxonData).forEach(function (key) {
-          data = data.concat(Checklist.getAllLeafData(taxonData[key]));
+          if (taxonData[key] == "") {
+            return;
+          }
+
+          const template =
+            Checklist.getDataMeta()[currentPath + "." + key]?.template;
+
+          if (template && taxonData[key] && taxonData[key] != "") {
+            const cacheKey = currentPath + "." + key + ":" + taxonData[key];
+
+            if (Checklist.leafDataRenderCache[cacheKey] === undefined) {
+              let dataObject = Checklist.getDataObjectForHandlebars(
+                taxonData[key]
+              );
+              const transformedData = Handlebars.compile(template)(dataObject);
+
+              Checklist.leafDataRenderCache[cacheKey] = transformedData;
+            }
+
+            const transformed = Checklist.leafDataRenderCache[cacheKey];
+            data.push(transformed);
+            return;
+          }
+
+          data = data.concat(
+            Checklist.getAllLeafData(
+              taxonData[key],
+              includeAuthorities,
+              currentPath + "." + key
+            )
+          );
         });
       }
-    } else {
+    } else if (taxonData != "") {
       data.push(taxonData);
     }
 
@@ -857,7 +890,7 @@ export let Checklist = {
                 return;
               }
 
-              let leafData = Checklist.getAllLeafData(data, true);
+              let leafData = Checklist.getAllLeafData(data, true, dataPath);
               leafData.forEach(function (leafDataItem) {
                 if (selectedItem == leafDataItem) {
                   foundAny = true;
@@ -1031,6 +1064,12 @@ export let Checklist = {
   },
 
   getMetaForDataPath: function (dataPath) {
+    if (dataPath.endsWith(templateResultSuffix)) {
+      dataPath = dataPath.substring(
+        0,
+        dataPath.length - templateResultSuffix.length
+      );
+    }
     if (this.getData().meta.data.hasOwnProperty(dataPath)) {
       return this.getData().meta.data[dataPath];
     }
