@@ -98,8 +98,6 @@ export let TaxonDataItemView = {
         listDisplayType,
         Object.getOwnPropertyNames(data).filter(key => data[key] !== null && data[key] != "").map(function (item, counter) {
           
-          console.log(item, data[item])
-          
           let titleValue = TaxonDataItemView.titleValuePair(
             data[item],
             dataPath + "." + item,

@@ -546,6 +546,10 @@ export let Checklist = {
           }
 
           leafData.forEach(function (value) {
+            if (value.trim() == "") {
+              return;
+            }
+
             if (
               !Checklist.filter.data[dataPath].possible.hasOwnProperty(value)
             ) {
@@ -1184,9 +1188,6 @@ export let Checklist = {
           if (taxon.d.hasOwnProperty(metaKey)) {
             let mediaData = taxon.d[metaKey];
 
-            console.log(meta);
-            console.log(mediaData);
-
             if (
               meta.datatype == "map" &&
               typeof mediaData === "object" &&
@@ -1197,11 +1198,7 @@ export let Checklist = {
               Object.keys(mediaData).forEach(function (key) {
                 const item = mediaData[key];
 
-                if (
-                  item === undefined ||
-                  item === null ||
-                  item.trim() == ""
-                ) {
+                if (item === undefined || item === null || item.trim() == "") {
                   return;
                 }
                 cleanedMediaData.push(item);
