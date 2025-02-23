@@ -21,7 +21,7 @@ export let DetailsView = {
     DetailsView.taxonName = m.route.param("taxon")
       ? m.route.param("taxon")
       : "";
-    let activeTab = Settings.defaultDetailsTab;
+
     let path = location.hash;
     if (path.indexOf("?") > 0 && path.indexOf("/details/") >= 0) {
       path = path.substring(0, path.indexOf("?"));
@@ -125,6 +125,10 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
         break;
     }
 
+    if (tabData == null) {
+      return;
+    }
+
     tabs[key] = new TabsContainerTab(tabData, icon, title, onClickCallback);
   });
 
@@ -135,8 +139,8 @@ function TabMedia(tabData, taxon, taxonName) {
   let mediaRenderingData = {};
 
   //content
-  Object.keys(Checklist.getDataMeta()).forEach(function (metaKey) {
-    let meta = Checklist.getDataMeta()[metaKey];
+  Object.keys(Checklist.getDataMeta("media")).forEach(function (metaKey) {
+    let meta = Checklist.getDataMeta("media")[metaKey];
     if (meta.datatype == "media") {
       if (tabData.indexOf(metaKey) >= 0) {
         let mediaType = meta.type;
@@ -303,242 +307,229 @@ function TabMap(tabData, taxon, taxonName) {
         Object.keys(mapsRenderingData[dataKey]).map(function (mediaTitleKey) {
           let mediaSet = mapsRenderingData[dataKey][mediaTitleKey];
 
-          return m(".media-map-set", [
-            m(
-              ".media-set-list",
-              mediaSet.mediaList.map(function (media) {
-                switch (dataKey) {
-                  case "image":
-                    return m(".media-image", [
-                      m(
-                        ".image-wrap",
-                        {
-                          onclick: function (e) {
-                            this.classList.toggle("fullscreen");
-                            this.getElementsByTagName(
-                              "img"
-                            )[0].classList.toggle("clickable");
-                            e.preventDefault();
-                            e.stopPropagation();
-                          },
-                        },
-                        m("img.clickable[src=" + media.url + "]")
-                      ),
-                      m(".title", media.title),
-                    ]);
-                    break;
-                  case "link":
-                    return m(".map-link", [
-                      m("span", _t("show_map")),
-                      m(
-                        "a[href=" + media.url + "][target=_blank]",
-                        media.title
-                      ),
-                    ]);
-                    break;
-                  case "regions":
-                    let presentRegionsMeta = [];
-                    let presentRegionsMetaSuffixes = [];
-                    let mapRegionsSplit = [];
+          let processedMediaSet = mediaSet.mediaList.map(function (media) {
+            switch (dataKey) {
+              case "image":
+                return m(".media-image", [
+                  m(
+                    ".image-wrap",
+                    {
+                      onclick: function (e) {
+                        this.classList.toggle("fullscreen");
+                        this.getElementsByTagName("img")[0].classList.toggle(
+                          "clickable"
+                        );
+                        e.preventDefault();
+                        e.stopPropagation();
+                      },
+                    },
+                    m("img.clickable[src=" + media.url + "]")
+                  ),
+                  m(".title", media.title),
+                ]);
+                break;
+              case "link":
+                return m(".map-link", [
+                  m("span", _t("show_map")),
+                  m("a[href=" + media.url + "][target=_blank]", media.title),
+                ]);
+                break;
+              case "regions":
+                let presentRegionsMeta = [];
+                let presentRegionsMetaSuffixes = [];
+                let mapRegionsSplit = [];
 
-                    if (
-                      !Array.isArray(media.regions) &&
-                      typeof media.regions === "object"
-                    ) {
-                      let reformattedMediaRegions = "";
-                      //transform to linear notation
-                      for (const [key, value] of Object.entries(
-                        media.regions
-                      )) {
-                        if (value && value != "") {
-                          reformattedMediaRegions += key + value + " ";
-                        }
-                      }
-
-                      media.regions = reformattedMediaRegions.trim();
+                if (
+                  !Array.isArray(media.regions) &&
+                  typeof media.regions === "object"
+                ) {
+                  let reformattedMediaRegions = "";
+                  //transform to linear notation
+                  for (const [key, value] of Object.entries(media.regions)) {
+                    if (value && value != "") {
+                      reformattedMediaRegions += key + value + " ";
                     }
+                  }
 
-                    if (media.regions && media.regions.split(" ").length > 0) {
-                      mapRegionsSplit = media.regions.split(" ");
-                    }
+                  media.regions = reformattedMediaRegions.trim();
+                }
 
-                    if (mapRegionsSplit.length == 0) {
-                      //dont' show any map if there is no region data
-                      return null;
-                    }
+                if (media.regions && media.regions.split(" ").length > 0) {
+                  mapRegionsSplit = media.regions.split(" ");
+                }
 
-                    []
-                      .concat(
-                        Checklist.getMapRegionsMeta(true),
-                        Checklist.getMapRegionsMeta()
-                      )
-                      .forEach(function (mapRegionMeta) {
-                        mapRegionsSplit.forEach(function (individualRegion) {
-                          if (
-                            getSuffixOfRegion(individualRegion).suffix ==
-                              mapRegionMeta.suffix &&
-                            presentRegionsMetaSuffixes.indexOf(
-                              mapRegionMeta.suffix
-                            ) < 0
-                          ) {
-                            presentRegionsMetaSuffixes.push(
-                              mapRegionMeta.suffix
-                            );
-                            presentRegionsMeta.push(mapRegionMeta);
-                          }
-                        });
-                      });
+                if (mapRegionsSplit.length == 0) {
+                  //dont' show any map if there is no region data
+                  return null;
+                }
 
-                    function colorMap(objectElement) {
+                []
+                  .concat(
+                    Checklist.getMapRegionsMeta(true),
+                    Checklist.getMapRegionsMeta()
+                  )
+                  .forEach(function (mapRegionMeta) {
+                    mapRegionsSplit.forEach(function (individualRegion) {
                       if (
-                        objectElement === undefined ||
-                        objectElement === null
+                        getSuffixOfRegion(individualRegion).suffix ==
+                          mapRegionMeta.suffix &&
+                        presentRegionsMetaSuffixes.indexOf(
+                          mapRegionMeta.suffix
+                        ) < 0
                       ) {
+                        presentRegionsMetaSuffixes.push(mapRegionMeta.suffix);
+                        presentRegionsMeta.push(mapRegionMeta);
+                      }
+                    });
+                  });
+
+                function colorMap(objectElement) {
+                  if (objectElement === undefined || objectElement === null) {
+                    return;
+                  }
+
+                  //cleanup
+                  if (objectElement.hasAttribute("data-usedregions")) {
+                    objectElement
+                      .getAttribute("data-usedregions")
+                      .split(" ")
+                      .forEach(function (suffixlessRegionCode) {
+                        let regionElements =
+                          objectElement.contentDocument.getElementsByClassName(
+                            suffixlessRegionCode
+                          );
+
+                        if (regionElements.length > 0) {
+                          for (
+                            let elIndex = 0;
+                            elIndex < regionElements.length;
+                            elIndex++
+                          ) {
+                            const el = regionElements[elIndex];
+
+                            el.removeAttribute("fill");
+                            el.removeAttribute("style");
+                            //el.setAttribute("fill", mapRegionMeta.fill);
+                            //el.setAttribute("style", "fill: " + mapRegionMeta.fill + "; opacity:1;");
+                          }
+                        }
+                      });
+                    objectElement.setAttribute("data-usedregions", "");
+                  }
+
+                  if (media.regions) {
+                    let usedRegions = "";
+
+                    media.regions.split(" ").forEach(function (region) {
+                      if (region === null || region.trim() == "") {
                         return;
                       }
 
-                      //cleanup
-                      if (objectElement.hasAttribute("data-usedregions")) {
-                        objectElement
-                          .getAttribute("data-usedregions")
-                          .split(" ")
-                          .forEach(function (suffixlessRegionCode) {
-                            let regionElements =
-                              objectElement.contentDocument.getElementsByClassName(
-                                suffixlessRegionCode
-                              );
+                      let mapRegionMeta = getSuffixOfRegion(region);
+                      let suffixlessRegionCode = region.substring(
+                        0,
+                        region.length - mapRegionMeta.suffix.length
+                      );
 
-                            if (regionElements.length > 0) {
-                              for (
-                                let elIndex = 0;
-                                elIndex < regionElements.length;
-                                elIndex++
-                              ) {
-                                const el = regionElements[elIndex];
-
-                                el.removeAttribute("fill");
-                                el.removeAttribute("style");
-                                //el.setAttribute("fill", mapRegionMeta.fill);
-                                //el.setAttribute("style", "fill: " + mapRegionMeta.fill + "; opacity:1;");
-                              }
-                            }
-                          });
-                        objectElement.setAttribute("data-usedregions", "");
+                      if (media.url.toLowerCase() == "world.svg") {
+                        //hotfix for countries with very wide span and overseas territories
+                        if (suffixlessRegionCode == "fr")
+                          suffixlessRegionCode = "frx";
+                        if (suffixlessRegionCode == "nl")
+                          suffixlessRegionCode = "nlx";
+                        if (suffixlessRegionCode == "cn")
+                          suffixlessRegionCode = "cnx";
                       }
 
-                      if (media.regions) {
-                        let usedRegions = "";
+                      let regionElements =
+                        objectElement.contentDocument.getElementsByClassName(
+                          suffixlessRegionCode
+                        );
 
-                        media.regions.split(" ").forEach(function (region) {
-                          if (region === null || region.trim() == "") {
-                            return;
-                          }
+                      if (regionElements.length > 0) {
+                        for (
+                          let elIndex = 0;
+                          elIndex < regionElements.length;
+                          elIndex++
+                        ) {
+                          const el = regionElements[elIndex];
 
-                          let mapRegionMeta = getSuffixOfRegion(region);
-                          let suffixlessRegionCode = region.substring(
-                            0,
-                            region.length - mapRegionMeta.suffix.length
+                          el.setAttribute("fill", mapRegionMeta.fill);
+                          el.setAttribute(
+                            "style",
+                            "fill: " + mapRegionMeta.fill + "; opacity:1;"
                           );
 
-                          if (media.url.toLowerCase() == "world.svg") {
-                            //hotfix for countries with very wide span and overseas territories
-                            if (suffixlessRegionCode == "fr")
-                              suffixlessRegionCode = "frx";
-                            if (suffixlessRegionCode == "nl")
-                              suffixlessRegionCode = "nlx";
-                            if (suffixlessRegionCode == "cn")
-                              suffixlessRegionCode = "cnx";
-                          }
-
-                          let regionElements =
-                            objectElement.contentDocument.getElementsByClassName(
-                              suffixlessRegionCode
-                            );
-
-                          if (regionElements.length > 0) {
-                            for (
-                              let elIndex = 0;
-                              elIndex < regionElements.length;
-                              elIndex++
-                            ) {
-                              const el = regionElements[elIndex];
-
-                              el.setAttribute("fill", mapRegionMeta.fill);
-                              el.setAttribute(
-                                "style",
-                                "fill: " + mapRegionMeta.fill + "; opacity:1;"
-                              );
-
-                              usedRegions += suffixlessRegionCode + " ";
-                            }
-                          }
-                        });
-
-                        objectElement.setAttribute(
-                          "data-usedregions",
-                          usedRegions
-                        );
+                          usedRegions += suffixlessRegionCode + " ";
+                        }
                       }
-                    }
+                    });
 
-                    window.setTimeout(function () {
-                      let map = document.getElementById("map_" + media.metaKey);
-                      colorMap(map);
-                    }, 100);
-
-                    return m(".media-map", [
-                      m(
-                        ".image-wrap.clickable",
-                        {
-                          onclick: function (e) {
-                            this.classList.toggle("fullscreen");
-                            this.classList.toggle("clickable");
-                            e.preventDefault();
-                            e.stopPropagation();
-                          },
-                        },
-                        m(
-                          "object#map_" +
-                            media.metaKey +
-                            "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
-                            media.url +
-                            "]",
-                          {
-                            onload: function () {
-                              colorMap(this);
-                            },
-                          }
-                        )
-                      ),
-                      media.regions
-                        ? m(
-                            ".legend",
-                            Object.keys(presentRegionsMeta).length == 0
-                              ? null
-                              : Object.values(presentRegionsMeta).map(function (
-                                  regionMeta
-                                ) {
-                                  return m(".legend-item", [
-                                    m(
-                                      ".map-fill[style=background-color: " +
-                                        regionMeta.fill +
-                                        "]"
-                                    ),
-                                    m(".map-legend-title", regionMeta.legend),
-                                  ]);
-                                })
-                          )
-                        : null,
-                      m(".title", media.title),
-                    ]);
-                    break;
-                  default:
-                    console.log("Not recognized media type " + dataKey);
-                    break;
+                    objectElement.setAttribute("data-usedregions", usedRegions);
+                  }
                 }
-              })
-            ),
-          ]);
+
+                window.setTimeout(function () {
+                  let map = document.getElementById("map_" + media.metaKey);
+                  colorMap(map);
+                }, 100);
+
+                return m(".media-map", [
+                  m(
+                    ".image-wrap.clickable",
+                    {
+                      onclick: function (e) {
+                        this.classList.toggle("fullscreen");
+                        this.classList.toggle("clickable");
+                        e.preventDefault();
+                        e.stopPropagation();
+                      },
+                    },
+                    m(
+                      "object#map_" +
+                        media.metaKey +
+                        "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
+                        media.url +
+                        "]",
+                      {
+                        onload: function () {
+                          colorMap(this);
+                        },
+                      }
+                    )
+                  ),
+                  media.regions
+                    ? m(
+                        ".legend",
+                        Object.keys(presentRegionsMeta).length == 0
+                          ? null
+                          : Object.values(presentRegionsMeta).map(function (
+                              regionMeta
+                            ) {
+                              return m(".legend-item", [
+                                m(
+                                  ".map-fill[style=background-color: " +
+                                    regionMeta.fill +
+                                    "]"
+                                ),
+                                m(".map-legend-title", regionMeta.legend),
+                              ]);
+                            })
+                      )
+                    : null,
+                  m(".title", media.title),
+                ]);
+                break;
+              default:
+                console.log("Not recognized media type " + dataKey);
+                break;
+            }
+          });
+
+          if (processedMediaSet.every((item) => item === null)) {
+            return null;
+          }
+          return m(".media-map-set", [m(".media-set-list", processedMediaSet)]);
         })
       );
     })
@@ -549,8 +540,10 @@ function TabText(tabData, taxon, taxonName) {
   let mdIndex = "";
   let mdText = "";
   //content
-  Object.keys(Checklist.getDataMeta()).forEach(function (metaKey) {
-    let meta = Checklist.getDataMeta()[metaKey];
+  Object.keys(Checklist.getDataMeta("accompanyingText")).forEach(function (
+    metaKey
+  ) {
+    let meta = Checklist.getDataMeta("accompanyingText")[metaKey];
     if (meta.datatype == "text") {
       if (tabData.indexOf(metaKey) >= 0 && taxon.d[metaKey].length > 0) {
         let itemText = taxon.d[metaKey];
@@ -568,6 +561,10 @@ function TabText(tabData, taxon, taxonName) {
       }
     }
   });
+
+  if (mdText.trim() == "") {
+    return null;
+  }
 
   let htmlText = DOMPurify.sanitize(marked.parse(mdText));
 

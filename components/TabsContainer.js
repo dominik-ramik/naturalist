@@ -16,6 +16,7 @@ export let TabsContainer = {
         if (TabsContainer.selectedTab === null && vnode.attrs.activeTab !== null) {
             TabsContainer.selectedTab = vnode.attrs.activeTab;
         }
+        TabsContainer.selectedTab = vnode.attrs.activeTab;
 
         let currentTab = "";
         if (Object.keys(tabs).indexOf(TabsContainer.selectedTab) < 0) {

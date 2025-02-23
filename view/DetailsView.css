@@ -199,10 +199,10 @@
 
 /* MAPS TAB */
 
-.tabs-container-content-map .media-map-set:not(:last-child) {
-  padding-bottom: var(--pad-large);
-  margin-bottom: var(--pad-large);
-  border-bottom: 1px solid #c9c9c9;
+.tabs-container-content-map .media-map-set:not(:first-child) {
+  padding-top: var(--pad-large);
+  margin-top: var(--pad-large);
+  border-top: 1px solid #c9c9c9;
 }
 
 .tabs-container-content-map .media-map-set .title {

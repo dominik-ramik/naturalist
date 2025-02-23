@@ -1219,6 +1219,12 @@ export let Checklist = {
           if (taxon.d.hasOwnProperty(metaKey)) {
             let mediaData = taxon.d[metaKey];
 
+            if (meta.datatype == "text") {
+              if(mediaData?.trim() == ""){
+                return null
+              }
+            }
+
             if (
               meta.datatype == "map" &&
               (typeof mediaData === "object" || typeof mediaData == "string") &&
