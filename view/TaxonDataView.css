@@ -8,7 +8,7 @@
     flex-direction: row;
 }
 
-.middle-row .column:last-child {
+.middle-row .column:first-child {
 flex-grow: 1;
 }
 

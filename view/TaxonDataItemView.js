@@ -34,7 +34,15 @@ export let TaxonDataItemView = {
         data = Checklist.handlebarsTemplates[dataPath](templateData);
       }
 
-      return m("img.image-in-view[src=" + data + "]");
+      return m(
+        "span.image-in-view-wrap.clickable",
+        {
+          onclick: function () {
+            this.classList.toggle("fullscreen");
+          },
+        },
+        m("img.image-in-view[src=" + data + "]")
+      );
     }
 
     if (meta.contentType == "taxon") {

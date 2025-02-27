@@ -5,9 +5,9 @@
 }
 
 .crumb-taxon-name-wrap {
-    user-select: all;
-    display: flex;
-    flex-direction: row;
+  user-select: all;
+  display: flex;
+  flex-direction: row;
 }
 
 .search-engine {
@@ -107,6 +107,7 @@
   width: 100vw !important;
   margin: auto !important;
   z-index: 999;
+  object-fit: contain;
 }
 
 /* TEXT TAB */
