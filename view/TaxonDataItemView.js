@@ -18,6 +18,25 @@ export let TaxonDataItemView = {
       return null;
     }
 
+    if (meta.contentType == "image") {
+      if (data.source.toString().trim() == "") {
+        return null;
+      }
+
+      if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
+        let templateData = Checklist.getDataObjectForHandlebars(
+          data.source,
+          TaxonDataItemView.originalData,
+          taxon.n,
+          taxon.a
+        );
+
+        data = Checklist.handlebarsTemplates[dataPath](templateData);
+      }
+
+      return m("img.image-in-view[src=" + data + "]");
+    }
+
     if (meta.contentType == "taxon") {
       if (data.n.trim() == "") {
         return null;
@@ -39,9 +58,13 @@ export let TaxonDataItemView = {
         .filter((key) => data[key] != "")
         .map((key) => {
           const regionData = data[key];
-          const appendedLegend = mapRegionsSuffixes.find(
+          let appendedLegend = mapRegionsSuffixes.find(
             (item) => item.suffix == regionData
-          ).appendedLegend;
+          )?.appendedLegend;
+
+          if (appendedLegend === undefined || appendedLegend === null) {
+            appendedLegend = "";
+          }
 
           let meta = Checklist.getMetaForDataPath(dataPath + "." + key);
 
@@ -75,6 +98,11 @@ export let TaxonDataItemView = {
         break;
       case "numbered list":
         listDisplayType = "ol.numbered-list[start=1]";
+        listSeparator = "";
+        isRealList = true;
+        break;
+      case "unmarked list":
+        listDisplayType = "ul.unmarked-list";
         listSeparator = "";
         isRealList = true;
         break;

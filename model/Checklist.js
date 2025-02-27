@@ -39,7 +39,10 @@ export let Checklist = {
       ["taxa", "data"].forEach(function (type) {
         if (query[type]) {
           Object.keys(query[type]).forEach(function (dataPath) {
-            if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
+            if (
+              Checklist.filter[type][dataPath].type == "text" ||
+              Checklist.filter[type][dataPath].type == "map regions"
+            ) {
               Checklist.filter[type][dataPath].selected = query[type][dataPath];
             } else if (Checklist.filter[type][dataPath].type == "number") {
               Checklist.filter[type][dataPath].numeric.operation =
@@ -75,7 +78,10 @@ export let Checklist = {
       let countFilters = 0;
       ["taxa", "data"].forEach(function (type) {
         Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-          if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
+          if (
+            Checklist.filter[type][dataPath].type == "text" ||
+            Checklist.filter[type][dataPath].type == "map regions"
+          ) {
             countFilters += Checklist.filter[type][dataPath].selected.length;
           } else if (Checklist.filter[type][dataPath].type == "number") {
             if (Checklist.filter[type][dataPath].numeric.operation != "") {
@@ -284,163 +290,165 @@ export let Checklist = {
       document.title = Checklist.getProjectName() + " | NaturaList";
     }
 
-    try {
-      this._data = jsonData;
-      this._isDraft = isDraft;
+    //try {
+    this._data = jsonData;
+    this._isDraft = isDraft;
 
-      Checklist._dataFulltextIndex = {};
+    Checklist._dataFulltextIndex = {};
 
-      Checklist.handlebarsTemplates = {};
-      Checklist._queryResultCache = {};
+    Checklist.handlebarsTemplates = {};
+    Checklist._queryResultCache = {};
 
-      //deep-clear filter
-      Checklist.filter.taxa = {};
-      Checklist.filter.data = {};
-      Checklist.filter.text = "";
-      Checklist.filter.delayCommitDataPath = "";
+    //deep-clear filter
+    Checklist.filter.taxa = {};
+    Checklist.filter.data = {};
+    Checklist.filter.text = "";
+    Checklist.filter.delayCommitDataPath = "";
 
-      // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
-      // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
-      Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
-        Checklist.filter.taxa[dataPath] = {
+    // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
+    // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
+    Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
+      Checklist.filter.taxa[dataPath] = {
+        all: [],
+        possible: {},
+        selected: [],
+        color: "",
+        type: "text",
+      };
+    });
+
+    let customDatatypeDataPaths = [];
+    Object.keys(Checklist.getDataMeta()).forEach(function (dataPath, index) {
+      let meta = Checklist.getMetaForDataPath(dataPath);
+
+      if (meta.template && meta.template.length > 0) {
+        Checklist.handlebarsTemplates[dataPath] = Handlebars.compile(
+          meta.template
+        );
+      }
+
+      let datatype = meta.datatype;
+      if (datatype == "custom" || datatype == "text") {
+        customDatatypeDataPaths.push(dataPath);
+      }
+
+      let searchCategory = meta.searchCategory;
+      if (searchCategory && searchCategory.length > 0) {
+        Checklist.filter.data[dataPath] = {
           all: [],
           possible: {},
           selected: [],
           color: "",
-          type: "text",
+          type: Checklist.getMetaForDataPath(dataPath).contentType,
+          numeric: {
+            threshold1: null,
+            threshold2: null,
+            operation: "",
+          },
         };
-      });
+      }
+    });
 
-      let customDatatypeDataPaths = [];
-      Object.keys(Checklist.getDataMeta()).forEach(function (dataPath, index) {
-        let meta = Checklist.getMetaForDataPath(dataPath);
-
-        if (meta.template && meta.template.length > 0) {
-          Checklist.handlebarsTemplates[dataPath] = Handlebars.compile(
-            meta.template
-          );
-        }
-
-        let datatype = meta.datatype;
-        if (datatype == "custom" || datatype == "text") {
-          customDatatypeDataPaths.push(dataPath);
-        }
-
-        let searchCategory = meta.searchCategory;
-        if (searchCategory && searchCategory.length > 0) {
-          Checklist.filter.data[dataPath] = {
-            all: [],
-            possible: {},
-            selected: [],
-            color: "",
-            type: Checklist.getMetaForDataPath(dataPath).contentType,
-            numeric: {
-              threshold1: null,
-              threshold2: null,
-              operation: "",
-            },
-          };
+    //cleanup data-paths to only contain terminals
+    customDatatypeDataPaths = customDatatypeDataPaths.filter(function (item) {
+      let isPrefixed = false;
+      customDatatypeDataPaths.forEach(function (testItem) {
+        if (testItem.startsWith(item + ".")) {
+          isPrefixed = true;
         }
       });
+      if (isPrefixed) {
+        return false;
+      } else {
+        return true;
+      }
+    });
 
-      //cleanup data-paths to only contain terminals
-      customDatatypeDataPaths = customDatatypeDataPaths.filter(function (item) {
-        let isPrefixed = false;
-        customDatatypeDataPaths.forEach(function (testItem) {
-          if (testItem.startsWith(item + ".")) {
-            isPrefixed = true;
+    Checklist.calculatePossibleFilterValues(this.getData().checklist);
+
+    //fill "all" data
+    Checklist.getData().checklist.forEach(function (taxon) {
+      ["taxa", "data"].forEach(function (dataType) {
+        Object.keys(Checklist.filter[dataType]).forEach(function (dataPath) {
+          let value = null;
+
+          if (dataType == "taxa") {
+            let taxonTentative =
+              taxon.t[Object.keys(Checklist.getTaxaMeta()).indexOf(dataPath)];
+            if (taxonTentative !== undefined && taxonTentative !== null) {
+              value = taxonTentative.n;
+            }
+          } else if (dataType == "data") {
+            value = Checklist.getDataFromDataPath(taxon.d, dataPath);
+          }
+
+          if (value === null) {
+            return;
+          }
+
+          let leafData = Checklist.getAllLeafData(value, false, dataPath);
+
+          if (
+            Checklist.filter[dataType][dataPath].type == "text" ||
+            Checklist.filter[dataType][dataPath].type == "map regions"
+          ) {
+            leafData.forEach(function (value) {
+              if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {
+                Checklist.filter[dataType][dataPath].all.push(value);
+              }
+            });
+          } else if (Checklist.filter.data[dataPath].type == "number") {
+            leafData.forEach(function (value) {
+              Checklist.filter[dataType][dataPath].all.push(value);
+            });
           }
         });
-        if (isPrefixed) {
-          return false;
-        } else {
-          return true;
-        }
       });
+    });
 
-      Checklist.calculatePossibleFilterValues(this.getData().checklist);
-
-      //fill "all" data
-      Checklist.getData().checklist.forEach(function (taxon) {
-        ["taxa", "data"].forEach(function (dataType) {
-          Object.keys(Checklist.filter[dataType]).forEach(function (dataPath) {
-            let value = null;
-
-            if (dataType == "taxa") {
-              let taxonTentative =
-                taxon.t[Object.keys(Checklist.getTaxaMeta()).indexOf(dataPath)];
-              if (taxonTentative !== undefined && taxonTentative !== null) {
-                value = taxonTentative.n;
-              }
-            } else if (dataType == "data") {
-              value = Checklist.getDataFromDataPath(taxon.d, dataPath);
-            }
-
-            if (value === null) {
-              return;
-            }
-
-            let leafData = Checklist.getAllLeafData(value, false, dataPath);
-
-            if (Checklist.filter[dataType][dataPath].type == "text" || Checklist.filter[dataType][dataPath].type == "map regions") {
-              leafData.forEach(function (value) {
-                if (
-                  Checklist.filter[dataType][dataPath].all.indexOf(value) < 0
-                ) {
-                  Checklist.filter[dataType][dataPath].all.push(value);
-                }
-              });
-            } else if (Checklist.filter.data[dataPath].type == "number") {
-              leafData.forEach(function (value) {
-                Checklist.filter[dataType][dataPath].all.push(value);
-              });
-            }
-          });
-        });
+    //browse possible data and add necessary items into filter
+    Checklist.getAllLanguages().forEach(function (lang) {
+      Checklist._dataFulltextIndex[lang.code] = [];
+      Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
+        taxon,
+        index
+      ) {
+        Checklist._dataFulltextIndex[lang.code][index] =
+          textLowerCaseAccentless(
+            Checklist.primitiveKeysOfObject(
+              taxon,
+              customDatatypeDataPaths
+            ).join("\n")
+          );
       });
+    });
 
-      //browse possible data and add necessary items into filter
-      Checklist.getAllLanguages().forEach(function (lang) {
-        Checklist._dataFulltextIndex[lang.code] = [];
-        Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
-          taxon,
-          index
-        ) {
-          Checklist._dataFulltextIndex[lang.code][index] =
-            textLowerCaseAccentless(
-              Checklist.primitiveKeysOfObject(
-                taxon,
-                customDatatypeDataPaths
-              ).join("\n")
-            );
-        });
-      });
+    //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
+    Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
+      Checklist.filter.taxa[dataPath].color = getGradedColor("taxa", index);
+    });
 
-      //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
-      Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
-        Checklist.filter.taxa[dataPath].color = getGradedColor("taxa", index);
-      });
+    Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
+      Checklist.filter.data[dataPath].color = getGradedColor("data", index);
+    });
 
-      Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
-        Checklist.filter.data[dataPath].color = getGradedColor("data", index);
-      });
-
-      // This has ABSOLUTELY to go AFTER the "possible" and "all" content generation, otherwise we may miss many values that are not present when the data wree filteres with an URL query
-      if (m.route.param("q") && m.route.param("q").length > 0) {
-        let currentQuery = "{}";
-        let q = {};
-        currentQuery = decodeURI(m.route.param("q"));
-        try {
-          q = JSON.parse(currentQuery);
-          Checklist.filter.setFromQuery(q);
-        } catch (ex) {
-          console.error("Malformed url query");
-          routeTo("/checklist", "");
-        }
+    // This has ABSOLUTELY to go AFTER the "possible" and "all" content generation, otherwise we may miss many values that are not present when the data wree filteres with an URL query
+    if (m.route.param("q") && m.route.param("q").length > 0) {
+      let currentQuery = "{}";
+      let q = {};
+      currentQuery = decodeURI(m.route.param("q"));
+      try {
+        q = JSON.parse(currentQuery);
+        Checklist.filter.setFromQuery(q);
+      } catch (ex) {
+        console.error("Malformed url query");
+        routeTo("/checklist", "");
       }
+    }
 
-      this._isDataReady = true;
-      console.timeEnd("Data loaded in");
+    this._isDataReady = true;
+    console.timeEnd("Data loaded in");
+    /*
     } catch (ex) {
       console.log("Error loading data: " + ex);
       this._isDataReady = false;
@@ -448,6 +456,7 @@ export let Checklist = {
       m.redraw();
       return false;
     }
+    */
   },
 
   getDataObjectForHandlebars: function (
@@ -502,7 +511,10 @@ export let Checklist = {
         if (Checklist.filter.delayCommitDataPath == dataType + "." + dataPath) {
           return; //delay this dataPath
         } else {
-          if (Checklist.filter[dataType][dataPath].type == "text" || Checklist.filter[dataType][dataPath].type == "map regions") {
+          if (
+            Checklist.filter[dataType][dataPath].type == "text" ||
+            Checklist.filter[dataType][dataPath].type == "map regions"
+          ) {
             Checklist.filter[dataType][dataPath].possible = {};
           }
           if (Checklist.filter[dataType][dataPath].type == "number") {
@@ -524,7 +536,10 @@ export let Checklist = {
           return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
         }
         let value = taxon.t[index].n; // !!! we suppose here that in filter taxa keys are ordered in order of appearance in "t" section
-        if (Checklist.filter.taxa[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
+        if (
+          Checklist.filter.taxa[dataPath].type == "text" ||
+          Checklist.filter.data[dataPath].type == "map regions"
+        ) {
           if (!Checklist.filter.taxa[dataPath].possible.hasOwnProperty(value)) {
             Checklist.filter.taxa[dataPath].possible[value] = 0;
           }
@@ -544,7 +559,10 @@ export let Checklist = {
         }
 
         let leafData = Checklist.getAllLeafData(value, false, dataPath);
-        if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
+        if (
+          Checklist.filter.data[dataPath].type == "text" ||
+          Checklist.filter.data[dataPath].type == "map regions"
+        ) {
           leafData.forEach(function (value) {
             if (value.trim() == "") {
               return;
@@ -625,7 +643,11 @@ export let Checklist = {
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
-          if (
+          
+          if (Checklist.getMetaForDataPath(dataPath).contentType == "image") {
+            primitives.push(arrayMember.source);
+            primitives.push(arrayMember.title);
+          } else if (
             Checklist.getMetaForDataPath(dataPath + (index + 1)).contentType ==
             "taxon"
           ) {
@@ -635,6 +657,12 @@ export let Checklist = {
             primitives.push(arrayMember);
           }
         });
+      } else if (
+        Checklist.getMetaForDataPath(dataPath).contentType == "image"
+      ) {
+        console.log("XX")
+        primitives.push(currentData.n);
+        primitives.push(currentData.a);
       } else if (
         Checklist.getMetaForDataPath(dataPath).contentType == "taxon"
       ) {
@@ -662,10 +690,18 @@ export let Checklist = {
 
   getAllLeafData: function (taxonData, includeAuthorities, currentPath = "") {
     let data = [];
-    
-    if(Checklist.getDataMeta()[currentPath]?.contentType == "map regions"){
-      data = Object.keys(taxonData).filter(item => taxonData[item] != "").map(item => Checklist.getDataMeta()[currentPath + "." + item].title)
+
+    if (Checklist.getDataMeta()[currentPath]?.contentType == "map regions") {
+      data = Object.keys(taxonData)
+        .filter((item) => taxonData[item] != "")
+        .map((item) => Checklist.getDataMeta()[currentPath + "." + item].title);
       return data;
+    }
+
+    if (Checklist.getDataMeta()[currentPath]?.contentType == "image") {
+      console.log("IMG", taxonData);
+
+      return "<img src='" + "?" + "' />";
     }
 
     if (Array.isArray(taxonData)) {
@@ -725,7 +761,10 @@ export let Checklist = {
     let key = { taxa: {}, data: {} };
     Object.keys(key).forEach(function (type) {
       Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-        if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
+        if (
+          Checklist.filter[type][dataPath].type == "text" ||
+          Checklist.filter[type][dataPath].type == "map regions"
+        ) {
           if (Checklist.filter[type][dataPath].selected.length > 0) {
             key[type][dataPath] = [];
           }
@@ -856,7 +895,10 @@ export let Checklist = {
         });
 
         Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
-          if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
+          if (
+            Checklist.filter.data[dataPath].type == "text" ||
+            Checklist.filter.data[dataPath].type == "map regions"
+          ) {
             if (Checklist.filter.data[dataPath].selected.length == 0) {
               return;
             }
@@ -867,7 +909,10 @@ export let Checklist = {
           }
 
           let foundAny = false;
-          if (Checklist.filter.data[dataPath].type == "text" || Checklist.filter.data[dataPath].type == "map regions") {
+          if (
+            Checklist.filter.data[dataPath].type == "text" ||
+            Checklist.filter.data[dataPath].type == "map regions"
+          ) {
             Checklist.filter.data[dataPath].selected.forEach(function (
               selectedItem
             ) {
@@ -1059,9 +1104,9 @@ export let Checklist = {
     if (this.getData().meta.data.hasOwnProperty(dataPath)) {
       return this.getData().meta.data[dataPath];
     }
-    
+
     //data not intended to be shown in view
-    return null
+    return null;
     //return this.getData().meta.data["$$default-custom$$"];
   },
 
@@ -1155,8 +1200,8 @@ export let Checklist = {
     Object.keys(taxon.data).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);
 
-      if(meta === null){
-        return
+      if (meta === null) {
+        return;
       }
 
       if (meta.hasOwnProperty("datatype") && meta.datatype === "custom") {
@@ -1220,8 +1265,8 @@ export let Checklist = {
             let mediaData = taxon.d[metaKey];
 
             if (meta.datatype == "text") {
-              if(mediaData?.trim() == ""){
-                return null
+              if (mediaData?.trim() == "") {
+                return null;
               }
             }
 
@@ -1231,11 +1276,11 @@ export let Checklist = {
               !Array.isArray(mediaData)
             ) {
               let cleanedMediaData = [];
-              
-              if(typeof mediaData == "string" && mediaData.trim() == ""){
+
+              if (typeof mediaData == "string" && mediaData.trim() == "") {
                 return;
               }
-              
+
               Object.keys(mediaData).forEach(function (key) {
                 const item = mediaData[key];
                 if (item === undefined || item === null || item.trim() == "") {
@@ -1256,7 +1301,7 @@ export let Checklist = {
                 if (
                   item === undefined ||
                   item === null ||
-                  item.source.trim() == ""
+                  item.source.toString().trim() == ""
                 ) {
                   return;
                 }
@@ -1280,8 +1325,8 @@ export let Checklist = {
     Object.keys(taxon.d).forEach(function (key) {
       let meta = Checklist.getMetaForDataPath(key);
 
-      if(meta === null){
-        return
+      if (meta === null) {
+        return;
       }
 
       if (meta.hasOwnProperty("datatype") && meta.datatype !== "custom") {

@@ -579,6 +579,10 @@ let translations = {
         "en": "Error in column names for taxon $1 in the checklist sheet; you need to use either a single column called $2 with the taxon name in it, or two columns called $3 and $4 in which the taxon name and authority is put respectively",
         "fr": "Erreur dans les noms de colonnes pour le taxon $1 dans la feuille de check-list ; vous devez utiliser soit une seule colonne appelée $2 avec le nom du taxon dedans, soit deux colonnes appelées $3 et $4 dans lesquelles le nom du taxon et l'autorité sont mis respectivement."
     },
+    dm_image_column_names: {
+        "en": "Error in column names for image $1 in the checklist sheet; you need to use either a single column called $2 with the imagr source in it, or two columns called $3 and $4 in which the image source and title is put respectively",
+        "fr": "Erreur dans les noms de colonnes pour le image $1 dans la feuille de check-list ; vous devez utiliser soit une seule colonne appelée $2 avec la source d'image dedans, soit deux colonnes appelées $3 et $4 dans lesquelles la source d'image et le titre sont mis respectivement."
+    },
     dm_value_cannot_be_empty: {
         "en": "Value in column $1 in table $2 cannot be empty",
         "fr": "La valeur de la colonne $1 du tableau $2 ne peut pas être vide"

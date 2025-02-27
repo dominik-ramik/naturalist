@@ -8,6 +8,10 @@
     flex-direction: row;
 }
 
+.middle-row .column:last-child {
+flex-grow: 1;
+}
+
 .app.mobile .middle-row {
     flex-direction: column;
 }

@@ -44,7 +44,7 @@ export let DataManager = function () {
     return checklist;
 
     function gatherReferences() {
-      const bibtexUrl = data.common.getItem(
+      let bibtexUrl = data.common.getItem(
         log,
         data.sheets.appearance.tables.customization.data,
         "References BibTeX file URL",
@@ -54,6 +54,14 @@ export let DataManager = function () {
 
       if (bibtexUrl == "") {
         return {};
+      }
+
+      if (bibtexUrl.toLowerCase().startsWith("./")) {
+        bibtexUrl = bibtexUrl.substring(2);
+      }
+
+      if (!bibtexUrl.toLowerCase().startsWith("http")) {
+        bibtexUrl = "./usercontent/" + bibtexUrl;
       }
 
       let bibtexfile = "";
@@ -240,6 +248,7 @@ export let DataManager = function () {
             title: row.title,
             icon: row.icon,
             url: row.searchUrlTemplate,
+            restrictToTaxon: row.restrictToTaxon,
           });
         }
       );
@@ -255,7 +264,7 @@ export let DataManager = function () {
               suffix: row.suffix,
               fill: row.fillColor,
               legend: row.legend,
-              appendedLegend: row.appendedLegend
+              appendedLegend: row.appendedLegend,
             });
           }
         }
@@ -785,11 +794,14 @@ export let DataManager = function () {
         case "taxon":
           return readTaxon(headers, row, computedPath, langCode);
           break;
+        case "image":
+          return readImage(headers, row, computedPath, langCode);
+          break;
         case "media":
           return readMedia(headers, row, computedPath, langCode);
           break;
         default:
-          console.log("Unknown data type: " + type);
+          console.log("Unknown data type: " + info.type);
           break;
       }
       return "";
@@ -842,6 +854,31 @@ export let DataManager = function () {
         log(
           "error",
           _tf("dm_media_column_names", [
+            path,
+            path,
+            path + ".source",
+            path + ".title",
+          ])
+        );
+      }
+
+      return { source: source, title: title };
+    }
+
+    function readImage(headers, row, path, langCode) {
+      let _plain = readSimpleData(headers, row, path, langCode);
+      let source = readSimpleData(headers, row, path + ".source", langCode);
+      let title = readSimpleData(headers, row, path + ".title", langCode);
+
+      if (source === null && title === null) {
+        source = _plain;
+        title = "";
+      }
+
+      if (source === null || (source !== null && title === null)) {
+        log(
+          "error",
+          _tf("dm_image_column_names", [
             path,
             path,
             path + ".source",
@@ -1174,6 +1211,7 @@ export let DataManager = function () {
     /*
     // All column names through all tables should be unique
     //!!! this can be relaxed, no real reason to enforce this
+    */
     let uniqueColumnNames = {};
     data.common
       .getAllColumnInfos(data.common.languages.defaultLanguageCode)
@@ -1184,6 +1222,13 @@ export let DataManager = function () {
         ) {
           uniqueColumnNames[item.name.toLowerCase()] = item;
         } else {
+          if (
+            item.table == "Maps" ||
+            uniqueColumnNames[item.name].table == "Maps"
+          ) {
+            return;
+          }
+
           log(
             "error",
             _tf("dm_column_name_duplicate", [
@@ -1194,6 +1239,8 @@ export let DataManager = function () {
           );
         }
       });
+
+    //*/
 
     // Hue has to be 0-360
     data.common.languages.supportedLanguages.forEach(function (lang) {
@@ -1216,7 +1263,6 @@ export let DataManager = function () {
         );
       }
     });
-    */
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
       let table =

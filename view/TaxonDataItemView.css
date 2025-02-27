@@ -52,6 +52,16 @@ span.simple-value p {
   display: list-item;
 }
 
+.data-item-view ul.unmarked-list {
+  display: block;
+  list-style: none;
+  padding-left: 0em;
+}
+
+.data-item-view ul.unmarked-list > span {
+  display: list-item;
+}
+
 .data-item-view span.plain {
   display: inline;
 }
@@ -67,6 +77,20 @@ span.simple-value p {
 }
 .data-item-view .map-regions-data p {
   display: inline;
+}
+
+.data-item-view img.image-in-view {
+  width: 6em;
+  height: 6em;
+  max-height: 6em;
+  max-width: 6em;
+  object-fit: cover;
+  margin-top: 0.1em;
+  margin-right: 0.1em;
+  background-image: url(../img/ui/checklist/offline.svg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 2.5em;
 }
 
 .found {

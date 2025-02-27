@@ -22,7 +22,7 @@ export let nlDataStructure = {
                 type = "taxon";
               }
               if (row.contentType == "map regions") {
-                type = "map regions";
+                type = "map regions"; // props (in.torba = torba) are region names and the content of the cells is the suffix
               }
               if (tableKey == "taxa") {
                 type = "taxon"; //can have .name and .authority
@@ -30,6 +30,9 @@ export let nlDataStructure = {
               }
               if (tableKey == "media") {
                 type = "media"; //can have .source and .title
+              }
+              if (row.contentType == "image") {
+                type = "image"; //can have .source and .title
               }
 
               if (row[columnKey] === undefined) {
@@ -216,7 +219,7 @@ export let nlDataStructure = {
             restrictToTaxon: {
               name: "Restrict to taxon",
               description:
-                "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa.",
+                "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa. If needed you can supply a comma-separated list of taxa. E.g. 'Aceropyga, Baeturia' will make the search engine appear only if the selected taxon is whithin either of the two genera.",
               integrity: {
                 description:
                   "A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)",
@@ -528,7 +531,7 @@ export let nlDataStructure = {
                 'If the column has subitems (e.g. the <b>habitat</b> column, which has an array of subitems <b>habitat#</b>, or the <b>origPub</b>, which has subitems <b>origPub.author</b>, <b>origPub.year</b> in the <a href="us-birds.xlsx">Birds of the US</a> sample), you can here define the way the subitems will be rendered in the checklist.',
               integrity: {
                 description:
-                  "Several special values are recognized: <ul><li><b>bullet list:</b> all the subitems will be rendered in a bullet list</li><li><b>numbered list:</b> all the subitems will be rendered in a numbered list starting with 1</li><li><b>space:</b> items won't form a list, but will follow each other on one line, there will be a single space between each item</li><li><b>comma:</b> items won't form a list, but will follow each other on one line, there will be a comma and a space between each item</li><li>any other value (one or multiple characters): items won't form a list, but will follow each other on one line, there will be the given character(s) between each item, technically using the special value 'comma' or directly writing ', ' here are equivalent</li></ul>",
+                  "Several special values are recognized: <ul><li><b>bullet list:</b> all the subitems will be rendered in a bullet list</li><li><b>numbered list:</b> all the subitems will be rendered in a numbered list starting with 1</li><li><b>unmarked list:</b> all the subitems will be rendered in a list without any marking</li><li><b>space:</b> items won't form a list, but will follow each other on one line, there will be a single space between each item</li><li><b>comma:</b> items won't form a list, but will follow each other on one line, there will be a comma and a space between each item</li><li>any other value (one or multiple characters): items won't form a list, but will follow each other on one line, there will be the given character(s) between each item, technically using the special value 'comma' or directly writing ', ' here are equivalent</li></ul>",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 defaultValue: "",
@@ -547,7 +550,7 @@ export let nlDataStructure = {
                 defaultValue: "text",
                 allowDuplicates: "yes",
                 allowedContent: "list",
-                listItems: ["text", "number", "taxon", "date", "map regions", ""],
+                listItems: ["text", "number", "taxon", "date", "map regions", "image", ""],
                 supportsMultilingual: false,
               },
             },

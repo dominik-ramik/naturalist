@@ -587,6 +587,16 @@ function TabExternalSearch(tabData, taxon, taxonName) {
   return m(
     ".search-engines",
     tabData.map(function (engine) {
+      if (engine.restrictToTaxon && engine.restrictToTaxon.length > 0) {
+        if (
+          !taxon.t.find(
+            (t) => t.n.toLowerCase() == engine.restrictToTaxon.toLowerCase()
+          )
+        ) {
+          return null; // If taxon to which this should be restricted is not found in the taxonomic branch, then don't show this engine
+        }
+      }
+
       let translatedURL = resolveTemplate(engine.url, "");
 
       return m(

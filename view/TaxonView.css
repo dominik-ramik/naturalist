@@ -44,13 +44,13 @@
   font-size: 85%;
   text-wrap-mode: nowrap;
   white-space: nowrap;
-margin-right: var(--pad-large);
+  margin-right: var(--pad-large);
 }
 
 .listed-taxa .taxon-data-view {
   margin-left: 1em;
   margin-top: var(--pad-large);
- }
+}
 
 .taxon .taxon-name {
   font-weight: bold;
@@ -71,6 +71,9 @@ margin-right: var(--pad-large);
 .taxon-details-icon img {
   height: 1.8em;
   margin-right: 0.1em;
+  /*
+  filter: invert(42%) sepia(93%) saturate(93%) hue-rotate(187deg) brightness(82%) contrast(136%);
+  */
 }
 
 .search-all-of-taxon img {
@@ -84,13 +87,13 @@ margin-right: var(--pad-large);
   flex-wrap: nowrap;
 }
 
-.taxon-name-inner-wrapper{
+.taxon-name-inner-wrapper {
   display: flex;
   flex-direction: row;
-  flex-wrap:  nowrap;
+  flex-wrap: nowrap;
 }
 
-.vertical-separator{
+.vertical-separator {
   display: block;
   width: 0.75em;
 }
