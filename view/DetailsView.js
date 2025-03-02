@@ -584,6 +584,10 @@ function TabText(tabData, taxon, taxonName) {
 }
 
 function TabExternalSearch(tabData, taxon, taxonName) {
+  if (tabData.length == 0) {
+    return null;
+  }
+
   return m(
     ".search-engines",
     tabData.map(function (engine) {
