@@ -93,6 +93,7 @@ export let Settings = {
                 if (itemObject.hasOwnProperty(type)) {
                     Object.keys(itemObject[type]).forEach(function (dataPath) {
                         let categoryName = "";
+
                         if (type == "taxa") {
                             categoryName = Checklist.getNameOfTaxonLevel(dataPath)
                         } else if (type == "data") {
@@ -104,7 +105,7 @@ export let Settings = {
                             categoryName = Checklist.getDataMeta()[dataPath].searchCategory;
                         }
 
-                        if (type == "taxa" || Checklist.getMetaForDataPath(dataPath).contentType == "text") {
+                        if (type == "taxa" || Checklist.getMetaForDataPath(dataPath).contentType == "text" || Checklist.getMetaForDataPath(dataPath).contentType == "map regions") {
                             names.push(categoryName + " " + _t("is_list_joiner") + " " + formatList(itemObject[type][dataPath], _t("or_list_joiner"), "<strong>", "</strong>"));
                         } else if (Checklist.getMetaForDataPath(dataPath).contentType == "number") {
                             let operation = itemObject[type][dataPath].o;
@@ -113,8 +114,6 @@ export let Settings = {
 
                             names.push(Checklist.filter.numericFilterToHumanReadable(dataPath, operation, t1, t2, "<strong>", "</strong>"));
                         }
-
-
                     });
                 }
             });

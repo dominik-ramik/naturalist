@@ -142,7 +142,7 @@ export function formatList(list, finalJoiner, preItem, postItem) {
     list = list.map(function (item) {
         return (preItem ? preItem : "") + item + (postItem ? postItem : "");
     });
-
+    
     const last = list.pop();
 
     return list.length === 0 ? last : [list.join(', '), last].join(" " + finalJoiner + " ");

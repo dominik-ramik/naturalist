@@ -6,6 +6,7 @@ import { DetailsView } from "./view/DetailsView.js";
 import { AboutView } from "./view/AboutView.js";
 import { ManageView } from "./view/ManageView.js";
 import { LiteratureView } from "./view/LiteratureView.js";
+import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
 
@@ -235,6 +236,17 @@ function runApp() {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
               m(LiteratureView),
+            ]);
+          },
+          onmatch: function () {
+            if (!isDataReady(checklistData)) m.route.set("/manage");
+          },
+        },
+        "/pinned": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(PinnedView),
             ]);
           },
           onmatch: function () {

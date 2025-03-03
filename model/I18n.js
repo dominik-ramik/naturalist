@@ -155,17 +155,37 @@ let translations = {
         "en": "Copy $1 taxa results of this search",
         "fr": "Copier les résultats de cette recherche pour $1 taxa"
     },
-    filter_taxa_levels: {
-        "en": "View",
-        "fr": "Affichage"
+    display_options: {
+        "en": "View options",
+        "fr": "Options d'affichage"
+    },
+    view_checklist_as: {
+        "en": "View checklist as",
+        "fr": "Afficher la liste tant que"
+    },
+    limit_view: {
+        "en": "Limit view to",
+        "fr": "Options d'affichage"
+    },
+    view_details: {
+        "en": "Detailed list (default)",
+        "fr": "Liste détaillée (par défaut)"
+    },
+    view_sunburst: {
+        "en": "Sunburst chart",
+        "fr": "Graphique en anneaux"
+    },
+    view_hierarchy: {
+        "en": "Hierarchy",
+        "fr": "Hierarchie"
     },
     pin_search: {
         "en": "Pin search",
         "fr": "Épingler la requête"
     },
     share_url: {
-        "en": "Share results",
-        "fr": "Partager les résultats"
+        "en": "Share this search",
+        "fr": "Partager les résultats actuels"
     },
     nothing_found_oops: {
         "en": "Oops!",
@@ -194,6 +214,10 @@ let translations = {
     pin_this_search: {
         "en": "Pin this search",
         "fr": "Épingler cette recherche"
+    },
+    pined_searches: {
+        "en": "Pinned searches",
+        "fr": "Recherches épinglées"
     },
     and_list_joiner: {
         "en": "and",
