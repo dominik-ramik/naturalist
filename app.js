@@ -276,11 +276,6 @@ function isDataReady(checklistData) {
 function readyPreloadableAssets() {
   Checklist.getPreloadableAssets().forEach(async (assetUrl) => {
     await fetch(assetUrl)
-      .then((response) => {
-        if (response.status != 200) {
-          console.log("Fetched asset issue", assetUrl, response);
-        }
-      })
       .catch((e) => {
         console.log("Fetch failed", assetUrl, e);
       });
