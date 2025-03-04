@@ -37,7 +37,9 @@ export let ManageView = {
 
     const deduplicatedMessages = dataman.loggedMessages.filter(
       (item, index) =>
-        dataman.loggedMessages.findIndex((find) => find.message == item.message) === index
+        dataman.loggedMessages.findIndex(
+          (find) => find.message == item.message
+        ) === index
     );
 
     return m(
@@ -315,7 +317,8 @@ export let ManageView = {
   },
 
   uploader: function () {
-    function processUpload(filepicker, file) {
+    function processUpload(filepicker, file, checkAssetsSize) {
+
       if (!file || !file.name) {
         ManageView.state = "uploaderror";
         ManageView.stateDetails = _t("chose_a_file");
@@ -332,7 +335,7 @@ export let ManageView = {
 
       let reader = new FileReader();
       reader.addEventListener("loadend", (evt) => {
-        dataman.loadData(new ExcelBridge(evt.target.result));
+        dataman.loadData(new ExcelBridge(evt.target.result), checkAssetsSize);
         if (dataman.hasErrors) {
           ManageView.state = "dirty";
         } else {
@@ -403,7 +406,7 @@ export let ManageView = {
             preventDefaults(e);
             var dt = e.dataTransfer;
             document.getElementById("dropzone").classList.remove("entered");
-            processUpload(document.getElementById("excelupload"), dt.files[0]);
+            processUpload(document.getElementById("excelupload"), dt.files[0], document.getElementById("checkassetssize").checked);
           },
         },
         m(".wrap", [
@@ -416,11 +419,16 @@ export let ManageView = {
               "input[type=file][id=excelupload][accept=.xlsx][style=display: none]",
               {
                 onchange: function (e) {
-                  processUpload(this, e.target.files[0]);
+                  processUpload(this, e.target.files[0], document.getElementById("checkassetssize").checked);
                 },
               }
             ),
-          ]),
+            m(".check-assets-size", [
+              m("input[checked][type=checkbox][id=checkassetssize][style=margin-right: 0.5em; width: 1.5em; height: 1.5em;]"),
+              m("label[for=checkassetssize]", _t("check_assets_size1")),
+            ]),
+            m("div[style=font-size: 85%; margin-top: 0.5em; text-align: left]", _t("check_assets_size2")),
+          ])
         ])
       ),
     ]);

@@ -659,7 +659,6 @@ export let Checklist = {
       } else if (
         Checklist.getMetaForDataPath(dataPath).contentType == "image"
       ) {
-        console.log("XX");
         primitives.push(currentData.n);
         primitives.push(currentData.a);
       } else if (

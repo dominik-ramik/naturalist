@@ -12,7 +12,7 @@ import { Checklist } from "../model/Checklist.js";
 export let DataManager = function () {
   const data = nlDataStructure;
 
-  function compileChecklist() {
+  function compileChecklist(checkAssetsSize) {
     let currentDate = new Date();
 
     let currentDateString =
@@ -109,16 +109,6 @@ export let DataManager = function () {
       let assets = [];
 
       data.common.languages.supportedLanguages.forEach(function (lang) {
-        let precachedImageMaxSize = parseFloat(
-          data.common.getItem(
-            log,
-            data.sheets.appearance.tables.customization.data,
-            "Precached image max size",
-            lang.code,
-            0.5
-          )
-        );
-
         //all online search icons
         data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
           function (row) {
@@ -151,7 +141,7 @@ export let DataManager = function () {
             continue;
           }
 
-          const template = row.template
+          const template = row.template;
 
           let compiledTemplate = null;
 
@@ -182,7 +172,10 @@ export let DataManager = function () {
 
                 const resolved = compiledTemplate(dataObject);
 
-                if (assets.indexOf(resolved) < 0 && isSameOriginAsCurrent(resolved)) {
+                if (
+                  assets.indexOf(resolved) < 0 &&
+                  isSameOriginAsCurrent(resolved)
+                ) {
                   assets.push(resolved);
                 }
               }
@@ -233,7 +226,10 @@ export let DataManager = function () {
 
                 const resolved = compiledTemplate(dataObject);
 
-                if (assets.indexOf(resolved) < 0 && isSameOriginAsCurrent(resolved)) {
+                if (
+                  assets.indexOf(resolved) < 0 &&
+                  isSameOriginAsCurrent(resolved)
+                ) {
                   assets.push(resolved);
                 }
               }
@@ -242,7 +238,79 @@ export let DataManager = function () {
         }
       });
 
+      if (checkAssetsSize) {
+        const assetsSizesMsg = "Checking " + assets.length + " assets sizes";
+        console.time(assetsSizesMsg);
+        let precachedImageMaxSizeMb = parseFloat(
+          data.common.getItem(
+            log,
+            data.sheets.appearance.tables.customization.data,
+            "Precached image max size",
+            data.common.languages.defaultLanguageCode,
+            0.5
+          )
+        );
+        
+        assets.forEach(function (asset) {
+          let contentLengthInfo = getContentLengthInfo(asset);
+          
+          if (contentLengthInfo.responseStatus == 200) {
+            if (
+              contentLengthInfo.contentLength > 0 &&
+              contentLengthInfo.contentLength / 1024 / 1024 >
+              precachedImageMaxSizeMb
+            ) {
+              log(
+                "warning",
+                _tf("dm_asset_too_large", [
+                  asset,
+                  (contentLengthInfo.contentLength / 1024 / 1024).toFixed(2),
+                  precachedImageMaxSizeMb,
+                ])
+              );
+            }
+          }
+          else{
+            if(contentLengthInfo.responseStatus == 404){
+              log("error", _tf("dm_asset_not_found", [asset]));
+            }
+          }
+        });
+        
+        console.timeEnd(assetsSizesMsg);
+      }
+      
       return assets;
+    }
+
+    function getContentLengthInfo(url) {
+      const result = { url: "", contentLength: null, responseStatus: 0 };
+
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("HEAD", url, false); // false makes the request synchronous
+        xhr.withCredentials = true; // Include credentials for CORS
+        xhr.send(null);
+
+        result.responseStatus = xhr.status;
+        result.url = url;
+
+        if (xhr.status === 200) {
+          const contentLength = xhr.getResponseHeader("Content-Length");
+          result.contentLength = contentLength
+            ? parseInt(contentLength, 10)
+            : 0;
+        } else {
+          result.responseStatus = xhr.status;
+          console.error(
+            "Error fetching HEAD for " + url + " status: " + xhr.status
+          );
+        }
+      } catch (error) {
+        console.error("Error:", error.message);
+      }
+
+      return result;
     }
 
     function compileChecklistVersion(lang) {
@@ -1690,8 +1758,10 @@ export let DataManager = function () {
   let dataManager = {
     loggedMessages: [],
     hasErrors: false,
+    checkAssetsSize: false,
 
-    loadData: function (extractor) {
+    loadData: function (extractor, checkAssetsSize) {
+      this.checkAssetsSize = checkAssetsSize;
       this.loggedMessages = [];
       this.hasErrors = false;
 
@@ -1707,7 +1777,7 @@ export let DataManager = function () {
     },
 
     getCompiledChecklist() {
-      return compileChecklist();
+      return compileChecklist(this.checkAssetsSize);
     },
   };
 

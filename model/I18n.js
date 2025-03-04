@@ -551,6 +551,14 @@ let translations = {
         "en": "Warning",
         "fr": "Avertissement"
     },    
+    check_assets_size1: {
+        "en": "Verify the size of linked media files",
+        "fr": "Vérifiez la taille des fichiers multimédias liés"
+    },
+    check_assets_size2: {
+        "en": "Verify the size of linked media files during spreadsheet upload to make sure they are not too large. This may take some time if your checklist contains links to many media files.",
+        "fr": "Vérifiez la taille des fichiers multimédias liés lors du téléchargement de la feuille de calcul pour vous assurer qu'ils ne sont pas trop grands. Cela peut prendre un certain temps si votre liste contient des liens vers de nombreux fichiers multimédias."
+    },
     dm_array_with_empty_cells_in_the_middle: {
         "en": "Check the column $1$2 of the following row in the checklist sheet. There should be no empty cell at that index: $3",
         "fr": "La colonne $1 du tableau $2 ne peut pas avoir d'indicateurs de langue ($3)"
@@ -686,6 +694,14 @@ let translations = {
     dm_value_not_number: {
         "en": "Value $1 in column $2 of checklist data should be a number",
         "fr": "La valeur $1 de la colonne $2 des données du check-list doit être un nombre"
+    },
+    dm_asset_too_large: {
+        "en": "The linked file $1 is too large with $2 MB (over the expected $3 MB)",
+        "fr": "Le fichier lié $1 est trop grand avec $2 Mo (au-dessus des $3 Mo attendus)"
+    },
+    dm_asset_not_found: {
+        "en": "The linked file $1 is not found on the server",
+        "fr": "Le fichier lié $1 n'est pas trouvé sur le serveur"
     },
     filter_or: {
         "en": "or",
