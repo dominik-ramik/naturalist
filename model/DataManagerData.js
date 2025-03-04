@@ -62,7 +62,8 @@ export let nlDataStructure = {
         log(
           "warning",
           "In sheet <b>nl_appearance</b>, table <b>Customization</b>, could not find the option <b>" +
-          itemName + "</b>"
+            itemName +
+            "</b>"
         );
 
         return defaultValue;
@@ -152,6 +153,7 @@ export let nlDataStructure = {
                   "Date format",
                   "References BibTeX file URL",
                   "Citation style",
+                  "Precached image max size",
                 ],
                 supportsMultilingual: false,
               },
@@ -354,8 +356,7 @@ export let nlDataStructure = {
               description:
                 "The content of this column will appended directly after the 'Title' field of subitems if you chose the 'map regions' content type in 'Custom data definition'. Field supports markdown.",
               integrity: {
-                description:
-                  "Any text",
+                description: "Any text",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 allowedContent: "any",
@@ -550,7 +551,15 @@ export let nlDataStructure = {
                 defaultValue: "text",
                 allowDuplicates: "yes",
                 allowedContent: "list",
-                listItems: ["text", "number", "taxon", "date", "map regions", "image", ""],
+                listItems: [
+                  "text",
+                  "number",
+                  "taxon",
+                  "date",
+                  "map regions",
+                  "image",
+                  "",
+                ],
                 supportsMultilingual: false,
               },
             },
@@ -668,6 +677,19 @@ export let nlDataStructure = {
                 allowDuplicates: "yes",
                 allowedContent: "any",
                 supportsMultilingual: true,
+              },
+            },
+            precache: {
+              name: "Precache",
+              description:
+                'Indicates whether NaturaList should atempt to precache the corresponding media for offline use on client device. This is best effort based and subject to available memory and support on client device. Only same origin resources will be considered for precaching. Note: "image" datatype in Custom data definition precaches by default.',
+              integrity: {
+                description: "Will precache if set to 'yes', otherwise won't",
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "list",
+                listItems: ["yes", "no", ""],
+                supportsMultilingual: false,
               },
             },
           },
