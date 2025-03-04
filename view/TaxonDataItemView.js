@@ -59,7 +59,7 @@ export let TaxonDataItemView = {
       });
     }
 
-    if (meta.contentType == "map regions") {
+    if (meta.contentType == "map regions") {      
       const mapRegionsSuffixes = Checklist.getDataMeta("mapRegions").suffixes;
 
       const renderedRegions = Object.keys(data)
@@ -203,6 +203,7 @@ export let TaxonDataItemView = {
   },
 
   titleValuePair: function (data, dataPath, taxon, tailingSeparator) {
+
     function purifyCssString(css) {
       if (css.indexOf('"') >= 0) {
         css = css.substring(0, css.indexOf('"'));

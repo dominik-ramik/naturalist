@@ -40,7 +40,7 @@ export let AppLayoutView = {
 
     toast: function (text, options) {
         Toast.show(text, options);
-        m.redraw();
+        //m.redraw();
     }
 }
 
