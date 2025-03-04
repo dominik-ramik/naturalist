@@ -134,6 +134,12 @@
   align-items: center;
 }
 
+.multi-item-menu-button.selected {
+  background-color: var(--nlblue);
+  opacity: 0.8;
+  cursor: default;
+}
+
 .menu-action-button {
   padding-left: var(--pad-large);
   padding-right: var(--pad-large);

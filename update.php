@@ -56,3 +56,43 @@ function jsonState($state, $messageCode, $fallbackMessage)
     echo '{"state": "' . $state . '", "messageCode": "' . $messageCode . '", "details": "' . $fallbackMessage . '"}';
     die;
 }
+
+header('Content-Type: application/json');
+
+if (!isset($_GET['url'])) {
+    echo json_encode(['error' => 'URL parameter is required']);
+    exit;
+}
+
+$url = filter_var($_GET['url'], FILTER_VALIDATE_URL);
+
+if (!$url) {
+    echo json_encode(['error' => 'Invalid URL']);
+    exit;
+}
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_NOBODY, true);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HEADER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Skip SSL verification for simplicity
+
+$response = curl_exec($ch);
+
+if ($response === false) {
+    echo json_encode(['error' => 'Failed to fetch URL']);
+    exit;
+}
+
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$contentLength = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+curl_close($ch);
+
+if ($httpCode !== 200) {
+    echo json_encode(['error' => 'Request failed', 'statusCode' => $httpCode]);
+    exit;
+}
+
+echo json_encode(['contentLength' => $contentLength, 'statusCode' => $httpCode]);

@@ -7,6 +7,7 @@ import {
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
 import { TinyBibReader } from "../lib/TinyBibMD.js";
+import { Checklist } from "../model/Checklist.js";
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -92,15 +93,37 @@ export let DataManager = function () {
       return bibReader.bibliography;
     }
 
+    function isSameOriginAsCurrent(url) {
+      try {
+        const parsedCurrentUrl = new URL(window.location.origin);
+        const parsedOtherUrl = new URL(url, window.location.origin);
+
+        return parsedCurrentUrl.origin === parsedOtherUrl.origin;
+      } catch (error) {
+        console.error("Error parsing URLs:", error);
+        return false;
+      }
+    }
+
     function gatherPreloadableAssets() {
       let assets = [];
 
       data.common.languages.supportedLanguages.forEach(function (lang) {
+        let precachedImageMaxSize = parseFloat(
+          data.common.getItem(
+            log,
+            data.sheets.appearance.tables.customization.data,
+            "Precached image max size",
+            lang.code,
+            0.5
+          )
+        );
+
         //all online search icons
         data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
           function (row) {
             let asset = "./usercontent/online_search_icons/" + row.icon;
-            if (assets.indexOf(asset) < 0) {
+            if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
           }
@@ -109,16 +132,114 @@ export let DataManager = function () {
         //all locally hosted maps
         data.sheets.content.tables.maps.data[lang.code].forEach(function (row) {
           if (row.source.indexOf("{{") >= 0 && row.source.indexOf("}}") >= 0) {
-            return; //skip sources with templates
+            return; //skip sources with templates, by default we won't cache any image-based maps either
           }
           if (row.mapType == "regions") {
             let asset =
               "." + window.location.pathname + "usercontent/maps/" + row.source;
-            if (assets.indexOf(asset) < 0) {
+            if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
           }
         });
+
+        //all "image" Custom data definition
+        for (const row of data.sheets.content.tables.customDataDefinition.data[
+          lang.code
+        ]) {
+          if (row.contentType !== "image") {
+            continue;
+          }
+
+          const template = row.template
+
+          let compiledTemplate = null;
+
+          try {
+            compiledTemplate = Handlebars.compile(template);
+          } catch (ex) {
+            console.log("Handlebars error", ex);
+            return;
+          }
+
+          for (const entry of data.sheets.checklist.data[lang.code]) {
+            const imageData = Checklist.getDataFromDataPath(
+              entry.d,
+              row.columnName
+            );
+
+            for (const media of Array.isArray(imageData)
+              ? imageData
+              : [imageData]) {
+              const mediaSource = media.source;
+              if (mediaSource != "") {
+                let dataObject = Checklist.getDataObjectForHandlebars(
+                  mediaSource,
+                  {},
+                  "",
+                  ""
+                );
+
+                const resolved = compiledTemplate(dataObject);
+
+                if (assets.indexOf(resolved) < 0 && isSameOriginAsCurrent(resolved)) {
+                  assets.push(resolved);
+                }
+              }
+            }
+          }
+        }
+
+        //all precache "yes" media
+        for (const row of data.sheets.content.tables.media.data[lang.code]) {
+          if (row.precache !== "yes") {
+            continue;
+          }
+
+          const linkBase = row.linkBase;
+          let mediaType = row.typeOfData;
+
+          if (mediaType !== "image" && mediaType !== "sound") {
+            console.log("Skipped caching of", mediaType, linkBase);
+            continue;
+          }
+
+          let compiledTemplate = null;
+
+          try {
+            compiledTemplate = Handlebars.compile(linkBase);
+          } catch (ex) {
+            console.log("Handlebars error", ex);
+            return;
+          }
+
+          for (const entry of data.sheets.checklist.data[lang.code]) {
+            const mediaArray = Checklist.getDataFromDataPath(
+              entry.d,
+              row.columnName
+            );
+
+            //media come in arrays
+            for (const mediaItem of mediaArray) {
+              const mediaSource = mediaItem.source.trim();
+
+              if (mediaSource != "") {
+                let dataObject = Checklist.getDataObjectForHandlebars(
+                  mediaSource,
+                  {},
+                  "",
+                  ""
+                );
+
+                const resolved = compiledTemplate(dataObject);
+
+                if (assets.indexOf(resolved) < 0 && isSameOriginAsCurrent(resolved)) {
+                  assets.push(resolved);
+                }
+              }
+            }
+          }
+        }
       });
 
       return assets;
@@ -162,6 +283,13 @@ export let DataManager = function () {
           "apa"
         )
         ?.toLowerCase();
+      let precachedImageMaxSize = data.common.getItem(
+        log,
+        data.sheets.appearance.tables.customization.data,
+        "Precached image max size",
+        lang.code,
+        0.5
+      );
 
       let version = {
         languageName: lang.name,
@@ -171,6 +299,7 @@ export let DataManager = function () {
         about: about,
         dateFormat: dateFormat,
         citationStyle: citationStyle.toLowerCase(),
+        precachedImageMaxSize: parseFloat(precachedImageMaxSize),
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],
@@ -397,6 +526,7 @@ export let DataManager = function () {
             meta[computedDataPath].type = info.fullRow.typeOfData;
             meta[computedDataPath].title = info.fullRow.title;
             meta[computedDataPath].link = info.fullRow.linkBase;
+            meta[computedDataPath].precache = info.fullRow.precache;
           }
           if (dataType == "map") {
             meta[computedDataPath].type = info.fullRow.mapType;
