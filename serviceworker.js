@@ -72,7 +72,7 @@ self.addEventListener('fetch', function (e) {
                     console.log("Fetching problems");
                     console.log(response);
                     communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
-                    return;
+                    return null;
                 }
                 return response;
             });

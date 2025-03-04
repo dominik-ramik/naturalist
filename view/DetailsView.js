@@ -13,11 +13,14 @@ export let DetailsView = {
   taxonAuthority: "",
   taxonData: {},
 
+  /*
+
   onupdate: function (vnode) {
     return this.view(vnode);
   },
+  */
 
-  view: function (vnode) {
+  view: function (vnode) {    
     DetailsView.taxonName = m.route.param("taxon")
       ? m.route.param("taxon")
       : "";
@@ -592,11 +595,12 @@ function TabExternalSearch(tabData, taxon, taxonName) {
     ".search-engines",
     tabData.map(function (engine) {
       if (engine.restrictToTaxon && engine.restrictToTaxon.length > 0) {
-        if (
-          !taxon.t.find(
-            (t) => t.n.toLowerCase() == engine.restrictToTaxon.toLowerCase()
-          )
-        ) {
+        let restricted = engine.restrictToTaxon
+          .split(",")
+          .map((i) => i.trim().toLowerCase())
+          .filter((i) => i !== null && i !== "");
+
+        if (!taxon.t.find((t) => restricted.includes(t.n.toLowerCase()))) {
           return null; // If taxon to which this should be restricted is not found in the taxonomic branch, then don't show this engine
         }
       }

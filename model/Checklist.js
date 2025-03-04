@@ -643,7 +643,6 @@ export let Checklist = {
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
-          
           if (Checklist.getMetaForDataPath(dataPath).contentType == "image") {
             primitives.push(arrayMember.source);
             primitives.push(arrayMember.title);
@@ -660,7 +659,7 @@ export let Checklist = {
       } else if (
         Checklist.getMetaForDataPath(dataPath).contentType == "image"
       ) {
-        console.log("XX")
+        console.log("XX");
         primitives.push(currentData.n);
         primitives.push(currentData.a);
       } else if (
@@ -742,6 +741,13 @@ export let Checklist = {
       if (currentDataItem == null) {
         return;
       }
+
+      let arrayMode = false;
+      if (item.endsWith("#")) {
+        item = item.substring(0, item.length - 1);
+        arrayMode = true;
+      }
+
       if (!currentDataItem.hasOwnProperty(item)) {
         currentDataItem = null;
         return;

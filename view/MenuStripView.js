@@ -9,8 +9,6 @@ export let MenuStripView = {
   menuOpen: false,
 
   view: function () {
-    //console.log("BUG!!! fix on desktop view - clicked on taxon parent in checklist");
-
     return m(".app-menu", [
       //"ADD persistent Filters below the menu that will allow filtering by search categoires (e.g. island or others) and will be sticky in the url",
       m.route.get().startsWith("/checklist") ||
@@ -224,16 +222,28 @@ function menuTopBar() {
           type: "button",
           title: _t("view_details"),
           icon: "ui/menu/detailed_list",
+          selected: Settings.viewType() === "view_details",
+          action: function () {
+            Settings.viewType("view_details");
+          },
         },
         {
           type: "button",
           title: _t("view_sunburst"),
           icon: "ui/menu/sunburst",
+          selected: Settings.viewType() === "view_sunburst",
+          action: function () {
+            Settings.viewType("view_sunburst");
+          },
         },
         {
           type: "button",
           title: _t("view_hierarchy"),
           icon: "ui/menu/hierarchy",
+          selected: Settings.viewType() === "view_hierarchy",
+          action: function () {
+            Settings.viewType("view_hierarchy");
+          },
         },
         { type: "label", title: _t("limit_view") },
         { type: "divider" },
@@ -307,7 +317,7 @@ let ActionButtonWithMenu = function (initialVnode) {
         }
 
         open = false;
-        m.redraw();
+        //m.redraw();
       },
       { once: true }
     );
@@ -357,10 +367,11 @@ let ActionButtonWithMenu = function (initialVnode) {
 
                   if (item.type == "button") {
                     return m(
-                      ".multi-item-menu-button",
+                      ".multi-item-menu-button" +
+                        (item.selected ? ".selected" : ""),
                       {
                         onclick: function (e) {
-                          if (item.state != "inactive") {
+                          if (!item.selected && item.state != "inactive") {
                             item.action();
                             open = false;
                           }
@@ -375,7 +386,9 @@ let ActionButtonWithMenu = function (initialVnode) {
                         ),
                         m(
                           ".menu-item" +
-                            (item.state == "inactive" ? ".inactive" : ""),
+                            (!item.selected && item.state == "inactive"
+                              ? ".inactive"
+                              : ""),
                           [m(".menu-item-title", item.title)]
                         ),
                         item.altActionIcon
