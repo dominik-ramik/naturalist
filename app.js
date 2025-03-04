@@ -139,8 +139,8 @@ export function checkForChecklistUpdate(sw) {
   checkDataUpdate.send();
 }
 
-Handlebars.registerHelper('ifeq', function(arg1, arg2, options) {
-  return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
+Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
+  return arg1 == arg2 ? options.fn(this) : options.inverse(this);
 });
 
 function runApp() {
@@ -223,9 +223,7 @@ function runApp() {
         "/references": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [
-              m(LiteratureView),
-            ]);
+            return m(AppLayoutView, [m(LiteratureView)]);
           },
           onmatch: function () {
             if (!isDataReady(checklistData)) m.route.set("/manage");
@@ -234,9 +232,7 @@ function runApp() {
         "/references/:citekey": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [
-              m(LiteratureView),
-            ]);
+            return m(AppLayoutView, [m(LiteratureView)]);
           },
           onmatch: function () {
             if (!isDataReady(checklistData)) m.route.set("/manage");
@@ -245,9 +241,7 @@ function runApp() {
         "/pinned": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [
-              m(PinnedView),
-            ]);
+            return m(AppLayoutView, [m(PinnedView)]);
           },
           onmatch: function () {
             if (!isDataReady(checklistData)) m.route.set("/manage");
@@ -280,13 +274,15 @@ function isDataReady(checklistData) {
 }
 
 function readyPreloadableAssets() {
-  Checklist.getPreloadableAssets()?.forEach(async (asset) => {
-    try {
-      await fetch(asset).catch((result) =>
-        console.log("ERROR downloading assets", result)
-      );
-    } catch {
-      console.log("Problem fetching preloadable asset");
-    }
+  Checklist.getPreloadableAssets().forEach(async (assetUrl) => {
+    await fetch(assetUrl)
+      .then((response) => {
+        if (response.status != 200) {
+          console.log("Fetched asset issue", assetUrl, response);
+        }
+      })
+      .catch((e) => {
+        console.log("Fetch failed", assetUrl, e);
+      });
   });
 }
