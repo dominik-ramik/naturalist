@@ -3,6 +3,7 @@ import {
   indexOfCaseInsensitive,
   isValidHttpUrl,
   pad,
+  splitN
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
@@ -250,15 +251,15 @@ export let DataManager = function () {
             0.5
           )
         );
-        
+
         assets.forEach(function (asset) {
           let contentLengthInfo = getContentLengthInfo(asset);
-          
+
           if (contentLengthInfo.responseStatus == 200) {
             if (
               contentLengthInfo.contentLength > 0 &&
               contentLengthInfo.contentLength / 1024 / 1024 >
-              precachedImageMaxSizeMb
+                precachedImageMaxSizeMb
             ) {
               log(
                 "warning",
@@ -269,17 +270,16 @@ export let DataManager = function () {
                 ])
               );
             }
-          }
-          else{
-            if(contentLengthInfo.responseStatus == 404){
+          } else {
+            if (contentLengthInfo.responseStatus == 404) {
               log("error", _tf("dm_asset_not_found", [asset]));
             }
           }
         });
-        
+
         console.timeEnd(assetsSizesMsg);
       }
-      
+
       return assets;
     }
 
@@ -560,11 +560,72 @@ export let DataManager = function () {
               );
             }
 
+            //verify syntax of .hidden
+            if (info.fullRow.hidden !== "yes" && info.fullRow.hidden !== "no") {
+              let expr = info.fullRow.hidden;
+
+              let split = splitN(expr, " ", 3);
+              if (split.length < 3 || split.length > 4) {
+                log(
+                  "error",
+                  _tf("dm_hidden_syntax_wrong_length", [
+                    info.fullRow.columnName,
+                    expr,
+                  ])
+                );
+              }
+
+              if (!["if", "unless"].includes(split[0])) {
+                log(
+                  "error",
+                  _tf("dm_hidden_syntax", [info.fullRow.columnName, expr])
+                );
+              }
+
+              let filter = split[1];
+              if (!dataPath.validate.isDataPath(filter)) {
+                log(
+                  "error",
+                  _tf("dm_hidden_syntax_wrong_filter", [
+                    info.fullRow.columnName,
+                    filter,
+                  ])
+                );
+              }
+
+              if (!["is", "isset", "notset", "notsetor"].includes(split[2])) {
+                log(
+                  "error",
+                  _tf("dm_hidden_syntax_wrong_operator", [
+                    info.fullRow.columnName,
+                    expr,
+                  ])
+                );
+              }
+
+              if (split.length == 4 && split[3].length > 0) {
+                try {
+                  let parsed = JSON.parse("[" + split[3] + "]");
+                  if(!Array.isArray(parsed)) {
+                    throw new Error("Not an array");
+                  }
+                } catch (e) {
+                  log(
+                    "error",
+                    _tf("dm_hidden_syntax_wrong_value", [
+                      info.fullRow.columnName,
+                      expr,
+                    ])
+                  );
+                }
+              }
+            }
+
             meta[computedDataPath].separator = info.fullRow.subitemsSeparator;
             meta[computedDataPath].contentType = info.fullRow.contentType;
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
-            meta[computedDataPath].hidden = info.fullRow.hidden == "yes";
+            meta[computedDataPath].hidden = info.fullRow.hidden;
             meta[computedDataPath].format = info.fullRow.formatting;
 
             if (info.fullRow.formatting.toLowerCase() == "badge") {

@@ -703,6 +703,26 @@ let translations = {
         "en": "The linked file $1 is not found on the server",
         "fr": "Le fichier lié $1 n'est pas trouvé sur le serveur"
     },
+    dm_hidden_syntax: {
+        "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. It should start with 'if' or 'unless'",
+        "fr": "La colonne 'Hidden' dans 'Définition des données personnalisées' à la ligne $1 a une syntaxe incorrecte $2. Elle doit commencer par 'if' ou 'unless'"
+    },
+    dm_hidden_syntax_wrong_operator: {
+        "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. The filter name should be followed by any of the following keywords 'is', 'isset', 'notset', 'notsetor'",
+        "fr": "La colonne 'Hidden' dans 'Définition des données personnalisées' à la ligne $1 a une syntaxe incorrecte $2. Le nom du filtre doit être suivi de l'un des mots-clés suivants 'is', 'isset', 'notset', 'notsetor'"
+    },
+    dm_hidden_syntax_wrong_filter: {
+        "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. The filter name should be a valid data path and correspond to a Column name with Search category title set",
+        "fr": "La colonne 'Hidden' dans 'Custom data definition' à la ligne $1 a une syntaxe incorrecte $2. Le nom du filtre doit être un chemin de données valide et correspondre à un Column name avec le Search category title défini"
+    },
+    dm_hidden_syntax_wrong_length: {
+        "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2.",
+        "fr": "La colonne 'Hidden' dans 'Custom data definition' à la ligne $1 a une syntaxe incorrecte $2."
+    },
+    dm_hidden_syntax_wrong_value: {
+        "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. The list of values should be separated by commas and enclosed in double quotes",
+        "fr": "La colonne 'Hidden' dans 'Custom data definition' à la ligne $1 a une syntaxe incorrecte $2. La liste des valeurs doit être séparée par des virgules et encadrée de guillemets"
+    },
     filter_or: {
         "en": "or",
         "fr": "ou"

@@ -227,6 +227,7 @@ function menuTopBar() {
             Settings.viewType("view_details");
           },
         },
+        /*
         {
           type: "button",
           title: _t("view_sunburst"),
@@ -245,6 +246,7 @@ function menuTopBar() {
             Settings.viewType("view_hierarchy");
           },
         },
+        */
         { type: "label", title: _t("limit_view") },
         { type: "divider" },
         [

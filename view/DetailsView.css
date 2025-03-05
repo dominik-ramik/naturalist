@@ -257,3 +257,9 @@
   width: 2em;
   margin-right: var(--pad-large);
 }
+
+path {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1px;
+}

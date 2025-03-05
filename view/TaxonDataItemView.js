@@ -1,6 +1,6 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/TaxonView.js";
-import { filterMatches, routeTo } from "../components/Utils.js";
+import { filterMatches, routeTo, shouldHide } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -223,7 +223,7 @@ export let TaxonDataItemView = {
     var itemType = TaxonDataItemView.getItemType(data);
     let meta = Checklist.getMetaForDataPath(dataPath);
 
-    if (meta.hidden) {
+    if (shouldHide(dataPath, meta.hidden, Checklist.filter.data)) {
       return null;
     }
 
