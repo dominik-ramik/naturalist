@@ -16,43 +16,48 @@
 @import "../view/LiteratureView.css";
 html,
 body {
-    font-family: var(--font-normal);
-    margin: 0px;
-    padding: 0px;
-    text-size-adjust: none;
-    background-color: white;
-    color: black;
-    line-height: 100%;
-    font-size: 100%;
-    user-select: none;
+  font-family: var(--font-normal);
+  margin: 0px;
+  padding: 0px;
+  text-size-adjust: none;
+  background-color: white;
+  color: black;
+  line-height: 100%;
+  font-size: 100%;
+  user-select: none;
+}
+
+a[target="_blank"]:after {
+  content: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDEyIDEyIj4KCTx0aXRsZT4KCQlleHRlcm5hbCBsaW5rCgk8L3RpdGxlPgoJPHBhdGggZmlsbD0iIzM2YyIgZD0iTTYgMWg1djVMOC44NiAzLjg1IDQuNyA4IDQgNy4zbDQuMTUtNC4xNnpNMiAzaDJ2MUgydjZoNlY4aDF2MmExIDEgMCAwIDEtMSAxSDJhMSAxIDAgMCAxLTEtMVY0YTEgMSAwIDAgMSAxLTEiLz4KPC9zdmc+Cg==);
+  margin: 0 3px 0 5px;
 }
 
 .clickable {
-    cursor: default;
-    cursor: pointer;
+  cursor: default;
+  cursor: pointer;
 }
 
 .clickable:hover {
-    opacity: 0.5;
+  opacity: 0.5;
 }
 
 #snack-wrap {
-    text-align: center;
-    position: fixed;
-    z-index: 1;
-    bottom: 2em;
-    left: 0px;
-    right: 0px;
+  text-align: center;
+  position: fixed;
+  z-index: 1;
+  bottom: 2em;
+  left: 0px;
+  right: 0px;
 }
 
 #snackbar {
-    font-size: 80%;
-    display: inline-block;
-    min-width: 5em;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 1em;
+  font-size: 80%;
+  display: inline-block;
+  min-width: 5em;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 1em;
 }

@@ -192,6 +192,79 @@ export let Checklist = {
     },
   },
 
+  databaseShortcodeList: [
+    {
+      code: "gbif",
+      name: "GBIF ($id$)",
+      url: "https://www.gbif.org/occurrence/$id$",
+    },
+    {
+      code: "gbif.s",
+      name: "GBIF (Taxon $id$)",
+      url: "https://www.gbif.org/species/$id$",
+    },
+    {
+      code: "inat",
+      name: "iNat ($id$)",
+      url: "https://www.inaturalist.org/observations/$id$",
+    },
+    {
+      code: "ebird",
+      name: "eBird ($id$)",
+      url: "https://ebird.org/checklist/S$id$",
+      idModifier: (id) =>
+        id.toLowerCase().startsWith("s") ? id.substring(1) : id,
+    },
+    {
+      code: "clml",
+      name: "ML ($id$)",
+      url: "https://macaulaylibrary.org/asset/$id$",
+    },
+    {
+      code: "obse",
+      name: "Observation.org ($id$)",
+      url: "https://observation.org/observation/$id$",
+    },
+  ],
+
+  transformDatabaseShortcodes: function (text) {
+    if (text === undefined || !text) return text;
+
+    if (text.indexOf("@") > -1) {
+      console.log(text);
+
+      text = text.replace(
+        /@([a-z]+)(\.[a-z]+)?:([a-zA-Z0-9-_\/]+)/gm,
+        (match, enginePrefix, engineOption, value) => {
+          let engineCode = enginePrefix + (engineOption ? engineOption : "");
+
+          let engine = Checklist.databaseShortcodeList.find(
+            (item) => item.code == engineCode
+          );
+
+          if (engine) {
+            value =
+              engine.idModifier !== undefined
+                ? engine.idModifier(value)
+                : value;
+            let link =
+              '<a class="citation" href="' +
+              engine.url.replace("$id$", value) +
+              '" target="_blank">' +
+              engine.name.replace("$id$", value) +
+              "</a>";
+            return match.replace(match, link);
+          } else {
+            console.log("Unknown engine: " + engineCode);
+            return match;
+          }
+        }
+      );
+    }
+
+    return text;
+  },
+
   _bibFormatter: null,
 
   getBibliographyKeys: function () {

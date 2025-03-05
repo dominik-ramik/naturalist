@@ -266,6 +266,8 @@ export let TaxonDataItemView = {
       if (meta.format == "markdown" || (meta.template && meta.template != "")) {
         //process bibliography
         try {
+          data = Checklist.transformDatabaseShortcodes(data);
+
           data = Checklist.getBibFormatter().transformInTextCitations(
             data,
             (citeKey) => {
@@ -285,7 +287,7 @@ export let TaxonDataItemView = {
 
         data = marked.parse(data);
         //in case markdown introduced some dirt, purify it again
-        data = DOMPurify.sanitize(data);
+        data = DOMPurify.sanitize(data, { ADD_ATTR: ['target'] });
         data = data.trim() + (tailingSeparator ? tailingSeparator : "");
         data = m.trust(data);
       } else if (meta.format == "badge") {

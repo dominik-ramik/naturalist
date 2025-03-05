@@ -133,4 +133,5 @@ span.simple-value p {
 a.citation {
   color: #0026eb;
   cursor: pointer;
+  text-decoration: none;
 }
