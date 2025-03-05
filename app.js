@@ -181,107 +181,85 @@ function runApp() {
 
       readyPreloadableAssets();
 
-      if (!Settings.alreadyViewedAboutSection()) {
-        m.route(document.body, "/about/checklist", {          
-          "/about/checklist": {
-            render: function () {
-              Settings.alreadyViewedAboutSection(true);
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [
-                m(AboutView, { text: Checklist.getProjectAbout() }),
-              ]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-        });
-      } else {
-        m.route(document.body, "/checklist", {
-          "/search": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(SearchView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/checklist": {
-            render: function () {
-              AppLayoutView.display = "checklist";
-              return m(AppLayoutView, [m(SearchView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/details/:taxon/:tab": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(DetailsView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/about/checklist": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [
-                m(AboutView, { text: Checklist.getProjectAbout() }),
-              ]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/references": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(LiteratureView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/references/:citekey": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(LiteratureView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/pinned": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(PinnedView)]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/about/app": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [
-                m(AboutView, { text: _t("about_app", appVersion) }),
-              ]);
-            },
-            onmatch: function () {
-              if (!isDataReady(checklistData)) m.route.set("/manage");
-            },
-          },
-          "/manage": {
-            render: function () {
-              AppLayoutView.display = "details";
-              return m(AppLayoutView, [m(ManageView)]);
-            },
-          },
-        });
+
+      function onMatchGuard() {
+        if (!isDataReady(checklistData)) m.route.set("/manage");
+        if (!Settings.alreadyViewedAboutSection()) {
+          m.route.set("/about/checklist");
+        }
+        
+        Settings.alreadyViewedAboutSection(true);
       }
+
+      m.route(document.body, "/checklist", {
+        "/search": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(SearchView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/checklist": {
+          render: function () {
+            AppLayoutView.display = "checklist";
+            return m(AppLayoutView, [m(SearchView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/details/:taxon/:tab": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(DetailsView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/about/checklist": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(AboutView, { text: Checklist.getProjectAbout() }),
+            ]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/references": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(LiteratureView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/references/:citekey": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(LiteratureView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/pinned": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(PinnedView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/about/app": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(AboutView, { text: _t("about_app", appVersion) }),
+            ]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/manage": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(ManageView)]);
+          },
+        },
+      });
+
     }, 50);
   });
 }
