@@ -45,7 +45,7 @@ export function shouldHide(dataPath, hideExpression, filterData) {
         values.some((value) => filterSelectedValues.includes(value));
       break;
     case "is":
-        result = values.some((value) => filterSelectedValues.includes(value));
+      result = values.some((value) => filterSelectedValues.includes(value));
       break;
     default:
       console.log("Unknown operator in Hidden", operator);
@@ -72,6 +72,25 @@ export function splitN(str, delimiter, n) {
   }
 
   return result;
+}
+
+export function relativeToUsercontent(url) {
+  //Add an initial period to relative URLs
+  if (url.length > 1 && url[0] == "/" && url[1] != "/") {
+    url = "." + url;
+  }
+
+  //Don't change absolute URLs
+  if (url.indexOf("://") >= 0) {
+    return url;
+  }
+
+  let processed = new URL(
+    url,
+    window.location.origin + window.location.pathname + "usercontent/"
+  ).href;
+
+  return processed;
 }
 
 export function getDecimalSeparator(locale) {

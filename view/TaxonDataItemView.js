@@ -1,6 +1,6 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/TaxonView.js";
-import { filterMatches, routeTo, shouldHide } from "../components/Utils.js";
+import { filterMatches, relativeToUsercontent, routeTo, shouldHide } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -23,16 +23,20 @@ export let TaxonDataItemView = {
         return null;
       }
 
+      let source = data.source
+
       if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
         let templateData = Checklist.getDataObjectForHandlebars(
-          data.source,
+          source,
           TaxonDataItemView.originalData,
           taxon.n,
           taxon.a
         );
 
-        data = Checklist.handlebarsTemplates[dataPath](templateData);
+        source = Checklist.handlebarsTemplates[dataPath](templateData);
       }
+      
+      source = relativeToUsercontent(source);
 
       return m(
         "span.image-in-view-wrap.clickable",
@@ -41,7 +45,7 @@ export let TaxonDataItemView = {
             this.classList.toggle("fullscreen");
           },
         },
-        m("img.image-in-view[src=" + data + "]")
+        m("img.image-in-view[src=" + source + "]")
       );
     }
 

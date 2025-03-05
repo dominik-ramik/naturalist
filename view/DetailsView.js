@@ -5,7 +5,7 @@ import {
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { _t } from "../model/I18n.js";
-import { routeTo } from "../components/Utils.js";
+import { relativeToUsercontent, routeTo } from "../components/Utils.js";
 
 export let DetailsView = {
   selectedTaxon: null,
@@ -20,7 +20,7 @@ export let DetailsView = {
   },
   */
 
-  view: function (vnode) {    
+  view: function (vnode) {
     DetailsView.taxonName = m.route.param("taxon")
       ? m.route.param("taxon")
       : "";
@@ -169,6 +169,8 @@ function TabMedia(tabData, taxon, taxonName) {
             url = resolveTemplate(mediaUrl, mediaItem.source);
           }
 
+          url = relativeToUsercontent(url);
+
           let title = mediaItem.hasOwnProperty("title") ? mediaItem.title : "";
 
           if (!mediaRenderingData.hasOwnProperty(mediaType)) {
@@ -281,7 +283,12 @@ function TabMap(tabData, taxon, taxonName) {
       if (mapUrl == "") {
         url = mapData;
       } else {
+        console.log("MAP", mapUrl, mapData);
         url = resolveTemplate(mapUrl, mapData);
+      }
+
+      if (mapData == "") {
+        return null;
       }
 
       if (!mapsRenderingData.hasOwnProperty(mapType)) {

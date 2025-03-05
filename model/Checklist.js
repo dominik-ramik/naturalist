@@ -231,8 +231,6 @@ export let Checklist = {
     if (text === undefined || !text) return text;
 
     if (text.indexOf("@") > -1) {
-      console.log(text);
-
       text = text.replace(
         /@([a-z]+)(\.[a-z]+)?:([a-zA-Z0-9-_\/]+)/gm,
         (match, enginePrefix, engineOption, value) => {

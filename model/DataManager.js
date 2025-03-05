@@ -3,6 +3,7 @@ import {
   indexOfCaseInsensitive,
   isValidHttpUrl,
   pad,
+  relativeToUsercontent as absoluteFromRelativeToUsercontent,
   splitN,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
@@ -113,7 +114,9 @@ export let DataManager = function () {
         //all online search icons
         data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
           function (row) {
-            let asset = "./usercontent/online_search_icons/" + row.icon;
+            let asset = absoluteFromRelativeToUsercontent(
+              "./online_search_icons/" + row.icon
+            );
             if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
@@ -126,8 +129,7 @@ export let DataManager = function () {
             return; //skip sources with templates, by default we won't cache any image-based maps either
           }
           if (row.mapType == "regions") {
-            let asset =
-              "." + window.location.pathname + "usercontent/maps/" + row.source;
+            let asset = absoluteFromRelativeToUsercontent("./maps/" + row.source);
             if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
@@ -177,7 +179,7 @@ export let DataManager = function () {
                   assets.indexOf(resolved) < 0 &&
                   isSameOriginAsCurrent(resolved)
                 ) {
-                  assets.push(resolved);
+                  assets.push(absoluteFromRelativeToUsercontent(resolved));
                 }
               }
             }
@@ -231,7 +233,7 @@ export let DataManager = function () {
                   assets.indexOf(resolved) < 0 &&
                   isSameOriginAsCurrent(resolved)
                 ) {
-                  assets.push(resolved);
+                  assets.push(absoluteFromRelativeToUsercontent(resolved));
                 }
               }
             }
@@ -899,7 +901,9 @@ export let DataManager = function () {
                     localCountedDataPath
                   ) < 0
                 ) {
-                  data.common.allUsedDataPaths[langCode].push(localCountedDataPath);
+                  data.common.allUsedDataPaths[langCode].push(
+                    localCountedDataPath
+                  );
                 }
               }
 
