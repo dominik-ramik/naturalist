@@ -3,7 +3,7 @@ import {
   indexOfCaseInsensitive,
   isValidHttpUrl,
   pad,
-  splitN
+  splitN,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
@@ -606,7 +606,7 @@ export let DataManager = function () {
               if (split.length == 4 && split[3].length > 0) {
                 try {
                   let parsed = JSON.parse("[" + split[3] + "]");
-                  if(!Array.isArray(parsed)) {
+                  if (!Array.isArray(parsed)) {
                     throw new Error("Not an array");
                   }
                 } catch (e) {
@@ -809,6 +809,7 @@ export let DataManager = function () {
         do {
           count++;
           let countedComputedPath = computedPath + count;
+
           possible = headers.filter(function (header) {
             if (
               header == countedComputedPath ||
@@ -876,6 +877,33 @@ export let DataManager = function () {
                 langCode
               );
               lastSuccesfullCount++;
+            }
+          } else if (count == 1 && pathSegments.length > 1) {
+            //we may have a candidate for simplified array (aka comma separated values)
+            let rawValue =
+              row[
+                headers.indexOf(pathSegments[pathSegments.length - 2])
+              ].trim();
+
+            if (rawValue != "") {
+              let values = rawValue?.split(",").map((v) => v.trim());
+
+              for (let i = 0; i < values.length; i++) {
+                const e = values[i];
+                rowObjData[i] = e;
+
+                let localCountedDataPath = computedPath + (i + 1).toString();
+
+                if (
+                  data.common.allUsedDataPaths[langCode].indexOf(
+                    localCountedDataPath
+                  ) < 0
+                ) {
+                  data.common.allUsedDataPaths[langCode].push(localCountedDataPath);
+                }
+              }
+
+              return;
             }
           }
         } while (possible.length > 0);
