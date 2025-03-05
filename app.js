@@ -181,90 +181,107 @@ function runApp() {
 
       readyPreloadableAssets();
 
-      m.route(document.body, "/checklist", {
-        "/search": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SearchView)]);
+      if (!Settings.alreadyViewedAboutSection()) {
+        m.route(document.body, "/about/checklist", {          
+          "/about/checklist": {
+            render: function () {
+              Settings.alreadyViewedAboutSection(true);
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [
+                m(AboutView, { text: Checklist.getProjectAbout() }),
+              ]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
+        });
+      } else {
+        m.route(document.body, "/checklist", {
+          "/search": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(SearchView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-        },
-        "/checklist": {
-          render: function () {
-            AppLayoutView.display = "checklist";
-            return m(AppLayoutView, [m(SearchView)]);
+          "/checklist": {
+            render: function () {
+              AppLayoutView.display = "checklist";
+              return m(AppLayoutView, [m(SearchView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
+          "/details/:taxon/:tab": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(DetailsView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-        },
-        "/details/:taxon/:tab": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(DetailsView)]);
+          "/about/checklist": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [
+                m(AboutView, { text: Checklist.getProjectAbout() }),
+              ]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
+          "/references": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(LiteratureView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-        },
-        "/about/checklist": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [
-              m(AboutView, { text: Checklist.getProjectAbout() }),
-            ]);
+          "/references/:citekey": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(LiteratureView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
+          "/pinned": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(PinnedView)]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-        },
-        "/references": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(LiteratureView)]);
+          "/about/app": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [
+                m(AboutView, { text: _t("about_app", appVersion) }),
+              ]);
+            },
+            onmatch: function () {
+              if (!isDataReady(checklistData)) m.route.set("/manage");
+            },
           },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
+          "/manage": {
+            render: function () {
+              AppLayoutView.display = "details";
+              return m(AppLayoutView, [m(ManageView)]);
+            },
           },
-        },
-        "/references/:citekey": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(LiteratureView)]);
-          },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
-          },
-        },
-        "/pinned": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(PinnedView)]);
-          },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
-          },
-        },
-        "/about/app": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [
-              m(AboutView, { text: _t("about_app", appVersion) }),
-            ]);
-          },
-          onmatch: function () {
-            if (!isDataReady(checklistData)) m.route.set("/manage");
-          },
-        },
-        "/manage": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(ManageView)]);
-          },
-        },
-      });
+        });
+      }
     }, 50);
   });
 }
@@ -275,9 +292,8 @@ function isDataReady(checklistData) {
 
 function readyPreloadableAssets() {
   Checklist.getPreloadableAssets().forEach(async (assetUrl) => {
-    await fetch(assetUrl)
-      .catch((e) => {
-        console.log("Fetch failed", assetUrl, e);
-      });
+    await fetch(assetUrl).catch((e) => {
+      console.log("Fetch failed", assetUrl, e);
+    });
   });
 }

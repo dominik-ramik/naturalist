@@ -37,6 +37,19 @@ export let Settings = {
     }
   },
 
+  alreadyViewedAboutSection: function (alreadyViewed) {
+    if (alreadyViewed === undefined) {
+      const viewed = window.localStorage.getItem("alreadyViewed");
+      if (!viewed || viewed === undefined) {
+        return false;
+      } else {
+        return viewed;
+      }
+    } else {
+      window.localStorage.setItem("alreadyViewed", alreadyViewed);
+    }
+  },
+
   lastKnownUploadFormAvailability: function (value) {
     if (value === undefined) {
       return window.localStorage.getItem("lastKnownUploadFormAvailability");
