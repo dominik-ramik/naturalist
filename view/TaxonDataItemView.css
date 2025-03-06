@@ -23,6 +23,29 @@ span.simple-value img {
   max-height: 6em;
 }
 
+span.simple-value h1 {
+  font-size: 125%;
+  margin-bottom: 0.5em;
+}
+
+span.simple-value h2 {
+  font-size: 115%;
+  margin-bottom: 0.5em;
+  padding-left: 0.25em
+}
+
+span.simple-value h3 {
+  font-size: 107%;
+  margin-bottom: 0.5em;
+  padding-left: 0.5em
+}
+
+span.simple-value h4 {
+  font-size: 100%;
+  margin-bottom: 0.5em;
+  padding-left: 1em
+}
+
 .data-item-title {
   font-weight: bold;
   color: hsl(212, 29%, 24%);
