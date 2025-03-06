@@ -1,6 +1,6 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/TaxonView.js";
-import { filterMatches, relativeToUsercontent, routeTo, shouldHide } from "../components/Utils.js";
+import { filterMatches, relativeToUsercontent, routeTo, shouldHide, mdImagesClickableAndUsercontentRelative } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -293,6 +293,9 @@ export let TaxonDataItemView = {
         //in case markdown introduced some dirt, purify it again
         data = DOMPurify.sanitize(data, { ADD_ATTR: ['target'] });
         data = data.trim() + (tailingSeparator ? tailingSeparator : "");
+
+        data = mdImagesClickableAndUsercontentRelative(data);
+
         data = m.trust(data);
       } else if (meta.format == "badge") {
         let badgeMeta = meta.badges;

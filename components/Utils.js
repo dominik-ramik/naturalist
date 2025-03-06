@@ -59,6 +59,19 @@ export function shouldHide(dataPath, hideExpression, filterData) {
   return result;
 }
 
+export function mdImagesClickableAndUsercontentRelative(markdown) {
+  return markdown.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
+    return match
+      .replace(
+        match,
+        '<span class="image-wrap" onClick="this.classList.toggle(\'fullscreen\')">' +
+          match +
+          "</span>"
+      )
+      .replace(src, relativeToUsercontent(src));
+  });
+}
+
 export function splitN(str, delimiter, n) {
   const parts = str.split(delimiter);
   const result = [];

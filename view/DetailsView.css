@@ -121,16 +121,42 @@
   cursor: pointer;
 }
 
+.tabs-container-content-text .accompanyingTextHeading{
+  text-align: center;
+  font-size: 200%;
+  font-weight: bold;
+  margin-top: 0em;
+  margin-bottom: 1em;
+  margin-top: 0.5em;
+}
+
 .tabs-container-content-text h1 {
-  font-size: 150%;
+  font-size: 135%;
+  margin-bottom: 0.5em;
 }
 
 .tabs-container-content-text h2 {
-  font-size: 130%;
+  font-size: 125%;
+  margin-bottom: 0.5em;
+  padding-left: 0.25em
 }
 
 .tabs-container-content-text h3 {
-  font-size: 115%;
+  font-size: 110%;
+  margin-bottom: 0.5em;
+  padding-left: 0.5em
+}
+
+.tabs-container-content-text h4 {
+  font-size: 100%;
+  margin-bottom: 0.5em;
+  padding-left: 1em
+}
+
+.tabs-container-content-text p {
+  padding-left: 1em;
+  text-align: justify;
+  margin-top: 0em;
 }
 
 .tabs-container-content-text img {

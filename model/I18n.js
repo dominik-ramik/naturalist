@@ -723,6 +723,10 @@ let translations = {
         "en": "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. The list of values should be separated by commas and enclosed in double quotes",
         "fr": "La colonne 'Hidden' dans 'Custom data definition' à la ligne $1 a une syntaxe incorrecte $2. La liste des valeurs doit être séparée par des virgules et encadrée de guillemets"
     },
+    dm_markdown_file_not_found: {
+        "en": "The markdown file $1 is not found on the server. It is referenced in the column $2 of the checklist data on row $3",
+        "fr": "Le fichier markdown $1 n'est pas trouvé sur le serveur. Il est référencé dans la colonne $2 des données du check-list à la ligne $3"
+    },
     filter_or: {
         "en": "or",
         "fr": "ou"

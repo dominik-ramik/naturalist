@@ -4,6 +4,7 @@ import {
   isValidHttpUrl,
   pad,
   relativeToUsercontent,
+  mdImagesClickableAndUsercontentRelative,
   splitN,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
@@ -40,11 +41,100 @@ export let DataManager = function () {
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
       checklist.versions[lang.code] = compileChecklistVersion(lang);
+
+      // process F: directives for markdown files ... only in Additional texts and markdown-enabled Custom data
+      let dataPathsToConsider = [];
+
+      Object.keys(
+        checklist.versions[lang.code].dataset.meta.accompanyingText
+      ).forEach(function (key) {
+        dataPathsToConsider.push(key);
+      });
+      Object.keys(checklist.versions[lang.code].dataset.meta.data).forEach(
+        function (key) {
+          if (
+            checklist.versions[lang.code].dataset.meta.data[key].format ==
+            "markdown"
+          ) {
+            dataPathsToConsider.push(key);
+          }
+        }
+      );
+
+      let runSpecificCache = {};
+
+      let rowNumber = 1;
+      checklist.versions[lang.code].dataset.checklist.forEach(function (entry) {
+        rowNumber++;
+        let entryData = entry.d;
+
+        for (const dataPath of dataPathsToConsider) {
+          let data = Checklist.getDataFromDataPath(entryData, dataPath);
+
+          if (data && data != "") {
+            if (data.match(/^F:[a-zA-Z0-9-_.~]+/)) {
+              let fileUrl = relativeToUsercontent(data.substring(2).trim());
+
+              if (!fileUrl.toLowerCase().endsWith(".md")) {
+                fileUrl = fileUrl + ".md";
+              }
+
+              if (isValidHttpUrl(fileUrl) && isSameOriginAsCurrent(fileUrl)) {
+                let markdownContent = getMarkdownContent(
+                  fileUrl,
+                  runSpecificCache
+                );
+                if (markdownContent.responseStatus == 200) {
+                  entryData[dataPath] = markdownContent.content;
+                } else {
+                  log(
+                    "error",
+                    _tf("dm_markdown_file_not_found", [
+                      fileUrl,
+                      dataPath,
+                      rowNumber,
+                    ])
+                  );
+                }
+              } else {
+                console.log("F: is not valid URL", data, fileUrl);
+              }
+            }
+          }
+        }
+      });
     });
 
     console.log("New checklist", checklist);
 
     return checklist;
+
+    function getMarkdownContent(url, runSpecificCache) {
+      let result = { content: "", responseStatus: 0 };
+
+      if (runSpecificCache[url]) {
+        return runSpecificCache[url];
+      }
+
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, false); // false makes the request synchronous
+        xhr.withCredentials = true; // Include credentials for CORS
+        xhr.send(null);
+
+        result.responseStatus = xhr.status;
+
+        if (xhr.status === 200) {
+          result.content = xhr.responseText;
+        }
+      } catch (error) {
+        console.error("Error fetching remote markdown:", error.message);
+      }
+
+      runSpecificCache[url] = result;
+
+      return result;
+    }
 
     function gatherReferences() {
       let bibtexUrl = data.common.getItem(
@@ -249,8 +339,6 @@ export let DataManager = function () {
                 continue;
               }
 
-              console.log("TT", textData);
-
               textData = textData.replaceAll("\\n", "\n");
 
               textData = textData.replace(
@@ -265,7 +353,6 @@ export let DataManager = function () {
                   return match.replace(src, asset);
                 }
               );
-              console.log("AA", textData);
             }
           }
         );

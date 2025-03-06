@@ -5,7 +5,11 @@ import {
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { _t } from "../model/I18n.js";
-import { relativeToUsercontent, routeTo } from "../components/Utils.js";
+import {
+  relativeToUsercontent,
+  routeTo,
+  mdImagesClickableAndUsercontentRelative,
+} from "../components/Utils.js";
 
 export let DetailsView = {
   selectedTaxon: null,
@@ -564,8 +568,8 @@ function TabText(tabData, taxon, taxonName) {
           meta.title +
           "</div>\n";
 
-        mdText += ' <span id="' + metaKey + '"></span>\n';
-        mdText += "# " + meta.title + "\n\n";
+        mdText +=
+          "<div class='accompanyingTextHeading'>" + meta.title + "</div>\n\n";
         mdText += itemText + "\n\n";
       }
     }
@@ -585,16 +589,7 @@ function TabText(tabData, taxon, taxonName) {
       ? marked.parse(mdIndex) + "\n\n"
       : "") + htmlText;
 
-  htmlText = htmlText.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
-    return match
-      .replace(
-        match,
-        '<span class="image-wrap" onClick="this.classList.toggle(\'fullscreen\')">' +
-          match +
-          "</span>"
-      )
-      .replace(src, relativeToUsercontent(src));
-  });
+  htmlText = mdImagesClickableAndUsercontentRelative(htmlText);
 
   return m.trust(htmlText);
 }

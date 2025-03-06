@@ -18,6 +18,11 @@ span.simple-value p {
   margin-bottom: var(--pad-small);
 }
 
+span.simple-value img {
+  max-width: 6em;
+  max-height: 6em;
+}
+
 .data-item-title {
   font-weight: bold;
   color: hsl(212, 29%, 24%);
