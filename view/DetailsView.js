@@ -283,7 +283,6 @@ function TabMap(tabData, taxon, taxonName) {
       if (mapUrl == "") {
         url = mapData;
       } else {
-        console.log("MAP", mapUrl, mapData);
         url = resolveTemplate(mapUrl, mapData);
       }
 
@@ -576,6 +575,9 @@ function TabText(tabData, taxon, taxonName) {
     return null;
   }
 
+  //Excel may add \n string into values with newline, let's get rid of those
+  mdText = mdText.replaceAll("\\n", "\n");
+
   let htmlText = DOMPurify.sanitize(marked.parse(mdText));
 
   htmlText =
@@ -583,12 +585,16 @@ function TabText(tabData, taxon, taxonName) {
       ? marked.parse(mdIndex) + "\n\n"
       : "") + htmlText;
 
-  let routeUri = window.location.origin + window.location.pathname + "#!/view/";
-
-  htmlText = htmlText.replace(
-    /<img /gi,
-    "<img onclick=\"window.location.href = '" + routeUri + "' + this.src;\" "
-  );
+  htmlText = htmlText.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
+    return match
+      .replace(
+        match,
+        '<span class="image-wrap" onClick="this.classList.toggle(\'fullscreen\')">' +
+          match +
+          "</span>"
+      )
+      .replace(src, relativeToUsercontent(src));
+  });
 
   return m.trust(htmlText);
 }

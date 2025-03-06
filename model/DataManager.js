@@ -3,7 +3,7 @@ import {
   indexOfCaseInsensitive,
   isValidHttpUrl,
   pad,
-  relativeToUsercontent as absoluteFromRelativeToUsercontent,
+  relativeToUsercontent,
   splitN,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
@@ -42,7 +42,7 @@ export let DataManager = function () {
       checklist.versions[lang.code] = compileChecklistVersion(lang);
     });
 
-    console.log(checklist);
+    console.log("New checklist", checklist);
 
     return checklist;
 
@@ -114,10 +114,10 @@ export let DataManager = function () {
         //all online search icons
         data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
           function (row) {
-            let asset = absoluteFromRelativeToUsercontent(
+            let asset = relativeToUsercontent(
               "./online_search_icons/" + row.icon
             );
-            if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
+            if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
           }
@@ -129,8 +129,8 @@ export let DataManager = function () {
             return; //skip sources with templates, by default we won't cache any image-based maps either
           }
           if (row.mapType == "regions") {
-            let asset = absoluteFromRelativeToUsercontent("./maps/" + row.source);
-            if (assets.indexOf(asset) < 0 && isSameOriginAsCurrent(asset)) {
+            let asset = relativeToUsercontent("./maps/" + row.source);
+            if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
               assets.push(asset);
             }
           }
@@ -175,11 +175,9 @@ export let DataManager = function () {
 
                 const resolved = compiledTemplate(dataObject);
 
-                if (
-                  assets.indexOf(resolved) < 0 &&
-                  isSameOriginAsCurrent(resolved)
-                ) {
-                  assets.push(absoluteFromRelativeToUsercontent(resolved));
+                const asset = relativeToUsercontent(resolved);
+                if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
+                  assets.push(asset);
                 }
               }
             }
@@ -229,16 +227,48 @@ export let DataManager = function () {
 
                 const resolved = compiledTemplate(dataObject);
 
-                if (
-                  assets.indexOf(resolved) < 0 &&
-                  isSameOriginAsCurrent(resolved)
-                ) {
-                  assets.push(absoluteFromRelativeToUsercontent(resolved));
+                const asset = relativeToUsercontent(resolved);
+                if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
+                  assets.push(relativeToUsercontent(asset));
                 }
               }
             }
           }
         }
+
+        //extract images from extra texts and if local, add to assets
+        data.sheets.content.tables.accompanyingText.data[lang.code].forEach(
+          function (row) {
+            for (const entry of data.sheets.checklist.data[lang.code]) {
+              let textData = Checklist.getDataFromDataPath(
+                entry.d,
+                row.columnName
+              );
+
+              if (textData == null || textData.trim() == "") {
+                continue;
+              }
+
+              console.log("TT", textData);
+
+              textData = textData.replaceAll("\\n", "\n");
+
+              textData = textData.replace(
+                /!\[[^\]]*\]\(([^\)]+)\)/gi,
+                (match, src) => {
+                  let asset = relativeToUsercontent(src);
+
+                  if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
+                    assets.push(asset);
+                  }
+
+                  return match.replace(src, asset);
+                }
+              );
+              console.log("AA", textData);
+            }
+          }
+        );
       });
 
       if (checkAssetsSize) {
