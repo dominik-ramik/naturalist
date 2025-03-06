@@ -1246,12 +1246,11 @@ export let Checklist = {
   },
 
   shouldItalicizeTaxon(levelOrDataPath) {
+
     let italicize = Checklist.getTaxonLevelMeta(levelOrDataPath)?.italicize;
+    console.log(levelOrDataPath, italicize)
 
     if (
-      italicize === undefined ||
-      italicize === null ||
-      italicize === "" ||
       italicize === "yes"
     ) {
       return true;
