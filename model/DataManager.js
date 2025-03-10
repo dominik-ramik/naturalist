@@ -625,6 +625,7 @@ export let DataManager = function () {
           return;
         }
 
+        
         matchingComputedDataPaths.forEach(function (computedDataPath) {
           if (info.role == "taxon") {
             return;
@@ -680,7 +681,7 @@ export let DataManager = function () {
             }
 
             //verify syntax of .hidden
-            if (info.fullRow.hidden !== "yes" && info.fullRow.hidden !== "no") {
+            if (info.fullRow.hidden !== "yes" && info.fullRow.hidden !== "no" && info.fullRow.hidden !== "data") {
               let expr = info.fullRow.hidden;
 
               let split = splitN(expr, " ", 3);
@@ -997,7 +998,7 @@ export let DataManager = function () {
               );
               lastSuccesfullCount++;
             }
-          } else if (count == 1 && pathSegments.length > 1) {
+          } else if (count == 1 && pathSegments.length > 1) {            
             //we may have a candidate for simplified array (aka comma separated values)
             let rawValue =
               row[
@@ -1186,7 +1187,7 @@ export let DataManager = function () {
                   log,
                   data.sheets.appearance.tables.customization.data,
                   "Date format",
-                  lang.code,
+                  langCode,
                   "YYYY-MM-DD"
                 );
 

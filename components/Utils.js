@@ -14,9 +14,13 @@ export let compressor = {
   },
 };
 
-export function shouldHide(dataPath, hideExpression, filterData) {
+export function shouldHide(dataPath, hideExpression, filterData, purpose) {
   if (hideExpression === "yes") {
     return true;
+  }
+
+  if (hideExpression === "data") {
+    return purpose === "filter" ? false : true;
   }
 
   if (hideExpression === "no") {
