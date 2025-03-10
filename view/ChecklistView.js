@@ -4,6 +4,8 @@ import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 import { TaxonView } from "../view/TaxonView.js";
 import { AppLayoutView } from "./AppLayoutView.js";
+import { circlePacking } from "./charts/CirclePacking.js";
+import { D3ChartView } from "./D3ChartView.js";
 
 export let ChecklistView = {
   itemsNumberStep: 50,
@@ -77,7 +79,7 @@ export let ChecklistView = {
         specificChecklistView = detailedTaxonView(treeTaxa, overflowing);
         break;
       case "view_hierarchy":
-        specificChecklistView = hierarchyView(treeTaxa, allResultingTaxa);
+        specificChecklistView = hierarchyView(allResultingTaxa);
         break;
       default:
         console.error("Unknown view type: " + Settings.viewType());
@@ -124,7 +126,7 @@ function detailedTaxonView(treeTaxa, overflowing) {
         parents: [],
         taxonKey: taxonLevel,
         taxonTree: treeTaxa.children[taxonLevel],
-        currentLevel: 0,
+        currentTaxonLevel: 0,
         displayMode: ChecklistView.displayMode,
       });
     }),
@@ -147,41 +149,82 @@ function detailedTaxonView(treeTaxa, overflowing) {
   ]);
 }
 
-function hierarchyView(treeTaxa, allResultingTaxa) {
-  let data = {
-    name: "◯",
-    children: [],
-  };
-
-  const maxDepth = Object.keys(Checklist.getTaxaMeta()).indexOf(
-    ChecklistView.displayMode
-  );
-
-  for (const taxon of allResultingTaxa) {
-    let currentDataItem = data;
-    let depth = 0;
-    for (const taxonLevel of taxon.t) {
-      if (!currentDataItem.children) {
-        currentDataItem.children = [];
-      }
-
-      let child = currentDataItem.children.find((i) => i.name == taxonLevel.n);
-      if (child === undefined) {
-        child = { name: taxonLevel.n, value: 1 };
-        currentDataItem.children.push(child);
-      }
-
-      currentDataItem = child;
-
-      if (maxDepth == depth) {
-        break;
-      }
-      depth++;
-    }
+function checklistDataForD3(node, level) {
+  if (level === undefined) {
+    level = 0;
   }
 
-  console.log(data);
-  return m("div", "");
+  if (!node.children || Object.keys(node.children).length === 0) {
+    return [];
+  } else {
+    let children = Object.keys(node.children).map((key) => {
+      return {
+        name: key,
+        children: checklistDataForD3(node.children[key], level + 1),
+        data: node.children[key].data,
+        taxon: node.children[key].taxon,
+      };
+    });
+
+    if (level == 0) {
+      return {
+        name: "◯",
+        children: children,
+      };
+    } else {
+      return children;
+    }
+  }
+}
+
+function assignLeavesCount(node, allMatchingData) {
+  if (!node.children || node.children.length === 0) {
+    let isMatch = allMatchingData.find(
+      (taxon) =>
+        taxon.t[taxon.t.length - 1].n == node.taxon.n &&
+        taxon.t[taxon.t.length - 1].a == node.taxon.a
+    );
+
+    node.value = 1;
+    node.totalLeafCount = 1;
+    node.matchingLeafCount = isMatch ? 1 : 0;
+    return {
+      totalLeafCount: node.totalLeafCount,
+      matchingLeafCount: node.matchingLeafCount,
+    };
+  }
+
+  let leavesCount = {
+    totalLeafCount: 0,
+    matchingLeafCount: 0,
+  };
+
+  for (const child of node.children) {
+    let assignedCount = assignLeavesCount(child, allMatchingData);
+    leavesCount.totalLeafCount += assignedCount.totalLeafCount;
+    leavesCount.matchingLeafCount += assignedCount.matchingLeafCount;
+  }
+
+  node.totalLeafCount = leavesCount.totalLeafCount;
+  node.matchingLeafCount = leavesCount.matchingLeafCount;
+  return leavesCount;
+}
+
+function hierarchyView(allResultingTaxa, type = "treemap") {
+  return m(D3ChartView, {
+    id: "d3test",
+    chart: circlePacking,
+    options: () => {
+      let allData = checklistDataForD3(
+        Checklist.treefiedTaxa(Checklist.getData().checklist)
+      );
+
+      assignLeavesCount(allData, Checklist.getTaxaForCurrentQuery());
+      return {
+        dataSource: allData,
+      };
+    },
+  });
 }
 
 function draftNotice() {

@@ -181,7 +181,6 @@ function runApp() {
 
       readyPreloadableAssets();
 
-
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (!Settings.alreadyViewedAboutSection()) {

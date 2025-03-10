@@ -38,7 +38,6 @@
   margin-right: var(--pad-large);
   font-size: 85%;
 }
-
 .listed-taxa .taxon-name-stripe .parent-taxon-indicator {
   margin-left: var(--pad-large);
   font-size: 85%;
@@ -52,7 +51,7 @@
   margin-top: var(--pad-large);
 }
 
-.taxon .taxon-name {
+.taxon-name {
   font-weight: bold;
 }
 

@@ -4,21 +4,10 @@ import { Checklist } from "../model/Checklist.js";
 import { TaxonDataView } from "../view/TaxonDataView.js";
 import { _t } from "../model/I18n.js";
 import { filterMatches } from "../components/Utils.js";
+import { TaxonNameView } from "./TaxonNameView.js";
 
 export let TaxonView = {
   view: function (vnode) {
-    let inverseTaxonLevel =
-      Object.keys(Checklist.getTaxaMeta()).length - vnode.attrs.currentLevel;
-    let fontSize = 100 + (10 * inverseTaxonLevel - 1);
-    if (fontSize > 200) {
-      fontSize = 200;
-    }
-
-    let parentTaxonIndicator = Checklist.getParentTaxonIndicator(
-      vnode.attrs.currentLevel,
-      vnode.attrs.parents
-    );
-
     function detailsIcon(taxonName, detailsType) {
       let icon = "";
       let tabName = "";
@@ -47,81 +36,47 @@ export let TaxonView = {
             routeTo("/details/" + taxonName + "/" + tabName);
           },
         },
-        m(".taxon-details-icon", [
-          m("img[src=./img/ui/tabs/" + icon + ".svg]"),
-        ])
+        m(".taxon-details-icon", [m("img[src=./img/ui/tabs/" + icon + ".svg]")])
       );
     }
 
     const taxonName = vnode.attrs.taxonTree.taxon.n;
     const tabsData = Checklist.getDetailsTabsForTaxon(taxonName);
 
-    const showSearchAll = Object.keys(vnode.attrs.taxonTree.children).length > 0
+    let inverseTaxonLevel = Checklist.inverseTaxonLevel(vnode.attrs.currentTaxonLevel);
+
+    const showSearchAll =
+      Object.keys(vnode.attrs.taxonTree.children).length > 0;
 
     return m("ul.card.taxon-level" + inverseTaxonLevel, [
       m("li.taxon", [
         m(".taxon-name-stripe", [
-          m(
-            ".taxon-name-inner-wrapper",
-            m(ClickableTaxonName, {
-              taxonTree: vnode.attrs.taxonTree,
-              fontSize: fontSize,
-              currentTaxonLevel: vnode.attrs.currentLevel,
-            }),
-            inverseTaxonLevel >= 1
-              ? m(
-                  ".copy-leaf-taxon.clickable",
-                  {
-                    onclick: function () {
-                      copyToClipboard(
-                        vnode.attrs.taxonTree.taxon.n +
-                          (vnode.attrs.taxonTree.taxon.a
-                            ? " " + vnode.attrs.taxonTree.taxon.a
-                            : ""),
-                        _t("taxon")
-                      );
-                    },
-                  },
-                  m("img[src=img/ui/checklist/copy.svg]")
-                )
-              : null,
-            vnode.attrs.currentLevel > 0 &&
-              inverseTaxonLevel >= 1 &&
-              parentTaxonIndicator !== null
-              ? m(
-                  ".parent-taxon-indicator.clickable",
-                  {
-                    onclick: function (e) {
-                      Checklist.filter.clear();
-                      Checklist.filter.taxa[
-                        parentTaxonIndicator.rankColumnName
-                      ].selected = [parentTaxonIndicator.taxon.n];
-                      Checklist.filter.commit("/checklist");
-                    },
-                  },
-                  _t("in_taxon_group", [
-                    parentTaxonIndicator.rank.toLowerCase(),
-                    parentTaxonIndicator.taxon.n,
-                  ])
-                )
-              : null
-          ),
+          m(TaxonNameView, {
+            taxonTree: vnode.attrs.taxonTree,
+            currentTaxonLevel: vnode.attrs.currentTaxonLevel,
+            parents: vnode.attrs.parents
+          }),
           m(".spacer"),
           m(".details-icons-wrapper", [
-            Object.hasOwn(tabsData, "media") && detailsIcon(vnode.attrs.taxonTree.taxon.n, "media"),
-            Object.hasOwn(tabsData, "map") && detailsIcon(vnode.attrs.taxonTree.taxon.n, "maps"),
-            Object.hasOwn(tabsData, "text") && detailsIcon(vnode.attrs.taxonTree.taxon.n, "accompanyingText"),
-            (Object.hasOwn(tabsData, "media") || Object.hasOwn(tabsData, "map") || Object.hasOwn(tabsData, "text")) && showSearchAll && m(".vertical-separator"),
-            vnode.attrs.taxonTree &&
-            inverseTaxonLevel > 1 &&
-            showSearchAll
+            Object.hasOwn(tabsData, "media") &&
+              detailsIcon(vnode.attrs.taxonTree.taxon.n, "media"),
+            Object.hasOwn(tabsData, "map") &&
+              detailsIcon(vnode.attrs.taxonTree.taxon.n, "maps"),
+            Object.hasOwn(tabsData, "text") &&
+              detailsIcon(vnode.attrs.taxonTree.taxon.n, "accompanyingText"),
+            (Object.hasOwn(tabsData, "media") ||
+              Object.hasOwn(tabsData, "map") ||
+              Object.hasOwn(tabsData, "text")) &&
+              showSearchAll &&
+              m(".vertical-separator"),
+            vnode.attrs.taxonTree && inverseTaxonLevel > 1 && showSearchAll
               ? m(
                   ".show-all-of-taxon.clickable",
                   {
                     onclick: function (e) {
                       Checklist.filter.clear();
                       let taxonLevelKey = Object.keys(Checklist.filter.taxa)[
-                        vnode.attrs.currentLevel
+                        vnode.attrs.currentTaxonLevel
                       ];
                       Checklist.filter.taxa[taxonLevelKey].selected = [
                         vnode.attrs.taxonTree.taxon.n,
@@ -150,7 +105,7 @@ export let TaxonView = {
           vnode.attrs.displayMode != "" &&
           Object.keys(Checklist.getTaxaMeta()).indexOf(
             vnode.attrs.displayMode
-          ) <= vnode.attrs.currentLevel
+          ) <= vnode.attrs.currentTaxonLevel
         ) {
           return null;
         }
@@ -162,57 +117,10 @@ export let TaxonView = {
               : [...vnode.attrs.parents, vnode.attrs.taxonTree.taxon],
           taxonKey: currentTaxonKey,
           taxonTree: vnode.attrs.taxonTree.children[currentTaxonKey],
-          currentLevel: vnode.attrs.currentLevel + 1,
+          currentTaxonLevel: vnode.attrs.currentTaxonLevel + 1,
           displayMode: vnode.attrs.displayMode,
         });
       }),
     ]);
-  },
-};
-
-export let ClickableTaxonName = {
-  view: function (vnode) {
-    let nameTag = Checklist.shouldItalicizeTaxon(vnode.attrs.currentTaxonLevel)
-      ? "i"
-      : "span";
-    let taxonTree = vnode.attrs.taxonTree;
-
-    if (taxonTree.taxon.n == "" && taxonTree.taxon.a == "") {
-      return null;
-    }
-
-    let filterMatch = filterMatches(
-      taxonTree.taxon.n + " " + taxonTree.taxon.a
-    );
-
-    return m(
-      "span.copiable.clickable",
-      {
-        onclick: function () {
-          routeTo(
-            "/details/" + taxonTree.taxon.n + "/" + Settings.currentDetailsTab()
-          );
-        },
-      },
-      [
-        m(
-          nameTag +
-            ".taxon-name" +
-            (filterMatch ? ".found" : "") +
-            "[style=font-size: " +
-            vnode.attrs.fontSize +
-            "%]",
-          taxonTree.taxon.n
-        ),
-        taxonTree.taxon.a == ""
-          ? null
-          : m(
-              "span.taxon-authority[style=font-size: " +
-                vnode.attrs.fontSize +
-                "%]",
-              " " + taxonTree.taxon.a
-            ),
-      ]
-    );
   },
 };

@@ -1,5 +1,5 @@
 import { Checklist } from "../model/Checklist.js";
-import { ClickableTaxonName } from "../view/TaxonView.js";
+import { ClickableTaxonName } from "../view/ClickableTaxonNameView.js";
 import { filterMatches, relativeToUsercontent, routeTo, shouldHide, mdImagesClickableAndUsercontentRelative } from "../components/Utils.js";
 
 export let TaxonDataItemView = {

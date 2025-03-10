@@ -175,9 +175,9 @@ let translations = {
         "en": "Sunburst chart",
         "fr": "Graphique en anneaux"
     },
-    view_hierarchy: {
-        "en": "Hierarchy",
-        "fr": "Hierarchie"
+    view_treemap: {
+        "en": "Treemap",
+        "fr": "Carte proportionnelle"
     },
     pin_search: {
         "en": "Pin search",

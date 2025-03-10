@@ -1248,7 +1248,6 @@ export let Checklist = {
   shouldItalicizeTaxon(levelOrDataPath) {
 
     let italicize = Checklist.getTaxonLevelMeta(levelOrDataPath)?.italicize;
-    console.log(levelOrDataPath, italicize)
 
     if (
       italicize === "yes"
@@ -1257,6 +1256,10 @@ export let Checklist = {
     } else {
       return false;
     }
+  },
+
+  inverseTaxonLevel: function (currentLevel) {
+    return Object.keys(Checklist.getTaxaMeta()).length - currentLevel;
   },
 
   getTaxonLevel: function (taxonName) {

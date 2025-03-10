@@ -227,6 +227,15 @@ function menuTopBar() {
             Settings.viewType("view_details");
           },
         },
+        {
+          type: "button",
+          title: _t("view_treemap"),
+          icon: "ui/menu/display_options",
+          selected: Settings.viewType() === "view_hierarchy",
+          action: function () {
+            Settings.viewType("view_hierarchy");
+          },
+        },
         /*
         {
           type: "button",
@@ -237,15 +246,7 @@ function menuTopBar() {
             Settings.viewType("view_sunburst");
           },
         },
-        {
-          type: "button",
-          title: _t("view_hierarchy"),
-          icon: "ui/menu/hierarchy",
-          selected: Settings.viewType() === "view_hierarchy",
-          action: function () {
-            Settings.viewType("view_hierarchy");
-          },
-        },
+        
         */
         { type: "label", title: _t("limit_view") },
         { type: "divider" },

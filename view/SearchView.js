@@ -16,7 +16,7 @@ export let SearchView = {
 
         dataFilterDropdown = Object.keys(Checklist.filter.data).map(function(dataPath, index) {
 
-            if(shouldHide(dataPath, Checklist.getMetaForDataPath(dataPath).hidden, Checklist.filter.data)) {
+            if(shouldHide(dataPath, Checklist.getMetaForDataPath(dataPath).hidden, Checklist.filter.data, "filter")) {
                 return null;
             }
 
