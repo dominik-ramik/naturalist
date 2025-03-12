@@ -186,7 +186,7 @@ function runApp() {
         if (!Settings.alreadyViewedAboutSection()) {
           m.route.set("/about/checklist");
         }
-        
+
         Settings.alreadyViewedAboutSection(true);
       }
 
@@ -258,7 +258,6 @@ function runApp() {
           },
         },
       });
-
     }, 50);
   });
 }

@@ -222,6 +222,8 @@ function hierarchyView(allResultingTaxa, type = "treemap") {
       assignLeavesCount(allData, Checklist.getTaxaForCurrentQuery());
       return {
         dataSource: allData,
+        backgroundColor: "white",
+        fontFamily: "Regular"
       };
     },
   });
