@@ -774,11 +774,11 @@ let translations = {
     fr: "",
   },
   view_cat_cell_verb_taxon: {
-    en: "$1% ($2) of $3 taxa are $4",
+    en: "$1 ($2) of $3 taxa are $4",
     fr: "",
   },
   view_cat_cell_verb_category: {
-    en: "$1% ($2) of $3 taxa are in $4",
+    en: "$1 ($2) of $3 taxa are in $4",
     fr: "",
   },
   view_cat_category_to_analyze: {

@@ -242,7 +242,6 @@ function circlePackingView() {
       assignLeavesCount(allData, Checklist.getTaxaForCurrentQuery());
       return {
         dataSource: allData,
-        backgroundColor: "white",
         fontFamily: "Regular",
       };
     },

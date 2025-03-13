@@ -16,12 +16,15 @@ export let D3ChartView = function (initialVnode) {
     onupdate: function (vnode) {
       let newDataString = JSON.stringify(options().dataSource);
       if (
-        oldDataString.length != newDataString.length &&
+        oldDataString.length != newDataString.length ||
         oldDataString != newDataString
       ) {
         getEl().innerHTML = "";
         getEl().appendChild(chart(options()));
         oldDataString = newDataString;
+      }
+      else{
+        console.log("VVVVV no change")
       }
     },
     onbeforeremove: function (vnode) {

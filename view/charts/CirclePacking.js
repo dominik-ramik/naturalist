@@ -1,10 +1,10 @@
 export function circlePacking(options) {
   let data = options.dataSource;
-  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 3;
-  let matchHue = options.matchHue || 120;
-  let noMatchColor = options.noMatchColor || "#656";
-  let opacityStep = options.opacityStep || 0.09;
-  let backgroundColor = options.backgroundColor || "transparent";
+  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 5;
+  let matchHue = options.matchHue || 212;
+  let noMatchColor = options.noMatchColor || "#04040420";
+  let opacityStep = options.opacityStep || 0.07;
+  let backgroundColor = options.backgroundColor || "white";
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";
   let showDownloadButton = options.showDownloadButton === false ? false : true;
@@ -103,19 +103,30 @@ export function circlePacking(options) {
     return result;
   }
 
-  function inferColor(node) {
+  function inferColor(node, target) {
     let d = node.data;
-    if (d.totalLeafCount == d.matchingLeafCount) {
-      return "hsl(" + matchHue + "deg 80% 40%)";
-    } else if (d.matchingLeafCount == 0) {
-      return noMatchColor;
-    } else {
-      let ratio = matchingRatio(d);
-      let max = 60,
-        min = 30;
-      return (
-        "hsl(" + matchHue + "deg " + (min + (max - min) * ratio) + "% 40%)"
-      );
+
+    if (target == "circle") {
+      if (d.totalLeafCount == d.matchingLeafCount) {
+        return "hsl(" + matchHue + "deg 80% 40%)";
+      } else if (d.matchingLeafCount == 0) {
+        return noMatchColor;
+      } else {
+        let ratio = matchingRatio(d);
+        let max = 60,
+          min = 30;
+        return (
+          "hsl(" + matchHue + "deg " + (min + (max - min) * ratio) + "% 40%)"
+        );
+      }
+    } else if (target == "label") {
+      if (d.totalLeafCount == d.matchingLeafCount) {
+        return "black";
+      } else if (d.matchingLeafCount == 0) {
+        return "#08080890";
+      } else {
+        return "black";
+      }
     }
   }
 
@@ -188,16 +199,17 @@ export function circlePacking(options) {
           console.log("Download");
           downloadSVG();
           event.stopPropagation();
-        })
+        });
 
       // Add a rectangle behind the download button to capture clicks
       downloadButton
         .append("rect")
-        .attr("x", -2) // Center the rectangle around the icon
-        .attr("y", -2)
-        .attr("width", 32) // Make the rectangle 32x32
-        .attr("height", 32)
-        .attr("fill", "transparent") // Keep the rectangle invisible
+        .attr("x", -4) // Center the rectangle around the icon
+        .attr("y", -6)
+        .attr("width", 36) // Make the rectangle 32x32
+        .attr("height", 36)
+        .attr("fill", "white") // Keep the rectangle invisible
+        .attr("opacity", 0.7)
         .attr("cursor", "pointer"); // Change cursor to pointer to indicate interactivity
 
       // Add the provided SVG path for the download icon
@@ -225,7 +237,7 @@ export function circlePacking(options) {
       .selectAll("circle")
       .data(nodes, (d) => d.data.name + "-" + d.depth)
       .join("circle")
-      .attr("fill", (d) => inferColor(d))
+      .attr("fill", (d) => inferColor(d, "circle"))
       .attr("opacity", (d) => (1 + d.depth) * opacityStep)
       .attr("pointer-events", (d) => (d.children ? "all" : "none"))
       .attr("stroke-width", 0.5)
@@ -255,7 +267,7 @@ export function circlePacking(options) {
       .data(tree.descendants(), (d) => d.data.name + "-" + d.depth)
       .join("text")
       .filter((d) => d.parent === tree)
-      .attr("fill", "black")
+      .attr("fill", (d) => inferColor(d, "label"))
       .attr("opacity", labelOpacity)
       .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
       .attr("dominant-baseline", "middle")
@@ -284,8 +296,6 @@ export function circlePacking(options) {
             : d.data.totalLeafCount
         }`
     );
-
-    
   }
 
   // Initial render.
