@@ -231,8 +231,6 @@ export function categoryChart(filteredTaxa) {
     categoryToView
   );
 
-  console.log(categorizedData);
-
   if (categorizedData == null) {
     categoryRoot = "";
     Settings.categoryChartRoot("");
@@ -382,7 +380,7 @@ export function categoryChart(filteredTaxa) {
       ),
       ...orderedCategories.map((cKey) =>
         m(
-          "th.sticky-row.rotate[style=border-bottom: 0.5em solid; color: black]",
+          "th.sticky-row.rotate[style=border-bottom: 0.5em solid;]",
           m("div", m("span", cKey))
         )
       ),

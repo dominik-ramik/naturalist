@@ -7,18 +7,19 @@ button {
 }
 
 button.selected {
-  background-color: var(--nlblue);
-  color: white;
+  background-color: #ffffff;
+  color: #7cb342;
+  font-weight: bold;
 }
 
 table.buttons-table {
-    color: white;
-    font-size: 85%;
-    border-collapse: collapse;
+  color: white;
+  font-size: 85%;
+  border-collapse: collapse;
 }
 table.buttons-table tr:not(:last-child) {
-    border-bottom: 1px solid gray;
-    padding: 0.5em;
+  border-bottom: 1px solid gray;
+  padding: 0.5em;
 }
 
 .info-label {
@@ -72,6 +73,7 @@ table.category-view td.noclick:first-child,
 table.category-view th.noclick:first-child {
   color: black;
   cursor: default;
+  white-space: nowrap;
 }
 
 table.category-view td.noclick:first-child:hover,
@@ -80,14 +82,15 @@ table.category-view th.noclick:first-child:hover {
   cursor: default;
 }
 
-table.category-view td:nth-child(odd):not(:first-child),
-th:nth-child(odd):not(:first-child) {
+/* https://materialui.co/colors track 600 */
+table.category-view td:nth-child(2n + 0):not(:first-child),
+th:nth-child(2n + 0):not(:first-child) {
   background-color: #ffb30007;
   border-color: #ffb300 !important;
   color: #ffb300;
 }
-table.category-view td:nth-child(even):not(:first-child),
-th:nth-child(even):not(:first-child) {
+table.category-view td:nth-child(2n + 1):not(:first-child),
+th:nth-child(2n + 1):not(:first-child) {
   background-color: #7cb34207;
   border-color: #7cb342 !important;
   color: #7cb342;
