@@ -85,9 +85,9 @@ table.category-view th.noclick:first-child:hover {
 /* https://materialui.co/colors track 600 */
 table.category-view td:nth-child(2n + 0):not(:first-child),
 th:nth-child(2n + 0):not(:first-child) {
-  background-color: #ffb30007;
-  border-color: #ffb300 !important;
-  color: #ffb300;
+  background-color: #55769b07;
+  border-color: #55769b !important;
+  color: #55769b;
 }
 table.category-view td:nth-child(2n + 1):not(:first-child),
 th:nth-child(2n + 1):not(:first-child) {

@@ -126,6 +126,20 @@ function parentOf(taxon, filteredTaxa) {
 }
 
 /**
+ * Convert a ratio to percent string, if lower than 1% display <1%
+ */
+function toPctString(ratio){
+  let pct = ratio * 100.0
+
+  if(pct < 1 && pct > 0){
+    return "< 1%"
+  }
+  else{
+    return pct.toFixed(0) + "%"
+  }
+}
+
+/**
  * Build data for the category chart for the given root, taxa, and category.
  */
 function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
@@ -428,7 +442,7 @@ export function categoryChart(filteredTaxa) {
             const ratio = taxon.categories[cKey] / basis;
             const borderSize = Math.max(ratio * 4, 0.01);
             const title = cellVerb(
-              (ratio * 100.0).toFixed(0),
+              toPctString(ratio),
               cKey,
               taxonKey,
               taxon.categories[cKey]
@@ -439,7 +453,7 @@ export function categoryChart(filteredTaxa) {
                 "div.number-container",
                 numericDisplay(
                   taxon.categories[cKey],
-                  (ratio * 100.0).toFixed(0) + "%"
+                  toPctString(ratio)
                 )
               )
             );
