@@ -229,50 +229,51 @@ function menuTopBar() {
         },
         {
           type: "button",
-          title: _t("view_treemap"),
-          icon: "ui/menu/display_options",
-          selected: Settings.viewType() === "view_hierarchy",
+          title: _t("view_circle_pack"),
+          icon: "ui/menu/scatter_plot",
+          selected: Settings.viewType() === "view_circle_pack",
           action: function () {
-            Settings.viewType("view_hierarchy");
+            Settings.viewType("view_circle_pack");
           },
         },
-        /*
         {
           type: "button",
-          title: _t("view_sunburst"),
-          icon: "ui/menu/sunburst",
-          selected: Settings.viewType() === "view_sunburst",
+          title: _t("view_category_density"),
+          icon: "ui/menu/categories_plot",
+          selected: Settings.viewType() === "view_category_density",
           action: function () {
-            Settings.viewType("view_sunburst");
+            Settings.viewType("view_category_density");
           },
         },
-        
-        */
-        { type: "label", title: _t("limit_view") },
-        { type: "divider" },
-        [
-          ChecklistView.displayMode == ""
-            ? null
-            : {
-                type: "button",
-                title: _t("cancel_details_filter"),
-                action: function () {
-                  ChecklistView.displayMode = "";
-                },
-              },
-        ],
-        [ChecklistView.displayMode == "" ? null : { type: "divider" }],
-        Object.keys(Checklist.getTaxaMeta()).map(function (taxonName) {
-          return {
-            type: "button",
-            title: Checklist.getTaxaMeta()[taxonName].name,
-            state: ChecklistView.displayMode == taxonName ? "inactive" : "",
-            action: function () {
-              ChecklistView.displayMode = taxonName;
-              ActionButtonWithMenu.open = false;
-            },
-          };
-        })
+        Settings.viewType() === "view_details"
+          ? [
+              { type: "label", title: _t("limit_view") },
+              { type: "divider" },
+              ChecklistView.displayMode == ""
+                ? null
+                : {
+                    type: "button",
+                    title: _t("cancel_details_filter"),
+                    action: function () {
+                      ChecklistView.displayMode = "";
+                    },
+                  },
+              ,
+              ChecklistView.displayMode == "" ? null : { type: "divider" },
+              ...Object.keys(Checklist.getTaxaMeta()).map(function (taxonName) {
+                return {
+                  type: "button",
+                  title: Checklist.getTaxaMeta()[taxonName].name,
+                  state:
+                    ChecklistView.displayMode == taxonName ? "inactive" : "",
+                  action: function () {
+                    ChecklistView.displayMode = taxonName;
+                    ActionButtonWithMenu.open = false;
+                  },
+                };
+              }),
+            ]
+          : null
       ),
     }),
   ];

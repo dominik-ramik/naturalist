@@ -39,7 +39,7 @@ export let PinnedView = {
           title: m(
             "div",
             m.trust(
-              Settings.pinnedSearches.getHumanNameForPinnedItem(pinnedItem)
+              Settings.pinnedSearches.getHumanNameForSearch(pinnedItem)
             )
           ),
           action: function () {

@@ -1,4 +1,4 @@
-import { copyToClipboard, roundWithPrecision, textLowerCaseAccentless } from "../components/Utils.js";
+import { copyToClipboard, roundWithPrecision, sortByCustomOrder, textLowerCaseAccentless } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { _t } from "../model/I18n.js";
 import { AppLayoutView } from "./AppLayoutView.js";
@@ -175,30 +175,6 @@ let DropdownText = function(initialVnode) {
         }
 
         return false;
-    }
-
-    function sortByCustomOrder(array, type, dataPath) {
-        let result = array.sort();
-
-        let guideArray = [];
-        if (type == "taxa") {
-            guideArray = Checklist.getTaxaMeta()[dataPath].searchCategoryOrder;
-        } else if (type == "data") {
-            guideArray = Checklist.getMetaForDataPath(dataPath).searchCategoryOrder;
-        }
-
-        if (guideArray.length > 0) {
-            result = result.sort(function(a, b) {
-                if (guideArray.indexOf(a.toLowerCase()) < 0) {
-                    return 1;
-                }
-                if (guideArray.indexOf(b.toLowerCase()) < 0) {
-                    return -1;
-                }
-                return guideArray.indexOf(a.toLowerCase()) - guideArray.indexOf(b.toLowerCase());
-            });
-        }
-        return result;
     }
 
     return {

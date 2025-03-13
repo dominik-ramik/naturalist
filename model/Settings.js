@@ -37,6 +37,56 @@ export let Settings = {
     }
   },
 
+  categoryChartCategory: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartCategory");
+      if (!value || value === undefined) {
+        return "";
+      } else {
+        return value;
+      }
+    } else {
+      window.localStorage.setItem("categoryChartCategory", data);
+    }
+  },
+
+  categoryChartRoot: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartRoot");
+      if (!value || value === undefined) {
+        return "";
+      } else {
+        return value;
+      }
+    } else {
+      window.localStorage.setItem("categoryChartRoot", data);
+    }
+  },
+  categoryChartDisplayMode: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartDisplayMode");
+      if (!value || value === undefined) {
+        return "";
+      } else {
+        return value;
+      }
+    } else {
+      window.localStorage.setItem("categoryChartDisplayMode", data);
+    }
+  },
+  categoryChartSumMethod: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartSumMethod");
+      if (!value || value === undefined) {
+        return "";
+      } else {
+        return value;
+      }
+    } else {
+      window.localStorage.setItem("categoryChartSumMethod", data);
+    }
+  },
+
   alreadyViewedAboutSection: function (alreadyViewed) {
     if (alreadyViewed === undefined) {
       const viewed = window.localStorage.getItem("alreadyViewed");
@@ -107,7 +157,7 @@ export let Settings = {
 
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
-    getHumanNameForPinnedItem: function (itemObject) {
+    getHumanNameForSearch: function (itemObject) {
       if (Object.keys(itemObject).length == 0) {
         return "All taxa";
       }

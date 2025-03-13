@@ -14,6 +14,33 @@ export let compressor = {
   },
 };
 
+export function sortByCustomOrder(array, type, dataPath) {
+  let result = array.sort();
+
+  let guideArray = [];
+  if (type == "taxa") {
+    guideArray = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder;
+  } else if (type == "data") {
+    guideArray = Checklist.getMetaForDataPath(dataPath)?.searchCategoryOrder;
+  }
+
+  if (guideArray?.length > 0) {
+    result = result.sort(function (a, b) {
+      if (guideArray.indexOf(a.toLowerCase()) < 0) {
+        return 1;
+      }
+      if (guideArray.indexOf(b.toLowerCase()) < 0) {
+        return -1;
+      }
+      return (
+        guideArray.indexOf(a.toLowerCase()) -
+        guideArray.indexOf(b.toLowerCase())
+      );
+    });
+  }
+  return result;
+}
+
 export function shouldHide(dataPath, hideExpression, filterData, purpose) {
   if (hideExpression === "yes") {
     return true;
@@ -453,13 +480,24 @@ export function getGradedColor(type, index) {
   return "#000000";
 }
 
-let usableBrightness = ["900", "800", "700", "600", "500", "300"];
+export function getIndexedColor(index) {
+  const huesCount = usableHues.length;
+  const brightnessCount = usableBrightness.length;
+
+  // Calculate brightness index and hue index
+  const brightnessIndex = Math.floor(index / huesCount) % brightnessCount;
+  const hueIndex = index % huesCount;
+
+  // Return the object with hue and brightness
+  let hue = usableHues[hueIndex];
+  let brightness = usableBrightness[brightnessIndex];
+
+  return materialColors[hue][brightness];
+}
+
+let usableBrightness = [500, 300, 900, 800, 700, 600];
 
 let usableHues = [
-  "deepOrange",
-  "orange",
-  "amber",
-  "yellow",
   "red",
   "pink",
   "purple",
@@ -469,11 +507,18 @@ let usableHues = [
   "lightBlue",
   "cyan",
   "teal",
+  "green",
   "lightGreen",
   "lime",
+  "yellow",
+  "amber",
+  "orange",
+  "deepOrange",
+  "brown",
+  "blueGrey",
 ];
 
-let materialColors = {
+export let materialColors = {
   red: {
     50: "#ffebee",
     100: "#ffcdd2",

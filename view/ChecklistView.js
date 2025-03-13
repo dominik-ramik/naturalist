@@ -1,11 +1,16 @@
-import { routeTo } from "../components/Utils.js";
+import {
+  getIndexedColor,
+  routeTo,
+  sortByCustomOrder,
+} from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
-import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
+import { _t } from "../model/I18n.js";
 import { TaxonView } from "../view/TaxonView.js";
 import { AppLayoutView } from "./AppLayoutView.js";
 import { circlePacking } from "./charts/CirclePacking.js";
 import { D3ChartView } from "./D3ChartView.js";
+import { categoryChart } from "./charts/CategoryChart.js";
 
 export let ChecklistView = {
   itemsNumberStep: 50,
@@ -56,30 +61,38 @@ export let ChecklistView = {
       }, 100);
     }
 
-    let allResultingTaxa = Checklist.getTaxaForCurrentQuery();
+    const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
+
+    let clampedFilteredTaxa = allFilteredTaxa;
 
     let overflowing = 0;
     if (
       ChecklistView.displayMode == "" &&
-      allResultingTaxa.length > ChecklistView.totalItemsToShow
+      clampedFilteredTaxa.length > ChecklistView.totalItemsToShow
     ) {
-      overflowing = allResultingTaxa.length - ChecklistView.totalItemsToShow;
-      allResultingTaxa = allResultingTaxa.slice(
+      overflowing = clampedFilteredTaxa.length - ChecklistView.totalItemsToShow;
+      clampedFilteredTaxa = clampedFilteredTaxa.slice(
         0,
         ChecklistView.totalItemsToShow
       );
     }
 
-    let treeTaxa = Checklist.treefiedTaxa(allResultingTaxa);
+    let treeClampedFilteredTaxa = Checklist.treefiedTaxa(clampedFilteredTaxa);
 
     let specificChecklistView = null;
 
     switch (Settings.viewType()) {
       case "view_details":
-        specificChecklistView = detailedTaxonView(treeTaxa, overflowing);
+        specificChecklistView = detailedTaxonView(
+          treeClampedFilteredTaxa,
+          overflowing
+        );
         break;
-      case "view_hierarchy":
-        specificChecklistView = hierarchyView(allResultingTaxa);
+      case "view_circle_pack":
+        specificChecklistView = circlePackingView();
+        break;
+      case "view_category_density":
+        specificChecklistView = categoryChartView(allFilteredTaxa);
         break;
       default:
         console.error("Unknown view type: " + Settings.viewType());
@@ -95,7 +108,7 @@ export let ChecklistView = {
         Checklist.getThemeHsl("light") +
         ");]",
       m(".checklist-inner-wrapper", [
-        allResultingTaxa.length == 0
+        clampedFilteredTaxa.length == 0
           ? m(".nothing-found-wrapper", [
               m("h2", _t("nothing_found_oops")),
               m("img.search-world[src=img/ui/checklist/search_world.svg]"),
@@ -103,7 +116,7 @@ export let ChecklistView = {
               m(
                 ".query",
                 m.trust(
-                  Settings.pinnedSearches.getHumanNameForPinnedItem(
+                  Settings.pinnedSearches.getHumanNameForSearch(
                     JSON.parse(Checklist.queryKey())
                   )
                 )
@@ -111,13 +124,20 @@ export let ChecklistView = {
             ])
           : m(".checklist-inner-wrapper", [
               Checklist._isDraft ? draftNotice() : null,
-              ChecklistView.displayMode != "" ? temporaryFilterNotice() : null,
+              Settings.viewType() === "view_details" &&
+              ChecklistView.displayMode != ""
+                ? temporaryFilterNotice()
+                : null,
               specificChecklistView,
             ]),
       ])
     );
   },
 };
+
+function categoryChartView(filteredTaxa) {
+  return categoryChart(filteredTaxa)
+}
 
 function detailedTaxonView(treeTaxa, overflowing) {
   return m(".listed-taxa", [
@@ -210,7 +230,7 @@ function assignLeavesCount(node, allMatchingData) {
   return leavesCount;
 }
 
-function hierarchyView(allResultingTaxa, type = "treemap") {
+function circlePackingView() {
   return m(D3ChartView, {
     id: "d3test",
     chart: circlePacking,
@@ -223,7 +243,7 @@ function hierarchyView(allResultingTaxa, type = "treemap") {
       return {
         dataSource: allData,
         backgroundColor: "white",
-        fontFamily: "Regular"
+        fontFamily: "Regular",
       };
     },
   });

@@ -1,110 +1,111 @@
 .checklist {
-    flex-grow: 1;
-    background: linear-gradient(28deg, #1d2834, #55769b);
+  flex-grow: 1;
+  overflow: hidden;
+  background: linear-gradient(28deg, #1d2834, #55769b);
 }
 
 .app.mobile .checklist {
-    height: 100%;
+  height: 100%;
 }
 
 .checklist-inner-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .listed-taxa {
-    flex-grow: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0.25em;
-    color: black;
-    font-size: 85%;
-    flex-grow: 1;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.25em;
+  color: black;
+  font-size: 85%;
+  flex-grow: 1;
 }
 
 .app.mobile .listed-taxa {
-    padding-bottom: 9em;
+  padding-bottom: 9em;
 }
 
 .show-more-items {
-    text-align: center;
-    cursor: default;
-    font-variant: small-caps;
-    padding: var(--pad-large);
-    border-radius: var(--pad-large);
-    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-    background-color: #ffffff87;
-    border: 1px solid white !important;
-    padding-left: 0em;
-    list-style: none;
-    display: block;
-    margin: var(--pad-small);
-    margin-bottom: var(--pad-large);
+  text-align: center;
+  cursor: default;
+  font-variant: small-caps;
+  padding: var(--pad-large);
+  border-radius: var(--pad-large);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  background-color: #ffffff87;
+  border: 1px solid white !important;
+  padding-left: 0em;
+  list-style: none;
+  display: block;
+  margin: var(--pad-small);
+  margin-bottom: var(--pad-large);
 }
 
 .show-more-items:hover {
-    background-color: var(--hover-background);
+  background-color: var(--hover-background);
 }
 
 .nothing-found-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    color: white;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: white;
+  align-items: center;
 }
 
 .nothing-found-wrapper img {
-    width: 7em;
+  width: 7em;
 }
 
 .nothing-found-wrapper .query {
-    margin: 1em;
-    text-align: center;
-    color: #efad1a;
-    max-width: 25em;
+  margin: 1em;
+  text-align: center;
+  color: #efad1a;
+  max-width: 25em;
 }
 
 .nothing-found-message {
-    text-align: center;
-    padding: var(--pad-large);
-    margin-top: var(--pad-large);
-    max-width: 25em;
-    line-height: 150%;
-    text-align: center;
+  text-align: center;
+  padding: var(--pad-large);
+  margin-top: var(--pad-large);
+  max-width: 25em;
+  line-height: 150%;
+  text-align: center;
 }
 
 .temporary-notice {
-    font-family: var(--font-light);
-    padding: var(--pad-large);
-    background-color: lightgoldenrodyellow;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    border-bottom: 1px solid rgb(209 209 174);
+  font-family: var(--font-light);
+  padding: var(--pad-large);
+  background-color: lightgoldenrodyellow;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  border-bottom: 1px solid rgb(209 209 174);
 }
 
 .temporary-notice .notice {
-    flex-grow: 1;
-    font-size: 85%;
+  flex-grow: 1;
+  font-size: 85%;
 }
 
 .temporary-notice button.show-all {
-    background-color: white;
-    border: 0px solid;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
+  background-color: white;
+  border: 0px solid;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .temporary-notice button.show-all:hover {
-    background-color: var(--hover-background);
+  background-color: var(--hover-background);
 }
 
 .temporary-notice .notice-icon {
-    height: 1.5em;
-    margin-right: var(--pad-large);
+  height: 1.5em;
+  margin-right: var(--pad-large);
 }

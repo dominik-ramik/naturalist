@@ -1,0 +1,166 @@
+button {
+  background-color: white;
+  border-radius: var(--pad-small);
+  padding: var(--pad-small);
+  border: 1px solid black;
+  font-family: Regular;
+}
+
+button.selected {
+  background-color: var(--nlblue);
+  color: white;
+}
+
+table.buttons-table {
+    color: white;
+    font-size: 85%;
+    border-collapse: collapse;
+}
+table.buttons-table tr:not(:last-child) {
+    border-bottom: 1px solid gray;
+    padding: 0.5em;
+}
+
+.info-label {
+  font-size: 100%;
+  padding-top: 0.5em;
+  margin-bottom: 0.5em;
+  width: 100%;
+  border-top: 1px solid gray;
+  color: white;
+}
+.info-label::before {
+  margin-right: 0.5em;
+  content: "🛈";
+}
+
+.table-flex-container {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background-color: white;
+  font-size: 80%;
+}
+
+table.category-view {
+  table-layout: fixed;
+  max-width: 100%;
+}
+
+table.category-view tr:first-child td:not(:first-child),
+table.category-view tr:first-child th:not(:first-child) {
+  font-size: 80%;
+}
+
+table.category-view td:first-child,
+table.category-view th:first-child {
+  cursor: pointer;
+}
+
+table.category-view td:first-child,
+table.category-view th:first-child {
+  color: #1565c0;
+}
+
+table.category-view td.noclick:first-child,
+table.category-view th.noclick:first-child {
+  color: black;
+  cursor: default;
+}
+
+table.category-view td.noclick:first-child:hover,
+table.category-view th.noclick:first-child:hover {
+  color: black;
+  cursor: default;
+}
+
+table.category-view td:nth-child(odd):not(:first-child),
+th:nth-child(odd):not(:first-child) {
+  background-color: #ffb30007;
+  border-color: #ffb300 !important;
+  color: #ffb300;
+}
+table.category-view td:nth-child(even):not(:first-child),
+th:nth-child(even):not(:first-child) {
+  background-color: #7cb34207;
+  border-color: #7cb342 !important;
+  color: #7cb342;
+}
+
+table.category-view td:not(:first-child),
+table.category-view th:not(:first-child) {
+  color: black;
+  width: 6.3em !important;
+  min-width: 6.3em !important;
+  max-width: 6.3em !important;
+  box-sizing: border-box;
+  text-align: right;
+  font-size: 0.6rem;
+}
+
+table.category-view th td {
+  color: black;
+}
+
+table.category-view tr:not(:first-child):hover {
+  background-color: rgb(245, 245, 245);
+}
+
+.up-button {
+  vertical-align: bottom;
+  padding-bottom: 0.5em;
+  background-color: white !important;
+}
+
+table.category-view .sticky-column {
+  position: sticky;
+  left: 0; /* Don't forget this, required for the stickiness */
+  background-color: white;
+}
+
+table.category-view .header-row {
+  background-color: white;
+  top: 0; /* Don't forget this, required for the stickiness */
+  position: sticky;
+  color: red !important;
+  z-index: 999;
+}
+
+table.category-view .sticky-row {
+  position: sticky;
+  top: 0; /* Don't forget this, required for the stickiness */
+  background-color: transparent;
+}
+
+button {
+  background-color: white;
+  border: 0px solid;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin: 0.2em;
+  display: inline-block;
+}
+
+.category-view th.rotate {
+  height: 12em;
+  white-space: nowrap;
+  vertical-align: bottom;
+  text-align: center;
+}
+
+.category-view th.rotate > div {
+  transform: translate(0, 50%) rotate(-45deg); /* Rotate the text */
+  transform-origin: bottom left; /* Adjust origin for rotation */
+  position: relative;
+  left: 2.5em;
+  top: -1em;
+  text-align: left;
+}
