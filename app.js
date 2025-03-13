@@ -179,7 +179,8 @@ function runApp() {
         AppLayoutView.mode = "mobile";
       }
 
-      readyPreloadableAssets();
+      console.log("Re-enable")
+      //readyPreloadableAssets();
 
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
