@@ -35,7 +35,24 @@ function menuPanel() {
           m(".menu-button-description", _t("menu")),
         ]
       ),
-      m(".menu-items", [
+      !Checklist.getProjectAbout() || Checklist.getProjectAbout().trim() == "" ? null : m(".menu-items", [
+        m(MenuItem, {
+          onclick: function () {
+            MenuStripView.menuOpen = !MenuStripView.menuOpen;
+            routeTo("/about/checklist");
+          },
+          icon: "about",
+          title: _t("about_this"),
+        }),
+        !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == "" ? null : m(MenuItem, {
+          onclick: function () {
+            MenuStripView.menuOpen = !MenuStripView.menuOpen;
+            routeTo("/about/cite");
+          },
+          icon: "cite",
+          title: _t("how_to_cite"),
+        }),
+        m(MenuDivider),
         m(MenuItem, {
           onclick: function () {
             if (navigator.share) {
@@ -62,15 +79,6 @@ function menuPanel() {
           },
           icon: "push_pin",
           title: _t("pin_search"),
-        }),
-        m(MenuDivider),
-        m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/about/checklist");
-          },
-          icon: "about",
-          title: _t("about_this"),
         }),
         Checklist.getBibliographyKeys().length > 0
           ? m(MenuItem, {

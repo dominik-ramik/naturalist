@@ -556,6 +556,11 @@ export let Checklist = {
     let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
     return text;
   },
+  
+  getProjectHowToCite: function () {
+    let text = Checklist._data.versions[Checklist.getCurrentLanguage()].howToCite;
+    return text;
+  },
 
   getThemeHsl: function (variant) {
     let sl = "29%, 47%";

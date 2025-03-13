@@ -148,6 +148,7 @@ export let nlDataStructure = {
                   "Color theme hue",
                   "Checklist name",
                   "About section",
+                  "How to cite",
                   "Name of checklist data sheet",
                   "Checklist data headers row",
                   "Date format",

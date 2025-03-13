@@ -181,9 +181,17 @@ let translations = {
     en: "Stacking circles",
     fr: "Empilement de cercles",
   },
+  how_to_cite: {
+    en: "How to cite",
+    fr: "Comment citer",
+  },
+  how_to_cite_header: {
+    en: "# $1\n\n## How to cite",
+    fr: "# $1\n\n## Comment citer",
+  },
   pin_search: {
-    en: "Pin search",
-    fr: "Épingler la requête",
+    en: "Pinned searches",
+    fr: "Requêtes épinglées",
   },
   share_url: {
     en: "Share this search",

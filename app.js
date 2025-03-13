@@ -1,4 +1,4 @@
-import { _t } from "./model/I18n.js";
+import { _t, _tf } from "./model/I18n.js";
 import { AppLayoutView, Toast } from "./view/AppLayoutView.js";
 import { Checklist } from "./model/Checklist.js";
 import { SearchView } from "./view/SearchView.js";
@@ -183,7 +183,7 @@ function runApp() {
 
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
-        if (!Settings.alreadyViewedAboutSection()) {
+        if (!Settings.alreadyViewedAboutSection() && Checklist.getProjectAbout()?.trim() != "") {
           m.route.set("/about/checklist");
         }
 
@@ -217,6 +217,15 @@ function runApp() {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
               m(AboutView, { text: Checklist.getProjectAbout() }),
+            ]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/about/cite": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [
+              m(AboutView, { text: _tf("how_to_cite_header", [Checklist.getProjectName()]) + "\n\n" + Checklist.getProjectHowToCite() }),
             ]);
           },
           onmatch: onMatchGuard,

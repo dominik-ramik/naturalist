@@ -184,6 +184,7 @@ let staticResources = [
     "./img/ui/menu/arrow_back.svg",
     "./img/ui/menu/expand_less.svg",
     "./img/ui/menu/expand_more.svg",
+    "./img/ui/menu/cite.svg",
     "./img/ui/menu/display_options.svg",
     "./img/ui/menu/filter_list.svg",
     "./img/ui/menu/filter_list_off.svg",

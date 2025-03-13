@@ -397,6 +397,14 @@ export let DataManager = function () {
         about = aboutResult;
       }
 
+      let howToCite = data.common.getItem(
+        log,
+        data.sheets.appearance.tables.customization.data,
+        "How to cite",
+        lang.code,
+        ""
+      );
+
       let dateFormat = data.common.getItem(
         log,
         data.sheets.appearance.tables.customization.data,
@@ -434,6 +442,7 @@ export let DataManager = function () {
         colorThemeHue: hue,
         name: name,
         about: about,
+        howToCite: howToCite,
         dateFormat: dateFormat,
         citationStyle: citationStyle.toLowerCase(),
         precachedImageMaxSize: parseFloat(precachedImageMaxSize),
