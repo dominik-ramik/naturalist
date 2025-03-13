@@ -255,9 +255,19 @@ function TabMedia(tabData, taxon, taxonName) {
 function TabMap(tabData, taxon, taxonName) {
   let mapsRenderingData = {};
 
-  function getSuffixOfRegion(region) {
+  function parseRegionCode(region) {
+    let parts = region.split(":");
+
+    if (parts.length != 2) {
+      console.error("Map suffix inconsistent", region);
+    }
+
+    return { region: parts[0], suffix: parts[parts.length - 1] };
+  }
+
+  function getRegionMeta(region) {
     let found = Checklist.getMapRegionsMeta().find(function (mapRegionMeta) {
-      if (region.endsWith(mapRegionMeta.suffix)) {
+      if (region.endsWith(":" + mapRegionMeta.suffix)) {
         return true;
       }
       return false;
@@ -384,7 +394,7 @@ function TabMap(tabData, taxon, taxonName) {
                   .forEach(function (mapRegionMeta) {
                     mapRegionsSplit.forEach(function (individualRegion) {
                       if (
-                        getSuffixOfRegion(individualRegion).suffix ==
+                        getRegionMeta(individualRegion).suffix ==
                           mapRegionMeta.suffix &&
                         presentRegionsMetaSuffixes.indexOf(
                           mapRegionMeta.suffix
@@ -433,50 +443,52 @@ function TabMap(tabData, taxon, taxonName) {
                   if (media.regions) {
                     let usedRegions = "";
 
-                    media.regions.split(" ").forEach(function (region) {
-                      if (region === null || region.trim() == "") {
-                        return;
-                      }
+                    media.regions
+                      .split(" ")
+                      .map((r) => r.trim())
+                      .forEach(function (region) {
+                        if (region === null || region.trim() == "") {
+                          return;
+                        }
 
-                      let mapRegionMeta = getSuffixOfRegion(region);
-                      let suffixlessRegionCode = region.substring(
-                        0,
-                        region.length - mapRegionMeta.suffix.length
-                      );
+                        let mapRegionMeta = getRegionMeta(region);
 
-                      if (media.url.toLowerCase() == "world.svg") {
-                        //hotfix for countries with very wide span and overseas territories
-                        if (suffixlessRegionCode == "fr")
-                          suffixlessRegionCode = "frx";
-                        if (suffixlessRegionCode == "nl")
-                          suffixlessRegionCode = "nlx";
-                        if (suffixlessRegionCode == "cn")
-                          suffixlessRegionCode = "cnx";
-                      }
+                        let suffixlessRegionCode =
+                          parseRegionCode(region).region;
 
-                      let regionElements =
-                        objectElement.contentDocument.getElementsByClassName(
-                          suffixlessRegionCode
-                        );
+                        if (media.url.toLowerCase().endsWith("world.svg")) {
+                          //hotfix for countries with very wide span and overseas territories
+                          if (suffixlessRegionCode == "fr")
+                            suffixlessRegionCode = "frx";
+                          if (suffixlessRegionCode == "nl")
+                            suffixlessRegionCode = "nlx";
+                          if (suffixlessRegionCode == "cn")
+                            suffixlessRegionCode = "cnx";
+                        }
 
-                      if (regionElements.length > 0) {
-                        for (
-                          let elIndex = 0;
-                          elIndex < regionElements.length;
-                          elIndex++
-                        ) {
-                          const el = regionElements[elIndex];
-
-                          el.setAttribute("fill", mapRegionMeta.fill);
-                          el.setAttribute(
-                            "style",
-                            "fill: " + mapRegionMeta.fill + "; opacity:1;"
+                        let regionElements =
+                          objectElement.contentDocument.getElementsByClassName(
+                            suffixlessRegionCode
                           );
 
-                          usedRegions += suffixlessRegionCode + " ";
+                        if (regionElements.length > 0) {
+                          for (
+                            let elIndex = 0;
+                            elIndex < regionElements.length;
+                            elIndex++
+                          ) {
+                            const el = regionElements[elIndex];
+
+                            el.setAttribute("fill", mapRegionMeta.fill);
+                            el.setAttribute(
+                              "style",
+                              "fill: " + mapRegionMeta.fill + "; opacity:1;"
+                            );
+
+                            usedRegions += suffixlessRegionCode + " ";
+                          }
                         }
-                      }
-                    });
+                      });
 
                     objectElement.setAttribute("data-usedregions", usedRegions);
                   }
