@@ -23,7 +23,7 @@ table.buttons-table tr:not(:last-child) {
 }
 
 .info-label {
-  font-size: 100%;
+  font-size: 70%;
   padding-top: 0.5em;
   margin-bottom: 0.5em;
   width: 100%;
@@ -33,6 +33,9 @@ table.buttons-table tr:not(:last-child) {
 .info-label::before {
   margin-right: 0.5em;
   content: "🛈";
+}
+.info-label strong{
+  font-weight: normal;
 }
 
 .table-flex-container {

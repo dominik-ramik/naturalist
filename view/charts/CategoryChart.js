@@ -91,6 +91,23 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
     default:
       break;
   }
+
+  if (Checklist.queryKey() !== "{}") {
+    verb =
+      verb +
+      " " +
+      _tf(
+        "view_cat_cell_verb_category_filtered",
+        [
+          Settings.pinnedSearches.getHumanNameForSearch(
+            JSON.parse(Checklist.queryKey()),
+            true
+          ),
+        ],
+        true
+      );
+  }
+
   return verb;
 };
 
@@ -128,14 +145,13 @@ function parentOf(taxon, filteredTaxa) {
 /**
  * Convert a ratio to percent string, if lower than 1% display <1%
  */
-function toPctString(ratio){
-  let pct = ratio * 100.0
+function toPctString(ratio) {
+  let pct = ratio * 100.0;
 
-  if(pct < 1 && pct > 0){
-    return "< 1%"
-  }
-  else{
-    return pct.toFixed(0) + "%"
+  if (pct < 1 && pct > 0) {
+    return "< 1%";
+  } else {
+    return pct.toFixed(0) + "%";
   }
 }
 
@@ -265,15 +281,16 @@ export function categoryChart(filteredTaxa) {
       m("table.buttons-table", [
         // Row for category selection
         m("tr", [
-          m("td[style=max-width: fit-content]" ,
-            _t("view_cat_category_to_analyze")),
+          m(
+            "td[style=max-width: fit-content]",
+            _t("view_cat_category_to_analyze")
+          ),
           m(
             "td[colspan=4]",
             filtersToDisplay.map((f) => {
               const title = Checklist.getMetaForDataPath(f).searchCategory;
               return m(
-                "button" +
-                  (f === categoryToView ? ".selected" : ""),
+                "button" + (f === categoryToView ? ".selected" : ""),
                 {
                   onclick: () => {
                     if (f === categoryToView) return false;
@@ -352,7 +369,7 @@ export function categoryChart(filteredTaxa) {
                       Settings.pinnedSearches.getHumanNameForSearch(
                         JSON.parse(Checklist.queryKey())
                       ),
-                    ])``
+                    ])
               )
             ),
           ]),
@@ -451,10 +468,7 @@ export function categoryChart(filteredTaxa) {
               `td[style=border-left: ${borderSize}em solid;][title="${title}"]`,
               m(
                 "div.number-container",
-                numericDisplay(
-                  taxon.categories[cKey],
-                  toPctString(ratio)
-                )
+                numericDisplay(taxon.categories[cKey], toPctString(ratio))
               )
             );
           } else {

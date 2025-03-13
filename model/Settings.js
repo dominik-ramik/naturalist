@@ -157,7 +157,7 @@ export let Settings = {
 
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
-    getHumanNameForSearch: function (itemObject) {
+    getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
       if (Object.keys(itemObject).length == 0) {
         return "All taxa";
       }
@@ -194,8 +194,8 @@ export let Settings = {
                   formatList(
                     itemObject[type][dataPath],
                     _t("or_list_joiner"),
-                    "<strong>",
-                    "</strong>"
+                    usePlainTextOutput ? "" : "<strong>",
+                    usePlainTextOutput ? "" : "</strong>"
                   )
               );
             } else if (
@@ -211,8 +211,8 @@ export let Settings = {
                   operation,
                   t1,
                   t2,
-                  "<strong>",
-                  "</strong>"
+                  usePlainTextOutput ? "" : "<strong>",
+                  usePlainTextOutput ? "" :"</strong>"
                 )
               );
             }

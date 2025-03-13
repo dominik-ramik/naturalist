@@ -1,8 +1,16 @@
 export function _t(tag, substitute) {
   return translate(tag, substitute);
 }
-export function _tf(tag, substitute) {
-  return translate(tag, substitute, "<strong>", "</strong>");
+export function _tf(tag, substitute, usePlainTextOutput) {
+  let openingTag = "<strong>";
+  let closingTag = "</strong>";
+  
+  if (usePlainTextOutput) {
+    openingTag = "";
+    closingTag = "";
+  }
+
+  return translate(tag, substitute, openingTag, closingTag);
 }
 
 export let i18n = {
@@ -788,6 +796,10 @@ let translations = {
   view_cat_cell_verb_category: {
     en: "$1 ($2) of $3 taxa are in $4",
     fr: "",
+  },
+  view_cat_cell_verb_category_filtered: {
+    en: "(counting only those where $1)",
+    fr: "(comptant uniquement ceux où $1)",
   },
   view_cat_category_to_analyze: {
     en: "Category to analyze",
