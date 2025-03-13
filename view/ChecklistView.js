@@ -243,6 +243,7 @@ function circlePackingView() {
       return {
         dataSource: allData,
         fontFamily: "Regular",
+        maxDataLevelsDisplayed: Checklist._data.versions[Checklist.getCurrentLanguage()].stackingCirclesDepth || 3
       };
     },
   });

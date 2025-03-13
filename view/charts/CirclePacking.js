@@ -1,6 +1,6 @@
 export function circlePacking(options) {
   let data = options.dataSource;
-  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 5;
+  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 3;
   let matchHue = options.matchHue || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
   let opacityStep = options.opacityStep || 0.07;
@@ -22,25 +22,6 @@ export function circlePacking(options) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
-  }
-
-  // ───────────────────────────────
-  // 1. DATA TRUNCATION ("VIRTUALIZATION")
-  // ───────────────────────────────
-  function truncate(children, maxLevel, currentLevel = 0) {
-    if (currentLevel === maxLevel) {
-      return [];
-    }
-    return children.map((c) => {
-      let copy = { ...c };
-      if (copy.children) {
-        copy.children = truncate(copy.children, maxLevel, currentLevel + 1);
-      }
-      return copy;
-    });
-  }
-  if (data.children) {
-    data.children = truncate(data.children, maxDataLevelsDisplayed);
   }
 
   // ───────────────────────────────
@@ -231,7 +212,8 @@ export function circlePacking(options) {
       }
     });
 
-    const nodes = getLevels(tree, 4);
+    const nodes = getLevels(tree, maxDataLevelsDisplayed);
+
     const nodeSelection = gContent
       .append("g")
       .selectAll("circle")

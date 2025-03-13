@@ -23,9 +23,6 @@ export let D3ChartView = function (initialVnode) {
         getEl().appendChild(chart(options()));
         oldDataString = newDataString;
       }
-      else{
-        console.log("VVVVV no change")
-      }
     },
     onbeforeremove: function (vnode) {
       getEl().innerHTML = "";

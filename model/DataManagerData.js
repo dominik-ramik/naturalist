@@ -154,6 +154,7 @@ export let nlDataStructure = {
                   "References BibTeX file URL",
                   "Citation style",
                   "Precached image max size",
+                  "Stacking circles depth",
                 ],
                 supportsMultilingual: false,
               },
