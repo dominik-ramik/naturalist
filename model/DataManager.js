@@ -72,33 +72,9 @@ export let DataManager = function () {
           let data = Checklist.getDataFromDataPath(entryData, dataPath);
 
           if (data && data != "") {
-            if (data.match(/^F:[a-zA-Z0-9-_.~]+/)) {
-              let fileUrl = relativeToUsercontent(data.substring(2).trim());
-
-              if (!fileUrl.toLowerCase().endsWith(".md")) {
-                fileUrl = fileUrl + ".md";
-              }
-
-              if (isValidHttpUrl(fileUrl) && isSameOriginAsCurrent(fileUrl)) {
-                let markdownContent = getMarkdownContent(
-                  fileUrl,
-                  runSpecificCache
-                );
-                if (markdownContent.responseStatus == 200) {
-                  entryData[dataPath] = markdownContent.content;
-                } else {
-                  log(
-                    "error",
-                    _tf("dm_markdown_file_not_found", [
-                      fileUrl,
-                      dataPath,
-                      rowNumber,
-                    ])
-                  );
-                }
-              } else {
-                console.log("F: is not valid URL", data, fileUrl);
-              }
+            let result = processFDirective(data, runSpecificCache, log);
+            if (result) {
+              entryData[dataPath] = result;
             }
           }
         }
@@ -108,33 +84,6 @@ export let DataManager = function () {
     console.log("New checklist", checklist);
 
     return checklist;
-
-    function getMarkdownContent(url, runSpecificCache) {
-      let result = { content: "", responseStatus: 0 };
-
-      if (runSpecificCache[url]) {
-        return runSpecificCache[url];
-      }
-
-      try {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, false); // false makes the request synchronous
-        xhr.withCredentials = true; // Include credentials for CORS
-        xhr.send(null);
-
-        result.responseStatus = xhr.status;
-
-        if (xhr.status === 200) {
-          result.content = xhr.responseText;
-        }
-      } catch (error) {
-        console.error("Error fetching remote markdown:", error.message);
-      }
-
-      runSpecificCache[url] = result;
-
-      return result;
-    }
 
     function gatherReferences() {
       let bibtexUrl = data.common.getItem(
@@ -183,18 +132,6 @@ export let DataManager = function () {
       }
 
       return bibReader.bibliography;
-    }
-
-    function isSameOriginAsCurrent(url) {
-      try {
-        const parsedCurrentUrl = new URL(window.location.origin);
-        const parsedOtherUrl = new URL(url, window.location.origin);
-
-        return parsedCurrentUrl.origin === parsedOtherUrl.origin;
-      } catch (error) {
-        console.error("Error parsing URLs:", error);
-        return false;
-      }
     }
 
     function gatherPreloadableAssets() {
@@ -454,6 +391,12 @@ export let DataManager = function () {
         lang.code,
         _t("generic_about")
       );
+
+      let aboutResult = processFDirective(about, {}, log);
+      if (aboutResult) {
+        about = aboutResult;
+      }
+
       let dateFormat = data.common.getItem(
         log,
         data.sheets.appearance.tables.customization.data,
@@ -633,7 +576,6 @@ export let DataManager = function () {
           return;
         }
 
-        
         matchingComputedDataPaths.forEach(function (computedDataPath) {
           if (info.role == "taxon") {
             return;
@@ -689,7 +631,11 @@ export let DataManager = function () {
             }
 
             //verify syntax of .hidden
-            if (info.fullRow.hidden !== "yes" && info.fullRow.hidden !== "no" && info.fullRow.hidden !== "data") {
+            if (
+              info.fullRow.hidden !== "yes" &&
+              info.fullRow.hidden !== "no" &&
+              info.fullRow.hidden !== "data"
+            ) {
               let expr = info.fullRow.hidden;
 
               let split = splitN(expr, " ", 3);
@@ -1006,7 +952,7 @@ export let DataManager = function () {
               );
               lastSuccesfullCount++;
             }
-          } else if (count == 1 && pathSegments.length > 1) {            
+          } else if (count == 1 && pathSegments.length > 1) {
             //we may have a candidate for simplified array (aka comma separated values)
             let rawValue =
               row[
@@ -2002,6 +1948,74 @@ export let DataManager = function () {
 
   return dataManager;
 };
+
+function isSameOriginAsCurrent(url) {
+  try {
+    const parsedCurrentUrl = new URL(window.location.origin);
+    const parsedOtherUrl = new URL(url, window.location.origin);
+
+    return parsedCurrentUrl.origin === parsedOtherUrl.origin;
+  } catch (error) {
+    console.error("Error parsing URLs:", error);
+    return false;
+  }
+}
+
+function getMarkdownContent(url, runSpecificCache) {
+  let result = { content: "", responseStatus: 0 };
+
+  if (runSpecificCache[url]) {
+    return runSpecificCache[url];
+  }
+
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url, false); // false makes the request synchronous
+    xhr.withCredentials = true; // Include credentials for CORS
+    xhr.send(null);
+
+    result.responseStatus = xhr.status;
+
+    if (xhr.status === 200) {
+      result.content = xhr.responseText;
+    }
+  } catch (error) {
+    console.error("Error fetching remote markdown:", error.message);
+  }
+
+  runSpecificCache[url] = result;
+
+  return result;
+}
+
+function processFDirective(data, runSpecificCache, logFn) {
+  if (data.match(/^F:[a-zA-Z0-9-_.~]+/)) {
+    let fileUrl = relativeToUsercontent(data.substring(2).trim());
+
+    if (!fileUrl.toLowerCase().endsWith(".md")) {
+      fileUrl = fileUrl + ".md";
+    }
+
+    if (isValidHttpUrl(fileUrl) && isSameOriginAsCurrent(fileUrl)) {
+      let markdownContent = getMarkdownContent(fileUrl, runSpecificCache);
+      if (markdownContent.responseStatus == 200) {
+        return markdownContent.content;
+      } else {
+        logFn(
+          "error",
+          _tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])
+        );
+        return null;
+      }
+    } else {
+      console.log("F: is not valid URL", data, fileUrl);
+      return null;
+    }
+    return null;
+  } else {
+    return data;
+  }
+}
 
 export let dataPath = {
   validate: {
