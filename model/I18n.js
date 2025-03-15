@@ -783,19 +783,19 @@ let translations = {
   },
   view_cat_category_verb_taxon: {
     en: "$1 of taxa belonging to a particular $2 category",
-    fr: "",
+    fr: "$1 de taxons appartenant à une catégorie particulière de $2",
   },
   view_cat_category_verb_category: {
     en: "Contribution of individual taxa to each $1 category",
-    fr: "",
+    fr: "Contribution des taxons individuels à chaque catégorie de $1",
   },
   view_cat_cell_verb_taxon: {
-    en: "$1 ($2) of $3 taxa are $4",
-    fr: "",
+    en: "$1 ($2) of $3 taxa are in category $4",
+    fr: "$1 ($2) de $3 taxons sont categorisés en $4",
   },
   view_cat_cell_verb_category: {
-    en: "$1 ($2) of $3 taxa are in $4",
-    fr: "",
+    en: "$1 ($2) of $3 taxa are $4",
+    fr: "$1 ($2) de $3 taxons sont $4",
   },
   view_cat_cell_verb_category_filtered: {
     en: "(counting only those where $1)",
@@ -803,22 +803,22 @@ let translations = {
   },
   view_cat_category_to_analyze: {
     en: "Category to analyze",
-    fr: "",
+    fr: "Catégorie à analyser",
   },
   view_cat_sum_method: {
     en: "Sum method",
-    fr: "",
+    fr: "Méthode de la somme",
   },
   view_cat_display: {
     en: "Display",
-    fr: "",
+    fr: "Afficher",
   },
   view_cat_counted_all: {
     en: "$1 counted through all taxa",
-    fr: "",
+    fr: "$1 comptés pour tous les taxons",
   },
   view_cat_counted_filter: {
     en: "$1 counted only where $2",
-    fr: "",
+    fr: "$1 ne comptant que lorsque $2",
   },
 };
