@@ -135,7 +135,7 @@ table.category-view .header-row {
   top: 0; /* Don't forget this, required for the stickiness */
   position: sticky;
   color: red !important;
-  z-index: 999;
+  z-index: 100;
 }
 
 table.category-view .sticky-row {

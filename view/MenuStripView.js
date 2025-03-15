@@ -210,6 +210,9 @@ let MenuExpandable = function (initialVnode) {
 };
 
 function menuTopBar() {
+
+  let currentViewName = _t(Settings.viewType()) //settings view type is the same as the i18n tag for that view
+
   return [
     m(
       ".menu-button.clickable",
@@ -218,18 +221,19 @@ function menuTopBar() {
           MenuStripView.menuOpen = !MenuStripView.menuOpen;
         },
       },
-      [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
+      [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")],      
     ),
     m(".menu-project-name", Checklist.getProjectName()),
     m(ActionButtonWithMenu, {
-      icon: "img/ui/menu/display_options.svg",
-      title: _t("display_options"),
+      icon: "img/ui/menu/" + Settings.viewType() + ".svg",
+      title: currentViewName,
+      imageReverse: true,
       items: [].concat(
         { type: "label", title: _t("view_checklist_as") },
         {
           type: "button",
           title: _t("view_details"),
-          icon: "ui/menu/detailed_list",
+          icon: "ui/menu/view_details",
           selected: Settings.viewType() === "view_details",
           action: function () {
             Settings.viewType("view_details");
@@ -238,7 +242,7 @@ function menuTopBar() {
         {
           type: "button",
           title: _t("view_circle_pack"),
-          icon: "ui/menu/scatter_plot",
+          icon: "ui/menu/view_circle_pack",
           selected: Settings.viewType() === "view_circle_pack",
           action: function () {
             Settings.viewType("view_circle_pack");
@@ -247,7 +251,7 @@ function menuTopBar() {
         {
           type: "button",
           title: _t("view_category_density"),
-          icon: "ui/menu/categories_plot",
+          icon: "ui/menu/view_category_density",
           selected: Settings.viewType() === "view_category_density",
           action: function () {
             Settings.viewType("view_category_density");
@@ -354,8 +358,9 @@ let ActionButtonWithMenu = function (initialVnode) {
             },
           },
           [
-            m("img[src=" + vnode.attrs.icon + "]"),
+            vnode.attrs.imageReverse !== true ? m("img[src=" + vnode.attrs.icon + "]") : null,
             m(".action-button-title", vnode.attrs.title),
+            vnode.attrs.imageReverse === true ? m("img[src=" + vnode.attrs.icon + "]") : null,
           ]
         ),
         open

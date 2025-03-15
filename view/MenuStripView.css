@@ -152,7 +152,7 @@
 }
 
 .menu-action-button .action-button-title {
-  padding-left: var(--pad-small);
+  padding-left: var(--pad-large);
   padding-right: var(--pad-large);
   font-size: 85%;
 }
