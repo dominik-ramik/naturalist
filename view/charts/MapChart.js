@@ -184,7 +184,7 @@ function renderMap(map) {
 
   return m(".image-wrap-outer", [
     m(
-      ".image-wrap", //.clickable
+      ".map-chart-image-wrap", //.clickable
       {
         onclick: function (e) {
           this.classList.toggle("fullscreen");

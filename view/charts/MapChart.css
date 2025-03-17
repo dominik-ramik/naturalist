@@ -7,7 +7,7 @@
   overflow: auto;
 }
 
-.image-wrap-outer {
+.map-chart-image-wrap-outer {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -19,7 +19,7 @@
   overflow: hidden;
 }
 
-.image-wrap {
+.map-chart-image-wrap {
   margin: 0;
   height: 100vh;
   max-height: 100%;
@@ -29,12 +29,12 @@
   text-align: center;
 }
 
-.image-wrap object {
+.map-chart-image-wrap object {
   max-height: 100%;
   max-width: 100%;
 }
 
-.image-wrap.fullscreen {
+.map-chart-image-wrap.fullscreen {
   position: fixed;
   left: 0;
   top: 0;
@@ -51,12 +51,12 @@
   flex-direction: column;
 }
 
-.image-wrap.fullscreen {
+.map-chart-image-wrap.fullscreen {
   opacity: 1 !important;
 }
 
-.image-wrap.fullscreen img,
-.image-wrap.fullscreen object {
+.map-chart-image-wrap.fullscreen img,
+.map-chart-image-wrap.fullscreen object {
   max-height: 100vh !important;
   max-width: 100vw !important;
   height: 100vh !important;
