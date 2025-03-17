@@ -1,7 +1,12 @@
 import { Settings } from "../../model/Settings.js";
-import { sortByCustomOrder, materialColors } from "../../components/Utils.js";
+import {
+  sortByCustomOrder,
+  materialColors,
+  filterTerminalLeaves,
+} from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 import { _t, _tf } from "../../model/I18n.js";
+import { ButtonGroup } from "../ChecklistView.js";
 
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
@@ -92,7 +97,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
       break;
   }
 
-  if (Checklist.queryKey() !== "{}") {
+  if (Checklist.filter.isEmpty()) {
     verb =
       verb +
       " " +
@@ -277,103 +282,85 @@ export function categoryChart(filteredTaxa) {
   // RENDER CONTROL PANEL
   // ------------------------------------------------------
   result.push(
-    m("div[style=margin: 0.25em]", [
-      m("table.buttons-table", [
-        // Row for category selection
-        m("tr", [
-          m(
-            "td[style=max-width: fit-content]",
-            _t("view_cat_category_to_analyze")
-          ),
-          m(
-            "td[colspan=4]",
-            filtersToDisplay.map((f) => {
-              const title = Checklist.getMetaForDataPath(f).searchCategory;
-              return m(
-                "button" + (f === categoryToView ? ".selected" : ""),
-                {
-                  onclick: () => {
-                    if (f === categoryToView) return false;
-                    categoryToView = f;
-                    Settings.categoryChartCategory(f);
-                  },
-                },
-                title
-              );
-            })
-          ),
-          m("td"),
-        ]),
-        // Row for sum method & display mode (if category is set)
-        categoryToView === ""
-          ? null
-          : m("tr", [
-              m("td[style=max-width: fit-content]", _t("view_cat_sum_method")),
-              m(
-                "td",
-                sumMethods.map((mt) =>
-                  m(
-                    "button" + (mt.method === sumMethod ? ".selected" : ""),
-                    {
-                      onclick: () => {
-                        if (mt.method === sumMethod) return false;
-                        sumMethod = mt.method;
-                        Settings.categoryChartSumMethod(sumMethod);
-                      },
+    m("div[style=margin: 0.25em; display: flex; flex-wrap: wrap;]", [
+      m(ButtonGroup, {
+        label: _t("view_cat_category_to_analyze"),
+        buttons: filtersToDisplay.map((f) => {
+          const title = Checklist.getMetaForDataPath(f).searchCategory;
+          return m(
+            "button" + (f === categoryToView ? ".selected" : ""),
+            {
+              onclick: () => {
+                if (f === categoryToView) return false;
+                categoryToView = f;
+                Settings.categoryChartCategory(f);
+              },
+            },
+            title
+          );
+        }),
+      }),
+      categoryToView === ""
+        ? null
+        : [
+            m(ButtonGroup, {
+              label: _t("view_cat_sum_method"),
+              buttons: sumMethods.map((mt) =>
+                m(
+                  "button" + (mt.method === sumMethod ? ".selected" : ""),
+                  {
+                    onclick: () => {
+                      if (mt.method === sumMethod) return false;
+                      sumMethod = mt.method;
+                      Settings.categoryChartSumMethod(sumMethod);
                     },
-                    mt.name
-                  )
+                  },
+                  mt.name
                 )
               ),
-              sumMethod === ""
-                ? null
-                : m(
-                    "td[style=max-width: fit-content; padding-left: 2em]",
-                    _t("view_cat_display")
-                  ),
-              sumMethod === ""
-                ? null
-                : m(
-                    "td",
-                    displayStyles.map((ds) =>
-                      m(
-                        "button" + (ds.method === display ? ".selected" : ""),
-                        {
-                          onclick: () => {
-                            if (ds.method === display) return false;
-                            display = ds.method;
-                            Settings.categoryChartDisplayMode(display);
-                          },
+            }),
+            sumMethod === ""
+              ? null
+              : m(ButtonGroup, {
+                  label: _t("view_cat_display"),
+                  buttons: displayStyles.map((ds) =>
+                    m(
+                      "button" + (ds.method === display ? ".selected" : ""),
+                      {
+                        onclick: () => {
+                          if (ds.method === display) return false;
+                          display = ds.method;
+                          Settings.categoryChartDisplayMode(display);
                         },
-                        ds.name
-                      )
+                      },
+                      ds.name
                     )
                   ),
-            ]),
-      ]),
-      // Info label (if there is data to show)
-      categoryToView === "" ||
+                }),
+          ],
+    ]),
+    // Info label (if there is data to show)
+    categoryToView === "" ||
       sumMethod === "" ||
       Object.keys(categorizedData.individualResults).length === 0
-        ? null
-        : m(".info-labels", [
-            m(
-              ".info-label",
-              m.trust(
-                Checklist.queryKey() === "{}"
-                  ? _t("view_cat_counted_all", [
-                      categoryVerb(categoryToView, sumMethod),
-                    ])
-                  : _tf("view_cat_counted_filter", [
-                      categoryVerb(categoryToView, sumMethod),
-                      Settings.pinnedSearches.getHumanNameForSearch(
-                        JSON.parse(Checklist.queryKey())
-                      ),
-                    ])
-              )
-            ),
-          ]),
-    ])
+      ? null
+      : m(".info-labels", [
+          m(
+            ".info-label",
+            m.trust(
+              Checklist.filter.isEmpty()
+                ? _t("view_cat_counted_all", [
+                    categoryVerb(categoryToView, sumMethod),
+                  ])
+                : _tf("view_cat_counted_filter", [
+                    categoryVerb(categoryToView, sumMethod),
+                    Settings.pinnedSearches.getHumanNameForSearch(
+                      JSON.parse(Checklist.queryKey())
+                    ),
+                  ])
+            )
+          ),
+        ])
   );
 
   // ------------------------------------------------------
@@ -493,54 +480,4 @@ export function categoryChart(filteredTaxa) {
   }
 
   return result;
-}
-
-/**
- * Returns true if the smallPath is a prefix of bigPath.
- * Each node is compared by concatenating `n` and `a` with a space.
- */
-function isPrefix(smallPath, bigPath) {
-  if (smallPath.length >= bigPath.length) return false;
-  for (let i = 0; i < smallPath.length; i++) {
-    const smallNode = `${smallPath[i].n} ${smallPath[i].a}`;
-    const bigNode = `${bigPath[i].n} ${bigPath[i].a}`;
-    if (smallNode !== bigNode) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * Filters an array of nodes and returns only the terminal leaves.
- * A terminal leaf is an object whose path is not a prefix of any other node's path.
- * Additionally, duplicate terminal leaves (with identical paths) are removed.
- *
- * @param {Array} nodes - Array of objects that include a property "t" (an array of nodes).
- * @returns {Array} filtered array containing only unique terminal leaves.
- */
-function filterTerminalLeaves(nodes) {
-  // First, filter out nodes that are non-terminal (i.e. that are prefixes of any other node's path)
-  const terminalLeaves = nodes.filter((node) => {
-    const nodePath = node.t;
-    // Check if there is any other node for which node.t is a prefix of other.t.
-    const isIntermediate = nodes.some((other) => {
-      if (other === node) return false;
-      return isPrefix(nodePath, other.t);
-    });
-    return !isIntermediate;
-  });
-
-  // Remove duplicate terminal leaves.
-  // We'll compute a signature for each node's path in the form "A x->B y->..." .
-  const seenPaths = new Set();
-  const uniqueTerminals = [];
-  terminalLeaves.forEach((node) => {
-    const pathSignature = node.t.map((n) => `${n.n} ${n.a}`).join("->");
-    if (!seenPaths.has(pathSignature)) {
-      seenPaths.add(pathSignature);
-      uniqueTerminals.push(node);
-    }
-  });
-  return uniqueTerminals;
 }

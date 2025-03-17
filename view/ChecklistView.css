@@ -109,3 +109,52 @@
   height: 1.5em;
   margin-right: var(--pad-large);
 }
+
+.button-group {
+  margin: 0;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  border: 1px solid black;
+  border-radius: var(--pad-small);
+  width: fit-content;
+  display: inline-flex;
+}
+
+.button-group button {
+  background-color: white;
+  font-family: Regular;
+  margin: 0;
+  border-radius: 0;
+  border: 0px solid transparent;
+}
+
+.button-group button.selected {
+  color: white;
+  background-color: #7cb342;
+  font-weight: normal;
+}
+
+.button-group button:first-child {
+  margin: 0;
+  border-top-left-radius: var(--pad-small);
+  border-bottom-left-radius: var(--pad-small);
+}
+.button-group button:not(:first-child) {
+  border-left: 1px solid gray;
+}
+
+.button-group button:last-child {
+  margin: 0;
+  border-top-right-radius: var(--pad-small);
+  border-bottom-right-radius: var(--pad-small);
+}
+
+.button-group-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.button-group-label {
+  font-size: 80%;
+  color: white;
+}

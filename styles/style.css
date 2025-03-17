@@ -15,6 +15,7 @@
 @import "../view/ManageView.css";
 @import "../view/LiteratureView.css";
 @import "../view/charts/CategoryChart.css";
+@import "../view/charts/MapChart.css";
 html,
 body {
   font-family: var(--font-normal);

@@ -37,6 +37,32 @@ export let Settings = {
     }
   },
 
+  mapChartCurrentMap: function (mapJSON) {
+    if (mapJSON === undefined) {
+      const mapJSON = window.localStorage.getItem("mapChartCurrentMap");
+      if (!mapJSON || mapJSON === undefined) {
+        return null;
+      } else {
+        return JSON.parse(mapJSON);
+      }
+    } else {
+      window.localStorage.setItem("mapChartCurrentMap", mapJSON);
+    }
+  },
+
+  mapChartCurrentSumMethod: function (method) {
+    if (method === undefined) {
+      const method = window.localStorage.getItem("mapChartCurrentSumMethod");
+      if (!method || method === undefined) {
+        return "filter";
+      } else {
+        return method;
+      }
+    } else {
+      window.localStorage.setItem("mapChartCurrentSumMethod", method);
+    }
+  },
+
   categoryChartCategory: function (data) {
     if (data === undefined) {
       const value = window.localStorage.getItem("categoryChartCategory");

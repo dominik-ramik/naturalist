@@ -1,9 +1,11 @@
+import { colorFromRatio } from "../../components/Utils.js";
+
 export function circlePacking(options) {
   let data = options.dataSource;
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 3;
-  let matchHue = options.matchHue || 212;
+  let colorInterpolation = options.colorInterpolation || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
-  let opacityStep = options.opacityStep || 0.07;
+  let opacityStep = options.opacityStep || maxDataLevelsDisplayed / 30.0;
   let backgroundColor = options.backgroundColor || "white";
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";
@@ -89,16 +91,11 @@ export function circlePacking(options) {
 
     if (target == "circle") {
       if (d.totalLeafCount == d.matchingLeafCount) {
-        return "hsl(" + matchHue + "deg 80% 40%)";
+        return colorInterpolation(matchingRatio(d))
       } else if (d.matchingLeafCount == 0) {
         return noMatchColor;
       } else {
-        let ratio = matchingRatio(d);
-        let max = 60,
-          min = 30;
-        return (
-          "hsl(" + matchHue + "deg " + (min + (max - min) * ratio) + "% 40%)"
-        );
+        return colorInterpolation(matchingRatio(d))
       }
     } else if (target == "label") {
       if (d.totalLeafCount == d.matchingLeafCount) {

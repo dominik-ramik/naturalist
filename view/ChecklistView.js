@@ -1,4 +1,5 @@
 import {
+  colorFromRatio,
   getIndexedColor,
   routeTo,
   sortByCustomOrder,
@@ -11,6 +12,7 @@ import { AppLayoutView } from "./AppLayoutView.js";
 import { circlePacking } from "./charts/CirclePacking.js";
 import { D3ChartView } from "./D3ChartView.js";
 import { categoryChart } from "./charts/CategoryChart.js";
+import { mapChart } from "./charts/MapChart.js";
 
 export let ChecklistView = {
   itemsNumberStep: 50,
@@ -94,6 +96,9 @@ export let ChecklistView = {
       case "view_category_density":
         specificChecklistView = categoryChartView(allFilteredTaxa);
         break;
+      case "view_map":
+        specificChecklistView = mapChart(allFilteredTaxa);
+        break;
       default:
         console.error("Unknown view type: " + Settings.viewType());
         break;
@@ -136,7 +141,7 @@ export let ChecklistView = {
 };
 
 function categoryChartView(filteredTaxa) {
-  return categoryChart(filteredTaxa)
+  return categoryChart(filteredTaxa);
 }
 
 function detailedTaxonView(treeTaxa, overflowing) {
@@ -242,8 +247,11 @@ function circlePackingView() {
       assignLeavesCount(allData, Checklist.getTaxaForCurrentQuery());
       return {
         dataSource: allData,
+        colorInterpolation: colorFromRatio,
         fontFamily: "Regular",
-        maxDataLevelsDisplayed: Checklist._data.versions[Checklist.getCurrentLanguage()].stackingCirclesDepth || 3
+        maxDataLevelsDisplayed:
+          Checklist._data.versions[Checklist.getCurrentLanguage()]
+            .stackingCirclesDepth || 3,
       };
     },
   });
@@ -299,3 +307,12 @@ function temporaryFilterNotice() {
     ]
   );
 }
+
+export let ButtonGroup = {
+  view: function (vnode) {
+    return m(".button-group-wrapper", [
+      m("span.button-group-label", vnode.attrs.label),
+      m(".button-group", vnode.attrs.buttons),
+    ]);
+  },
+};

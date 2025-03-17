@@ -1,24 +1,9 @@
-button {
-  background-color: white;
-  border-radius: var(--pad-small);
-  padding: var(--pad-small);
-  border: 1px solid black;
-  font-family: Regular;
-}
-
-button.selected {
-  background-color: #ffffff;
-  color: #7cb342;
-  font-weight: bold;
-}
-
 table.buttons-table {
   color: white;
   font-size: 85%;
   border-collapse: collapse;
 }
 table.buttons-table tr:not(:last-child) {
-  border-bottom: 1px solid gray;
   padding: 0.5em;
 }
 
@@ -87,13 +72,13 @@ table.category-view th.noclick:first-child:hover {
 
 /* https://materialui.co/colors track 600 */
 table.category-view td:nth-child(2n + 0):not(:first-child),
-th:nth-child(2n + 0):not(:first-child) {
+table.category-view th:nth-child(2n + 0):not(:first-child) {
   background-color: #55769b07;
   border-color: #55769b !important;
   color: #55769b;
 }
 table.category-view td:nth-child(2n + 1):not(:first-child),
-th:nth-child(2n + 1):not(:first-child) {
+table.category-view th:nth-child(2n + 1):not(:first-child) {
   background-color: #7cb34207;
   border-color: #7cb342 !important;
   color: #7cb342;

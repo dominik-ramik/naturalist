@@ -17,6 +17,11 @@ export let Checklist = {
     return Checklist._data.versions[Checklist.getCurrentLanguage()].dataset;
   },
 
+  getEntireChecklist: function () {
+    return Checklist._data.versions[Checklist.getCurrentLanguage()].dataset
+      .checklist;
+  },
+
   _data: null,
   _dataFulltextIndex: {},
   _isDraft: false,
@@ -261,6 +266,23 @@ export let Checklist = {
     }
 
     return text;
+  },
+
+  nameForMapRegion: function (region) {
+    const meta = Checklist.getDataMeta();
+    const pathPrefixesToConsider = Object.keys(meta).filter((dataKey) => {
+      return meta[dataKey].contentType == "map regions";
+    })
+
+    pathPrefixesToConsider.forEach(prefix => {
+      let regionMeta = Checklist.getMetaForDataPath(prefix + "." + region)
+      if(regionMeta){
+        region = regionMeta.title
+        return;
+      }
+    })
+
+    return region;
   },
 
   _bibFormatter: null,
@@ -556,9 +578,10 @@ export let Checklist = {
     let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
     return text;
   },
-  
+
   getProjectHowToCite: function () {
-    let text = Checklist._data.versions[Checklist.getCurrentLanguage()].howToCite;
+    let text =
+      Checklist._data.versions[Checklist.getCurrentLanguage()].howToCite;
     return text;
   },
 
@@ -1251,12 +1274,9 @@ export let Checklist = {
   },
 
   shouldItalicizeTaxon(levelOrDataPath) {
-
     let italicize = Checklist.getTaxonLevelMeta(levelOrDataPath)?.italicize;
 
-    if (
-      italicize === "yes"
-    ) {
+    if (italicize === "yes") {
       return true;
     } else {
       return false;

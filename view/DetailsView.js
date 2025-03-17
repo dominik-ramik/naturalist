@@ -9,6 +9,9 @@ import {
   relativeToUsercontent,
   routeTo,
   mdImagesClickableAndUsercontentRelative,
+  colorSVGMap,
+  getRegionMeta,
+  getRegionColors,
 } from "../components/Utils.js";
 
 export let DetailsView = {
@@ -255,31 +258,6 @@ function TabMedia(tabData, taxon, taxonName) {
 function TabMap(tabData, taxon, taxonName) {
   let mapsRenderingData = {};
 
-  function parseRegionCode(region) {
-    let parts = region.split(":");
-
-    if (parts.length != 2) {
-      console.error("Map suffix inconsistent", region);
-    }
-
-    return { region: parts[0], suffix: parts[parts.length - 1] };
-  }
-
-  function getRegionMeta(region) {
-    let found = Checklist.getMapRegionsMeta().find(function (mapRegionMeta) {
-      if (region.endsWith(":" + mapRegionMeta.suffix)) {
-        return true;
-      }
-      return false;
-    });
-
-    if (found) {
-      return found;
-    } else {
-      return Checklist.getMapRegionsMeta(true);
-    }
-  }
-
   //content
   Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {
     let meta = Checklist.getDataMeta("maps")[metaKey];
@@ -370,7 +348,7 @@ function TabMap(tabData, taxon, taxonName) {
                   //transform to linear notation
                   for (const [key, value] of Object.entries(media.regions)) {
                     if (value && value != "") {
-                      reformattedMediaRegions += key + value + " ";
+                      reformattedMediaRegions += key + ":" + value + " ";
                     }
                   }
 
@@ -406,98 +384,16 @@ function TabMap(tabData, taxon, taxonName) {
                     });
                   });
 
-                function colorMap(objectElement) {
-                  if (objectElement === undefined || objectElement === null) {
-                    return;
-                  }
-
-                  //cleanup
-                  if (objectElement.hasAttribute("data-usedregions")) {
-                    objectElement
-                      .getAttribute("data-usedregions")
-                      .split(" ")
-                      .forEach(function (suffixlessRegionCode) {
-                        let regionElements =
-                          objectElement.contentDocument.getElementsByClassName(
-                            suffixlessRegionCode
-                          );
-
-                        if (regionElements.length > 0) {
-                          for (
-                            let elIndex = 0;
-                            elIndex < regionElements.length;
-                            elIndex++
-                          ) {
-                            const el = regionElements[elIndex];
-
-                            el.removeAttribute("fill");
-                            el.removeAttribute("style");
-                            //el.setAttribute("fill", mapRegionMeta.fill);
-                            //el.setAttribute("style", "fill: " + mapRegionMeta.fill + "; opacity:1;");
-                          }
-                        }
-                      });
-                    objectElement.setAttribute("data-usedregions", "");
-                  }
-
-                  if (media.regions) {
-                    let usedRegions = "";
-
-                    media.regions
-                      .split(" ")
-                      .map((r) => r.trim())
-                      .forEach(function (region) {
-                        if (region === null || region.trim() == "") {
-                          return;
-                        }
-
-                        let mapRegionMeta = getRegionMeta(region);
-
-                        let suffixlessRegionCode =
-                          parseRegionCode(region).region;
-
-                        if (media.url.toLowerCase().endsWith("world.svg")) {
-                          //hotfix for countries with very wide span and overseas territories
-                          if (suffixlessRegionCode == "fr")
-                            suffixlessRegionCode = "frx";
-                          if (suffixlessRegionCode == "nl")
-                            suffixlessRegionCode = "nlx";
-                          if (suffixlessRegionCode == "cn")
-                            suffixlessRegionCode = "cnx";
-                        }
-
-                        let regionElements =
-                          objectElement.contentDocument.getElementsByClassName(
-                            suffixlessRegionCode
-                          );
-
-                        if (regionElements.length > 0) {
-                          for (
-                            let elIndex = 0;
-                            elIndex < regionElements.length;
-                            elIndex++
-                          ) {
-                            const el = regionElements[elIndex];
-
-                            el.setAttribute("fill", mapRegionMeta.fill);
-                            el.setAttribute(
-                              "style",
-                              "fill: " + mapRegionMeta.fill + "; opacity:1;"
-                            );
-
-                            usedRegions += suffixlessRegionCode + " ";
-                          }
-                        }
-                      });
-
-                    objectElement.setAttribute("data-usedregions", usedRegions);
-                  }
-                }
-
                 window.setTimeout(function () {
                   let map = document.getElementById("map_" + media.metaKey);
-                  colorMap(map);
-                }, 100);
+                  colorSVGMap(
+                    map,
+                    getRegionColors(
+                      media.regions,
+                      media.url.toLowerCase().endsWith("world.svg")
+                    )
+                  );
+                }, 50);
 
                 return m(".media-map", [
                   m(
@@ -518,7 +414,13 @@ function TabMap(tabData, taxon, taxonName) {
                         "]",
                       {
                         onload: function () {
-                          colorMap(this);
+                          colorSVGMap(
+                            this,
+                            getRegionColors(
+                              media.regions,
+                              media.url.toLowerCase().endsWith("world.svg")
+                            )
+                          );
                         },
                       }
                     )

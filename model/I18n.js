@@ -4,7 +4,7 @@ export function _t(tag, substitute) {
 export function _tf(tag, substitute, usePlainTextOutput) {
   let openingTag = "<strong>";
   let closingTag = "</strong>";
-  
+
   if (usePlainTextOutput) {
     openingTag = "";
     closingTag = "";
@@ -188,6 +188,10 @@ let translations = {
   view_circle_pack: {
     en: "Stacking circles",
     fr: "Empilement de cercles",
+  },
+  view_map: {
+    en: "Geography",
+    fr: "Géographie",
   },
   how_to_cite: {
     en: "How to cite",
@@ -820,5 +824,53 @@ let translations = {
   view_cat_counted_filter: {
     en: "$1 counted only where $2",
     fr: "$1 ne comptant que lorsque $2",
+  },
+  view_map_verb_filter: {
+    en: "What percentage of all taxa for which $1 is found in each region",
+    fr: "Quel est le pourcentage de tous taxons pour lesquels $1 se trouve dans chaque région ?",
+  },
+  view_map_verb_region: {
+    en: "What percentage of each region's taxa fits $1",
+    fr: "Quel pourcentage des taxons de chaque région correspond à $1",
+  },
+  view_map_verb_total: {
+    en: "What percentage of all taxa fits $1 in each region",
+    fr: "Quel pourcentage de tous les taxons correspond à $1 dans chaque région ?",
+  },
+  view_map_verb_filter_all: {
+    en: "What percentage of all the taxa is found in each region",
+    fr: "Quel pourcentage de tous les taxons se trouve dans chaque région ?",
+  },
+  view_map_verb_region_all: {
+    en: "What regions are covered by checklist taxa",
+    fr: "Quelles sont les régions couvertes par les taxons de la check-list ?",
+  },
+  view_map_verb_total_all: {
+    en: "What percentage of all the taxa is found in each region",
+    fr: "Quel pourcentage de tous les taxons se trouve dans chaque région ?",
+  },
+  view_map_no_filter: {
+    en: "Tip: Use the filter to explore how are the results distributed throgh the map",
+    fr: "Conseil : Utilisez le filtre pour explorer la répartition des résultats sur la carte.",
+  },
+  view_map_sum_by_filter: {
+    en: "Filter",
+    fr: "Filter",
+  },
+  view_map_sum_by_region: {
+    en: "Region",
+    fr: "Region",
+  },
+  view_map_sum_by_total: {
+    en: "Total",
+    fr: "Total",
+  },
+  view_map_count: {
+    en: "taxa count",
+    fr: "nombre de taxons",
+  },
+  view_map_select_map: {
+    en: "Select a map above",
+    fr: "Sélectionnez une carte ci-dessus",
   },
 };

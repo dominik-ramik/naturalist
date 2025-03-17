@@ -4,6 +4,7 @@ import { ChecklistView } from "../view/ChecklistView.js";
 import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 import { AppLayoutView } from "./AppLayoutView.js";
+import { getAvailableMaps, mapChart } from "./charts/MapChart.js";
 
 export let MenuStripView = {
   menuOpen: false,
@@ -255,6 +256,15 @@ function menuTopBar() {
           selected: Settings.viewType() === "view_category_density",
           action: function () {
             Settings.viewType("view_category_density");
+          },
+        },
+        getAvailableMaps().length == 0 ? null : {
+          type: "button",
+          title: _t("view_map"),
+          icon: "ui/menu/view_map",
+          selected: Settings.viewType() === "view_map",
+          action: function () {
+            Settings.viewType("view_map");
           },
         },
         Settings.viewType() === "view_details"

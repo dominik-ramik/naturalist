@@ -14,6 +14,171 @@ export let compressor = {
   },
 };
 
+export function colorFromRatio(ratio) {
+  return d3.interpolateLab("#ffe09d", "#cf3737")(ratio);
+}
+
+export function getRegionMeta(region) {
+  let found = Checklist.getMapRegionsMeta().find(function (mapRegionMeta) {
+    if (region.endsWith(":" + mapRegionMeta.suffix)) {
+      return true;
+    }
+    return false;
+  });
+
+  if (found) {
+    return found;
+  } else {
+    return Checklist.getMapRegionsMeta(true);
+  }
+}
+
+/**
+ * Filters an array of nodes and returns only the terminal leaves.
+ * A terminal leaf is an object whose path is not a prefix of any other node's path.
+ * Additionally, duplicate terminal leaves (with identical paths) are removed.
+ *
+ * @param {Array} nodes - Array of objects that include a property "t" (an array of nodes).
+ * @returns {Array} filtered array containing only unique terminal leaves.
+ */
+export function filterTerminalLeaves(nodes) {
+  // First, filter out nodes that are non-terminal (i.e. that are prefixes of any other node's path)
+  const terminalLeaves = nodes.filter((node) => {
+    const nodePath = node.t;
+    // Check if there is any other node for which node.t is a prefix of other.t.
+    const isIntermediate = nodes.some((other) => {
+      if (other === node) return false;
+      return isPrefix(nodePath, other.t);
+    });
+    return !isIntermediate;
+  });
+
+  // Remove duplicate terminal leaves.
+  // We'll compute a signature for each node's path in the form "A x->B y->..." .
+  const seenPaths = new Set();
+  const uniqueTerminals = [];
+  terminalLeaves.forEach((node) => {
+    const pathSignature = node.t.map((n) => `${n.n} ${n.a}`).join("->");
+    if (!seenPaths.has(pathSignature)) {
+      seenPaths.add(pathSignature);
+      uniqueTerminals.push(node);
+    }
+  });
+  return uniqueTerminals;
+
+  /**
+   * Returns true if the smallPath is a prefix of bigPath.
+   * Each node is compared by concatenating `n` and `a` with a space.
+   */
+  function isPrefix(smallPath, bigPath) {
+    if (smallPath.length >= bigPath.length) return false;
+    for (let i = 0; i < smallPath.length; i++) {
+      const smallNode = `${smallPath[i].n} ${smallPath[i].a}`;
+      const bigNode = `${bigPath[i].n} ${bigPath[i].a}`;
+      if (smallNode !== bigNode) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
+export function parseRegionCode(region) {
+  let parts = region.split(":");
+
+  if (parts.length != 2) {
+    console.error("Map suffix inconsistent", region);
+  }
+
+  return { region: parts[0], suffix: parts[parts.length - 1] };
+}
+
+export function getRegionColors(regions, fixForWorldMap) {
+  let regionColors = {
+    //regionCode: #color
+  };
+
+  regions
+    .split(" ")
+    .map((r) => r.trim())
+    .forEach(function (region) {
+      if (region === null || region.trim() == "") {
+        return;
+      }
+
+      let mapRegionMeta = getRegionMeta(region);
+
+      let suffixlessRegionCode = parseRegionCode(region).region;
+
+      if (fixForWorldMap) {
+        //hotfix for countries with very wide span and overseas territories
+        if (suffixlessRegionCode == "fr") suffixlessRegionCode = "frx";
+        if (suffixlessRegionCode == "nl") suffixlessRegionCode = "nlx";
+        if (suffixlessRegionCode == "cn") suffixlessRegionCode = "cnx";
+      }
+
+      regionColors[suffixlessRegionCode] = mapRegionMeta.fill;
+    });
+
+  return regionColors;
+}
+
+export function colorSVGMap(svgObjectElement, regionColors) {
+  if (svgObjectElement === undefined || svgObjectElement === null) {
+    return;
+  }
+
+  //cleanup
+  if (svgObjectElement.hasAttribute("data-usedregions")) {
+    svgObjectElement
+      .getAttribute("data-usedregions")
+      .split(" ")
+      .forEach(function (suffixlessRegionCode) {
+        let regionElements =
+          svgObjectElement.contentDocument.getElementsByClassName(
+            suffixlessRegionCode
+          );
+
+        if (regionElements.length > 0) {
+          for (let elIndex = 0; elIndex < regionElements.length; elIndex++) {
+            const el = regionElements[elIndex];
+
+            el.removeAttribute("fill");
+            el.removeAttribute("style");
+          }
+        }
+      });
+    svgObjectElement.setAttribute("data-usedregions", "");
+  }
+
+  let regions = Object.keys(regionColors);
+
+  if (regions.length > 0) {
+    let usedRegions = "";
+
+    regions.forEach(function (region) {
+      let regionElements =
+        svgObjectElement.contentDocument.getElementsByClassName(region);
+
+      if (regionElements.length > 0) {
+        for (let elIndex = 0; elIndex < regionElements.length; elIndex++) {
+          const el = regionElements[elIndex];
+
+          el.setAttribute("fill", regionColors[region]);
+          el.setAttribute(
+            "style",
+            "fill: " + regionColors[region] + "; opacity:1;"
+          );
+
+          usedRegions += region + " ";
+        }
+      }
+    });
+
+    svgObjectElement.setAttribute("data-usedregions", usedRegions);
+  }
+}
+
 export function sortByCustomOrder(array, type, dataPath) {
   let result = array.sort();
 
