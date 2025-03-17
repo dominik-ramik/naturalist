@@ -86,25 +86,33 @@ export let DataManager = function () {
     return checklist;
 
     function gatherReferences() {
-      let bibtexUrl = data.common.getItem(
-        log,
-        data.sheets.appearance.tables.customization.data,
-        "References BibTeX file URL",
-        data.common.languages.defaultLanguageCode, //only support bibtex in default language code
-        ""
-      );
+      let useCitations = data.common
+        .getItem(
+          log,
+          data.sheets.appearance.tables.customization.data,
+          "Use citations",
+          data.common.languages.defaultLanguageCode, //only support bibtex in default language code
+          ""
+        )
+        .toLowerCase();
 
-      if (bibtexUrl == "") {
+      if (useCitations.trim() == "") {
         return {};
       }
 
-      if (bibtexUrl.toLowerCase().startsWith("./")) {
-        bibtexUrl = bibtexUrl.substring(2);
+      let supportedCitationStyles = ["apa", "harvard"];
+      if (!supportedCitationStyles.includes(useCitations)) {
+        log(
+          "error",
+          "Unknown citation style '" +
+            useCitations +
+            "'. Supported values are " +
+            ["apa", "harvard"].map((x) => "'" + x + "'").join(", ")
+        );
+        return;
       }
 
-      if (!bibtexUrl.toLowerCase().startsWith("http")) {
-        bibtexUrl = "./usercontent/" + bibtexUrl;
-      }
+      let bibtexUrl = "./usercontent/references.bib";
 
       let bibtexfile = "";
 
@@ -116,7 +124,12 @@ export let DataManager = function () {
         if (xhr.status === 200) {
           bibtexfile = xhr.responseText;
         } else {
-          throw new Error("Request failed: " + xhr.statusText);
+          log(
+            "critical",
+            "You set 'Use citations' in the 'Customization' table, but the file 'references.bib' cannot be found in your 'usercontent' folder. " +
+              xhr.statusText
+          );
+          //throw new Error("Request failed: " + xhr.statusText);
         }
       } catch (error) {
         console.error("Error:", error.message);
@@ -412,13 +425,13 @@ export let DataManager = function () {
         lang.code,
         "YYYY-MM-DD"
       );
-      let citationStyle = data.common
+      let useCitations = data.common
         .getItem(
           log,
           data.sheets.appearance.tables.customization.data,
-          "Citation style",
+          "Use citations",
           lang.code,
-          "apa"
+          ""
         )
         ?.toLowerCase();
       let precachedImageMaxSize = data.common.getItem(
@@ -444,7 +457,7 @@ export let DataManager = function () {
         about: about,
         howToCite: howToCite,
         dateFormat: dateFormat,
-        citationStyle: citationStyle.toLowerCase(),
+        useCitations: useCitations.toLowerCase(),
         precachedImageMaxSize: parseFloat(precachedImageMaxSize),
         stackingCirclesDepth: stackingCirclesDepth,
         dataset: {
@@ -1903,9 +1916,6 @@ export let DataManager = function () {
     let hasCritical = false;
 
     let index = dataManager.loggedMessages.findIndex(function (msg) {
-      if (msg.level == "critical" || msg.level == "error") {
-        dataManager.hasErrors = true;
-      }
       if (msg.level == "critical") {
         hasCritical = true;
       }
@@ -1931,21 +1941,24 @@ export let DataManager = function () {
 
   let dataManager = {
     loggedMessages: [],
-    hasErrors: false,
+    hasErrors: function () {
+      return this.loggedMessages.find(
+        (msg) => msg.level === "error" || msg.level === "critical"
+      );
+    },
     checkAssetsSize: false,
 
     loadData: function (extractor, checkAssetsSize) {
       this.checkAssetsSize = checkAssetsSize;
       this.loggedMessages = [];
-      this.hasErrors = false;
 
       extractor.loadMeta(data, log);
       checkMetaValidity();
-      if (!this.hasErrors) {
+      if (!this.hasErrors()) {
         postprocessMetadata();
       }
 
-      if (!this.hasErrors) {
+      if (!this.hasErrors()) {
         loadData(extractor.getRawChecklistData());
       }
     },

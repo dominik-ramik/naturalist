@@ -336,7 +336,8 @@ export let ManageView = {
       let reader = new FileReader();
       reader.addEventListener("loadend", (evt) => {
         dataman.loadData(new ExcelBridge(evt.target.result), checkAssetsSize);
-        if (dataman.hasErrors) {
+        console.log("xxxx", dataman.hasErrors(), dataman)
+        if (dataman.hasErrors()) {
           ManageView.state = "dirty";
         } else {
           ManageView.state = "clean";

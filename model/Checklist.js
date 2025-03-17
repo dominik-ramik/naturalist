@@ -272,15 +272,15 @@ export let Checklist = {
     const meta = Checklist.getDataMeta();
     const pathPrefixesToConsider = Object.keys(meta).filter((dataKey) => {
       return meta[dataKey].contentType == "map regions";
-    })
+    });
 
-    pathPrefixesToConsider.forEach(prefix => {
-      let regionMeta = Checklist.getMetaForDataPath(prefix + "." + region)
-      if(regionMeta){
-        region = regionMeta.title
+    pathPrefixesToConsider.forEach((prefix) => {
+      let regionMeta = Checklist.getMetaForDataPath(prefix + "." + region);
+      if (regionMeta) {
+        region = regionMeta.title;
         return;
       }
-    })
+    });
 
     return region;
   },
@@ -295,8 +295,7 @@ export let Checklist = {
     if (this._bibFormatter === null) {
       const formatter = new TinyBibFormatter(this._data.general.bibliography, {
         style:
-          Checklist._data.versions[Checklist.getCurrentLanguage()]
-            .citationStyle,
+          Checklist._data.versions[Checklist.getCurrentLanguage()].useCitations,
         format: "markdown",
       });
       this._bibFormatter = formatter;
