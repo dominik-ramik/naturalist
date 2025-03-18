@@ -184,6 +184,11 @@ export let Settings = {
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
     getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
+      if(itemObject === undefined)
+      {
+        itemObject = JSON.parse(Checklist.queryKey())
+      }
+
       if (Object.keys(itemObject).length == 0) {
         return "All taxa";
       }
