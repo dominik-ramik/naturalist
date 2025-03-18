@@ -1077,9 +1077,13 @@ export let DataManager = function () {
 
         if (pathPosition == pathSegments.length - 1) {
           //terminal node
+
+          /* this seems to raise false alarms
           if (rowObjData.hasOwnProperty(currentSegment)) {
             console.log("ERROR duplicity for: " + currentSegment);
           }
+          */
+
           let genericData = getGenericData(
             headers,
             row,
@@ -1252,7 +1256,6 @@ export let DataManager = function () {
           break;
         case "map regions":
           let mr = readMapRegions(headers, row, computedPath, langCode);
-          mr != "" ? console.log("MR", computedPath, mr) : null;
           return mr;
           break;
         case "taxon":
