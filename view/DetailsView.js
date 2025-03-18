@@ -347,6 +347,7 @@ function TabMap(tabData, taxon, taxonName) {
                   let reformattedMediaRegions = "";
                   //transform to linear notation
                   for (const [key, value] of Object.entries(media.regions)) {
+                    console.log("BB", value)
                     if (value && value != "") {
                       reformattedMediaRegions += key + ":" + value + " ";
                     }

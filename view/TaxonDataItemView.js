@@ -1,6 +1,12 @@
 import { Checklist } from "../model/Checklist.js";
 import { ClickableTaxonName } from "../view/ClickableTaxonNameView.js";
-import { filterMatches, relativeToUsercontent, routeTo, shouldHide, mdImagesClickableAndUsercontentRelative } from "../components/Utils.js";
+import {
+  filterMatches,
+  relativeToUsercontent,
+  routeTo,
+  shouldHide,
+  mdImagesClickableAndUsercontentRelative,
+} from "../components/Utils.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -23,7 +29,7 @@ export let TaxonDataItemView = {
         return null;
       }
 
-      let source = data.source
+      let source = data.source;
 
       if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
         let templateData = Checklist.getDataObjectForHandlebars(
@@ -35,7 +41,7 @@ export let TaxonDataItemView = {
 
         source = Checklist.handlebarsTemplates[dataPath](templateData);
       }
-      
+
       source = relativeToUsercontent(source);
 
       return m(
@@ -63,25 +69,27 @@ export let TaxonDataItemView = {
       });
     }
 
-    if (meta.contentType == "map regions") {      
-      const mapRegionsSuffixes = Checklist.getDataMeta("mapRegions").suffixes;
+    if (meta.contentType == "map regions") {
+      let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
 
-      const renderedRegions = Object.keys(data)
-        .filter((key) => data[key] != "")
-        .map((key) => {
-          const regionData = data[key];
+      const renderedRegions = Checklist.mapRegionsLinearToObject(data).map(
+        (regionInfo) => {
           let appendedLegend = mapRegionsSuffixes.find(
-            (item) => item.suffix == regionData
+            (item) => item.suffix == regionInfo.suffix
           )?.appendedLegend;
 
           if (appendedLegend === undefined || appendedLegend === null) {
             appendedLegend = "";
           }
 
-          let meta = Checklist.getMetaForDataPath(dataPath + "." + key);
-
-          return "**" + meta.title + "**" + appendedLegend;
-        });
+          return (
+            "**" +
+            Checklist.nameForMapRegion(regionInfo.region) +
+            "**" +
+            appendedLegend
+          );
+        }
+      );
 
       if (renderedRegions.length == 0) {
         return null;
@@ -207,7 +215,6 @@ export let TaxonDataItemView = {
   },
 
   titleValuePair: function (data, dataPath, taxon, tailingSeparator) {
-
     function purifyCssString(css) {
       if (css.indexOf('"') >= 0) {
         css = css.substring(0, css.indexOf('"'));
@@ -224,8 +231,11 @@ export let TaxonDataItemView = {
       return css;
     }
 
-    var itemType = TaxonDataItemView.getItemType(data);
     let meta = Checklist.getMetaForDataPath(dataPath);
+    var itemType = TaxonDataItemView.getItemType(data);
+    if (meta.contentType == "map regions") {
+      itemType = "object";
+    }
 
     if (shouldHide(dataPath, meta.hidden, Checklist.filter.data)) {
       return null;
@@ -291,7 +301,7 @@ export let TaxonDataItemView = {
 
         data = marked.parse(data);
         //in case markdown introduced some dirt, purify it again
-        data = DOMPurify.sanitize(data, { ADD_ATTR: ['target'] });
+        data = DOMPurify.sanitize(data, { ADD_ATTR: ["target"] });
         data = data.trim() + (tailingSeparator ? tailingSeparator : "");
 
         data = mdImagesClickableAndUsercontentRelative(data);
@@ -341,6 +351,7 @@ export let TaxonDataItemView = {
       dataPath,
       itemType
     );
+
     if (subitemsList === null) {
       return null;
     }

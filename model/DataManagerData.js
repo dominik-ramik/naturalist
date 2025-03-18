@@ -354,11 +354,11 @@ export let nlDataStructure = {
           data: [],
         },
         mapRegionsNames: {
-          name: "Map regions names",
+          name: "Map regions information",
           description:
             "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
           columns: {
-            suffix: {
+            code: {
               name: "Region code",
               description:
                 "On each line a suffix of map regions to be matched against.",
@@ -370,10 +370,11 @@ export let nlDataStructure = {
                 defaultValue: "",
                 allowedContent: "regex",
                 regex: "[a-z]+",
+                regexExplanation: "only lowercase letters a-z",
                 supportsMultilingual: false,
               },
             },
-            fillColor: {
+            name: {
               name: "Region name",
               description:
                 "The fill color applied to the matching region and to its legend element.",
@@ -387,8 +388,8 @@ export let nlDataStructure = {
             },
           },
         },
-        mapRegionsTypes: {
-          name: "Map regions types",
+        mapRegionsLegend: {
+          name: "Map regions legend",
           description:
             "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
           columns: {

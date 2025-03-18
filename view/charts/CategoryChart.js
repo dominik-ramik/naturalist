@@ -167,6 +167,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
   const individualResults = {};
   const allCategories = {};
 
+  let categoryType = Checklist.filter.data[dataCategory].type;
   // Initialize categories based on filter data
   Checklist.filter.data[dataCategory]?.all.forEach((i) => {
     allCategories[i] = { color: "", sum: 0 };
@@ -183,7 +184,6 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
       }
       let categoryData = [];
 
-      let categoryType = Checklist.filter.data[dataCategory].type;
       switch (categoryType) {
         case "text":
           categoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
@@ -197,16 +197,10 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
             dataCategory
           );
 
-          Object.keys(tempCategoryData).forEach((key) => {
-            let isPresent =
-              tempCategoryData[key] && tempCategoryData[key] != "";
-            if (isPresent) {
-              let region = Checklist.getMetaForDataPath(
-                dataCategory + "." + key
-              ).title;
-              categoryData.push(region);
-            }
-          });
+          let regionCodes = Checklist.mapRegionsLinearToObject(
+            tempCategoryData
+          ).map((r) => r.region);
+          categoryData = regionCodes.map((r) => Checklist.nameForMapRegion(r));
           break;
 
         default:

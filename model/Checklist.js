@@ -1,7 +1,8 @@
-import { appVersion } from "../app.js";
+import { appVersion, checkForChecklistUpdate } from "../app.js";
 import {
   getCurrentLocaleBestGuess,
   getGradedColor,
+  parseRegionCode,
   routeTo,
   textLowerCaseAccentless,
 } from "../components/Utils.js";
@@ -268,21 +269,44 @@ export let Checklist = {
     return text;
   },
 
-  nameForMapRegion: function (region) {
-    const meta = Checklist.getDataMeta();
-    const pathPrefixesToConsider = Object.keys(meta).filter((dataKey) => {
-      return meta[dataKey].contentType == "map regions";
-    });
+  nameForMapRegionCache: new Map(),
+  nameForMapRegion: function (regionCode) {
+    if (!this.nameForMapRegionCache.has(regionCode)) {
+      let regionName = "";
 
-    pathPrefixesToConsider.forEach((prefix) => {
-      let regionMeta = Checklist.getMetaForDataPath(prefix + "." + region);
-      if (regionMeta) {
-        region = regionMeta.title;
-        return;
+      const meta = Checklist.getMapRegionsNamesMeta()?.find(
+        (x) => x.code == regionCode
+      );
+
+      if (meta) {
+        regionName = meta.name;
+      } else {
+        console.log("Unknown region name for code", regionCode);
+        regionName = regionCode;
       }
-    });
 
-    return region;
+      this.nameForMapRegionCache.set(regionCode, regionName);
+    }
+    return this.nameForMapRegionCache.get(regionCode);
+  },
+
+  mapRegionsLinearToObjectCache: new Map(),
+  mapRegionsLinearToObject: function (mapRegionsLinear) {
+    if (mapRegionsLinear === null) {
+      return [];
+    }
+    if (!this.mapRegionsLinearToObjectCache.has(mapRegionsLinear)) {
+      let result = [];
+
+      if (mapRegionsLinear.trim() != "") {
+        result = mapRegionsLinear.split(" ").map((r) => {
+          return parseRegionCode(r);
+        });
+      }
+
+      this.mapRegionsLinearToObjectCache.set(mapRegionsLinear, result);
+    }
+    return this.mapRegionsLinearToObjectCache.get(mapRegionsLinear);
   },
 
   _bibFormatter: null,
@@ -662,7 +686,7 @@ export let Checklist = {
           Checklist.filter.data[dataPath].type == "map regions"
         ) {
           leafData.forEach(function (value) {
-            if (value.trim() == "") {
+            if (typeof value === "string" && value.trim() == "") {
               return;
             }
 
@@ -784,51 +808,59 @@ export let Checklist = {
 
   leafDataRenderCache: {},
 
+  getAllLeafDataCache: new Map(),
   getAllLeafData: function (taxonData, includeAuthorities, currentPath = "") {
-    let data = [];
+    let cacheKey = JSON.stringify([taxonData, includeAuthorities, currentPath]);
 
-    if (Checklist.getDataMeta()[currentPath]?.contentType == "map regions") {
-      data = Object.keys(taxonData)
-        .filter((item) => taxonData[item] != "")
-        .map((item) => Checklist.getDataMeta()[currentPath + "." + item].title);
-      return data;
-    }
+    if (!this.getAllLeafDataCache.has(cacheKey)) {
+      let data = [];
 
-    if (Checklist.getDataMeta()[currentPath]?.contentType == "image") {
-      console.log("IMG", taxonData);
-
-      return "<img src='" + "?" + "' />";
-    }
-
-    if (Array.isArray(taxonData)) {
-      taxonData.forEach(function (item) {
-        data = data.concat(
-          Checklist.getAllLeafData(item, includeAuthorities, currentPath + "#")
+      if (Checklist.getDataMeta()[currentPath]?.contentType == "map regions") {
+        data = Checklist.mapRegionsLinearToObject(taxonData).map((r) =>
+          Checklist.nameForMapRegion(r.region)
         );
-      });
-    } else if (typeof taxonData === "object") {
-      if (taxonData.hasOwnProperty("n") && taxonData.hasOwnProperty("a")) {
-        data.push(taxonData.n + (includeAuthorities ? " " + taxonData.a : ""));
-      } else {
-        Object.keys(taxonData).forEach(function (key) {
-          if (taxonData[key] == "") {
-            return;
-          }
+      } else if (Checklist.getDataMeta()[currentPath]?.contentType == "image") {
+        console.log("################### IMG", taxonData);
 
+        data = "<img src='" + "?" + "' />";
+      } else if (Array.isArray(taxonData)) {
+        taxonData.forEach(function (item) {
           data = data.concat(
             Checklist.getAllLeafData(
-              taxonData[key],
+              item,
               includeAuthorities,
-              currentPath + "." + key
+              currentPath + "#"
             )
           );
         });
+      } else if (typeof taxonData === "object") {
+        if (taxonData.hasOwnProperty("n") && taxonData.hasOwnProperty("a")) {
+          data.push(
+            taxonData.n + (includeAuthorities ? " " + taxonData.a : "")
+          );
+        } else {
+          Object.keys(taxonData).forEach(function (key) {
+            if (taxonData[key] == "") {
+              return;
+            }
+
+            data = data.concat(
+              Checklist.getAllLeafData(
+                taxonData[key],
+                includeAuthorities,
+                currentPath + "." + key
+              )
+            );
+          });
+        }
+      } else if (taxonData != "") {
+        data.push(taxonData);
       }
-    } else if (taxonData != "") {
-      data.push(taxonData);
+
+      this.getAllLeafDataCache.set(cacheKey, data);
     }
 
-    return data;
+    return this.getAllLeafDataCache.get(cacheKey);
   },
 
   getDataFromDataPath(dObject, dataPath) {
@@ -1094,11 +1126,24 @@ export let Checklist = {
     return this.getData().meta[dataType];
   },
   getMapRegionsMeta: function (returnDefault) {
-    if (returnDefault) {
-      return this.getData().meta.mapRegionsTypes.default;
-    } else {
-      return this.getData().meta.mapRegionsTypes.suffixes;
+    if (this.getData().meta.mapRegions) {
+      //this is here for backward compatibility, remove in future versions TODO
+      console.log("Deprecated");
+      if (returnDefault) {
+        return this.getData().meta.mapRegions.default;
+      } else {
+        return this.getData().meta.mapRegions.suffixes;
+      }
     }
+
+    if (returnDefault) {
+      return this.getData().meta.mapRegionsLegend.default;
+    } else {
+      return this.getData().meta.mapRegionsLegend.suffixes;
+    }
+  },
+  getMapRegionsNamesMeta: function () {
+    return this.getData().meta.mapRegionsNames;
   },
 
   getTaxonByName: function (taxonNameFind) {

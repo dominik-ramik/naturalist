@@ -182,7 +182,7 @@ function renderMap(map) {
     }, 50);
   }
 
-  return m(".image-wrap-outer", [
+  return m(".map-chart-image-wrap-outer", [
     m(
       ".map-chart-image-wrap", //.clickable
       {
@@ -357,9 +357,7 @@ function regionRatio(regionCount, globalCounts, regionKey, sumMethod) {
 }
 
 function getPresentRegions(mapData) {
-  return Object.keys(mapData).filter(
-    (key) => mapData[key] && mapData[key] != ""
-  );
+  return Checklist.mapRegionsLinearToObject(mapData).map(r => r.region)
 }
 
 function cacheAllTaxa(columnName) {

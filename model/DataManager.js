@@ -6,6 +6,7 @@ import {
   relativeToUsercontent,
   mdImagesClickableAndUsercontentRelative,
   splitN,
+  parseRegionCode,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
@@ -13,6 +14,35 @@ import { TinyBibReader } from "../lib/TinyBibMD.js";
 import { Checklist } from "../model/Checklist.js";
 
 let dataCodesCache = new Map();
+function processPossibleDataCode(currentDataPath, value, codes, langCode, log) {
+  let columnNameMatches = (d) =>
+    d.columnName.toLowerCase() ==
+    dataPath.modify.itemNumbersToHash(currentDataPath).toLowerCase();
+
+  const key = currentDataPath + "|" + value + "|" + langCode;
+
+  if (!dataCodesCache.has(key)) {
+    let dataCodesFound = codes[langCode].find(
+      (d) => columnNameMatches(d) && d.code == value
+    );
+    if (dataCodesFound) {
+      value = dataCodesFound.replacement;
+    } else if (codes[langCode].find((d) => columnNameMatches(d))) {
+      log(
+        "warning",
+        "Code '" +
+          value +
+          "' found in column '" +
+          currentDataPath +
+          "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
+      );
+    }
+
+    dataCodesCache.set(key, value);
+  }
+
+  return dataCodesCache.get(key);
+}
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -482,7 +512,7 @@ export let DataManager = function () {
         accompanyingText: compileDataMeta(lang, [
           data.sheets.content.tables.accompanyingText.name,
         ]),
-        mapRegionsTypes: {
+        mapRegionsLegend: {
           default: {
             suffix: "",
             fill: "#55769b",
@@ -490,6 +520,7 @@ export let DataManager = function () {
           },
           suffixes: [],
         },
+        mapRegionsNames : [],
         externalSearchEngines: [],
       };
 
@@ -544,20 +575,29 @@ export let DataManager = function () {
         }
       );
 
-      data.sheets.appearance.tables.mapRegionsTypes.data[lang.code].forEach(
+      data.sheets.appearance.tables.mapRegionsLegend.data[lang.code].forEach(
         function (row) {
           if (row.suffix.trim() == "") {
-            meta.mapRegionsTypes.default.suffix = row.suffix;
-            meta.mapRegionsTypes.default.fill = row.fillColor;
-            meta.mapRegionsTypes.default.legend = row.legend;
+            meta.mapRegionsLegend.default.suffix = row.suffix;
+            meta.mapRegionsLegend.default.fill = row.fillColor;
+            meta.mapRegionsLegend.default.legend = row.legend;
           } else {
-            meta.mapRegionsTypes.suffixes.push({
+            meta.mapRegionsLegend.suffixes.push({
               suffix: row.suffix,
               fill: row.fillColor,
               legend: row.legend,
               appendedLegend: row.appendedLegend,
             });
           }
+        }
+      );
+
+      data.sheets.appearance.tables.mapRegionsNames.data[lang.code].forEach(
+        function (row) {
+          meta.mapRegionsNames.push({
+            code: row.code,
+            name: row.name,
+          });
         }
       );
 
@@ -986,6 +1026,16 @@ export let DataManager = function () {
             if (rawValue != "") {
               let values = rawValue?.split(",").map((v) => v.trim());
 
+              values = values.map((v) =>
+                processPossibleDataCode(
+                  countedComputedPath,
+                  v,
+                  data.sheets.appearance.tables.dataCodes.data,
+                  langCode,
+                  log
+                )
+              );
+
               for (let i = 0; i < values.length; i++) {
                 const e = values[i];
                 rowObjData[i] = e;
@@ -1027,9 +1077,10 @@ export let DataManager = function () {
             info,
             langCode
           );
-          //if (genericData) {
-          rowObjData[currentSegment] = genericData;
-          //}
+
+          if (genericData) {
+            rowObjData[currentSegment] = genericData;
+          }
           return;
         } else if (!rowObjData.hasOwnProperty(currentSegment)) {
           if (pathSegments[pathPosition + 1] == "#") {
@@ -1144,38 +1195,13 @@ export let DataManager = function () {
                 stringValue = stringValue.replace(/\r\n/, "\\n");
                 stringValue = stringValue.replace(/[\r\n]/, "\\n");
 
-                let columnNameMatches = (d) =>
-                  d.columnName.toLowerCase() ==
-                  dataPath.modify.itemNumbersToHash(computedPath).toLowerCase();
-
-                const key = dataPath + "|" + stringValue;
-                if (!dataCodesCache.has(key)) {
-                  let dataCodesFound =
-                    data.sheets.appearance.tables.dataCodes.data[langCode].find(
-                      (d) => columnNameMatches(d) && d.code == stringValue
-                    );
-                  if (dataCodesFound) {
-                    stringValue = dataCodesFound.replacement;
-                  } else if (
-                    data.sheets.appearance.tables.dataCodes.data[langCode].find(
-                      (d) => columnNameMatches(d)
-                    )
-                  ) {
-                    log(
-                      "warning",
-                      "Code '" +
-                        stringValue +
-                        "' found in column '" +
-                        computedPath +
-                        "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
-                    );
-                    console.log("warning", "");
-                  }
-
-                  dataCodesCache.set(key, stringValue);
-                }
-
-                 stringValue = dataCodesCache.get(key);
+                stringValue = processPossibleDataCode(
+                  computedPath,
+                  stringValue,
+                  data.sheets.appearance.tables.dataCodes.data,
+                  langCode,
+                  log
+                );
 
                 return stringValue;
                 break;
@@ -1214,6 +1240,11 @@ export let DataManager = function () {
             }
           }
           break;
+        case "map regions":
+          let mr = readMapRegions(headers, row, computedPath, langCode);
+          mr != "" ? console.log("MR", computedPath, mr) : null;
+          return mr;
+          break;
         case "taxon":
           return readTaxon(headers, row, computedPath, langCode);
           break;
@@ -1228,6 +1259,55 @@ export let DataManager = function () {
           break;
       }
       return "";
+    }
+
+    function readMapRegions(headers, row, computedPath, langCode) {
+      const concernedColumns = headers.filter((h) =>
+        h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
+      );
+
+      let mapRegions = "";
+
+      if (concernedColumns.length == 0) {
+        //mapRegions are already linear
+        mapRegions = readSimpleData(headers, row, computedPath, langCode);
+      } else {
+        //linearize
+        mapRegions = concernedColumns
+          .map((c) => {
+            let data = readSimpleData(headers, row, c, langCode);
+
+            if (data && data.length > 0) {
+              return c.substring(computedPath.length + 1) + ":" + data;
+            } else {
+              return null;
+            }
+          })
+          .filter((c) => c !== null)
+          .join(" ");
+      }
+
+      let knownRegionCodes = data.sheets.appearance.tables.mapRegionsNames.data[
+        langCode
+      ].map((x) => x.code);
+
+      if (mapRegions.length > 0) {
+        mapRegions.split(" ").forEach((region) => {
+          let parsed = parseRegionCode(region);
+          if (!knownRegionCodes.includes(parsed.region)) {
+            log(
+              "error",
+              "Region code '" +
+                parsed.region +
+                "' in column '" +
+                computedPath +
+                "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
+            );
+          }
+        });
+      }
+
+      return mapRegions;
     }
 
     function readMedia(headers, row, path, langCode) {
@@ -1555,7 +1635,6 @@ export let DataManager = function () {
                       }
 
                       let regex = new RegExp(integrity.regex);
-                      console.log(regex, integrity.regex);
                       if (regex.test(value) == false) {
                         log(
                           "error",
