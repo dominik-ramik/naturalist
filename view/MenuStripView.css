@@ -160,6 +160,8 @@
 .app.mobile .menu-action-button .action-button-title {
   padding: 0;
   margin: 0;
+  padding-left: var(--pad-large);
+  padding-right: var(--pad-large);
 }
 
 .multi-item-menu-button:hover {
