@@ -184,9 +184,8 @@ export let Settings = {
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
     getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
-      if(itemObject === undefined)
-      {
-        itemObject = JSON.parse(Checklist.queryKey())
+      if (itemObject === undefined) {
+        itemObject = JSON.parse(Checklist.queryKey());
       }
 
       if (Object.keys(itemObject).length == 0) {
@@ -243,7 +242,7 @@ export let Settings = {
                   t1,
                   t2,
                   usePlainTextOutput ? "" : "<strong>",
-                  usePlainTextOutput ? "" :"</strong>"
+                  usePlainTextOutput ? "" : "</strong>"
                 )
               );
             }
@@ -252,7 +251,13 @@ export let Settings = {
       });
 
       if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
-        names.push(_t("text_is_list_joiner") + " " + itemObject.text);
+        names.push(
+          _t("text_is_list_joiner") +
+            " " +
+            (usePlainTextOutput ? "" : "<strong>") +
+            itemObject.text +
+            (usePlainTextOutput ? "" : "</strong>")
+        );
       }
 
       return formatList(names);
