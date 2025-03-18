@@ -6,7 +6,7 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { _t } from "../model/I18n.js";
+import { _t, _tf } from "../model/I18n.js";
 import { TaxonView } from "../view/TaxonView.js";
 import { AppLayoutView } from "./AppLayoutView.js";
 import { circlePacking } from "./charts/CirclePacking.js";
@@ -121,13 +121,12 @@ export let ChecklistView = {
               m(
                 ".query",
                 m.trust(
-                  Settings.pinnedSearches.getHumanNameForSearch(
-                    JSON.parse(Checklist.queryKey())
-                  )
+                  Settings.pinnedSearches.getHumanNameForSearch()
                 )
               ),
             ])
           : m(".checklist-inner-wrapper", [
+            AppLayoutView.mobile() && !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
               Checklist._isDraft ? draftNotice() : null,
               Settings.viewType() === "view_details" &&
               ChecklistView.displayMode != ""
@@ -257,55 +256,81 @@ function circlePackingView() {
   });
 }
 
-function draftNotice() {
-  return m(
-    ".temporary-notice",
-    {
-      onclick: function () {
-        ChecklistView.displayMode = "";
+let Notice = {
+  view: function (vnode) {
+    return m(
+      ".temporary-notice",
+      {
+        onclick: vnode.attrs.action,
       },
+      [
+        m(".notice", vnode.attrs.notice),
+        vnode.attrs.additionalButton === undefined
+          ? null
+          : m(
+              "button.show-all",
+              {
+                onclick: vnode.attrs.additionalButton.action,
+              },
+              [
+                m(
+                  "img.notice-icon[src=img/ui/menu/" +
+                    vnode.attrs.additionalButton.icon +
+                    ".svg]"
+                ),
+                vnode.attrs.additionalButton.text,
+              ]
+            ),
+      ]
+    );
+  },
+};
+
+function draftNotice() {
+  return m(Notice, {
+    action: function () {
+      ChecklistView.displayMode = "";
     },
-    [
-      m(".notice", _t("draft_notice")),
-      m(
-        "button.show-all",
-        {
-          onclick: function () {
-            routeTo("/manage");
-          },
-        },
-        [
-          m("img.notice-icon[src=img/ui/menu/manage.svg]"),
-          _t("temporary_draft_goto_manage"),
-        ]
-      ),
-    ]
-  );
+    notice: _t("draft_notice"),
+    additionalButton: {
+      action: function () {
+        routeTo("/manage");
+      },
+      icon: "manage",
+      text: _t("temporary_draft_goto_manage"),
+    },
+  });
+}
+
+function mobileFilterOnNotice() {
+  return m(Notice, {
+    action: function () {
+      ChecklistView.displayMode = "";
+    },
+    notice: m.trust(
+      _tf("mobile_filter_notice", [Settings.pinnedSearches.getHumanNameForSearch()], true)
+    ),    
+  });
 }
 
 function temporaryFilterNotice() {
-  return m(
-    ".temporary-notice",
-    {
-      onclick: function () {
+  return m(Notice, {
+    action: function () {
+      ChecklistView.displayMode = "";
+    },
+    notice: m.trust(
+      _t("temporary_filter", [
+        Checklist.getTaxaMeta()[ChecklistView.displayMode].name,
+      ])
+    ),
+    additionalButton: {
+      action: function () {
         ChecklistView.displayMode = "";
       },
+      icon: "filter_list_off",
+      text: _t("temporary_filter_show_all"),
     },
-    [
-      m(
-        ".notice",
-        m.trust(
-          _t("temporary_filter", [
-            Checklist.getTaxaMeta()[ChecklistView.displayMode].name,
-          ])
-        )
-      ),
-      m("button.show-all", [
-        m("img.notice-icon[src=img/ui/menu/filter_list_off.svg]"),
-        _t("temporary_filter_show_all"),
-      ]),
-    ]
-  );
+  });
 }
 
 export let ButtonGroup = {

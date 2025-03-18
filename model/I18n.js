@@ -217,6 +217,10 @@ let translations = {
     en: "We searched the world for you, but found nothing that matches your query",
     fr: "Nous avons cherché dans le monde entier pour vous, mais nous n'avons rien trouvé qui corresponde à votre requête.",
   },
+  mobile_filter_notice: {
+    en: "Showing only taxa where $1",
+    fr: "Affiche seulement les taxa où $1",
+  },
   temporary_filter: {
     en: "Simplified view showing only taxa down to <strong>$1</strong> level.",
     fr: "Vue simplifiée montrant uniquement les taxons jusqu'au niveau <strong>$1</strong>.",
@@ -751,7 +755,8 @@ let translations = {
   },
   dm_precache_absolute: {
     en: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
-    fr: "",
+    //TODO translate
+    fr: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
   },
   filter_or: {
     en: "or",
