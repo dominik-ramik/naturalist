@@ -749,6 +749,10 @@ let translations = {
     en: "The markdown file $1 is not found on the server. It is referenced in the column $2 of the checklist data on row $3",
     fr: "Le fichier markdown $1 n'est pas trouvé sur le serveur. Il est référencé dans la colonne $2 des données du check-list à la ligne $3",
   },
+  dm_precache_absolute: {
+    en: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
+    fr: "",
+  },
   filter_or: {
     en: "or",
     fr: "ou",

@@ -265,6 +265,16 @@ export let DataManager = function () {
           const linkBase = row.linkBase;
           let mediaType = row.typeOfData;
 
+          if (
+            linkBase.toLowerCase().startsWith("http:") ||
+            linkBase.toLowerCase().startsWith("https:")
+          ) {
+            log(
+              "error",
+              _tf("dm_precache_absolute", [row.columnName, linkBase])
+            );
+          }
+
           if (mediaType !== "image" && mediaType !== "sound") {
             console.log("Skipped caching of", mediaType, linkBase);
             continue;
@@ -520,7 +530,7 @@ export let DataManager = function () {
           },
           suffixes: [],
         },
-        mapRegionsNames : [],
+        mapRegionsNames: [],
         externalSearchEngines: [],
       };
 
