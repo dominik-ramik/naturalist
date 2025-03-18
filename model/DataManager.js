@@ -12,6 +12,8 @@ import { i18n, _t, _tf } from "./I18n.js";
 import { TinyBibReader } from "../lib/TinyBibMD.js";
 import { Checklist } from "../model/Checklist.js";
 
+let dataCodesCache = new Map();
+
 export let DataManager = function () {
   const data = nlDataStructure;
 
@@ -480,7 +482,7 @@ export let DataManager = function () {
         accompanyingText: compileDataMeta(lang, [
           data.sheets.content.tables.accompanyingText.name,
         ]),
-        mapRegions: {
+        mapRegionsTypes: {
           default: {
             suffix: "",
             fill: "#55769b",
@@ -542,14 +544,14 @@ export let DataManager = function () {
         }
       );
 
-      data.sheets.appearance.tables.mapRegions.data[lang.code].forEach(
+      data.sheets.appearance.tables.mapRegionsTypes.data[lang.code].forEach(
         function (row) {
           if (row.suffix.trim() == "") {
-            meta.mapRegions.default.suffix = row.suffix;
-            meta.mapRegions.default.fill = row.fillColor;
-            meta.mapRegions.default.legend = row.legend;
+            meta.mapRegionsTypes.default.suffix = row.suffix;
+            meta.mapRegionsTypes.default.fill = row.fillColor;
+            meta.mapRegionsTypes.default.legend = row.legend;
           } else {
-            meta.mapRegions.suffixes.push({
+            meta.mapRegionsTypes.suffixes.push({
               suffix: row.suffix,
               fill: row.fillColor,
               legend: row.legend,
@@ -1049,6 +1051,8 @@ export let DataManager = function () {
       }
     }
 
+    dataCodesCache = new Map();
+
     function getGenericData(headers, row, computedPath, info, langCode) {
       switch (info.type) {
         case "general":
@@ -1139,6 +1143,40 @@ export let DataManager = function () {
                 stringValue = stringValue.toString().trim();
                 stringValue = stringValue.replace(/\r\n/, "\\n");
                 stringValue = stringValue.replace(/[\r\n]/, "\\n");
+
+                let columnNameMatches = (d) =>
+                  d.columnName.toLowerCase() ==
+                  dataPath.modify.itemNumbersToHash(computedPath).toLowerCase();
+
+                const key = dataPath + "|" + stringValue;
+                if (!dataCodesCache.has(key)) {
+                  let dataCodesFound =
+                    data.sheets.appearance.tables.dataCodes.data[langCode].find(
+                      (d) => columnNameMatches(d) && d.code == stringValue
+                    );
+                  if (dataCodesFound) {
+                    stringValue = dataCodesFound.replacement;
+                  } else if (
+                    data.sheets.appearance.tables.dataCodes.data[langCode].find(
+                      (d) => columnNameMatches(d)
+                    )
+                  ) {
+                    log(
+                      "warning",
+                      "Code '" +
+                        stringValue +
+                        "' found in column '" +
+                        computedPath +
+                        "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
+                    );
+                    console.log("warning", "");
+                  }
+
+                  dataCodesCache.set(key, stringValue);
+                }
+
+                 stringValue = dataCodesCache.get(key);
+
                 return stringValue;
                 break;
               case "number":
@@ -1516,7 +1554,7 @@ export let DataManager = function () {
                         regexPattern = regexPattern + "$";
                       }
 
-                      let regex = new RegExp(integrity.regex, "i");
+                      let regex = new RegExp(integrity.regex);
                       console.log(regex, integrity.regex);
                       if (regex.test(value) == false) {
                         log(

@@ -234,6 +234,52 @@ export let nlDataStructure = {
           },
           data: [],
         },
+        dataCodes: {
+          name: "Data codes",
+          description:
+            "",
+          columns: {
+            columnName: {
+              name: "Column name",
+              description:
+                "",
+              integrity: {
+                description:
+                  "XXXXX Each of the values need its separate line, so if you have badges for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "dataPath",
+                supportsMultilingual: false,
+              },
+            },
+            code: {
+              name: "Code",
+              description:
+                "",
+              integrity: {
+                description:
+                  "",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false,
+              },
+            },
+            replacement: {
+              name: "Replacement",
+              description:
+                "",
+              integrity: {
+                description: "",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: true,
+              },
+            },
+          },
+          data: [],
+        },
         badges: {
           name: "Colored badges",
           description:
@@ -307,8 +353,42 @@ export let nlDataStructure = {
           },
           data: [],
         },
-        mapRegions: {
-          name: "Map regions",
+        mapRegionsNames: {
+          name: "Map regions names",
+          description:
+            "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
+          columns: {
+            suffix: {
+              name: "Region code",
+              description:
+                "On each line a suffix of map regions to be matched against.",
+              integrity: {
+                description:
+                  "Single or several characters representing a region suffix. E.g. on the map of the world, 'ca:x' (arbitrary suffix 'x' we may chose to mark present taxa) could represent the taxon is native to Canada, while 'ca:i' could represent 'Introduced' and 'ca:e' could represent the taxon is endemic to Canada. In this case, three rows would be used, the first with suffix 'x', the second with suffix 'i' and the third with suffix value 'e'.",
+                allowEmpty: true,
+                allowDuplicates: "no",
+                defaultValue: "",
+                allowedContent: "regex",
+                regex: "[a-z]+",
+                supportsMultilingual: false,
+              },
+            },
+            fillColor: {
+              name: "Region name",
+              description:
+                "The fill color applied to the matching region and to its legend element.",
+              integrity: {
+                description: "",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false,
+              },
+            },
+          },
+        },
+        mapRegionsTypes: {
+          name: "Map regions types",
           description:
             "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
           columns: {

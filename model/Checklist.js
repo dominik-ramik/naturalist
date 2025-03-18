@@ -1095,9 +1095,9 @@ export let Checklist = {
   },
   getMapRegionsMeta: function (returnDefault) {
     if (returnDefault) {
-      return this.getData().meta.mapRegions.default;
+      return this.getData().meta.mapRegionsTypes.default;
     } else {
-      return this.getData().meta.mapRegions.suffixes;
+      return this.getData().meta.mapRegionsTypes.suffixes;
     }
   },
 
