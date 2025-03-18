@@ -348,9 +348,7 @@ export function categoryChart(filteredTaxa) {
                   ])
                 : _tf("view_cat_counted_filter", [
                     categoryVerb(categoryToView, sumMethod),
-                    Settings.pinnedSearches.getHumanNameForSearch(
-                      JSON.parse(Checklist.queryKey())
-                    ),
+                    Settings.pinnedSearches.getHumanNameForSearch(),
                   ])
             )
           ),
