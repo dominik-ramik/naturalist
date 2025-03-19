@@ -1264,7 +1264,7 @@ export let DataManager = function () {
           return readTaxon(headers, row, computedPath, langCode);
           break;
         case "image":
-          return readImage(headers, row, computedPath, langCode);
+          return readSingleMedia(headers, row, computedPath, langCode);
           break;
         case "media":
           return readMedia(headers, row, computedPath, langCode);
@@ -1364,33 +1364,17 @@ export let DataManager = function () {
       let title = readSimpleData(headers, row, path + ".title", langCode);
 
       if (source === null && title === null) {
-        source = _plain;
-        title = "";
-      }
-
-      if (source === null || (source !== null && title === null)) {
-        log(
-          "error",
-          _tf("dm_media_column_names", [
-            path,
-            path,
-            path + ".source",
-            path + ".title",
-          ])
-        );
-      }
-
-      return { source: source, title: title };
-    }
-
-    function readImage(headers, row, path, langCode) {
-      let _plain = readSimpleData(headers, row, path, langCode);
-      let source = readSimpleData(headers, row, path + ".source", langCode);
-      let title = readSimpleData(headers, row, path + ".title", langCode);
-
-      if (source === null && title === null) {
-        source = _plain;
-        title = "";
+        //try to recover the structure from | separated structure
+        let plainSplit = _plain.split("|");
+        if (plainSplit.length != 2) {
+          source = _plain;
+          title = "";
+        }
+        else{
+          source = plainSplit[0];
+          title = plainSplit[1];
+          console.log(path, _plain);
+        }
       }
 
       if (source === null || (source !== null && title === null)) {
@@ -1419,8 +1403,15 @@ export let DataManager = function () {
       );
 
       if (name === null && authority === null) {
-        name = _plain;
-        authority = "";
+        let plainSplit = _plain.split("|");
+
+        if (plainSplit.length != 2) {
+          name = _plain;
+          authority = "";
+        } else {
+          name = plainSplit[0];
+          authority = plainSplit[1];
+        }
       }
 
       if (name === null || (name !== null && authority === null)) {
