@@ -464,7 +464,19 @@ export let nlDataStructure = {
                 supportsMultilingual: false,
               },
             },
-            values: {
+            groupTitle: {
+              name: "Group title",
+              description:
+                "When displayed in a filter, values from 'Values ordered' with the same group title will be displayed together and can be ticked and unticked together. This is useful when you have several similar filter values that one would often use together - e.g. have taxa with status Endemic, Near endemic, Endemic? can all go under the same title Endemites and get displayed and ticekd/unticked together when one clicks on the group. Grouped values still can be ticked and unticked individually.",
+              integrity: {
+                allowEmpty: true,
+                description: "Title of the group",
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: true,
+              },
+            },
+            value: {
               name: "Values ordered",
               description:
                 "Values from the given column, one per row in the order in which they should appear in the filter. As this column is multilingual, you can impose here custom ordering for different language mutations",

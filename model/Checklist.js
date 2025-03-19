@@ -328,6 +328,58 @@ export let Checklist = {
     return this._bibFormatter;
   },
 
+  getCustomOrderGroupItemsCache: new Map(),
+  getCustomOrderGroupItems: function (type, dataPath, groupTitle) {
+    let key = type + "|" + dataPath + "|" + groupTitle + "|";
+
+    if (!this.getCustomOrderGroupItemsCache.has(key)) {
+      let items = [];
+
+      let searchCategory = undefined;
+      if (type == "taxa") {
+        searchCategory = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder;
+      } else if (type == "data") {
+        let meta = Checklist.getMetaForDataPath(dataPath);
+        searchCategory = meta.searchCategoryOrder;
+      }
+
+      if (searchCategory) {
+        items = searchCategory.filter((c) => c.group == groupTitle).map(c => c.title);
+      }
+
+      this.getCustomOrderGroupItemsCache.set(key, items);
+    }
+
+    return this.getCustomOrderGroupItemsCache.get(key);
+  },
+
+  getCustomOrderGroupCache: new Map(),
+  getCustomOrderGroup: function (title, type, dataPath) {
+    let key = title + "|" + type + "|" + dataPath;
+
+    if (!this.getCustomOrderGroupCache.has(key)) {
+
+      let guideItem = undefined;
+      if (type == "taxa") {
+        guideItem = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder.find(
+          (c) => c.title == title
+        );
+      } else if (type == "data") {
+        let meta = Checklist.getMetaForDataPath(dataPath);
+        guideItem = meta.searchCategoryOrder.find((c) => c.title == title);
+      }
+
+      this.getCustomOrderGroupCache.set(
+        key,
+        guideItem !== undefined && guideItem.group !== ""
+          ? guideItem.group
+          : undefined
+      );
+    }
+
+    return this.getCustomOrderGroupCache.get(key);
+  },
+
   getPreloadableAssets: function () {
     if (!this._isDataReady) {
       return [];

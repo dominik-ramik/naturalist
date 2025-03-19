@@ -566,9 +566,10 @@ export let DataManager = function () {
             if (
               metaRow.columnName.toLowerCase() == row.columnName.toLowerCase()
             ) {
-              meta.taxa[row.columnName].searchCategoryOrder.push(
-                metaRow.values.toLowerCase()
-              );
+              meta.taxa[row.columnName].searchCategoryOrder.push({
+                group: metaRow.groupTitle,
+                title: metaRow.value,
+              });
             }
           }
         );
@@ -696,9 +697,10 @@ export let DataManager = function () {
                     row.columnName.toLowerCase() ==
                     computedDataPath.toLowerCase()
                   ) {
-                    meta[computedDataPath].searchCategoryOrder.push(
-                      row.values.toLowerCase()
-                    );
+                    meta[computedDataPath].searchCategoryOrder.push({
+                      group: row.groupTitle,
+                      title: row.value,
+                    });
                   }
                 }
               );

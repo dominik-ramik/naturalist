@@ -179,31 +179,42 @@ export function colorSVGMap(svgObjectElement, regionColors) {
   }
 }
 
-export function sortByCustomOrder(array, type, dataPath) {
-  let result = array.sort();
+let sortByCustomOrderCache = new Map();
+export function sortByCustomOrder(array, type, dataPath) {  
+  let key = array + "|" + type + "|" + dataPath;
 
-  let guideArray = [];
-  if (type == "taxa") {
-    guideArray = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder;
-  } else if (type == "data") {
-    guideArray = Checklist.getMetaForDataPath(dataPath)?.searchCategoryOrder;
-  }
+  if (!sortByCustomOrderCache.has(key)) {
+    let result = array.sort();
 
-  if (guideArray?.length > 0) {
-    result = result.sort(function (a, b) {
-      if (guideArray.indexOf(a.toLowerCase()) < 0) {
-        return 1;
-      }
-      if (guideArray.indexOf(b.toLowerCase()) < 0) {
-        return -1;
-      }
-      return (
-        guideArray.indexOf(a.toLowerCase()) -
-        guideArray.indexOf(b.toLowerCase())
+    let guideArray = [];
+    if (type == "taxa") {
+      guideArray = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder.map(
+        (c) => c.title.toLowerCase()
       );
-    });
+    } else if (type == "data") {
+      guideArray = Checklist.getMetaForDataPath(
+        dataPath
+      )?.searchCategoryOrder.map((c) => c.title.toLowerCase());
+    }
+
+    if (guideArray?.length > 0) {
+      result = result.sort(function (a, b) {
+        if (guideArray.indexOf(a.toLowerCase()) < 0) {
+          return 1;
+        }
+        if (guideArray.indexOf(b.toLowerCase()) < 0) {
+          return -1;
+        }
+        return (
+          guideArray.indexOf(a.toLowerCase()) -
+          guideArray.indexOf(b.toLowerCase())
+        );
+      });
+    }
+    sortByCustomOrderCache.set(key, result);
   }
-  return result;
+
+  return sortByCustomOrderCache.get(key);
 }
 
 export function shouldHide(dataPath, hideExpression, filterData, purpose) {
