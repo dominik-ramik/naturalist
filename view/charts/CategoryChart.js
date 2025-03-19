@@ -34,6 +34,8 @@ let categoryRoot = Settings.categoryChartRoot();
 let sumMethod = Settings.categoryChartSumMethod();
 let display = Settings.categoryChartDisplayMode();
 
+let currentCellVerb = _t("view_cat_click_on_cell");
+
 // Fallbacks if settings are invalid
 if (!displayStyles.find((ds) => ds.method === display)) {
   display = displayStyles[0].method;
@@ -449,6 +451,11 @@ export function categoryChart(filteredTaxa) {
             );
             return m(
               `td[style=border-left: ${borderSize}em solid;][title="${title}"]`,
+              {
+                onclick: function () {
+                  currentCellVerb = title
+                },
+              },
               m(
                 "div.number-container",
                 numericDisplay(taxon.categories[cKey], toPctString(ratio))
@@ -466,6 +473,7 @@ export function categoryChart(filteredTaxa) {
     result.push(
       m(".table-flex-container", [
         m(".table-wrapper", [
+          m(".cell-verb", currentCellVerb),
           m("table.category-view", [
             m("tr.header-row", headerCells),
             ...rows.map((r) => m("tr", r)),

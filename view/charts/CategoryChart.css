@@ -19,7 +19,7 @@ table.buttons-table tr:not(:last-child) {
   margin-right: 0.5em;
   content: "🛈";
 }
-.info-label strong{
+.info-label strong {
   font-weight: normal;
 }
 
@@ -154,4 +154,9 @@ button {
   left: 2.5em;
   top: -1em;
   text-align: left;
+}
+
+.cell-verb {
+  margin-left: 0.5em;
+  margin-top: 0.25em;
 }

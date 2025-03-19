@@ -760,7 +760,7 @@ let translations = {
   dm_precache_absolute: {
     en: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
     //TODO translate
-    fr: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
+    fr: "Le média $1 est configuré pour le précache mais son 'Link base' est une adresse absolue $2. Le média dont le précache est configuré sur 'oui' doit avoir son 'Link base' configurée sur une URL relative au dossier 'usercontent'.",
   },
   filter_or: {
     en: "or",
@@ -773,6 +773,10 @@ let translations = {
   check_all_shown: {
     en: "Check all shown items",
     fr: "Cocher tous les éléments affichés",
+  },
+  view_cat_click_on_cell: {
+    en: "Click on a cell to get an explanation on its data",
+    fr: "Cliquez sur une cellule pour obtenir une explication sur ses données",
   },
   view_cat_sum_by_taxon: {
     en: "Sum by taxon",
