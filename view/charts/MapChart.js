@@ -26,6 +26,15 @@ const sumMethods = [
 ];
 
 export function mapChart(filteredTaxa) {
+  let currentMapStringified = JSON.stringify(currentMap);
+  if (
+    !getAvailableMaps().find(
+      (map) => JSON.stringify(map) == currentMapStringified
+    )
+  ) {
+    currentMap = null;
+  }
+
   if (currentMap != null) {
     colors = calculateRegionColors(
       filteredTaxa,
@@ -36,8 +45,7 @@ export function mapChart(filteredTaxa) {
 
   if (Checklist.filter.isEmpty()) {
     currentSumMethod = "total";
-  }
-  else{
+  } else {
     currentSumMethod = Settings.mapChartCurrentSumMethod();
   }
 
@@ -270,7 +278,7 @@ function renderDataTable(columnName, sumMethod) {
 
 function calculateRegionColors(filteredTaxa, columnName, sumMethod) {
   const terminalLeaves = filterTerminalLeaves(filteredTaxa);
-  currentFilterResultsLength = terminalLeaves.length
+  currentFilterResultsLength = terminalLeaves.length;
 
   if (!Object.keys(sessionCache).includes(columnName)) {
     sessionCache[columnName] = cacheAllTaxa(columnName);
@@ -357,11 +365,11 @@ function regionRatio(regionCount, globalCounts, regionKey, sumMethod) {
 }
 
 function getPresentRegions(mapData) {
-  return Checklist.mapRegionsLinearToObject(mapData).map(r => r.region)
+  return Checklist.mapRegionsLinearToObject(mapData).map((r) => r.region);
 }
 
 function cacheAllTaxa(columnName) {
-  let cache = { __all__: 0, };
+  let cache = { __all__: 0 };
 
   filterTerminalLeaves(Checklist.getEntireChecklist()).forEach((taxon) => {
     const mapData = Checklist.getDataFromDataPath(taxon.d, columnName);
