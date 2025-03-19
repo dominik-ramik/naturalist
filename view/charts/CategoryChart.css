@@ -19,9 +19,6 @@ table.buttons-table tr:not(:last-child) {
   margin-right: 0.5em;
   content: "🛈";
 }
-.info-label strong {
-  font-weight: normal;
-}
 
 .table-flex-container {
   display: flex;

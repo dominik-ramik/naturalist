@@ -80,7 +80,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
   let verb = "";
   switch (sumMethod) {
     case "taxon":
-      verb = _t("view_cat_cell_verb_taxon", [
+      verb = _tf("view_cat_cell_verb_taxon", [
         percentage,
         matchingCount,
         taxonKey,
@@ -88,7 +88,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
       ]);
       break;
     case "category":
-      verb = _t("view_cat_cell_verb_category", [
+      verb = _tf("view_cat_cell_verb_category", [
         percentage,
         matchingCount,
         cKey,
@@ -99,7 +99,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
       break;
   }
 
-  if (Checklist.filter.isEmpty()) {
+  if (!Checklist.filter.isEmpty()) {
     verb =
       verb +
       " " +
@@ -108,14 +108,13 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
         [
           Settings.pinnedSearches.getHumanNameForSearch(
             JSON.parse(Checklist.queryKey()),
-            true
           ),
         ],
         true
       );
   }
 
-  return verb;
+  return m.trust(verb);
 };
 
 /**
