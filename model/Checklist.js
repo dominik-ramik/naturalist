@@ -616,7 +616,6 @@ export let Checklist = {
     }
 
     this._isDataReady = true;
-    console.timeEnd("Data loaded in");
     /*
     } catch (ex) {
       console.log("Error loading data: " + ex);

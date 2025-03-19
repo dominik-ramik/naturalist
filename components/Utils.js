@@ -186,7 +186,6 @@ export function sortByCustomOrder(array, type, dataPath) {
   }
   
   let key = JSON.stringify(array) + "|" + type + "|" + dataPath;
-  console.log(key);
 
   if (!sortByCustomOrderCache.has(key)) {
     let result = array.sort();
