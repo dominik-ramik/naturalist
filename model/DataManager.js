@@ -1373,7 +1373,6 @@ export let DataManager = function () {
         else{
           source = plainSplit[0];
           title = plainSplit[1];
-          console.log(path, _plain);
         }
       }
 
