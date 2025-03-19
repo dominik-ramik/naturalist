@@ -153,6 +153,10 @@ let translations = {
     en: "Clear filter",
     fr: "Effacer le filtre",
   },
+  problem_loading_data: {
+    en: "Problem loading data",
+    fr: "Problème en chargeant les données",
+  },
   free_text_search: {
     en: "Full-text search",
     fr: "Recherche plein texte",

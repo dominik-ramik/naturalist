@@ -824,7 +824,8 @@ export let DataManager = function () {
 
   function loadData(table) {
     if (table == null) {
-      log("error", _tf("Problem loading data"));
+      log("error", _t("problem_loading_data"));
+      return null;
     }
 
     //check if all map colums are present
