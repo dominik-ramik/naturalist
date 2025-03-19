@@ -120,13 +120,13 @@ export let ChecklistView = {
               m(".nothing-found-message", _t("nothing_found_checklist")),
               m(
                 ".query",
-                m.trust(
-                  Settings.pinnedSearches.getHumanNameForSearch()
-                )
+                m.trust(Settings.pinnedSearches.getHumanNameForSearch())
               ),
             ])
           : m(".checklist-inner-wrapper", [
-            AppLayoutView.mobile() && !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
+              AppLayoutView.mobile() && !Checklist.filter.isEmpty()
+                ? mobileFilterOnNotice()
+                : null,
               Checklist._isDraft ? draftNotice() : null,
               Settings.viewType() === "view_details" &&
               ChecklistView.displayMode != ""
@@ -234,23 +234,32 @@ function assignLeavesCount(node, allMatchingData) {
   return leavesCount;
 }
 
+let cachedData = null;
+let oldQueryKey = "";
+
 function circlePackingView() {
   return m(D3ChartView, {
     id: "d3test",
     chart: circlePacking,
     options: () => {
-      let allData = checklistDataForD3(
-        Checklist.treefiedTaxa(Checklist.getData().checklist)
-      );
+      let shouldUpdate = false;
+      if (cachedData == null || Checklist.queryKey() != oldQueryKey) {
+        console.log("recalc");
+        oldQueryKey = Checklist.queryKey();
+        cachedData = checklistDataForD3(Checklist.treefiedTaxa());
+        assignLeavesCount(cachedData, Checklist.getTaxaForCurrentQuery());
+        shouldUpdate = true;
+        console.log(cachedData);
+      }
 
-      assignLeavesCount(allData, Checklist.getTaxaForCurrentQuery());
       return {
-        dataSource: allData,
+        shouldUpdate: shouldUpdate,
+        dataSource: cachedData,
         colorInterpolation: colorFromRatio,
         fontFamily: "Regular",
         maxDataLevelsDisplayed:
           Checklist._data.versions[Checklist.getCurrentLanguage()]
-            .stackingCirclesDepth || 3,
+            .stackingCirclesDepth || 4,
       };
     },
   });
@@ -308,8 +317,12 @@ function mobileFilterOnNotice() {
       ChecklistView.displayMode = "";
     },
     notice: m.trust(
-      _tf("mobile_filter_notice", [Settings.pinnedSearches.getHumanNameForSearch()], true)
-    ),    
+      _tf(
+        "mobile_filter_notice",
+        [Settings.pinnedSearches.getHumanNameForSearch()],
+        true
+      )
+    ),
   });
 }
 

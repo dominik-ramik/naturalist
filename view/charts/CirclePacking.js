@@ -2,10 +2,10 @@ import { colorFromRatio } from "../../components/Utils.js";
 
 export function circlePacking(options) {
   let data = options.dataSource;
-  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 3;
+  let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 4;
   let colorInterpolation = options.colorInterpolation || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
-  let opacityStep = options.opacityStep || maxDataLevelsDisplayed / 30.0;
+  let opacityStep = options.opacityStep || maxDataLevelsDisplayed / 40;
   let backgroundColor = options.backgroundColor || "white";
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";

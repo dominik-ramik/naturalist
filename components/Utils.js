@@ -180,7 +180,7 @@ export function colorSVGMap(svgObjectElement, regionColors) {
 }
 
 let sortByCustomOrderCache = new Map();
-export function sortByCustomOrder(array, type, dataPath) {  
+export function sortByCustomOrder(array, type, dataPath) {
   let key = array + "|" + type + "|" + dataPath;
 
   if (!sortByCustomOrderCache.has(key)) {
@@ -270,12 +270,14 @@ export function mdImagesClickableAndUsercontentRelative(markdown) {
   return markdown.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
     const getAlt = /alt=["']([^"']*)["']/gi;
     const alt = getAlt.exec(match);
-    const altText = alt ? alt[1] : null
+    const altText = alt ? alt[1] : null;
 
     return match
       .replace(
         match,
-        '<span class="image-wrap fullscreenable-image" title="' + altText + '" onClick="this.classList.toggle(\'fullscreen\')">' +
+        '<span class="image-wrap fullscreenable-image" title="' +
+          altText +
+          '" onClick="this.classList.toggle(\'fullscreen\')">' +
           match +
           "</span>"
       )

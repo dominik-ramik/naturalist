@@ -5,8 +5,6 @@ export let D3ChartView = function (initialVnode) {
 
   const getEl = () => document.getElementById(uid);
 
-  let oldDataString = "";
-
   return {
     oninit: function (vnode) {},
     oncreate: function (vnode) {
@@ -14,15 +12,10 @@ export let D3ChartView = function (initialVnode) {
       m.redraw();
     },
     onupdate: function (vnode) {
-      let newDataString = JSON.stringify(options().dataSource);
-      if (
-        oldDataString.length != newDataString.length ||
-        oldDataString != newDataString
-      ) {
         getEl().innerHTML = "";
+        console.time("redraw");
         getEl().appendChild(chart(options()));
-        oldDataString = newDataString;
-      }
+        console.timeEnd("redraw");
     },
     onbeforeremove: function (vnode) {
       getEl().innerHTML = "";

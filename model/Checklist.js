@@ -344,7 +344,9 @@ export let Checklist = {
       }
 
       if (searchCategory) {
-        items = searchCategory.filter((c) => c.group == groupTitle).map(c => c.title);
+        items = searchCategory
+          .filter((c) => c.group == groupTitle)
+          .map((c) => c.title);
       }
 
       this.getCustomOrderGroupItemsCache.set(key, items);
@@ -358,7 +360,6 @@ export let Checklist = {
     let key = title + "|" + type + "|" + dataPath;
 
     if (!this.getCustomOrderGroupCache.has(key)) {
-
       let guideItem = undefined;
       if (type == "taxa") {
         guideItem = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder.find(
@@ -1233,7 +1234,18 @@ export let Checklist = {
     return found;
   },
 
+  treefiedTaxaCache: null,
   treefiedTaxa: function (taxa) {
+    if (taxa === undefined) {
+      //serve a cached version of the full taxa tree
+      if (this.treefiedTaxaCache === null) {
+        this.treefiedTaxaCache = this.treefiedTaxa(
+          Checklist.getData().checklist
+        );
+      }
+      return this.treefiedTaxaCache;
+    }
+
     let treefied = {
       taxon: {},
       data: {},
