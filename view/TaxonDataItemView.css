@@ -122,35 +122,6 @@ span.simple-value h4 {
   cursor: pointer;
 }
 
-.data-item-view span.image-in-view-wrap.fullscreen {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  max-width: 100vw;
-  max-height: 100vh;
-  height: 100vh;
-  width: 100vw;
-  z-index: 10000;
-  margin: 0;
-  padding: 0;
-  opacity: 1 !important;
-  object-fit: contain;
-  background-color: #000000a8 !important;
-}
-
-.data-item-view span.image-in-view-wrap.fullscreen img {
-  max-width: 100vw;
-  max-height: 100vh;
-  height: 100vh;
-  width: 100vw;
-  object-fit: contain;
-  margin: 0 !important;
-  padding: 0 !important;
-  position: absolute;
-}
-
 .found {
   background-color: #ffa50047;
   border-radius: var(--pad-large);

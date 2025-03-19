@@ -215,7 +215,7 @@ function TabMedia(tabData, taxon, taxonName) {
                   case "image":
                     return m(".media-image", [
                       m(
-                        ".image-wrap",
+                        ".image-wrap.fullscreenable-image[title=" + media.title + "]",
                         {
                           onclick: function (e) {
                             this.classList.toggle("fullscreen");
@@ -226,7 +226,7 @@ function TabMedia(tabData, taxon, taxonName) {
                             e.stopPropagation();
                           },
                         },
-                        m("img.clickable[src=" + media.url + "]")
+                        m("img.clickable[src=" + media.url + "][alt=" + media.title + "]")
                       ),
                       m(".title", media.title),
                     ]);
@@ -313,7 +313,7 @@ function TabMap(tabData, taxon, taxonName) {
               case "image":
                 return m(".media-image", [
                   m(
-                    ".image-wrap",
+                    ".image-wrap.fullscreenable-image",
                     {
                       onclick: function (e) {
                         this.classList.toggle("fullscreen");
@@ -398,7 +398,7 @@ function TabMap(tabData, taxon, taxonName) {
 
                 return m(".media-map", [
                   m(
-                    ".image-wrap.clickable",
+                    ".image-wrap.clickable.fullscreenable-image",
                     {
                       onclick: function (e) {
                         this.classList.toggle("fullscreen");

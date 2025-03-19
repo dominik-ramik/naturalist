@@ -996,7 +996,7 @@ let DropdownNumber = function (initialVnode) {
                 : _t("numeric_apply_show_results", [countResults()])
             ),
         m(".histogram-wrap", [
-          m(".histogram#histogram_" + dropdownId + ".image-wrap", {
+          m(".histogram#histogram_" + dropdownId + ".image-wrap.fullscreenable-image", {
             onclick: function (e) {
               this.classList.toggle("fullscreen");
               this.getElementsByTagName("svg")[0].classList.toggle("clickable");

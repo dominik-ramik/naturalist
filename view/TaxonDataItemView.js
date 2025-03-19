@@ -30,6 +30,7 @@ export let TaxonDataItemView = {
       }
 
       let source = data.source;
+      let title = data.title;
 
       if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
         let templateData = Checklist.getDataObjectForHandlebars(
@@ -45,13 +46,13 @@ export let TaxonDataItemView = {
       source = relativeToUsercontent(source);
 
       return m(
-        "span.image-in-view-wrap.clickable",
+        "span.image-in-view-wrap.fullscreenable-image.clickable[title=" + title + "]",
         {
           onclick: function () {
             this.classList.toggle("fullscreen");
           },
         },
-        m("img.image-in-view[src=" + source + "]")
+        m("img.image-in-view[src=" + source + "][alt=" + title + "]")
       );
     }
 

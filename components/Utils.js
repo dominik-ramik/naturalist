@@ -268,10 +268,14 @@ export function shouldHide(dataPath, hideExpression, filterData, purpose) {
 
 export function mdImagesClickableAndUsercontentRelative(markdown) {
   return markdown.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
+    const getAlt = /alt=["']([^"']*)["']/gi;
+    const alt = getAlt.exec(match);
+    const altText = alt ? alt[1] : null
+
     return match
       .replace(
         match,
-        '<span class="image-wrap" onClick="this.classList.toggle(\'fullscreen\')">' +
+        '<span class="image-wrap fullscreenable-image" title="' + altText + '" onClick="this.classList.toggle(\'fullscreen\')">' +
           match +
           "</span>"
       )
