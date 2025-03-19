@@ -167,6 +167,10 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
   const individualResults = {};
   const allCategories = {};
 
+  if (!Object.keys(Checklist.filter.data).includes(dataCategory)) {
+    return null;
+  }
+
   let categoryType = Checklist.filter.data[dataCategory].type;
   // Initialize categories based on filter data
   Checklist.filter.data[dataCategory]?.all.forEach((i) => {
