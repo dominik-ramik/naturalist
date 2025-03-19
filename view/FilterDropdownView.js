@@ -542,6 +542,12 @@ let DropdownCheckItem = function (initialVnode) {
                 Checklist.filter[vnode.attrs.type][
                   vnode.attrs.dataPath
                 ].selected.splice(index, 1);
+                console.log(
+                  "uncheck",
+                  vnode.attrs.item,
+                  Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath]
+                    .selected
+                );
                 Checklist.filter.commit();
               }
               break;
@@ -996,14 +1002,21 @@ let DropdownNumber = function (initialVnode) {
                 : _t("numeric_apply_show_results", [countResults()])
             ),
         m(".histogram-wrap", [
-          m(".histogram#histogram_" + dropdownId + ".image-wrap.fullscreenable-image", {
-            onclick: function (e) {
-              this.classList.toggle("fullscreen");
-              this.getElementsByTagName("svg")[0].classList.toggle("clickable");
-              e.preventDefault();
-              e.stopPropagation();
-            },
-          }),
+          m(
+            ".histogram#histogram_" +
+              dropdownId +
+              ".image-wrap.fullscreenable-image",
+            {
+              onclick: function (e) {
+                this.classList.toggle("fullscreen");
+                this.getElementsByTagName("svg")[0].classList.toggle(
+                  "clickable"
+                );
+                e.preventDefault();
+                e.stopPropagation();
+              },
+            }
+          ),
           m(".legend", [
             m(".legend-item", [
               m(".map-fill[style=background-color: #d3d3d3]"),

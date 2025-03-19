@@ -181,7 +181,12 @@ export function colorSVGMap(svgObjectElement, regionColors) {
 
 let sortByCustomOrderCache = new Map();
 export function sortByCustomOrder(array, type, dataPath) {
-  let key = array + "|" + type + "|" + dataPath;
+  if (array.length == 0) {
+    return array;
+  }
+  
+  let key = JSON.stringify(array) + "|" + type + "|" + dataPath;
+  console.log(key);
 
   if (!sortByCustomOrderCache.has(key)) {
     let result = array.sort();
