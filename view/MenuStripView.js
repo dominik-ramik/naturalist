@@ -229,10 +229,20 @@ function menuTopBar() {
       [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
     m(".menu-project-name", Checklist.getProjectName()),
-    m(".menu-action-button", [
-      m("img[src=./img/ui/menu/cite.svg]"),
-      m(".action-button-title", "Cite this checklist"),
-    ]),
+    AppLayoutView.mobile()
+      ? m(".menu-action-button", [
+          m("img[src=./img/ui/menu/cite.svg]"),
+          m(
+            ".action-button-title",
+            {
+              onclick: function () {
+                routeTo("/about/cite");
+              },
+            },
+            "Cite"
+          ),
+        ])
+      : null,
     m(ActionButtonWithMenu, {
       icon: "img/ui/menu/" + Settings.viewType() + ".svg",
       title: currentViewName,

@@ -225,7 +225,7 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
-              m(AboutView, { text: _tf("how_to_cite_header", [Checklist.getProjectName()]) + "\n\n" + Checklist.getProjectHowToCite() }),
+              m(AboutView, { text: _tf("how_to_cite_header", [Checklist.getProjectName()]) + "\n\n<p style='user-select: all'>" + Checklist.getProjectHowToCite() +" </p>" }),
             ]);
           },
           onmatch: onMatchGuard,

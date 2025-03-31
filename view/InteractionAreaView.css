@@ -1,42 +1,56 @@
 .interaction-area {
-    overflow-y: auto;
-    max-width: 50vw;
-    width: 33em;
-    min-width: 30em;
-    background-color: var(--nlblue);
-    color: white;
-    padding: var(--small-pad);
-    background: var(--gradient-background);
+  overflow-y: auto;
+  max-width: 50vw;
+  width: 33em;
+  min-width: 30em;
+  background-color: var(--nlblue);
+  color: white;
+  padding: var(--small-pad);
+  background: var(--gradient-background);
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 .app.mobile .interaction-area {
-    max-width: unset;
-    width: 100%;
-    min-width: unset;
-    height: 100%;
-    padding-bottom: 4em;
+  max-width: unset;
+  width: 100%;
+  min-width: unset;
+  height: 100%;
+  padding-bottom: 4em;
 }
 
 .interaction-area .branding {
-    font-family: var(--font-light);
-    font-size: 0.75em;
-    position: absolute;
-    opacity: 0.45;
-    user-select: none;
-    bottom: var(--pad-small);
-    right: 9em;
+  font-family: var(--font-light);
+  font-size: 0.75em;
+  position: relative;
+  opacity: 0.45;
+  user-select: none;
+  bottom: var(--pad-small);
+  right: -20em;
+  bottom: 1.5em;
+  display: inline-block;
 }
 
 .interaction-area .branding img {
-    width: 50em;
+  width: 50em;
 }
 
 .interaction-area-branding-wrapper {
-    background-image: url('../img/icon_transparent_fine.svg');
-    background-repeat: no-repeat;
-    background-size: 16em;
-    background-position: bottom 1.5em right 0em;
-    padding: var(--pad-large);
-    min-height: 100%;
-    box-sizing: border-box;
+  background-image: url("../img/icon_transparent_fine.svg");
+  background-repeat: no-repeat;
+  background-size: 16em;
+  background-position: bottom 1.5em right 0em;
+  padding: var(--pad-large);
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.interaction-area .desktop-cite {
+  background-color: white;
+  color: black;
+  margin: 0.75em;
+  border-radius: 0.25em;
+  padding: 0.25em;
+  font-size: 80%;
 }
