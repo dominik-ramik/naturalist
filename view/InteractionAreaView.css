@@ -21,7 +21,7 @@
     font-family: var(--font-light);
     font-size: 0.75em;
     position: absolute;
-    opacity: 0.25;
+    opacity: 0.45;
     user-select: none;
     bottom: var(--pad-small);
     right: 9em;

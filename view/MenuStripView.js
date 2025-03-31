@@ -36,107 +36,112 @@ function menuPanel() {
           m(".menu-button-description", _t("menu")),
         ]
       ),
-      !Checklist.getProjectAbout() || Checklist.getProjectAbout().trim() == "" ? null : m(".menu-items", [
-        m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/about/checklist");
-          },
-          icon: "about",
-          title: _t("about_this"),
-        }),
-        !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == "" ? null : m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/about/cite");
-          },
-          icon: "cite",
-          title: _t("how_to_cite"),
-        }),
-        m(MenuDivider),
-        m(MenuItem, {
-          onclick: function () {
-            if (navigator.share) {
-              try {
-                navigator.share({
-                  title: Checklist.getProjectName(),
-                  text: "",
-                  url: window.location.href,
-                });
-              } catch (err) {
-                console.log(err);
-              }
-            } else {
-              copyToClipboard(window.location.href);
-            }
-          },
-          icon: "share",
-          title: _t("share_url"),
-        }),
-        m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/pinned");
-          },
-          icon: "push_pin",
-          title: _t("pin_search"),
-        }),
-        Checklist.getBibliographyKeys().length > 0
-          ? m(MenuItem, {
+      !Checklist.getProjectAbout() || Checklist.getProjectAbout().trim() == ""
+        ? null
+        : m(".menu-items", [
+            m(MenuItem, {
               onclick: function () {
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                routeTo("/references");
+                routeTo("/about/checklist");
               },
-              icon: "literature",
-              title: _t("literature"),
-            })
-          : null,
-        m(MenuDivider),
-        Checklist.getAllLanguages().length > 1
-          ? m(MenuExpandable, { title: _t("languages") }, [
-              Checklist.getAllLanguages().map(function (lang) {
-                if (lang.code == Checklist.getCurrentLanguage()) {
-                  return null; //skip this version
+              icon: "about",
+              title: _t("about_this"),
+            }),
+            !Checklist.getProjectHowToCite() ||
+            Checklist.getProjectHowToCite().trim() == ""
+              ? null
+              : m(MenuItem, {
+                  onclick: function () {
+                    MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                    routeTo("/about/cite");
+                  },
+                  icon: "cite",
+                  title: _t("how_to_cite"),
+                }),
+            m(MenuDivider),
+            m(MenuItem, {
+              onclick: function () {
+                if (navigator.share) {
+                  try {
+                    navigator.share({
+                      title: Checklist.getProjectName(),
+                      text: "",
+                      url: window.location.href,
+                    });
+                  } catch (err) {
+                    console.log(err);
+                  }
                 } else {
-                  return m(MenuItem, {
-                    onclick: function () {
-                      Settings.language(lang.code);
-                      routeTo("/checklist", "", lang.code);
-                      MenuStripView.menuOpen = false;
-                      location.reload(true);
-                    },
-                    title: lang.name,
-                  });
+                  copyToClipboard(window.location.href);
                 }
-              }),
-            ])
-          : null,
-        //Checklist.getAllLanguages().length > 1 ? m(MenuDivider) : null,
-        m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/manage");
-          },
-          icon: "manage",
-          title: _t("manage"),
-        }),
-        m(MenuDivider),
-        m(MenuItem, {
-          onclick: function () {
-            window.location = "./docs/";
-          },
-          icon: "./img/ui/menu/docs.svg",
-          title: _t("docs"),
-        }),
-        m(MenuItem, {
-          onclick: function () {
-            MenuStripView.menuOpen = !MenuStripView.menuOpen;
-            routeTo("/about/app");
-          },
-          icon: "./img/icon_transparent_dark.svg",
-          title: _t("about_nl"),
-        }),
-      ]),
+              },
+              icon: "share",
+              title: _t("share_url"),
+            }),
+            m(MenuItem, {
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/pinned");
+              },
+              icon: "push_pin",
+              title: _t("pin_search"),
+            }),
+            Checklist.getBibliographyKeys().length > 0
+              ? m(MenuItem, {
+                  onclick: function () {
+                    MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                    routeTo("/references");
+                  },
+                  icon: "literature",
+                  title: _t("literature"),
+                })
+              : null,
+            m(MenuDivider),
+            Checklist.getAllLanguages().length > 1
+              ? m(MenuExpandable, { title: _t("languages") }, [
+                  Checklist.getAllLanguages().map(function (lang) {
+                    if (lang.code == Checklist.getCurrentLanguage()) {
+                      return null; //skip this version
+                    } else {
+                      return m(MenuItem, {
+                        onclick: function () {
+                          Settings.language(lang.code);
+                          routeTo("/checklist", "", lang.code);
+                          MenuStripView.menuOpen = false;
+                          location.reload(true);
+                        },
+                        title: lang.name,
+                      });
+                    }
+                  }),
+                ])
+              : null,
+            //Checklist.getAllLanguages().length > 1 ? m(MenuDivider) : null,
+            m(MenuItem, {
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/manage");
+              },
+              icon: "manage",
+              title: _t("manage"),
+            }),
+            m(MenuDivider),
+            m(MenuItem, {
+              onclick: function () {
+                window.location = "./docs/";
+              },
+              icon: "./img/ui/menu/docs.svg",
+              title: _t("docs"),
+            }),
+            m(MenuItem, {
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/about/app");
+              },
+              icon: "./img/icon_transparent_dark.svg",
+              title: _t("about_nl"),
+            }),
+          ]),
     ]),
     m(".menu-background", {
       onclick: function () {
@@ -211,8 +216,7 @@ let MenuExpandable = function (initialVnode) {
 };
 
 function menuTopBar() {
-
-  let currentViewName = _t(Settings.viewType()) //settings view type is the same as the i18n tag for that view
+  let currentViewName = _t(Settings.viewType()); //settings view type is the same as the i18n tag for that view
 
   return [
     m(
@@ -222,9 +226,13 @@ function menuTopBar() {
           MenuStripView.menuOpen = !MenuStripView.menuOpen;
         },
       },
-      [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")],      
+      [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
     m(".menu-project-name", Checklist.getProjectName()),
+    m(".menu-action-button", [
+      m("img[src=./img/ui/menu/cite.svg]"),
+      m(".action-button-title", "Cite this checklist"),
+    ]),
     m(ActionButtonWithMenu, {
       icon: "img/ui/menu/" + Settings.viewType() + ".svg",
       title: currentViewName,
@@ -258,15 +266,17 @@ function menuTopBar() {
             Settings.viewType("view_category_density");
           },
         },
-        getAvailableMaps().length == 0 ? null : {
-          type: "button",
-          title: _t("view_map"),
-          icon: "ui/menu/view_map",
-          selected: Settings.viewType() === "view_map",
-          action: function () {
-            Settings.viewType("view_map");
-          },
-        },
+        getAvailableMaps().length == 0
+          ? null
+          : {
+              type: "button",
+              title: _t("view_map"),
+              icon: "ui/menu/view_map",
+              selected: Settings.viewType() === "view_map",
+              action: function () {
+                Settings.viewType("view_map");
+              },
+            },
         Settings.viewType() === "view_details"
           ? [
               { type: "label", title: _t("limit_view") },
@@ -368,9 +378,13 @@ let ActionButtonWithMenu = function (initialVnode) {
             },
           },
           [
-            vnode.attrs.imageReverse !== true ? m("img[src=" + vnode.attrs.icon + "]") : null,
+            vnode.attrs.imageReverse !== true
+              ? m("img[src=" + vnode.attrs.icon + "]")
+              : null,
             m(".action-button-title", vnode.attrs.title),
-            vnode.attrs.imageReverse === true ? m("img[src=" + vnode.attrs.icon + "]") : null,
+            vnode.attrs.imageReverse === true
+              ? m("img[src=" + vnode.attrs.icon + "]")
+              : null,
           ]
         ),
         open

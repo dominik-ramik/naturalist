@@ -25,6 +25,6 @@ ul.filter-buttons li {
     padding: var(--pad-large);
     font-family: var(--font-normal);
     width: 100%;
-    border-radius: var(--small-pad);
+    border-radius: 0.25em;
     border: 0px solid transparent;
 }

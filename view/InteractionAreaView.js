@@ -11,6 +11,7 @@ export let InteractionAreaView = {
                 vnode.children,
             ]),
             AppLayoutView.mobile() ? null : m(".branding", _t("powered_by_nl")),
+            //AppLayoutView.mobile() ? null : m(".brandingss", "Plunkett, G.M., T.R. Ranker, C. Sam, M.J. Balick, and D.M. Ramík. 2022. Vanuatu's Plant List: An Interactive Checklist of the Vascular Plants of Vanuatu. checklist.pvnh.net [continuously updated]."),
         ]);
     }
 }
