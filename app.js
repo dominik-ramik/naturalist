@@ -183,7 +183,10 @@ function runApp() {
 
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
-        if (!Settings.alreadyViewedAboutSection() && Checklist.getProjectAbout()?.trim() != "") {
+        if (
+          !Settings.alreadyViewedAboutSection() &&
+          Checklist.getProjectAbout()?.trim() != ""
+        ) {
           m.route.set("/about/checklist");
         }
 
@@ -225,7 +228,13 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
-              m(AboutView, { text: _tf("how_to_cite_header", [Checklist.getProjectName()]) + "\n\n<p style='user-select: all'>" + Checklist.getProjectHowToCite() +" </p>" }),
+              m(AboutView, {
+                text:
+                  _tf("how_to_cite_header", [Checklist.getProjectName()]) +
+                  "\n\n<p style='user-select: all'>" +
+                  Checklist.getProjectHowToCite() +
+                  " </p>",
+              }),
             ]);
           },
           onmatch: onMatchGuard,
