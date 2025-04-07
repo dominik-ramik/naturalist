@@ -312,6 +312,10 @@ export let Checklist = {
   _bibFormatter: null,
 
   getBibliographyKeys: function () {
+    if (!this._isDataReady || this._data.general.bibliography === undefined) {
+      return [];
+    }
+
     return Object.keys(this._data.general.bibliography);
   },
 
@@ -1467,6 +1471,10 @@ export let Checklist = {
 
     metaToConsider.forEach(function (metaId) {
       const currentMeta = Checklist.getDataMeta(metaId);
+
+      if (currentMeta === undefined) {
+        return;
+      }
 
       Object.keys(currentMeta).forEach(function (metaKey) {
         let meta = currentMeta[metaKey];

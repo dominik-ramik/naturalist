@@ -184,7 +184,7 @@ export function sortByCustomOrder(array, type, dataPath) {
   if (array.length == 0) {
     return array;
   }
-  
+
   let key = JSON.stringify(array) + "|" + type + "|" + dataPath;
 
   if (!sortByCustomOrderCache.has(key)) {
@@ -236,6 +236,10 @@ export function shouldHide(dataPath, hideExpression, filterData, purpose) {
 
   let split = splitN(hideExpression, " ", 3);
 
+  if (split === undefined || split.length == 0) {
+    return false;
+  }
+  
   let ifunless = split[0];
   let filterSelectedValues = filterData[split[1]].selected;
   let operator = split[2];
@@ -290,6 +294,9 @@ export function mdImagesClickableAndUsercontentRelative(markdown) {
 }
 
 export function splitN(str, delimiter, n) {
+  if (typeof str.split !== "function") {
+    return [];
+  }
   const parts = str.split(delimiter);
   const result = [];
 

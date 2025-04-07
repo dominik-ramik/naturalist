@@ -72,16 +72,21 @@ export function getAvailableMaps() {
   let maps = [];
 
   //content
-  Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {
-    let meta = Checklist.getDataMeta("maps")[metaKey];
-    if (meta.datatype == "map" && meta.type == "regions") {
-      maps.push({
-        url: meta.source,
-        title: meta.title,
-        columnName: metaKey,
-      });
-    }
-  });
+  try {
+    Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {
+      let meta = Checklist.getDataMeta("maps")[metaKey];
+      if (meta.datatype == "map" && meta.type == "regions") {
+        maps.push({
+          url: meta.source,
+          title: meta.title,
+          columnName: metaKey,
+        });
+      }
+    });
+  } catch (ex) {
+    console.log("Error while loading maps", ex);
+    return [];
+  }
 
   return maps;
 }
