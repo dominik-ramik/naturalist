@@ -68,9 +68,7 @@ export let TaxonDataItemView = {
           children: {},
         },
       });
-    }
-
-    if (meta.contentType == "map regions") {
+    }    if (meta.contentType == "map regions") {
       let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
 
       const renderedRegions = Checklist.mapRegionsLinearToObject(data).map(
@@ -83,12 +81,17 @@ export let TaxonDataItemView = {
             appendedLegend = "";
           }
 
-          return (
-            "**" +
+          let regionText = "**" +
             Checklist.nameForMapRegion(regionInfo.region) +
             "**" +
-            appendedLegend
-          );
+            appendedLegend;
+
+          // Add notes if available (already processed through markdown/bibliography)
+          if (regionInfo.note && regionInfo.note.trim() !== "") {
+            regionText += " (" + regionInfo.note + ")";
+          }
+
+          return regionText;
         }
       );
 

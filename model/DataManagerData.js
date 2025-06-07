@@ -20,9 +20,8 @@ export let nlDataStructure = {
               let type = "general";
               if (row.contentType == "taxon") {
                 type = "taxon";
-              }
-              if (row.contentType == "map regions") {
-                type = "map regions"; // props (in.torba = torba) are region names and the content of the cells is the suffix
+              }              if (row.contentType == "map regions") {
+                type = "map regions"; // supports inline format (reg1:suffix:note | reg2:suffix2) and column format (suffix or suffix|note)
               }
               if (tableKey == "taxa") {
                 type = "taxon"; //can have .name and .authority
@@ -790,7 +789,7 @@ export let nlDataStructure = {
         maps: {
           name: "Maps",
           description:
-            "You can supply several kinds of maps with each of your taxa. This table allows you to link specific columns in your checklist sheet with the necessary information to display the maps on the <b>Details</b> pane when clicking on any of the taxa in your checklist.\nDepending on the type of the map, the corresponding data column in the checklist sheet may contain a resource identifier (file name, resource number, ...) which will be used to compose the URL of the map if you use the <b>image</b> or <b>link</b> map type. If you use the <b>regions</b> map type, the data column will hold a space-separated list of regions (followed by a semicolon and a suffix) to color on the map which you suppy in SVG format and on which shapes of countries or regions have <b>class</b> attribute which you can reference. E.g. on the world map (world.svg supplied in the folder usercontent/maps) each country has its two-letters code set as the class attribute. Filling 'us:x ca:x mx:x' in the data column will the cause the corresponding countries (USA, Canada, Mexico) to be colored on the map. This provided that you set-up the suffix 'x' in the table nl_appearance Map regions.\nThis table can be left completely empty, if you do not wish to display any maps in the <b>Details</b> pane. Note that your regions can bear suffixes (e.g. 'us:x ca:unknown') by which you can modify what color the region will be. This behavior can be set on the <b>nl_appearance</b> sheet in the <a href=\"#table-mapRegions\">Map regions</a> table.",
+            "You can supply several kinds of maps with each of your taxa. This table allows you to link specific columns in your checklist sheet with the necessary information to display the maps on the <b>Details</b> pane when clicking on any of the taxa in your checklist.\nDepending on the type of the map, the corresponding data column in the checklist sheet may contain a resource identifier (file name, resource number, ...) which will be used to compose the URL of the map if you use the <b>image</b> or <b>link</b> map type. If you use the <b>regions</b> map type, the data column supports two formats:\n<b>Inline format:</b> Vertical bar separated list of regions with optional suffixes and notes: 'reg1:suffix:note | reg2:suffix2 | reg3:suffix3:note3'. Notes support markdown and @-notation bibliographical references.\n<b>Column format:</b> Individual columns for each region containing 'suffix' or 'suffix|note' where notes support markdown and @-citations.\nRegions are colored on SVG maps where shapes have <b>class</b> attributes matching region codes. E.g. on the world map (world.svg) each country has its two-letter code as the class attribute. This table can be left completely empty if you do not wish to display any maps in the <b>Details</b> pane. Region colors are configured in the <b>nl_appearance</b> sheet in the <a href=\"#table-mapRegions\">Map regions</a> table.",
           columns: {
             columnName: {
               name: "Column name",

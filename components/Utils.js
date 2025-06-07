@@ -84,13 +84,28 @@ export function filterTerminalLeaves(nodes) {
 }
 
 export function parseRegionCode(region) {
-  let parts = region.split(":");
+  // Handle both legacy and new formats
+  if (typeof region === 'string') {
+    let parts = region.split(":");
 
-  if (parts.length != 2) {
-    console.error("Map suffix inconsistent", region);
+    if (parts.length < 2) {
+      console.error("Map suffix inconsistent", region);
+      return { region: parts[0] || "", suffix: "", note: "" };
+    }
+
+    // Legacy format: "region:suffix" or new format: "region:suffix:note"
+    return { 
+      region: parts[0], 
+      suffix: parts[1],
+      note: parts.length > 2 ? parts.slice(2).join(":") : ""
+    };
+  } else if (typeof region === 'object' && region.region) {
+    // Already parsed object
+    return region;
   }
-
-  return { region: parts[0], suffix: parts[parts.length - 1] };
+  
+  console.error("Invalid region format", region);
+  return { region: "", suffix: "", note: "" };
 }
 
 export function getRegionColors(regions, fixForWorldMap) {
@@ -98,27 +113,37 @@ export function getRegionColors(regions, fixForWorldMap) {
     //regionCode: #color
   };
 
-  regions
-    .split(" ")
-    .map((r) => r.trim())
-    .forEach(function (region) {
-      if (region === null || region.trim() == "") {
-        return;
-      }
-
-      let mapRegionMeta = getRegionMeta(region);
-
-      let suffixlessRegionCode = parseRegionCode(region).region;
-
-      if (fixForWorldMap) {
-        //hotfix for countries with very wide span and overseas territories
-        if (suffixlessRegionCode == "fr") suffixlessRegionCode = "frx";
-        if (suffixlessRegionCode == "nl") suffixlessRegionCode = "nlx";
-        if (suffixlessRegionCode == "cn") suffixlessRegionCode = "cnx";
-      }
-
-      regionColors[suffixlessRegionCode] = mapRegionMeta.fill;
+  // Handle both legacy string format and new object format
+  let regionsToProcess = [];
+  
+  if (typeof regions === 'string') {
+    // Legacy format - space separated regions
+    regionsToProcess = regions.split(" ").map(r => r.trim()).filter(r => r !== "");
+  } else if (typeof regions === 'object' && regions.regions) {
+    // New object format
+    regionsToProcess = Object.keys(regions.regions).map(regionCode => {
+      const regionData = regions.regions[regionCode];
+      return regionCode + ":" + regionData.status;
     });
+  }
+
+  regionsToProcess.forEach(function (region) {
+    if (region === null || region.trim() == "") {
+      return;
+    }
+
+    let mapRegionMeta = getRegionMeta(region);
+    let suffixlessRegionCode = parseRegionCode(region).region;
+
+    if (fixForWorldMap) {
+      //hotfix for countries with very wide span and overseas territories
+      if (suffixlessRegionCode == "fr") suffixlessRegionCode = "frx";
+      if (suffixlessRegionCode == "nl") suffixlessRegionCode = "nlx";
+      if (suffixlessRegionCode == "cn") suffixlessRegionCode = "cnx";
+    }
+
+    regionColors[suffixlessRegionCode] = mapRegionMeta.fill;
+  });
 
   return regionColors;
 }

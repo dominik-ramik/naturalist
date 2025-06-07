@@ -292,21 +292,31 @@ export let Checklist = {
 
   mapRegionsLinearToObjectCache: new Map(),
   mapRegionsLinearToObject: function (mapRegionsLinear) {
-    if (mapRegionsLinear === null) {
+    if (mapRegionsLinear === null || mapRegionsLinear === undefined) {
       return [];
     }
-    if (!this.mapRegionsLinearToObjectCache.has(mapRegionsLinear)) {
+    
+    const cacheKey = JSON.stringify(mapRegionsLinear);
+    if (!this.mapRegionsLinearToObjectCache.has(cacheKey)) {
       let result = [];
 
-      if (mapRegionsLinear.trim() != "") {
+      if (typeof mapRegionsLinear === 'object' && mapRegionsLinear.regions) {
+        // New object format from DataManager: { regions: { "reg1": { status: "x", notes: "..." } } }
+        result = Object.keys(mapRegionsLinear.regions).map(regionCode => ({
+          region: regionCode,
+          suffix: mapRegionsLinear.regions[regionCode].status || "",
+          note: mapRegionsLinear.regions[regionCode].notes || ""
+        }));
+      } else if (typeof mapRegionsLinear === 'string' && mapRegionsLinear.trim() != "") {
+        // Legacy string format
         result = mapRegionsLinear.split(" ").map((r) => {
           return parseRegionCode(r);
         });
       }
 
-      this.mapRegionsLinearToObjectCache.set(mapRegionsLinear, result);
+      this.mapRegionsLinearToObjectCache.set(cacheKey, result);
     }
-    return this.mapRegionsLinearToObjectCache.get(mapRegionsLinear);
+    return this.mapRegionsLinearToObjectCache.get(cacheKey);
   },
 
   _bibFormatter: null,

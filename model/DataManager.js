@@ -1275,55 +1275,138 @@ export let DataManager = function () {
           break;
       }
       return "";
-    }
-
-    function readMapRegions(headers, row, computedPath, langCode) {
+    }    function readMapRegions(headers, row, computedPath, langCode) {
       const concernedColumns = headers.filter((h) =>
         h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
       );
 
       let mapRegions = "";
+      let resultObject = { regions: {} };
 
       if (concernedColumns.length == 0) {
-        //mapRegions are already linear
+        //mapRegions are already inline format
         mapRegions = readSimpleData(headers, row, computedPath, langCode);
+        resultObject = parseInlineMapRegions(mapRegions, langCode);
       } else {
-        //linearize
-        mapRegions = concernedColumns
-          .map((c) => {
-            let data = readSimpleData(headers, row, c, langCode);
-
-            if (data && data.length > 0) {
-              return c.substring(computedPath.length + 1) + ":" + data;
-            } else {
-              return null;
-            }
-          })
-          .filter((c) => c !== null)
-          .join(" ");
+        //column-per-region format
+        resultObject = parseColumnMapRegions(concernedColumns, headers, row, computedPath, langCode);
       }
 
+      // Validate region codes
       let knownRegionCodes = data.sheets.appearance.tables.mapRegionsNames.data[
         langCode
       ].map((x) => x.code);
 
-      if (mapRegions.length > 0) {
-        mapRegions.split(" ").forEach((region) => {
-          let parsed = parseRegionCode(region);
-          if (!knownRegionCodes.includes(parsed.region)) {
-            log(
-              "error",
-              "Region code '" +
-                parsed.region +
-                "' in column '" +
-                computedPath +
-                "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
-            );
-          }
-        });
+      Object.keys(resultObject.regions).forEach((regionCode) => {
+        if (!knownRegionCodes.includes(regionCode)) {
+          log(
+            "error",
+            "Region code '" +
+              regionCode +
+              "' in column '" +
+              computedPath +
+              "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
+          );
+        }
+      });
+
+      return resultObject;
+    }
+
+    // Parse inline format: "reg1:suffix:note | reg2:suffix2 | reg3:suffix3:note3"
+    function parseInlineMapRegions(mapRegions, langCode) {
+      const result = { regions: {} };
+      
+      if (!mapRegions || mapRegions.trim() === "") {
+        return result;
       }
 
-      return mapRegions;
+      // Check if using new format with vertical bar separators
+      if (mapRegions.includes("|")) {
+        const regions = mapRegions.split("|").map(r => r.trim());
+        
+        regions.forEach(regionStr => {
+          if (regionStr.trim() === "") return;
+          
+          const parts = regionStr.split(":");
+          if (parts.length >= 2) {
+            const regionCode = parts[0].trim();
+            const suffix = parts[1].trim();
+            const note = parts.length > 2 ? parts.slice(2).join(":").trim() : "";
+            
+            result.regions[regionCode] = {
+              status: suffix,
+              notes: processRegionNote(note, langCode)
+            };
+          }
+        });
+      } else {
+        // Legacy space-separated format: "reg1:suffix reg2:suffix"
+        const regions = mapRegions.split(" ").map(r => r.trim());
+        
+        regions.forEach(regionStr => {
+          if (regionStr.trim() === "") return;
+          
+          const parsed = parseRegionCode(regionStr);
+          result.regions[parsed.region] = {
+            status: parsed.suffix,
+            notes: ""
+          };
+        });
+      }
+      
+      return result;
+    }
+
+    // Parse column-per-region format
+    function parseColumnMapRegions(concernedColumns, headers, row, computedPath, langCode) {
+      const result = { regions: {} };
+      
+      concernedColumns.forEach((columnName) => {
+        const data = readSimpleData(headers, row, columnName, langCode);
+        
+        if (data && data.trim() !== "") {
+          const regionCode = columnName.substring(computedPath.length + 1);
+          
+          // Check if data contains vertical bar for notes
+          if (data.includes("|")) {
+            const parts = data.split("|").map(p => p.trim());
+            const suffix = parts[0];
+            const note = parts.length > 1 ? parts.slice(1).join("|").trim() : "";
+            
+            result.regions[regionCode] = {
+              status: suffix,
+              notes: processRegionNote(note, langCode)
+            };
+          } else {
+            // Just the suffix
+            result.regions[regionCode] = {
+              status: data.trim(),
+              notes: ""
+            };
+          }
+        }
+      });
+      
+      return result;
+    }
+
+    // Process region notes through markdown and bibliography
+    function processRegionNote(note, langCode) {
+      if (!note || note.trim() === "") {
+        return "";
+      }
+      
+      try {
+        // Process markdown and @-citations using TinyBibReader
+        const reader = new TinyBibReader(
+          data.sheets.appearance.tables.bibliography.data[langCode]
+        );
+        return reader.processText(note);
+      } catch (error) {
+        console.warn("Error processing region note:", error);
+        return note; // Return original note if processing fails
+      }
     }
 
     function readMedia(headers, row, path, langCode) {

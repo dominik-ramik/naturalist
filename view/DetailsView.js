@@ -338,21 +338,32 @@ function TabMap(tabData, taxon, taxonName) {
               case "regions":
                 let presentRegionsMeta = [];
                 let presentRegionsMetaSuffixes = [];
-                let mapRegionsSplit = [];
-
-                if (
+                let mapRegionsSplit = [];                if (
+                  typeof media.regions === "object" &&
+                  media.regions !== null &&
+                  media.regions.regions
+                ) {
+                  // New object format from DataManager: { regions: { "reg1": { status: "x", notes: "..." } } }
+                  // Convert to array format for processing
+                  const regionsArray = Checklist.mapRegionsLinearToObject(media.regions);
+                  // Convert to legacy string format for existing logic
+                  let reformattedMediaRegions = "";
+                  regionsArray.forEach(regionObj => {
+                    reformattedMediaRegions += regionObj.region + ":" + regionObj.suffix + " ";
+                  });
+                  media.regions = reformattedMediaRegions.trim();
+                } else if (
                   !Array.isArray(media.regions) &&
                   typeof media.regions === "object"
                 ) {
+                  // Legacy column-per-region object format
                   let reformattedMediaRegions = "";
                   //transform to linear notation
                   for (const [key, value] of Object.entries(media.regions)) {
-                    console.log("BB", value)
                     if (value && value != "") {
                       reformattedMediaRegions += key + ":" + value + " ";
                     }
                   }
-
                   media.regions = reformattedMediaRegions.trim();
                 }
 
