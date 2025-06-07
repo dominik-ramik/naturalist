@@ -115,9 +115,7 @@ export let DataManager = function () {
 
     console.log("New checklist", checklist);
 
-    return checklist;
-
-    function gatherReferences() {
+    return checklist;    function gatherReferences() {
       let useCitations = data.common
         .getItem(
           log,
@@ -141,38 +139,37 @@ export let DataManager = function () {
             "'. Supported values are " +
             ["apa", "harvard"].map((x) => "'" + x + "'").join(", ")
         );
-        return;
+        return {};
       }
 
-      let bibtexUrl = "./usercontent/references.bib";
+      // Get bibliography data from Excel table
+      const bibliographyData = data.sheets.appearance.tables.bibliography.data[
+        data.common.languages.defaultLanguageCode
+      ];
 
-      let bibtexfile = "";
-
-      try {
-        //not using fetch here to keep this simple and synchronous
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", bibtexUrl, false);
-        xhr.send(null);
-        if (xhr.status === 200) {
-          bibtexfile = xhr.responseText;
-        } else {
-          log(
-            "critical",
-            "You set 'Use citations' in the 'Customization' table, but the file 'references.bib' cannot be found in your 'usercontent' folder. " +
-              xhr.statusText
-          );
-          //throw new Error("Request failed: " + xhr.statusText);
-        }
-      } catch (error) {
-        console.error("Error:", error.message);
+      if (!bibliographyData || bibliographyData.length === 0) {
+        log("warning", "Bibliography table is empty. Add BibTeX entries to use citations.");
+        return {};
       }
 
+      // Combine all BibTeX entries from individual cells
+      let combinedBibtex = bibliographyData
+        .map(row => row.bibtex?.trim())
+        .filter(bibtex => bibtex && bibtex.length > 0)
+        .join("\n\n");
+
+      if (!combinedBibtex.trim()) {
+        log("warning", "No valid BibTeX entries found in Bibliography table.");
+        return {};
+      }
+
+      // Parse using existing TinyBibReader
       let bibReader = null;
       try {
-        bibReader = new TinyBibReader(bibtexfile);
+        bibReader = new TinyBibReader(combinedBibtex);
       } catch (e) {
         console.log(e);
-        log("error", "Error processing references: " + e);
+        log("error", "Error processing bibliography entries: " + e);
         return {};
       }
 
