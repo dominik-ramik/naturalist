@@ -879,12 +879,12 @@ export let nlDataStructure = {
         bibliography: {
           name: "Bibliography",
           description:
-            "BibTeX citations for @-notation references. Each row contains one complete BibTeX entry. Copy entries directly from reference managers like Zotero, Mendeley, or EndNote. When using @-notation in region notes or other markdown content, reference the citekey defined in each BibTeX entry.",
+            "BibTeX citations for @-notation references. Each row contains one complete BibTeX entry. Copy entries directly from reference managers.",
           columns: {
             bibtex: {
               name: "BibTeX entries",
               description:
-                "Complete BibTeX entry including citekey (e.g., @article{smith2024, author={Smith, J.}, title={Plant Distribution}, year={2024}}). Each cell should contain exactly one citation. The citekey (part after @ and before the first comma) will be used for @-notation references throughout the application.",
+                "Complete BibTeX entry",
               integrity: {
                 allowEmpty: false,
                 allowDuplicates: "yes",
