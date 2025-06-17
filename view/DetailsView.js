@@ -10,7 +10,6 @@ import {
   routeTo,
   mdImagesClickableAndUsercontentRelative,
   colorSVGMap,
-  getRegionMeta,
   getRegionColors,
 } from "../components/Utils.js";
 

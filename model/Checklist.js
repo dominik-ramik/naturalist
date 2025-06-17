@@ -799,6 +799,11 @@ export let Checklist = {
       //console.log("Meta", Checklist.getMetaForDataPath(dataPath));
 
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
+      
+      if(Checklist.getMetaForDataPath(dataPath).contentType == "map regions") {
+        return primitives;
+      }
+
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
           if (Checklist.getMetaForDataPath(dataPath).contentType == "image") {

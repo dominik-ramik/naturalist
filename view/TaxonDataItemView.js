@@ -5,7 +5,7 @@ import {
   relativeToUsercontent,
   routeTo,
   shouldHide,
-  mdImagesClickableAndUsercontentRelative,
+  processMarkdownWithBibliography,
 } from "../components/Utils.js";
 
 export let TaxonDataItemView = {
@@ -46,7 +46,9 @@ export let TaxonDataItemView = {
       source = relativeToUsercontent(source);
 
       return m(
-        "span.image-in-view-wrap.fullscreenable-image.clickable[title=" + title + "]",
+        "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
+          title +
+          "]",
         {
           onclick: function () {
             this.classList.toggle("fullscreen");
@@ -68,30 +70,77 @@ export let TaxonDataItemView = {
           children: {},
         },
       });
-    }    if (meta.contentType == "map regions") {
+    }
+
+    //console.log("meta.contentType:", meta.contentType);
+
+    if (meta.contentType == "map regions") {
       let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
 
-      // Work directly with object format
-      const renderedRegions = Object.keys(data).map((regionCode) => {
+      //console.log("Map Regions Suffixes:", mapRegionsSuffixes);
+
+      // Preprocess all notes once to avoid modifying original data
+      const preprocessedData = {};
+      Object.keys(data).forEach((regionCode) => {
         const regionInfo = data[regionCode];
-        
+        preprocessedData[regionCode] = {
+          ...regionInfo,
+          notes: regionInfo.notes && regionInfo.notes.trim() !== ""
+            ? processMarkdownWithBibliography(regionInfo.notes.trim())
+            : regionInfo.notes
+        };
+      });
+
+      // Collect and deduplicate notes
+      const notesMap = new Map(); // note text -> footnote number
+      const footnotes = []; // array of unique notes
+      let footnoteCounter = 1;
+
+      // First pass: collect unique notes (using preprocessed data)
+      Object.keys(preprocessedData).forEach((regionCode) => {
+        const regionInfo = preprocessedData[regionCode];
+        if (regionInfo.notes && regionInfo.notes.trim() !== "") {
+          const noteText = regionInfo.notes.trim();
+          if (!notesMap.has(noteText)) {
+            notesMap.set(noteText, footnoteCounter);
+            footnotes.push(noteText);
+            footnoteCounter++;
+          }
+        }
+      });
+
+      const regionsFootnotes =
+        footnotes.length > 0
+          ? footnotes
+              .map(
+                (note, index) =>
+                  `<sup class="region-footnotes-number">${index + 1}</sup>&nbsp;${note}`
+              )
+              .join("<br/>")
+          : "";
+
+      // Work directly with object format (using preprocessed data)
+      const renderedRegions = Object.keys(preprocessedData).map((regionCode) => {
+        const regionInfo = preprocessedData[regionCode];
+
         let appendedLegend = mapRegionsSuffixes.find(
-          (item) => item.suffix == (regionInfo.suffix || regionInfo.status || "")
+          (item) =>
+            item.suffix == (regionInfo.suffix || regionInfo.status || "")
         )?.appendedLegend;
 
         if (appendedLegend === undefined || appendedLegend === null) {
           appendedLegend = "";
         }
 
-        let regionText = "**" +
-          Checklist.nameForMapRegion(regionCode) +
-          "**" +
-          appendedLegend;
+        let regionName = Checklist.nameForMapRegion(regionCode);
 
-        // Add notes if available (already processed through markdown/bibliography)
-        if (regionInfo.note && regionInfo.note.trim() !== "") {
-          regionText += " (" + regionInfo.note + ")";
+        // Add footnote reference directly after region name if notes are available
+        if (regionInfo.notes && regionInfo.notes.trim() !== "") {
+          const footnoteNumber = notesMap.get(regionInfo.notes.trim());
+          regionName = `${regionName}<sup>${footnoteNumber}</sup>`;
         }
+
+        let regionText = "**" + regionName + "**" + appendedLegend;
 
         return regionText;
       });
@@ -100,10 +149,12 @@ export let TaxonDataItemView = {
         return null;
       }
 
-      return m(
-        ".map-regions-data",
-        m.trust(marked.parse(renderedRegions.join(", ")))
-      );
+      const regionsText = renderedRegions.join(", ");
+      const fullText = regionsFootnotes
+        ? `${regionsText}<div class="region-footnotes">${regionsFootnotes}</div>`
+        : regionsText;
+
+      return m(".map-regions-data", m.trust(marked.parse(fullText)));
     }
 
     let listDisplayType = "span.bullet-list";
@@ -283,34 +334,7 @@ export let TaxonDataItemView = {
 
       //process markdown and items with templates
       if (meta.format == "markdown" || (meta.template && meta.template != "")) {
-        //process bibliography
-        try {
-          data = Checklist.transformDatabaseShortcodes(data);
-
-          data = Checklist.getBibFormatter().transformInTextCitations(
-            data,
-            (citeKey) => {
-              return {
-                prefix:
-                  '<a class="citation" data-citekey="' +
-                  citeKey.toLowerCase() +
-                  '">',
-                suffix: "</a>",
-              };
-            }
-          );
-        } catch (ex) {
-          console.log("Error matching ctiation in:", data, ex);
-        }
-        //*/
-
-        data = marked.parse(data);
-        //in case markdown introduced some dirt, purify it again
-        data = DOMPurify.sanitize(data, { ADD_ATTR: ["target"] });
-        data = data.trim() + (tailingSeparator ? tailingSeparator : "");
-
-        data = mdImagesClickableAndUsercontentRelative(data);
-
+        data = processMarkdownWithBibliography(data, tailingSeparator);
         data = m.trust(data);
       } else if (meta.format == "badge") {
         let badgeMeta = meta.badges;
@@ -390,6 +414,13 @@ export let TaxonDataItemView = {
     if (titleValue === null) {
       return null;
     }
-    return m(".data-item-view", titleValue);
+
+    return m("div.data-item-view", [
+      m("div.data-item-content", [
+        titleValue,
+        m("div.clearfix"),
+        vnode.children,
+      ]),
+    ]);
   },
 };

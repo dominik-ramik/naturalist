@@ -5,6 +5,37 @@ import { _t } from "../model/I18n.js";
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
+export function processMarkdownWithBibliography(data, tailingSeparator = "") {
+  //process bibliography
+  try {
+    data = Checklist.transformDatabaseShortcodes(data);
+
+    data = Checklist.getBibFormatter().transformInTextCitations(
+      data,
+      (citeKey) => {
+        return {
+          prefix:
+            '<a class="citation" data-citekey="' +
+            citeKey.toLowerCase() +
+            '">',
+          suffix: "</a>",
+        };
+      }
+    );
+  } catch (ex) {
+    console.log("Error matching citation in:", data, ex);
+  }
+
+  data = marked.parse(data);
+  //in case markdown introduced some dirt, purify it again
+  data = DOMPurify.sanitize(data, { ADD_ATTR: ["target"] });
+  data = data.trim() + (tailingSeparator ? tailingSeparator : "");
+
+  data = mdImagesClickableAndUsercontentRelative(data);
+
+  return data;
+}
+
 export let compressor = {
   compress: function (str) {
     return LZString.compressToUTF16(str);

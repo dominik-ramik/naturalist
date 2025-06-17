@@ -4,7 +4,6 @@ import {
   isValidHttpUrl,
   pad,
   relativeToUsercontent,
-  mdImagesClickableAndUsercontentRelative,
   splitN,
   parseRegionCode,
 } from "../components/Utils.js";
@@ -114,7 +113,7 @@ export let DataManager = function () {
     });
 
     console.log("New checklist", checklist);
-    console.log("New checklist string", JSON.stringify(checklist));
+//    console.log("New checklist string", JSON.stringify(checklist));
 
     return checklist;
     function gatherReferences() {
@@ -669,7 +668,7 @@ export let DataManager = function () {
           ) {
             dataType = "custom";
           }
-          if (info.type == "map regions") dataType = "map regions";
+
           if (info.table == data.sheets.content.tables.media.name)
             dataType = "media";
           if (info.table == data.sheets.content.tables.maps.name)

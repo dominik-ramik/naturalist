@@ -31,19 +31,19 @@ span.simple-value h1 {
 span.simple-value h2 {
   font-size: 115%;
   margin-bottom: 0.5em;
-  padding-left: 0.25em
+  padding-left: 0.25em;
 }
 
 span.simple-value h3 {
   font-size: 107%;
   margin-bottom: 0.5em;
-  padding-left: 0.5em
+  padding-left: 0.5em;
 }
 
 span.simple-value h4 {
   font-size: 100%;
   margin-bottom: 0.5em;
-  padding-left: 1em
+  padding-left: 1em;
 }
 
 .data-item-title {
@@ -130,7 +130,20 @@ span.simple-value h4 {
 }
 
 a.citation {
-  color: #1565C0;
+  color: #1565c0;
   cursor: pointer;
   text-decoration: none;
+}
+
+.region-footnotes {
+  margin-top: 0.5em;
+}
+
+.region-footnotes-number {
+  background-color: #8d8d8d;
+  color: white;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  border-radius: 0.2em;
+  margin-left: 0.2em;
 }
