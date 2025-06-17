@@ -71,29 +71,30 @@ export let TaxonDataItemView = {
     }    if (meta.contentType == "map regions") {
       let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
 
-      const renderedRegions = Checklist.mapRegionsLinearToObject(data).map(
-        (regionInfo) => {
-          let appendedLegend = mapRegionsSuffixes.find(
-            (item) => item.suffix == regionInfo.suffix
-          )?.appendedLegend;
+      // Work directly with object format
+      const renderedRegions = Object.keys(data).map((regionCode) => {
+        const regionInfo = data[regionCode];
+        
+        let appendedLegend = mapRegionsSuffixes.find(
+          (item) => item.suffix == (regionInfo.suffix || regionInfo.status || "")
+        )?.appendedLegend;
 
-          if (appendedLegend === undefined || appendedLegend === null) {
-            appendedLegend = "";
-          }
-
-          let regionText = "**" +
-            Checklist.nameForMapRegion(regionInfo.region) +
-            "**" +
-            appendedLegend;
-
-          // Add notes if available (already processed through markdown/bibliography)
-          if (regionInfo.note && regionInfo.note.trim() !== "") {
-            regionText += " (" + regionInfo.note + ")";
-          }
-
-          return regionText;
+        if (appendedLegend === undefined || appendedLegend === null) {
+          appendedLegend = "";
         }
-      );
+
+        let regionText = "**" +
+          Checklist.nameForMapRegion(regionCode) +
+          "**" +
+          appendedLegend;
+
+        // Add notes if available (already processed through markdown/bibliography)
+        if (regionInfo.note && regionInfo.note.trim() !== "") {
+          regionText += " (" + regionInfo.note + ")";
+        }
+
+        return regionText;
+      });
 
       if (renderedRegions.length == 0) {
         return null;

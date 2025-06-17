@@ -20,7 +20,8 @@ export let nlDataStructure = {
               let type = "general";
               if (row.contentType == "taxon") {
                 type = "taxon";
-              }              if (row.contentType == "map regions") {
+              }
+              if (row.contentType == "map regions") {
                 type = "map regions"; // supports inline format (reg1:suffix:note | reg2:suffix2) and column format (suffix or suffix|note)
               }
               if (tableKey == "taxa") {
@@ -163,7 +164,8 @@ export let nlDataStructure = {
               description:
                 "Define the values for each of the items here. As this column is multilingual, you can have sevaral Value colums in this table (e.g. Value:en, Value:es and Value:fr side by side if you defined English, Spanish and French as languages of your checklist).",
               integrity: {
-                description: '<ul><li><b>Color theme hue</b>: a number from 0 to 360 representing a hue of the color theme of the app. The default deep blue hue is 212. If you want to pick your own, find the hue with an online tool like <a href="https://hslpicker.com">hslpicker.com</a> (use the value of the topmost slider). You can visually separate different language mutations of your checklist (if you make a multilingual one) by assigning different hues to different translations</li><li><b>Checklist name</b>: A short name which will appear in the header of the checklist app. E.g. Vascular flora of Vanuatu</li><li><b>About section</b>: a free-form text which will appear in the About section in the checklist menu. You can write there a short description of the checklist, contacts to its author or any other information. You can use <a href="#g-md">Markdown<a/> to format your text including different heading levels, links, images (in folder \'usercontent\' or hosted elsewhere), lists or other. If your text is more complex, you may wish to insert an F-directive instead. The content of the cell would be \'F:about.md\' where the file \'about.md\' is uploaded to the folder \'usercontent\'. You can see the documentation on F-directive for more information</li><li><b>Name of checklist data sheet</b>: name of the sheet which contains the checklist data. By default this is called "checklist", but you can modify that if you need the sheet be called otherwise</li><li><b>Checklist data headers row</b>: By default the headers row is on line 1, but in case your data are designed otherwise and the checklist data headers are on any other row (e.g. headers are on row 2 because row 1 is occupied by supplementary infor for curators or any other data), put the row number here.</li><li><b>Date format</b>: If you dates in your checklist data sheet, you can determine here how the date will be shown in your checklist. Available formats, see: <a href="https://day.js.org/docs/en/display/format">day.js.org</a>. You can define different formats for different language mutations (e.g. if you have English (en) and French (fr) defined as the checklist languages, you can have in the column Value:en a value MMM D, YYYY while the column Value:fr can have the more common French format YYYY/MM/DD). By default or if left empty the format is YYYY-MM-DD.</li><li><b>Use citations</b>: If set to \'apa\' or \'harvard\', NaturaList will read BibTeX entries from the Bibliography table in the nl_appearance sheet. Add one complete BibTeX entry per row in the Bibliography table to enable @-notation references throughout your checklist. The references will also be displayed on the References page. Leave empty if you don\'t want to use the bibliography function.</li></ul>',
+                description:
+                  "<ul><li><b>Color theme hue</b>: a number from 0 to 360 representing a hue of the color theme of the app. The default deep blue hue is 212. If you want to pick your own, find the hue with an online tool like <a href=\"https://hslpicker.com\">hslpicker.com</a> (use the value of the topmost slider). You can visually separate different language mutations of your checklist (if you make a multilingual one) by assigning different hues to different translations</li><li><b>Checklist name</b>: A short name which will appear in the header of the checklist app. E.g. Vascular flora of Vanuatu</li><li><b>About section</b>: a free-form text which will appear in the About section in the checklist menu. You can write there a short description of the checklist, contacts to its author or any other information. You can use <a href=\"#g-md\">Markdown<a/> to format your text including different heading levels, links, images (in folder 'usercontent' or hosted elsewhere), lists or other. If your text is more complex, you may wish to insert an F-directive instead. The content of the cell would be 'F:about.md' where the file 'about.md' is uploaded to the folder 'usercontent'. You can see the documentation on F-directive for more information</li><li><b>Name of checklist data sheet</b>: name of the sheet which contains the checklist data. By default this is called \"checklist\", but you can modify that if you need the sheet be called otherwise</li><li><b>Checklist data headers row</b>: By default the headers row is on line 1, but in case your data are designed otherwise and the checklist data headers are on any other row (e.g. headers are on row 2 because row 1 is occupied by supplementary infor for curators or any other data), put the row number here.</li><li><b>Date format</b>: If you dates in your checklist data sheet, you can determine here how the date will be shown in your checklist. Available formats, see: <a href=\"https://day.js.org/docs/en/display/format\">day.js.org</a>. You can define different formats for different language mutations (e.g. if you have English (en) and French (fr) defined as the checklist languages, you can have in the column Value:en a value MMM D, YYYY while the column Value:fr can have the more common French format YYYY/MM/DD). By default or if left empty the format is YYYY-MM-DD.</li><li><b>Use citations</b>: If set to 'apa' or 'harvard', NaturaList will read BibTeX entries from the Bibliography table in the nl_appearance sheet. Add one complete BibTeX entry per row in the Bibliography table to enable @-notation references throughout your checklist. The references will also be displayed on the References page. Leave empty if you don't want to use the bibliography function.</li></ul>",
                 allowDuplicates: "yes",
                 allowEmpty: true,
                 allowedContent: "any",
@@ -235,13 +237,11 @@ export let nlDataStructure = {
         },
         dataCodes: {
           name: "Data codes",
-          description:
-            "",
+          description: "",
           columns: {
             columnName: {
               name: "Column name",
-              description:
-                "",
+              description: "",
               integrity: {
                 description:
                   "XXXXX Each of the values need its separate line, so if you have badges for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
@@ -253,11 +253,9 @@ export let nlDataStructure = {
             },
             code: {
               name: "Code",
-              description:
-                "",
+              description: "",
               integrity: {
-                description:
-                  "",
+                description: "",
                 allowEmpty: false,
                 allowDuplicates: "yes",
                 allowedContent: "any",
@@ -266,8 +264,7 @@ export let nlDataStructure = {
             },
             replacement: {
               name: "Replacement",
-              description:
-                "",
+              description: "",
               integrity: {
                 description: "",
                 allowEmpty: false,
@@ -703,7 +700,8 @@ export let nlDataStructure = {
               description:
                 "You can use this column to show or hide data conditionally. For example you can only display data about the organisms status in a particular country if that country is selected in the filter. Others of your columns in the checklist sheet may contain data, which you do not want to display directly, but which you nonetheless reference e.g. through a template of another column. You can use this column to make sure your data are loaded, but are kept hidden.",
               integrity: {
-                description: "Leave empty or enter 'no' to keep the data displayed. Enter 'yes' to hide the data (they will still be available for you to use e.g. in templates). Enter 'data' to hide this only from data display but allow display as a filter. Use a conditional expression to show or hide the data based on the value of a filter. The syntax looks like (in this example <b>incountry</b> is a column name acting as a filter): <ul><li><b>if incountry notset</b> will hide the data if the <i>incountry</i> filter is not set to any value</li><li><b>unless incountry isset</b> will hide the data unless the <i>incountry</i> filter is set to whichever value</li><li><b>unless incountry is \"Czechia\", \"Vanuatu\"</b> will hide the data unless the <i>incountry</i> filter has either Czechia or Vanuatu (or both) values selected</li><li><b>unless incountry notsetor \"Czechia\"</b> will hide the data unless the <i>incountry</i> filter is either empty or has Czechia among selected values</li><li>you can combine the [if|unless], [isset|notset|notsetor|is|] keywords in similar manner to achieve the desired behavior; actual filter values must always be enclosed in double quotes and, if several, separated by a comma</li></ul>",
+                description:
+                  "Leave empty or enter 'no' to keep the data displayed. Enter 'yes' to hide the data (they will still be available for you to use e.g. in templates). Enter 'data' to hide this only from data display but allow display as a filter. Use a conditional expression to show or hide the data based on the value of a filter. The syntax looks like (in this example <b>incountry</b> is a column name acting as a filter): <ul><li><b>if incountry notset</b> will hide the data if the <i>incountry</i> filter is not set to any value</li><li><b>unless incountry isset</b> will hide the data unless the <i>incountry</i> filter is set to whichever value</li><li><b>unless incountry is \"Czechia\", \"Vanuatu\"</b> will hide the data unless the <i>incountry</i> filter has either Czechia or Vanuatu (or both) values selected</li><li><b>unless incountry notsetor \"Czechia\"</b> will hide the data unless the <i>incountry</i> filter is either empty or has Czechia among selected values</li><li>you can combine the [if|unless], [isset|notset|notsetor|is|] keywords in similar manner to achieve the desired behavior; actual filter values must always be enclosed in double quotes and, if several, separated by a comma</li></ul>",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 allowedContent: "any",
@@ -873,7 +871,8 @@ export let nlDataStructure = {
                 allowedContent: "any",
                 supportsMultilingual: true,
               },
-            },          },
+            },
+          },
           data: [],
         },
         bibliography: {
@@ -883,8 +882,7 @@ export let nlDataStructure = {
           columns: {
             bibtex: {
               name: "BibTeX entries",
-              description:
-                "Complete BibTeX entry",
+              description: "Complete BibTeX entry",
               integrity: {
                 allowEmpty: false,
                 allowDuplicates: "yes",

@@ -370,7 +370,11 @@ function regionRatio(regionCount, globalCounts, regionKey, sumMethod) {
 }
 
 function getPresentRegions(mapData) {
-  return Checklist.mapRegionsLinearToObject(mapData).map((r) => r.region);
+  // Work directly with object format
+  if (typeof mapData === "object" && mapData) {
+    return Object.keys(mapData);
+  }
+  return [];
 }
 
 function cacheAllTaxa(columnName) {

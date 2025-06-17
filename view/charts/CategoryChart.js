@@ -202,9 +202,11 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
             dataCategory
           );
 
-          let regionCodes = Checklist.mapRegionsLinearToObject(
-            tempCategoryData
-          ).map((r) => r.region);
+          // Work directly with object format
+          let regionCodes = [];
+          if (typeof tempCategoryData === 'object' && tempCategoryData) {
+            regionCodes = Object.keys(tempCategoryData);
+          }
           categoryData = regionCodes.map((r) => Checklist.nameForMapRegion(r));
           break;
 

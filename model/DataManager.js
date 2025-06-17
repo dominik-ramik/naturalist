@@ -114,8 +114,10 @@ export let DataManager = function () {
     });
 
     console.log("New checklist", checklist);
+    console.log("New checklist string", JSON.stringify(checklist));
 
-    return checklist;    function gatherReferences() {
+    return checklist;
+    function gatherReferences() {
       let useCitations = data.common
         .getItem(
           log,
@@ -143,19 +145,26 @@ export let DataManager = function () {
       }
 
       // Get bibliography data from Excel table
-      const bibliographyData = data.sheets.appearance.tables.bibliography.data[
-        data.common.languages.defaultLanguageCode
-      ];
+
+      console.log(data.sheets.content.tables);
+
+      const bibliographyData =
+        data.sheets.content.tables.bibliography.data[
+          data.common.languages.defaultLanguageCode
+        ];
 
       if (!bibliographyData || bibliographyData.length === 0) {
-        log("warning", "Bibliography table is empty. Add BibTeX entries to use citations.");
+        log(
+          "warning",
+          "Bibliography table is empty. Add BibTeX entries to use citations."
+        );
         return {};
       }
 
       // Combine all BibTeX entries from individual cells
       let combinedBibtex = bibliographyData
-        .map(row => row.bibtex?.trim())
-        .filter(bibtex => bibtex && bibtex.length > 0)
+        .map((row) => row.bibtex?.trim())
+        .filter((bibtex) => bibtex && bibtex.length > 0)
         .join("\n\n");
 
       if (!combinedBibtex.trim()) {
@@ -640,7 +649,7 @@ export let DataManager = function () {
         let matchingComputedDataPaths = allDataPaths.filter(function (path) {
           return (
             dataPath.modify.itemNumbersToHash(path).toLowerCase() ==
-            dataPath.modify.itemNumbersToHash(info.name)
+            dataPath.modify.itemNumbersToHash(info.name).toLowerCase()
           );
         });
 
@@ -652,6 +661,7 @@ export let DataManager = function () {
           if (info.role == "taxon") {
             return;
           }
+
           let dataType = "custom";
 
           if (
@@ -659,6 +669,7 @@ export let DataManager = function () {
           ) {
             dataType = "custom";
           }
+          if (info.type == "map regions") dataType = "map regions";
           if (info.table == data.sheets.content.tables.media.name)
             dataType = "media";
           if (info.table == data.sheets.content.tables.maps.name)
@@ -1272,13 +1283,14 @@ export let DataManager = function () {
           break;
       }
       return "";
-    }    function readMapRegions(headers, row, computedPath, langCode) {
+    }
+    function readMapRegions(headers, row, computedPath, langCode) {
       const concernedColumns = headers.filter((h) =>
         h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
       );
 
       let mapRegions = "";
-      let resultObject = { regions: {} };
+      let resultObject = {};
 
       if (concernedColumns.length == 0) {
         //mapRegions are already inline format
@@ -1286,7 +1298,13 @@ export let DataManager = function () {
         resultObject = parseInlineMapRegions(mapRegions, langCode);
       } else {
         //column-per-region format
-        resultObject = parseColumnMapRegions(concernedColumns, headers, row, computedPath, langCode);
+        resultObject = parseColumnMapRegions(
+          concernedColumns,
+          headers,
+          row,
+          computedPath,
+          langCode
+        );
       }
 
       // Validate region codes
@@ -1294,7 +1312,7 @@ export let DataManager = function () {
         langCode
       ].map((x) => x.code);
 
-      Object.keys(resultObject.regions).forEach((regionCode) => {
+      Object.keys(resultObject).forEach((regionCode) => {
         if (!knownRegionCodes.includes(regionCode)) {
           log(
             "error",
@@ -1312,98 +1330,88 @@ export let DataManager = function () {
 
     // Parse inline format: "reg1:suffix:note | reg2:suffix2 | reg3:suffix3:note3"
     function parseInlineMapRegions(mapRegions, langCode) {
-      const result = { regions: {} };
-      
+      const result = {};
+
       if (!mapRegions || mapRegions.trim() === "") {
         return result;
       }
 
       // Check if using new format with vertical bar separators
       if (mapRegions.includes("|")) {
-        const regions = mapRegions.split("|").map(r => r.trim());
-        
-        regions.forEach(regionStr => {
+        const regions = mapRegions.split("|").map((r) => r.trim());
+
+        regions.forEach((regionStr) => {
           if (regionStr.trim() === "") return;
-          
+
           const parts = regionStr.split(":");
           if (parts.length >= 2) {
             const regionCode = parts[0].trim();
             const suffix = parts[1].trim();
-            const note = parts.length > 2 ? parts.slice(2).join(":").trim() : "";
-            
-            result.regions[regionCode] = {
+            const note =
+              parts.length > 2 ? parts.slice(2).join(":").trim() : "";
+
+            result[regionCode] = {
               status: suffix,
-              notes: processRegionNote(note, langCode)
+              notes: note,
             };
           }
         });
       } else {
         // Legacy space-separated format: "reg1:suffix reg2:suffix"
-        const regions = mapRegions.split(" ").map(r => r.trim());
-        
-        regions.forEach(regionStr => {
+        const regions = mapRegions.split(" ").map((r) => r.trim());
+
+        regions.forEach((regionStr) => {
           if (regionStr.trim() === "") return;
-          
+
           const parsed = parseRegionCode(regionStr);
-          result.regions[parsed.region] = {
+          result[parsed.region] = {
             status: parsed.suffix,
-            notes: ""
+            notes: "",
           };
         });
       }
-      
+
       return result;
     }
 
     // Parse column-per-region format
-    function parseColumnMapRegions(concernedColumns, headers, row, computedPath, langCode) {
-      const result = { regions: {} };
-      
+    function parseColumnMapRegions(
+      concernedColumns,
+      headers,
+      row,
+      computedPath,
+      langCode
+    ) {
+      const result = {};
+
       concernedColumns.forEach((columnName) => {
         const data = readSimpleData(headers, row, columnName, langCode);
-        
+
         if (data && data.trim() !== "") {
           const regionCode = columnName.substring(computedPath.length + 1);
-          
+
           // Check if data contains vertical bar for notes
           if (data.includes("|")) {
-            const parts = data.split("|").map(p => p.trim());
+            const parts = data.split("|").map((p) => p.trim());
             const suffix = parts[0];
-            const note = parts.length > 1 ? parts.slice(1).join("|").trim() : "";
-            
-            result.regions[regionCode] = {
+            const note =
+              parts.length > 1 ? parts.slice(1).join("|").trim() : "";
+
+            result[regionCode] = {
               status: suffix,
-              notes: processRegionNote(note, langCode)
+              notes: note,
             };
           } else {
             // Just the suffix
-            result.regions[regionCode] = {
+            result[regionCode] = {
               status: data.trim(),
-              notes: ""
+              notes: "",
             };
           }
         }
       });
-      
-      return result;
-    }
 
-    // Process region notes through markdown and bibliography
-    function processRegionNote(note, langCode) {
-      if (!note || note.trim() === "") {
-        return "";
-      }
-      
-      try {
-        // Process markdown and @-citations using TinyBibReader
-        const reader = new TinyBibReader(
-          data.sheets.appearance.tables.bibliography.data[langCode]
-        );
-        return reader.processText(note);
-      } catch (error) {
-        console.warn("Error processing region note:", error);
-        return note; // Return original note if processing fails
-      }
+      return result;
     }
 
     function readMedia(headers, row, path, langCode) {
@@ -1450,8 +1458,7 @@ export let DataManager = function () {
         if (plainSplit.length != 2) {
           source = _plain;
           title = "";
-        }
-        else{
+        } else {
           source = plainSplit[0];
           title = plainSplit[1];
         }

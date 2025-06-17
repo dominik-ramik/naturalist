@@ -272,51 +272,18 @@ export let Checklist = {
   nameForMapRegionCache: new Map(),
   nameForMapRegion: function (regionCode) {
     if (!this.nameForMapRegionCache.has(regionCode)) {
-      let regionName = "";
-
       const meta = Checklist.getMapRegionsNamesMeta()?.find(
         (x) => x.code == regionCode
       );
-
+      
       if (meta) {
-        regionName = meta.name;
+        this.nameForMapRegionCache.set(regionCode, meta.name);
       } else {
-        console.log("Unknown region name for code", regionCode);
-        regionName = regionCode;
+        this.nameForMapRegionCache.set(regionCode, regionCode);
       }
-
-      this.nameForMapRegionCache.set(regionCode, regionName);
-    }
-    return this.nameForMapRegionCache.get(regionCode);
-  },
-
-  mapRegionsLinearToObjectCache: new Map(),
-  mapRegionsLinearToObject: function (mapRegionsLinear) {
-    if (mapRegionsLinear === null || mapRegionsLinear === undefined) {
-      return [];
     }
     
-    const cacheKey = JSON.stringify(mapRegionsLinear);
-    if (!this.mapRegionsLinearToObjectCache.has(cacheKey)) {
-      let result = [];
-
-      if (typeof mapRegionsLinear === 'object' && mapRegionsLinear.regions) {
-        // New object format from DataManager: { regions: { "reg1": { status: "x", notes: "..." } } }
-        result = Object.keys(mapRegionsLinear.regions).map(regionCode => ({
-          region: regionCode,
-          suffix: mapRegionsLinear.regions[regionCode].status || "",
-          note: mapRegionsLinear.regions[regionCode].notes || ""
-        }));
-      } else if (typeof mapRegionsLinear === 'string' && mapRegionsLinear.trim() != "") {
-        // Legacy string format
-        result = mapRegionsLinear.split(" ").map((r) => {
-          return parseRegionCode(r);
-        });
-      }
-
-      this.mapRegionsLinearToObjectCache.set(cacheKey, result);
-    }
-    return this.mapRegionsLinearToObjectCache.get(cacheKey);
+    return this.nameForMapRegionCache.get(regionCode);
   },
 
   _bibFormatter: null,
@@ -828,6 +795,9 @@ export let Checklist = {
     function nestedPrimitives(currentData, dataPath) {
       let primitives = [];
 
+      //console.log("Data path: ", dataPath);
+      //console.log("Meta", Checklist.getMetaForDataPath(dataPath));
+
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
@@ -844,11 +814,6 @@ export let Checklist = {
             primitives.push(arrayMember);
           }
         });
-      } else if (
-        Checklist.getMetaForDataPath(dataPath).contentType == "image"
-      ) {
-        primitives.push(currentData.n);
-        primitives.push(currentData.a);
       } else if (
         Checklist.getMetaForDataPath(dataPath).contentType == "taxon"
       ) {
@@ -882,9 +847,12 @@ export let Checklist = {
       let data = [];
 
       if (Checklist.getDataMeta()[currentPath]?.contentType == "map regions") {
-        data = Checklist.mapRegionsLinearToObject(taxonData).map((r) =>
-          Checklist.nameForMapRegion(r.region)
-        );
+        // Work directly with object format
+        if (typeof taxonData === 'object' && taxonData) {
+          data = Object.keys(taxonData).map((regionCode) =>
+            Checklist.nameForMapRegion(regionCode)
+          );
+        }
       } else if (Checklist.getDataMeta()[currentPath]?.contentType == "image") {
         console.log("################### IMG", taxonData);
 
@@ -1511,7 +1479,7 @@ export let Checklist = {
 
               Object.keys(mediaData).forEach(function (key) {
                 const item = mediaData[key];
-                if (item === undefined || item === null || item.trim() == "") {
+                if (item === undefined || item === null || Object.keys(item).length == 0) {
                   return;
                 }
                 cleanedMediaData.push(item);

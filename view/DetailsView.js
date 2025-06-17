@@ -338,126 +338,109 @@ function TabMap(tabData, taxon, taxonName) {
               case "regions":
                 let presentRegionsMeta = [];
                 let presentRegionsMetaSuffixes = [];
-                let mapRegionsSplit = [];                if (
-                  typeof media.regions === "object" &&
-                  media.regions !== null &&
-                  media.regions.regions
-                ) {
-                  // New object format from DataManager: { regions: { "reg1": { status: "x", notes: "..." } } }
-                  // Convert to array format for processing
-                  const regionsArray = Checklist.mapRegionsLinearToObject(media.regions);
-                  // Convert to legacy string format for existing logic
-                  let reformattedMediaRegions = "";
-                  regionsArray.forEach(regionObj => {
-                    reformattedMediaRegions += regionObj.region + ":" + regionObj.suffix + " ";
-                  });
-                  media.regions = reformattedMediaRegions.trim();
-                } else if (
-                  !Array.isArray(media.regions) &&
-                  typeof media.regions === "object"
-                ) {
-                  // Legacy column-per-region object format
-                  let reformattedMediaRegions = "";
-                  //transform to linear notation
-                  for (const [key, value] of Object.entries(media.regions)) {
-                    if (value && value != "") {
-                      reformattedMediaRegions += key + ":" + value + " ";
-                    }
+
+                // Work directly with object format
+                if (typeof media.regions === "object" && media.regions !== null) {
+                  const regionCodes = Object.keys(media.regions);
+
+                  if (regionCodes.length == 0) {
+                    return null;
                   }
-                  media.regions = reformattedMediaRegions.trim();
-                }
 
-                if (media.regions && media.regions.split(" ").length > 0) {
-                  mapRegionsSplit = media.regions.split(" ");
-                }
+                  []
+                    .concat(
+                      Checklist.getMapRegionsMeta(true),
+                      Checklist.getMapRegionsMeta()
+                    )
+                    .forEach(function (mapRegionMeta) {
+                      regionCodes.forEach(function (regionCode) {
+                        const regionData = media.regions[regionCode];
+                        const suffix = regionData.suffix || regionData.status || "";
 
-                if (mapRegionsSplit.length == 0) {
-                  //dont' show any map if there is no region data
+                        if (
+                          suffix == mapRegionMeta.suffix &&
+                          presentRegionsMetaSuffixes.indexOf(mapRegionMeta.suffix) < 0
+                        ) {
+                          presentRegionsMetaSuffixes.push(mapRegionMeta.suffix);
+                          presentRegionsMeta.push(mapRegionMeta);
+                        }
+                      });
+                    });
+
+                  // Convert to legacy format for colorSVGMap compatibility
+                  let reformattedMediaRegions = "";
+                  Object.keys(media.regions).forEach((regionCode) => {
+                    const regionData = media.regions[regionCode];
+                    const suffix = regionData.suffix || regionData.status || "";
+                    reformattedMediaRegions += regionCode + ":" + suffix + " ";
+                  });
+                  const mapRegionsString = reformattedMediaRegions.trim();
+
+                  window.setTimeout(function () {
+                    let map = document.getElementById("map_" + media.metaKey);
+                    colorSVGMap(
+                      map,
+                      getRegionColors(
+                        mapRegionsString,
+                        media.url.toLowerCase().endsWith("world.svg")
+                      )
+                    );
+                  }, 50);
+
+                  return m(".media-map", [
+                    m(
+                      ".image-wrap.clickable.fullscreenable-image",
+                      {
+                        onclick: function (e) {
+                          this.classList.toggle("fullscreen");
+                          this.classList.toggle("clickable");
+                          e.preventDefault();
+                          e.stopPropagation();
+                        },
+                      },
+                      m(
+                        "object#map_" +
+                          media.metaKey +
+                          "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
+                          media.url +
+                          "]",
+                        {
+                          onload: function () {
+                            colorSVGMap(
+                              this,
+                              getRegionColors(
+                                mapRegionsString,
+                                media.url.toLowerCase().endsWith("world.svg")
+                              )
+                            );
+                          },
+                        }
+                      )
+                    ),
+                    media.regions
+                      ? m(
+                          ".legend",
+                          Object.keys(presentRegionsMeta).length == 0
+                            ? null
+                            : Object.values(presentRegionsMeta).map(function (
+                                regionMeta
+                              ) {
+                                return m(".legend-item", [
+                                  m(
+                                    ".map-fill[style=background-color: " +
+                                      regionMeta.fill +
+                                      "]"
+                                  ),
+                                  m(".map-legend-title", regionMeta.legend),
+                                ]);
+                              })
+                        )
+                      : null,
+                    m(".title", media.title),
+                  ]);
+                } else {
                   return null;
                 }
-
-                []
-                  .concat(
-                    Checklist.getMapRegionsMeta(true),
-                    Checklist.getMapRegionsMeta()
-                  )
-                  .forEach(function (mapRegionMeta) {
-                    mapRegionsSplit.forEach(function (individualRegion) {
-                      if (
-                        getRegionMeta(individualRegion).suffix ==
-                          mapRegionMeta.suffix &&
-                        presentRegionsMetaSuffixes.indexOf(
-                          mapRegionMeta.suffix
-                        ) < 0
-                      ) {
-                        presentRegionsMetaSuffixes.push(mapRegionMeta.suffix);
-                        presentRegionsMeta.push(mapRegionMeta);
-                      }
-                    });
-                  });
-
-                window.setTimeout(function () {
-                  let map = document.getElementById("map_" + media.metaKey);
-                  colorSVGMap(
-                    map,
-                    getRegionColors(
-                      media.regions,
-                      media.url.toLowerCase().endsWith("world.svg")
-                    )
-                  );
-                }, 50);
-
-                return m(".media-map", [
-                  m(
-                    ".image-wrap.clickable.fullscreenable-image",
-                    {
-                      onclick: function (e) {
-                        this.classList.toggle("fullscreen");
-                        this.classList.toggle("clickable");
-                        e.preventDefault();
-                        e.stopPropagation();
-                      },
-                    },
-                    m(
-                      "object#map_" +
-                        media.metaKey +
-                        "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
-                        media.url +
-                        "]",
-                      {
-                        onload: function () {
-                          colorSVGMap(
-                            this,
-                            getRegionColors(
-                              media.regions,
-                              media.url.toLowerCase().endsWith("world.svg")
-                            )
-                          );
-                        },
-                      }
-                    )
-                  ),
-                  media.regions
-                    ? m(
-                        ".legend",
-                        Object.keys(presentRegionsMeta).length == 0
-                          ? null
-                          : Object.values(presentRegionsMeta).map(function (
-                              regionMeta
-                            ) {
-                              return m(".legend-item", [
-                                m(
-                                  ".map-fill[style=background-color: " +
-                                    regionMeta.fill +
-                                    "]"
-                                ),
-                                m(".map-legend-title", regionMeta.legend),
-                              ]);
-                            })
-                      )
-                    : null,
-                  m(".title", media.title),
-                ]);
                 break;
               default:
                 console.log("Not recognized media type " + dataKey);
