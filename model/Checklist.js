@@ -1147,6 +1147,46 @@ export let Checklist = {
       return found;
     });
 
+    // NEW CODE: Include parent taxa for all matching results
+    if (!emptyFilter && searchResults.length > 0) {
+      let parentTaxaToInclude = new Set();
+      
+      // Collect all parent taxa names from matching results
+      searchResults.forEach(function (matchedTaxon) {
+        // For each matched taxon, add all its parent taxa (all except the last one)
+        for (let i = 0; i < matchedTaxon.t.length - 1; i++) {
+          parentTaxaToInclude.add(matchedTaxon.t[i].n);
+        }
+      });
+
+      // Find parent taxa in the full checklist
+      let parentTaxa = this.getData().checklist.filter(function (item) {
+        // Check if this item represents a parent taxon
+        if (item.t.length === 1) {
+          // Single-level taxon - check if it's in our parent set
+          return parentTaxaToInclude.has(item.t[0].n);
+        } else {
+          // Multi-level taxon - check if the last level is in our parent set
+          // and it's shorter than any of our matched results (making it a parent)
+          let lastTaxonName = item.t[item.t.length - 1].n;
+          return parentTaxaToInclude.has(lastTaxonName) && 
+                 searchResults.some(matched => matched.t.length > item.t.length);
+        }
+      });
+
+      // Merge parent taxa with search results, avoiding duplicates
+      let existingTaxaIds = new Set(searchResults.map(function (item) {
+        return item.t.map(t => t.n).join('|');
+      }));
+
+      parentTaxa.forEach(function (parentTaxon) {
+        let parentId = parentTaxon.t.map(t => t.n).join('|');
+        if (!existingTaxaIds.has(parentId)) {
+          searchResults.push(parentTaxon);
+        }
+      });
+    }
+
     Checklist.calculatePossibleFilterValues(searchResults);
     this.queryCache.cache(searchResults);
 
