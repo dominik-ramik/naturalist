@@ -1042,6 +1042,10 @@ export let Checklist = {
     ); //escape for RegEx use
     let textFilterRegex = new RegExp("\\b" + textFilter);
 
+    // Collect parent taxa immediately when matches are found
+    let parentTaxaToInclude = new Set();
+    let matchedTaxaIds = new Set();
+
     let searchResults = this.getData().checklist.filter(function (
       item,
       itemIndex
@@ -1049,88 +1053,95 @@ export let Checklist = {
       let found = true;
 
       if (!emptyFilter) {
-        Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
+        // Taxa filter check with early termination
+        for (let dataPath of Object.keys(Checklist.filter.taxa)) {
+          let index = Object.keys(Checklist.filter.taxa).indexOf(dataPath);
           if (Checklist.filter.taxa[dataPath].selected.length == 0) {
-            return;
+            continue;
           }
 
           let foundAny = false;
-          Checklist.filter.taxa[dataPath].selected.forEach(function (
-            selectedItem
-          ) {
+          for (let selectedItem of Checklist.filter.taxa[dataPath].selected) {
             if (index < item.t.length && item.t[index].n == selectedItem) {
               foundAny = true;
+              break; // Early exit when match found
             }
-          });
+          }
           if (!foundAny) {
             found = false;
+            break; // Early termination - no need to check other filters
           }
-        });
+        }
 
-        Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
-          if (
-            Checklist.filter.data[dataPath].type == "text" ||
-            Checklist.filter.data[dataPath].type == "map regions"
-          ) {
-            if (Checklist.filter.data[dataPath].selected.length == 0) {
-              return;
-            }
-          } else if (Checklist.filter.data[dataPath].type == "number") {
-            if (Checklist.filter.data[dataPath].numeric.operation == "") {
-              return;
-            }
-          }
-
-          let foundAny = false;
-          if (
-            Checklist.filter.data[dataPath].type == "text" ||
-            Checklist.filter.data[dataPath].type == "map regions"
-          ) {
-            Checklist.filter.data[dataPath].selected.forEach(function (
-              selectedItem
+        // Data filter check with early termination
+        if (found) {
+          for (let dataPath of Object.keys(Checklist.filter.data)) {
+            if (
+              Checklist.filter.data[dataPath].type == "text" ||
+              Checklist.filter.data[dataPath].type == "map regions"
             ) {
-              let data = Checklist.getDataFromDataPath(item.d, dataPath);
-              if (!data) {
-                return;
+              if (Checklist.filter.data[dataPath].selected.length == 0) {
+                continue;
               }
+            } else if (Checklist.filter.data[dataPath].type == "number") {
+              if (Checklist.filter.data[dataPath].numeric.operation == "") {
+                continue;
+              }
+            }
 
-              let leafData = Checklist.getAllLeafData(data, true, dataPath);
-              leafData.forEach(function (leafDataItem) {
-                if (selectedItem == leafDataItem) {
+            let foundAny = false;
+            if (
+              Checklist.filter.data[dataPath].type == "text" ||
+              Checklist.filter.data[dataPath].type == "map regions"
+            ) {
+              for (let selectedItem of Checklist.filter.data[dataPath].selected) {
+                let data = Checklist.getDataFromDataPath(item.d, dataPath);
+                if (!data) {
+                  continue;
+                }
+
+                let leafData = Checklist.getAllLeafData(data, true, dataPath);
+                for (let leafDataItem of leafData) {
+                  if (selectedItem == leafDataItem) {
+                    foundAny = true;
+                    break; // Early exit when match found
+                  }
+                }
+                if (foundAny) break; // Early exit when match found
+              }
+            } else if (Checklist.filter.data[dataPath].type == "number") {
+              if (Checklist.filter.data[dataPath].numeric.operation != "") {
+                let valueToCheck = Checklist.getDataFromDataPath(
+                  item.d,
+                  dataPath
+                );
+
+                let numericFilter =
+                  Checklist.filter.numericFilters[
+                    Checklist.filter.data[dataPath].numeric.operation
+                  ];
+
+                if (
+                  numericFilter.comparer(
+                    valueToCheck,
+                    Checklist.filter.data[dataPath].numeric.threshold1,
+                    Checklist.filter.data[dataPath].numeric.threshold2
+                  )
+                ) {
                   foundAny = true;
                 }
-              });
-            });
-          } else if (Checklist.filter.data[dataPath].type == "number") {
-            if (Checklist.filter.data[dataPath].numeric.operation != "") {
-              let valueToCheck = Checklist.getDataFromDataPath(
-                item.d,
-                dataPath
-              );
-
-              let numericFilter =
-                Checklist.filter.numericFilters[
-                  Checklist.filter.data[dataPath].numeric.operation
-                ];
-
-              if (
-                numericFilter.comparer(
-                  valueToCheck,
-                  Checklist.filter.data[dataPath].numeric.threshold1,
-                  Checklist.filter.data[dataPath].numeric.threshold2
-                )
-              ) {
-                foundAny = true;
               }
             }
-          }
 
-          if (!foundAny) {
-            found = false;
+            if (!foundAny) {
+              found = false;
+              break; // Early termination - no need to check other filters
+            }
           }
-        });
+        }
 
-        if (textFilter.length > 0) {
+        // Text filter check with early termination
+        if (found && textFilter.length > 0) {
           //textFilter is already lowercase and so is $$fulltext$$
           if (
             !textFilterRegex.test(
@@ -1144,47 +1155,38 @@ export let Checklist = {
         }
       }
 
+      // If this taxon matches, collect its parent taxa immediately
+      if (found) {
+        let taxonId = item.t.map(t => t.n).join('|');
+        matchedTaxaIds.add(taxonId);
+        
+        // Add all parent taxa (all levels except the last one)
+        for (let i = 0; i < item.t.length - 1; i++) {
+          let parentId = item.t.slice(0, i + 1).map(t => t.n).join('|');
+          parentTaxaToInclude.add(parentId);
+        }
+      }
+
       return found;
     });
 
-    // NEW CODE: Include parent taxa for all matching results
+    // If we have matches and filters, include parent taxa
     if (!emptyFilter && searchResults.length > 0) {
-      let parentTaxaToInclude = new Set();
-      
-      // Collect all parent taxa names from matching results
-      searchResults.forEach(function (matchedTaxon) {
-        // For each matched taxon, add all its parent taxa (all except the last one)
-        for (let i = 0; i < matchedTaxon.t.length - 1; i++) {
-          parentTaxaToInclude.add(matchedTaxon.t[i].n);
-        }
-      });
-
-      // Find parent taxa in the full checklist
+      // Find and add parent taxa from the full checklist
       let parentTaxa = this.getData().checklist.filter(function (item) {
-        // Check if this item represents a parent taxon
-        if (item.t.length === 1) {
-          // Single-level taxon - check if it's in our parent set
-          return parentTaxaToInclude.has(item.t[0].n);
-        } else {
-          // Multi-level taxon - check if the last level is in our parent set
-          // and it's shorter than any of our matched results (making it a parent)
-          let lastTaxonName = item.t[item.t.length - 1].n;
-          return parentTaxaToInclude.has(lastTaxonName) && 
-                 searchResults.some(matched => matched.t.length > item.t.length);
+        let itemId = item.t.map(t => t.n).join('|');
+        
+        // Skip if already in matched results
+        if (matchedTaxaIds.has(itemId)) {
+          return false;
         }
+        
+        // Include if this taxon is in our parent taxa set
+        return parentTaxaToInclude.has(itemId);
       });
 
-      // Merge parent taxa with search results, avoiding duplicates
-      let existingTaxaIds = new Set(searchResults.map(function (item) {
-        return item.t.map(t => t.n).join('|');
-      }));
-
-      parentTaxa.forEach(function (parentTaxon) {
-        let parentId = parentTaxon.t.map(t => t.n).join('|');
-        if (!existingTaxaIds.has(parentId)) {
-          searchResults.push(parentTaxon);
-        }
-      });
+      // Add parent taxa to search results
+      searchResults = searchResults.concat(parentTaxa);
     }
 
     Checklist.calculatePossibleFilterValues(searchResults);
