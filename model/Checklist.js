@@ -2,14 +2,12 @@ import { appVersion, checkForChecklistUpdate } from "../app.js";
 import {
   getCurrentLocaleBestGuess,
   getGradedColor,
-  parseRegionCode,
   routeTo,
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
 import { TinyBibFormatter } from "../lib/TinyBibMD.js";
-import { dataPath } from "./DataManager.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -27,6 +25,8 @@ export let Checklist = {
   _dataFulltextIndex: {},
   _isDraft: false,
   _isDataReady: false,
+
+  _bibFormatter: null,
 
   filter: {
     taxa: {},
@@ -286,8 +286,6 @@ export let Checklist = {
     return this.nameForMapRegionCache.get(regionCode);
   },
 
-  _bibFormatter: null,
-
   getBibliographyKeys: function () {
     if (!this._isDataReady || this._data.general.bibliography === undefined) {
       return [];
@@ -443,6 +441,7 @@ export let Checklist = {
     //try {
     this._data = jsonData;
     this._isDraft = isDraft;
+    this._bibFormatter = null;
 
     Checklist._dataFulltextIndex = {};
 
