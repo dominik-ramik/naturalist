@@ -1037,14 +1037,14 @@ export let DataManager = function () {
               lastSuccesfullCount++;
             }
           } else if (count == 1 && pathSegments.length > 1) {
-            //we may have a candidate for simplified array (aka comma separated values)
+            //we may have a candidate for simplified array (aka | pipe separated values)
             let rawValue =
               row[
                 headers.indexOf(pathSegments[pathSegments.length - 2])
               ].trim();
 
             if (rawValue != "") {
-              let values = rawValue?.split(",").map((v) => v.trim());
+              let values = rawValue?.split("|").map((v) => v.trim());
 
               values = values.map((v) =>
                 processPossibleDataCode(
