@@ -139,11 +139,15 @@ a.citation {
   margin-top: 0.5em;
 }
 
+.region-footnote{
+  display: inline-block;
+  margin-right: 0.25em;;
+}
+
 .region-footnotes-number {
-  background-color: #8d8d8d;
-  color: white;
-  padding-left: 0.2em;
-  padding-right: 0.2em;
-  border-radius: 0.2em;
-  margin-left: 0.2em;
+    border: 1px solid #8d8d8d;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+    border-radius: 0.2em;
+    margin-left: 0.2em;
 }

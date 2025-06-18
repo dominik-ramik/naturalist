@@ -1327,48 +1327,43 @@ export let DataManager = function () {
       return resultObject;
     }
 
-    // Parse inline format: "reg1:suffix:note | reg2:suffix2 | reg3:suffix3:note3"
-    function parseInlineMapRegions(mapRegions, langCode) {
+    // Parse inline format: "regionA:?:noteA | regionB | regionC:! | regionD:?:noteD"
+    function parseInlineMapRegions(mapRegions) {
       const result = {};
 
       if (!mapRegions || mapRegions.trim() === "") {
         return result;
       }
 
-      // Check if using new format with vertical bar separators
-      if (mapRegions.includes("|")) {
-        const regions = mapRegions.split("|").map((r) => r.trim());
+      // Split by pipe separators
+      const regions = mapRegions.split("|").map((r) => r.trim());
 
-        regions.forEach((regionStr) => {
-          if (regionStr.trim() === "") return;
+      regions.forEach((regionStr) => {
+        if (regionStr.trim() === "") return;
 
-          const parts = regionStr.split(":");
-          if (parts.length >= 2) {
-            const regionCode = parts[0].trim();
-            const suffix = parts[1].trim();
-            const note =
-              parts.length > 2 ? parts.slice(2).join(":").trim() : "";
+        const parts = regionStr.split(":");
+        const regionCode = parts[0].trim();
+        
+        if (regionCode === "") return;
 
-            result[regionCode] = {
-              status: suffix,
-              notes: note,
-            };
-          }
-        });
-      } else {
-        // Legacy space-separated format: "reg1:suffix reg2:suffix"
-        const regions = mapRegions.split(" ").map((r) => r.trim());
+        // Initialize region object with empty status and notes
+        const regionObj = {
+          status: "",
+          notes: "",
+        };
 
-        regions.forEach((regionStr) => {
-          if (regionStr.trim() === "") return;
+        // If there's a status part
+        if (parts.length >= 2 && parts[1].trim() !== "") {
+          regionObj.status = parts[1].trim();
+        }
 
-          const parsed = parseRegionCode(regionStr);
-          result[parsed.region] = {
-            status: parsed.suffix,
-            notes: "",
-          };
-        });
-      }
+        // If there's a notes part
+        if (parts.length >= 3 && parts[2].trim() !== "") {
+          regionObj.notes = parts[2].trim();
+        }
+
+        result[regionCode] = regionObj;
+      });
 
       return result;
     }

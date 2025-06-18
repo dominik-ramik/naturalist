@@ -85,9 +85,10 @@ export let TaxonDataItemView = {
         const regionInfo = data[regionCode];
         preprocessedData[regionCode] = {
           ...regionInfo,
-          notes: regionInfo.notes && regionInfo.notes.trim() !== ""
-            ? processMarkdownWithBibliography(regionInfo.notes.trim())
-            : regionInfo.notes
+          notes:
+            regionInfo.notes && regionInfo.notes.trim() !== ""
+              ? processMarkdownWithBibliography(regionInfo.notes.trim())
+              : regionInfo.notes,
         };
       });
 
@@ -109,52 +110,83 @@ export let TaxonDataItemView = {
         }
       });
 
-      const regionsFootnotes =
-        footnotes.length > 0
-          ? footnotes
-              .map(
-                (note, index) =>
-                  `<sup class="region-footnotes-number">${index + 1}</sup>&nbsp;${note}`
-              )
-              .join("<br/>")
-          : "";
-
       // Work directly with object format (using preprocessed data)
-      const renderedRegions = Object.keys(preprocessedData).map((regionCode) => {
-        const regionInfo = preprocessedData[regionCode];
+      const renderedRegions = Object.keys(preprocessedData).map(
+        (regionCode) => {
+          const regionInfo = preprocessedData[regionCode];
 
-        let appendedLegend = mapRegionsSuffixes.find(
-          (item) =>
-            item.suffix == (regionInfo.suffix || regionInfo.status || "")
-        )?.appendedLegend;
+          let appendedLegend = mapRegionsSuffixes.find(
+            (item) =>
+              item.suffix == (regionInfo.suffix || regionInfo.status || "")
+          )?.appendedLegend;
 
-        if (appendedLegend === undefined || appendedLegend === null) {
-          appendedLegend = "";
+          if (
+            appendedLegend === undefined ||
+            appendedLegend === null ||
+            appendedLegend.trim() === ""
+          ) {
+            appendedLegend = "";
+          } else {
+            appendedLegend = processMarkdownWithBibliography(
+              " _(" + appendedLegend + ")_"
+            );
+          }
+
+          let regionName = Checklist.nameForMapRegion(regionCode);
+
+          // Create region name element with optional footnote
+          let regionNameElement;
+          if (regionInfo.notes && regionInfo.notes.trim() !== "") {
+            const footnoteNumber = notesMap.get(regionInfo.notes.trim());
+            regionNameElement = [
+              m("strong", regionName),
+              m("sup", footnoteNumber),
+            ];
+          } else {
+            regionNameElement = m("strong", regionName);
+          }
+
+          // Create the full region element with appended legend in italics
+          if (appendedLegend && appendedLegend.trim() !== "") {
+            return m("span", [
+              regionNameElement,
+              m("em", m.trust(appendedLegend)),
+            ]);
+          } else {
+            return m("span", regionNameElement);
+          }
         }
-
-        let regionName = Checklist.nameForMapRegion(regionCode);
-
-        // Add footnote reference directly after region name if notes are available
-        if (regionInfo.notes && regionInfo.notes.trim() !== "") {
-          const footnoteNumber = notesMap.get(regionInfo.notes.trim());
-          regionName = `${regionName}<sup>${footnoteNumber}</sup>`;
-        }
-
-        let regionText = "**" + regionName + "**" + appendedLegend;
-
-        return regionText;
-      });
+      );
 
       if (renderedRegions.length == 0) {
         return null;
       }
 
-      const regionsText = renderedRegions.join(", ");
-      const fullText = regionsFootnotes
-        ? `${regionsText}<div class="region-footnotes">${regionsFootnotes}</div>`
-        : regionsText;
+      // Create footnotes elements
+      const footnotesElements =
+        footnotes.length > 0
+          ? footnotes.map((note, index) =>
+              m(".region-footnote", [
+                m("sup.region-footnotes-number", (index + 1).toString()),
+                "\u00A0", // non-breaking space
+                m.trust(note),
+              ])
+            )
+          : [];
 
-      return m(".map-regions-data", m.trust(marked.parse(fullText)));
+      return m(".map-regions-data", [
+        m(
+          "span",
+          renderedRegions.reduce((acc, region, index) => {
+            if (index > 0) acc.push(", ");
+            acc.push(region);
+            return acc;
+          }, [])
+        ),
+        footnotesElements.length > 0
+          ? m(".region-footnotes", footnotesElements)
+          : null,
+      ]);
     }
 
     let listDisplayType = "span.bullet-list";

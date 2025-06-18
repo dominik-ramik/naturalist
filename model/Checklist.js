@@ -1165,16 +1165,6 @@ export let Checklist = {
     return this.getData().meta[dataType];
   },
   getMapRegionsMeta: function (returnDefault) {
-    if (this.getData().meta.mapRegions) {
-      //this is here for backward compatibility, remove in future versions TODO
-      console.log("Deprecated");
-      if (returnDefault) {
-        return this.getData().meta.mapRegions.default;
-      } else {
-        return this.getData().meta.mapRegions.suffixes;
-      }
-    }
-
     if (returnDefault) {
       return this.getData().meta.mapRegionsLegend.default;
     } else {
