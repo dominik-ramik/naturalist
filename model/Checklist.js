@@ -201,34 +201,34 @@ export let Checklist = {
   databaseShortcodeList: [
     {
       code: "gbif",
-      name: "GBIF ($id$)",
+      name: "GBIF ($note$$id$)",
       url: "https://www.gbif.org/occurrence/$id$",
     },
     {
       code: "gbif.s",
-      name: "GBIF (Taxon $id$)",
+      name: "GBIF (Taxon $note$$id$)",
       url: "https://www.gbif.org/species/$id$",
     },
     {
       code: "inat",
-      name: "iNat ($id$)",
+      name: "iNat ($note$$id$)",
       url: "https://www.inaturalist.org/observations/$id$",
     },
     {
       code: "ebird",
-      name: "eBird ($id$)",
+      name: "eBird ($note$$id$)",
       url: "https://ebird.org/checklist/S$id$",
       idModifier: (id) =>
         id.toLowerCase().startsWith("s") ? id.substring(1) : id,
     },
     {
       code: "clml",
-      name: "ML ($id$)",
+      name: "ML ($note$$id$)",
       url: "https://macaulaylibrary.org/asset/$id$",
     },
     {
       code: "obse",
-      name: "Observation.org ($id$)",
+      name: "Observation.org ($note$$id$)",
       url: "https://observation.org/observation/$id$",
     },
   ],
@@ -238,8 +238,8 @@ export let Checklist = {
 
     if (text.indexOf("@") > -1) {
       text = text.replace(
-        /@([a-z]+)(\.[a-z]+)?:([a-zA-Z0-9-_\/]+)/gm,
-        (match, enginePrefix, engineOption, value) => {
+        /@([a-z]+)(\.[a-z]+)?:(?:([^:]+):)?([a-zA-Z0-9-_\/]+)/gm,
+        (match, enginePrefix, engineOption, note, value) => {
           let engineCode = enginePrefix + (engineOption ? engineOption : "");
 
           let engine = Checklist.databaseShortcodeList.find(
@@ -251,11 +251,14 @@ export let Checklist = {
               engine.idModifier !== undefined
                 ? engine.idModifier(value)
                 : value;
+            
+            // Prepare note and id for replacement
+            let noteText = note ? note + " " : "";
             let link =
               '<a class="citation" href="' +
               engine.url.replace("$id$", value) +
               '" target="_blank">' +
-              engine.name.replace("$id$", value) +
+              engine.name.replace("$note$", noteText).replace("$id$", value) +
               "</a>";
             return match.replace(match, link);
           } else {
@@ -1162,13 +1165,16 @@ export let Checklist = {
         
         // Add all parent taxa (all levels except the last one)
         for (let i = 0; i < item.t.length - 1; i++) {
-          let parentId = item.t.slice(0, i + 1).map(t => t.n).join('|');
+          let parentId = item.t[i].n;
           parentTaxaToInclude.add(parentId);
         }
       }
 
       return found;
     });
+
+    console.log("matchedTaxaIds", matchedTaxaIds);
+    console.log("parentTaxaToInclude", parentTaxaToInclude);
 
     // If we have matches and filters, include parent taxa
     if (!emptyFilter && searchResults.length > 0) {
@@ -1181,8 +1187,14 @@ export let Checklist = {
           return false;
         }
         
-        // Include if this taxon is in our parent taxa set
-        return parentTaxaToInclude.has(itemId);
+        // Check if any of the taxon names at any level is in our parent taxa set
+        for (let i = 0; i < item.t.length; i++) {
+          if (parentTaxaToInclude.has(item.t[i].n)) {
+            return true;
+          }
+        }
+        
+        return false;
       });
 
       // Add parent taxa to search results
