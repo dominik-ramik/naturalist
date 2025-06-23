@@ -1081,6 +1081,32 @@ export let materialColors = {
   },
 };
 
+/**
+ * Converts an HTML string to plain text, preserving line breaks for block elements.
+ * Highly efficient, uses DOM parsing and innerText.
+ * @param {string} html
+ * @returns {string}
+ */
+export function htmlToPlainText(html) {
+  if (!html || typeof html !== 'string') return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  // Replace <br> with newlines
+  tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+  // Add newlines after block elements
+  tempDiv.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6, blockquote, pre').forEach(el => {
+    el.insertAdjacentText('afterend', '\n');
+  });
+  let text = tempDiv.innerText || tempDiv.textContent || '';
+  // Normalize whitespace and newlines
+  text = text.replace(/[ \t]+/g, ' ')
+             .replace(/\n[ \t]+/g, '\n')
+             .replace(/[ \t]+\n/g, '\n')
+             .replace(/\n{3,}/g, '\n\n')
+             .trim();
+  return text;
+}
+
 let ianaLocaleSubtags = {
   aa: "Afar",
   ab: "Abkhazian",
