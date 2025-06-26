@@ -11,7 +11,7 @@ import {
 export let TaxonDataItemView = {
   originalData: null,
 
-  listOfTaxonDataItemViewFromSubitems: function (
+  renderDataItem: function (
     data,
     taxon,
     dataPath,
@@ -24,7 +24,8 @@ export let TaxonDataItemView = {
       return null;
     }
 
-    if (meta.contentType == "image") {
+    if (meta.formatting == "image") {
+
       if (data.source.toString().trim() == "") {
         return null;
       }
@@ -58,7 +59,7 @@ export let TaxonDataItemView = {
       );
     }
 
-    if (meta.contentType == "taxon") {
+    if (meta.formatting == "taxon") {
       if (data.n.trim() == "") {
         return null;
       }
@@ -72,9 +73,7 @@ export let TaxonDataItemView = {
       });
     }
 
-    //console.log("meta.contentType:", meta.contentType);
-
-    if (meta.contentType == "map regions") {
+    if (meta.formatting == "map regions") {
       let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
 
       //console.log("Map Regions Suffixes:", mapRegionsSuffixes);
@@ -317,11 +316,13 @@ export let TaxonDataItemView = {
         css = css.substring(0, css.indexOf(":"));
       }
       return css;
+    }    let meta = Checklist.getMetaForDataPath(dataPath);
+    if (meta === null) {
+      return null;
     }
-
-    let meta = Checklist.getMetaForDataPath(dataPath);
+    
     var itemType = TaxonDataItemView.getItemType(data);
-    if (meta.contentType == "map regions") {
+    if (meta.formatting == "map regions") {
       itemType = "object";
     }
 
@@ -365,10 +366,10 @@ export let TaxonDataItemView = {
       }
 
       //process markdown and items with templates
-      if (meta.format == "markdown" || (meta.template && meta.template != "")) {
+      if (meta.formatting == "markdown" || (meta.template && meta.template != "")) {
         data = processMarkdownWithBibliography(data, tailingSeparator);
         data = m.trust(data);
-      } else if (meta.format == "badge") {
+      } else if (meta.formatting == "badge") {
         let badgeMeta = meta.badges;
 
         let badgeFormat = badgeMeta.find(function (possibleFormat) {
@@ -406,7 +407,7 @@ export let TaxonDataItemView = {
       }
     }
 
-    let subitemsList = TaxonDataItemView.listOfTaxonDataItemViewFromSubitems(
+    let subitemsList = TaxonDataItemView.renderDataItem(
       data,
       taxon,
       dataPath,

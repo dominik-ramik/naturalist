@@ -15,9 +15,7 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "") {
       (citeKey) => {
         return {
           prefix:
-            '<a class="citation" data-citekey="' +
-            citeKey.toLowerCase() +
-            '">',
+            '<a class="citation" data-citekey="' + citeKey.toLowerCase() + '">',
           suffix: "</a>",
         };
       }
@@ -116,7 +114,7 @@ export function filterTerminalLeaves(nodes) {
 
 export function parseRegionCode(region) {
   // Handle both legacy and new formats
-  if (typeof region === 'string') {
+  if (typeof region === "string") {
     let parts = region.split(":");
 
     if (parts.length < 2) {
@@ -125,16 +123,16 @@ export function parseRegionCode(region) {
     }
 
     // Legacy format: "region:suffix" or new format: "region:suffix:note"
-    return { 
-      region: parts[0], 
+    return {
+      region: parts[0],
       suffix: parts[1],
-      note: parts.length > 2 ? parts.slice(2).join(":") : ""
+      note: parts.length > 2 ? parts.slice(2).join(":") : "",
     };
-  } else if (typeof region === 'object' && region.region) {
+  } else if (typeof region === "object" && region.region) {
     // Already parsed object
     return region;
   }
-  
+
   console.error("Invalid region format", region);
   return { region: "", suffix: "", note: "" };
 }
@@ -146,13 +144,16 @@ export function getRegionColors(regions, fixForWorldMap) {
 
   // Handle both legacy string format and new object format
   let regionsToProcess = [];
-  
-  if (typeof regions === 'string') {
+
+  if (typeof regions === "string") {
     // Legacy format - space separated regions
-    regionsToProcess = regions.split(" ").map(r => r.trim()).filter(r => r !== "");
-  } else if (typeof regions === 'object' && regions.regions) {
+    regionsToProcess = regions
+      .split(" ")
+      .map((r) => r.trim())
+      .filter((r) => r !== "");
+  } else if (typeof regions === "object" && regions.regions) {
     // New object format
-    regionsToProcess = Object.keys(regions.regions).map(regionCode => {
+    regionsToProcess = Object.keys(regions.regions).map((regionCode) => {
       const regionData = regions.regions[regionCode];
       return regionCode + ":" + regionData.status;
     });
@@ -295,7 +296,7 @@ export function shouldHide(dataPath, hideExpression, filterData, purpose) {
   if (split === undefined || split.length == 0) {
     return false;
   }
-  
+
   let ifunless = split[0];
   let filterSelectedValues = filterData[split[1]].selected;
   let operator = split[2];
@@ -706,7 +707,7 @@ export function filterMatches(data) {
   if (
     Checklist.filter.text.trim() != "" &&
     typeof data === "string" &&
-    data.toLowerCase().indexOf(Checklist.filter.text.toLowerCase()) >= 0
+    data.toLowerCase().includes(Checklist.filter.text.toLowerCase())
   ) {
     return true;
   }
@@ -1088,22 +1089,25 @@ export let materialColors = {
  * @returns {string}
  */
 export function htmlToPlainText(html) {
-  if (!html || typeof html !== 'string') return '';
-  const tempDiv = document.createElement('div');
+  if (!html || typeof html !== "string") return "";
+  const tempDiv = document.createElement("div");
   tempDiv.innerHTML = html;
   // Replace <br> with newlines
-  tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+  tempDiv.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
   // Add newlines after block elements
-  tempDiv.querySelectorAll('p, div, li, h1, h2, h3, h4, h5, h6, blockquote, pre').forEach(el => {
-    el.insertAdjacentText('afterend', '\n');
-  });
-  let text = tempDiv.innerText || tempDiv.textContent || '';
+  tempDiv
+    .querySelectorAll("p, div, li, h1, h2, h3, h4, h5, h6, blockquote, pre")
+    .forEach((el) => {
+      el.insertAdjacentText("afterend", "\n");
+    });
+  let text = tempDiv.innerText || tempDiv.textContent || "";
   // Normalize whitespace and newlines
-  text = text.replace(/[ \t]+/g, ' ')
-             .replace(/\n[ \t]+/g, '\n')
-             .replace(/[ \t]+\n/g, '\n')
-             .replace(/\n{3,}/g, '\n\n')
-             .trim();
+  text = text
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   return text;
 }
 

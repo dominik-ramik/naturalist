@@ -81,10 +81,11 @@ export let DataManager = function () {
       ).forEach(function (key) {
         dataPathsToConsider.push(key);
       });
+
       Object.keys(checklist.versions[lang.code].dataset.meta.data).forEach(
         function (key) {
           if (
-            checklist.versions[lang.code].dataset.meta.data[key].format ==
+            checklist.versions[lang.code].dataset.meta.data[key].formatting ==
             "markdown"
           ) {
             dataPathsToConsider.push(key);
@@ -113,7 +114,7 @@ export let DataManager = function () {
     });
 
     console.log("New checklist", checklist);
-//    console.log("New checklist string", JSON.stringify(checklist));
+    //    console.log("New checklist string", JSON.stringify(checklist));
 
     return checklist;
     function gatherReferences() {
@@ -217,7 +218,7 @@ export let DataManager = function () {
         for (const row of data.sheets.content.tables.customDataDefinition.data[
           lang.code
         ]) {
-          if (row.contentType !== "image") {
+          if (row.formatting !== "image") {
             continue;
           }
 
@@ -496,6 +497,8 @@ export let DataManager = function () {
         3
       );
 
+      console.log(data.sheets.checklist.data[lang.code]);
+
       let version = {
         languageName: lang.name,
         fallbackUiLang: lang.fallbackLanguage,
@@ -636,7 +639,7 @@ export let DataManager = function () {
           title: "",
           searchCategory: "",
           separator: "bullet list",
-          contentType: "text",
+          formatting: "text",
           template: "",
           placement: "bottom",
         };
@@ -657,7 +660,7 @@ export let DataManager = function () {
         }
 
         matchingComputedDataPaths.forEach(function (computedDataPath) {
-          if (info.role == "taxon") {
+          if (info.formatting == "taxon") {
             return;
           }
 
@@ -779,11 +782,10 @@ export let DataManager = function () {
             }
 
             meta[computedDataPath].separator = info.fullRow.subitemsSeparator;
-            meta[computedDataPath].contentType = info.fullRow.contentType;
+            meta[computedDataPath].formatting = info.fullRow.formatting;
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
-            meta[computedDataPath].format = info.fullRow.formatting;
 
             if (info.fullRow.formatting.toLowerCase() == "badge") {
               meta[computedDataPath].badges = [];
@@ -880,6 +882,7 @@ export let DataManager = function () {
       let headers = table[0].map(function (item) {
         return item.toLowerCase();
       });
+
       //check duplicates in headers
       let headersCache = [];
       headers.forEach(function (header) {
@@ -905,7 +908,9 @@ export let DataManager = function () {
             return;
           }
 
-          if (info.role == "taxon") {
+          //console.log("INFO", info.name, info);
+
+          if (info.formatting == "taxon") {
             let taxon = readTaxon(headers, row, info.name, lang.code);
 
             let taxonIsEmpty = taxon?.n?.trim() == "" && taxon?.a?.trim() == "";
@@ -925,7 +930,7 @@ export let DataManager = function () {
                 );
               }
             }
-          } else if (info.role == "data") {
+          } else if (info.formatting != "taxon") {
             includeTreefiedData(
               rowObj.d,
               headers,
@@ -937,7 +942,7 @@ export let DataManager = function () {
               lang.code
             );
           } else {
-            console.log("Unknown role: " + info.role);
+            console.log("Unknown formatting: " + info.formatting);
           }
         });
 
@@ -1046,6 +1051,7 @@ export let DataManager = function () {
             if (rawValue != "") {
               let values = rawValue?.split("|").map((v) => v.trim());
 
+              //*
               values = values.map((v) =>
                 processPossibleDataCode(
                   countedComputedPath,
@@ -1055,6 +1061,7 @@ export let DataManager = function () {
                   log
                 )
               );
+              //*/
 
               for (let i = 0; i < values.length; i++) {
                 const e = values[i];
@@ -1129,8 +1136,9 @@ export let DataManager = function () {
     dataCodesCache = new Map();
 
     function getGenericData(headers, row, computedPath, info, langCode) {
-      switch (info.type) {
-        case "general":
+
+      switch (info.formatting) {
+        case "text":
           let stringValue = readSimpleData(
             headers,
             row,
@@ -1196,6 +1204,17 @@ export let DataManager = function () {
             return "";
           }
           if (stringValue.toString().length > 0) {
+            
+            console.log(computedPath, stringValue)
+
+            stringValue = processPossibleDataCode(
+              computedPath,
+              stringValue,
+              data.sheets.appearance.tables.dataCodes.data,
+              langCode,
+              log
+            );
+
             let matchingMetaRow =
               data.sheets.content.tables.customDataDefinition.data[
                 langCode
@@ -1208,10 +1227,16 @@ export let DataManager = function () {
 
             let expectedType = "text";
             if (matchingMetaRow != null) {
-              expectedType = matchingMetaRow.contentType;
+              expectedType = matchingMetaRow.formatting;
             }
 
             switch (expectedType) {
+              case "image":
+                return stringValue;
+                break;
+              case "badge":
+                return stringValue;
+                break;
               case "text":
                 stringValue = DOMPurify.sanitize(stringValue);
 
@@ -1219,14 +1244,12 @@ export let DataManager = function () {
                 stringValue = stringValue.replace(/\r\n/, "\\n");
                 stringValue = stringValue.replace(/[\r\n]/, "\\n");
 
-                stringValue = processPossibleDataCode(
-                  computedPath,
-                  stringValue,
-                  data.sheets.appearance.tables.dataCodes.data,
-                  langCode,
-                  log
-                );
-
+                return stringValue;
+                break;
+              case "markdown":
+                return stringValue;
+                break;
+              case "taxon":
                 return stringValue;
                 break;
               case "number":
@@ -1260,6 +1283,8 @@ export let DataManager = function () {
                 return date;
                 break;
               default:
+                console.log("Unknown formatting: " + expectedType, stringValue);
+                //return stringValue;
                 break;
             }
           }
@@ -1278,7 +1303,7 @@ export let DataManager = function () {
           return readMedia(headers, row, computedPath, langCode);
           break;
         default:
-          console.log("Unknown data type: " + info.type);
+          console.log("Unknown formatting: " + info.formatting);
           break;
       }
       return "";
@@ -1343,7 +1368,7 @@ export let DataManager = function () {
 
         const parts = regionStr.split(":");
         const regionCode = parts[0].trim();
-        
+
         if (regionCode === "") return;
 
         // Initialize region object with empty status and notes

@@ -201,34 +201,34 @@ export let Checklist = {
   databaseShortcodeList: [
     {
       code: "gbif",
-      name: "GBIF ($note$$id$)",
+      name: "GBIF ($author$$id$)",
       url: "https://www.gbif.org/occurrence/$id$",
     },
     {
       code: "gbif.s",
-      name: "GBIF (Taxon $note$$id$)",
+      name: "GBIF (Taxon $author$$id$)",
       url: "https://www.gbif.org/species/$id$",
     },
     {
       code: "inat",
-      name: "iNat ($note$$id$)",
+      name: "$author$ (iNat $id$)",
       url: "https://www.inaturalist.org/observations/$id$",
     },
     {
       code: "ebird",
-      name: "eBird ($note$$id$)",
+      name: "eBird ($author$$id$)",
       url: "https://ebird.org/checklist/S$id$",
       idModifier: (id) =>
         id.toLowerCase().startsWith("s") ? id.substring(1) : id,
     },
     {
       code: "clml",
-      name: "ML ($note$$id$)",
+      name: "ML ($author$$id$)",
       url: "https://macaulaylibrary.org/asset/$id$",
     },
     {
       code: "obse",
-      name: "Observation.org ($note$$id$)",
+      name: "Observation.org ($author$$id$)",
       url: "https://observation.org/observation/$id$",
     },
   ],
@@ -239,7 +239,7 @@ export let Checklist = {
     if (text.indexOf("@") > -1) {
       text = text.replace(
         /@([a-z]+)(\.[a-z]+)?:(?:([^:]+):)?([a-zA-Z0-9-_\/]+)/gm,
-        (match, enginePrefix, engineOption, note, value) => {
+        (match, enginePrefix, engineOption, author, value) => {
           let engineCode = enginePrefix + (engineOption ? engineOption : "");
 
           let engine = Checklist.databaseShortcodeList.find(
@@ -251,14 +251,14 @@ export let Checklist = {
               engine.idModifier !== undefined
                 ? engine.idModifier(value)
                 : value;
-            
+
             // Prepare note and id for replacement
-            let noteText = note ? note + " " : "";
+            let authorText = author ? author + " " : "";
             let link =
               '<a class="citation" href="' +
               engine.url.replace("$id$", value) +
               '" target="_blank">' +
-              engine.name.replace("$note$", noteText).replace("$id$", value) +
+              engine.name.replace("$author$", authorText).replace("$id$", value) +
               "</a>";
             return match.replace(match, link);
           } else {
@@ -278,14 +278,14 @@ export let Checklist = {
       const meta = Checklist.getMapRegionsNamesMeta()?.find(
         (x) => x.code == regionCode
       );
-      
+
       if (meta) {
         this.nameForMapRegionCache.set(regionCode, meta.name);
       } else {
         this.nameForMapRegionCache.set(regionCode, regionCode);
       }
     }
-    
+
     return this.nameForMapRegionCache.get(regionCode);
   },
 
@@ -422,6 +422,8 @@ export let Checklist = {
   //precompiled Handlebars templates saved as dataPath key and template as a value ... precompiled during loadData
   handlebarsTemplates: {},
 
+  _metaForDataPathCache: {},
+
   loadData: function (jsonData, isDraft) {
     if (
       jsonData === undefined ||
@@ -443,10 +445,12 @@ export let Checklist = {
 
     //try {
     this._data = jsonData;
+
     this._isDraft = isDraft;
     this._bibFormatter = null;
 
     Checklist._dataFulltextIndex = {};
+    Checklist._metaForDataPathCache = {};
 
     Checklist.handlebarsTemplates = {};
     Checklist._queryResultCache = {};
@@ -491,7 +495,7 @@ export let Checklist = {
           possible: {},
           selected: [],
           color: "",
-          type: Checklist.getMetaForDataPath(dataPath).contentType,
+          type: Checklist.getMetaForDataPath(dataPath).formatting,
           numeric: {
             threshold1: null,
             threshold2: null,
@@ -561,6 +565,7 @@ export let Checklist = {
     //browse possible data and add necessary items into filter
     Checklist.getAllLanguages().forEach(function (lang) {
       Checklist._dataFulltextIndex[lang.code] = [];
+
       Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
         taxon,
         index
@@ -616,6 +621,10 @@ export let Checklist = {
     taxonName,
     taxonAuthority
   ) {
+    if(currentValue === undefined || currentValue === null) {
+      return currentValue;
+    }
+
     return {
       value: currentValue.toString(),
       data: taxonData,
@@ -801,18 +810,18 @@ export let Checklist = {
       //console.log("Meta", Checklist.getMetaForDataPath(dataPath));
 
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
-      
-      if(Checklist.getMetaForDataPath(dataPath).contentType == "map regions") {
+
+      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "map regions") {
         return primitives;
       }
 
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
-          if (Checklist.getMetaForDataPath(dataPath).contentType == "image") {
+          if (Checklist.getMetaForDataPath(dataPath).formatting == "image") {
             primitives.push(arrayMember.source);
             primitives.push(arrayMember.title);
           } else if (
-            Checklist.getMetaForDataPath(dataPath + (index + 1)).contentType ==
+            Checklist.getMetaForDataPath(dataPath + (index + 1)).formatting ==
             "taxon"
           ) {
             primitives.push(arrayMember.n + " " + arrayMember.a);
@@ -822,7 +831,7 @@ export let Checklist = {
           }
         });
       } else if (
-        Checklist.getMetaForDataPath(dataPath).contentType == "taxon"
+        Checklist.getMetaForDataPath(dataPath)?.formatting == "taxon"
       ) {
         primitives.push(currentData.n);
         primitives.push(currentData.a);
@@ -853,14 +862,14 @@ export let Checklist = {
     if (!this.getAllLeafDataCache.has(cacheKey)) {
       let data = [];
 
-      if (Checklist.getDataMeta()[currentPath]?.contentType == "map regions") {
+      if (Checklist.getDataMeta()[currentPath]?.formatting == "map regions") {
         // Work directly with object format
-        if (typeof taxonData === 'object' && taxonData) {
+        if (typeof taxonData === "object" && taxonData) {
           data = Object.keys(taxonData).map((regionCode) =>
             Checklist.nameForMapRegion(regionCode)
           );
         }
-      } else if (Checklist.getDataMeta()[currentPath]?.contentType == "image") {
+      } else if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
         console.log("################### IMG", taxonData);
 
         data = "<img src='" + "?" + "' />";
@@ -1043,18 +1052,13 @@ export let Checklist = {
       /[-\/\\^$*+?.()|[\]{}]/g,
       "\\$&"
     ); //escape for RegEx use
-    let textFilterRegex = new RegExp("\\b" + textFilter);
-
-    // Collect parent taxa immediately when matches are found
-    let parentTaxaToInclude = new Set();
-    let matchedTaxaIds = new Set();
-
-    let searchResults = this.getData().checklist.filter(function (
-      item,
-      itemIndex
-    ) {
+    let textFilterRegex = new RegExp("\\b" + textFilter); // 1. Collect matched items and their parent paths
+    let matchedItems = [];
+    let parentPaths = [];
+    let matchedKeys = new Set();
+    this.getData().checklist.forEach(function (item, itemIndex) {
       let found = true;
-
+      // ...existing filter logic...
       if (!emptyFilter) {
         // Taxa filter check with early termination
         for (let dataPath of Object.keys(Checklist.filter.taxa)) {
@@ -1062,20 +1066,18 @@ export let Checklist = {
           if (Checklist.filter.taxa[dataPath].selected.length == 0) {
             continue;
           }
-
           let foundAny = false;
           for (let selectedItem of Checklist.filter.taxa[dataPath].selected) {
             if (index < item.t.length && item.t[index].n == selectedItem) {
               foundAny = true;
-              break; // Early exit when match found
+              break;
             }
           }
           if (!foundAny) {
             found = false;
-            break; // Early termination - no need to check other filters
+            break;
           }
         }
-
         // Data filter check with early termination
         if (found) {
           for (let dataPath of Object.keys(Checklist.filter.data)) {
@@ -1091,26 +1093,25 @@ export let Checklist = {
                 continue;
               }
             }
-
             let foundAny = false;
             if (
               Checklist.filter.data[dataPath].type == "text" ||
               Checklist.filter.data[dataPath].type == "map regions"
             ) {
-              for (let selectedItem of Checklist.filter.data[dataPath].selected) {
+              for (let selectedItem of Checklist.filter.data[dataPath]
+                .selected) {
                 let data = Checklist.getDataFromDataPath(item.d, dataPath);
                 if (!data) {
                   continue;
                 }
-
                 let leafData = Checklist.getAllLeafData(data, true, dataPath);
                 for (let leafDataItem of leafData) {
                   if (selectedItem == leafDataItem) {
                     foundAny = true;
-                    break; // Early exit when match found
+                    break;
                   }
                 }
-                if (foundAny) break; // Early exit when match found
+                if (foundAny) break;
               }
             } else if (Checklist.filter.data[dataPath].type == "number") {
               if (Checklist.filter.data[dataPath].numeric.operation != "") {
@@ -1118,12 +1119,10 @@ export let Checklist = {
                   item.d,
                   dataPath
                 );
-
                 let numericFilter =
                   Checklist.filter.numericFilters[
                     Checklist.filter.data[dataPath].numeric.operation
                   ];
-
                 if (
                   numericFilter.comparer(
                     valueToCheck,
@@ -1135,17 +1134,14 @@ export let Checklist = {
                 }
               }
             }
-
             if (!foundAny) {
               found = false;
-              break; // Early termination - no need to check other filters
+              break;
             }
           }
         }
-
         // Text filter check with early termination
         if (found && textFilter.length > 0) {
-          //textFilter is already lowercase and so is $$fulltext$$
           if (
             !textFilterRegex.test(
               Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()][
@@ -1157,54 +1153,43 @@ export let Checklist = {
           }
         }
       }
-
-      // If this taxon matches, collect its parent taxa immediately
       if (found) {
-        let taxonId = item.t.map(t => t.n).join('|');
-        matchedTaxaIds.add(taxonId);
-        
-        // Add all parent taxa (all levels except the last one)
-        for (let i = 0; i < item.t.length - 1; i++) {
-          let parentId = item.t[i].n;
-          parentTaxaToInclude.add(parentId);
+        matchedItems.push(item);
+        let key = item.t.map((t) => t.n).join("|");
+        matchedKeys.add(key);
+        // Add all parent paths (not just immediate parent)
+        for (let i = 1; i < item.t.length; i++) {
+          parentPaths.push(item.t.slice(0, i).map((t) => t.n));
         }
       }
-
-      return found;
+    }); // 2. Find true parent items
+    let parentItems = [];
+    let matchedKeySet = new Set(
+      matchedItems.map((item) => item.t.map((t) => t.n).join("|"))
+    );
+    let parentKeySet = new Set();
+    parentPaths.forEach(function (parentPathArr) {
+      let parentKey = parentPathArr.join("|");
+      if (parentKeySet.has(parentKey) || matchedKeySet.has(parentKey)) return;
+      let parent = Checklist.getData().checklist.find(
+        (candidate) => candidate.t.map((t) => t.n).join("|") === parentKey
+      );
+      if (parent) {
+        parentItems.push(parent);
+        parentKeySet.add(parentKey);
+      }
     });
 
-    console.log("matchedTaxaIds", matchedTaxaIds);
-    console.log("parentTaxaToInclude", parentTaxaToInclude);
+    // 3. Build final results in checklist order
+    let requiredSet = new Set([...matchedItems, ...parentItems]);
+    let finalSearchResults = this.getData().checklist.filter((item) =>
+      requiredSet.has(item)
+    );
 
-    // If we have matches and filters, include parent taxa
-    if (!emptyFilter && searchResults.length > 0) {
-      // Find and add parent taxa from the full checklist
-      let parentTaxa = this.getData().checklist.filter(function (item) {
-        let itemId = item.t.map(t => t.n).join('|');
-        
-        // Skip if already in matched results
-        if (matchedTaxaIds.has(itemId)) {
-          return false;
-        }
-        
-        // Check if any of the taxon names at any level is in our parent taxa set
-        for (let i = 0; i < item.t.length; i++) {
-          if (parentTaxaToInclude.has(item.t[i].n)) {
-            return true;
-          }
-        }
-        
-        return false;
-      });
+    Checklist.calculatePossibleFilterValues(finalSearchResults);
+    this.queryCache.cache(finalSearchResults);
 
-      // Add parent taxa to search results
-      searchResults = searchResults.concat(parentTaxa);
-    }
-
-    Checklist.calculatePossibleFilterValues(searchResults);
-    this.queryCache.cache(searchResults);
-
-    return searchResults;
+    return finalSearchResults;
   },
 
   getTaxaMeta: function () {
@@ -1336,18 +1321,23 @@ export let Checklist = {
   },
 
   getMetaForDataPath: function (dataPath) {
+    
     if (dataPath.endsWith(templateResultSuffix)) {
       dataPath = dataPath.substring(
         0,
         dataPath.length - templateResultSuffix.length
       );
     }
-    if (this.getData().meta.data.hasOwnProperty(dataPath)) {
-      return this.getData().meta.data[dataPath];
+    if (this._metaForDataPathCache.hasOwnProperty(dataPath)) {
+      return this._metaForDataPathCache[dataPath];
     }
-
+    let meta = null;
+    if (this.getData().meta.data.hasOwnProperty(dataPath)) {
+      meta = this.getData().meta.data[dataPath];
+    }
+    this._metaForDataPathCache[dataPath] = meta;
+    return meta;
     //data not intended to be shown in view
-    return null;
     //return this.getData().meta.data["$$default-custom$$"];
   },
 
@@ -1527,7 +1517,11 @@ export let Checklist = {
 
               Object.keys(mediaData).forEach(function (key) {
                 const item = mediaData[key];
-                if (item === undefined || item === null || Object.keys(item).length == 0) {
+                if (
+                  item === undefined ||
+                  item === null ||
+                  Object.keys(item).length == 0
+                ) {
                   return;
                 }
                 cleanedMediaData.push(item);
@@ -1598,5 +1592,19 @@ export let Checklist = {
     });
     results.sort();
     return results;
+  },
+
+  postprocessedItemPropSuffix: "$$postprocessed",
+  getPostProcessedValueForSimpleItem: function (item, dataPath) {
+    let postprocessedKey = dataPath + Checklist.postprocessedItemPropSuffix;
+    if (item.d && item.d.hasOwnProperty(postprocessedKey)) {
+      return item.d[postprocessedKey];
+    } else {
+      let postProcessed = { plain: "", html: "" };
+
+      item[postprocessedKey] = postProcessed;
+
+      return postProcessed;
+    }
   },
 };

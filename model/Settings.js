@@ -212,8 +212,8 @@ export let Settings = {
 
             if (
               type == "taxa" ||
-              Checklist.getMetaForDataPath(dataPath).contentType == "text" ||
-              Checklist.getMetaForDataPath(dataPath).contentType ==
+              Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
+              Checklist.getMetaForDataPath(dataPath).formatting ==
                 "map regions"
             ) {
               names.push(
@@ -229,7 +229,7 @@ export let Settings = {
                   )
               );
             } else if (
-              Checklist.getMetaForDataPath(dataPath).contentType == "number"
+              Checklist.getMetaForDataPath(dataPath).formatting == "number"
             ) {
               let operation = itemObject[type][dataPath].o;
               let t1 = itemObject[type][dataPath].a;

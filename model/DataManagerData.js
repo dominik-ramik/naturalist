@@ -16,25 +16,15 @@ export let nlDataStructure = {
         Object.keys(table.columns).forEach(function (columnKey) {
           if (columnKey == "columnName" && table.data[langCode]) {
             table.data[langCode].forEach(function (row) {
-              let role = "data";
-              let type = "general";
-              if (row.contentType == "taxon") {
-                type = "taxon";
-              }
-              if (row.contentType == "map regions") {
-                type = "map regions"; // supports inline format (reg1:suffix:note | reg2:suffix2) and column format (suffix or suffix|note)
-              }
+              let formatting = "text";
+
               if (tableKey == "taxa") {
-                type = "taxon"; //can have .name and .authority
-                role = "taxon";
+                formatting = "taxon"; //can have .name and .authority
               }
               if (tableKey == "media") {
-                type = "media"; //can have .source and .title
+                formatting = "media"; //can have .source and .title
               }
-              if (row.contentType == "image") {
-                type = "image"; //can have .source and .title
-              }
-
+              
               if (row[columnKey] === undefined) {
                 console.log(row, columnKey, table.name, type, role, row);
                 return;
@@ -43,8 +33,7 @@ export let nlDataStructure = {
               result.push({
                 name: row[columnKey].toLowerCase(),
                 table: table.name,
-                type: type,
-                role: role,
+                formatting: formatting,
                 fullRow: row,
               });
             });
@@ -629,10 +618,10 @@ export let nlDataStructure = {
                 supportsMultilingual: false,
               },
             },
-            contentType: {
-              name: "Content type",
+            formatting: {
+              name: "Formatting",
               description:
-                "Most of the data in the checklist sheet data columns will probably be plain text. However, if a particular column contains a number or another type of data, you can specify it here. It will have impact on how the data are shown (e.g. <b>taxon</b> type will be rendered as a clickable taxon name, or <b>number</b> type will enable a special numeric filter if you use that column as a filter category)",
+                "Most of the data in the checklist sheet data columns will probably be plain text. However, if a particular column contains a taxon name, image, map region, number or another type of data, you can specify it here. It will have impact on how the data are shown (e.g. <b>taxon</b> type will be rendered as a clickable taxon name, or <b>number</b> type will enable a special numeric filter if you use that column as a filter category)",
               integrity: {
                 description:
                   "Several values are possible: <ul><li><b>text:</b> (or just empty cell) means the content of this data column in the checklist sheet is treated as a normal text. If 'Search category title' is set, it will be displayed with a text filter button.</li><li><b>number:</b> means the content of this data column in the checklist sheet is treated as a number (integer or decimal, you need to ensure the column contains only properly formatted numbers in your checklist sheet). If 'Search category title' is set, it will be displayed with a numeric filter button.</li><li><b>taxon:</b> instructs the checklist app to render the column as a clickable taxon. Note that if the column is called e.g. 'basionym', then the checklist sheet may contain just that column, or can actually contain columns <b>basionym.name</b> and <b>basionym.authority</b> where you fill the appropriate data.</li><li><b>date:</b> if you enter a properly formatted date in your spreadsheet to this column, it will be parsed and formatted according to the format you defined on the <b>nl_appearance</b> sheet in the <a href=\"#table-customization\">Customization</a> table under the <b>Date format</b> item.</li></ul>",
@@ -647,6 +636,8 @@ export let nlDataStructure = {
                   "date",
                   "map regions",
                   "image",
+                  "markdown",
+                  "badge",
                   "",
                 ],
                 supportsMultilingual: false,
@@ -677,21 +668,6 @@ export let nlDataStructure = {
                 defaultValue: "top",
                 allowedContent: "list",
                 listItems: ["top", "bottom", "left", "middle", "right", ""],
-                supportsMultilingual: false,
-              },
-            },
-            formatting: {
-              name: "Formatting",
-              description:
-                "By default, data items are displayed plain, without additional formatting. If you need your data to be formatted, you can chose here the proper style.",
-              integrity: {
-                description:
-                  'Several values are possible: <ul><li><b>none:</b> (or just an empty cell) means the data will be shown without any additional formating.</li><li><b>markdown:</b> means you can use <a href="#g-md">Markdown syntax<a/> in the data of this column in the checklist sheet.</li><li><b>badge:</b> means the data in this column in the checklist sheet will be formatted as colored badges. You can define which data get what format on the <b>nl_appearance</b> sheet in the table <a href="#table-badges">Colored badges</a>.</li></ul>',
-                allowEmpty: true,
-                allowDuplicates: "yes",
-                allowedContent: "list",
-                listItems: ["markdown", "badge", "none", ""],
-                defaultValue: "none",
                 supportsMultilingual: false,
               },
             },

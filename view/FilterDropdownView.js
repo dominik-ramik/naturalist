@@ -69,7 +69,7 @@ export let FilterDropdown = function (initialVnode) {
 
       if (
         type == "data" &&
-        Checklist.getDataMeta()[dataPath].contentType == "number"
+        Checklist.getDataMeta()[dataPath].formatting == "number"
       ) {
         detectedUiType = "number";
       }
