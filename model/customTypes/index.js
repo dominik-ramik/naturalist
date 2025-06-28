@@ -1,26 +1,142 @@
 import { Logger } from "../../components/Logger.js";
+import { nlDataStructure } from "../DataManagerData.js";
+import { dataPath } from "../DataPath.js";
 
-const helpers = {
+const data = nlDataStructure;
+
+// Helper function to build readers object indexed by dataType
+function buildReaders(...readerObjects) {
+  const readers = {};
+  readerObjects.forEach((reader) => {
+    readers[reader.dataType] = reader;
+  });
+  return readers;
+}
+
+// Import and build all readers that are to be supported
+import { readerText } from "./ReaderText.js";
+import { readerMarkdown } from "./ReaderMarkdown.js";
+import { readerTaxon } from "./ReaderTaxon.js";
+import { readerNumber } from "./ReaderNumber.js";
+const readers = buildReaders(
+  readerText,
+  readerMarkdown,
+  readerTaxon,
+  readerNumber
+);
+
+// Verify readers
+function verifyReaders() {
+  const dataTypes = new Set();
+  const duplicateDataTypes = [];
+
+  Object.entries(readers).forEach(([dataType, reader], index) => {
+    // Check for required properties and their types
+    if (
+      !reader.hasOwnProperty("dataType") ||
+      typeof reader.dataType !== "string"
+    ) {
+      console.error(
+        `Reader at index ${index} is missing required 'dataType' property or it's not a string`
+      );
+    }
+
+    if (
+      !reader.hasOwnProperty("readData") ||
+      typeof reader.readData !== "function"
+    ) {
+      console.error(
+        `Reader at index ${index} is missing required 'readData' property or it's not a function`
+      );
+    }
+
+    if (
+      !reader.hasOwnProperty("dataToUI") ||
+      typeof reader.dataToUI !== "function"
+    ) {
+      console.error(
+        `Reader at index ${index} is missing required 'dataToUI' property or it's not a function`
+      );
+    }
+
+    // Check if object key matches reader's dataType
+    if (dataType !== reader.dataType) {
+      console.error(
+        `Reader key '${dataType}' doesn't match reader's dataType '${reader.dataType}'`
+      );
+    }
+
+    // Check for duplicate dataTypes (though this is less likely with object structure)
+    if (reader.dataType && typeof reader.dataType === "string") {
+      if (dataTypes.has(reader.dataType)) {
+        duplicateDataTypes.push(reader.dataType);
+      } else {
+        dataTypes.add(reader.dataType);
+      }
+    }
+  });
+
+  // Report duplicate dataTypes
+  if (duplicateDataTypes.length > 0) {
+    console.error(
+      `Duplicate dataType(s) found in readers: ${duplicateDataTypes.join(", ")}`
+    );
+  }
+}
+
+// Run verification
+verifyReaders();
+
+export const helpers = {
+  dataCodes: data.sheets.appearance.tables.dataCodes.data,
   dataCodesCache: new Map(),
-  processPossibleDataCode: function (
-    currentDataPath,
-    value,
-    codes,
-    langCode
-  ) {
-    let columnNameMatches = (d) =>
-      d.columnName.toLowerCase() ==
-      dataPath.modify.itemNumbersToHash(currentDataPath).toLowerCase();
+  // Pre-computed lookup maps for faster data code resolution
+  dataCodesLookup: new Map(), // langCode -> Map(columnName -> Map(code -> replacement))
+  // Initialize lookup maps once during startup
+  initializeDataCodesLookup: function () {
+    this.dataCodesLookup.clear();
+
+    Object.keys(this.dataCodes).forEach((langCode) => {
+      const langMap = new Map();
+      this.dataCodesLookup.set(langCode, langMap);
+
+      this.dataCodes[langCode].forEach((dataCodeRow) => {
+        const normalizedColumnName = dataPath.modify
+          .itemNumbersToHash(dataCodeRow.columnName)
+          .toLowerCase();
+
+        if (!langMap.has(normalizedColumnName)) {
+          langMap.set(normalizedColumnName, new Map());
+        }
+
+        const codeMap = langMap.get(normalizedColumnName);
+        codeMap.set(dataCodeRow.code, dataCodeRow.replacement);
+      });
+    });
+  },
+
+  processPossibleDataCode: function (currentDataPath, value, langCode) {
+    // Early return for empty/null values to avoid unnecessary processing
+    if (!value || value === "") return value;
 
     const key = currentDataPath + "|" + value + "|" + langCode;
 
-    if (!dataCodesCache.has(key)) {
-      let dataCodesFound = codes[langCode].find(
-        (d) => columnNameMatches(d) && d.code == value
-      );
-      if (dataCodesFound) {
-        value = dataCodesFound.replacement;
-      } else if (codes[langCode].find((d) => columnNameMatches(d))) {
+    if (this.dataCodesCache.has(key)) {
+      return this.dataCodesCache.get(key);
+    }
+
+    // Use pre-computed lookup instead of array.find()
+    const normalizedPath = dataPath.modify
+      .itemNumbersToHash(currentDataPath)
+      .toLowerCase();
+    const langMap = this.dataCodesLookup.get(langCode);
+
+    if (langMap && langMap.has(normalizedPath)) {
+      const codeMap = langMap.get(normalizedPath);
+      if (codeMap.has(value)) {
+        value = codeMap.get(value);
+      } else {
+        // Only warn if we have codes for this column but not this specific value
         Logger.warning(
           "Code '" +
             value +
@@ -29,327 +145,73 @@ const helpers = {
             "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
         );
       }
-
-      dataCodesCache.set(key, value);
     }
 
-    return dataCodesCache.get(key);
+    this.dataCodesCache.set(key, value);
+    return value;
   },
 };
 
-// Main function
-export function loadDataByType({
-  headers,
-  row,
-  computedPath,
-  info,
-  langCode,
-  overrideValue,
-  data,
-}) {
-  let stringValue = null;
+// Initialize the lookup maps when the module loads
+helpers.initializeDataCodesLookup();
 
-  if (overrideValue !== undefined) {
-    stringValue = overrideValue;
-  } else {
-    stringValue = readSimpleData(headers, row, computedPath, langCode, data);
-  }
-
-  switch (info.formatting) {
-    case "text":
-      if (stringValue == null) {
-        let template = "";
-        if (
-          info.table == data.sheets.content.tables.customDataDefinition.name
-        ) {
-          let columnMeta = data.sheets.content.tables.customDataDefinition.data[
-            langCode
-          ].find((row) => row.columnName === computedPath);
-          template = columnMeta ? columnMeta.template : "";
-        } else if (info.table == data.sheets.content.tables.maps.name) {
-          let columnMeta = data.sheets.content.tables.maps.data[langCode].find(
-            (row) => row.columnName === computedPath
-          );
-          template = columnMeta ? columnMeta.source : "";
-        } else if (info.table == data.sheets.content.tables.media.name) {
-          let columnMeta = data.sheets.content.tables.media.data[langCode].find(
-            (row) => row.columnName === computedPath
-          );
-          template = columnMeta ? columnMeta.linkBase : "";
-        }
-        let valueRegex = new RegExp("{{\\s*value\\s*}}", "i");
-        if (valueRegex.test(template)) {
-          Logger.warning(
-            `Defined column not present: ${computedPath}, ${info.table}, ${data.sheets.content.name}`
-          );
-        }
-        return "";
-      }
-      if (stringValue.toString().length > 0) {
-        stringValue = processPossibleDataCode(
-          computedPath,
-          stringValue,
-          data.sheets.appearance.tables.dataCodes.data,
-          langCode
-        );
-        let matchingMetaRow =
-          data.sheets.content.tables.customDataDefinition.data[langCode].find(
-            (row) => row.columnName.toLowerCase() === computedPath.toLowerCase()
-          );
-        let expectedType = "text";
-        if (matchingMetaRow != null) {
-          expectedType = matchingMetaRow.formatting;
-        }
-        stringValue = DOMPurify.sanitize(stringValue);
-        stringValue = stringValue.toString().trim();
-        stringValue = stringValue.replace(/\r\n/, "\\n");
-        stringValue = stringValue.replace(/[\r\n]/, "\\n");
-      }
-      break;
-    case "number":
-      let sv = readSimpleData(headers, row, computedPath, langCode, data);
-      if (sv == null || (typeof sv == "string" && sv.trim() == "")) {
-        return null;
-      }
-      let number = 0;
-      if (Number.isInteger(sv)) {
-        number = parseInt(sv);
-      } else {
-        number = parseFloat(sv);
-      }
-      if (Number.isNaN(number)) {
-        Logger.error(`Value not a number: ${sv}, ${computedPath}`);
-      }
-      return number;
-    case "date":
-      let date = stringValue;
-      let dateFormat = data.common.getItem(
-        log,
-        data.sheets.appearance.tables.customization.data,
-        "Date format",
-        langCode,
-        "YYYY-MM-DD"
-      );
-      date = dayjs(stringValue).format(dateFormat);
-      return date;
-    case "badge":
-      let retval = processPossibleDataCode(
-        computedPath,
-        stringValue,
-        data.sheets.appearance.tables.dataCodes.data,
-        langCode,
-        log
-      );
-      return retval;
-    case "markdown":
-      return readSimpleData(headers, row, computedPath, langCode, data);
-    // Other cases (map regions, taxon, image, media) should be handled by caller or extended here as needed
-    default:
-      Logger.error(`Unknown formatting: ${info.formatting}`);
-      break;
-  }
-  return "";
-}
-
-///////////
-
-function readMapRegions(headers, row, computedPath, langCode) {
-  const concernedColumns = headers.filter((h) =>
-    h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
-  );
-
-  let mapRegions = "";
-  let resultObject = {};
-
-  if (concernedColumns.length == 0) {
-    //mapRegions are already inline format
-    mapRegions = readSimpleData(headers, row, computedPath, langCode);
-    resultObject = parseInlineMapRegions(mapRegions, langCode);
-  } else {
-    //column-per-region format
-    resultObject = parseColumnMapRegions(
-      concernedColumns,
-      headers,
-      row,
-      computedPath,
-      langCode
-    );
-  }
-
-  // Validate region codes
-  let knownRegionCodes = data.sheets.appearance.tables.mapRegionsNames.data[
-    langCode
-  ].map((x) => x.code);
-
-  Object.keys(resultObject).forEach((regionCode) => {
-    if (!knownRegionCodes.includes(regionCode)) {
-      Logger.error(
-        "Region code '" +
-          regionCode +
-          "' in column '" +
-          computedPath +
-          "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
-      );
-    }
-  });
-
-  return resultObject;
-}
-
-// Parse inline format: "regionA:?:noteA | regionB | regionC:! | regionD:?:noteD"
-function parseInlineMapRegions(mapRegions) {
-  const result = {};
-
-  if (!mapRegions || mapRegions.trim() === "") {
-    return result;
-  }
-
-  // Split by pipe separators
-  const regions = mapRegions.split("|").map((r) => r.trim());
-
-  regions.forEach((regionStr) => {
-    if (regionStr.trim() === "") return;
-
-    const parts = regionStr.split(":");
-    const regionCode = parts[0].trim();
-
-    if (regionCode === "") return;
-
-    // Initialize region object with empty status and notes
-    const regionObj = {
-      status: "",
-      notes: "",
-    };
-
-    // If there's a status part
-    if (parts.length >= 2 && parts[1].trim() !== "") {
-      regionObj.status = parts[1].trim();
-    }
-
-    // If there's a notes part
-    if (parts.length >= 3 && parts[2].trim() !== "") {
-      regionObj.notes = parts[2].trim();
-    }
-
-    result[regionCode] = regionObj;
-  });
-
-  return result;
-}
-
-// Parse column-per-region format
-function parseColumnMapRegions(
-  concernedColumns,
-  headers,
-  row,
-  computedPath,
-  langCode
-) {
-  const result = {};
-
-  concernedColumns.forEach((columnName) => {
-    const data = readSimpleData(headers, row, columnName, langCode);
-
-    if (data && data.trim() !== "") {
-      const regionCode = columnName.substring(computedPath.length + 1);
-
-      // Check if data contains vertical bar for notes
-      if (data.includes("|")) {
-        const parts = data.split("|").map((p) => p.trim());
-        const suffix = parts[0];
-        const note = parts.length > 1 ? parts.slice(1).join("|").trim() : "";
-
-        result[regionCode] = {
-          status: suffix,
-          notes: note,
-        };
-      } else {
-        // Just the suffix
-        result[regionCode] = {
-          status: data.trim(),
-          notes: "",
-        };
-      }
-    }
-  });
-
-  return result;
-}
-
-function readMedia(headers, row, path, langCode) {
-  let mediaArray = [];
-
-  //first a case without numbers
-  let singleMedia = readSingleMedia(headers, row, path, langCode);
-  if (singleMedia !== null) {
-    mediaArray.push(singleMedia);
-  }
-  for (let index = 1; index <= 50; index++) {
-    singleMedia = readSingleMedia(
-      headers,
-      row,
-      path + index.toString(),
-      langCode
-    );
-
-    if (singleMedia !== null) {
-      mediaArray.push(singleMedia);
-    }
-  }
-
-  return mediaArray;
-}
-
-function readSingleMedia(headers, row, path, langCode) {
-  if (
-    headers.indexOf(path) < 0 &&
-    headers.indexOf(path + ":" + langCode) < 0 &&
-    headers.indexOf(path + ".source") < 0 &&
-    headers.indexOf(path + ".source:" + langCode) < 0
-  ) {
-    return null;
-  }
-
-  let _plain = readSimpleData(headers, row, path, langCode);
-  let source = readSimpleData(headers, row, path + ".source", langCode);
-  let title = readSimpleData(headers, row, path + ".title", langCode);
-
-  if (source === null && title === null) {
-    //try to recover the structure from | separated structure
-    let plainSplit = _plain.split("|");
-    if (plainSplit.length != 2) {
-      source = _plain;
-      title = "";
-    } else {
-      source = plainSplit[0];
-      title = plainSplit[1];
-    }
-  }
-
-  if (source === null || (source !== null && title === null)) {
-    Logger.error(
-      _tf("dm_image_column_names", [
-        path,
-        path,
-        path + ".source",
-        path + ".title",
-      ])
-    );
-  }
-
-  return { source: source, title: title };
+// Cache management function
+export function clearDataCodesCache() {
+  helpers.dataCodesCache.clear();
+  // Re-initialize lookup maps when cache is cleared
+  helpers.initializeDataCodesLookup();
 }
 
 /**
- * Unified function to read data from CSV headers/row with optional structured property parsing
+ * Load and process data from spreadsheet row based on column type and formatting rules
  *
- * @param {string[]} headers - Array of column headers from CSV
- * @param {string[]} row - Array of values for current row
+ * @param {Object} context - Data context containing headers, row, and language info
+ * @param {string[]} context.headers - Array of column headers from spreadsheet
+ * @param {string[]} context.row - Array of values for current row
+ * @param {string} context.langCode - Language code for localized column resolution
+ * @param {string} computedPath - Column path/name to read data from
+ * @param {Object} info - Column metadata containing formatting type and table info
+ *
+ * @returns {string|number|Object|null} Processed data value based on formatting type
+ */
+export function loadDataByType(context, computedPath, info) {
+  // Try to find a matching reader for the formatting type
+  const matchingReader = readers[info.formatting];
+
+  if (matchingReader) {
+    // Call the reader's readData function and return the result
+    let dataRead = matchingReader.readData(context, computedPath);
+
+    if (typeof dataRead === "string") {
+      dataRead = helpers.processPossibleDataCode(
+        computedPath,
+        dataRead,
+        context.langCode
+      );
+    }
+
+    return dataRead;
+  } else {
+    // No matching reader found, log error with available types
+    const availableFormattings = Object.keys(readers).join(", ");
+    //TODO: change to Logger.error
+    Logger.warning(
+      `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
+    );
+    return null;
+  }
+}
+
+/**
+ * Unified function to read data from spreadsheet headers/row with optional structured property parsing
+ *
+ * @param {Object} context - Data context containing headers, row, and language info
+ * @param {string[]} context.headers - Array of column headers from spreadsheet
+ * @param {string[]} context.row - Array of values for current row
+ * @param {string} context.langCode - Language code for column resolution
  * @param {string} path - Base column name to read from
  * @param {Object} options - Configuration options
- * @param {string} [options.langCode="en"] - Language code for column resolution
  * @param {string} [options.separator="|"] - Separator for parsing plain text into structured data
- * @param {Function} [options.log=console.log] - Logging function for errors
  * @param {Function} [options.errorMessageTemplate=null] - Template function for error messages
  * @param {Object} [options.data] - Data context with language info
  * @param {string[]|null} expectedProps - Array of expected property names for structured data (leave null/empty for simple value mode)
@@ -381,19 +243,16 @@ function readSingleMedia(headers, row, path, langCode) {
  * // Returns: { source: "photo.jpg", title: "My Photo" }
  * // Works with columns: "image.source", "image.title" OR "image" containing "photo.jpg|My Photo"
  */
-function readDataFromPath(
-  headers,
-  row,
+export function readDataFromPath(
+  context,
   path,
   options = {},
   expectedProps = null
 ) {
-  const {
-    langCode = "en",
-    separator = "|",
-    errorMessageTemplate = null,
-    data,
-  } = options;
+  const { headers, row, langCode } = context;
+  const { errorMessageTemplate = null } = options;
+
+  const separator = "|"; // Default separator for structured data parsing
 
   // Helper function for reading a single column with language fallback
   // Tries language-specific columns first, then falls back to plain column name
@@ -407,7 +266,16 @@ function readDataFromPath(
     for (const col of possibleColumns) {
       const colIndex = headers.indexOf(col);
       if (colIndex >= 0) {
-        return row[colIndex];
+        const cellValue = row[colIndex];
+        // Early termination if cell value is empty or just whitespace
+        if (
+          cellValue === null ||
+          cellValue === undefined ||
+          String(cellValue).trim() === ""
+        ) {
+          return null;
+        }
+        return cellValue;
       }
     }
     return null;
@@ -431,6 +299,10 @@ function readDataFromPath(
       hasAnyStructuredValue = true;
     }
   });
+
+  if (!hasAnyStructuredValue && (_plain === null || _plain === undefined)) {
+    return null; // Return null if plain value is not available
+  }
 
   // Fallback: If no structured columns found, try parsing plain value with separator
   if (!hasAnyStructuredValue && _plain) {
@@ -462,6 +334,8 @@ function readDataFromPath(
     hasValidData &&
     expectedProps.slice(1).some((prop) => structuredValues[prop] === null);
 
+  hasMissingRequiredData = false;
+
   if (!hasValidData || hasMissingRequiredData) {
     if (errorMessageTemplate) {
       // Generate column name suggestions for error message
@@ -470,40 +344,10 @@ function readDataFromPath(
         path,
         ...expectedProps.map((prop) => `${path}.${prop}`),
       ];
+
       Logger.error(errorMessageTemplate(columnNames));
     }
   }
 
   return structuredValues;
-}
-
-function readTaxon(headers, row, path, langCode) {
-  let _plain = readSimpleData(headers, row, path, langCode);
-  let name = readSimpleData(headers, row, path + ".name", langCode);
-  let authority = readSimpleData(headers, row, path + ".authority", langCode);
-
-  if (name === null && authority === null) {
-    let plainSplit = _plain.split("|");
-
-    if (plainSplit.length != 2) {
-      name = _plain;
-      authority = "";
-    } else {
-      name = plainSplit[0];
-      authority = plainSplit[1];
-    }
-  }
-
-  if (name === null || (name !== null && authority === null)) {
-    Logger.error(
-      _tf("dm_taxon_column_names", [
-        path,
-        path,
-        path + ".name",
-        path + ".authority",
-      ])
-    );
-  }
-
-  return { n: name, a: authority };
 }

@@ -76,8 +76,8 @@ function taxonomyCrumbs(taxonName) {
       ),
       */
       m(".crumb-taxon-name-wrap", [
-        m(".crumb-taxon-name", taxonName.n),
-        taxonName.a == "" ? null : m(".crumb-taxon-authority", taxonName.a),
+        m(".crumb-taxon-name", taxonName.name),
+        taxonName.authority == "" ? null : m(".crumb-taxon-authority", taxonName.authority),
       ]),
     ]);
   });
@@ -109,7 +109,7 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
       Settings.currentDetailsTab(key);
       routeTo(
         "/details/" +
-          taxon.t[taxon.t.length - 1].n +
+          taxon.t[taxon.t.length - 1].name +
           "/" +
           Settings.currentDetailsTab()
       );
@@ -516,7 +516,7 @@ function TabExternalSearch(tabData, taxon, taxonName) {
           .map((i) => i.trim().toLowerCase())
           .filter((i) => i !== null && i !== "");
 
-        if (!taxon.t.find((t) => restricted.includes(t.n.toLowerCase()))) {
+        if (!taxon.t.find((t) => restricted.includes(t.name.toLowerCase()))) {
           return null; // If taxon to which this should be restricted is not found in the taxonomic branch, then don't show this engine
         }
       }

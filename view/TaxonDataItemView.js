@@ -11,13 +11,10 @@ import {
 export let TaxonDataItemView = {
   originalData: null,
 
-  renderDataItem: function (
-    data,
-    taxon,
-    dataPath,
-    itemType
-  ) {
+  renderDataItem: function (data, taxon, dataPath, itemType) {
     let meta = Checklist.getMetaForDataPath(dataPath);
+
+    //console.log("Details", dataPath, data, meta);
 
     if (meta == null) {
       console.log("null", dataPath);
@@ -25,7 +22,6 @@ export let TaxonDataItemView = {
     }
 
     if (meta.formatting == "image") {
-
       if (data.source.toString().trim() == "") {
         return null;
       }
@@ -37,8 +33,8 @@ export let TaxonDataItemView = {
         let templateData = Checklist.getDataObjectForHandlebars(
           source,
           TaxonDataItemView.originalData,
-          taxon.n,
-          taxon.a
+          taxon.name,
+          taxon.authority
         );
 
         source = Checklist.handlebarsTemplates[dataPath](templateData);
@@ -60,7 +56,10 @@ export let TaxonDataItemView = {
     }
 
     if (meta.formatting == "taxon") {
-      if (data.n.trim() == "") {
+
+      console.log(data, meta)
+
+      if (data.name.trim() == "") {
         return null;
       }
 
@@ -316,11 +315,12 @@ export let TaxonDataItemView = {
         css = css.substring(0, css.indexOf(":"));
       }
       return css;
-    }    let meta = Checklist.getMetaForDataPath(dataPath);
+    }
+    let meta = Checklist.getMetaForDataPath(dataPath);
     if (meta === null) {
       return null;
     }
-    
+
     var itemType = TaxonDataItemView.getItemType(data);
     if (meta.formatting == "map regions") {
       itemType = "object";
@@ -358,15 +358,18 @@ export let TaxonDataItemView = {
         let templateData = Checklist.getDataObjectForHandlebars(
           data,
           TaxonDataItemView.originalData,
-          taxon.n,
-          taxon.a
+          taxon.name,
+          taxon.authority
         );
 
         data = Checklist.handlebarsTemplates[dataPath](templateData);
       }
 
       //process markdown and items with templates
-      if (meta.formatting == "markdown" || (meta.template && meta.template != "")) {
+      if (
+        meta.formatting == "markdown" ||
+        (meta.template && meta.template != "")
+      ) {
         data = processMarkdownWithBibliography(data, tailingSeparator);
         data = m.trust(data);
       } else if (meta.formatting == "badge") {

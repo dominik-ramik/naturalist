@@ -205,8 +205,8 @@ function assignLeavesCount(node, allMatchingData) {
   if (!node.children || node.children.length === 0) {
     let isMatch = allMatchingData.find(
       (taxon) =>
-        taxon.t[taxon.t.length - 1].n == node.taxon.n &&
-        taxon.t[taxon.t.length - 1].a == node.taxon.a
+        taxon.t[taxon.t.length - 1].name == node.taxon.name &&
+        taxon.t[taxon.t.length - 1].authority == node.taxon.authority
     );
 
     node.value = 1;

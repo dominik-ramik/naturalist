@@ -33,9 +33,9 @@ export let TaxonNameView = {
               {
                 onclick: function () {
                   copyToClipboard(
-                    vnode.attrs.taxonTree.taxon.n +
-                      (vnode.attrs.taxonTree.taxon.a
-                        ? " " + vnode.attrs.taxonTree.taxon.a
+                    vnode.attrs.taxonTree.taxon.name +
+                      (vnode.attrs.taxonTree.taxon.authority
+                        ? " " + vnode.attrs.taxonTree.taxon.authority
                         : ""),
                     _t("taxon")
                   );
@@ -47,14 +47,14 @@ export let TaxonNameView = {
                   let textToCopy = "";
 
                   for (const taxon of vnode.attrs.parents) {
-                    textToCopy += taxon.n + "\t";
-                    if (taxon.a) {
-                      textToCopy += taxon.a + "\t";
+                    textToCopy += taxon.name + "\t";
+                    if (taxon.authority) {
+                      textToCopy += taxon.authority + "\t";
                     }
                   }
-                  textToCopy += vnode.attrs.taxonTree.taxon.n + "\t";
-                  if (vnode.attrs.taxonTree.taxon.a) {
-                    textToCopy += vnode.attrs.taxonTree.taxon.a + "\t";
+                  textToCopy += vnode.attrs.taxonTree.taxon.name + "\t";
+                  if (vnode.attrs.taxonTree.taxon.authority) {
+                    textToCopy += vnode.attrs.taxonTree.taxon.authority + "\t";
                   }
 
                   textToCopy = textToCopy.trim();
@@ -84,7 +84,7 @@ export let TaxonNameView = {
             },
             _t("in_taxon_group", [
               parentTaxonIndicator.rank.toLowerCase(),
-              parentTaxonIndicator.taxon.n,
+              parentTaxonIndicator.taxon.name,
             ])
           )
         : null

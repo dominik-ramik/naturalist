@@ -9,12 +9,12 @@ export let ClickableTaxonName = {
       : "span";
     let taxonTree = vnode.attrs.taxonTree;
 
-    if (taxonTree.taxon.n == "" && taxonTree.taxon.a == "") {
+    if (taxonTree.taxon.name == "" && taxonTree.taxon.authority == "") {
       return null;
     }
 
     let filterMatch = filterMatches(
-      taxonTree.taxon.n + " " + taxonTree.taxon.a
+      taxonTree.taxon.name + " " + taxonTree.taxon.authority
     );
 
     return m(
@@ -22,7 +22,7 @@ export let ClickableTaxonName = {
       {
         onclick: function () {
           routeTo(
-            "/details/" + taxonTree.taxon.n + "/" + Settings.currentDetailsTab()
+            "/details/" + taxonTree.taxon.name + "/" + Settings.currentDetailsTab()
           );
         },
       },
@@ -34,15 +34,15 @@ export let ClickableTaxonName = {
             "[style=font-size: " +
             vnode.attrs.fontSize +
             "%]",
-          taxonTree.taxon.n
+          taxonTree.taxon.name
         ),
-        taxonTree.taxon.a == ""
+        taxonTree.taxon.authority == ""
           ? null
           : m(
               "span.taxon-authority[style=font-size: " +
                 vnode.attrs.fontSize +
                 "%]",
-              " " + taxonTree.taxon.a
+              " " + taxonTree.taxon.authority
             ),
       ]
     );

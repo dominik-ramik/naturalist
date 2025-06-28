@@ -59,11 +59,11 @@ export let TaxonView = {
           m(".spacer"),
           m(".details-icons-wrapper", [
             Object.hasOwn(tabsData, "media") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.n, "media"),
+              detailsIcon(vnode.attrs.taxonTree.taxon.name, "media"),
             Object.hasOwn(tabsData, "map") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.n, "maps"),
+              detailsIcon(vnode.attrs.taxonTree.taxon.name, "maps"),
             Object.hasOwn(tabsData, "text") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.n, "accompanyingText"),
+              detailsIcon(vnode.attrs.taxonTree.taxon.name, "accompanyingText"),
             (Object.hasOwn(tabsData, "media") ||
               Object.hasOwn(tabsData, "map") ||
               Object.hasOwn(tabsData, "text")) &&
@@ -79,14 +79,14 @@ export let TaxonView = {
                         vnode.attrs.currentTaxonLevel
                       ];
                       Checklist.filter.taxa[taxonLevelKey].selected = [
-                        vnode.attrs.taxonTree.taxon.n,
+                        vnode.attrs.taxonTree.taxon.name,
                       ];
                       Checklist.filter.commit("/checklist");
                     },
                   },
                   m(".search-all-of-taxon", [
                     m("img[src=./img/ui/checklist/search.svg]"),
-                    vnode.attrs.taxonTree.taxon.n,
+                    vnode.attrs.taxonTree.taxon.name,
                   ])
                 )
               : null,

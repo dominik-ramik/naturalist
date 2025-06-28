@@ -6,15 +6,15 @@ import {
   relativeToUsercontent,
   splitN,
   parseRegionCode,
+  formatList,
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
 import { TinyBibReader } from "../lib/TinyBibMD.js";
 import { Checklist } from "../model/Checklist.js";
-import { loadDataByType } from "./customTypes/index.js";
+import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
-
-
+import { dataPath } from "./DataPath.js";
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -117,7 +117,7 @@ export let DataManager = function () {
 
       // Get bibliography data from Excel table
 
-      console.log(data.sheets.content.tables);
+      //console.log(data.sheets.content.tables);
 
       const bibliographyData =
         data.sheets.content.tables.bibliography.data[
@@ -330,7 +330,6 @@ export let DataManager = function () {
         console.time(assetsSizesMsg);
         let precachedImageMaxSizeMb = parseFloat(
           data.common.getItem(
-            log,
             data.sheets.appearance.tables.customization.data,
             "Precached image max size",
             data.common.languages.defaultLanguageCode,
@@ -540,16 +539,16 @@ export let DataManager = function () {
         );
       });
 
-      data.sheets.content.tables.searchOnline.data[lang.code].forEach(
-        function (row) {
-          meta.externalSearchEngines.push({
-            title: row.title,
-            icon: row.icon,
-            url: row.searchUrlTemplate,
-            restrictToTaxon: row.restrictToTaxon,
-          });
-        }
-      );
+      data.sheets.content.tables.searchOnline.data[lang.code].forEach(function (
+        row
+      ) {
+        meta.externalSearchEngines.push({
+          title: row.title,
+          icon: row.icon,
+          url: row.searchUrlTemplate,
+          restrictToTaxon: row.restrictToTaxon,
+        });
+      });
 
       data.sheets.appearance.tables.mapRegionsLegend.data[lang.code].forEach(
         function (row) {
@@ -617,11 +616,17 @@ export let DataManager = function () {
         }
 
         matchingComputedDataPaths.forEach(function (computedDataPath) {
-          if (info.formatting == "taxon") {
-            return;
-          }
 
           let dataType = "custom";
+                    
+          if (info.formatting == "taxon") {
+            if (info.table == data.sheets.content.tables.taxa.name) {
+              return;
+            }
+            else{
+              dataType = "taxon";
+            }
+          }
 
           if (
             info.table == data.sheets.content.tables.customDataDefinition.name
@@ -846,9 +851,13 @@ export let DataManager = function () {
           Logger.error(_tf("dm_column_names_duplicate", [header]));
         }
       });
+        // Create context object once per row
+        const context = { headers, row: null, langCode: lang.code };
+
 
       for (let rowIndex = 1; rowIndex < table.length; rowIndex++) {
         const row = table[rowIndex];
+        context.row = row; // Update context with the current row
 
         let rowObj = { t: [], d: {} };
         let doneWithTaxa = false;
@@ -861,10 +870,14 @@ export let DataManager = function () {
 
           //console.log("INFO", info.name, info);
 
-          if (info.formatting == "taxon") {
-            let taxon = readTaxon(headers, row, info.name, lang.code);
+          if (info.formatting == "checklist-taxon") {
+            let taxon = loadDataByType(
+              context,
+              info.name,
+              {...info, formatting: "taxon"},
+            );
 
-            let taxonIsEmpty = taxon?.n?.trim() == "" && taxon?.a?.trim() == "";
+            let taxonIsEmpty = taxon == null || (taxon?.n?.trim() == "" && taxon?.a?.trim() == "");
 
             if (taxonIsEmpty) {
               doneWithTaxa = true;
@@ -880,19 +893,15 @@ export let DataManager = function () {
                 );
               }
             }
-          } else if (info.formatting != "taxon") {
+          } else {
             includeTreefiedData(
               rowObj.d,
-              headers,
-              row,
+              context,
               dataPath.modify.pathToSegments(info.name),
               0,
               info,
-              "",
-              lang.code
+              ""
             );
-          } else {
-            console.log("Unknown formatting: " + info.formatting);
           }
         });
 
@@ -902,14 +911,13 @@ export let DataManager = function () {
 
     function includeTreefiedData(
       rowObjData,
-      headers,
-      row,
+      context,
       pathSegments,
       pathPosition,
       info,
-      computedPath,
-      langCode
+      computedPath
     ) {
+      const { headers, row, langCode } = context;
       const currentSegment = pathSegments[pathPosition];
 
       if (currentSegment == "#") {
@@ -946,15 +954,12 @@ export let DataManager = function () {
               if (rowObjData.hasOwnProperty(currentSegment)) {
                 throw _tf("dm_duplicate_segment", [currentSegment]);
               }
-              let genericData = loadDataByType({
-                headers,
-                row,
+              let genericData = loadDataByType(
+                context,
                 computedPath,
-                info,
-                langCode,
-                data,
-              });
-              if (genericData !== "") {
+                info
+              );
+              if (genericData !== "" && genericData !== null) {
                 //rowObjData[count - 1] = genericData;
                 rowObjData[lastSuccesfullCount] = genericData;
                 lastSuccesfullCount++;
@@ -981,13 +986,11 @@ export let DataManager = function () {
 
               includeTreefiedData(
                 rowObjData[lastSuccesfullCount],
-                headers,
-                row,
+                context,
                 pathSegments,
                 pathPosition + 1,
                 info,
-                countedComputedPath,
-                langCode
+                countedComputedPath
               );
               lastSuccesfullCount++;
             }
@@ -1002,15 +1005,12 @@ export let DataManager = function () {
               let values = rawValue
                 ?.split("|")
                 .map((v, index) =>
-                  loadDataByType({
-                    headers,
-                    row,
-                    computedPath: computedPath + index.toString(),
+                  loadDataByType(
+                    context,
+                    computedPath + index.toString(),
                     info,
-                    langCode,
-                    overrideValue: v.trim(),
-                    data,
-                  })
+                    v.trim()
+                  )
                 );
 
               for (let i = 0; i < values.length; i++) {
@@ -1051,14 +1051,11 @@ export let DataManager = function () {
           }
           */
 
-          let genericData = loadDataByType({
-            headers,
-            row,
+          let genericData = loadDataByType(
+            context,
             computedPath,
-            info,
-            langCode,
-            data,
-          });
+            info
+          );
 
           if (genericData) {
             rowObjData[currentSegment] = genericData;
@@ -1073,18 +1070,16 @@ export let DataManager = function () {
         }
         includeTreefiedData(
           rowObjData[currentSegment],
-          headers,
-          row,
+          context,
           pathSegments,
           pathPosition + 1,
           info,
-          computedPath,
-          langCode
+          computedPath
         );
       }
     }
 
-    dataCodesCache = new Map();
+    clearDataCodesCache();
   }
 
   function checkMetaValidity() {
@@ -1775,130 +1770,3 @@ function processFDirective(data, runSpecificCache) {
     return data;
   }
 }
-
-export let dataPath = {
-  validate: {
-    isSimpleColumnName: function (value) {
-      let simpleColumnName = new RegExp("^[a-zA-Z]+$", "gi");
-      return simpleColumnName.test(value);
-    },
-    isDataPath(value) {
-      let valueSplit = value.split(".");
-      let correct = true;
-      valueSplit.forEach(function (columnSegment) {
-        if (!correct) {
-          return;
-        }
-        let extendedColumnName = new RegExp(
-          "^[a-zA-Z]+(([1-9]+[0-9]*)|#)?$",
-          "gi"
-        );
-        if (extendedColumnName.test(columnSegment) == false) {
-          correct = false;
-        }
-      });
-
-      return correct;
-    },
-  },
-  analyse: {
-    position: function (allDataPaths, thisDataPath) {
-      let result = {
-        isLeaf: false,
-        isRoot: false,
-        hasChildren: false,
-        isSimpleItem: false,
-      };
-
-      allDataPaths = allDataPaths.map(function (item) {
-        return dataPath.modify.itemNumbersToHash(item).toLowerCase();
-      });
-      thisDataPath = dataPath.modify
-        .itemNumbersToHash(thisDataPath)
-        .toLowerCase();
-
-      if (thisDataPath.indexOf(".") < 0 && thisDataPath.indexOf("#") < 0) {
-        if (dataPath.analyse.hasChildren(allDataPaths, thisDataPath)) {
-          //root item
-          result.isLeaf = false;
-          result.isRoot = true;
-          result.hasChildren = true;
-        } else {
-          //simple item
-          result.isLeaf = true;
-          result.isRoot = true;
-          result.hasChildren = false;
-        }
-      } else {
-        if (dataPath.analyse.hasChildren(allDataPaths, thisDataPath)) {
-          //middle item
-          result.isLeaf = false;
-          result.isRoot = false;
-          result.hasChildren = true;
-        } else {
-          //leaf item
-          result.isLeaf = true;
-          result.isRoot = false;
-          result.hasChildren = false;
-        }
-      }
-
-      result.isSimpleItem =
-        result.isLeaf && result.isRoot && !result.hasChildren;
-      return result;
-    },
-    getChildrenOf(allDataPaths, parent) {
-      parent = parent.toLowerCase();
-      let children = [];
-
-      allDataPaths.forEach(function (othertDataPath) {
-        let other = othertDataPath.toLowerCase();
-        if (other.startsWith(parent + ".") || other.startsWith(parent + "#")) {
-          return children.push(other);
-        }
-      });
-
-      return children;
-    },
-    hasChildren: function (allDataPaths, possibleParent) {
-      return (
-        dataPath.analyse.getChildrenOf(allDataPaths, possibleParent).length > 0
-      );
-    },
-  },
-  modify: {
-    itemNumbersToHash: function (value) {
-      return value.replace(/(\d+)/g, "#");
-    },
-    pathToSegments: function (path) {
-      let split = path.split(/\.|#/);
-      split = split.map(function (item) {
-        if (item == "") {
-          return "#";
-        } else {
-          return item;
-        }
-      });
-      return split;
-    },
-    segmentsToPath: function (segments) {
-      let path = "";
-
-      for (let index = 0; index < segments.length; index++) {
-        const segment = segments[index];
-
-        if (segment == "#") {
-          path = path + segment;
-        } else {
-          path = path + "." + segment;
-        }
-      }
-
-      if (path.startsWith(".")) {
-        path = path.substring(1);
-      }
-
-      return path;
-    },
-  },
-};

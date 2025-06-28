@@ -258,7 +258,9 @@ export let Checklist = {
               '<a class="citation" href="' +
               engine.url.replace("$id$", value) +
               '" target="_blank">' +
-              engine.name.replace("$author$", authorText).replace("$id$", value) +
+              engine.name
+                .replace("$author$", authorText)
+                .replace("$id$", value) +
               "</a>";
             return match.replace(match, link);
           } else {
@@ -532,7 +534,7 @@ export let Checklist = {
             let taxonTentative =
               taxon.t[Object.keys(Checklist.getTaxaMeta()).indexOf(dataPath)];
             if (taxonTentative !== undefined && taxonTentative !== null) {
-              value = taxonTentative.n;
+              value = taxonTentative.name;
             }
           } else if (dataType == "data") {
             value = Checklist.getDataFromDataPath(taxon.d, dataPath);
@@ -621,7 +623,7 @@ export let Checklist = {
     taxonName,
     taxonAuthority
   ) {
-    if(currentValue === undefined || currentValue === null) {
+    if (currentValue === undefined || currentValue === null) {
       return currentValue;
     }
 
@@ -648,7 +650,7 @@ export let Checklist = {
 
   getProjectHowToCite: function () {
     let text =
-      Checklist._data.versions[Checklist.getCurrentLanguage()].howToCite;
+      Checklist._data?.versions[Checklist.getCurrentLanguage()].howToCite;
     return text;
   },
 
@@ -701,7 +703,7 @@ export let Checklist = {
         if (index >= taxon.t.length) {
           return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
         }
-        let value = taxon.t[index].n; // !!! we suppose here that in filter taxa keys are ordered in order of appearance in "t" section
+        let value = taxon.t[index].name; // !!! we suppose here that in filter taxa keys are ordered in order of appearance in "t" section
         if (
           Checklist.filter.taxa[dataPath].type == "text" ||
           Checklist.filter.data[dataPath].type == "map regions"
@@ -786,8 +788,8 @@ export let Checklist = {
     let primitives = [];
 
     taxon.t.forEach(function (scientificName) {
-      primitives.push(scientificName.n + " " + scientificName.a);
-      if (scientificName.a) primitives.push(scientificName.a);
+      primitives.push(scientificName.name + " " + scientificName.authority);
+      if (scientificName.authority) primitives.push(scientificName.authority);
     });
 
     dataPathsToKeep.forEach(function (dataPath) {
@@ -824,8 +826,8 @@ export let Checklist = {
             Checklist.getMetaForDataPath(dataPath + (index + 1)).formatting ==
             "taxon"
           ) {
-            primitives.push(arrayMember.n + " " + arrayMember.a);
-            primitives.push(arrayMember.a);
+            primitives.push(arrayMember.name + " " + arrayMember.authority);
+            primitives.push(arrayMember.authority);
           } else {
             primitives.push(arrayMember);
           }
@@ -833,8 +835,8 @@ export let Checklist = {
       } else if (
         Checklist.getMetaForDataPath(dataPath)?.formatting == "taxon"
       ) {
-        primitives.push(currentData.n);
-        primitives.push(currentData.a);
+        primitives.push(currentData.name);
+        primitives.push(currentData.authority);
       } else if (typeof currentData === "object") {
         Object.keys(currentData).forEach(function (key) {
           if (currentData.hasOwnProperty(key)) {
@@ -884,9 +886,13 @@ export let Checklist = {
           );
         });
       } else if (typeof taxonData === "object") {
-        if (taxonData.hasOwnProperty("n") && taxonData.hasOwnProperty("a")) {
+        if (
+          taxonData.hasOwnProperty("name") &&
+          taxonData.hasOwnProperty("authority")
+        ) {
           data.push(
-            taxonData.n + (includeAuthorities ? " " + taxonData.a : "")
+            taxonData.name +
+              (includeAuthorities ? " " + taxonData.authority : "")
           );
         } else {
           Object.keys(taxonData).forEach(function (key) {
@@ -1068,7 +1074,7 @@ export let Checklist = {
           }
           let foundAny = false;
           for (let selectedItem of Checklist.filter.taxa[dataPath].selected) {
-            if (index < item.t.length && item.t[index].n == selectedItem) {
+            if (index < item.t.length && item.t[index].name == selectedItem) {
               foundAny = true;
               break;
             }
@@ -1155,24 +1161,24 @@ export let Checklist = {
       }
       if (found) {
         matchedItems.push(item);
-        let key = item.t.map((t) => t.n).join("|");
+        let key = item.t.map((t) => t.name).join("|");
         matchedKeys.add(key);
         // Add all parent paths (not just immediate parent)
         for (let i = 1; i < item.t.length; i++) {
-          parentPaths.push(item.t.slice(0, i).map((t) => t.n));
+          parentPaths.push(item.t.slice(0, i).map((t) => t.name));
         }
       }
     }); // 2. Find true parent items
     let parentItems = [];
     let matchedKeySet = new Set(
-      matchedItems.map((item) => item.t.map((t) => t.n).join("|"))
+      matchedItems.map((item) => item.t.map((t) => t.name).join("|"))
     );
     let parentKeySet = new Set();
     parentPaths.forEach(function (parentPathArr) {
       let parentKey = parentPathArr.join("|");
       if (parentKeySet.has(parentKey) || matchedKeySet.has(parentKey)) return;
       let parent = Checklist.getData().checklist.find(
-        (candidate) => candidate.t.map((t) => t.n).join("|") === parentKey
+        (candidate) => candidate.t.map((t) => t.name).join("|") === parentKey
       );
       if (parent) {
         parentItems.push(parent);
@@ -1219,7 +1225,7 @@ export let Checklist = {
     let found = this.getData().checklist.find(function (taxon) {
       for (let index = 0; index < taxon.t.length; index++) {
         const taxonName = taxon.t[index];
-        if (taxonName.n == taxonNameFind) {
+        if (taxonName.name == taxonNameFind) {
           if (reconstructedTaxonomy.length == 0) {
             reconstructedTaxonomy = taxon.t.slice(0, index + 1);
             break;
@@ -1228,7 +1234,7 @@ export let Checklist = {
       }
 
       const taxonName = taxon.t[taxon.t.length - 1]; //the taxon name of this item is the last in the taxon array
-      if (taxonName.n == taxonNameFind) {
+      if (taxonName.name == taxonNameFind) {
         return true;
       }
       return false;
@@ -1238,7 +1244,7 @@ export let Checklist = {
       if (reconstructedTaxonomy.length > 0) {
         found = { t: reconstructedTaxonomy };
       } else {
-        found = { t: [{ n: taxonNameFind, a: "" }] };
+        found = { t: [{ name: taxonNameFind, authority: "" }] };
       }
       found.isInChecklist = false;
     } else {
@@ -1267,10 +1273,11 @@ export let Checklist = {
     };
 
     taxa.forEach(function (taxon) {
+      
       let currentParent = treefied;
       taxon.t.forEach(function (taxonOfThisLevel, index) {
-        if (!currentParent.children.hasOwnProperty(taxonOfThisLevel.n)) {
-          currentParent.children[taxonOfThisLevel.n] = {
+        if (!currentParent.children.hasOwnProperty(taxonOfThisLevel.name)) {
+          currentParent.children[taxonOfThisLevel.name] = {
             taxon: taxonOfThisLevel,
             data: {},
             children: {},
@@ -1279,10 +1286,10 @@ export let Checklist = {
 
         if (taxon.t.length == index + 1) {
           //add data to the last item
-          currentParent.children[taxonOfThisLevel.n].data = taxon.d;
+          currentParent.children[taxonOfThisLevel.name].data = taxon.d;
         }
 
-        currentParent = currentParent.children[taxonOfThisLevel.n];
+        currentParent = currentParent.children[taxonOfThisLevel.name];
       });
     });
 
@@ -1321,7 +1328,6 @@ export let Checklist = {
   },
 
   getMetaForDataPath: function (dataPath) {
-    
     if (dataPath.endsWith(templateResultSuffix)) {
       dataPath = dataPath.substring(
         0,
@@ -1582,8 +1588,8 @@ export let Checklist = {
     let seen = {};
     let results = [];
     Checklist.getData().checklist.forEach(function (taxon) {
-      if (topmostTaxon == "*" || taxon.t[0].n == topmostTaxon) {
-        let taxonName = taxon.t[taxonLevel].n;
+      if (topmostTaxon == "*" || taxon.t[0].name == topmostTaxon) {
+        let taxonName = taxon.t[taxonLevel].name;
         if (!seen.hasOwnProperty(taxonName)) {
           seen[taxonName] = true;
           results.push(taxonName);

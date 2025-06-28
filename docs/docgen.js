@@ -1,4 +1,5 @@
 import { nlDataStructure } from "../model/DataManagerData.js";
+import { dataPath } from "../model/DataPath.js";
 
 let doc = "";
 
