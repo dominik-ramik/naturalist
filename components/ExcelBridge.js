@@ -1,5 +1,6 @@
 import { _t, _tf } from "../model/I18n.js";
 import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";
+import { Logger } from "./Logger.js";
 
 //TODO refactor all this so that ExcelBridge only loads raw data from the spreadsheet in form of JSON and passes them on to DataManager to treat
 // that will clean the code and make creating other connectors easier
@@ -29,8 +30,7 @@ export let ExcelBridge = function (excelFile) {
     let generalSheet = loadSheet(workbook, data.sheets.appearance.name);
 
     if (generalSheet == null) {
-      log(
-        "critical",
+      Logger.critical(
         _tf("dm_cannot_load_languages", [data.sheets.appearance.name])
       );
       return null;
@@ -43,9 +43,7 @@ export let ExcelBridge = function (excelFile) {
       data.sheets.appearance.tables.supportedLanguages
     );
     if (languageTable.length < 2) {
-      //TODO translate this and other hardcoded log messages
-      log(
-        "critical",
+      Logger.critical(
         "The '" +
           data.common.languages.languagesTableName +
           "' table needs to have at least one row, which contains the default language of the checklist"
@@ -59,8 +57,7 @@ export let ExcelBridge = function (excelFile) {
 
     let codeColumn = indexOfCaseInsensitive(languageTable[0], nCode);
     if (codeColumn < 0) {
-      log(
-        "critical",
+      Logger.critical(
         "Cannot find column 'Code' in the '" +
           data.common.languages.languagesTableName +
           "' table on sheet " +
@@ -70,8 +67,7 @@ export let ExcelBridge = function (excelFile) {
     }
     let nameColumn = indexOfCaseInsensitive(languageTable[0], nName);
     if (codeColumn < 0) {
-      log(
-        "critical",
+      Logger.critical(
         "Cannot find column 'Name of language' in the '" +
           data.common.languages.languagesTableName +
           "' table on sheet " +
@@ -82,8 +78,7 @@ export let ExcelBridge = function (excelFile) {
     }
     let fallbackColumn = indexOfCaseInsensitive(languageTable[0], nFallback);
     if (codeColumn < 0) {
-      log(
-        "critical",
+      Logger.critical(
         "Cannot find column 'Fallback language' in the '" +
           data.common.languages.languagesTableName +
           "' table on sheet " +
@@ -173,7 +168,7 @@ export let ExcelBridge = function (excelFile) {
       colIndex = indexOfCaseInsensitive(headers, columnName);
     }
     if (colIndex < 0) {
-      log("error", _tf("dm_column_not_found", [columnName, subTableName]));
+      Logger.error(_tf("dm_column_not_found", [columnName, subTableName]));
     }
     return colIndex;
   }
@@ -213,7 +208,7 @@ export let ExcelBridge = function (excelFile) {
     );
 
     if (rawSubTable == null) {
-      log("critical", "Cannot find " + sheetName + ", " + tableInfo.name);
+      Logger.critical("Cannot find " + sheetName + ", " + tableInfo.name);
       return null;
     }
 
@@ -236,13 +231,12 @@ export let ExcelBridge = function (excelFile) {
 
   function getSubTable(sheetName, sheetData, tableName, tableInfo, lang) {
     if (sheetData == null) {
-      log("critical", "Sheet data is null"); //TODO verify this is necessary
+      Logger.critical("Sheet data is null");
       return null;
     }
 
     if (sheetData.length < 2) {
-      log(
-        "critical",
+      Logger.critical(
         _tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) +
           " " +
           _t("dm_verify_doc")
@@ -252,8 +246,7 @@ export let ExcelBridge = function (excelFile) {
 
     let tableStartCol = indexOfCaseInsensitive(sheetData[0], tableName);
     if (tableStartCol < 0) {
-      log(
-        "critical",
+      Logger.critical(
         _tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) +
           " " +
           _t("dm_verify_doc")
@@ -337,8 +330,7 @@ export let ExcelBridge = function (excelFile) {
         });
 
         if (matchingHeader === undefined) {
-          log(
-            "critical",
+          Logger.critical(
             "Could not find expected column '" +
               expectedHeader +
               "' in table " +
@@ -367,8 +359,7 @@ export let ExcelBridge = function (excelFile) {
               }
             });
             if (multilingualColumns.length > 0) {
-              log(
-                "error",
+              Logger.error(
                 _tf("dm_cannot_have_language_indicators", [
                   columnMeta.name,
                   tableInfo.name,
@@ -385,7 +376,7 @@ export let ExcelBridge = function (excelFile) {
   function loadSheet(workbook, sheetName) {
     let rawSheetData = readSheetToJSON(workbook, sheetName);
     if (!rawSheetData) {
-      log("critical", _tf("dm_cannot_find_sheet", [sheetName]));
+      Logger.critical(_tf("dm_cannot_find_sheet", [sheetName]));
       return null;
       //throw "Could not find the sheet '" + sheetName + "' in the spreadsheet you provided. This sheet contains critical information about the checklist data you upload and needs to be present and contain the appropriate information (see documentation).";
     }
@@ -421,12 +412,10 @@ export let ExcelBridge = function (excelFile) {
   }
 
   // Object to return
-  let log = null;
   let data = null;
 
   let excelBridge = {
-    loadMeta: function (dataManagerData, logFunction) {
-      log = logFunction;
+    loadMeta: function (dataManagerData) {
       data = dataManagerData;
 
       let workbook = readWorkbook(excelFile);
@@ -444,7 +433,7 @@ export let ExcelBridge = function (excelFile) {
       //load checklist data
       let sheetData = loadSheet(workbook, data.sheets.checklist.name);
       if (sheetData == null) {
-        log("critical", "Could not locate checklist sheet");
+        Logger.critical("Could not locate checklist sheet");
         return null;
       }
 

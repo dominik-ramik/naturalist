@@ -7,7 +7,13 @@ export let nlDataStructure = {
     },
     checklistHeadersStartRow: 1,
     allUsedDataPaths: {}, // allUsedDataPaths[lang.code] = dataPath
+
+    _columnInfosCache: {}, // Add cache object
+
     getAllColumnInfos: function (langCode) {
+      if (this._columnInfosCache[langCode]) {
+        return this._columnInfosCache[langCode];
+      }
       let result = [];
       Object.keys(nlDataStructure.sheets.content.tables).forEach(function (
         tableKey
@@ -21,12 +27,15 @@ export let nlDataStructure = {
               if (tableKey == "taxa") {
                 formatting = "taxon"; //can have .name and .authority
               }
-              if (tableKey == "media") {
+              else if (tableKey == "media") {
                 formatting = "media"; //can have .source and .title
               }
-              
+              else if (tableKey == "customDataDefinition") {
+                formatting = row["formatting"] || "text"; 
+              }
+
               if (row[columnKey] === undefined) {
-                console.log(row, columnKey, table.name, type, role, row);
+                console.log(row, columnKey, table.name, formatting, row);
                 return;
               }
 
@@ -40,16 +49,17 @@ export let nlDataStructure = {
           }
         });
       });
+      this._columnInfosCache[langCode] = result;
       return result;
     },
-    getItem: function (log, tableData, itemName, langCode, defaultValue) {
+
+    getItem: function (tableData, itemName, langCode, defaultValue) {
       let item = tableData[langCode].find(function (row) {
         return row.item == itemName;
       });
 
       if (item === undefined) {
-        log(
-          "warning",
+        Logger.warning(
           "In sheet <b>nl_appearance</b>, table <b>Customization</b>, could not find the option <b>" +
             itemName +
             "</b>"
@@ -159,66 +169,6 @@ export let nlDataStructure = {
                 allowEmpty: true,
                 allowedContent: "any",
                 supportsMultilingual: true,
-              },
-            },
-          },
-          data: [],
-        },
-        searchOnline: {
-          name: "Search online",
-          description:
-            "When you click on any taxon in the checklist app, a 'Details' pane opens with the taxon details. If you fill this table, you can display a series of links to search engines of herbaria, collections, encyclopedia or other where the taxon may be found through a template URL adress. You can find some exemples in the <a href=\"us-birds.xlsx\">Birds of the US</a> sample checklist.\nThis table can be left completely empty, if you do not want to provide users means to search the taxa in external search engines. This being said, adding appropriate search engines will help users find relevant information about the taxa you present (e.g. digitalized specimens, if you provide a link to a muzeum or herbarium collection).",
-          columns: {
-            title: {
-              name: "Title",
-              description:
-                "The title of the link to the search engine you wish to display. As this column is multilingual, you can have different titles for different language mutations (e.g. 'Google Image Search' in English version column Title:en and 'Recherche des images Google' in the French column Title:fr).",
-              integrity: {
-                description: "A short title describing the search engine.",
-                allowEmpty: false,
-                allowDuplicates: "no",
-                allowedContent: "any",
-                supportsMultilingual: true,
-              },
-            },
-            icon: {
-              name: "Icon",
-              description:
-                "For each search engine, you should prepare an icon to be displayed with the link. The icon should represent visually the search engine (e.g. use its logo) and preferably be square (200px width/height should be enough) and have white or transparent background. The icon must be put into the 'usercontent' folder, inside the 'online_search_icons' subfolder.",
-              integrity: {
-                description:
-                  "Name of the image including the extension (e.g. google.png)",
-                allowEmpty: false,
-                allowDuplicates: "yes",
-                allowedContent: "filename",
-                allowedExtensions: [".jpg", ".png", "webp", ".svg"],
-                supportsMultilingual: true,
-              },
-            },
-            searchUrlTemplate: {
-              name: "Search URL template",
-              description:
-                "Here you define to which web (URL) your users will be directed when clicking on the search engine link. For example, if you want to allow them to display images of the given taxon on Google Image Search, you can first search for an arbitrary taxon on Google Image Search ... e.g. Turdus merula. Then you can copy the results address (which will look something like <i>https://www.google.com/search?q=Turdus%20merula&tbm=isch &sxsrf=As5e5fwef5wwHOw:1673525622390 &source=lnms&sa=X...</i> with a lot of other unnecessary parameters), remove the unneeded URL parameters and replace the search string (Turdus merula) by a template designating the taxon name ... getting at the end https://www.google.com/search?q={{taxon.name}}&tbm=isch which is the URL you can copy-paste into the appropriate cell in this column. Some search engines of online museum collections or herbaria might by a bit more fiddly, but in general one can create templated search URLs for nearly all search engines.",
-              integrity: {
-                description:
-                  'A URL of the desired search engine where URL parameters which determine the search are replaced by the template {{ taxon.name }} (or any other necessary, see <a href="#g-template">template</a> for all template options).',
-                allowEmpty: false,
-                allowDuplicates: "no",
-                allowedContent: "url",
-                supportsMultilingual: true,
-              },
-            },
-            restrictToTaxon: {
-              name: "Restrict to taxon",
-              description:
-                "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa. If needed you can supply a comma-separated list of taxa. E.g. 'Aceropyga, Baeturia' will make the search engine appear only if the selected taxon is whithin either of the two genera.",
-              integrity: {
-                description:
-                  "A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)",
-                allowEmpty: true,
-                allowDuplicates: "yes",
-                allowedContent: "any",
-                supportsMultilingual: false,
               },
             },
           },
@@ -682,6 +632,66 @@ export let nlDataStructure = {
                 allowDuplicates: "yes",
                 allowedContent: "any",
                 defaultValue: "no",
+                supportsMultilingual: false,
+              },
+            },
+          },
+          data: [],
+        },
+                searchOnline: {
+          name: "Search online",
+          description:
+            "When you click on any taxon in the checklist app, a 'Details' pane opens with the taxon details. If you fill this table, you can display a series of links to search engines of herbaria, collections, encyclopedia or other where the taxon may be found through a template URL adress. You can find some exemples in the <a href=\"us-birds.xlsx\">Birds of the US</a> sample checklist.\nThis table can be left completely empty, if you do not want to provide users means to search the taxa in external search engines. This being said, adding appropriate search engines will help users find relevant information about the taxa you present (e.g. digitalized specimens, if you provide a link to a muzeum or herbarium collection).",
+          columns: {
+            title: {
+              name: "Title",
+              description:
+                "The title of the link to the search engine you wish to display. As this column is multilingual, you can have different titles for different language mutations (e.g. 'Google Image Search' in English version column Title:en and 'Recherche des images Google' in the French column Title:fr).",
+              integrity: {
+                description: "A short title describing the search engine.",
+                allowEmpty: false,
+                allowDuplicates: "no",
+                allowedContent: "any",
+                supportsMultilingual: true,
+              },
+            },
+            icon: {
+              name: "Icon",
+              description:
+                "For each search engine, you should prepare an icon to be displayed with the link. The icon should represent visually the search engine (e.g. use its logo) and preferably be square (200px width/height should be enough) and have white or transparent background. The icon must be put into the 'usercontent' folder, inside the 'online_search_icons' subfolder.",
+              integrity: {
+                description:
+                  "Name of the image including the extension (e.g. google.png)",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "filename",
+                allowedExtensions: [".jpg", ".png", "webp", ".svg"],
+                supportsMultilingual: true,
+              },
+            },
+            searchUrlTemplate: {
+              name: "Search URL template",
+              description:
+                "Here you define to which web (URL) your users will be directed when clicking on the search engine link. For example, if you want to allow them to display images of the given taxon on Google Image Search, you can first search for an arbitrary taxon on Google Image Search ... e.g. Turdus merula. Then you can copy the results address (which will look something like <i>https://www.google.com/search?q=Turdus%20merula&tbm=isch &sxsrf=As5e5fwef5wwHOw:1673525622390 &source=lnms&sa=X...</i> with a lot of other unnecessary parameters), remove the unneeded URL parameters and replace the search string (Turdus merula) by a template designating the taxon name ... getting at the end https://www.google.com/search?q={{taxon.name}}&tbm=isch which is the URL you can copy-paste into the appropriate cell in this column. Some search engines of online museum collections or herbaria might by a bit more fiddly, but in general one can create templated search URLs for nearly all search engines.",
+              integrity: {
+                description:
+                  'A URL of the desired search engine where URL parameters which determine the search are replaced by the template {{ taxon.name }} (or any other necessary, see <a href="#g-template">template</a> for all template options).',
+                allowEmpty: false,
+                allowDuplicates: "no",
+                allowedContent: "url",
+                supportsMultilingual: true,
+              },
+            },
+            restrictToTaxon: {
+              name: "Restrict to taxon",
+              description:
+                "Sometimes you may enter online databases which are only pertinent to a specific group of organisms in your checklist. If you only wish to show the corresponding search when a particular taxon or its descendant is selected, enter the name of the taxon here. E.g. on a checklist of vertebrates you may have a search URL to an online database of mammals; then you would enter <i>Mammalia</i> into this cell (provided you have such a taxon in your checklist) and only taxa which are descendent of <i>Mammalia</i> will have this search button shown. Leave empty if you wish to make the corresponding search available to any taxa. If needed you can supply a comma-separated list of taxa. E.g. 'Aceropyga, Baeturia' will make the search engine appear only if the selected taxon is whithin either of the two genera.",
+              integrity: {
+                description:
+                  "A name of taxon (excluding the authority). The field is case insensitive (e.g. enter Mammalia or mammalia to the same effect)",
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "any",
                 supportsMultilingual: false,
               },
             },

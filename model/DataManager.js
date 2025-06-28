@@ -11,37 +11,10 @@ import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
 import { TinyBibReader } from "../lib/TinyBibMD.js";
 import { Checklist } from "../model/Checklist.js";
+import { loadDataByType } from "./customTypes/index.js";
+import { Logger } from "../components/Logger.js";
 
-let dataCodesCache = new Map();
-function processPossibleDataCode(currentDataPath, value, codes, langCode, log) {
-  let columnNameMatches = (d) =>
-    d.columnName.toLowerCase() ==
-    dataPath.modify.itemNumbersToHash(currentDataPath).toLowerCase();
 
-  const key = currentDataPath + "|" + value + "|" + langCode;
-
-  if (!dataCodesCache.has(key)) {
-    let dataCodesFound = codes[langCode].find(
-      (d) => columnNameMatches(d) && d.code == value
-    );
-    if (dataCodesFound) {
-      value = dataCodesFound.replacement;
-    } else if (codes[langCode].find((d) => columnNameMatches(d))) {
-      log(
-        "warning",
-        "Code '" +
-          value +
-          "' found in column '" +
-          currentDataPath +
-          "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
-      );
-    }
-
-    dataCodesCache.set(key, value);
-  }
-
-  return dataCodesCache.get(key);
-}
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -120,7 +93,6 @@ export let DataManager = function () {
     function gatherReferences() {
       let useCitations = data.common
         .getItem(
-          log,
           data.sheets.appearance.tables.customization.data,
           "Use citations",
           data.common.languages.defaultLanguageCode, //only support bibtex in default language code
@@ -134,8 +106,7 @@ export let DataManager = function () {
 
       let supportedCitationStyles = ["apa", "harvard"];
       if (!supportedCitationStyles.includes(useCitations)) {
-        log(
-          "error",
+        Logger.error(
           "Unknown citation style '" +
             useCitations +
             "'. Supported values are " +
@@ -154,8 +125,7 @@ export let DataManager = function () {
         ];
 
       if (!bibliographyData || bibliographyData.length === 0) {
-        log(
-          "warning",
+        Logger.warning(
           "Bibliography table is empty. Add BibTeX entries to use citations."
         );
         return {};
@@ -168,7 +138,7 @@ export let DataManager = function () {
         .join("\n\n");
 
       if (!combinedBibtex.trim()) {
-        log("warning", "No valid BibTeX entries found in Bibliography table.");
+        Logger.warning("No valid BibTeX entries found in Bibliography table.");
         return {};
       }
 
@@ -178,7 +148,7 @@ export let DataManager = function () {
         bibReader = new TinyBibReader(combinedBibtex);
       } catch (e) {
         console.log(e);
-        log("error", "Error processing bibliography entries: " + e);
+        Logger.error("Error processing bibliography entries: " + e);
         return {};
       }
 
@@ -190,7 +160,7 @@ export let DataManager = function () {
 
       data.common.languages.supportedLanguages.forEach(function (lang) {
         //all online search icons
-        data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
+        data.sheets.content.tables.searchOnline.data[lang.code].forEach(
           function (row) {
             let asset = relativeToUsercontent(
               "./online_search_icons/" + row.icon
@@ -275,8 +245,7 @@ export let DataManager = function () {
             linkBase.toLowerCase().startsWith("http:") ||
             linkBase.toLowerCase().startsWith("https:")
           ) {
-            log(
-              "error",
+            Logger.error(
               _tf("dm_precache_absolute", [row.columnName, linkBase])
             );
           }
@@ -378,8 +347,7 @@ export let DataManager = function () {
               contentLengthInfo.contentLength / 1024 / 1024 >
                 precachedImageMaxSizeMb
             ) {
-              log(
-                "warning",
+              Logger.warning(
                 _tf("dm_asset_too_large", [
                   asset,
                   (contentLengthInfo.contentLength / 1024 / 1024).toFixed(2),
@@ -389,7 +357,7 @@ export let DataManager = function () {
             }
           } else {
             if (contentLengthInfo.responseStatus == 404) {
-              log("error", _tf("dm_asset_not_found", [asset]));
+              Logger.error(_tf("dm_asset_not_found", [asset]));
             }
           }
         });
@@ -432,34 +400,30 @@ export let DataManager = function () {
 
     function compileChecklistVersion(lang) {
       let hue = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "Color theme hue",
         lang.code,
         212
       );
       let name = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "Checklist name",
         lang.code,
         "Checklist"
       );
       let about = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "About section",
         lang.code,
         _t("generic_about")
       );
 
-      let aboutResult = processFDirective(about, {}, log);
+      let aboutResult = processFDirective(about, {});
       if (aboutResult) {
         about = aboutResult;
       }
 
       let howToCite = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "How to cite",
         lang.code,
@@ -467,7 +431,6 @@ export let DataManager = function () {
       );
 
       let dateFormat = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "Date format",
         lang.code,
@@ -475,7 +438,6 @@ export let DataManager = function () {
       );
       let useCitations = data.common
         .getItem(
-          log,
           data.sheets.appearance.tables.customization.data,
           "Use citations",
           lang.code,
@@ -483,21 +445,17 @@ export let DataManager = function () {
         )
         ?.toLowerCase();
       let precachedImageMaxSize = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "Precached image max size",
         lang.code,
         0.5
       );
       let stackingCirclesDepth = data.common.getItem(
-        log,
         data.sheets.appearance.tables.customization.data,
         "Stacking circles depth",
         lang.code,
         3
       );
-
-      console.log(data.sheets.checklist.data[lang.code]);
 
       let version = {
         languageName: lang.name,
@@ -552,8 +510,7 @@ export let DataManager = function () {
           row.parentTaxonIndication !== "none"
         ) {
           if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
-            log(
-              "warning",
+            Logger.warning(
               "Wrong value in Parent taxon indication will be ignored: " +
                 row.parentTaxonIndication
             );
@@ -583,7 +540,7 @@ export let DataManager = function () {
         );
       });
 
-      data.sheets.appearance.tables.searchOnline.data[lang.code].forEach(
+      data.sheets.content.tables.searchOnline.data[lang.code].forEach(
         function (row) {
           meta.externalSearchEngines.push({
             title: row.title,
@@ -726,8 +683,7 @@ export let DataManager = function () {
 
               let split = splitN(expr, " ", 3);
               if (split.length < 3 || split.length > 4) {
-                log(
-                  "error",
+                Logger.error(
                   _tf("dm_hidden_syntax_wrong_length", [
                     info.fullRow.columnName,
                     expr,
@@ -736,16 +692,14 @@ export let DataManager = function () {
               }
 
               if (!["if", "unless"].includes(split[0])) {
-                log(
-                  "error",
+                Logger.error(
                   _tf("dm_hidden_syntax", [info.fullRow.columnName, expr])
                 );
               }
 
               let filter = split[1];
               if (!dataPath.validate.isDataPath(filter)) {
-                log(
-                  "error",
+                Logger.error(
                   _tf("dm_hidden_syntax_wrong_filter", [
                     info.fullRow.columnName,
                     filter,
@@ -754,8 +708,7 @@ export let DataManager = function () {
               }
 
               if (!["is", "isset", "notset", "notsetor"].includes(split[2])) {
-                log(
-                  "error",
+                Logger.error(
                   _tf("dm_hidden_syntax_wrong_operator", [
                     info.fullRow.columnName,
                     expr,
@@ -770,8 +723,7 @@ export let DataManager = function () {
                     throw new Error("Not an array");
                   }
                 } catch (e) {
-                  log(
-                    "error",
+                  Logger.error(
                     _tf("dm_hidden_syntax_wrong_value", [
                       info.fullRow.columnName,
                       expr,
@@ -833,7 +785,7 @@ export let DataManager = function () {
 
   function loadData(table) {
     if (table == null) {
-      log("error", _t("problem_loading_data"));
+      Logger.error(_t("problem_loading_data"));
       return null;
     }
 
@@ -852,8 +804,7 @@ export let DataManager = function () {
           indexOfCaseInsensitive(dataRow, mapRow.columnName + ":" + lang.code) <
             0
         ) {
-          log(
-            "error",
+          Logger.error(
             _tf("dm_column_defined_but_missing", [
               mapRow.columnName,
               data.sheets.content.tables.maps.name,
@@ -892,7 +843,7 @@ export let DataManager = function () {
         if (headersCache.indexOf(header) < 0) {
           headersCache.push(header);
         } else {
-          log("error", _tf("dm_column_names_duplicate", [header]));
+          Logger.error(_tf("dm_column_names_duplicate", [header]));
         }
       });
 
@@ -921,8 +872,7 @@ export let DataManager = function () {
               if (!doneWithTaxa) {
                 rowObj.t.push(taxon);
               } else {
-                log(
-                  "error",
+                Logger.error(
                   _tf("dm_incomplete_taxa_info_row", [
                     rowIndex + data.common.checklistHeadersStartRow,
                     info.name,
@@ -996,13 +946,14 @@ export let DataManager = function () {
               if (rowObjData.hasOwnProperty(currentSegment)) {
                 throw _tf("dm_duplicate_segment", [currentSegment]);
               }
-              let genericData = getGenericData(
+              let genericData = loadDataByType({
                 headers,
                 row,
-                countedComputedPath,
+                computedPath,
                 info,
-                langCode
-              );
+                langCode,
+                data,
+              });
               if (genericData !== "") {
                 //rowObjData[count - 1] = genericData;
                 rowObjData[lastSuccesfullCount] = genericData;
@@ -1013,8 +964,7 @@ export let DataManager = function () {
                   count != lastSuccesfullCount
                 ) {
                   // lastSuccesfullCount must be as is and not with -1 to give the user a 1 based index and not a 0 based one
-                  log(
-                    "error",
+                  Logger.error(
                     _tf("dm_array_with_empty_cells_in_the_middle", [
                       computedPath,
                       lastSuccesfullCount,
@@ -1049,19 +999,19 @@ export let DataManager = function () {
               ].trim();
 
             if (rawValue != "") {
-              let values = rawValue?.split("|").map((v) => v.trim());
-
-              //*
-              values = values.map((v) =>
-                processPossibleDataCode(
-                  countedComputedPath,
-                  v,
-                  data.sheets.appearance.tables.dataCodes.data,
-                  langCode,
-                  log
-                )
-              );
-              //*/
+              let values = rawValue
+                ?.split("|")
+                .map((v, index) =>
+                  loadDataByType({
+                    headers,
+                    row,
+                    computedPath: computedPath + index.toString(),
+                    info,
+                    langCode,
+                    overrideValue: v.trim(),
+                    data,
+                  })
+                );
 
               for (let i = 0; i < values.length; i++) {
                 const e = values[i];
@@ -1101,13 +1051,14 @@ export let DataManager = function () {
           }
           */
 
-          let genericData = getGenericData(
+          let genericData = loadDataByType({
             headers,
             row,
             computedPath,
             info,
-            langCode
-          );
+            langCode,
+            data,
+          });
 
           if (genericData) {
             rowObjData[currentSegment] = genericData;
@@ -1134,429 +1085,6 @@ export let DataManager = function () {
     }
 
     dataCodesCache = new Map();
-
-    function getGenericData(headers, row, computedPath, info, langCode) {
-
-      switch (info.formatting) {
-        case "text":
-          let stringValue = readSimpleData(
-            headers,
-            row,
-            computedPath,
-            langCode
-          );
-          if (stringValue == null) {
-            let template = "";
-            if (
-              info.table == data.sheets.content.tables.customDataDefinition.name
-            ) {
-              let columnMeta =
-                data.sheets.content.tables.customDataDefinition.data[
-                  langCode
-                ].find(function (row) {
-                  if (
-                    dataPath.modify.itemNumbersToHash(row.columnName) ==
-                    dataPath.modify.itemNumbersToHash(computedPath)
-                  ) {
-                    return true;
-                  }
-                });
-              template = columnMeta ? columnMeta.template : "";
-            } else if (info.table == data.sheets.content.tables.maps.name) {
-              let columnMeta = data.sheets.content.tables.maps.data[
-                langCode
-              ].find(function (row) {
-                if (
-                  dataPath.modify.itemNumbersToHash(row.columnName) ==
-                  dataPath.modify.itemNumbersToHash(computedPath)
-                ) {
-                  return true;
-                }
-              });
-              template = columnMeta ? columnMeta.source : "";
-            } else if (info.table == data.sheets.content.tables.media.name) {
-              let columnMeta = data.sheets.content.tables.media.data[
-                langCode
-              ].find(function (row) {
-                if (
-                  dataPath.modify.itemNumbersToHash(row.columnName) ==
-                  dataPath.modify.itemNumbersToHash(computedPath)
-                ) {
-                  return true;
-                }
-              });
-              template = columnMeta ? columnMeta.linkBase : "";
-            }
-
-            let valueRegex = new RegExp("{{\\s*value\\s*}}", "i");
-
-            if (valueRegex.test(template)) {
-              log(
-                "warning",
-                _tf("dm_defined_column_not_present", [
-                  computedPath,
-                  info.table,
-                  data.sheets.content.name,
-                ])
-              );
-            }
-
-            return "";
-          }
-          if (stringValue.toString().length > 0) {
-            
-            console.log(computedPath, stringValue)
-
-            stringValue = processPossibleDataCode(
-              computedPath,
-              stringValue,
-              data.sheets.appearance.tables.dataCodes.data,
-              langCode,
-              log
-            );
-
-            let matchingMetaRow =
-              data.sheets.content.tables.customDataDefinition.data[
-                langCode
-              ].find(function (row) {
-                return (
-                  row.columnName.toLowerCase() ==
-                  dataPath.modify.itemNumbersToHash(computedPath).toLowerCase()
-                );
-              });
-
-            let expectedType = "text";
-            if (matchingMetaRow != null) {
-              expectedType = matchingMetaRow.formatting;
-            }
-
-            switch (expectedType) {
-              case "image":
-                return stringValue;
-                break;
-              case "badge":
-                return stringValue;
-                break;
-              case "text":
-                stringValue = DOMPurify.sanitize(stringValue);
-
-                stringValue = stringValue.toString().trim();
-                stringValue = stringValue.replace(/\r\n/, "\\n");
-                stringValue = stringValue.replace(/[\r\n]/, "\\n");
-
-                return stringValue;
-                break;
-              case "markdown":
-                return stringValue;
-                break;
-              case "taxon":
-                return stringValue;
-                break;
-              case "number":
-                let number = 0;
-                if (Number.isInteger(stringValue)) {
-                  number = parseInt(stringValue);
-                } else {
-                  number = parseFloat(stringValue);
-                }
-                if (Number.isNaN(number)) {
-                  log(
-                    "error",
-                    _tf("dm_value_not_number", [stringValue, computedPath])
-                  );
-                }
-                return number;
-                break;
-              case "date":
-                let date = stringValue;
-
-                let dateFormat = data.common.getItem(
-                  log,
-                  data.sheets.appearance.tables.customization.data,
-                  "Date format",
-                  langCode,
-                  "YYYY-MM-DD"
-                );
-
-                date = dayjs(stringValue).format(dateFormat);
-
-                return date;
-                break;
-              default:
-                console.log("Unknown formatting: " + expectedType, stringValue);
-                //return stringValue;
-                break;
-            }
-          }
-          break;
-        case "map regions":
-          let mr = readMapRegions(headers, row, computedPath, langCode);
-          return mr;
-          break;
-        case "taxon":
-          return readTaxon(headers, row, computedPath, langCode);
-          break;
-        case "image":
-          return readSingleMedia(headers, row, computedPath, langCode);
-          break;
-        case "media":
-          return readMedia(headers, row, computedPath, langCode);
-          break;
-        default:
-          console.log("Unknown formatting: " + info.formatting);
-          break;
-      }
-      return "";
-    }
-    function readMapRegions(headers, row, computedPath, langCode) {
-      const concernedColumns = headers.filter((h) =>
-        h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
-      );
-
-      let mapRegions = "";
-      let resultObject = {};
-
-      if (concernedColumns.length == 0) {
-        //mapRegions are already inline format
-        mapRegions = readSimpleData(headers, row, computedPath, langCode);
-        resultObject = parseInlineMapRegions(mapRegions, langCode);
-      } else {
-        //column-per-region format
-        resultObject = parseColumnMapRegions(
-          concernedColumns,
-          headers,
-          row,
-          computedPath,
-          langCode
-        );
-      }
-
-      // Validate region codes
-      let knownRegionCodes = data.sheets.appearance.tables.mapRegionsNames.data[
-        langCode
-      ].map((x) => x.code);
-
-      Object.keys(resultObject).forEach((regionCode) => {
-        if (!knownRegionCodes.includes(regionCode)) {
-          log(
-            "error",
-            "Region code '" +
-              regionCode +
-              "' in column '" +
-              computedPath +
-              "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
-          );
-        }
-      });
-
-      return resultObject;
-    }
-
-    // Parse inline format: "regionA:?:noteA | regionB | regionC:! | regionD:?:noteD"
-    function parseInlineMapRegions(mapRegions) {
-      const result = {};
-
-      if (!mapRegions || mapRegions.trim() === "") {
-        return result;
-      }
-
-      // Split by pipe separators
-      const regions = mapRegions.split("|").map((r) => r.trim());
-
-      regions.forEach((regionStr) => {
-        if (regionStr.trim() === "") return;
-
-        const parts = regionStr.split(":");
-        const regionCode = parts[0].trim();
-
-        if (regionCode === "") return;
-
-        // Initialize region object with empty status and notes
-        const regionObj = {
-          status: "",
-          notes: "",
-        };
-
-        // If there's a status part
-        if (parts.length >= 2 && parts[1].trim() !== "") {
-          regionObj.status = parts[1].trim();
-        }
-
-        // If there's a notes part
-        if (parts.length >= 3 && parts[2].trim() !== "") {
-          regionObj.notes = parts[2].trim();
-        }
-
-        result[regionCode] = regionObj;
-      });
-
-      return result;
-    }
-
-    // Parse column-per-region format
-    function parseColumnMapRegions(
-      concernedColumns,
-      headers,
-      row,
-      computedPath,
-      langCode
-    ) {
-      const result = {};
-
-      concernedColumns.forEach((columnName) => {
-        const data = readSimpleData(headers, row, columnName, langCode);
-
-        if (data && data.trim() !== "") {
-          const regionCode = columnName.substring(computedPath.length + 1);
-
-          // Check if data contains vertical bar for notes
-          if (data.includes("|")) {
-            const parts = data.split("|").map((p) => p.trim());
-            const suffix = parts[0];
-            const note =
-              parts.length > 1 ? parts.slice(1).join("|").trim() : "";
-
-            result[regionCode] = {
-              status: suffix,
-              notes: note,
-            };
-          } else {
-            // Just the suffix
-            result[regionCode] = {
-              status: data.trim(),
-              notes: "",
-            };
-          }
-        }
-      });
-
-      return result;
-    }
-
-    function readMedia(headers, row, path, langCode) {
-      let mediaArray = [];
-
-      //first a case without numbers
-      let singleMedia = readSingleMedia(headers, row, path, langCode);
-      if (singleMedia !== null) {
-        mediaArray.push(singleMedia);
-      }
-      for (let index = 1; index <= 50; index++) {
-        singleMedia = readSingleMedia(
-          headers,
-          row,
-          path + index.toString(),
-          langCode
-        );
-
-        if (singleMedia !== null) {
-          mediaArray.push(singleMedia);
-        }
-      }
-
-      return mediaArray;
-    }
-
-    function readSingleMedia(headers, row, path, langCode) {
-      if (
-        headers.indexOf(path) < 0 &&
-        headers.indexOf(path + ":" + langCode) < 0 &&
-        headers.indexOf(path + ".source") < 0 &&
-        headers.indexOf(path + ".source:" + langCode) < 0
-      ) {
-        return null;
-      }
-
-      let _plain = readSimpleData(headers, row, path, langCode);
-      let source = readSimpleData(headers, row, path + ".source", langCode);
-      let title = readSimpleData(headers, row, path + ".title", langCode);
-
-      if (source === null && title === null) {
-        //try to recover the structure from | separated structure
-        let plainSplit = _plain.split("|");
-        if (plainSplit.length != 2) {
-          source = _plain;
-          title = "";
-        } else {
-          source = plainSplit[0];
-          title = plainSplit[1];
-        }
-      }
-
-      if (source === null || (source !== null && title === null)) {
-        log(
-          "error",
-          _tf("dm_image_column_names", [
-            path,
-            path,
-            path + ".source",
-            path + ".title",
-          ])
-        );
-      }
-
-      return { source: source, title: title };
-    }
-
-    function readTaxon(headers, row, path, langCode) {
-      let _plain = readSimpleData(headers, row, path, langCode);
-      let name = readSimpleData(headers, row, path + ".name", langCode);
-      let authority = readSimpleData(
-        headers,
-        row,
-        path + ".authority",
-        langCode
-      );
-
-      if (name === null && authority === null) {
-        let plainSplit = _plain.split("|");
-
-        if (plainSplit.length != 2) {
-          name = _plain;
-          authority = "";
-        } else {
-          name = plainSplit[0];
-          authority = plainSplit[1];
-        }
-      }
-
-      if (name === null || (name !== null && authority === null)) {
-        log(
-          "error",
-          _tf("dm_taxon_column_names", [
-            path,
-            path,
-            path + ".name",
-            path + ".authority",
-          ])
-        );
-      }
-
-      return { n: name, a: authority };
-    }
-
-    function readSimpleData(headers, row, columnName, language) {
-      //try with given language
-      let colIndex = indexOfCaseInsensitive(
-        headers,
-        columnName + ":" + language
-      );
-      //try with default language code
-      if (colIndex < 0) {
-        colIndex = indexOfCaseInsensitive(
-          headers,
-          columnName + ":" + data.common.languages.defaultLanguageCode
-        );
-      }
-      //try without default language code
-      if (colIndex < 0) {
-        colIndex = indexOfCaseInsensitive(headers, columnName);
-      }
-      if (colIndex < 0) {
-        return null;
-      }
-      return row[colIndex];
-    }
   }
 
   function checkMetaValidity() {
@@ -1569,7 +1097,7 @@ export let DataManager = function () {
           data.common.languages.supportedLanguages.forEach(function (lang) {
             let tableData = table.data[lang.code];
             if (tableData == null) {
-              log("critical", "Missing table " + table.name);
+              Logger.critical("Missing table " + table.name);
               return;
             }
 
@@ -1579,8 +1107,7 @@ export let DataManager = function () {
                 let value = row[key];
                 if (value === undefined) {
                   //value was not read, this means the column is missing
-                  log(
-                    "critical",
+                  Logger.critical(
                     "Missing required column " +
                       table.columns[key].name +
                       " in table " +
@@ -1603,8 +1130,7 @@ export let DataManager = function () {
                 let value = dataRow[columnKey];
 
                 if (value === undefined) {
-                  log(
-                    "critical",
+                  Logger.critical(
                     "Missing column name " +
                       column.name +
                       " in table " +
@@ -1621,8 +1147,7 @@ export let DataManager = function () {
                   value.toString().trim() == "";
 
                 if (!integrity.allowEmpty && isEmpty) {
-                  log(
-                    "error",
+                  Logger.error(
                     _tf("dm_value_cannot_be_empty", [column.name, table.name])
                   );
                 }
@@ -1645,8 +1170,7 @@ export let DataManager = function () {
                         }
                       });
                       if (!found) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_list", [
                             value,
                             column.name,
@@ -1664,8 +1188,7 @@ export let DataManager = function () {
                       break;
                     case "columnName":
                       if (!dataPath.validate.isSimpleColumnName(value)) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_simple_column_name", [
                             value,
                             column.name,
@@ -1683,8 +1206,7 @@ export let DataManager = function () {
                         hexHslaRgbaColor.test(value) == false &&
                         cssColorNames.indexOf(value.toLowerCase()) < 0
                       ) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_hlsa", [
                             value,
                             column.name,
@@ -1702,8 +1224,7 @@ export let DataManager = function () {
                         integrity.allowedExtensions.indexOf(ext.toLowerCase()) <
                         0
                       ) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_filename", [
                             value,
                             column.name,
@@ -1715,8 +1236,7 @@ export let DataManager = function () {
                       break;
                     case "url":
                       if (!isValidHttpUrl(value)) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_http", [
                             value,
                             column.name,
@@ -1727,8 +1247,7 @@ export let DataManager = function () {
                       break;
                     case "dataPath":
                       if (!dataPath.validate.isDataPath(value)) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_incorrect_datapath", [
                             value,
                             column.name,
@@ -1748,8 +1267,7 @@ export let DataManager = function () {
 
                       let regex = new RegExp(integrity.regex);
                       if (regex.test(value) == false) {
-                        log(
-                          "error",
+                        Logger.error(
                           _tf("dm_regex_failed", [
                             value,
                             column.name,
@@ -1783,8 +1301,7 @@ export let DataManager = function () {
                     }
                   });
                   if (count > 1) {
-                    log(
-                      "error",
+                    Logger.error(
                       _tf("dm_incorrect_must_be_unique", [
                         value,
                         column.name,
@@ -1810,8 +1327,7 @@ export let DataManager = function () {
         i18n.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
         i18n.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
       ) {
-        log(
-          "warning",
+        Logger.warning(
           _tf("dm_specify_fallback_language", [
             lang.name,
             "Supported languages",
@@ -1843,8 +1359,7 @@ export let DataManager = function () {
             return;
           }
 
-          log(
-            "error",
+          Logger.error(
             _tf("dm_column_name_duplicate", [
               item.name,
               item.table,
@@ -1869,8 +1384,7 @@ export let DataManager = function () {
 
       let hue = parseInt(hueString);
       if (isNaN(hue) || hue < 0 || hue > 360) {
-        log(
-          "error",
+        Logger.error(
           _tf("dm_hue_value", [
             data.sheets.appearance.tables.customization.name,
           ])
@@ -1882,7 +1396,7 @@ export let DataManager = function () {
       let table =
         data.sheets.content.tables.customDataDefinition.data[lang.code];
       if (table === null) {
-        log("critical", "Cannot find custom data def");
+        Logger.critical("Cannot find custom data def");
         return;
       }
 
@@ -1896,7 +1410,7 @@ export let DataManager = function () {
         let columnName = row.columnName;
 
         if (columnName === undefined) {
-          log("critical", "Not found column " + columnName);
+          Logger.critical("Not found column " + columnName);
           return null;
         }
 
@@ -1910,8 +1424,7 @@ export let DataManager = function () {
           row.placement != "" &&
           !(colPosition.isSimpleItem || colPosition.isRoot)
         ) {
-          log(
-            "error",
+          Logger.error(
             _tf("dm_wrong_placement", [
               columnName,
               row.placement,
@@ -1922,13 +1435,12 @@ export let DataManager = function () {
 
         // Only leaf column can have "template"
         if (row.template != "" && !colPosition.isLeaf) {
-          log("error", _tf("dm_wrong_template", [columnName]));
+          Logger.error(_tf("dm_wrong_template", [columnName]));
         }
 
         // Only leaf column can have badge "formatting"
         if (row.formatting.toLowerCase() == "badge" && !colPosition.isLeaf) {
-          log(
-            "error",
+          Logger.error(
             _tf("dm_wrong_badge", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns.formatting
@@ -1939,8 +1451,7 @@ export let DataManager = function () {
 
         // Only columns with children or # can have subitems separator
         if (row.subitemsSeparator != "" && !colPosition.hasChildren) {
-          log(
-            "error",
+          Logger.error(
             _tf("dm_wrong_separator", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns
@@ -1976,8 +1487,7 @@ export let DataManager = function () {
               }
               console.log(columnKey);
               console.log(row[columnKey]);
-              log(
-                "warning",
+              Logger.warning(
                 _tf("dm_hidden_column_name", [
                   columnName,
                   data.sheets.content.tables.customDataDefinition.columns[
@@ -2125,8 +1635,7 @@ export let DataManager = function () {
               .replaceAll(".#", "#");
 
             if (allDataPaths.indexOf(cumulative) < 0) {
-              log(
-                "error",
+              Logger.error(
                 _tf("dm_hidden_missing_index", [
                   cumulative,
                   data.sheets.content.tables.customDataDefinition.name,
@@ -2179,15 +1688,15 @@ export let DataManager = function () {
 
     loadData: function (extractor, checkAssetsSize) {
       this.checkAssetsSize = checkAssetsSize;
-      this.loggedMessages = [];
+      Logger.clear();
 
-      extractor.loadMeta(data, log);
+      extractor.loadMeta(data);
       checkMetaValidity();
-      if (!this.hasErrors()) {
+      if (!Logger.hasErrors()) {
         postprocessMetadata();
       }
 
-      if (!this.hasErrors()) {
+      if (!Logger.hasErrors()) {
         loadData(extractor.getRawChecklistData());
       }
     },
@@ -2239,7 +1748,7 @@ function getMarkdownContent(url, runSpecificCache) {
   return result;
 }
 
-function processFDirective(data, runSpecificCache, logFn) {
+function processFDirective(data, runSpecificCache) {
   if (data.match(/^F:[a-zA-Z0-9-_.~]+/)) {
     let fileUrl = relativeToUsercontent(data.substring(2).trim());
 
@@ -2252,8 +1761,7 @@ function processFDirective(data, runSpecificCache, logFn) {
       if (markdownContent.responseStatus == 200) {
         return markdownContent.content;
       } else {
-        logFn(
-          "error",
+        Logger.error(
           _tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])
         );
         return null;

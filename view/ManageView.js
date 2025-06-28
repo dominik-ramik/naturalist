@@ -6,6 +6,7 @@ import { DataManager } from "../model/DataManager.js";
 import { _t } from "../model/I18n.js";
 import { checklistFileName } from "../components/Utils.js";
 import { Settings } from "../model/Settings.js";
+import { Logger } from "../components/Logger.js";
 
 let dataman = new DataManager();
 
@@ -27,40 +28,24 @@ export let ManageView = {
       this.state == "uploaderror" ? this.uploadError() : null,
       this.state == "done" ? this.done() : null,
       this.state != "processing" && this.state != "done"
-        ? this.logList()
+        ? m(
+            ".log",
+            Logger.getMessagesForDisplay().map(function (logItem) {
+              return m(".log-item." + logItem.level, [
+                m(
+                  ".message",
+                  m.trust(
+                    "<strong>" +
+                      _t("log_" + logItem.level) +
+                      ": </strong>" +
+                      logItem.message
+                  )
+                ),
+              ]);
+            })
+          )
         : null,
     ]);
-  },
-
-  logList: function () {
-    // deduplicated and reversed array of rendered (i18n) error messages
-
-    const deduplicatedMessages = dataman.loggedMessages.filter(
-      (item, index) =>
-        dataman.loggedMessages.findIndex(
-          (find) => find.message == item.message
-        ) === index
-    );
-
-    return m(
-      ".log",
-      deduplicatedMessages
-        .slice(0)
-        .reverse()
-        .map(function (logItem) {
-          return m(".log-item." + logItem.level, [
-            m(
-              ".message",
-              m.trust(
-                "<strong>" +
-                  _t("log_" + logItem.level) +
-                  ": </strong>" +
-                  logItem.message
-              )
-            ),
-          ]);
-        })
-    );
   },
 
   done: function () {
@@ -133,6 +118,18 @@ export let ManageView = {
     checkPHPPresent().then((result) => {
       this.shouldShowUploadForm = result;
       Settings.lastKnownUploadFormAvailability(result);
+      m.redraw();
+    });
+
+    // Add Logger observer to trigger redraws when messages change
+    Logger.addObserver(() => {
+      m.redraw();
+    });
+  },
+
+  onremove: function (vnode) {
+    // Clean up Logger observer when view is removed
+    Logger.removeObserver(() => {
       m.redraw();
     });
   },
@@ -336,7 +333,7 @@ export let ManageView = {
       reader.addEventListener("loadend", (evt) => {
         dataman.loadData(new ExcelBridge(evt.target.result), checkAssetsSize);
 
-        if (dataman.hasErrors()) {
+        if (Logger.hasErrors()) {
           ManageView.state = "dirty";
         } else {
           ManageView.state = "clean";
