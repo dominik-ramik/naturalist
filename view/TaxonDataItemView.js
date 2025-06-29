@@ -57,8 +57,6 @@ export let TaxonDataItemView = {
 
     if (meta.formatting == "taxon") {
 
-      console.log(data, meta)
-
       if (data.name.trim() == "") {
         return null;
       }

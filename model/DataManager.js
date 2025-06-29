@@ -87,7 +87,10 @@ export let DataManager = function () {
     });
 
     console.log("New checklist", checklist);
-    //    console.log("New checklist string", JSON.stringify(checklist));
+    console.log(checklist.versions.en.dataset.checklist[0].d);
+    console.log(checklist.versions.en.dataset.checklist[1].d);
+    console.log(checklist.versions.en.dataset.checklist[2].d);
+    
 
     return checklist;
     function gatherReferences() {
@@ -996,37 +999,38 @@ export let DataManager = function () {
             }
           } else if (count == 1 && pathSegments.length > 1) {
             //we may have a candidate for simplified array (aka | pipe separated values)
-            let rawValue =
-              row[
-                headers.indexOf(pathSegments[pathSegments.length - 2])
-              ].trim();
+            let rawValue = row[headers.indexOf(pathSegments[pathSegments.length - 2])].trim();
 
             if (rawValue != "") {
-              let values = rawValue
-                ?.split("|")
-                .map((v, index) =>
-                  loadDataByType(
-                    context,
-                    computedPath + index.toString(),
-                    info,
-                    v.trim()
-                  )
-                );
+              let values = rawValue?.split("|")
+                .map((v, index) => {
+                  // Create a virtual context that simulates the numbered column structure
+                  const virtualColumnName = (computedPath + (index + 1).toString()).toLowerCase();
+                  const virtualContext = {
+                    headers: [...context.headers, virtualColumnName],
+                    row: [...context.row, v.trim()],
+                    langCode: context.langCode
+                  };
 
-              for (let i = 0; i < values.length; i++) {
-                const e = values[i];
-                rowObjData[i] = e;
+                  // Track the virtual data path
+                  let localCountedDataPath = computedPath + (index + 1).toString();
+                  if (data.common.allUsedDataPaths[langCode].indexOf(localCountedDataPath) < 0) {
+                    data.common.allUsedDataPaths[langCode].push(localCountedDataPath);
+                  }
 
-                let localCountedDataPath = computedPath + (i + 1).toString();
-
-                if (
-                  data.common.allUsedDataPaths[langCode].indexOf(
-                    localCountedDataPath
-                  ) < 0
-                ) {
-                  data.common.allUsedDataPaths[langCode].push(
-                    localCountedDataPath
+                  // Now call loadDataByType with the virtual context - this follows the standard pattern
+                  return loadDataByType(
+                    virtualContext,
+                    localCountedDataPath,
+                    info
                   );
+                });
+
+              // Assign the processed values to the array
+              for (let i = 0; i < values.length; i++) {
+                const processedValue = values[i];
+                if (processedValue !== null && processedValue !== "" && processedValue !== undefined) {
+                  rowObjData[i] = processedValue;
                 }
               }
 

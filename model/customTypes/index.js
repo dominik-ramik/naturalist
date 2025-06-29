@@ -18,11 +18,13 @@ import { readerText } from "./ReaderText.js";
 import { readerMarkdown } from "./ReaderMarkdown.js";
 import { readerTaxon } from "./ReaderTaxon.js";
 import { readerNumber } from "./ReaderNumber.js";
+import { readerBadge } from "./ReaderBadge.js";
 const readers = buildReaders(
   readerText,
   readerMarkdown,
   readerTaxon,
-  readerNumber
+  readerNumber,
+  readerBadge
 );
 
 // Verify readers
