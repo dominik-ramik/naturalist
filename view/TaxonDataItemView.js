@@ -1,12 +1,10 @@
 import { Checklist } from "../model/Checklist.js";
-import { ClickableTaxonName } from "../view/ClickableTaxonNameView.js";
 import {
   filterMatches,
-  relativeToUsercontent,
   routeTo,
   shouldHide,
-  processMarkdownWithBibliography,
 } from "../components/Utils.js";
+import { dataReaders } from "../model/customTypes/index.js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -14,187 +12,17 @@ export let TaxonDataItemView = {
   renderDataItem: function (data, taxon, dataPath, itemType) {
     let meta = Checklist.getMetaForDataPath(dataPath);
 
-    //console.log("Details", dataPath, data, meta);
-
     if (meta == null) {
       console.log("null", dataPath);
       return null;
     }
 
-    if (meta.formatting == "image") {
-      if (data.source.toString().trim() == "") {
-        return null;
-      }
-
-      let source = data.source;
-      let title = data.title;
-
-      if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
-        let templateData = Checklist.getDataObjectForHandlebars(
-          source,
-          TaxonDataItemView.originalData,
-          taxon.name,
-          taxon.authority
-        );
-
-        source = Checklist.handlebarsTemplates[dataPath](templateData);
-      }
-
-      source = relativeToUsercontent(source);
-
-      return m(
-        "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
-          title +
-          "]",
-        {
-          onclick: function () {
-            this.classList.toggle("fullscreen");
-          },
-        },
-        m("img.image-in-view[src=" + source + "][alt=" + title + "]")
-      );
-    }
-
-    if (meta.formatting == "taxon") {
-
-      if (data.name.trim() == "") {
-        return null;
-      }
-
-      return m(ClickableTaxonName, {
-        taxonTree: {
-          taxon: data,
-          data: {},
-          children: {},
-        },
-      });
-    }
-
-    if (meta.formatting == "map regions") {
-      let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
-
-      //console.log("Map Regions Suffixes:", mapRegionsSuffixes);
-
-      // Preprocess all notes once to avoid modifying original data
-      const preprocessedData = {};
-      Object.keys(data).forEach((regionCode) => {
-        const regionInfo = data[regionCode];
-        preprocessedData[regionCode] = {
-          ...regionInfo,
-          notes:
-            regionInfo.notes && regionInfo.notes.trim() !== ""
-              ? processMarkdownWithBibliography(regionInfo.notes.trim())
-              : regionInfo.notes,
-        };
-      });
-
-      // Collect and deduplicate notes
-      const notesMap = new Map(); // note text -> footnote number
-      const footnotes = []; // array of unique notes
-      let footnoteCounter = 1;
-
-      // First pass: collect unique notes (using preprocessed data)
-      Object.keys(preprocessedData).forEach((regionCode) => {
-        const regionInfo = preprocessedData[regionCode];
-        if (regionInfo.notes && regionInfo.notes.trim() !== "") {
-          const noteText = regionInfo.notes.trim();
-          if (!notesMap.has(noteText)) {
-            notesMap.set(noteText, footnoteCounter);
-            footnotes.push(noteText);
-            footnoteCounter++;
-          }
-        }
-      });
-
-      // Work directly with object format (using preprocessed data)
-      const renderedRegions = Object.keys(preprocessedData).map(
-        (regionCode) => {
-          const regionInfo = preprocessedData[regionCode];
-
-          let appendedLegend = mapRegionsSuffixes.find(
-            (item) =>
-              item.suffix == (regionInfo.suffix || regionInfo.status || "")
-          )?.appendedLegend;
-
-          if (
-            appendedLegend === undefined ||
-            appendedLegend === null ||
-            appendedLegend.trim() === ""
-          ) {
-            appendedLegend = "";
-          } else {
-            appendedLegend = processMarkdownWithBibliography(
-              " _(" + appendedLegend + ")_"
-            );
-          }
-
-          let regionName = Checklist.nameForMapRegion(regionCode);
-
-          // Create region name element with optional footnote
-          let regionNameElement;
-          if (regionInfo.notes && regionInfo.notes.trim() !== "") {
-            const footnoteNumber = notesMap.get(regionInfo.notes.trim());
-            regionNameElement = [
-              m("strong", regionName),
-              m("sup", footnoteNumber),
-            ];
-          } else {
-            regionNameElement = m("strong", regionName);
-          }
-
-          // Create the full region element with appended legend in italics
-          if (appendedLegend && appendedLegend.trim() !== "") {
-            return m("span", [
-              regionNameElement,
-              m("em", m.trust(appendedLegend)),
-            ]);
-          } else {
-            return m("span", regionNameElement);
-          }
-        }
-      );
-
-      if (renderedRegions.length == 0) {
-        return null;
-      }
-
-      // Create footnotes elements
-      const footnotesElements =
-        footnotes.length > 0
-          ? footnotes.map((note, index) =>
-              m(".region-footnote", [
-                m("sup.region-footnotes-number", (index + 1).toString()),
-                "\u00A0", // non-breaking space
-                m.trust(note),
-              ])
-            )
-          : [];
-
-      return m(".map-regions-data", [
-        m(
-          "span",
-          renderedRegions.reduce((acc, region, index) => {
-            if (index > 0) acc.push(", ");
-            acc.push(region);
-            return acc;
-          }, [])
-        ),
-        footnotesElements.length > 0
-          ? m(".region-footnotes", footnotesElements)
-          : null,
-      ]);
-    }
-
+    // Handle list separators for arrays and objects
     let listDisplayType = "span.bullet-list";
     let listSeparator = "";
     let isRealList = true;
     switch (meta.separator) {
       case "":
-        //default case (normal bullet list)
-        listDisplayType = "span.bullet-list";
-        listSeparator = "";
-        isRealList = true;
-        break;
       case "bullet list":
         listDisplayType = "span.bullet-list";
         listSeparator = "";
@@ -259,6 +87,12 @@ export let TaxonDataItemView = {
     if (itemType == "object") {
       let dataLength = Object.getOwnPropertyNames(data).length;
 
+      // Check whether we have a reader for meta.formatting and if so, return the dataToUI, otherwise continue
+      const readerResult = TaxonDataItemView.renderWithReader(data, meta, dataPath, taxon, null);
+      if (readerResult !== DOMPurify.sanitize(data.toString().trim())) {
+        return readerResult;
+      }
+
       let result = m(
         listDisplayType,
         Object.getOwnPropertyNames(data)
@@ -298,22 +132,35 @@ export let TaxonDataItemView = {
     return itemType;
   },
 
-  titleValuePair: function (data, dataPath, taxon, tailingSeparator) {
-    function purifyCssString(css) {
-      if (css.indexOf('"') >= 0) {
-        css = css.substring(0, css.indexOf('"'));
+  /**
+   * Handles rendering with a dataReader if available, otherwise returns sanitized string.
+   * Returns null if the reader returns null (should be hidden).
+   */
+  renderWithReader: function(data, meta, dataPath, taxon, tailingSeparator) {
+    const reader = dataReaders[meta.formatting];
+    if (reader && reader.dataToUI) {
+      const uiContext = {
+        meta: meta,
+        dataPath: dataPath,
+        taxon: taxon,
+        originalData: TaxonDataItemView.originalData
+      };
+      let rendered = reader.dataToUI(data, uiContext);
+      if (rendered === null) {
+        return null;
       }
-      if (css.indexOf("'") >= 0) {
-        css = css.substring(0, css.indexOf("'"));
+      if (tailingSeparator && typeof rendered === "string") {
+        rendered += tailingSeparator;
+      } else if (tailingSeparator && rendered && rendered.tag) {
+        rendered = [rendered, tailingSeparator];
       }
-      if (css.indexOf(";") >= 0) {
-        css = css.substring(0, css.indexOf(";"));
-      }
-      if (css.indexOf(":") >= 0) {
-        css = css.substring(0, css.indexOf(":"));
-      }
-      return css;
+      return rendered;
+    } else {
+      return DOMPurify.sanitize(data.toString().trim()) + (tailingSeparator ? tailingSeparator : "");
     }
+  },
+
+  titleValuePair: function (data, dataPath, taxon, tailingSeparator) {
     let meta = Checklist.getMetaForDataPath(dataPath);
     if (meta === null) {
       return null;
@@ -339,73 +186,16 @@ export let TaxonDataItemView = {
         : null;
 
     if (itemType == "simple") {
-      if (data === null || data.toString() === "") {
+      if (data === null || data === undefined || data.toString().trim() === "") {
         return null;
       }
 
-      //purify prior to use of simple data
-      data = DOMPurify.sanitize(data);
-
-      // process template first, then process markdown
-      /*
-            value = value of this dataPath
-            taxon = current taxon with convenience rendering
-            data = current data of this taxon
-            */
-      if (meta.template != "" && Checklist.handlebarsTemplates[dataPath]) {
-        let templateData = Checklist.getDataObjectForHandlebars(
-          data,
-          TaxonDataItemView.originalData,
-          taxon.name,
-          taxon.authority
-        );
-
-        data = Checklist.handlebarsTemplates[dataPath](templateData);
+      // Use generic reader-based rendering via helper
+      const rendered = TaxonDataItemView.renderWithReader(data, meta, dataPath, taxon, tailingSeparator);
+      if (rendered === null) {
+        return null;
       }
-
-      //process markdown and items with templates
-      if (
-        meta.formatting == "markdown" ||
-        (meta.template && meta.template != "")
-      ) {
-        data = processMarkdownWithBibliography(data, tailingSeparator);
-        data = m.trust(data);
-      } else if (meta.formatting == "badge") {
-        let badgeMeta = meta.badges;
-
-        let badgeFormat = badgeMeta.find(function (possibleFormat) {
-          let possibleFormatCured = possibleFormat.contains
-            .toLowerCase()
-            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); //escape characters for RegEx
-
-          var reg = new RegExp(possibleFormatCured, "gi");
-          return reg.test(data.toLowerCase());
-        });
-        if (badgeFormat) {
-          data = m.trust(
-            "<span class='badge' style='" +
-              (badgeFormat.background
-                ? "background-color: " +
-                  purifyCssString(badgeFormat.background) +
-                  ";"
-                : "") +
-              (badgeFormat.text
-                ? "color: " + purifyCssString(badgeFormat.text) + ";"
-                : "") +
-              (badgeFormat.border
-                ? "border-color: " + purifyCssString(badgeFormat.border) + ";"
-                : "") +
-              "'>" +
-              data +
-              "</span>" +
-              (tailingSeparator
-                ? "<span class='separator'>" + tailingSeparator + "</span>"
-                : "")
-          );
-        }
-      } else {
-        data = data.trim() + (tailingSeparator ? tailingSeparator : "");
-      }
+      data = rendered;
     }
 
     let subitemsList = TaxonDataItemView.renderDataItem(

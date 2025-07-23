@@ -617,7 +617,7 @@ export let nlDataStructure = {
                 allowDuplicates: "yes",
                 defaultValue: "top",
                 allowedContent: "list",
-                listItems: ["top", "bottom", "left", "middle", "right", ""],
+                listItems: ["top", "bottom", "left", "middle", "right", "details", "top|details", "bottom|details", "left|details", "middle|details", "right|details", ""],
                 supportsMultilingual: false,
               },
             },

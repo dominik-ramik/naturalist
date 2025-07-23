@@ -1,4 +1,4 @@
-import { readDataFromPath } from "./index.js";
+import { readDataFromPath } from "../ReadDataFromPath.js";
 import { Logger } from "../../components/Logger.js";
 
 export let readerNumber = {
@@ -33,6 +33,6 @@ export let readerNumber = {
     return parsedNumber;
   },
   dataToUI: function (data) {
-    return "UI: " + data;
+    return data;
   },
 };

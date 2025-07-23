@@ -87,10 +87,6 @@ export let DataManager = function () {
     });
 
     console.log("New checklist", checklist);
-    console.log(checklist.versions.en.dataset.checklist[0].d);
-    console.log(checklist.versions.en.dataset.checklist[1].d);
-    console.log(checklist.versions.en.dataset.checklist[2].d);
-    
 
     return checklist;
     function gatherReferences() {
@@ -619,14 +615,12 @@ export let DataManager = function () {
         }
 
         matchingComputedDataPaths.forEach(function (computedDataPath) {
-
           let dataType = "custom";
-                    
+
           if (info.formatting == "taxon") {
             if (info.table == data.sheets.content.tables.taxa.name) {
               return;
-            }
-            else{
+            } else {
               dataType = "taxon";
             }
           }
@@ -854,9 +848,8 @@ export let DataManager = function () {
           Logger.error(_tf("dm_column_names_duplicate", [header]));
         }
       });
-        // Create context object once per row
-        const context = { headers, row: null, langCode: lang.code };
-
+      // Create context object once per row
+      const context = { headers, row: null, langCode: lang.code };
 
       for (let rowIndex = 1; rowIndex < table.length; rowIndex++) {
         const row = table[rowIndex];
@@ -874,13 +867,14 @@ export let DataManager = function () {
           //console.log("INFO", info.name, info);
 
           if (info.formatting == "checklist-taxon") {
-            let taxon = loadDataByType(
-              context,
-              info.name,
-              {...info, formatting: "taxon"},
-            );
+            let taxon = loadDataByType(context, info.name, {
+              ...info,
+              formatting: "taxon",
+            });
 
-            let taxonIsEmpty = taxon == null || (taxon?.n?.trim() == "" && taxon?.a?.trim() == "");
+            let taxonIsEmpty =
+              taxon == null ||
+              (taxon?.n?.trim() == "" && taxon?.a?.trim() == "");
 
             if (taxonIsEmpty) {
               doneWithTaxa = true;
@@ -948,7 +942,7 @@ export let DataManager = function () {
               data.common.allUsedDataPaths[langCode].indexOf(
                 countedComputedPath
               ) < 0
-            ) {
+            ) {              
               data.common.allUsedDataPaths[langCode].push(countedComputedPath);
             }
 
@@ -957,11 +951,7 @@ export let DataManager = function () {
               if (rowObjData.hasOwnProperty(currentSegment)) {
                 throw _tf("dm_duplicate_segment", [currentSegment]);
               }
-              let genericData = loadDataByType(
-                context,
-                computedPath,
-                info
-              );
+              let genericData = loadDataByType(context, countedComputedPath, info);
               if (genericData !== "" && genericData !== null) {
                 //rowObjData[count - 1] = genericData;
                 rowObjData[lastSuccesfullCount] = genericData;
@@ -999,37 +989,52 @@ export let DataManager = function () {
             }
           } else if (count == 1 && pathSegments.length > 1) {
             //we may have a candidate for simplified array (aka | pipe separated values)
-            let rawValue = row[headers.indexOf(pathSegments[pathSegments.length - 2])].trim();
+            let rawValue =
+              row[
+                headers.indexOf(pathSegments[pathSegments.length - 2])
+              ].trim();
 
             if (rawValue != "") {
-              let values = rawValue?.split("|")
-                .map((v, index) => {
-                  // Create a virtual context that simulates the numbered column structure
-                  const virtualColumnName = (computedPath + (index + 1).toString()).toLowerCase();
-                  const virtualContext = {
-                    headers: [...context.headers, virtualColumnName],
-                    row: [...context.row, v.trim()],
-                    langCode: context.langCode
-                  };
+              let values = rawValue?.split("|").map((v, index) => {
+                // Create a virtual context that simulates the numbered column structure
+                const virtualColumnName = (
+                  computedPath + (index + 1).toString()
+                ).toLowerCase();
+                const virtualContext = {
+                  headers: [...context.headers, virtualColumnName],
+                  row: [...context.row, v.trim()],
+                  langCode: context.langCode,
+                };
 
-                  // Track the virtual data path
-                  let localCountedDataPath = computedPath + (index + 1).toString();
-                  if (data.common.allUsedDataPaths[langCode].indexOf(localCountedDataPath) < 0) {
-                    data.common.allUsedDataPaths[langCode].push(localCountedDataPath);
-                  }
-
-                  // Now call loadDataByType with the virtual context - this follows the standard pattern
-                  return loadDataByType(
-                    virtualContext,
-                    localCountedDataPath,
-                    info
+                // Track the virtual data path
+                let localCountedDataPath =
+                  computedPath + (index + 1).toString();
+                if (
+                  data.common.allUsedDataPaths[langCode].indexOf(
+                    localCountedDataPath
+                  ) < 0
+                ) {
+                  data.common.allUsedDataPaths[langCode].push(
+                    localCountedDataPath
                   );
-                });
+                }
+
+                // Now call loadDataByType with the virtual context - this follows the standard pattern
+                return loadDataByType(
+                  virtualContext,
+                  localCountedDataPath,
+                  info
+                );
+              });
 
               // Assign the processed values to the array
               for (let i = 0; i < values.length; i++) {
                 const processedValue = values[i];
-                if (processedValue !== null && processedValue !== "" && processedValue !== undefined) {
+                if (
+                  processedValue !== null &&
+                  processedValue !== "" &&
+                  processedValue !== undefined
+                ) {
                   rowObjData[i] = processedValue;
                 }
               }
@@ -1055,11 +1060,7 @@ export let DataManager = function () {
           }
           */
 
-          let genericData = loadDataByType(
-            context,
-            computedPath,
-            info
-          );
+          let genericData = loadDataByType(context, computedPath, info);
 
           if (genericData) {
             rowObjData[currentSegment] = genericData;

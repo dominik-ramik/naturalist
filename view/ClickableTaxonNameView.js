@@ -9,7 +9,7 @@ export let ClickableTaxonName = {
       : "span";
     let taxonTree = vnode.attrs.taxonTree;
 
-    if (taxonTree.taxon.name == "" && taxonTree.taxon.authority == "") {
+    if (taxonTree.taxon.name?.trim() == "" && taxonTree.taxon.authority?.trim() == "") {
       return null;
     }
 

@@ -743,7 +743,7 @@ let translations = {
   },
   dm_hidden_syntax_wrong_filter: {
     en: "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. The filter name should be a valid data path and correspond to a Column name with Search category title set",
-    fr: "La colonne 'Hidden' dans 'Custom data definition' à la ligne $1 a une syntaxe incorrecte $2. Le nom du filtre doit être un chemin de données valide et correspondre à un Column name avec le Search category title défini",
+    fr: "La colonne 'Hidden' dans 'Définition des données personnalisées' à la ligne $1 a une syntaxe incorrecte $2. Le nom du filtre doit être un chemin de données valide et correspondre à un Column name avec le Search category title défini",
   },
   dm_hidden_syntax_wrong_length: {
     en: "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2.",
@@ -889,5 +889,9 @@ let translations = {
   view_map_select_map: {
     en: "Select a map above",
     fr: "Sélectionnez une carte ci-dessus",
+  },
+  dm_generic_column_names: {
+    en: "Error in column names for formatting of type $1 in the checklist sheet; we expect either a single column called $2 or multiple columns with the following suffixes: $3",
+    fr: "Erreur dans les noms de colonnes pour le formatage de type $1 dans la feuille de check-list ; nous attendons soit une seule colonne appelée $2, soit plusieurs colonnes avec les suffixes suivants : $3",
   },
 };

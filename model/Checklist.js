@@ -234,7 +234,9 @@ export let Checklist = {
   ],
 
   transformDatabaseShortcodes: function (text) {
-    if (text === undefined || !text) return text;
+    if (text === undefined || text === null || typeof text !== 'string') {
+      return text;
+    }
 
     if (text.indexOf("@") > -1) {
       text = text.replace(

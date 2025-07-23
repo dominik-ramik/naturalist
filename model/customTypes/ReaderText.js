@@ -1,4 +1,6 @@
-import { readDataFromPath } from "./index.js";
+import { readDataFromPath } from "../ReadDataFromPath.js";
+import { processMarkdownWithBibliography } from "../../components/Utils.js";
+import { Checklist } from "../Checklist.js";
 
 export let readerText = {
   dataType: "text",
@@ -12,7 +14,12 @@ export let readerText = {
 
     return text;
   },
-  dataToUI: function (data) {
-    return "UI: " + data;
+  dataToUI: function (data, uiContext) {
+    if (data === null || data === undefined || data.toString().trim() === "" ) {
+      return null;
+    }
+
+    let processedData = data.toString().trim();    
+    return processedData;
   },
 };
