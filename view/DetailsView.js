@@ -12,6 +12,7 @@ import {
   colorSVGMap,
   getRegionColors,
 } from "../components/Utils.js";
+import { dataReaders } from "../model/customTypes/index.js";
 
 export let DetailsView = {
   selectedTaxon: null,
@@ -77,7 +78,9 @@ function taxonomyCrumbs(taxonName) {
       */
       m(".crumb-taxon-name-wrap", [
         m(".crumb-taxon-name", taxonName.name),
-        taxonName.authority == "" ? null : m(".crumb-taxon-authority", taxonName.authority),
+        taxonName.authority == ""
+          ? null
+          : m(".crumb-taxon-authority", taxonName.authority),
       ]),
     ]);
   });
@@ -145,361 +148,169 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
 }
 
 function TabMedia(tabData, taxon, taxonName) {
-  let mediaRenderingData = {};
+  if (!tabData || tabData.length === 0) {
+    return null;
+  }
 
-  //content
-  Object.keys(Checklist.getDataMeta("media")).forEach(function (metaKey) {
-    let meta = Checklist.getDataMeta("media")[metaKey];
-    if (meta.datatype == "media") {
-      if (tabData.indexOf(metaKey) >= 0) {
-        let mediaType = meta.type;
-        let mediaTitle = meta.title;
-        let mediaUrl = meta.link;
+  let renderedContent = [];
 
-        let mediaItems = taxon.d[metaKey];
+  tabData.forEach(function (item) {
+    const { data, meta, dataPath } = item;
 
-        mediaItems.forEach(function (mediaItem) {
-          if (
-            mediaItem == undefined ||
-            mediaItem == null ||
-            !mediaItem.source ||
-            mediaItem.source == ""
-          ) {
-            return;
-          }
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return;
+    }
 
-          let url = "";
-          if (mediaUrl == "") {
-            url = mediaItem.source;
-          } else {
-            url = resolveTemplate(mediaUrl, mediaItem.source);
-          }
+    const uiContext = {
+      meta: meta,
+      dataPath: dataPath || meta.columnName || "",
+      originalData: taxon.d,
+      taxon: {
+        name: taxon.t[taxon.t.length - 1].name,
+        authority: taxon.t[taxon.t.length - 1].authority,
+      },
+      placement: "details",
+    };
 
-          url = relativeToUsercontent(url);
+    console.log("TabMedia item:", uiContext);
 
-          let title = mediaItem.hasOwnProperty("title") ? mediaItem.title : "";
+    // Get the appropriate reader based on formatting type
+    const reader = dataReaders[meta.formatting];
 
-          if (!mediaRenderingData.hasOwnProperty(mediaType)) {
-            mediaRenderingData[mediaType] = {};
-          }
-          if (!mediaRenderingData[mediaType].hasOwnProperty(metaKey)) {
-            mediaRenderingData[mediaType][metaKey] = {
-              title: mediaTitle,
-              mediaList: [],
-            };
-          }
-          mediaRenderingData[mediaType][metaKey].mediaList.push({
-            url: url,
-            title: title,
-          });
-        });
+    if (reader && reader.dataToUI) {
+      let renderedItem = reader.dataToUI(data, uiContext);
+      if (renderedItem) {
+        renderedContent.push(renderedItem);
       }
     }
   });
 
-  return m(
-    ".media-list",
-    Object.keys(mediaRenderingData).map(function (dataKey) {
-      return m(
-        ".media-type-" + dataKey,
-        Object.keys(mediaRenderingData[dataKey]).map(function (mediaTitleKey) {
-          let mediaSet = mediaRenderingData[dataKey][mediaTitleKey];
+  if (renderedContent.length === 0) {
+    return null;
+  }
 
-          return m(".media-set", [
-            m(".media-set-title", mediaSet.title),
-            m(
-              ".media-set-list",
-              mediaSet.mediaList.map(function (media, index) {
-                switch (dataKey) {
-                  case "image":
-                    return m(".media-image", [
-                      m(
-                        ".image-wrap.fullscreenable-image[title=" + media.title + "]",
-                        {
-                          onclick: function (e) {
-                            this.classList.toggle("fullscreen");
-                            this.getElementsByTagName(
-                              "img"
-                            )[0].classList.toggle("clickable");
-                            e.preventDefault();
-                            e.stopPropagation();
-                          },
-                        },
-                        m("img.clickable[src=" + media.url + "][alt=" + media.title + "]")
-                      ),
-                      m(".title", media.title),
-                    ]);
-                    break;
-                  case "sound":
-                    return m(".media-sound", [
-                      m("audio[controls=controls]", [
-                        m("source[src=" + media.url + "]"),
-                      ]),
-                      m(".title", media.title),
-                    ]);
-                    break;
-                  case "video":
-                    console.log("Not implemented"); //TODO-FUTURE implement
-                    break;
-                  default:
-                    console.log("Not recognized media type");
-                    break;
-                }
-              })
-            ),
-          ]);
-        })
-      );
-    })
-  );
+  return m(".media-list", renderedContent);
 }
 
 function TabMap(tabData, taxon, taxonName) {
-  let mapsRenderingData = {};
+  if (!tabData || tabData.length === 0) {
+    return null;
+  }
 
-  //content
-  Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {
-    let meta = Checklist.getDataMeta("maps")[metaKey];
-    if (meta.datatype == "map") {
-      let mapData = taxon.d[metaKey];
-      let mapType = meta.type;
-      let mapTitle = meta.title;
-      let mapUrl = meta.source;
+  let renderedContent = [];
 
-      if (mapData == null || mapData == undefined) {
-        mapData = "";
-      }
+  tabData.forEach(function (item) {
+    const { data, meta, dataPath } = item;
 
-      let url = "";
-      if (mapUrl == "") {
-        url = mapData;
-      } else {
-        url = resolveTemplate(mapUrl, mapData);
-      }
+    if (!data) {
+      return;
+    }
 
-      if (mapData == "") {
-        return null;
-      }
+    const uiContext = {
+      meta: meta,
+      dataPath: dataPath || meta.columnName || "",
+      originalData: taxon.d,
+      taxon: {
+        name: taxon.t[taxon.t.length - 1].name,
+        authority: taxon.t[taxon.t.length - 1].a,
+      },
+      placement: "details",
+    };
 
-      if (!mapsRenderingData.hasOwnProperty(mapType)) {
-        mapsRenderingData[mapType] = {};
+    // Get the appropriate reader based on formatting type
+    const reader = dataReaders[meta.formatting];
+
+    if (reader && reader.dataToUI) {
+      let renderedItem = reader.dataToUI(data, uiContext);
+      if (renderedItem) {
+        renderedContent.push(renderedItem);
       }
-      if (!mapsRenderingData[mapType].hasOwnProperty(metaKey)) {
-        mapsRenderingData[mapType][metaKey] = {
-          title: mapTitle,
-          mediaList: [],
-        };
-      }
-      mapsRenderingData[mapType][metaKey].mediaList.push({
-        url: url,
-        title: mapTitle,
-        regions: mapData,
-        metaKey: metaKey,
-      });
     }
   });
 
-  return m(
-    ".media-list",
-    Object.keys(mapsRenderingData).map(function (dataKey) {
-      return m(
-        ".media-type-" + dataKey,
-        Object.keys(mapsRenderingData[dataKey]).map(function (mediaTitleKey) {
-          let mediaSet = mapsRenderingData[dataKey][mediaTitleKey];
+  if (renderedContent.length === 0) {
+    return null;
+  }
 
-          let processedMediaSet = mediaSet.mediaList.map(function (media) {
-            switch (dataKey) {
-              case "image":
-                return m(".media-image", [
-                  m(
-                    ".image-wrap.fullscreenable-image",
-                    {
-                      onclick: function (e) {
-                        this.classList.toggle("fullscreen");
-                        this.getElementsByTagName("img")[0].classList.toggle(
-                          "clickable"
-                        );
-                        e.preventDefault();
-                        e.stopPropagation();
-                      },
-                    },
-                    m("img.clickable[src=" + media.url + "]")
-                  ),
-                  m(".title", media.title),
-                ]);
-                break;
-              case "link":
-                return m(".map-link", [
-                  m("span", _t("show_map")),
-                  m("a[href=" + media.url + "][target=_blank]", media.title),
-                ]);
-                break;
-              case "regions":
-                let presentRegionsMeta = [];
-                let presentRegionsMetaSuffixes = [];
-
-                // Work directly with object format
-                if (typeof media.regions === "object" && media.regions !== null) {
-                  const regionCodes = Object.keys(media.regions);
-
-                  if (regionCodes.length == 0) {
-                    return null;
-                  }
-
-                  []
-                    .concat(
-                      Checklist.getMapRegionsMeta(true),
-                      Checklist.getMapRegionsMeta()
-                    )
-                    .forEach(function (mapRegionMeta) {
-                      regionCodes.forEach(function (regionCode) {
-                        const regionData = media.regions[regionCode];
-                        const suffix = regionData.suffix || regionData.status || "";
-
-                        if (
-                          suffix == mapRegionMeta.suffix &&
-                          presentRegionsMetaSuffixes.indexOf(mapRegionMeta.suffix) < 0
-                        ) {
-                          presentRegionsMetaSuffixes.push(mapRegionMeta.suffix);
-                          presentRegionsMeta.push(mapRegionMeta);
-                        }
-                      });
-                    });
-
-                  // Convert to legacy format for colorSVGMap compatibility
-                  let reformattedMediaRegions = "";
-                  Object.keys(media.regions).forEach((regionCode) => {
-                    const regionData = media.regions[regionCode];
-                    const suffix = regionData.suffix || regionData.status || "";
-                    reformattedMediaRegions += regionCode + ":" + suffix + " ";
-                  });
-                  const mapRegionsString = reformattedMediaRegions.trim();
-
-                  window.setTimeout(function () {
-                    let map = document.getElementById("map_" + media.metaKey);
-                    colorSVGMap(
-                      map,
-                      getRegionColors(
-                        mapRegionsString,
-                        media.url.toLowerCase().endsWith("world.svg")
-                      )
-                    );
-                  }, 50);
-
-                  return m(".media-map", [
-                    m(
-                      ".image-wrap.clickable.fullscreenable-image",
-                      {
-                        onclick: function (e) {
-                          this.classList.toggle("fullscreen");
-                          this.classList.toggle("clickable");
-                          e.preventDefault();
-                          e.stopPropagation();
-                        },
-                      },
-                      m(
-                        "object#map_" +
-                          media.metaKey +
-                          "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
-                          media.url +
-                          "]",
-                        {
-                          onload: function () {
-                            colorSVGMap(
-                              this,
-                              getRegionColors(
-                                mapRegionsString,
-                                media.url.toLowerCase().endsWith("world.svg")
-                              )
-                            );
-                          },
-                        }
-                      )
-                    ),
-                    media.regions
-                      ? m(
-                          ".legend",
-                          Object.keys(presentRegionsMeta).length == 0
-                            ? null
-                            : Object.values(presentRegionsMeta).map(function (
-                                regionMeta
-                              ) {
-                                return m(".legend-item", [
-                                  m(
-                                    ".map-fill[style=background-color: " +
-                                      regionMeta.fill +
-                                      "]"
-                                  ),
-                                  m(".map-legend-title", regionMeta.legend),
-                                ]);
-                              })
-                        )
-                      : null,
-                    m(".title", media.title),
-                  ]);
-                } else {
-                  return null;
-                }
-                break;
-              default:
-                console.log("Not recognized media type " + dataKey);
-                break;
-            }
-          });
-
-          if (processedMediaSet.every((item) => item === null)) {
-            return null;
-          }
-          return m(".media-map-set", [m(".media-set-list", processedMediaSet)]);
-        })
-      );
-    })
-  );
+  return m(".media-list", renderedContent);
 }
 
 function TabText(tabData, taxon, taxonName) {
-  let mdIndex = "";
-  let mdText = "";
-  //content
-  Object.keys(Checklist.getDataMeta("accompanyingText")).forEach(function (
-    metaKey
-  ) {
-    let meta = Checklist.getDataMeta("accompanyingText")[metaKey];
-    if (meta.datatype == "text") {
-      if (tabData.indexOf(metaKey) >= 0 && taxon.d[metaKey].length > 0) {
-        let itemText = taxon.d[metaKey];
+  if (!tabData || tabData.length === 0) {
+    return null;
+  }
 
+  let mdIndex = "";
+  let renderedContent = [];
+
+  tabData.forEach(function (item) {
+    const { data, meta } = item;
+
+    if (!data || data.toString().trim() === "") {
+      return;
+    }
+
+    // Create UI context for the reader
+    const uiContext = {
+      meta: meta,
+      dataPath: meta.columnName || "",
+      originalData: taxon.d,
+      taxon: {
+        name: taxonName,
+        authority: taxon.t[taxon.t.length - 1].a,
+      },
+      placement: "details",
+    };
+
+    // Get the appropriate reader based on formatting type
+    const reader = dataReaders[meta.formatting] || dataReaders["text"];
+
+    if (reader && reader.dataToUI) {
+      // Generate index entry if we have multiple items
+      if (tabData.length > 1) {
+        const metaKey = meta.columnName || "text";
         mdIndex +=
           "- <div class='index-head' onclick=\"document.getElementById('" +
           metaKey +
           "').scrollIntoView({behavior: 'smooth'}, true)\">" +
           meta.title +
           "</div>\n";
+      }
 
-        mdText +=
-          "<div class='accompanyingTextHeading'>" + meta.title + "</div>\n\n";
-        mdText += itemText + "\n\n";
+      // Render the content using the reader
+      let renderedItem = reader.dataToUI(data, uiContext);
+
+      if (renderedItem) {
+        // Wrap with heading if we have a title
+        if (meta.title) {
+          const metaKey = meta.columnName || "text";
+          renderedContent.push(
+            m("div", [
+              m("div.textHeading", { id: metaKey }, meta.title),
+              renderedItem,
+            ])
+          );
+        } else {
+          renderedContent.push(renderedItem);
+        }
       }
     }
   });
 
-  if (mdText.trim() == "") {
+  if (renderedContent.length === 0) {
     return null;
   }
 
-  //Excel may add \n string into values with newline, let's get rid of those
-  mdText = mdText.replaceAll("\\n", "\n");
+  // Combine index and content
+  let finalContent = [];
 
-  let htmlText = DOMPurify.sanitize(marked.parse(mdText));
+  if (mdIndex.length > 0 && tabData.length > 1) {
+    finalContent.push(m.trust(marked.parse(mdIndex)));
+  }
 
-  htmlText =
-    (mdIndex.length > 0 && tabData.length > 1
-      ? marked.parse(mdIndex) + "\n\n"
-      : "") + htmlText;
+  finalContent = finalContent.concat(renderedContent);
 
-  htmlText = mdImagesClickableAndUsercontentRelative(htmlText);
-
-  return m.trust(htmlText);
+  return m("div", finalContent);
 }
 
 function TabExternalSearch(tabData, taxon, taxonName) {

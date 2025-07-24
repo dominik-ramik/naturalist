@@ -49,12 +49,6 @@ export let DataManager = function () {
       // process F: directives for markdown files ... only in Additional texts and markdown-enabled Custom data
       let dataPathsToConsider = [];
 
-      Object.keys(
-        checklist.versions[lang.code].dataset.meta.accompanyingText
-      ).forEach(function (key) {
-        dataPathsToConsider.push(key);
-      });
-
       Object.keys(checklist.versions[lang.code].dataset.meta.data).forEach(
         function (key) {
           if (
@@ -156,6 +150,12 @@ export let DataManager = function () {
 
     function gatherPreloadableAssets() {
       let assets = [];
+
+      console.log(
+        "TODO gather preloadable assets for images, sounds, maps, etc."
+      );
+
+      return assets;
 
       data.common.languages.supportedLanguages.forEach(function (lang) {
         //all online search icons
@@ -481,11 +481,6 @@ export let DataManager = function () {
         data: compileDataMeta(lang, [
           data.sheets.content.tables.customDataDefinition.name,
         ]),
-        media: compileDataMeta(lang, [data.sheets.content.tables.media.name]),
-        maps: compileDataMeta(lang, [data.sheets.content.tables.maps.name]),
-        accompanyingText: compileDataMeta(lang, [
-          data.sheets.content.tables.accompanyingText.name,
-        ]),
         mapRegionsLegend: {
           default: {
             suffix: "",
@@ -631,26 +626,23 @@ export let DataManager = function () {
             dataType = "custom";
           }
 
-          if (info.table == data.sheets.content.tables.media.name)
-            dataType = "media";
-          if (info.table == data.sheets.content.tables.maps.name)
-            dataType = "map";
-          if (info.table == data.sheets.content.tables.accompanyingText.name)
-            dataType = "text";
-
           meta[computedDataPath] = {
             datatype: dataType,
           };
 
-          let placement = info.fullRow.placement;
-          if (
-            placement === undefined ||
-            placement === null ||
-            placement.trim() == ""
-          ) {
-            placement =
+          let placement = [];
+
+          info.fullRow.placement
+            .trim()
+            .toLowerCase()
+            .split("|")
+            .forEach((x) => placement.push(x.trim()));
+
+          if (placement.length == 0) {
+            placement = [
               data.sheets.content.tables.customDataDefinition.columns.placement
-                .integrity.defaultValue;
+                .integrity.defaultValue,
+            ];
           }
 
           if (dataType == "custom") {
@@ -791,34 +783,6 @@ export let DataManager = function () {
       return null;
     }
 
-    //check if all map colums are present
-    data.common.languages.supportedLanguages.forEach(function (lang) {
-      data.sheets.content.tables.maps.data[lang.code].forEach(function (
-        mapRow
-      ) {
-        let dataRow = table[0];
-
-        if (
-          indexOfCaseInsensitive(dataRow, mapRow.columnName) < 0 &&
-          dataRow.findIndex((item) =>
-            item.toLowerCase().startsWith(mapRow.columnName.toLowerCase() + ".")
-          ) < 0 &&
-          indexOfCaseInsensitive(dataRow, mapRow.columnName + ":" + lang.code) <
-            0
-        ) {
-          Logger.error(
-            _tf("dm_column_defined_but_missing", [
-              mapRow.columnName,
-              data.sheets.content.tables.maps.name,
-              data.sheets.content.tables.maps.name,
-            ])
-          );
-        }
-      });
-    });
-
-    //continue
-
     let allColumnInfos = data.common.getAllColumnInfos(
       data.common.languages.defaultLanguageCode
     );
@@ -942,7 +906,7 @@ export let DataManager = function () {
               data.common.allUsedDataPaths[langCode].indexOf(
                 countedComputedPath
               ) < 0
-            ) {              
+            ) {
               data.common.allUsedDataPaths[langCode].push(countedComputedPath);
             }
 
@@ -951,7 +915,11 @@ export let DataManager = function () {
               if (rowObjData.hasOwnProperty(currentSegment)) {
                 throw _tf("dm_duplicate_segment", [currentSegment]);
               }
-              let genericData = loadDataByType(context, countedComputedPath, info);
+              let genericData = loadDataByType(
+                context,
+                countedComputedPath,
+                info
+              );
               if (genericData !== "" && genericData !== null) {
                 //rowObjData[count - 1] = genericData;
                 rowObjData[lastSuccesfullCount] = genericData;

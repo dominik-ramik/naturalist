@@ -1,5 +1,6 @@
 import { nlDataStructure } from "../DataManagerData.js";
 import { dataPath } from "../DataPath.js";
+import { Checklist } from "../Checklist.js";
 
 const data = nlDataStructure;
 
@@ -82,4 +83,27 @@ export const helpers = {
   processPossibleDataCode: function (currentDataPath, value, langCode) {
     return this.getDataCodeValue(currentDataPath, value, langCode);
   },
+  
+  /**
+   * Process template if available for the given data and context
+   * @param {any} data - The data to process with template
+   * @param {Object} uiContext - UI context containing meta, dataPath, originalData, taxon
+   * @returns {any} Processed data or original data if no template
+   */
+  processTemplate: function(data, uiContext) {
+    if (
+      uiContext.meta.template && 
+      uiContext.meta.template !== "" &&
+      Checklist.handlebarsTemplates[uiContext.dataPath]
+    ) {
+      let templateData = Checklist.getDataObjectForHandlebars(
+        data,
+        uiContext.originalData,
+        uiContext.taxon.name,
+        uiContext.taxon.authority
+      );
+      return Checklist.handlebarsTemplates[uiContext.dataPath](templateData);
+    }
+    return data;
+  }
 };

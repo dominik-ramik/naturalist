@@ -4,16 +4,16 @@ import { relativeToUsercontent } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { _tf } from "../I18n.js";
 
-export let readerImage = {
-  dataType: "image",
+export let readerSound = {
+  dataType: "sound",
   readData: function (context, computedPath) {
-    let imageData = readDataFromPath(
+    let soundData = readDataFromPath(
       context,
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
           _tf("dm_generic_column_names", [
-            "image",
+            "sound",
             computedPath,
             String.join(", ", columnNames),
           ]),
@@ -22,14 +22,14 @@ export let readerImage = {
     );
 
     if (
-      (typeof imageData === "string" && imageData.length == 0) ||
-      imageData == null
+      (typeof soundData === "string" && soundData.length == 0) ||
+      soundData == null
     ) {
       // If the text is an empty string, return null
       return null;
     }
 
-    return imageData;
+    return soundData;
   },
   dataToUI: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
@@ -39,31 +39,20 @@ export let readerImage = {
     let source = data.source;
     let title = data.title;
 
+    // Process template if available
     source = helpers.processTemplate(source, uiContext);
+
     source = relativeToUsercontent(source);
 
-    const imageElement = m(
-      "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
-        title +
-        "]",
-      {
-        onclick: function (e) {
-          this.classList.toggle("fullscreen");
-          this.classList.toggle("clickable");
-          e.preventDefault();
-          e.stopPropagation();
+    return m(".media-sound", [
+      m("audio[controls=controls][controlslist=nodownload]", {
+        oncontextmenu: (e) => {
+          return false;
         },
-      },
-      m("img.image-in-view[src=" + source + "][alt=" + title + "]")
-    );
-
-    if (uiContext.placement === "details") {
-      return m("div", [
-        imageElement,
-        title ? m(".title", title) : null,
-      ]);
-    } else {
-      return imageElement;
-    }
+      }, [
+        m("source[src=" + source + "]"),
+      ]),
+      m(".title", title),
+    ]);
   },
 };

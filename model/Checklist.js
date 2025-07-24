@@ -8,6 +8,7 @@ import {
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
 import { TinyBibFormatter } from "../lib/TinyBibMD.js";
+import { Filter } from "./Filter.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -28,175 +29,7 @@ export let Checklist = {
 
   _bibFormatter: null,
 
-  filter: {
-    taxa: {},
-    data: {},
-    text: "",
-    delayCommitDataPath: "", //this data path is the one of the last used dropdown and will not update possibles of that dropdown untill the dropdown is hidden to allow for multiple selection
-    commit: function (specificRoute) {
-      if (specificRoute) {
-        routeTo(specificRoute);
-      } else {
-        routeTo("/search");
-      }
-    },
-    setFromQuery: function (query) {
-      Checklist.filter.clear();
-      ["taxa", "data"].forEach(function (type) {
-        if (query[type]) {
-          Object.keys(query[type]).forEach(function (dataPath) {
-            if (
-              Checklist.filter[type][dataPath].type == "text" ||
-              Checklist.filter[type][dataPath].type == "map regions"
-            ) {
-              Checklist.filter[type][dataPath].selected = query[type][dataPath];
-            } else if (Checklist.filter[type][dataPath].type == "number") {
-              Checklist.filter[type][dataPath].numeric.operation =
-                query[type][dataPath].o;
-              Checklist.filter[type][dataPath].numeric.threshold1 =
-                query[type][dataPath].a;
-              if (query[type][dataPath].hasOwnProperty("b")) {
-                Checklist.filter[type][dataPath].numeric.threshold2 =
-                  query[type][dataPath].b;
-              }
-            }
-          });
-        }
-      });
-      if (query.text && query.text.length > 0)
-        Checklist.filter.text = query.text;
-    },
-    clear: function () {
-      Object.keys(Checklist.filter.taxa).forEach(function (dataPath) {
-        Checklist.filter.taxa[dataPath].selected = [];
-      });
-      Object.keys(Checklist.filter.data).forEach(function (dataPath) {
-        Checklist.filter.data[dataPath].selected = [];
-        Checklist.filter.data[dataPath].numeric = {
-          threshold1: null,
-          threshold2: null,
-          operation: "",
-        };
-      });
-      Checklist.filter.text = "";
-    },
-    isEmpty: function () {
-      let countFilters = 0;
-      ["taxa", "data"].forEach(function (type) {
-        Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-          if (
-            Checklist.filter[type][dataPath].type == "text" ||
-            Checklist.filter[type][dataPath].type == "map regions"
-          ) {
-            countFilters += Checklist.filter[type][dataPath].selected.length;
-          } else if (Checklist.filter[type][dataPath].type == "number") {
-            if (Checklist.filter[type][dataPath].numeric.operation != "") {
-              countFilters++;
-            }
-          }
-        });
-      });
-      if (Checklist.filter.text.length > 0) countFilters++;
-
-      return countFilters == 0;
-    },
-    numericFilterToHumanReadable: function (
-      dataPath,
-      operation,
-      threshold1,
-      threshold2,
-      formatPre,
-      formatPost,
-      ommitSearchCategory
-    ) {
-      let title = "";
-      if (ommitSearchCategory) {
-        title +=
-          (formatPre ? formatPre : "") +
-          Checklist.getMetaForDataPath(dataPath).searchCategory +
-          (formatPost ? formatPost : "") +
-          " ";
-      }
-      title += _t("numeric_filter_" + operation + "_short") + " ";
-      title += threshold1.toLocaleString();
-      if (Checklist.filter.numericFilters[operation].values > 1) {
-        switch (operation) {
-          case "between":
-            title += " " + _t("numeric_filter_and") + " ";
-            break;
-          case "around":
-            title += " " + _t("numeric_filter_plusminus") + " ";
-
-          default:
-            break;
-        }
-        title += threshold2.toLocaleString();
-      }
-
-      return title;
-    },
-    numericFilters: {
-      equal: {
-        operation: "equal",
-        icon: "equal",
-        values: 1,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest == threshold1;
-        },
-      },
-      lesser: {
-        operation: "lesser",
-        icon: "lesser",
-        values: 1,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest < threshold1;
-        },
-      },
-      lesserequal: {
-        operation: "lesserequal",
-        icon: "lesserequal",
-        values: 1,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest <= threshold1;
-        },
-      },
-      greater: {
-        operation: "greater",
-        icon: "greater",
-        values: 1,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest > threshold1;
-        },
-      },
-      greaterequal: {
-        operation: "greaterequal",
-        icon: "greaterequal",
-        values: 1,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest >= threshold1;
-        },
-      },
-      between: {
-        operation: "between",
-        icon: "between",
-        values: 2,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return valueToTest >= threshold1 && valueToTest <= threshold2;
-        },
-      },
-      around: {
-        operation: "around",
-        icon: "around",
-        values: 2,
-        comparer: function (valueToTest, threshold1, threshold2) {
-          return (
-            valueToTest >= threshold1 - threshold2 &&
-            valueToTest <= threshold1 + threshold2
-          );
-        },
-      },
-    },
-  },
+  filter: Filter,
 
   databaseShortcodeList: [
     {
@@ -234,7 +67,7 @@ export let Checklist = {
   ],
 
   transformDatabaseShortcodes: function (text) {
-    if (text === undefined || text === null || typeof text !== 'string') {
+    if (text === undefined || text === null || typeof text !== "string") {
       return text;
     }
 
@@ -457,13 +290,13 @@ export let Checklist = {
     Checklist._metaForDataPathCache = {};
 
     Checklist.handlebarsTemplates = {};
-    Checklist._queryResultCache = {};
 
     //deep-clear filter
     Checklist.filter.taxa = {};
     Checklist.filter.data = {};
     Checklist.filter.text = "";
     Checklist.filter.delayCommitDataPath = "";
+    Checklist.filter._queryResultCache = {};
 
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
@@ -524,7 +357,7 @@ export let Checklist = {
       }
     });
 
-    Checklist.calculatePossibleFilterValues(this.getData().checklist);
+    Checklist.filter.calculatePossibleFilterValues(this.getData().checklist);
 
     //fill "all" data
     Checklist.getData().checklist.forEach(function (taxon) {
@@ -672,118 +505,6 @@ export let Checklist = {
       sl +
       ")"
     );
-  },
-
-  calculatePossibleFilterValues: function (taxa) {
-    //clear filter possible data
-    ["taxa", "data"].forEach(function (dataType) {
-      Object.keys(Checklist.filter[dataType]).forEach(function (dataPath) {
-        if (Checklist.filter.delayCommitDataPath == dataType + "." + dataPath) {
-          return; //delay this dataPath
-        } else {
-          if (
-            Checklist.filter[dataType][dataPath].type == "text" ||
-            Checklist.filter[dataType][dataPath].type == "map regions"
-          ) {
-            Checklist.filter[dataType][dataPath].possible = {};
-          }
-          if (Checklist.filter[dataType][dataPath].type == "number") {
-            Checklist.filter[dataType][dataPath].possible = [];
-            Checklist.filter[dataType][dataPath].min = null;
-            Checklist.filter[dataType][dataPath].max = null;
-          }
-        }
-      });
-    });
-
-    taxa.forEach(function (taxon, index) {
-      //add number of occurrences of possible taxa items
-      Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
-        if (Checklist.filter.delayCommitDataPath == "taxa." + dataPath) {
-          return; //delay this dataPath
-        }
-        if (index >= taxon.t.length) {
-          return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
-        }
-        let value = taxon.t[index].name; // !!! we suppose here that in filter taxa keys are ordered in order of appearance in "t" section
-        if (
-          Checklist.filter.taxa[dataPath].type == "text" ||
-          Checklist.filter.data[dataPath].type == "map regions"
-        ) {
-          if (!Checklist.filter.taxa[dataPath].possible.hasOwnProperty(value)) {
-            Checklist.filter.taxa[dataPath].possible[value] = 0;
-          }
-          Checklist.filter.taxa[dataPath].possible[value]++;
-        }
-      });
-      //add number of occurrences of possible data items
-      Object.keys(Checklist.filter.data).forEach(function (dataPath) {
-        if (Checklist.filter.delayCommitDataPath == "data." + dataPath) {
-          return; //delay this dataPath
-        }
-        let value = Checklist.getDataFromDataPath(taxon.d, dataPath);
-
-        if (value === null) {
-          //enable the next line to test data that were not exported
-          return; //when there is no data associated with the dataPath
-        }
-
-        let leafData = Checklist.getAllLeafData(value, false, dataPath);
-        if (
-          Checklist.filter.data[dataPath].type == "text" ||
-          Checklist.filter.data[dataPath].type == "map regions"
-        ) {
-          leafData.forEach(function (value) {
-            if (typeof value === "string" && value.trim() == "") {
-              return;
-            }
-
-            if (
-              !Checklist.filter.data[dataPath].possible.hasOwnProperty(value)
-            ) {
-              Checklist.filter.data[dataPath].possible[value] = 0;
-            }
-            Checklist.filter.data[dataPath].possible[value]++;
-          });
-        } else if (Checklist.filter.data[dataPath].type == "number") {
-          leafData.forEach(function (value) {
-            if (
-              Checklist.filter.data[dataPath].min === null ||
-              value < Checklist.filter.data[dataPath].min
-            ) {
-              Checklist.filter.data[dataPath].min = value;
-            }
-            if (
-              Checklist.filter.data[dataPath].max === null ||
-              value > Checklist.filter.data[dataPath].max
-            ) {
-              Checklist.filter.data[dataPath].max = value;
-            }
-
-            Checklist.filter.data[dataPath].possible.push(value);
-          });
-        }
-      });
-    });
-
-    Object.keys(Checklist.filter.data).forEach(function (dataPath) {
-      if (Checklist.filter.data[dataPath].type == "number") {
-        if (
-          Checklist.filter.data[dataPath].globalMin === undefined ||
-          Checklist.filter.data[dataPath].globalMin === null
-        ) {
-          Checklist.filter.data[dataPath].globalMin =
-            Checklist.filter.data[dataPath].min;
-        }
-        if (
-          Checklist.filter.data[dataPath].globalMax === undefined ||
-          Checklist.filter.data[dataPath].globalMax === null
-        ) {
-          Checklist.filter.data[dataPath].globalMax =
-            Checklist.filter.data[dataPath].max;
-        }
-      }
-    });
   },
 
   primitiveKeysOfObject: function (taxon, dataPathsToKeep) {
@@ -949,255 +670,12 @@ export let Checklist = {
     return this.getData().i18n;
   },
 
-  _queryResultCache: {},
   queryKey: function () {
-    let key = { taxa: {}, data: {} };
-    Object.keys(key).forEach(function (type) {
-      Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-        if (
-          Checklist.filter[type][dataPath].type == "text" ||
-          Checklist.filter[type][dataPath].type == "map regions"
-        ) {
-          if (Checklist.filter[type][dataPath].selected.length > 0) {
-            key[type][dataPath] = [];
-          }
-          Checklist.filter[type][dataPath].selected.forEach(function (
-            selected
-          ) {
-            key[type][dataPath].push(selected);
-          });
-        } else if (Checklist.filter[type][dataPath].type == "number") {
-          if (Checklist.filter[type][dataPath].numeric.operation != "") {
-            key[type][dataPath] = {};
-            key[type][dataPath].o =
-              Checklist.filter[type][dataPath].numeric.operation;
-            key[type][dataPath].a =
-              Checklist.filter[type][dataPath].numeric.threshold1;
-            if (
-              Checklist.filter.numericFilters[
-                Checklist.filter[type][dataPath].numeric.operation
-              ].values > 1
-            ) {
-              key[type][dataPath].b =
-                Checklist.filter[type][dataPath].numeric.threshold2;
-            }
-          }
-        }
-      });
-    });
-
-    if (Object.keys(key.taxa).length == 0) {
-      delete key.taxa;
-    }
-    if (Object.keys(key.data).length == 0) {
-      delete key.data;
-    }
-
-    if (Checklist.filter.text.length > 0) {
-      key.text = Checklist.filter.text;
-    }
-
-    let stringKey = JSON.stringify(key);
-
-    return stringKey;
-  },
-  queryCache: {
-    cache: function (searchResults) {
-      let queryKey = Checklist.queryKey();
-      Checklist._queryResultCache[queryKey] = {};
-      Checklist._queryResultCache[queryKey].taxa = searchResults;
-      Checklist._queryResultCache[queryKey].filter = JSON.parse(
-        JSON.stringify(Checklist.filter)
-      );
-    },
-    retrieve: function () {
-      let queryKey = Checklist.queryKey();
-
-      if (Checklist._queryResultCache.hasOwnProperty(queryKey)) {
-        return Checklist._queryResultCache[queryKey];
-      }
-
-      return false;
-    },
+    return Filter.queryKey();
   },
 
   getTaxaForCurrentQuery: function () {
-    if (!this._isDataReady) {
-      return [];
-    }
-
-    //sanitize filter ... remove impossible selected (when in taxa selecting two higher units then one lower and then unchecking the one higher)
-    ["taxa", "data"].forEach(function (type) {
-      Object.keys(Checklist.filter[type]).forEach(function (dataPath) {
-        Checklist.filter[type][dataPath].selected = Checklist.filter[type][
-          dataPath
-        ].selected.filter(function (selectedItem) {
-          if (
-            Object.keys(Checklist.filter[type][dataPath].possible).indexOf(
-              selectedItem
-            ) < 0
-          ) {
-            console.log(
-              "Sanitized " + type + " - " + dataPath + " - " + selectedItem
-            );
-            return false;
-          } else {
-            return true;
-          }
-        });
-      });
-    });
-
-    let emptyFilter = Checklist.filter.isEmpty();
-
-    let cacheResult = Checklist.queryCache.retrieve();
-    if (cacheResult) {
-      Checklist.calculatePossibleFilterValues(cacheResult.taxa);
-      return cacheResult.taxa;
-    }
-
-    let textFilter = textLowerCaseAccentless(Checklist.filter.text).replace(
-      /[-\/\\^$*+?.()|[\]{}]/g,
-      "\\$&"
-    ); //escape for RegEx use
-    let textFilterRegex = new RegExp("\\b" + textFilter); // 1. Collect matched items and their parent paths
-    let matchedItems = [];
-    let parentPaths = [];
-    let matchedKeys = new Set();
-    this.getData().checklist.forEach(function (item, itemIndex) {
-      let found = true;
-      // ...existing filter logic...
-      if (!emptyFilter) {
-        // Taxa filter check with early termination
-        for (let dataPath of Object.keys(Checklist.filter.taxa)) {
-          let index = Object.keys(Checklist.filter.taxa).indexOf(dataPath);
-          if (Checklist.filter.taxa[dataPath].selected.length == 0) {
-            continue;
-          }
-          let foundAny = false;
-          for (let selectedItem of Checklist.filter.taxa[dataPath].selected) {
-            if (index < item.t.length && item.t[index].name == selectedItem) {
-              foundAny = true;
-              break;
-            }
-          }
-          if (!foundAny) {
-            found = false;
-            break;
-          }
-        }
-        // Data filter check with early termination
-        if (found) {
-          for (let dataPath of Object.keys(Checklist.filter.data)) {
-            if (
-              Checklist.filter.data[dataPath].type == "text" ||
-              Checklist.filter.data[dataPath].type == "map regions"
-            ) {
-              if (Checklist.filter.data[dataPath].selected.length == 0) {
-                continue;
-              }
-            } else if (Checklist.filter.data[dataPath].type == "number") {
-              if (Checklist.filter.data[dataPath].numeric.operation == "") {
-                continue;
-              }
-            }
-            let foundAny = false;
-            if (
-              Checklist.filter.data[dataPath].type == "text" ||
-              Checklist.filter.data[dataPath].type == "map regions"
-            ) {
-              for (let selectedItem of Checklist.filter.data[dataPath]
-                .selected) {
-                let data = Checklist.getDataFromDataPath(item.d, dataPath);
-                if (!data) {
-                  continue;
-                }
-                let leafData = Checklist.getAllLeafData(data, true, dataPath);
-                for (let leafDataItem of leafData) {
-                  if (selectedItem == leafDataItem) {
-                    foundAny = true;
-                    break;
-                  }
-                }
-                if (foundAny) break;
-              }
-            } else if (Checklist.filter.data[dataPath].type == "number") {
-              if (Checklist.filter.data[dataPath].numeric.operation != "") {
-                let valueToCheck = Checklist.getDataFromDataPath(
-                  item.d,
-                  dataPath
-                );
-                let numericFilter =
-                  Checklist.filter.numericFilters[
-                    Checklist.filter.data[dataPath].numeric.operation
-                  ];
-                if (
-                  numericFilter.comparer(
-                    valueToCheck,
-                    Checklist.filter.data[dataPath].numeric.threshold1,
-                    Checklist.filter.data[dataPath].numeric.threshold2
-                  )
-                ) {
-                  foundAny = true;
-                }
-              }
-            }
-            if (!foundAny) {
-              found = false;
-              break;
-            }
-          }
-        }
-        // Text filter check with early termination
-        if (found && textFilter.length > 0) {
-          if (
-            !textFilterRegex.test(
-              Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()][
-                itemIndex
-              ]
-            )
-          ) {
-            found = false;
-          }
-        }
-      }
-      if (found) {
-        matchedItems.push(item);
-        let key = item.t.map((t) => t.name).join("|");
-        matchedKeys.add(key);
-        // Add all parent paths (not just immediate parent)
-        for (let i = 1; i < item.t.length; i++) {
-          parentPaths.push(item.t.slice(0, i).map((t) => t.name));
-        }
-      }
-    }); // 2. Find true parent items
-    let parentItems = [];
-    let matchedKeySet = new Set(
-      matchedItems.map((item) => item.t.map((t) => t.name).join("|"))
-    );
-    let parentKeySet = new Set();
-    parentPaths.forEach(function (parentPathArr) {
-      let parentKey = parentPathArr.join("|");
-      if (parentKeySet.has(parentKey) || matchedKeySet.has(parentKey)) return;
-      let parent = Checklist.getData().checklist.find(
-        (candidate) => candidate.t.map((t) => t.name).join("|") === parentKey
-      );
-      if (parent) {
-        parentItems.push(parent);
-        parentKeySet.add(parentKey);
-      }
-    });
-
-    // 3. Build final results in checklist order
-    let requiredSet = new Set([...matchedItems, ...parentItems]);
-    let finalSearchResults = this.getData().checklist.filter((item) =>
-      requiredSet.has(item)
-    );
-
-    Checklist.calculatePossibleFilterValues(finalSearchResults);
-    this.queryCache.cache(finalSearchResults);
-
-    return finalSearchResults;
+    return Filter.getTaxaForCurrentQuery();
   },
 
   getTaxaMeta: function () {
@@ -1275,7 +753,6 @@ export let Checklist = {
     };
 
     taxa.forEach(function (taxon) {
-      
       let currentParent = treefied;
       taxon.t.forEach(function (taxonOfThisLevel, index) {
         if (!currentParent.children.hasOwnProperty(taxonOfThisLevel.name)) {
@@ -1433,7 +910,7 @@ export let Checklist = {
       right: [],
       middle: [],
       bottom: [],
-      details: []
+      details: [],
     };
 
     Object.keys(taxon.data).forEach(function (key) {
@@ -1445,22 +922,13 @@ export let Checklist = {
 
       if (meta.hasOwnProperty("datatype") && meta.datatype === "custom") {
         if (meta.hasOwnProperty("placement")) {
-          if (meta.placement == "auto") {
-            console.log(
-              "Unexpected placement " + meta.placement + " in key " + key
-            );
-            meta.placement = "top";
-          }
-
-          let placement = meta.placement?.split("|") || ["top"];
-
-          placement.forEach(function (placement) {
+          meta.placement.forEach(function (placement) {
             if (
               dataCells.hasOwnProperty(placement) &&
               Array.isArray(dataCells[placement])
             ) {
-              dataCells[placement].push(key);
-            } else {              
+              dataCells[placement].push(key);              
+            } else {
               console.log(
                 "Unknown placement: '" + meta.placement + "' in '" + key + "'"
               );
@@ -1471,107 +939,44 @@ export let Checklist = {
       }
     });
 
-    //console.log("Data cells:", dataCells);
-
     return dataCells;
   },
 
   getDetailsTabsForTaxon: function (taxonName) {
-    let taxon = Checklist.getTaxonByName(taxonName);
+    let originalTaxon = Checklist.getTaxonByName(taxonName);
 
     let tabs = {
       externalsearch: Checklist.getData().meta.externalSearchEngines,
+      media: [],
+      map: [], 
+      text: [],
     };
 
-    if (taxon === undefined || !taxon.d) {
+    if (originalTaxon === undefined || !originalTaxon.d) {
       return tabs;
     }
 
-    const metaToConsider = ["media", "maps", "accompanyingText"];
+    let taxon = {
+      data: originalTaxon.d,
+      taxon: originalTaxon.t,
+      children: {},
+    };
 
-    metaToConsider.forEach(function (metaId) {
-      const currentMeta = Checklist.getDataMeta(metaId);
-
-      if (currentMeta === undefined) {
+    Checklist.getChecklistDataCellsForTaxon(taxon).details.forEach(function (
+      dataPath
+    ) {
+      if(originalTaxon.d[dataPath] === undefined || Object.keys(originalTaxon.d[dataPath]).length == 0) {
         return;
       }
 
-      Object.keys(currentMeta).forEach(function (metaKey) {
-        let meta = currentMeta[metaKey];
-        if (meta.hasOwnProperty("datatype") && meta.datatype != "custom") {
-          if (taxon.d.hasOwnProperty(metaKey)) {
-            let mediaData = taxon.d[metaKey];
+      let meta = Checklist.getMetaForDataPath(dataPath);
 
-            if (meta.datatype == "text") {
-              if (mediaData?.trim() == "") {
-                return null;
-              }
-            }
-
-            if (
-              meta.datatype == "map" &&
-              (typeof mediaData === "object" || typeof mediaData == "string") &&
-              !Array.isArray(mediaData)
-            ) {
-              let cleanedMediaData = [];
-
-              if (typeof mediaData == "string" && mediaData.trim() == "") {
-                return;
-              }
-
-              Object.keys(mediaData).forEach(function (key) {
-                const item = mediaData[key];
-                if (
-                  item === undefined ||
-                  item === null ||
-                  Object.keys(item).length == 0
-                ) {
-                  return;
-                }
-                cleanedMediaData.push(item);
-              });
-
-              if (cleanedMediaData.length == 0) {
-                return;
-              }
-            }
-
-            if (meta.datatype == "media") {
-              let cleanedMediaData = [];
-
-              mediaData.forEach(function (item) {
-                if (
-                  item === undefined ||
-                  item === null ||
-                  item.source.toString().trim() == ""
-                ) {
-                  return;
-                }
-                cleanedMediaData.push(item);
-              });
-
-              if (cleanedMediaData.length == 0) {
-                return;
-              }
-            }
-
-            if (Object.keys(tabs).indexOf(meta.datatype) < 0) {
-              tabs[meta.datatype] = [];
-            }
-            tabs[meta.datatype].push(metaKey);
-          }
-        }
-      });
-    });
-
-    Object.keys(taxon.d).forEach(function (key) {
-      let meta = Checklist.getMetaForDataPath(key);
-
-      if (meta === null) {
-        return;
-      }
-
-      if (meta.hasOwnProperty("datatype") && meta.datatype !== "custom") {
+      if (meta.formatting == "image" || meta.formatting == "sound") {
+        tabs.media.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
+      } else if (meta.formatting == "map" || meta.formatting == "map regions") {
+        tabs.map.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
+      } else if (meta.formatting == "text" || meta.formatting == "markdown") {
+        tabs.text.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
       }
     });
 

@@ -2,18 +2,18 @@ import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
-import { _tf } from "../I18n.js";
+import { _tf, _t } from "../I18n.js";
 
-export let readerImage = {
-  dataType: "image",
+export let readerMap = {
+  dataType: "map",
   readData: function (context, computedPath) {
-    let imageData = readDataFromPath(
+    let mapData = readDataFromPath(
       context,
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
           _tf("dm_generic_column_names", [
-            "image",
+            "map",
             computedPath,
             String.join(", ", columnNames),
           ]),
@@ -22,14 +22,14 @@ export let readerImage = {
     );
 
     if (
-      (typeof imageData === "string" && imageData.length == 0) ||
-      imageData == null
+      (typeof mapData === "string" && mapData.length == 0) ||
+      mapData == null
     ) {
       // If the text is an empty string, return null
       return null;
     }
 
-    return imageData;
+    return mapData;
   },
   dataToUI: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
@@ -38,11 +38,13 @@ export let readerImage = {
 
     let source = data.source;
     let title = data.title;
-
+    
     source = helpers.processTemplate(source, uiContext);
+
+    // Default image rendering
     source = relativeToUsercontent(source);
 
-    const imageElement = m(
+    return m(
       "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
         title +
         "]",
@@ -56,14 +58,5 @@ export let readerImage = {
       },
       m("img.image-in-view[src=" + source + "][alt=" + title + "]")
     );
-
-    if (uiContext.placement === "details") {
-      return m("div", [
-        imageElement,
-        title ? m(".title", title) : null,
-      ]);
-    } else {
-      return imageElement;
-    }
   },
 };

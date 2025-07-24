@@ -141,10 +141,20 @@ export let TaxonDataItemView = {
   renderWithReader: function (data, meta, dataPath, taxon, tailingSeparator) {
     const reader = dataReaders[meta.formatting];
     if (reader && reader.dataToUI) {
+      // Normalize taxon to { name, authority }
+      let taxonObj = taxon;
+      if (taxon && typeof taxon === "object" && Array.isArray(taxon.t)) {
+        taxonObj = {
+          name: taxon.t[taxon.t.length - 1].name,
+          authority: taxon.t[taxon.t.length - 1].a,
+        };
+      } else if (typeof taxon === "string") {
+        taxonObj = { name: taxon, authority: "" };
+      }
       const uiContext = {
         meta: meta,
         dataPath: dataPath,
-        taxon: taxon,
+        taxon: taxonObj,
         originalData: TaxonDataItemView.originalData,
       };
       let rendered = reader.dataToUI(data, uiContext);

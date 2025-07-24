@@ -9,7 +9,7 @@ export let FilterCrumbsView = {
 
         types.forEach(function(type) {
             Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
-                if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions") {
+                if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions" || Checklist.filter[type][dataPath].type == "badge") {
                     Checklist.filter[type][dataPath].selected.forEach(function(selectedItem) {
                         if (Object.keys(Checklist.filter[type][dataPath].possible).indexOf(selectedItem) < 0) {
                             return;
@@ -74,7 +74,7 @@ let Crumb = {
                     Checklist.filter.text = "";
                     Checklist.filter.commit();
                 } else {
-                    if (Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "text" || Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "map regions") {
+                    if (Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "text" || Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "map regions" || Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "badge") {
                         const index = Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.indexOf(vnode.attrs.title);
                         if (index > -1) { // only splice array when item is found
                             Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.splice(index, 1);

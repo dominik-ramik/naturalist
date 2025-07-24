@@ -71,6 +71,10 @@ export function mapChart(filteredTaxa) {
 export function getAvailableMaps() {
   let maps = [];
 
+  console.log("TODO create function in Checklist to get available maps");
+
+  return maps;
+
   //content
   try {
     Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {

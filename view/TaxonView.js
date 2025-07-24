@@ -20,7 +20,7 @@ export let TaxonView = {
           icon = "map";
           tabName = "map";
           break;
-        case "accompanyingText":
+        case "text":
           icon = "text";
           tabName = "text";
           break;
@@ -40,13 +40,22 @@ export let TaxonView = {
       );
     }
 
-    const taxonName = vnode.attrs.taxonTree.taxon.n;
+    const taxonName = vnode.attrs.taxonTree.taxon.name;
     const tabsData = Checklist.getDetailsTabsForTaxon(taxonName);
 
     let inverseTaxonLevel = Checklist.inverseTaxonLevel(vnode.attrs.currentTaxonLevel);
 
     const showSearchAll =
       Object.keys(vnode.attrs.taxonTree.children).length > 0;
+
+    function shouldRenderTab(tabsData, tabKey) {
+      return (
+        tabsData &&
+        Object.hasOwn(tabsData, tabKey) &&
+        tabsData[tabKey] &&
+        tabsData[tabKey].length > 0
+      );
+    } 
 
     return m("ul.card.taxon-level" + inverseTaxonLevel, [
       m("li.taxon", [
@@ -58,15 +67,15 @@ export let TaxonView = {
           }),
           m(".spacer"),
           m(".details-icons-wrapper", [
-            Object.hasOwn(tabsData, "media") &&
+            shouldRenderTab(tabsData, "media") &&
               detailsIcon(vnode.attrs.taxonTree.taxon.name, "media"),
-            Object.hasOwn(tabsData, "map") &&
+            shouldRenderTab(tabsData, "map") &&
               detailsIcon(vnode.attrs.taxonTree.taxon.name, "maps"),
-            Object.hasOwn(tabsData, "text") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.name, "accompanyingText"),
-            (Object.hasOwn(tabsData, "media") ||
-              Object.hasOwn(tabsData, "map") ||
-              Object.hasOwn(tabsData, "text")) &&
+            shouldRenderTab(tabsData, "text") &&
+              detailsIcon(vnode.attrs.taxonTree.taxon.name, "text"),
+            (shouldRenderTab(tabsData, "media") ||
+              shouldRenderTab(tabsData, "map") ||
+              shouldRenderTab(tabsData, "text")) &&
               showSearchAll &&
               m(".vertical-separator"),
             vnode.attrs.taxonTree && inverseTaxonLevel > 1 && showSearchAll

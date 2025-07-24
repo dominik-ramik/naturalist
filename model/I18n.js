@@ -73,7 +73,7 @@ let translations = {
     en: "Media",
     fr: "Média",
   },
-  tab_title_map: {
+  tab_title_maps: {
     en: "Maps",
     fr: "Cartes",
   },
@@ -84,6 +84,14 @@ let translations = {
   tab_title_externalsearch: {
     en: "Search online",
     fr: "Rechercher en ligne",
+  },
+  tab_title_text: {
+    en: "Text",
+    fr: "Texte",
+  },
+  tab_title_map: {
+    en: "Map",
+    fr: "Carte",
   },
   back_to_search: {
     en: "Back to search",
