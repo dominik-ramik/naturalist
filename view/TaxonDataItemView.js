@@ -1,9 +1,5 @@
 import { Checklist } from "../model/Checklist.js";
-import {
-  filterMatches,
-  routeTo,
-  shouldHide,
-} from "../components/Utils.js";
+import { filterMatches, routeTo, shouldHide } from "../components/Utils.js";
 import { dataReaders } from "../model/customTypes/index.js";
 
 export let TaxonDataItemView = {
@@ -88,7 +84,13 @@ export let TaxonDataItemView = {
       let dataLength = Object.getOwnPropertyNames(data).length;
 
       // Check whether we have a reader for meta.formatting and if so, return the dataToUI, otherwise continue
-      const readerResult = TaxonDataItemView.renderWithReader(data, meta, dataPath, taxon, null);
+      const readerResult = TaxonDataItemView.renderWithReader(
+        data,
+        meta,
+        dataPath,
+        taxon,
+        null
+      );
       if (readerResult !== DOMPurify.sanitize(data.toString().trim())) {
         return readerResult;
       }
@@ -136,14 +138,14 @@ export let TaxonDataItemView = {
    * Handles rendering with a dataReader if available, otherwise returns sanitized string.
    * Returns null if the reader returns null (should be hidden).
    */
-  renderWithReader: function(data, meta, dataPath, taxon, tailingSeparator) {
+  renderWithReader: function (data, meta, dataPath, taxon, tailingSeparator) {
     const reader = dataReaders[meta.formatting];
     if (reader && reader.dataToUI) {
       const uiContext = {
         meta: meta,
         dataPath: dataPath,
         taxon: taxon,
-        originalData: TaxonDataItemView.originalData
+        originalData: TaxonDataItemView.originalData,
       };
       let rendered = reader.dataToUI(data, uiContext);
       if (rendered === null) {
@@ -156,7 +158,10 @@ export let TaxonDataItemView = {
       }
       return rendered;
     } else {
-      return DOMPurify.sanitize(data.toString().trim()) + (tailingSeparator ? tailingSeparator : "");
+      return (
+        DOMPurify.sanitize(data.toString().trim()) +
+        (tailingSeparator ? tailingSeparator : "")
+      );
     }
   },
 
@@ -167,9 +172,6 @@ export let TaxonDataItemView = {
     }
 
     var itemType = TaxonDataItemView.getItemType(data);
-    if (meta.formatting == "map regions") {
-      itemType = "object";
-    }
 
     if (shouldHide(dataPath, meta.hidden, Checklist.filter.data)) {
       return null;
@@ -186,12 +188,22 @@ export let TaxonDataItemView = {
         : null;
 
     if (itemType == "simple") {
-      if (data === null || data === undefined || data.toString().trim() === "") {
+      if (
+        data === null ||
+        data === undefined ||
+        data.toString().trim() === ""
+      ) {
         return null;
       }
 
       // Use generic reader-based rendering via helper
-      const rendered = TaxonDataItemView.renderWithReader(data, meta, dataPath, taxon, tailingSeparator);
+      const rendered = TaxonDataItemView.renderWithReader(
+        data,
+        meta,
+        dataPath,
+        taxon,
+        tailingSeparator
+      );
       if (rendered === null) {
         return null;
       }

@@ -1433,6 +1433,7 @@ export let Checklist = {
       right: [],
       middle: [],
       bottom: [],
+      details: []
     };
 
     Object.keys(taxon.data).forEach(function (key) {
@@ -1451,31 +1452,26 @@ export let Checklist = {
             meta.placement = "top";
           }
 
-          switch (meta.placement) {
-            case "top":
-              dataCells.top.push(key);
-              break;
-            case "bottom":
-              dataCells.bottom.push(key);
-              break;
-            case "left":
-              dataCells.left.push(key);
-              break;
-            case "middle":
-              dataCells.middle.push(key);
-              break;
-            case "right":
-              dataCells.right.push(key);
-              break;
-            default:
+          let placement = meta.placement?.split("|") || ["top"];
+
+          placement.forEach(function (placement) {
+            if (
+              dataCells.hasOwnProperty(placement) &&
+              Array.isArray(dataCells[placement])
+            ) {
+              dataCells[placement].push(key);
+            } else {              
               console.log(
                 "Unknown placement: '" + meta.placement + "' in '" + key + "'"
               );
-              break;
-          }
+              return;
+            }
+          });
         }
       }
     });
+
+    //console.log("Data cells:", dataCells);
 
     return dataCells;
   },
