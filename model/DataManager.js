@@ -151,12 +151,6 @@ export let DataManager = function () {
     function gatherPreloadableAssets() {
       let assets = [];
 
-      console.log(
-        "TODO gather preloadable assets for images, sounds, maps, etc."
-      );
-
-      return assets;
-
       data.common.languages.supportedLanguages.forEach(function (lang) {
         //all online search icons
         data.sheets.content.tables.searchOnline.data[lang.code].forEach(
@@ -170,156 +164,86 @@ export let DataManager = function () {
           }
         );
 
-        //all locally hosted maps
-        data.sheets.content.tables.maps.data[lang.code].forEach(function (row) {
-          if (row.source.indexOf("{{") >= 0 && row.source.indexOf("}}") >= 0) {
-            return; //skip sources with templates, by default we won't cache any image-based maps either
-          }
-          if (row.mapType == "regions") {
-            let asset = relativeToUsercontent("./maps/" + row.source);
-            if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
-              assets.push(asset);
-            }
-          }
-        });
-
-        //all "image" Custom data definition
-        for (const row of data.sheets.content.tables.customDataDefinition.data[
-          lang.code
-        ]) {
-          if (row.formatting !== "image") {
-            continue;
-          }
-
-          const template = row.template;
-
-          let compiledTemplate = null;
-
-          try {
-            compiledTemplate = Handlebars.compile(template);
-          } catch (ex) {
-            console.log("Handlebars error", ex);
-            return;
-          }
-
-          for (const entry of data.sheets.checklist.data[lang.code]) {
-            const imageData = Checklist.getDataFromDataPath(
-              entry.d,
-              row.columnName
-            );
-
-            for (const media of Array.isArray(imageData)
-              ? imageData
-              : [imageData]) {
-              const mediaSource = media.source;
-              if (mediaSource != "") {
-                let dataObject = Checklist.getDataObjectForHandlebars(
-                  mediaSource,
-                  {},
-                  "",
-                  ""
-                );
-
-                const resolved = compiledTemplate(dataObject);
-
-                const asset = relativeToUsercontent(resolved);
-                if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
-                  assets.push(asset);
-                }
-              }
-            }
-          }
-        }
-
-        //all precache "yes" media
-        for (const row of data.sheets.content.tables.media.data[lang.code]) {
-          if (row.precache !== "yes") {
-            continue;
-          }
-
-          const linkBase = row.linkBase;
-          let mediaType = row.typeOfData;
-
-          if (
-            linkBase.toLowerCase().startsWith("http:") ||
-            linkBase.toLowerCase().startsWith("https:")
-          ) {
-            Logger.error(
-              _tf("dm_precache_absolute", [row.columnName, linkBase])
-            );
-          }
-
-          if (mediaType !== "image" && mediaType !== "sound") {
-            console.log("Skipped caching of", mediaType, linkBase);
-            continue;
-          }
-
-          let compiledTemplate = null;
-
-          try {
-            compiledTemplate = Handlebars.compile(linkBase);
-          } catch (ex) {
-            console.log("Handlebars error", ex);
-            return;
-          }
-
-          for (const entry of data.sheets.checklist.data[lang.code]) {
-            const mediaArray = Checklist.getDataFromDataPath(
-              entry.d,
-              row.columnName
-            );
-
-            //media come in arrays
-            for (const mediaItem of mediaArray) {
-              const mediaSource = mediaItem.source.trim();
-
-              if (mediaSource != "") {
-                let dataObject = Checklist.getDataObjectForHandlebars(
-                  mediaSource,
-                  {},
-                  "",
-                  ""
-                );
-
-                const resolved = compiledTemplate(dataObject);
-
-                const asset = relativeToUsercontent(resolved);
-                if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
-                  assets.push(relativeToUsercontent(asset));
-                }
-              }
-            }
-          }
-        }
-
-        //extract images from extra texts and if local, add to assets
-        data.sheets.content.tables.accompanyingText.data[lang.code].forEach(
+        // Gather assets from customDataDefinition table
+        data.sheets.content.tables.customDataDefinition.data[lang.code].forEach(
           function (row) {
-            for (const entry of data.sheets.checklist.data[lang.code]) {
-              let textData = Checklist.getDataFromDataPath(
+            if (!row.template || row.template.trim() === "") {
+              return;
+            }
+
+            // Skip if formatting is not media-related
+            if (!["image", "sound", "map regions"].includes(row.formatting)) {
+              return;
+            }
+
+            let compiledTemplate = null;
+            try {
+              compiledTemplate = Handlebars.compile(row.template);
+            } catch (ex) {
+              console.log("Handlebars error for template:", row.template, ex);
+              return;
+            }
+
+            // Process each checklist entry to gather actual assets
+            data.sheets.checklist.data[lang.code].forEach(function (entry) {
+              const mediaData = Checklist.getDataFromDataPath(
                 entry.d,
                 row.columnName
               );
 
-              if (textData == null || textData.trim() == "") {
-                continue;
+              if (!mediaData) {
+                return;
               }
 
-              textData = textData.replaceAll("\\n", "\n");
+              // Handle both single items and arrays
+              const mediaItems = Array.isArray(mediaData) ? mediaData : [mediaData];
 
-              textData = textData.replace(
-                /!\[[^\]]*\]\(([^\)]+)\)/gi,
-                (match, src) => {
-                  let asset = relativeToUsercontent(src);
+              mediaItems.forEach(function (mediaItem) {
+                if (!mediaItem || typeof mediaItem !== "object") {
+                  return;
+                }
 
+                let source = "";
+                
+                // Different media types have different source properties
+                if (row.formatting === "map regions") {
+                  // For map regions, the source comes from the template
+                  let templateData = Checklist.getDataObjectForHandlebars(
+                    "",
+                    entry.d,
+                    entry.t[entry.t.length - 1]?.name || "",
+                    entry.t[entry.t.length - 1]?.authority || ""
+                  );
+                  source = compiledTemplate(templateData);
+                } else {
+                  // For images and sounds, use the source property
+                  source = mediaItem.source;
+                  if (!source || source.trim() === "") {
+                    return;
+                  }
+
+                  let templateData = Checklist.getDataObjectForHandlebars(
+                    source,
+                    entry.d,
+                    entry.t[entry.t.length - 1]?.name || "",
+                    entry.t[entry.t.length - 1]?.authority || ""
+                  );
+                  source = compiledTemplate(templateData);
+                }
+
+                if (source && source.trim() !== "") {
+                  // Remove leading slash if present
+                  if (source.startsWith("/")) {
+                    source = source.substring(1);
+                  }
+
+                  const asset = relativeToUsercontent(source);
                   if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
                     assets.push(asset);
                   }
-
-                  return match.replace(src, asset);
                 }
-              );
-            }
+              });
+            });
           }
         );
       });
@@ -362,6 +286,8 @@ export let DataManager = function () {
 
         console.timeEnd(assetsSizesMsg);
       }
+
+      console.log("Assets", assets.length, "gathered:", assets);
 
       return assets;
     }

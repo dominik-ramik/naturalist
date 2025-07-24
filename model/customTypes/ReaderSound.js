@@ -3,6 +3,7 @@ import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { _tf } from "../I18n.js";
+import { MinimalAudioPlayer } from "../../components/MinimalAudioPlayer.js";
 
 export let readerSound = {
   dataType: "sound",
@@ -39,20 +40,23 @@ export let readerSound = {
     let source = data.source;
     let title = data.title;
 
+    console.log("ReaderSound dataToUI", data);
+
     // Process template if available
     source = helpers.processTemplate(source, uiContext);
 
     source = relativeToUsercontent(source);
 
-    return m(".media-sound", [
-      m("audio[controls=controls][controlslist=nodownload]", {
-        oncontextmenu: (e) => {
-          return false;
-        },
-      }, [
-        m("source[src=" + source + "]"),
-      ]),
-      m(".title", title),
+    return m(".media-sound", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      },
+    },
+    [
+      m(MinimalAudioPlayer, { src: source }),
+      title ? m(".title", title) : null,
     ]);
   },
 };
