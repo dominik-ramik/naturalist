@@ -383,7 +383,8 @@ export let Checklist = {
 
           if (
             Checklist.filter[dataType][dataPath].type == "text" ||
-            Checklist.filter[dataType][dataPath].type == "map regions"
+            Checklist.filter[dataType][dataPath].type == "map regions" ||
+            Checklist.filter[dataType][dataPath].type == "badge"
           ) {
             leafData.forEach(function (value) {
               if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {

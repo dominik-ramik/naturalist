@@ -78,7 +78,7 @@ export let TaxonNameView = {
                 Checklist.filter.clear();
                 Checklist.filter.taxa[
                   parentTaxonIndicator.rankColumnName
-                ].selected = [parentTaxonIndicator.taxon.n];
+                ].selected = [parentTaxonIndicator.taxon.name];
                 Checklist.filter.commit("/checklist");
               },
             },

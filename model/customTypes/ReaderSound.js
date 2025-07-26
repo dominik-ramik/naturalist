@@ -40,8 +40,6 @@ export let readerSound = {
     let source = data.source;
     let title = data.title;
 
-    console.log("ReaderSound dataToUI", data);
-
     // Process template if available
     source = helpers.processTemplate(source, uiContext);
 

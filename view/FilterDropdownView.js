@@ -541,13 +541,7 @@ let DropdownCheckItem = function (initialVnode) {
                 // only splice array when item is found
                 Checklist.filter[vnode.attrs.type][
                   vnode.attrs.dataPath
-                ].selected.splice(index, 1);
-                console.log(
-                  "uncheck",
-                  vnode.attrs.item,
-                  Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath]
-                    .selected
-                );
+                ].selected.splice(index, 1);                
                 Checklist.filter.commit();
               }
               break;

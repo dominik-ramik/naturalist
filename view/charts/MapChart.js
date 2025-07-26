@@ -3,7 +3,7 @@ import {
   colorFromRatio,
   colorSVGMap,
   filterTerminalLeaves,
-  sortByCustomOrder,
+  relativeToUsercontent,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 import { _t, _tf } from "../../model/I18n.js";
@@ -13,8 +13,10 @@ let currentMap = Settings.mapChartCurrentMap();
 let currentSumMethod = Settings.mapChartCurrentSumMethod();
 
 let currentFilterResultsLength = 0;
-let sessionCache = {}; // key: map.columnName, value: __all__ for all mapped occurrences, key:value for region:number matching
+let sessionCache = {}; // key: map.dataPath, value: __all__ for all mapped occurrences, key:value for region:number matching
 let currentRegions = {};
+
+let availableMapsCache = null;
 
 let oldColoredRegionsJSON = "";
 let colors = null;
@@ -35,64 +37,83 @@ export function mapChart(filteredTaxa) {
     currentMap = null;
   }
 
-  if (currentMap != null) {
-    colors = calculateRegionColors(
-      filteredTaxa,
-      currentMap.columnName,
-      currentSumMethod
-    );
-  }
-
   if (Checklist.filter.isEmpty()) {
     currentSumMethod = "total";
   } else {
     currentSumMethod = Settings.mapChartCurrentSumMethod();
   }
 
+  if (currentMap != null) {
+    colors = calculateRegionColors(
+      filteredTaxa,
+      currentMap.dataPath,
+      currentSumMethod
+    );
+  }
+
   return m(".map-chart", [
     renderControlPanel(),
     m(".map-verb", mapVerb()),
     m(".map-table-wrapper", [
+      currentMap == null ? null : renderMap(currentMap),
       currentMap == null
         ? null
-        : renderMap(
-            currentMap,
-            currentMap.columnName,
-            currentSumMethod,
-            filteredTaxa
-          ),
-      currentMap == null
-        ? null
-        : renderDataTable(currentMap.columnName, currentSumMethod),
+        : renderDataTable(currentMap.dataPath, currentSumMethod),
     ]),
   ]);
 }
 
 export function getAvailableMaps() {
-  let maps = [];
-
-  console.log("TODO create function in Checklist to get available maps");
-
-  return maps;
-
-  //content
-  try {
-    Object.keys(Checklist.getDataMeta("maps")).forEach(function (metaKey) {
-      let meta = Checklist.getDataMeta("maps")[metaKey];
-      if (meta.datatype == "map" && meta.type == "regions") {
-        maps.push({
-          url: meta.source,
-          title: meta.title,
-          columnName: metaKey,
-        });
-      }
-    });
-  } catch (ex) {
-    console.log("Error while loading maps", ex);
-    return [];
+  // Return cached result if available
+  if (availableMapsCache !== null) {
+    return availableMapsCache;
   }
 
-  return maps;
+  let availableMaps = [];
+
+  // Get all data meta entries with "map regions" formatting
+  const dataMeta = Checklist.getDataMeta();
+
+  Object.keys(dataMeta).forEach(function (dataPath) {
+    const meta = dataMeta[dataPath];
+
+    if (
+      meta.formatting === "map regions" &&
+      meta.template &&
+      meta.template.trim() !== ""
+    ) {
+      // Process the template to get the actual map source
+      let source = meta.template;
+
+      // Check if there's a compiled Handlebars template
+      if (Checklist.handlebarsTemplates[dataPath]) {
+        // Use empty template data since we just want the base source
+        let templateData = Checklist.getDataObjectForHandlebars("", {}, "", "");
+        source = Checklist.handlebarsTemplates[dataPath](templateData);
+      }
+
+      if (source && source.trim() !== "") {
+        // Remove leading slash if present
+        if (source.startsWith("/")) {
+          source = source.substring(1);
+        }
+
+        // Convert to usercontent relative path
+        const mapPath = relativeToUsercontent(source);
+
+        availableMaps.push({
+          title: meta.title || dataPath,
+          dataPath: dataPath,
+          source: mapPath,
+          isWorldMap: source.toLowerCase().endsWith("world.svg"),
+        });
+      }
+    }
+  });
+
+  // Cache the result
+  availableMapsCache = availableMaps;
+  return availableMapsCache;
 }
 
 function renderControlPanel() {
@@ -212,8 +233,8 @@ function renderMap(map) {
       },
       m(
         "object#map" +
-          "[style=pointer-events: none;][type=image/svg+xml][data=usercontent/maps/" +
-          map.url +
+          "[style=pointer-events: none;][type=image/svg+xml][data=" +
+          map.source +
           "]",
         {
           onload: function () {
@@ -225,8 +246,8 @@ function renderMap(map) {
   ]);
 }
 
-function renderDataTable(columnName, sumMethod) {
-  const globalCounts = sessionCache[columnName];
+function renderDataTable(dataPath, sumMethod) {
+  const globalCounts = sessionCache[dataPath];
 
   let sortedRegions = [...Object.keys(currentRegions)];
   sortedRegions.sort((a, b) => {
@@ -285,20 +306,20 @@ function renderDataTable(columnName, sumMethod) {
   );
 }
 
-function calculateRegionColors(filteredTaxa, columnName, sumMethod) {
+function calculateRegionColors(filteredTaxa, dataPath, sumMethod) {
   const terminalLeaves = filterTerminalLeaves(filteredTaxa);
   currentFilterResultsLength = terminalLeaves.length;
 
-  if (!Object.keys(sessionCache).includes(columnName)) {
-    sessionCache[columnName] = cacheAllTaxa(columnName);
+  if (!Object.keys(sessionCache).includes(dataPath)) {
+    sessionCache[dataPath] = cacheAllTaxa(dataPath);
   }
-  const globalCounts = sessionCache[columnName];
+  const globalCounts = sessionCache[dataPath];
   const regionCounts = {};
 
   const colors = {};
 
   terminalLeaves.forEach((taxon) => {
-    const mapData = Checklist.getDataFromDataPath(taxon.d, columnName);
+    const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
     const presentRegions = getPresentRegions(mapData);
 
     if (presentRegions.length > 0) {
@@ -381,11 +402,11 @@ function getPresentRegions(mapData) {
   return [];
 }
 
-function cacheAllTaxa(columnName) {
+function cacheAllTaxa(dataPath) {
   let cache = { __all__: 0 };
 
   filterTerminalLeaves(Checklist.getEntireChecklist()).forEach((taxon) => {
-    const mapData = Checklist.getDataFromDataPath(taxon.d, columnName);
+    const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
     const presentRegions = getPresentRegions(mapData);
 
     if (presentRegions.length > 0) {

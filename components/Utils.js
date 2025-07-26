@@ -87,7 +87,7 @@ export function filterTerminalLeaves(nodes) {
   const seenPaths = new Set();
   const uniqueTerminals = [];
   terminalLeaves.forEach((node) => {
-    const pathSignature = node.t.map((n) => `${n.n} ${n.a}`).join("->");
+    const pathSignature = node.t.map((n) => `${n.name} ${n.authority}`).join("->");
     if (!seenPaths.has(pathSignature)) {
       seenPaths.add(pathSignature);
       uniqueTerminals.push(node);
@@ -102,8 +102,8 @@ export function filterTerminalLeaves(nodes) {
   function isPrefix(smallPath, bigPath) {
     if (smallPath.length >= bigPath.length) return false;
     for (let i = 0; i < smallPath.length; i++) {
-      const smallNode = `${smallPath[i].n} ${smallPath[i].a}`;
-      const bigNode = `${bigPath[i].n} ${bigPath[i].a}`;
+      const smallNode = `${smallPath[i].name} ${smallPath[i].authority}`;
+      const bigNode = `${bigPath[i].name} ${bigPath[i].authority}`;
       if (smallNode !== bigNode) {
         return false;
       }

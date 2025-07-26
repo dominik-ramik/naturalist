@@ -1,7 +1,6 @@
 import { Settings } from "../../model/Settings.js";
 import {
   sortByCustomOrder,
-  materialColors,
   filterTerminalLeaves,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
@@ -107,7 +106,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
         "view_cat_cell_verb_category_filtered",
         [
           Settings.pinnedSearches.getHumanNameForSearch(
-            JSON.parse(Checklist.queryKey()),
+            JSON.parse(Checklist.queryKey())
           ),
         ],
         true
@@ -173,6 +172,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
   }
 
   let categoryType = Checklist.filter.data[dataCategory].type;
+
   // Initialize categories based on filter data
   Checklist.filter.data[dataCategory]?.all.forEach((i) => {
     allCategories[i] = { color: "", sum: 0 };
@@ -182,7 +182,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
   taxa.forEach((taxon) => {
     const currentRootIndex = taxon.t.findIndex((x) => x.name === rootTaxon);
     if (currentRootIndex < 0 && rootTaxon !== "") return;
-    const child = taxon.t[currentRootIndex + 1]?.n;
+    const child = taxon.t[currentRootIndex + 1]?.name;
     if (child !== undefined) {
       if (!individualResults.hasOwnProperty(child)) {
         individualResults[child] = { categories: {}, sum: 0, children: 0 };
@@ -196,6 +196,12 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
             categoryData = [categoryData];
           }
           break;
+        case "badge":
+          categoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
+          if (!Array.isArray(categoryData)) {
+            categoryData = [categoryData];
+          }
+          break;
         case "map regions":
           let tempCategoryData = Checklist.getDataFromDataPath(
             taxon.d,
@@ -204,15 +210,17 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
 
           // Work directly with object format
           let regionCodes = [];
-          if (typeof tempCategoryData === 'object' && tempCategoryData) {
+          if (typeof tempCategoryData === "object" && tempCategoryData) {
             regionCodes = Object.keys(tempCategoryData);
           }
           categoryData = regionCodes.map((r) => Checklist.nameForMapRegion(r));
+
           break;
 
         default:
           break;
       }
+
       // Count deeper levels as "children"
       if (currentRootIndex < taxon.t.length - 2) {
         individualResults[child].children++;
@@ -221,8 +229,14 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
       categoryData = [...new Set(categoryData)];
 
       categoryData.forEach((cd) => {
-        if (cd == "") {
-          return;
+        // Handle null, undefined, empty string, or other falsy values
+        if (!cd || cd === "" || cd === "null") {
+          cd = "[unknown]";
+        }
+
+        // Ensure the category exists in allCategories before using it
+        if (!allCategories.hasOwnProperty(cd)) {
+          allCategories[cd] = { color: "", sum: 0 };
         }
 
         if (!individualResults[child].categories.hasOwnProperty(cd)) {
@@ -252,10 +266,13 @@ export function categoryChart(filteredTaxa) {
   //remove all non-leaf taxa
   filteredTaxa = filterTerminalLeaves(filteredTaxa);
 
+  console.log(Checklist.filter.data)
+  
   // Build available filter options (only small lists)
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
     (f) =>
       (Checklist.filter.data[f].type === "text" ||
+        Checklist.filter.data[f].type === "badge" ||
         Checklist.filter.data[f].type === "map regions") &&
       Checklist.filter.data[f].all.length < 40
   );
@@ -451,10 +468,10 @@ export function categoryChart(filteredTaxa) {
               taxon.categories[cKey]
             );
             return m(
-              `td[style=border-left: ${borderSize}em solid;][title="${title}"]`,
+              `td[style=border-left: ${borderSize}em solid;cursor:pointer]`,
               {
                 onclick: function () {
-                  currentCellVerb = title
+                  currentCellVerb = title;
                 },
               },
               m(
