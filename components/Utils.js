@@ -386,7 +386,7 @@ export function relativeToUsercontent(url) {
 
   processed = "." + processed.substring(window.location.origin.length);
 
-  console.log(processed);
+  //console.log(processed);
 
   return processed;
 }

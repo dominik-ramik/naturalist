@@ -184,6 +184,7 @@ export let Settings = {
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
     getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
+
       if (itemObject === undefined) {
         itemObject = JSON.parse(Checklist.queryKey());
       }
@@ -213,20 +214,21 @@ export let Settings = {
             if (
               type == "taxa" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
+              Checklist.getMetaForDataPath(dataPath).formatting == "badge" ||
               Checklist.getMetaForDataPath(dataPath).formatting ==
-                "map regions"
+              "map regions"
             ) {
               names.push(
                 categoryName +
-                  " " +
-                  _t("is_list_joiner") +
-                  " " +
-                  formatList(
-                    itemObject[type][dataPath],
-                    _t("or_list_joiner"),
-                    usePlainTextOutput ? "" : "<strong>",
-                    usePlainTextOutput ? "" : "</strong>"
-                  )
+                " " +
+                _t("is_list_joiner") +
+                " " +
+                formatList(
+                  itemObject[type][dataPath],
+                  _t("or_list_joiner"),
+                  usePlainTextOutput ? "" : "<strong>",
+                  usePlainTextOutput ? "" : "</strong>"
+                )
               );
             } else if (
               Checklist.getMetaForDataPath(dataPath).formatting == "number"
@@ -253,10 +255,10 @@ export let Settings = {
       if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
         names.push(
           _t("text_is_list_joiner") +
-            " " +
-            (usePlainTextOutput ? "" : "<strong>") +
-            itemObject.text +
-            (usePlainTextOutput ? "" : "</strong>")
+          " " +
+          (usePlainTextOutput ? "" : "<strong>") +
+          itemObject.text +
+          (usePlainTextOutput ? "" : "</strong>")
         );
       }
 

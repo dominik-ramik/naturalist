@@ -4,6 +4,7 @@ import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Checklist } from "../model/Checklist.js";
 import { routeTo } from "../components/Utils.js";
 import { _t } from "../model/I18n.js";
+import { Filter } from "../model/Filter.js";
 
 export let AppLayoutView = {
     mode: "desktop",
@@ -61,7 +62,17 @@ let FloatingSearch = {
                     routeTo("/search");
                 }
             }),
-            m(".floating-search[style=flex-grow: 1; margin-left: 1em;]", m(SearchBoxImmediate)),
+            m(".floating-search[style=flex-grow: 1; margin-left: -0.25em;]", m(SearchBoxImmediate)),
+            
+            Filter.numberOfActive() > 0 ? m(RoundedButton, {
+                icon: "filter",
+                badge: Filter.numberOfActive(),
+                onclick: function () {
+                    Filter.clear();
+                    Filter.commit();
+                    routeTo("/checklist");
+                }
+            }) : null,
         ]
     }
 }
@@ -82,15 +93,20 @@ let SearchBoxImmediate = {
 
 let RoundedButton = {
     view: function (vnode) {
-        return m(".round-envelope", m(".rounded-button" + (vnode.attrs.disabled ? ".disabled" : ""), {
+        return m(".round-envelope", m(".rounded-button" + (vnode.attrs.label ? "" : "-notext") + (vnode.attrs.disabled ? ".disabled" : ""), {
             onclick: function () {
                 if (!vnode.attrs.disabled) {
                     vnode.attrs.onclick();
                 }
             }
         }, [
-            m("img[src=img/ui/checklist/" + vnode.attrs.icon + ".svg]"),
-            m(".label", vnode.attrs.label)
+            m(".image-wrapper",
+                [
+                    m("img[src=img/ui/checklist/" + vnode.attrs.icon + ".svg]"),
+                    vnode.attrs.badge ? m(".round-button-badge", vnode.attrs.badge) : null,
+                ]
+            ),
+            m(".label", vnode.attrs.label),
         ]))
     }
 }

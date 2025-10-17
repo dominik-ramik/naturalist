@@ -10,7 +10,7 @@ export let Filter = {
   text: "",
   delayCommitDataPath: "",
   _queryResultCache: {},
-  
+
   commit: function (specificRoute) {
     if (specificRoute) {
       routeTo(specificRoute);
@@ -18,7 +18,27 @@ export let Filter = {
       routeTo("/search");
     }
   },
-  
+
+  numberOfActive: function () {
+    let count = 0;
+
+    if (this.text != "") {
+      count++;
+    }
+
+    ["taxa", "data"].forEach(type => {
+      Object.keys(Filter[type]).forEach(filterKey => {
+        if (Filter[type][filterKey].selected.length > 0){
+          count++;
+        }
+      })
+    })
+
+    console.log(Filter.taxa, Filter.data, Filter.text, count);
+
+    return count;
+  },
+
   setFromQuery: function (query) {
     Filter.clear();
     ["taxa", "data"].forEach(function (type) {
@@ -376,7 +396,7 @@ export let Filter = {
     Filter._sanitizeFilters();
 
     let emptyFilter = Filter.isEmpty();
-    
+
     // Phase 1.2: Early return for cached results
     let cacheResult = Filter.queryCache.retrieve();
 
@@ -407,7 +427,7 @@ export let Filter = {
     // Single pass with early termination
     checklistData.forEach(function (item, itemIndex) {
       let itemKey = item._key || item.t.map((t) => t.name).join("|");
-      
+
       if (emptyFilter) {
         matchedItems.push(item);
         matchedKeySet.add(itemKey);
@@ -436,7 +456,7 @@ export let Filter = {
       if (found) {
         matchedItems.push(item);
         matchedKeySet.add(itemKey);
-        
+
         // Collect parent keys
         for (let i = 1; i < item.t.length; i++) {
           let parentKey = item.t.slice(0, i).map((t) => t.name).join("|");
@@ -458,7 +478,7 @@ export let Filter = {
   },
 
   // Helper methods
-  _sanitizeFilters: function() {
+  _sanitizeFilters: function () {
     // Remove invalid filter values
     ["taxa", "data"].forEach(function (type) {
       Object.keys(Filter[type]).forEach(function (dataPath) {
@@ -471,20 +491,20 @@ export let Filter = {
     });
   },
 
-  _createFilterSnapshot: function(filterObj) {
+  _createFilterSnapshot: function (filterObj) {
     let snapshot = {};
     Object.keys(filterObj).forEach(key => {
       snapshot[key] = {
         selected: [...(filterObj[key].selected || [])],
-        numeric: filterObj[key].numeric ? {...filterObj[key].numeric} : null
+        numeric: filterObj[key].numeric ? { ...filterObj[key].numeric } : null
       };
     });
     return snapshot;
   },
 
-  _getActiveFilters: function() {
+  _getActiveFilters: function () {
     let active = { taxa: [], data: [] };
-    
+
     Object.keys(Filter.taxa).forEach(dataPath => {
       if (Filter.taxa[dataPath].selected.length > 0) {
         active.taxa.push({
@@ -515,11 +535,11 @@ export let Filter = {
     return active;
   },
 
-  _checkTaxaFilters: function(item, taxaFilters) {
+  _checkTaxaFilters: function (item, taxaFilters) {
     for (let filter of taxaFilters) {
       let taxonIndex = Object.keys(Filter.taxa).indexOf(filter.dataPath);
       if (taxonIndex >= item.t.length) continue;
-      
+
       let value = item.t[taxonIndex].name;
       if (!filter.selected.includes(value)) {
         return false;
@@ -528,15 +548,15 @@ export let Filter = {
     return true;
   },
 
-  _checkDataFilters: function(item, dataFilters) {
+  _checkDataFilters: function (item, dataFilters) {
     for (let filter of dataFilters) {
       let value = Checklist.getDataFromDataPath(item.d, filter.dataPath);
-      
+
       if (value === null) return false;
 
       if (filter.type === "number") {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
-        let passes = leafData.some(v => 
+        let passes = leafData.some(v =>
           Filter.numericFilters[filter.numeric.operation].comparer(
             v,
             filter.numeric.threshold1,
@@ -553,9 +573,9 @@ export let Filter = {
     return true;
   },
 
-  _assembleResults: function(matchedItems, parentKeySet, checklistData) {
+  _assembleResults: function (matchedItems, parentKeySet, checklistData) {
     let finalResults = [...matchedItems];
-    
+
     // Add parent taxa
     if (parentKeySet.size > 0) {
       checklistData.forEach(item => {
