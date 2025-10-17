@@ -118,7 +118,7 @@ export let DataManager = function () {
         ];
 
       if (!bibliographyData || bibliographyData.length === 0) {
-        Logger.warning(
+        Logger.info(
           "Bibliography table is empty. Add BibTeX entries to use citations."
         );
         return {};
@@ -472,16 +472,16 @@ export let DataManager = function () {
 
       data.sheets.appearance.tables.mapRegionsLegend.data[lang.code].forEach(
         function (row) {
-          if (row.suffix.trim() == "") {
-            meta.mapRegionsLegend.default.suffix = row.suffix;
+          if (row.suffix.toString().trim() == "") {
+            meta.mapRegionsLegend.default.suffix = row.suffix.toString();
             meta.mapRegionsLegend.default.fill = row.fillColor;
-            meta.mapRegionsLegend.default.legend = row.legend;
+            meta.mapRegionsLegend.default.legend = row.legend.toString();
           } else {
             meta.mapRegionsLegend.suffixes.push({
-              suffix: row.suffix,
+              suffix: row.suffix.toString(),
               fill: row.fillColor,
-              legend: row.legend,
-              appendedLegend: row.appendedLegend,
+              legend: row.legend.toString(),
+              appendedLegend: row.appendedLegend.toString(),
             });
           }
         }
@@ -1183,8 +1183,9 @@ export let DataManager = function () {
 
                 if (integrity.allowDuplicates !== "yes") {
                   let count = 0;
+
                   entireColumn.forEach(function (item) {
-                    if (item.toLowerCase() == value.toLowerCase()) {
+                    if (item.toString().toLowerCase() == value.toString().toLowerCase()) {
                       if (value == "") {
                         if (integrity.allowDuplicates != "empty-only") {
                           count++;

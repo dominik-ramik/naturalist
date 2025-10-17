@@ -589,6 +589,10 @@ let translations = {
     en: "Warning",
     fr: "Avertissement",
   },
+  log_info: {
+    en: "Info",
+    fr: "Info",
+  },
   check_assets_size1: {
     en: "Verify the size of linked media files",
     fr: "Vérifiez la taille des fichiers multimédias liés",

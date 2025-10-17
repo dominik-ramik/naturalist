@@ -36,7 +36,7 @@ export let TaxonView = {
             routeTo("/details/" + taxonName + "/" + tabName);
           },
         },
-        m(".taxon-details-icon", [m("img[src=./img/ui/tabs/" + icon + ".svg]")])
+        m(".taxon-details-icon", [m("img[src=./img/ui/tabs/" + icon + ".svg]")]),
       );
     }
 

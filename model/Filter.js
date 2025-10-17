@@ -18,6 +18,7 @@ export let Filter = {
       routeTo("/search");
     }
   },
+  
   setFromQuery: function (query) {
     Filter.clear();
     ["taxa", "data"].forEach(function (type) {
@@ -345,11 +346,15 @@ export let Filter = {
   queryCache: {
     cache: function (searchResults) {
       let queryKey = Filter.queryKey();
-      Filter._queryResultCache[queryKey] = {};
-      Filter._queryResultCache[queryKey].taxa = searchResults;
-      Filter._queryResultCache[queryKey].filter = JSON.parse(
-        JSON.stringify(Filter)
-      );
+      Filter._queryResultCache[queryKey] = {
+        taxa: searchResults,
+        // Store only a lightweight snapshot of filter state instead of deep cloning
+        filterSnapshot: {
+          text: Filter.text,
+          taxa: Filter._createFilterSnapshot(Filter.taxa),
+          data: Filter._createFilterSnapshot(Filter.data)
+        }
+      };
     },
     retrieve: function () {
       let queryKey = Filter.queryKey();
@@ -363,212 +368,230 @@ export let Filter = {
   },
 
   getTaxaForCurrentQuery: function () {
+    console.time("Filter.getTaxaForCurrentQuery - Total");
+    
     if (!Checklist._isDataReady) {
+      console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
       return [];
     }
 
-    //sanitize filter ... remove impossible selected (when in taxa selecting two higher units then one lower and then unchecking the one higher)
-    ["taxa", "data"].forEach(function (type) {
-      Object.keys(Filter[type]).forEach(function (dataPath) {
-        Filter[type][dataPath].selected = Filter[type][
-          dataPath
-        ].selected.filter(function (selectedItem) {
-          if (
-            Object.keys(Filter[type][dataPath].possible).indexOf(
-              selectedItem
-            ) < 0
-          ) {
-            return false;
-          } else {
-            return true;
-          }
-        });
-      });
-    });
+    // Phase 1.1: Pre-sanitize filters once
+    console.time("Filter.getTaxaForCurrentQuery - Sanitize");
+    Filter._sanitizeFilters();
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Sanitize");
 
     let emptyFilter = Filter.isEmpty();
-
+    
+    // Phase 1.2: Early return for cached results
+    console.time("Filter.getTaxaForCurrentQuery - Cache Check");
     let cacheResult = Filter.queryCache.retrieve();
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Cache Check");
 
     if (cacheResult) {
+      console.time("Filter.getTaxaForCurrentQuery - Calculate Possible");
       Filter.calculatePossibleFilterValues(cacheResult.taxa);
+      console.timeEnd("Filter.getTaxaForCurrentQuery - Calculate Possible");
+      console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
       return cacheResult.taxa;
     }
 
-    let textFilter = textLowerCaseAccentless(Filter.text).replace(
-      /[-\/\\^$*+?.()|[\]{}]/g,
-      "\\$&"
-    ); //escape for RegEx use
-    let textFilterRegex = new RegExp("\\b" + textFilter);
+    // Phase 2.1: Pre-compile regex once
+    console.time("Filter.getTaxaForCurrentQuery - Compile Regex");
+    let textFilterRegex = null;
+    if (Filter.text.length > 0) {
+      let textFilter = textLowerCaseAccentless(Filter.text).replace(
+        /[-\/\\^$*+?.()|[\]{}]/g,
+        "\\$&"
+      );
+      textFilterRegex = new RegExp("\\b" + textFilter);
+    }
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Compile Regex");
+
+    // Phase 2.2: Pre-compute filter criteria
+    console.time("Filter.getTaxaForCurrentQuery - Get Active Filters");
+    let activeFilters = Filter._getActiveFilters();
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Get Active Filters");
 
     let matchedItems = [];
-    let parentPaths = [];
-    let matchedKeys = new Set();
-    let totalProcessed = 0;
-    let taxaFilterRejects = 0;
-    let dataFilterRejects = 0;
-    let textFilterRejects = 0;
+    let parentKeySet = new Set();
+    let matchedKeySet = new Set();
 
-    Checklist.getData().checklist.forEach(function (item, itemIndex) {
-      totalProcessed++;
+    let checklistData = Checklist.getData().checklist;
+
+    // Single pass with early termination
+    console.time("Filter.getTaxaForCurrentQuery - Main Loop");
+    console.log("Processing items:", checklistData.length);
+    
+    checklistData.forEach(function (item, itemIndex) {
+      let itemKey = item._key || item.t.map((t) => t.name).join("|");
+      
+      if (emptyFilter) {
+        matchedItems.push(item);
+        matchedKeySet.add(itemKey);
+        return;
+      }
+
       let found = true;
-      let rejectionReason = "";
 
-      if (!emptyFilter) {
-        // Taxa filter check with early termination
-        for (let dataPath of Object.keys(Filter.taxa)) {
-          let index = Object.keys(Filter.taxa).indexOf(dataPath);
-          if (Filter.taxa[dataPath].selected.length == 0) {
-            continue;
-          }
-          let foundAny = false;
-          for (let selectedItem of Filter.taxa[dataPath].selected) {
-            if (index < item.t.length && item.t[index].name == selectedItem) {
-              foundAny = true;
-              break;
-            }
-          }
-          if (!foundAny) {
-            found = false;
-            rejectionReason = `taxa filter failed for ${dataPath}`;
-            taxaFilterRejects++;
-            break;
-          }
-        }
-        // Data filter check with early termination
-        if (found) {
-          for (let dataPath of Object.keys(Filter.data)) {
-            // Skip filters that have no criteria set
-            let hasFilterCriteria = false;
-            if (
-              Filter.data[dataPath].type == "text" ||
-              Filter.data[dataPath].type == "map regions" ||
-              Filter.data[dataPath].type == "badge"
-            ) {
-              hasFilterCriteria = Filter.data[dataPath].selected.length > 0;
-            } else if (Filter.data[dataPath].type == "number") {
-              hasFilterCriteria = Filter.data[dataPath].numeric.operation != "";
-            }
-            
-            if (!hasFilterCriteria) {
-              continue; // Skip this filter entirely if no criteria is set
-            }
-            
-            let foundAny = false;
-            if (
-              Filter.data[dataPath].type == "text" ||
-              Filter.data[dataPath].type == "map regions" ||
-              Filter.data[dataPath].type == "badge"
-            ) {
-              for (let selectedItem of Filter.data[dataPath]
-                .selected) {
-                let data = Checklist.getDataFromDataPath(item.d, dataPath);
-                if (!data) {
-                  continue;
-                }
-                let leafData = Checklist.getAllLeafData(data, true, dataPath);
-                for (let leafDataItem of leafData) {
-                  if (selectedItem == leafDataItem) {
-                    foundAny = true;
-                    break;
-                  }
-                }
-                if (foundAny) break;
-              }
-            } else if (Filter.data[dataPath].type == "number") {
-              let valueToCheck = Checklist.getDataFromDataPath(
-                item.d,
-                dataPath
-              );
-              let numericFilter =
-                Filter.numericFilters[
-                  Filter.data[dataPath].numeric.operation
-                ];
-              if (
-                numericFilter.comparer(
-                  valueToCheck,
-                  Filter.data[dataPath].numeric.threshold1,
-                  Filter.data[dataPath].numeric.threshold2
-                )
-              ) {
-                foundAny = true;
-              }
-            }
+      // Taxa filter
+      if (activeFilters.taxa.length > 0) {
+        found = Filter._checkTaxaFilters(item, activeFilters.taxa);
+      }
 
-            if (!foundAny) {
-              found = false;
-              rejectionReason = `data filter failed for ${dataPath}`;
-              dataFilterRejects++;
-              break;
-            }
-          }
-        }
-        // Text filter check with early termination
-        if (found && textFilter.length > 0) {
-          if (
-            !textFilterRegex.test(
-              Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()][
-                itemIndex
-              ]
-            )
-          ) {
-            found = false;
-            rejectionReason = "text filter failed";
-            textFilterRejects++;
-          }
-        }
+      // Data filter
+      if (found && activeFilters.data.length > 0) {
+        found = Filter._checkDataFilters(item, activeFilters.data);
+      }
+
+      // Text filter
+      if (found && textFilterRegex) {
+        found = textFilterRegex.test(
+          Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()][itemIndex]
+        );
       }
 
       if (found) {
         matchedItems.push(item);
-        let key = item.t.map((t) => t.name).join("|");
-        matchedKeys.add(key);
-        // Add all parent paths (not just immediate parent)
+        matchedKeySet.add(itemKey);
+        
+        // Collect parent keys
         for (let i = 1; i < item.t.length; i++) {
-          parentPaths.push(item.t.slice(0, i).map((t) => t.name));
+          let parentKey = item.t.slice(0, i).map((t) => t.name).join("|");
+          if (!matchedKeySet.has(parentKey)) {
+            parentKeySet.add(parentKey);
+          }
         }
       }
-    }); 
+    });
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Main Loop");
+    console.log("Matched items:", matchedItems.length, "Parent keys:", parentKeySet.size);
 
-    // 2. Find true parent items
-    let parentItems = [];
-    let matchedKeySet = new Set(
-      matchedItems.map((item) => item.t.map((t) => t.name).join("|"))
-    );
+    // Assemble final results
+    console.time("Filter.getTaxaForCurrentQuery - Assemble Results");
+    let finalSearchResults = Filter._assembleResults(matchedItems, parentKeySet, checklistData);
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Assemble Results");
 
-    let parentKeySet = new Set();
-    parentPaths.forEach(function (parentPathArr) {
-      let parentKey = parentPathArr.join("|");
-      if (parentKeySet.has(parentKey) || matchedKeySet.has(parentKey)) return;
-      let parent = Checklist.getData().checklist.find(
-        (candidate) => candidate.t.map((t) => t.name).join("|") === parentKey
-      );
-      if (parent) {
-        parentItems.push(parent);
-        parentKeySet.add(parentKey);
+    console.time("Filter.getTaxaForCurrentQuery - Calculate Possible");
+    Filter.calculatePossibleFilterValues(finalSearchResults);
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Calculate Possible");
+
+    console.time("Filter.getTaxaForCurrentQuery - Cache Results");
+    Filter.queryCache.cache(finalSearchResults);
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Cache Results");
+
+    console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
+    return finalSearchResults;
+  },
+
+  // Helper methods
+  _sanitizeFilters: function() {
+    // Remove invalid filter values
+    ["taxa", "data"].forEach(function (type) {
+      Object.keys(Filter[type]).forEach(function (dataPath) {
+        if (Filter[type][dataPath].selected) {
+          Filter[type][dataPath].selected = Filter[type][dataPath].selected.filter(
+            v => v != null && v !== ""
+          );
+        }
+      });
+    });
+  },
+
+  _createFilterSnapshot: function(filterObj) {
+    let snapshot = {};
+    Object.keys(filterObj).forEach(key => {
+      snapshot[key] = {
+        selected: [...(filterObj[key].selected || [])],
+        numeric: filterObj[key].numeric ? {...filterObj[key].numeric} : null
+      };
+    });
+    return snapshot;
+  },
+
+  _getActiveFilters: function() {
+    let active = { taxa: [], data: [] };
+    
+    Object.keys(Filter.taxa).forEach(dataPath => {
+      if (Filter.taxa[dataPath].selected.length > 0) {
+        active.taxa.push({
+          dataPath,
+          selected: Filter.taxa[dataPath].selected
+        });
       }
     });
 
-    // 3. Build final results in checklist order
-    let finalSearchResults;
+    Object.keys(Filter.data).forEach(dataPath => {
+      if (Filter.data[dataPath].type === "number") {
+        if (Filter.data[dataPath].numeric.operation) {
+          active.data.push({
+            dataPath,
+            type: "number",
+            numeric: Filter.data[dataPath].numeric
+          });
+        }
+      } else if (Filter.data[dataPath].selected.length > 0) {
+        active.data.push({
+          dataPath,
+          type: Filter.data[dataPath].type,
+          selected: Filter.data[dataPath].selected
+        });
+      }
+    });
+
+    return active;
+  },
+
+  _checkTaxaFilters: function(item, taxaFilters) {
+    for (let filter of taxaFilters) {
+      let taxonIndex = Object.keys(Filter.taxa).indexOf(filter.dataPath);
+      if (taxonIndex >= item.t.length) continue;
+      
+      let value = item.t[taxonIndex].name;
+      if (!filter.selected.includes(value)) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  _checkDataFilters: function(item, dataFilters) {
+    for (let filter of dataFilters) {
+      let value = Checklist.getDataFromDataPath(item.d, filter.dataPath);
+      
+      if (value === null) return false;
+
+      if (filter.type === "number") {
+        let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
+        let passes = leafData.some(v => 
+          Filter.numericFilters[filter.numeric.operation].comparer(
+            v,
+            filter.numeric.threshold1,
+            filter.numeric.threshold2
+          )
+        );
+        if (!passes) return false;
+      } else {
+        let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
+        let found = leafData.some(v => filter.selected.includes(v));
+        if (!found) return false;
+      }
+    }
+    return true;
+  },
+
+  _assembleResults: function(matchedItems, parentKeySet, checklistData) {
+    let finalResults = [...matchedItems];
     
-    if (emptyFilter) {
-      // If no filters applied, return all checklist items
-      finalSearchResults = Checklist.getData().checklist;
-    } else {
-      // FIX: Use key-based set for matching, not object reference
-      let requiredKeySet = new Set([
-        ...matchedItems.map(item => item.t.map(t => t.name).join("|")),
-        ...parentItems.map(item => item.t.map(t => t.name).join("|"))
-      ]);
-      finalSearchResults = Checklist.getData().checklist.filter((item) =>
-        requiredKeySet.has(item.t.map(t => t.name).join("|"))
-      );
+    // Add parent taxa
+    if (parentKeySet.size > 0) {
+      checklistData.forEach(item => {
+        let itemKey = item._key || item.t.map(t => t.name).join("|");
+        if (parentKeySet.has(itemKey)) {
+          finalResults.push(item);
+        }
+      });
     }
 
-    Filter.calculatePossibleFilterValues(finalSearchResults);
-    Filter.queryCache.cache(finalSearchResults);
-
-    return finalSearchResults;
-  },
+    return finalResults;
+  }
 };

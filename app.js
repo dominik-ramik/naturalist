@@ -94,6 +94,7 @@ function openComChannel(sw) {
 }
 
 export function checkForChecklistUpdate(sw) {
+  console.time("checkForChecklistUpdate");
   var checkDataUpdate = new XMLHttpRequest();
   checkDataUpdate.open("HEAD", checklistURL, true);
   checkDataUpdate.onreadystatechange = function () {
@@ -131,10 +132,12 @@ export function checkForChecklistUpdate(sw) {
         console.log("XHR status error: " + checkDataUpdate.status);
         //something failed, just get the cached vesion
       }
+      console.timeEnd("checkForChecklistUpdate");
     }
   };
   checkDataUpdate.onerror = function (e) {
     console.log("Error trying to get checklist update: ", e);
+    console.timeEnd("checkForChecklistUpdate");
   };
   checkDataUpdate.send();
 }
@@ -144,6 +147,9 @@ Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
 });
 
 function runApp() {
+  console.time("runApp.total");
+  console.time("runApp.fetchChecklist");
+  
   m.request({
     method: "GET",
     url: checklistURL,
@@ -156,6 +162,7 @@ function runApp() {
         return null;
       }
 
+      console.time("runApp.decompress");
       let parsed = "";
       try {
         parsed = JSON.parse(compressor.decompress(xhr.responseText));
@@ -163,12 +170,18 @@ function runApp() {
       } catch (ex) {
         console.log("Error parsing: ", ex);
       }
+      console.timeEnd("runApp.decompress");
+      console.timeEnd("runApp.fetchChecklist");
       return parsed;
     },
   }).then(function (checklistData) {
+    console.time("runApp.initialization");
+    
     window.setTimeout(function () {
       if (checklistData) {
+        console.time("Checklist.loadData");
         Checklist.loadData(checklistData, false);
+        console.timeEnd("Checklist.loadData");
       }
 
       let w = document.documentElement.clientWidth;
@@ -179,7 +192,9 @@ function runApp() {
         AppLayoutView.mode = "mobile";
       }
 
+      console.time("readyPreloadableAssets");
       readyPreloadableAssets();
+      console.timeEnd("readyPreloadableAssets");
 
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
@@ -193,6 +208,7 @@ function runApp() {
         Settings.alreadyViewedAboutSection(true);
       }
 
+      console.time("m.route.setup");
       m.route(document.body, "/checklist", {
         "/search": {
           render: function () {
@@ -276,6 +292,10 @@ function runApp() {
           },
         },
       });
+      console.timeEnd("m.route.setup");
+      
+      console.timeEnd("runApp.initialization");
+      console.timeEnd("runApp.total");
     }, 50);
   });
 }

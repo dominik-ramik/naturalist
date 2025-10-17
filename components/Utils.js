@@ -341,10 +341,10 @@ export function mdImagesClickableAndUsercontentRelative(markdown) {
       .replace(
         match,
         '<span class="image-wrap fullscreenable-image" title="' +
-          altText +
-          '" onClick="this.classList.toggle(\'fullscreen\')">' +
-          match +
-          "</span>"
+        altText +
+        '" onClick="this.classList.toggle(\'fullscreen\')">' +
+        match +
+        "</span>"
       )
       .replace(src, relativeToUsercontent(src));
   });
@@ -383,6 +383,10 @@ export function relativeToUsercontent(url) {
     url,
     window.location.origin + window.location.pathname + "usercontent/"
   ).href;
+
+  processed = "." + processed.substring(window.location.origin.length);
+
+  console.log(processed);
 
   return processed;
 }
@@ -9378,7 +9382,7 @@ var LZString = (function () {
         return keyStrBase64.charAt(a);
       });
       switch (
-        res.length % 4 // To produce valid Base64
+      res.length % 4 // To produce valid Base64
       ) {
         default: // When could this happen ?
         case 0:
