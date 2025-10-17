@@ -1,6 +1,8 @@
 import { helpers } from "./customTypes/helpers.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { dataPath } from "./DataPath.js";
+import { Logger } from "../components/Logger.js";
+import { _tf } from "./I18n.js";
 
 const data = nlDataStructure;
 
@@ -144,29 +146,28 @@ export function readDataFromPath(
 
   // Validation: Check if we have required data and log errors if needed
   let hasValidData = structuredValues[expectedProps[0]] !== null;
+
+  /*
   let hasMissingRequiredData =
     hasValidData &&
     expectedProps.slice(1).some((prop) => structuredValues[prop] === null);
+*/
 
-  hasMissingRequiredData = false;
+  if (!hasValidData) {
 
-  if (!hasValidData || hasMissingRequiredData) {
-    if (errorMessageTemplate) {
-      // Generate column name suggestions for error message
-      let columnNames = [
+    // Generate column name suggestions for error message
+    let columnNames = [
+      ...expectedProps.map((prop) => `${path}.${prop}`),
+    ];
+
+    Logger.error(
+      _tf("dm_generic_column_names", [
+        dataType,
         path,
-        path,
-        ...expectedProps.map((prop) => `${path}.${prop}`),
-      ];
-
-      Logger.error(
-        _tf("dm_generic_column_names", [
-          dataType,
-          computedPath,
-          String.join(", ", columnNames),
-        ])
-      );
-    }
+        columnNames.join(", "),
+        path + "." + columnNames[0]
+      ])
+    );
   }
 
   return structuredValues;

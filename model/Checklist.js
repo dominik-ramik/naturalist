@@ -159,10 +159,10 @@ export let Checklist = {
         searchCategory = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder;
       } else if (type == "data") {
         let meta = Checklist.getMetaForDataPath(dataPath);
-        searchCategory = meta.searchCategoryOrder;
+        searchCategory = meta?.searchCategoryOrder;
       }
 
-      if (searchCategory) {
+      if (searchCategory && Array.isArray(searchCategory)) {
         items = searchCategory
           .filter((c) => c.group == groupTitle)
           .map((c) => c.title);
@@ -181,12 +181,15 @@ export let Checklist = {
     if (!this.getCustomOrderGroupCache.has(key)) {
       let guideItem = undefined;
       if (type == "taxa") {
-        guideItem = Checklist.getTaxaMeta()[dataPath]?.searchCategoryOrder.find(
-          (c) => c.title == title
-        );
+        let meta = Checklist.getTaxaMeta()[dataPath];
+        if (meta?.searchCategoryOrder) {
+          guideItem = meta.searchCategoryOrder.find((c) => c.title == title);
+        }
       } else if (type == "data") {
         let meta = Checklist.getMetaForDataPath(dataPath);
-        guideItem = meta.searchCategoryOrder.find((c) => c.title == title);
+        if (meta?.searchCategoryOrder) {
+          guideItem = meta.searchCategoryOrder.find((c) => c.title == title);
+        }
       }
 
       this.getCustomOrderGroupCache.set(

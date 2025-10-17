@@ -899,7 +899,7 @@ let translations = {
     fr: "Sélectionnez une carte ci-dessus",
   },
   dm_generic_column_names: {
-    en: "Error in column names for formatting of type $1 in the checklist sheet; we expect either a single column called $2 or multiple columns with the following suffixes: $3",
-    fr: "Erreur dans les noms de colonnes pour le formatage de type $1 dans la feuille de check-list ; nous attendons soit une seule colonne appelée $2, soit plusieurs colonnes avec les suffixes suivants : $3",
+    en: "Error in column names for formatting of type $1 in the checklist sheet; we expect either a single column called $2 or multiple columns with the following suffixes: $3. Also check you don't have the column $4 empty while filling-in the other columns",
+    fr: "Erreur dans les noms de colonnes pour le formatage de type $1 dans la feuille de check-list ; nous attendons soit une seule colonne appelée $2, soit plusieurs colonnes avec les suffixes suivants : $3. Aussi vérifie qu'il n'y a pas de valeur manquante dans la colonne $4 tout en ayant les valeurs dans les autres colones",
   },
 };
