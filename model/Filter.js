@@ -368,35 +368,24 @@ export let Filter = {
   },
 
   getTaxaForCurrentQuery: function () {
-    console.time("Filter.getTaxaForCurrentQuery - Total");
-    
     if (!Checklist._isDataReady) {
-      console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
       return [];
     }
 
     // Phase 1.1: Pre-sanitize filters once
-    console.time("Filter.getTaxaForCurrentQuery - Sanitize");
     Filter._sanitizeFilters();
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Sanitize");
 
     let emptyFilter = Filter.isEmpty();
     
     // Phase 1.2: Early return for cached results
-    console.time("Filter.getTaxaForCurrentQuery - Cache Check");
     let cacheResult = Filter.queryCache.retrieve();
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Cache Check");
 
     if (cacheResult) {
-      console.time("Filter.getTaxaForCurrentQuery - Calculate Possible");
       Filter.calculatePossibleFilterValues(cacheResult.taxa);
-      console.timeEnd("Filter.getTaxaForCurrentQuery - Calculate Possible");
-      console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
       return cacheResult.taxa;
     }
 
     // Phase 2.1: Pre-compile regex once
-    console.time("Filter.getTaxaForCurrentQuery - Compile Regex");
     let textFilterRegex = null;
     if (Filter.text.length > 0) {
       let textFilter = textLowerCaseAccentless(Filter.text).replace(
@@ -405,12 +394,9 @@ export let Filter = {
       );
       textFilterRegex = new RegExp("\\b" + textFilter);
     }
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Compile Regex");
 
     // Phase 2.2: Pre-compute filter criteria
-    console.time("Filter.getTaxaForCurrentQuery - Get Active Filters");
     let activeFilters = Filter._getActiveFilters();
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Get Active Filters");
 
     let matchedItems = [];
     let parentKeySet = new Set();
@@ -419,9 +405,6 @@ export let Filter = {
     let checklistData = Checklist.getData().checklist;
 
     // Single pass with early termination
-    console.time("Filter.getTaxaForCurrentQuery - Main Loop");
-    console.log("Processing items:", checklistData.length);
-    
     checklistData.forEach(function (item, itemIndex) {
       let itemKey = item._key || item.t.map((t) => t.name).join("|");
       
@@ -463,23 +446,14 @@ export let Filter = {
         }
       }
     });
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Main Loop");
-    console.log("Matched items:", matchedItems.length, "Parent keys:", parentKeySet.size);
 
     // Assemble final results
-    console.time("Filter.getTaxaForCurrentQuery - Assemble Results");
     let finalSearchResults = Filter._assembleResults(matchedItems, parentKeySet, checklistData);
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Assemble Results");
 
-    console.time("Filter.getTaxaForCurrentQuery - Calculate Possible");
     Filter.calculatePossibleFilterValues(finalSearchResults);
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Calculate Possible");
 
-    console.time("Filter.getTaxaForCurrentQuery - Cache Results");
     Filter.queryCache.cache(finalSearchResults);
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Cache Results");
 
-    console.timeEnd("Filter.getTaxaForCurrentQuery - Total");
     return finalSearchResults;
   },
 
