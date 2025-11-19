@@ -185,7 +185,7 @@ function renderDetailsMap(data, uiContext) {
               ]);
             })
       ),
-      uiContext.meta.title ? m(".title", uiContext.meta.title) : null,
+      //uiContext.meta.title ? m(".title", uiContext.meta.title) : null,
     ]);
   }
 }

@@ -950,7 +950,7 @@ export let Checklist = {
     let originalTaxon = Checklist.getTaxonByName(taxonName);
 
     let tabs = {
-      externalseearch: Checklist.getData().meta.externalSearchEngines,
+      externalsearch: Checklist.getData().meta.externalSearchEngines,
       media: [],
       map: [],
       text: [],

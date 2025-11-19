@@ -16,10 +16,16 @@ import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
 
+// Global array to collect assets from F: directives
+let assetsFromFDirectives = [];
+
 export let DataManager = function () {
   const data = nlDataStructure;
 
   function compileChecklist(checkAssetsSize) {
+    // Clear assetsFromFDirectives at the start of compilation
+    assetsFromFDirectives = [];
+
     let currentDate = new Date();
 
     let currentDateString =
@@ -37,7 +43,6 @@ export let DataManager = function () {
       general: {
         lastUpdate: currentDateString,
         defaultVersion: data.common.languages.defaultLanguageCode,
-        assets: gatherPreloadableAssets(),
         bibliography: gatherReferences(),
       },
       versions: {},
@@ -71,18 +76,18 @@ export let DataManager = function () {
           let data = Checklist.getDataFromDataPath(entryData, dataPath);
 
           if (data && data != "") {
-            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber);
+            // Pass assetsFromFDirectives as an argument to processFDirective
+            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsFromFDirectives);
             if (result) {
-              // OLD (buggy):
-              // entryData[dataPath] = result;
-
-              // NEW (fixed):
               setDataAtDataPath(entryData, dataPath, result);
             }
           }
         }
       });
     });
+
+    // Now that all F: directives are processed, gather assets
+    checklist.general.assets = gatherPreloadableAssets();
 
     console.log("New checklist", checklist);
 
@@ -282,6 +287,13 @@ export let DataManager = function () {
             });
           }
         );
+      });
+
+      // Add assets from F: directives, avoiding duplicates
+      assetsFromFDirectives.forEach(function (asset) {
+        if (!assets.includes(asset)) {
+          assets.push(asset);
+        }
       });
 
       if (checkAssetsSize) {
@@ -1707,7 +1719,7 @@ function getMarkdownContent(url, runSpecificCache) {
   return result;
 }
 
-function processFDirective(data, runSpecificCache, log, dataPath, rowNumber) {
+function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsFromFDirectivesArg) {
   // Allow only forward slashes, no backward slashes, no .., no absolute or ./, must end with .md (or will be appended)
   // Example allowed: F:about.md, F:docs/intro.md, F:folder/subfolder/file.md
   // Disallowed: F:../secret.md, F:/etc/passwd, F:C:\file.md, F:folder\file.md, F:./file.md
@@ -1761,7 +1773,58 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber) {
     if (isValidHttpUrl(fileUrl) && isSameOriginAsCurrent(fileUrl)) {
       let markdownContent = getMarkdownContent(fileUrl, runSpecificCache);
       if (markdownContent.responseStatus == 200) {
-        return markdownContent.content;
+        // Extract directory path from the markdown file path
+        const lastSlashIndex = filePath.lastIndexOf('/');
+        const mdFileDirectory = lastSlashIndex >= 0 ? filePath.substring(0, lastSlashIndex + 1) : '';
+
+        // Array to track rewritten image paths
+        const rewrittenImagePaths = [];
+
+        // Process markdown content to rewrite relative image paths
+        let processedContent = markdownContent.content;
+
+        // Regex to match markdown images: ![alt text](url)
+        // Captures: ![any text](captured_url)
+        const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+
+        processedContent = processedContent.replace(markdownImageRegex, (match, altText, imageUrl) => {
+          // Skip if the image URL is absolute (http:// or https://)
+          if (/^https?:\/\//i.test(imageUrl)) {
+            return match; // Keep as-is
+          }
+
+          // Skip if the image URL starts with / (already root-relative)
+          if (imageUrl.startsWith('/')) {
+            return match; // Keep as-is
+          }
+
+          // This is a relative path - rewrite it to be relative to root
+          const rewrittenPath = mdFileDirectory + imageUrl;
+          rewrittenImagePaths.push(rewrittenPath);
+
+          // Return the rewritten markdown image syntax
+          return `![${altText}](${rewrittenPath})`;
+        });
+
+        // Store rewritten paths for further processing if needed
+        if (rewrittenImagePaths.length > 0) {
+          // Add assets to global array, avoiding duplicates
+          if (Array.isArray(assetsFromFDirectivesArg)) {
+            rewrittenImagePaths.forEach(function (asset) {
+              // Use relativeToUsercontent to resolve asset path
+              const resolvedAsset = relativeToUsercontent(asset);
+              if (!assetsFromFDirectivesArg.includes(resolvedAsset)) {
+                assetsFromFDirectivesArg.push(resolvedAsset);
+              }
+            });
+          }
+          console.log(`F: Rewritten ${rewrittenImagePaths.length} image paths in ${filePath}:`, rewrittenImagePaths);
+        }
+
+        // Return an object with both content and rewritten paths
+        console.log("F: Rewritten image paths:", rewrittenImagePaths);
+
+        return processedContent;
       } else {
         Logger.error(
           _tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])

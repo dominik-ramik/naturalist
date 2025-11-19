@@ -63,6 +63,7 @@
   margin-bottom: var(--pad-small);
   margin-right: 0.5em;
 }
+
 .details-taxon-crumb:not(:last-child):after {
   content: "→";
   margin-left: 0.5em;
@@ -82,9 +83,44 @@
   color: white;
 }
 
+/* UNIFIED GROUP & ITEM TITLES FOR ALL TABS */
+
+.details-group-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 120%;
+  color: #222;
+  margin-bottom: 1em;
+}
+
+.details-item-title {
+  text-align: center;
+  font-weight: normal;
+  color: #444;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.tabs-container-content-text .details-group-title {
+  text-align: left;
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+}
+
+.tabs-container-content-text .details-item-title {
+  text-align: left;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  margin-left: 0.33em
+}
+.tabs-container-content-text .image-wrap img {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 /* TEXT TAB */
 
-.tabs-container-content-text {
+.tabs-container-content-text p {
   font-size: 85%;
 }
 
@@ -93,62 +129,27 @@
   cursor: pointer;
 }
 
-.tabs-container-content-text .textHeading{
-  text-align: center;
-  font-size: 200%;
-  font-weight: bold;
-  margin-top: 0em;
-  margin-bottom: 1em;
-  margin-top: 0.5em;
-}
-
-.tabs-container-content-text h1 {
-  font-size: 135%;
-  margin-bottom: 0.5em;
-}
-
-.tabs-container-content-text h2 {
-  font-size: 125%;
-  margin-bottom: 0.5em;
-  padding-left: 0.25em
-}
-
-.tabs-container-content-text h3 {
-  font-size: 110%;
-  margin-bottom: 0.5em;
-  padding-left: 0.5em
-}
-
-.tabs-container-content-text h4 {
-  font-size: 100%;
-  margin-bottom: 0.5em;
-  padding-left: 1em
-}
-
-.tabs-container-content-text p {
-  padding-left: 1em;
-  text-align: justify;
-  margin-top: 0em;
-}
-
-.tabs-container-content-text img {
-  max-width: 80%;
-  max-height: 50vh;
-  display: block;
-  text-align: center;
-  margin: auto;
-}
+/* Remove old .textGroupHeading and .textHeading rules */
 
 /* MEDIIA TAB */
 
 .media-list .media-set {
-  margin-bottom: 1em;
+  margin-bottom: 2em;
 }
 
 .media-list .media-set-title {
   text-align: center;
   margin-bottom: var(--pad-large);
   font-weight: bold;
+  font-size: 120%;
+}
+
+.media-list .media-item-title {
+  text-align: center;
+  font-weight: normal;
+  margin-bottom: var(--pad-large);
+  color: #444;
+  margin-top: 0.5em
 }
 
 .media-list .media-set-list {
@@ -157,6 +158,10 @@
   flex-wrap: wrap;
   width: 100%;
   justify-content: center;
+}
+
+.media-list .media-set-list >div {
+  margin-bottom: 0.5em;
 }
 
 .media-list .media-sound {
@@ -215,12 +220,7 @@
   max-width: 28em;
 }
 
-.app.mobile
-  .tabs-container-content-map
-  .media-list
-  .media-type-regions
-  .image-wrap
-  object {
+.app.mobile .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
   max-width: 100%;
 }
 
