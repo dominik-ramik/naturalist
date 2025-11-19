@@ -87,6 +87,9 @@ function taxonomyCrumbs(taxonName) {
 }
 
 function TabsForDetails(detailsTabs, taxon, taxonName) {
+  
+    console.log(detailsTabs, taxon, taxonName);
+
   if (detailsTabs == null) {
     return null;
   }
@@ -112,9 +115,9 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
       Settings.currentDetailsTab(key);
       routeTo(
         "/details/" +
-          taxon.t[taxon.t.length - 1].name +
-          "/" +
-          Settings.currentDetailsTab()
+        taxon.t[taxon.t.length - 1].name +
+        "/" +
+        Settings.currentDetailsTab()
       );
     };
 
@@ -154,34 +157,69 @@ function TabMedia(tabData, taxon, taxonName) {
 
   let renderedContent = [];
 
-  tabData.forEach(function (item) {
-    const { data, meta, dataPath } = item;
+  tabData.forEach(function (renderingItem) {
+    if (!renderingItem.items || renderingItem.items.length === 0) return;
 
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      return;
-    }
-
-    const uiContext = {
-      meta: meta,
-      dataPath: dataPath || meta.columnName || "",
-      originalData: taxon.d,
-      taxon: {
-        name: taxon.t[taxon.t.length - 1].name,
-        authority: taxon.t[taxon.t.length - 1].authority,
-      },
-      placement: "details",
-    };
-
-    console.log("TabMedia item:", uiContext);
-
-    // Get the appropriate reader based on formatting type
-    const reader = dataReaders[meta.formatting];
-
-    if (reader && reader.dataToUI) {
-      let renderedItem = reader.dataToUI(data, uiContext);
-      if (renderedItem) {
-        renderedContent.push(renderedItem);
-      }
+    // Render group title if present
+    if (renderingItem.groupTitle) {
+      renderedContent.push(
+        m(".media-set", [
+          m(".media-set-title", renderingItem.groupTitle),
+          m(
+            ".media-set-list",
+            renderingItem.items.map(function ({ data, meta, dataPath }) {
+              const uiContext = {
+                meta: meta,
+                dataPath: dataPath || meta.columnName || "",
+                originalData: taxon.d,
+                taxon: {
+                  name: taxon.t[taxon.t.length - 1].name,
+                  authority: taxon.t[taxon.t.length - 1].authority,
+                },
+                placement: "details",
+              };
+              const reader = dataReaders[meta.formatting];
+              let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+              // Render meta.title for each item if present
+              if (renderedItem && meta.title) {
+                return m(".media-item", [
+                  m(".media-item-title", meta.title),
+                  renderedItem
+                ]);
+              }
+              return renderedItem;
+            })
+          ),
+        ])
+      );
+    } else {
+      // No group title: render each item individually, with its own title if present
+      renderingItem.items.forEach(function ({ data, meta, dataPath }) {
+        const uiContext = {
+          meta: meta,
+          dataPath: dataPath || meta.columnName || "",
+          originalData: taxon.d,
+          taxon: {
+            name: taxon.t[taxon.t.length - 1].name,
+            authority: taxon.t[taxon.t.length - 1].authority,
+          },
+          placement: "details",
+        };
+        const reader = dataReaders[meta.formatting];
+        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        if (renderedItem) {
+          if (meta.title) {
+            renderedContent.push(
+              m(".media-set", [
+                m(".media-set-title", meta.title),
+                m(".media-set-list", [renderedItem]),
+              ])
+            );
+          } else {
+            renderedContent.push(renderedItem);
+          }
+        }
+      });
     }
   });
 
@@ -199,32 +237,66 @@ function TabMap(tabData, taxon, taxonName) {
 
   let renderedContent = [];
 
-  tabData.forEach(function (item) {
-    const { data, meta, dataPath } = item;
+  tabData.forEach(function (renderingItem) {
+    if (!renderingItem.items || renderingItem.items.length === 0) return;
 
-    if (!data) {
-      return;
-    }
-
-    const uiContext = {
-      meta: meta,
-      dataPath: dataPath || meta.columnName || "",
-      originalData: taxon.d,
-      taxon: {
-        name: taxon.t[taxon.t.length - 1].name,
-        authority: taxon.t[taxon.t.length - 1].a,
-      },
-      placement: "details",
-    };
-
-    // Get the appropriate reader based on formatting type
-    const reader = dataReaders[meta.formatting];
-
-    if (reader && reader.dataToUI) {
-      let renderedItem = reader.dataToUI(data, uiContext);
-      if (renderedItem) {
-        renderedContent.push(renderedItem);
-      }
+    if (renderingItem.groupTitle) {
+      renderedContent.push(
+        m(".media-set", [
+          m(".media-set-title", renderingItem.groupTitle),
+          m(
+            ".media-set-list",
+            renderingItem.items.map(function ({ data, meta, dataPath }) {
+              const uiContext = {
+                meta: meta,
+                dataPath: dataPath || meta.columnName || "",
+                originalData: taxon.d,
+                taxon: {
+                  name: taxon.t[taxon.t.length - 1].name,
+                  authority: taxon.t[taxon.t.length - 1].a,
+                },
+                placement: "details",
+              };
+              const reader = dataReaders[meta.formatting];
+              let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+              if (renderedItem && meta.title) {
+                return m(".media-item", [
+                  m(".media-item-title", meta.title),
+                  renderedItem
+                ]);
+              }
+              return renderedItem;
+            })
+          ),
+        ])
+      );
+    } else {
+      renderingItem.items.forEach(function ({ data, meta, dataPath }) {
+        const uiContext = {
+          meta: meta,
+          dataPath: dataPath || meta.columnName || "",
+          originalData: taxon.d,
+          taxon: {
+            name: taxon.t[taxon.t.length - 1].name,
+            authority: taxon.t[taxon.t.length - 1].a,
+          },
+          placement: "details",
+        };
+        const reader = dataReaders[meta.formatting];
+        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        if (renderedItem) {
+          if (meta.title) {
+            renderedContent.push(
+              m(".media-set", [
+                m(".media-set-title", meta.title),
+                m(".media-set-list", [renderedItem]),
+              ])
+            );
+          } else {
+            renderedContent.push(renderedItem);
+          }
+        }
+      });
     }
   });
 
@@ -243,57 +315,71 @@ function TabText(tabData, taxon, taxonName) {
   let mdIndex = "";
   let renderedContent = [];
 
-  tabData.forEach(function (item) {
-    const { data, meta } = item;
+  tabData.forEach(function (renderingItem) {
+    if (!renderingItem.items || renderingItem.items.length === 0) return;
 
-    if (!data || data.toString().trim() === "") {
-      return;
-    }
-
-    // Create UI context for the reader
-    const uiContext = {
-      meta: meta,
-      dataPath: meta.columnName || "",
-      originalData: taxon.d,
-      taxon: {
-        name: taxonName,
-        authority: taxon.t[taxon.t.length - 1].a,
-      },
-      placement: "details",
-    };
-
-    // Get the appropriate reader based on formatting type
-    const reader = dataReaders[meta.formatting] || dataReaders["text"];
-
-    if (reader && reader.dataToUI) {
-      // Generate index entry if we have multiple items
-      if (tabData.length > 1) {
-        const metaKey = meta.columnName || "text";
-        mdIndex +=
-          "- <div class='index-head' onclick=\"document.getElementById('" +
-          metaKey +
-          "').scrollIntoView({behavior: 'smooth'}, true)\">" +
-          meta.title +
-          "</div>\n";
-      }
-
-      // Render the content using the reader
-      let renderedItem = reader.dataToUI(data, uiContext);
-
-      if (renderedItem) {
-        // Wrap with heading if we have a title
-        if (meta.title) {
-          const metaKey = meta.columnName || "text";
-          renderedContent.push(
-            m("div", [
-              m("div.textHeading", { id: metaKey }, meta.title),
-              renderedItem,
-            ])
-          );
-        } else {
-          renderedContent.push(renderedItem);
+    if (renderingItem.groupTitle) {
+      // Grouped: render group title and all items
+      let groupItems = renderingItem.items.map(function ({ data, meta }) {
+        if (!data || data.toString().trim() === "") return null;
+        const uiContext = {
+          meta: meta,
+          dataPath: meta.columnName || "",
+          originalData: taxon.d,
+          taxon: {
+            name: taxonName,
+            authority: taxon.t[taxon.t.length - 1].a,
+          },
+          placement: "details",
+        };
+        const reader = dataReaders[meta.formatting] || dataReaders["text"];
+        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        if (renderedItem && meta.title) {
+          return m("div", [
+            m("div.textHeading", { id: meta.columnName || "text" }, meta.title),
+            renderedItem,
+          ]);
         }
+        return renderedItem;
+      }).filter(Boolean);
+
+      if (groupItems.length > 0) {
+        renderedContent.push(
+          m("div", [
+            m("div.textGroupHeading", renderingItem.groupTitle),
+            ...groupItems
+          ])
+        );
       }
+    } else {
+      // Not grouped: render each item individually
+      renderingItem.items.forEach(function ({ data, meta }) {
+        if (!data || data.toString().trim() === "") return;
+        const uiContext = {
+          meta: meta,
+          dataPath: meta.columnName || "",
+          originalData: taxon.d,
+          taxon: {
+            name: taxonName,
+            authority: taxon.t[taxon.t.length - 1].a,
+          },
+          placement: "details",
+        };
+        const reader = dataReaders[meta.formatting] || dataReaders["text"];
+        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        if (renderedItem) {
+          if (meta.title) {
+            renderedContent.push(
+              m("div", [
+                m("div.textHeading", { id: meta.columnName || "text" }, meta.title),
+                renderedItem,
+              ])
+            );
+          } else {
+            renderedContent.push(renderedItem);
+          }
+        }
+      });
     }
   });
 
@@ -304,9 +390,10 @@ function TabText(tabData, taxon, taxonName) {
   // Combine index and content
   let finalContent = [];
 
-  if (mdIndex.length > 0 && tabData.length > 1) {
-    finalContent.push(m.trust(marked.parse(mdIndex)));
-  }
+  // (Optional) If you want to keep the index for multiple items, you can adapt this logic
+  // if (mdIndex.length > 0 && tabData.length > 1) {
+  //   finalContent.push(m.trust(marked.parse(mdIndex)));
+  // }
 
   finalContent = finalContent.concat(renderedContent);
 
@@ -344,8 +431,8 @@ function TabExternalSearch(tabData, taxon, taxonName) {
         [
           m(
             "img.engine-icon[src=usercontent/online_search_icons/" +
-              engine.icon +
-              "]"
+            engine.icon +
+            "]"
           ),
           m(".engine-title", engine.title),
         ]

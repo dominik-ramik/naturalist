@@ -1,9 +1,8 @@
-
 //This duplicates the externalised contsnts of the same name in Utils but Chrome would not allow the SW to register even in module mode so we have to repeat them here
 const checklistURL = "./usercontent/data/checklist.json";
 const checklistFileName = "checklist.json";
 
-let version = "3.0.0-alpha.8";
+let version = "3.0.0-alpha.14";
 
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + version;
@@ -54,12 +53,23 @@ self.addEventListener('fetch', function (e) {
 
     e.respondWith((async function () {
 
+        // Do not serve from cache for /usercontent/ ... .md files
+        const isUserMdFile = (
+            e.request.url.toLowerCase().includes("/usercontent/") &&
+            e.request.url.toLowerCase().endsWith(".md")
+        );
+        if (isUserMdFile) {
+            // Always fetch from network, never cache
+            try {
+                return await fetch(e.request, { cache: "no-cache" });
+            } catch (ex) {
+                console.error("[SW] Fetching error (md file)", e.request.url, ex);
+                return new Response("", { status: 404 });
+            }
+        }
+
         const r = await caches.match(e.request);
-
-        //console.log(`[SW] Fetching resource: ${e.request.url}`);
         if (r) { return r; }
-
-        //console.log(`[SW] Not found in cache, trying the network: ${e.request.url}`);
 
         //make sure we always have a fresh reply for checklist data
         let response = null;
@@ -81,7 +91,9 @@ self.addEventListener('fetch', function (e) {
         let cache = null;
 
         function urlForUserCache(url) {
-            return url.includes("/usercontent/") && !url.includes("/usercontent/identity")
+            // Do not cache .md files in /usercontent/
+            if (url.includes("/usercontent/") && url.endsWith(".md")) return false;
+            return url.includes("/usercontent/") && !url.includes("/usercontent/identity");
         }
 
         if (urlForUserCache(e.request.url.toLowerCase())) {
@@ -140,14 +152,56 @@ function refreshCachedChecklistData() {
 //Save reference to port
 self.addEventListener('message', function (message) {
     if (message.data && message.data.type === 'PORT_INITIALIZATION') {
-        //console.log("SW side received PORT INIT");
         communicationPort = message.ports[0];
     } else if (message.data && message.data.type == "UPDATE_CHECKLIST_DATA") {
-        //console.log("[SW] Checklist got updated");
         refreshCachedChecklistData();
-        communicationPort.postMessage({ type: 'CHECKLIST_UPDATED', lastModifiedTimestamp: message.data.lastModifiedTimestamp });
+        communicationPort.postMessage({ 
+            type: 'CHECKLIST_UPDATED', 
+            updateMeta: message.data.updateMeta
+        });
     } else if (message.data && message.data.type == "GET_VERSION") {
         communicationPort.postMessage({ type: 'VERSION', version: version });
+    } else if (message.data && message.data.type === "CACHE_ASSETS" && Array.isArray(message.data.assets)) {
+        // Cache the provided asset URLs in the user cache
+
+        // Utility to check internet connectivity
+        const checkInternetConnection = async () => {
+            try {
+                const response = await fetch("http://www.google.com/generate_204", { method: 'HEAD', cache: 'no-store' });
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        };
+
+        (async () => {
+            const isOnline = await checkInternetConnection();
+            if (!isOnline) {
+                console.log("[SW] Skipping asset caching: offline or network issue.");
+                return;
+            }
+
+            const cache = await caches.open(userCacheName);
+            const assets = message.data.assets;
+            // Filter out assets already cached
+            const missingAssets = [];
+            for (const assetUrl of assets) {
+                const match = await cache.match(assetUrl);
+                if (!match) {
+                    missingAssets.push(assetUrl);
+                }
+            }
+            if (missingAssets.length > 0) {
+                try {
+                    await cache.addAll(missingAssets);
+                    console.log("[SW] Cached assets:", missingAssets);
+                } catch (e) {
+                    console.log("[SW] Failed to cache some assets", e);
+                }
+            } else {
+                console.log("[SW] All assets already cached.");
+            }
+        })();
     }
 });
 

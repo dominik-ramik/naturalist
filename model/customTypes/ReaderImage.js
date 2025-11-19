@@ -1,6 +1,6 @@
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
-import { relativeToUsercontent } from "../../components/Utils.js";
+import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { _tf } from "../I18n.js";
 
@@ -32,6 +32,7 @@ export let readerImage = {
     return imageData;
   },
   dataToUI: function (data, uiContext) {
+    //console.log("Rendering ReaderImage with data:", data, "and uiContext:", uiContext);
     if (!data || data.source.toString().trim() === "") {
       return null;
     }
@@ -42,10 +43,16 @@ export let readerImage = {
     source = helpers.processTemplate(source, uiContext);
     source = relativeToUsercontent(source);
 
+    // Interpret the title as Markdown
+    if (title && title.trim() !== "") {
+      let processedTitle = processMarkdownWithBibliography(title).replace(/<[^>]+>/g, "").trim();
+      title = processedTitle;
+    }
+
     const imageElement = m(
       "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
-        title +
-        "]",
+      title +
+      "]",
       {
         onclick: function (e) {
           this.classList.toggle("fullscreen");

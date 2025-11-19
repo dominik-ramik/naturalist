@@ -45,6 +45,9 @@ function translate(tag, substitute, preFormat, postFormat) {
     translated = source[defaultLanguage];
   }
 
+  // Replace **...** with <strong>...</strong>
+  translated = translated.replace(/\*(.*?)\*/g, "<strong>$1</strong>");
+
   if (substitute) {
     if (!Array.isArray(substitute)) {
       substitute = [substitute];
@@ -905,5 +908,33 @@ let translations = {
   dm_generic_column_names: {
     en: "Error in column names for formatting of type $1 in the checklist sheet; we expect either a single column called $2 or multiple columns with the following suffixes: $3. Also check you don't have the column $4 empty while filling-in the other columns",
     fr: "Erreur dans les noms de colonnes pour le formatage de type $1 dans la feuille de check-list ; nous attendons soit une seule colonne appelée $2, soit plusieurs colonnes avec les suffixes suivants : $3. Aussi vérifie qu'il n'y a pas de valeur manquante dans la colonne $4 tout en ayant les valeurs dans les autres colones",
+  },
+  dm_fdirective_backslash: {
+    en: "Invalid F: path: backward slashes (\\) are not allowed in file paths: $1. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
+    fr: "Chemin F: invalide : les barres obliques inverses (\\) ne sont pas autorisées dans les chemins de fichiers : $1. Le chemin doit être relatif au dossier *usercontent*. Exemple de chemin valide : *about* (l'extension .md est déduite) ou *docs/about.md*",
+  },
+  dm_fdirective_absolute_or_dot_slash: {
+    en: "Invalid F: path: absolute paths or paths starting with '/' or './' are not allowed: $1. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
+    fr: "Chemin F: invalide : les chemins absolus ou commençant par '/' ou './' ne sont pas autorisés : $1. Le chemin doit être relatif au dossier *usercontent*. Exemple de chemin valide : *about* (l'extension .md est déduite) ou *docs/about.md*",
+  },
+  dm_fdirective_directory_traversal: {
+    en: "Invalid F: path: directory traversal (..) is not allowed: $1. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
+    fr: "Chemin F: invalide : la traversée de répertoires (..) n'est pas autorisée : $1. Le chemin doit être relatif au dossier *usercontent*. Exemple de chemin valide : *about* (l'extension .md est déduite) ou *docs/about.md*",
+  },
+  dm_fdirective_invalid_path: {
+    en: "Invalid F: path: the path contains invalid characters or structure: $1. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
+    fr: "Chemin F: invalide : le chemin contient des caractères ou une structure non valides : $1. Le chemin doit être relatif au dossier *usercontent*. Exemple de chemin valide : *about* (l'extension .md est déduite) ou *docs/about.md*",
+  },
+  dm_fdirective_invalid_url: {
+    en: "Invalid F: URL or not same origin: $1 ($2)",
+    fr: "URL F: invalide ou d'origine différente : $1 ($2)",
+  },
+  dm_details_formatting_invalid: {
+    en: "Column $1 has placement 'details' but formatting '$2'. Only '', 'text', 'image', 'sound', 'map', or 'map regions' are allowed for placement 'details'. (Current placement: '$3')",
+    fr: "La colonne $1 a le placement 'details' mais le formatage '$2'. Seuls '', 'text', 'image', 'sound', 'map' ou 'map regions' sont autorisés pour le placement 'details'. (Placement actuel : '$3')"
+  },
+  dm_details_with_children_invalid: {
+    en: "Column $1 has placement 'details' but also has dependent columns: $2. For placement 'details', the column must be a simple value and not have any child columns.",
+    fr: "La colonne $1 a le placement 'details' mais possède aussi des colonnes dépendantes : $2. Pour le placement 'details', la colonne doit être une valeur simple et ne pas avoir de colonnes enfants."
   },
 };

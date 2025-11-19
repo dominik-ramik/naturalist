@@ -10,7 +10,7 @@ import {
 } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
-import { TinyBibReader } from "../lib/TinyBibMD.js";
+import { TinyBibReader } from "../lib/bibex-json-toolbox.es.js";
 import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
@@ -71,9 +71,13 @@ export let DataManager = function () {
           let data = Checklist.getDataFromDataPath(entryData, dataPath);
 
           if (data && data != "") {
-            let result = processFDirective(data, runSpecificCache, log);
+            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber);
             if (result) {
-              entryData[dataPath] = result;
+              // OLD (buggy):
+              // entryData[dataPath] = result;
+
+              // NEW (fixed):
+              setDataAtDataPath(entryData, dataPath, result);
             }
           }
         }
@@ -83,6 +87,38 @@ export let DataManager = function () {
     console.log("New checklist", checklist);
 
     return checklist;
+
+    function setDataAtDataPath(data, path, value) {
+      const segments = dataPath.modify.pathToSegments(path);
+      let current = data;
+
+      for (let i = 0; i < segments.length - 1; i++) {
+        const segment = segments[i];
+
+        if (segment === '#') {
+          // Handle array notation
+          const nextSegment = segments[i + 1];
+          if (!Array.isArray(current)) {
+            current = [];
+          }
+          const index = parseInt(nextSegment) - 1; // Convert to 0-based
+          if (!current[index]) {
+            current[index] = {};
+          }
+          current = current[index];
+          i++; // Skip the number segment
+        } else {
+          if (!current[segment]) {
+            current[segment] = {};
+          }
+          current = current[segment];
+        }
+      }
+
+      const lastSegment = segments[segments.length - 1];
+      current[lastSegment] = value;
+    }
+
     function gatherReferences() {
       let useCitations = data.common
         .getItem(
@@ -101,9 +137,9 @@ export let DataManager = function () {
       if (!supportedCitationStyles.includes(useCitations)) {
         Logger.error(
           "Unknown citation style '" +
-            useCitations +
-            "'. Supported values are " +
-            ["apa", "harvard"].map((x) => "'" + x + "'").join(", ")
+          useCitations +
+          "'. Supported values are " +
+          ["apa", "harvard"].map((x) => "'" + x + "'").join(", ")
         );
         return {};
       }
@@ -114,7 +150,7 @@ export let DataManager = function () {
 
       const bibliographyData =
         data.sheets.content.tables.bibliography.data[
-          data.common.languages.defaultLanguageCode
+        data.common.languages.defaultLanguageCode
         ];
 
       if (!bibliographyData || bibliographyData.length === 0) {
@@ -204,7 +240,7 @@ export let DataManager = function () {
                 }
 
                 let source = "";
-                
+
                 // Different media types have different source properties
                 if (row.formatting === "map regions") {
                   // For map regions, the source comes from the template
@@ -267,7 +303,7 @@ export let DataManager = function () {
             if (
               contentLengthInfo.contentLength > 0 &&
               contentLengthInfo.contentLength / 1024 / 1024 >
-                precachedImageMaxSizeMb
+              precachedImageMaxSizeMb
             ) {
               Logger.warning(
                 _tf("dm_asset_too_large", [
@@ -431,7 +467,7 @@ export let DataManager = function () {
           if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
             Logger.warning(
               "Wrong value in Parent taxon indication will be ignored: " +
-                row.parentTaxonIndication
+              row.parentTaxonIndication
             );
             row.parentTaxonIndication = "";
           }
@@ -682,7 +718,7 @@ export let DataManager = function () {
               );
             }
           }
-          if (dataType == "media") {
+          if (dataType == "image" || dataType == "sound") {
             meta[computedDataPath].type = info.fullRow.typeOfData;
             meta[computedDataPath].title = info.fullRow.title;
             meta[computedDataPath].link = info.fullRow.linkBase;
@@ -1003,11 +1039,11 @@ export let DataManager = function () {
                   //value was not read, this means the column is missing
                   Logger.critical(
                     "Missing required column " +
-                      table.columns[key].name +
-                      " in table " +
-                      table.name +
-                      ". " +
-                      _t("dm_verify_doc")
+                    table.columns[key].name +
+                    " in table " +
+                    table.name +
+                    ". " +
+                    _t("dm_verify_doc")
                   );
                   return;
                 }
@@ -1026,11 +1062,11 @@ export let DataManager = function () {
                 if (value === undefined) {
                   Logger.critical(
                     "Missing column name " +
-                      column.name +
-                      " in table " +
-                      table.name +
-                      " " +
-                      _t("dm_verify_doc")
+                    column.name +
+                    " in table " +
+                    table.name +
+                    " " +
+                    _t("dm_verify_doc")
                   );
                   return;
                 }
@@ -1175,7 +1211,7 @@ export let DataManager = function () {
                     default:
                       console.log(
                         "Unknown integrity allowed content: " +
-                          integrity.allowedContent
+                        integrity.allowedContent
                       );
                       break;
                   }
@@ -1394,6 +1430,34 @@ export let DataManager = function () {
             }
           });
         }
+
+        // --- ADD THIS BLOCK: Integrity check for placement=details and allowed formatting ---
+        if (row.placement && row.placement.split("|").map(x => x.trim()).includes("details")) {
+          const allowedFormatting = ["", "text", "markdown", "image", "sound", "map", "map regions"];
+          if (!allowedFormatting.includes((row.formatting || "").trim().toLowerCase())) {
+            Logger.error(
+              _tf("dm_details_formatting_invalid", [
+                row.columnName,
+                row.formatting,
+                row.placement
+              ])
+            );
+          }
+
+          /*
+          const thisDataPath = dataPath.modify.itemNumbersToHash(columnName).toLowerCase();
+          const children = dataPath.analyse.getChildrenOf(allColumnNames, thisDataPath);
+          if (children.length > 0) {
+            Logger.error(
+              _tf("dm_details_with_children_invalid", [
+                row.columnName,
+                children.join(", ")
+              ])
+            );
+          }
+            */
+        }
+        // --- END ADDITION ---
       }
     });
   }
@@ -1643,9 +1707,52 @@ function getMarkdownContent(url, runSpecificCache) {
   return result;
 }
 
-function processFDirective(data, runSpecificCache) {
-  if (data.match(/^F:[a-zA-Z0-9-_.~]+/)) {
-    let fileUrl = relativeToUsercontent(data.substring(2).trim());
+function processFDirective(data, runSpecificCache, log, dataPath, rowNumber) {
+  // Allow only forward slashes, no backward slashes, no .., no absolute or ./, must end with .md (or will be appended)
+  // Example allowed: F:about.md, F:docs/intro.md, F:folder/subfolder/file.md
+  // Disallowed: F:../secret.md, F:/etc/passwd, F:C:\file.md, F:folder\file.md, F:./file.md
+
+  if (
+    typeof data === "string" &&
+    data.startsWith("F:")
+  ) {
+    let filePath = data.substring(2).trim();
+
+    // Disallow backward slashes
+    if (filePath.includes("\\")) {
+      Logger.error(_t("dm_fdirective_backslash", [filePath]));
+      return null;
+    }
+
+    // Disallow absolute or relative paths starting with / or ./
+    if (filePath.startsWith("/") || filePath.startsWith("./")) {
+      Logger.error(_t("dm_fdirective_absolute_or_dot_slash", [filePath]));
+      return null;
+    }
+
+    // Disallow directory traversal
+    if (filePath.includes("..")) {
+      Logger.error(_t("dm_fdirective_directory_traversals", [filePath]));
+      return null;
+    }
+
+    // Only allow valid relative paths with forward slashes and .md extension
+    // Each segment: [a-zA-Z0-9_\-~.]+, separated by /
+    // Must end with .md (or will be appended)
+    const validPathRegex = /^([a-zA-Z0-9_\-~.]+\/)*[a-zA-Z0-9_\-~]+(\.md)?$/;
+    if (!validPathRegex.test(filePath)) {
+      Logger.error(_t("dm_fdirective_invalid_path", [filePath]));
+      return null;
+    }
+
+    console.log("F: loading markdown file", filePath);
+    let fileUrl = relativeToUsercontent(filePath);
+    console.log("F: resolved file URL", fileUrl);
+
+    // Ensure fileUrl is absolute
+    if (!/^https:\/\//i.test(fileUrl)) {
+      fileUrl = new URL(fileUrl, window.location.origin).href;
+    }
 
     if (!fileUrl.toLowerCase().endsWith(".md")) {
       fileUrl = fileUrl + ".md";
@@ -1662,10 +1769,10 @@ function processFDirective(data, runSpecificCache) {
         return null;
       }
     } else {
+      Logger.error(_t("dm_fdirective_invalid_url", [data, fileUrl]));
       console.log("F: is not valid URL", data, fileUrl);
       return null;
     }
-    return null;
   } else {
     return data;
   }

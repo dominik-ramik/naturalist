@@ -44,7 +44,7 @@ export let readerMap = {
     // Default image rendering
     source = relativeToUsercontent(source);
 
-    return m(
+    const imageElement = m(
       "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
         title +
         "]",
@@ -58,5 +58,14 @@ export let readerMap = {
       },
       m("img.image-in-view[src=" + source + "][alt=" + title + "]")
     );
+
+    if (uiContext.placement === "details") {
+      return m("div", [
+        imageElement,
+        title ? m(".title", title) : null,
+      ]);
+    } else {
+      return imageElement;
+    }
   },
 };

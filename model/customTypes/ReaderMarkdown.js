@@ -26,8 +26,10 @@ export let readerMarkdown = {
       processedData = Checklist.handlebarsTemplates[uiContext.dataPath](templateData);
     }
 
-    // Process markdown and bibliography
+    // Process markdown and bibliography fully (consistent with view and other readers)
+    processedData = processedData.replace(/\r?\n/g, " $NEWLINE$"); // Normalize line endings - hotfix for edge cases of @citekey at the end of a line for some reason getting the end-of-line char included mark attached to itself and then misinterpreted by the bibliography processor
     processedData = processMarkdownWithBibliography(processedData);
+    processedData = processedData.replace(/ \$NEWLINE\$/g, "\n"); // Back from normalization
     return m.trust(processedData);
   },
 };

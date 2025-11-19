@@ -3,16 +3,29 @@ import { Checklist } from "./Checklist.js";
 import { _t } from "./I18n.js";
 
 export let Settings = {
-  lastKnownVersion(timestampToSet) {
-    if (timestampToSet === undefined) {
-      let timestamp = localStorage.getItem("lastKnownDataVersion");
-      if (!timestamp) {
-        return 0;
-      } else {
-        return parseInt(timestamp);
+  lastKnownDataVersion(objToSet) {
+    const key = "lastKnownDataVersion";
+    if (objToSet === undefined) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) throw new Error();
+        const parsed = JSON.parse(raw);
+        // Ensure all keys exist
+        return {
+          lastModified: parsed.lastModified ?? null,
+          etag: parsed.etag ?? null,
+          lastManualUpdate: parsed.lastManualUpdate ?? null
+        };
+      } catch {
+        // If parsing fails, force manual update
+        return { lastModified: null, etag: null, lastManualUpdate: null };
       }
     } else {
-      localStorage.setItem("lastKnownDataVersion", timestampToSet.toString());
+      localStorage.setItem(key, JSON.stringify({
+        lastModified: objToSet.lastModified ?? null,
+        etag: objToSet.etag ?? null,
+        lastManualUpdate: objToSet.lastManualUpdate ?? null
+      }));
     }
   },
 

@@ -26,11 +26,9 @@ export let nlDataStructure = {
 
               if (tableKey == "taxa") {
                 formatting = "checklist-taxon"; //can have .name and .authority
-              }
-              else if (tableKey == "media") {
-                formatting = "media"; //can have .source and .title
-              }
+              } 
               else if (tableKey == "customDataDefinition") {
+                console.log("customDataDefinition", row);
                 formatting = row["formatting"] || "text"; 
               }
 

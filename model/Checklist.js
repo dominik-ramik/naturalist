@@ -7,7 +7,7 @@ import {
 } from "../components/Utils.js";
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
-import { TinyBibFormatter } from "../lib/TinyBibMD.js";
+import { TinyBibFormatter } from "../lib/bibex-json-toolbox.es.js";
 import { Filter } from "./Filter.js";
 
 const templateResultSuffix = "$$templateresult";
@@ -27,7 +27,8 @@ export let Checklist = {
   _isDraft: false,
   _isDataReady: false,
 
-  _bibFormatter: null,
+  // Replace single _bibFormatter with a per-language cache
+  _bibFormatterCache: {},
 
   filter: Filter,
 
@@ -135,16 +136,23 @@ export let Checklist = {
   },
 
   getBibFormatter: function () {
-    if (this._bibFormatter === null) {
-      const formatter = new TinyBibFormatter(this._data.general.bibliography, {
-        style:
-          Checklist._data.versions[Checklist.getCurrentLanguage()].useCitations,
-        format: "markdown",
-      });
-      this._bibFormatter = formatter;
+    const lang = Checklist.getCurrentLanguage();
+    if (!this._bibFormatterCache) this._bibFormatterCache = {};
+    if (!this._bibFormatterCache[lang]) {
+      const bibliography = this._data.versions[lang]?.dataset?.general?.bibliography
+        || this._data.general?.bibliography;
+      const style =
+        this._data.versions[lang]?.useCitations ||
+        Checklist._data.versions[Checklist.getCurrentLanguage()].useCitations;
+      this._bibFormatterCache[lang] = new TinyBibFormatter(
+        bibliography,
+        {
+          style: style,
+          format: "markdown",
+        }
+      );
     }
-
-    return this._bibFormatter;
+    return this._bibFormatterCache[lang];
   },
 
   getCustomOrderGroupItemsCache: new Map(),
@@ -255,14 +263,6 @@ export let Checklist = {
   getDefaultLanguage: function () {
     return this._data.general.defaultVersion;
   },
-  getDefaultI18n: function () {
-    return this._data.general.default_i18n;
-  },
-
-  //precompiled Handlebars templates saved as dataPath key and template as a value ... precompiled during loadData
-  handlebarsTemplates: {},
-
-  _metaForDataPathCache: {},
 
   loadData: function (jsonData, isDraft) {
     if (
@@ -619,7 +619,7 @@ export let Checklist = {
         ) {
           data.push(
             taxonData.name +
-              (includeAuthorities ? " " + taxonData.authority : "")
+            (includeAuthorities ? " " + taxonData.authority : "")
           );
         } else {
           Object.keys(taxonData).forEach(function (key) {
@@ -931,7 +931,7 @@ export let Checklist = {
               dataCells.hasOwnProperty(placement) &&
               Array.isArray(dataCells[placement])
             ) {
-              dataCells[placement].push(key);              
+              dataCells[placement].push(key);
             } else {
               console.log(
                 "Unknown placement: '" + meta.placement + "' in '" + key + "'"
@@ -950,9 +950,9 @@ export let Checklist = {
     let originalTaxon = Checklist.getTaxonByName(taxonName);
 
     let tabs = {
-      externalsearch: Checklist.getData().meta.externalSearchEngines,
+      externalseearch: Checklist.getData().meta.externalSearchEngines,
       media: [],
-      map: [], 
+      map: [],
       text: [],
     };
 
@@ -966,22 +966,78 @@ export let Checklist = {
       children: {},
     };
 
-    Checklist.getChecklistDataCellsForTaxon(taxon).details.forEach(function (
-      dataPath
-    ) {
-      if(originalTaxon.d[dataPath] === undefined || Object.keys(originalTaxon.d[dataPath]).length == 0) {
-        return;
-      }
+    // Allowed formatting types for each tab
+    const allowedMedia = ["image", "sound"];
+    const allowedMap = ["map", "map regions"];
+    const allowedText = ["text", "markdown"];
 
-      let meta = Checklist.getMetaForDataPath(dataPath);
-
-      if (meta.formatting == "image" || meta.formatting == "sound") {
-        tabs.media.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
-      } else if (meta.formatting == "map" || meta.formatting == "map regions") {
-        tabs.map.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
-      } else if (meta.formatting == "text" || meta.formatting == "markdown") {
-        tabs.text.push({data: originalTaxon.d[dataPath], meta: meta, dataPath: dataPath});
+    // Helper: add to correct tab if formatting and value are valid
+    function tryAddToTab(formatting, data, meta, dataPath, tabType, arr) {
+      if (tabType === "media" && allowedMedia.includes(formatting)) {
+        arr.push({ data, meta, dataPath });
+        return true;
+      } else if (tabType === "map" && allowedMap.includes(formatting)) {
+        arr.push({ data, meta, dataPath });
+        return true;
+      } else if (tabType === "text" && allowedText.includes(formatting)) {
+        // Only add "text" if it's a string
+        if (formatting === "text" && typeof data !== "string") return false;
+        arr.push({ data, meta, dataPath });
+        return true;
       }
+      return false;
+    }
+
+    // For each tab type, collect rendering items as { groupTitle, items: [...] }
+    ["media", "map", "text"].forEach(function (tabType) {
+      let renderingItems = [];
+
+      Object.keys(taxon.data).forEach(function (key) {
+        let meta = Checklist.getMetaForDataPath(key);
+        if (!meta || !meta.placement || !meta.placement.includes("details")) {
+          return;
+        }
+        let data = taxon.data[key];
+
+        // Try to add the parent item itself (root/simple)
+        let rootItems = [];
+        if (tryAddToTab(meta.formatting, data, meta, key, tabType, rootItems)) {
+          renderingItems.push({
+            groupTitle: "",
+            items: rootItems
+          });
+          return;
+        }
+
+        // If not added, and data is array/object, check immediate children
+        let childItems = [];
+        if (Array.isArray(data)) {
+          data.forEach(function (item, idx) {
+            let childPath = key + (idx + 1);
+            let childMeta = Checklist.getMetaForDataPath(childPath);
+            if (childMeta) {
+              tryAddToTab(childMeta.formatting, item, childMeta, childPath, tabType, childItems);
+            }
+          });
+        } else if (typeof data === "object" && data !== null) {
+          Object.keys(data).forEach(function (childKey) {
+            let childPath = key + "." + childKey;
+            let childMeta = Checklist.getMetaForDataPath(childPath);
+            if (childMeta) {
+              tryAddToTab(childMeta.formatting, data[childKey], childMeta, childPath, tabType, childItems);
+            }
+          });
+        }
+        if (childItems.length > 0) {
+          renderingItems.push({
+            groupTitle: meta.title || "",
+            items: childItems
+          });
+        }
+      });
+
+      // Only keep rendering items with at least one item
+      tabs[tabType] = renderingItems.filter(ri => ri.items && ri.items.length > 0);
     });
 
     return tabs;

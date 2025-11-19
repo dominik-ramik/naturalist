@@ -68,7 +68,9 @@ function openComChannel(sw) {
 
       case "CHECKLIST_UPDATED":
         console.log("Checklist data updated");
-        Settings.lastKnownVersion(message.data.lastModifiedTimestamp);
+        if (message.data.updateMeta) {
+          Settings.lastKnownDataVersion(message.data.updateMeta);
+        }
         Toast.show(_t("checklist_data_updated"), {
           whenClosed: function () {
             window.location.href =
@@ -93,49 +95,132 @@ function openComChannel(sw) {
   };
 }
 
+const MAX_MANUAL_UPDATE_AGE_DAYS = 3;
+
+function stripQuotes(str) {
+  return (typeof str === "string" && str.startsWith('"') && str.endsWith('"'))
+    ? str.slice(1, -1)
+    : str;
+}
+
+function shouldUpdateChecklist({ lastModifiedString, etagString, meta }) {
+  const cleanEtag = stripQuotes(etagString);
+
+  // If Last-Modified was previously set but is now missing, treat as update and clear it
+  if (meta.lastModified && (!lastModifiedString || lastModifiedString.trim() === "")) {
+    return {
+      update: true,
+      newMeta: {
+        lastModified: null,
+        etag: cleanEtag || null,
+        lastManualUpdate: null
+      }
+    };
+  }
+
+  // If ETag was previously set but is now missing, treat as update and clear it
+  if (meta.etag && (!etagString || etagString.trim() === "")) {
+    return {
+      update: true,
+      newMeta: {
+        lastModified: lastModifiedString || null,
+        etag: null,
+        lastManualUpdate: null
+      }
+    };
+  }
+
+  // If Last-Modified is present and changed
+  if (typeof lastModifiedString === "string" && lastModifiedString.trim() !== "") {
+    if (meta.lastModified !== lastModifiedString) {
+      return {
+        update: true,
+        newMeta: {
+          lastModified: lastModifiedString,
+          etag: cleanEtag ?? null,
+          lastManualUpdate: null
+        }
+      };
+    }
+    // If Last-Modified is present and matches, do not use manual fallback
+    return { update: false };
+  }
+
+  // If ETag is present and changed
+  if (typeof etagString === "string" && etagString.trim() !== "") {
+    if (meta.etag !== cleanEtag) {
+      return {
+        update: true,
+        newMeta: {
+          lastModified: null,
+          etag: cleanEtag,
+          lastManualUpdate: null
+        }
+      };
+    }
+    // If ETag is present and matches, do not use manual fallback
+    return { update: false };
+  }
+
+  // Only if both are missing, use manual update fallback
+  const now = Date.now();
+  let lastManual = meta.lastManualUpdate;
+  if (!lastManual || isNaN(lastManual)) lastManual = 0;
+  const daysSince = (now - lastManual) / (1000 * 60 * 60 * 24);
+  if (!meta.lastManualUpdate || daysSince >= MAX_MANUAL_UPDATE_AGE_DAYS) {
+    return {
+      update: true,
+      newMeta: {
+        lastModified: null,
+        etag: null,
+        lastManualUpdate: now
+      }
+    };
+  }
+  return { update: false };
+}
+
 export function checkForChecklistUpdate(sw) {
   var checkDataUpdate = new XMLHttpRequest();
   checkDataUpdate.open("HEAD", checklistURL, true);
   checkDataUpdate.onreadystatechange = function () {
     if (checkDataUpdate.readyState === 2) {
       if (checkDataUpdate.status === 200) {
-        let lastModifiedString =
-          checkDataUpdate.getResponseHeader("Last-Modified");
-        if (
-          lastModifiedString === undefined ||
-          lastModifiedString === null ||
-          lastModifiedString === ""
-        ) {
-          //---------------------------------- TODO investigate why not received
-          console.log("Last-modified not received: " + lastModifiedString);
-          //something failed, just get the cached vesion
-          return;
-        }
+        let lastModifiedString = checkDataUpdate.getResponseHeader("Last-Modified");
+        let etagString = checkDataUpdate.getResponseHeader("ETag");
+        let meta = Settings.lastKnownDataVersion();
 
-        lastModifiedString = lastModifiedString.substring(
-          lastModifiedString.indexOf(", ") + 2
-        );
-        let lastModifiedTimestamp = Date.parse(lastModifiedString);
-        let lastKnownTimestamp = Settings.lastKnownVersion();
+        const result = shouldUpdateChecklist({ lastModifiedString, etagString, meta });
 
-        if (lastKnownTimestamp < lastModifiedTimestamp) {
-          //Checklist got updated
+        if (result.update) {
+          Settings.lastKnownDataVersion(result.newMeta);
           sw.postMessage({
             type: "UPDATE_CHECKLIST_DATA",
-            lastModifiedTimestamp: lastModifiedTimestamp,
+            updateMeta: result.newMeta
           });
         } else {
-          // No update detected
+          // Neither Last-Modified nor ETag present or no update needed
+          if (
+            (!lastModifiedString || lastModifiedString.trim() === "") &&
+            (!etagString || etagString.trim() === "")
+          ) {
+            console.log("No Last-Modified or ETag header received.");
+            if (checkDataUpdate.getAllResponseHeaders) {
+              console.log("checkDataUpdate headers:\n" + checkDataUpdate.getAllResponseHeaders());
+            }
+          }
+          //something failed, just get the cached version
+          return;
         }
       } else {
         console.log("XHR status error: " + checkDataUpdate.status);
         //something failed, just get the cached vesion
       }
-      }
+    }
   };
   checkDataUpdate.onerror = function (e) {
     console.log("Error trying to get checklist update: ", e);
-    };
+  };
   checkDataUpdate.send();
 }
 
@@ -144,7 +229,7 @@ Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
 });
 
 function runApp() {
-  
+
   m.request({
     method: "GET",
     url: checklistURL,
@@ -164,10 +249,10 @@ function runApp() {
       } catch (ex) {
         console.log("Error parsing: ", ex);
       }
-            return parsed;
+      return parsed;
     },
   }).then(function (checklistData) {
-    
+
     window.setTimeout(function () {
       if (checklistData) {
         Checklist.loadData(checklistData, false);
@@ -182,7 +267,7 @@ function runApp() {
       }
 
       readyPreloadableAssets();
-      
+
       function onMatchGuard() {
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (
@@ -287,9 +372,12 @@ function isDataReady(checklistData) {
 }
 
 function readyPreloadableAssets() {
-  Checklist.getPreloadableAssets().forEach(async (assetUrl) => {
-    await fetch(assetUrl).catch((e) => {
-      console.log("Fetch failed", assetUrl, e);
+  // Send asset URLs to service worker for caching
+  const assets = Checklist.getPreloadableAssets();
+  if (assets && assets.length > 0) {
+    messageChannel.port1.postMessage({
+      type: "CACHE_ASSETS",
+      assets: assets
     });
-  });
+  }
 }
