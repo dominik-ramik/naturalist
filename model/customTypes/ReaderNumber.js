@@ -1,5 +1,7 @@
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { Logger } from "../../components/Logger.js";
+import { helpers } from "./helpers.js";
+import { Checklist } from "../Checklist.js";
 
 export let readerNumber = {
   dataType: "number",
@@ -32,7 +34,17 @@ export let readerNumber = {
 
     return parsedNumber;
   },
-  dataToUI: function (data) {
-    return data;
+  dataToUI: function (data, uiContext) {
+    if (data === undefined || data === null || data === "") {
+      return "";
+    }
+
+    let displayValue = (typeof data === "number") ? data.toLocaleString(Checklist.getCurrentLanguage(), { useGrouping: false }) : data;
+
+    if (uiContext.meta.template && uiContext.meta.template !== "") {
+      return helpers.processTemplate(displayValue, uiContext);
+    }
+
+    return displayValue.toString();
   },
 };
