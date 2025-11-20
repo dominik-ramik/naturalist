@@ -333,7 +333,6 @@ function renderRegionsList(data, uiContext) {
     const status = regionInfo.status || "";
 
     // Get Appended Legend (Italics status)
-    console.log(mapRegionsStatuses);
     let appendedLegend = mapRegionsStatuses.find(
       (item) => item.status === status
     )?.appendedLegend;

@@ -283,6 +283,7 @@ export let ManageView = {
             {
               onclick: function (e) {
                 ManageView.state = "waiting";
+                window.location.reload("/#!/manage");
               },
             },
             _t("back_to_upload")
@@ -329,9 +330,15 @@ export let ManageView = {
       ManageView.state = "processing";
       m.redraw();
 
+      // --- Clear stale state: recreate extractor and dataManager instances ---
+      // Recreate extractor (ExcelBridge) and dataman (DataManager) for each upload
+      let extractor = null;
+      dataman = new DataManager();
+
       let reader = new FileReader();
       reader.addEventListener("loadend", (evt) => {
-        dataman.loadData(new ExcelBridge(evt.target.result), checkAssetsSize);
+        extractor = new ExcelBridge(evt.target.result);
+        dataman.loadData(extractor, checkAssetsSize);
 
         if (Logger.hasErrors()) {
           ManageView.state = "dirty";

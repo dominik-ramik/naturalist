@@ -223,6 +223,7 @@ let staticResources = [
     "./img/ui/checklist/search.svg",
     "./img/ui/checklist/results.svg",
     "./img/ui/checklist/filter.svg",
+    "./img/ui/checklist/question.svg",
     "./img/ui/checklist/trash.svg",
     "./img/ui/checklist/offline.svg",
     "./img/ui/checklist/level_up.svg",

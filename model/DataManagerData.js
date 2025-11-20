@@ -27,7 +27,6 @@ export let nlDataStructure = {
               if (tableKey == "taxa") {
                 formatting = "checklist-taxon"; //can have .name and .authority
               } else if (tableKey == "customDataDefinition") {
-                console.log("customDataDefinition", row);
                 formatting = row["formatting"] || "text";
               }
 
@@ -529,7 +528,7 @@ export let nlDataStructure = {
                 "The title of the data item you want to show in front of the data.",
               integrity: {
                 description:
-                  "You can enter any title (multilingual content is supported, so you can have columns Title:en, Title:fr etc.) or leave this blank if you want no title to be displayed. This is useful when using nested data, such as the <b>habitat</b> in the <a href=\"us-birds.xlsx\">Birds of the US</a>, where the data item 'habitat' gets its title (Habitat), but each of the habitat values in the array (row Habitat#) get no title, so each of the habitat values are displayed plainly.",
+                  "You can enter any title (multilingual content is supported, so you can have columns Title:en, Title:fr etc.) or leave this blank if you want no title to be displayed. This is useful when using nested data, such as the <b>habitat</b> in the <a href=\"us-birds.xlsx\">Birds of the US</a>, where the data item 'habitat' gets its title (Habitat), but each of the habitat values in the array (row Habitat#) get no title, so each of the habitat values are displayed plainly. You can also insert a | character after the title to add a short explanatory text which will be shown when the user clicks on a small info icon next to the title, e.g. <b>Total length | Average or typical head to tail length of the animal in cm</b>",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 defaultValue: "",

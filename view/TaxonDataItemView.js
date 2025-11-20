@@ -1,11 +1,12 @@
 import { Checklist } from "../model/Checklist.js";
 import { filterMatches, routeTo, shouldHide } from "../components/Utils.js";
 import { dataReaders } from "../model/customTypes/index.js";
+import { AppLayoutView } from "./AppLayoutView.js";
 
 export let TaxonDataItemView = {
   originalData: null,
 
-  renderDataItem: function (data, taxon, dataPath, itemType) {
+  renderDataItem: function (data, taxon, dataPath, itemType, tailingSeparator) {
     let meta = Checklist.getMetaForDataPath(dataPath);
 
     if (meta == null) {
@@ -161,10 +162,13 @@ export let TaxonDataItemView = {
       if (rendered === null) {
         return null;
       }
-      if (tailingSeparator && typeof rendered === "string") {
-        rendered += tailingSeparator;
-      } else if (tailingSeparator && rendered && rendered.tag) {
-        rendered = [rendered, tailingSeparator];
+      if (tailingSeparator) {
+        if (typeof rendered === "string" || typeof rendered === "number") {
+           rendered = rendered + tailingSeparator;
+        } else {
+           // Wrap in array [Content, Separator] - Mithril handles this natively
+           rendered = [rendered, tailingSeparator]; 
+        }
       }
       return rendered;
     } else {
@@ -187,15 +191,36 @@ export let TaxonDataItemView = {
       return null;
     }
 
-    let title =
-      meta.hasOwnProperty("title") && meta.title != ""
-        ? m(
-            "span.data-item-title[style=color: " +
-              Checklist.getThemeHsl("light") +
-              ";]",
-            meta.title + ": "
-          )
-        : null;
+    // --- Title and info icon logic ---
+    let title = null;
+    if (meta.hasOwnProperty("title") && meta.title != "") {
+      // Split on first | for info text
+      let [mainTitle, infoText] = meta.title.split(/\s*\|\s*(.+)/);
+      title = m(
+        "span.data-item-title[style=color: " +
+        Checklist.getThemeHsl("light") +
+        ";]",
+        [
+          mainTitle,
+          infoText
+            ? m(
+              "span.data-item-info-icon[style=display:inline-block;vertical-align:baseline;cursor:pointer;margin-left:0.3em;]",
+              {
+                onclick: function (e) {
+                  AppLayoutView.toast(infoText, { showPermanently: true });
+                  e.stopPropagation();
+                },
+                title: infoText,
+              },
+              m("img[style=width:1em;height:1em;vertical-align:middle;]", {
+                src: "img/ui/checklist/question.svg",
+              })
+            )
+            : null,
+          m("span", m.trust("&#8201;:&nbsp;"))
+        ]
+      );
+    }
 
     if (itemType == "simple") {
       if (
@@ -236,6 +261,8 @@ export let TaxonDataItemView = {
       itemType == "simple"
         ? m("span.simple-value" + (filterMatches(data) ? ".found" : ""), data)
         : subitemsList,
+      // Manually append separator for complex types (Simple types already have it inside 'data')
+      itemType !== "simple" && tailingSeparator ? tailingSeparator : null
     ]);
   },
 

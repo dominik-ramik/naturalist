@@ -148,10 +148,20 @@ export let Toast = {
             m("div#snackbar", {
                 onclick: function () {
                     Toast.hide();
-                }
+                },
+                style: "display:flex;align-items:center;justify-content:space-between;max-width:32em;margin-left:auto;margin-right:auto;"
             }, [
-                m("span", Toast.message),
-                Toast.permanent ? m("span", "X") : null,
+                m("span", {
+                    style: "flex:1 1 auto;overflow-wrap:break-word;"
+                }, Toast.message),
+                Toast.permanent
+                  ? m("button[style=flex:0 0 auto;color:white;margin-left:0.75em;padding:0.15em 0.5em;min-width:1.8em;min-height:1.8em;line-height:1.2em;font-size:1.2em;border:none;background:transparent;cursor:pointer;border-radius:0.2em;vertical-align:middle;display:inline-block;]", {
+                        onclick: function (e) {
+                            e.stopPropagation();
+                            Toast.hide();
+                        }
+                    }, "✕")
+                  : null
             ])
         ]) : null;
     }

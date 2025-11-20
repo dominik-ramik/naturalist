@@ -1086,6 +1086,7 @@ export let DataManager = function () {
                   value.toString().trim() == "";
 
                 if (!integrity.allowEmpty && isEmpty) {
+                  console.log("XX", dataRow, integrity);
                   Logger.error(
                     _tf("dm_value_cannot_be_empty", [column.name, table.name])
                   );
