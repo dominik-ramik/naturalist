@@ -1,13 +1,10 @@
 import {
   cssColorNames,
-  indexOfCaseInsensitive,
   isValidHttpUrl,
   pad,
   relativeToUsercontent,
   splitN,
-  parseRegionCode,
-  formatList,
-} from "../components/Utils.js";
+  } from "../components/Utils.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { i18n, _t, _tf } from "./I18n.js";
 import { TinyBibReader } from "../lib/bibex-json-toolbox.es.js";
@@ -457,11 +454,11 @@ export let DataManager = function () {
         ]),
         mapRegionsLegend: {
           default: {
-            suffix: "",
+            status: "",
             fill: "#55769b",
             legend: _t("default_legend"),
           },
-          suffixes: [],
+          statuses: [],
         },
         mapRegionsNames: [],
         externalSearchEngines: [],
@@ -520,13 +517,13 @@ export let DataManager = function () {
 
       data.sheets.appearance.tables.mapRegionsLegend.data[lang.code].forEach(
         function (row) {
-          if (row.suffix.toString().trim() == "") {
-            meta.mapRegionsLegend.default.suffix = row.suffix.toString();
+          if (row.status.toString().trim() == "") {
+            meta.mapRegionsLegend.default.status = row.status.toString();
             meta.mapRegionsLegend.default.fill = row.fillColor;
             meta.mapRegionsLegend.default.legend = row.legend.toString();
           } else {
-            meta.mapRegionsLegend.suffixes.push({
-              suffix: row.suffix.toString(),
+            meta.mapRegionsLegend.statuses.push({
+              status: row.status.toString(),
               fill: row.fillColor,
               legend: row.legend.toString(),
               appendedLegend: row.appendedLegend.toString(),

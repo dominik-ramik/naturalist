@@ -8,19 +8,20 @@ export let readerMapRegions = {
   dataType: "map regions",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
+    // Optimization: strict prefix check to avoid false positives if column names are subsets of each other
     const concernedColumns = headers.filter((h) =>
+      h === computedPath.toLowerCase() || 
       h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
     );
 
-    let mapRegions = "";
     let resultObject = {};
 
-    if (concernedColumns.length == 0) {
-      // mapRegions are already inline format
-      mapRegions = readSimpleData(context, computedPath);
-      resultObject = parseInlineMapRegions(mapRegions, langCode);
+    if (concernedColumns.length === 0) {
+      // Inline format (single cell)
+      const mapRegions = readSimpleData(context, computedPath);
+      resultObject = parseInlineMapRegions(mapRegions);
     } else {
-      // column-per-region format
+      // Column-per-region format
       resultObject = parseColumnMapRegions(
         concernedColumns,
         context,
@@ -29,18 +30,14 @@ export let readerMapRegions = {
     }
 
     // Validate region codes
-    let knownRegionCodes = nlData.sheets.appearance.tables.mapRegionsNames.data[
+    const knownRegionCodes = nlData.sheets.appearance.tables.mapRegionsNames.data[
       langCode
     ].map((x) => x.code);
 
     Object.keys(resultObject).forEach((regionCode) => {
       if (!knownRegionCodes.includes(regionCode)) {
         Logger.error(
-          "Region code '" +
-            regionCode +
-            "' in column '" +
-            computedPath +
-            "' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z"
+          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z`
         );
       }
     });
@@ -56,50 +53,166 @@ export let readerMapRegions = {
   },
 };
 
+// --- Parsing Logic (DRY) ---
+
+/**
+ * Parses the tail of a string (Status and Notes).
+ * Handles escaping: \# becomes a literal #.
+ * Syntax: [Status][#Note][#Note]
+ */
+function parseRegionString(inputString) {
+  const result = {
+    status: "",
+    notes: [], // Always array
+  };
+
+  if (!inputString || inputString.trim() === "") {
+    return result;
+  }
+
+  // 1. Tokenize by '#' but respect '\#' (escaped)
+  // We use a temporary placeholder for escaped hashes to allow simple splitting
+  const placeholder = "§§HASH_PLACEHOLDER§§";
+  const safeString = inputString.replace(/\\#/g, placeholder);
+  
+  const parts = safeString.split("#").map(part => part.trim());
+
+  // 2. Extract Status (First segment)
+  // If the original string started with '#', the first part is empty -> empty status
+  if (parts.length > 0) {
+    result.status = parts[0].replace(new RegExp(placeholder, "g"), "#");
+  }
+
+  // 3. Extract Notes (Subsequent segments)
+  for (let i = 1; i < parts.length; i++) {
+    const note = parts[i].replace(new RegExp(placeholder, "g"), "#");
+    if (note !== "") {
+      result.notes.push(note.replace(/\r?\n/g, " "));
+    }
+  }
+
+  return result;
+}
+
+// Parse inline format: "regionA:stat#note | regionB#note"
+function parseInlineMapRegions(mapRegions) {
+  const result = {};
+
+  if (!mapRegions || mapRegions.trim() === "") {
+    return result;
+  }
+
+  // Split by pipe separators
+  const regions = mapRegions.split("|").map((r) => r.trim());
+
+  regions.forEach((regionStr) => {
+    if (regionStr === "") return;
+
+    // Determine where the Code ends and the Status/Notes begin.
+    // Code ends at the first Colon (:) OR the first Hash (#), whichever comes first.
+    // If neither exists, the whole string is the Code.
+    
+    const idxColon = regionStr.indexOf(":");
+    const idxHash = regionStr.indexOf("#");
+    
+    let splitIndex = -1;
+
+    if (idxColon !== -1 && idxHash !== -1) {
+      splitIndex = Math.min(idxColon, idxHash);
+    } else if (idxColon !== -1) {
+      splitIndex = idxColon;
+    } else if (idxHash !== -1) {
+      splitIndex = idxHash;
+    }
+
+    let regionCode = "";
+    let tail = "";
+
+    if (splitIndex === -1) {
+      regionCode = regionStr;
+      tail = ""; // Code only, no status, no notes
+    } else {
+      regionCode = regionStr.substring(0, splitIndex);
+      tail = regionStr.substring(splitIndex);
+    }
+
+    regionCode = regionCode.trim();
+    if (regionCode === "") return;
+
+    // Remove the leading colon if it exists (it separates code from status)
+    // Note: We do NOT remove a leading #, because parseRegionString expects # to start notes
+    if (tail.startsWith(":")) {
+      tail = tail.substring(1);
+    }
+
+    result[regionCode] = parseRegionString(tail);
+  });
+
+  return result;
+}
+
+// Parse column-per-region format
+function parseColumnMapRegions(concernedColumns, context, computedPath) {
+  const result = {};
+
+  concernedColumns.forEach((columnName) => {
+    const data = readSimpleData(context, columnName);
+
+    if (data && data.toString().trim() !== "") {
+      // Extract code from header: "map.fr" -> "fr"
+      // computedPath is "map", columnName is "map.fr"
+      const regionCode = columnName.substring(computedPath.length + 1);
+      
+      // Parse the cell content directly as status/notes
+      result[regionCode] = parseRegionString(data.toString());
+    }
+  });
+
+  return result;
+}
+
+
+// --- UI Rendering ---
+
 // Render SVG map for details view
 function renderDetailsMap(data, uiContext) {
-  // Handle regions SVG map rendering
   if (typeof data === "object" && data !== null) {
     const regionCodes = Object.keys(data);
 
-    if (regionCodes.length == 0) {
+    if (regionCodes.length === 0) {
       return null;
     }
 
+    // Gather meta for legend
     let presentRegionsMeta = [];
-    let presentRegionsMetaSuffixes = [];
+    let presentRegionsMetaStatuses = [];
 
-    []
-      .concat(
-        Checklist.getMapRegionsMeta(true),
-        Checklist.getMapRegionsMeta()
-      )
-      .forEach(function (mapRegionMeta) {
-        regionCodes.forEach(function (regionCode) {
-          const regionData = data[regionCode];
-          const suffix =
-            regionData.suffix || regionData.status || "";
+    // Optimization: Combined meta retrieval
+    const allMeta = [].concat(
+      Checklist.getMapRegionsMeta(true), 
+      Checklist.getMapRegionsMeta()
+    );
 
-          if (
-            suffix == mapRegionMeta.suffix &&
-            presentRegionsMetaSuffixes.indexOf(
-              mapRegionMeta.suffix
-            ) < 0
-          ) {
-            presentRegionsMetaSuffixes.push(mapRegionMeta.suffix);
-            presentRegionsMeta.push(mapRegionMeta);
-          }
-        });
+    allMeta.forEach(function (mapRegionMeta) {
+      regionCodes.forEach(function (regionCode) {
+        const regionData = data[regionCode];
+        const status = regionData.status || "";
+
+        if (
+          status === mapRegionMeta.status &&
+          !presentRegionsMetaStatuses.includes(mapRegionMeta.status)
+        ) {
+          presentRegionsMetaStatuses.push(mapRegionMeta.status);
+          presentRegionsMeta.push(mapRegionMeta);
+        }
       });
-
-    // Convert to legacy format for colorSVGMap compatibility
-    let reformattedMediaRegions = "";
-    Object.keys(data).forEach((regionCode) => {
-      const regionData = data[regionCode];
-      const suffix = regionData.suffix || regionData.status || "";
-      reformattedMediaRegions += regionCode + ":" + suffix + " ";
     });
-    const mapRegionsString = reformattedMediaRegions.trim();
+
+    // Create string for Utils.colorSVGMap: "code:status code:status"
+    // We strictly ignore notes here as they don't affect coloring
+    const mapRegionsString = Object.keys(data)
+      .map(code => `${code}:${data[code].status || ""}`)
+      .join(" ");
 
     // Get source from meta template
     let source = "";
@@ -119,23 +232,25 @@ function renderDetailsMap(data, uiContext) {
     if (!source || source.trim() === "") {
       return null;
     }
-    else{
-      if(source.startsWith("/")) {
-        source = source.substring(1); // Remove leading slash if present
-      }
+    
+    if(source.startsWith("/")) {
+      source = source.substring(1);
     }
 
     const mapId = "map_" + uiContext.dataPath.replace(/\./g, '_');
 
+    // Async coloring call
     window.setTimeout(function () {
       let map = document.getElementById(mapId);
-      colorSVGMap(
-        map,
-        getRegionColors(
-          mapRegionsString,
-          source.toLowerCase().endsWith("world.svg")
-        )
-      );
+      if (map) {
+        colorSVGMap(
+          map,
+          getRegionColors(
+            mapRegionsString,
+            source.toLowerCase().endsWith("world.svg")
+          )
+        );
+      }
     }, 50);
 
     return m(".media-map", [
@@ -170,11 +285,9 @@ function renderDetailsMap(data, uiContext) {
       ),
       m(
         ".legend",
-        Object.keys(presentRegionsMeta).length == 0
+        Object.keys(presentRegionsMeta).length === 0
           ? null
-          : Object.values(presentRegionsMeta).map(function (
-              regionMeta
-            ) {
+          : Object.values(presentRegionsMeta).map(function (regionMeta) {
               return m(".legend-item", [
                 m(
                   ".map-fill[style=background-color: " +
@@ -185,109 +298,91 @@ function renderDetailsMap(data, uiContext) {
               ]);
             })
       ),
-      //uiContext.meta.title ? m(".title", uiContext.meta.title) : null,
     ]);
   }
 }
 
 // Render regions list for default view
 function renderRegionsList(data, uiContext) {
-  let mapRegionsSuffixes = Checklist.getMapRegionsMeta();
+  const mapRegionsStatuses = Checklist.getMapRegionsMeta();
 
-  // Preprocess all notes once to avoid modifying original data
-  const preprocessedData = {};
-  Object.keys(data).forEach((regionCode) => {
+  // 1. Global deduplication of notes for this specific call
+  // Map: "Processed Note Text" -> Footnote Number (1-based)
+  const uniqueNotesMap = new Map();
+  const uniqueNotesList = [];
+  let noteCounter = 1;
+
+  // Helper to process and register a note
+  function registerNote(rawNote) {
+    if (!rawNote || rawNote.trim() === "") return null;
+    
+    const processed = processMarkdownWithBibliography(rawNote.trim());
+    
+    if (!uniqueNotesMap.has(processed)) {
+      uniqueNotesMap.set(processed, noteCounter);
+      uniqueNotesList.push(processed);
+      noteCounter++;
+    }
+    
+    return uniqueNotesMap.get(processed);
+  }
+
+  // 2. Build render objects for regions
+  const renderedRegions = Object.keys(data).map((regionCode) => {
     const regionInfo = data[regionCode];
-    preprocessedData[regionCode] = {
-      ...regionInfo,
-      notes:
-        regionInfo.notes && regionInfo.notes.trim() !== ""
-          ? processMarkdownWithBibliography(regionInfo.notes.trim())
-          : regionInfo.notes,
-    };
+    const status = regionInfo.status || "";
+
+    // Get Appended Legend (Italics status)
+    console.log(mapRegionsStatuses);
+    let appendedLegend = mapRegionsStatuses.find(
+      (item) => item.status === status
+    )?.appendedLegend;
+
+    if (appendedLegend && appendedLegend.trim() !== "") {
+      appendedLegend = processMarkdownWithBibliography(" _(" + appendedLegend + ")_");
+    } else {
+      appendedLegend = "";
+    }
+
+    const regionName = Checklist.nameForMapRegion(regionCode);
+
+    // Process Notes for this region
+    // Ensure notes is an array (fallback for legacy data if any)
+    const notesArray = Array.isArray(regionInfo.notes) ? regionInfo.notes : (regionInfo.notes ? [regionInfo.notes] : []);
+    
+    const footnoteIndices = notesArray
+      .map(registerNote)
+      .filter(idx => idx !== null);
+
+    // Create Region Name Element with Superscripts
+    let regionContent = [m("strong", regionName)];
+    
+    if (footnoteIndices.length > 0) {
+        // Add sorted indices separated by comma
+        // Optimization: Sort indices for consistent display (e.g. "Region 1,3")
+        const indicesStr = footnoteIndices.sort((a, b) => a - b).join(",");
+        regionContent.push(m("sup", indicesStr));
+    }
+
+    if (appendedLegend) {
+      regionContent.push(m("em", m.trust(appendedLegend)));
+    }
+
+    return m("span", regionContent);
   });
 
-  // Collect and deduplicate notes
-  const notesMap = new Map(); // note text -> footnote number
-  const footnotes = []; // array of unique notes
-  let footnoteCounter = 1;
-
-  // First pass: collect unique notes (using preprocessed data)
-  Object.keys(preprocessedData).forEach((regionCode) => {
-    const regionInfo = preprocessedData[regionCode];
-    if (regionInfo.notes && regionInfo.notes.trim() !== "") {
-      const noteText = regionInfo.notes.trim();
-      if (!notesMap.has(noteText)) {
-        notesMap.set(noteText, footnoteCounter);
-        footnotes.push(noteText);
-        footnoteCounter++;
-      }
-    }
-  });
-
-  // Work directly with object format (using preprocessed data)
-  const renderedRegions = Object.keys(preprocessedData).map(
-    (regionCode) => {
-      const regionInfo = preprocessedData[regionCode];
-
-      let appendedLegend = mapRegionsSuffixes.find(
-        (item) =>
-          item.suffix == (regionInfo.suffix || regionInfo.status || "")
-      )?.appendedLegend;
-
-      if (
-        appendedLegend === undefined ||
-        appendedLegend === null ||
-        appendedLegend.trim() === ""
-      ) {
-        appendedLegend = "";
-      } else {
-        appendedLegend = processMarkdownWithBibliography(
-          " _(" + appendedLegend + ")_"
-        );
-      }
-
-      let regionName = Checklist.nameForMapRegion(regionCode);
-
-      // Create region name element with optional footnote
-      let regionNameElement;
-      if (regionInfo.notes && regionInfo.notes.trim() !== "") {
-        const footnoteNumber = notesMap.get(regionInfo.notes.trim());
-        regionNameElement = [
-          m("strong", regionName),
-          m("sup", footnoteNumber),
-        ];
-      } else {
-        regionNameElement = m("strong", regionName);
-      }
-
-      // Create the full region element with appended legend in italics
-      if (appendedLegend && appendedLegend.trim() !== "") {
-        return m("span", [
-          regionNameElement,
-          m("em", m.trust(appendedLegend)),
-        ]);
-      } else {
-        return m("span", regionNameElement);
-      }
-    }
-  );
-
-  if (renderedRegions.length == 0) {
+  if (renderedRegions.length === 0) {
     return null;
   }
 
-  // Create footnotes elements
-  const footnotesElements =
-    footnotes.length > 0
-      ? footnotes.map((note, index) =>
-          m(".region-footnote", [
-            m("sup.region-footnotes-number", (index + 1).toString()),
-            "\u00A0", // non-breaking space
-            m.trust(note),
-          ])
-        )
-      : [];
+  // 3. Create Footnotes Elements
+  const footnotesElements = uniqueNotesList.map((noteHtml, index) => 
+    m(".region-footnote", [
+      m("sup.region-footnotes-number", (index + 1).toString()),
+      "\u00A0", // non-breaking space
+      m.trust(noteHtml),
+    ])
+  );
 
   return m(".map-regions-data", [
     m(
@@ -318,78 +413,4 @@ function readSimpleData(context, path) {
   }
   
   return null;
-}
-
-// Parse inline format: "regionA:?:noteA | regionB | regionC:! | regionD:?:noteD"
-function parseInlineMapRegions(mapRegions) {
-  const result = {};
-
-  if (!mapRegions || mapRegions.trim() === "") {
-    return result;
-  }
-
-  // Split by pipe separators
-  const regions = mapRegions.split("|").map((r) => r.trim());
-
-  regions.forEach((regionStr) => {
-    if (regionStr.trim() === "") return;
-
-    const parts = regionStr.split(":");
-    const regionCode = parts[0].trim();
-
-    if (regionCode === "") return;
-
-    // Initialize region object with empty status and notes
-    const regionObj = {
-      status: "",
-      notes: "",
-    };
-
-    // If there's a status part
-    if (parts.length >= 2 && parts[1].trim() !== "") {
-      regionObj.status = parts[1].trim();
-    }
-
-    // If there's a notes part
-    if (parts.length >= 3 && parts[2].trim() !== "") {
-      regionObj.notes = parts[2].trim();
-    }
-
-    result[regionCode] = regionObj;
-  });
-
-  return result;
-}
-
-// Parse column-per-region format
-function parseColumnMapRegions(concernedColumns, context, computedPath) {
-  const result = {};
-
-  concernedColumns.forEach((columnName) => {
-    const data = readSimpleData(context, columnName);
-
-    if (data && data.trim() !== "") {
-      const regionCode = columnName.substring(computedPath.length + 1);
-
-      // Check if data contains vertical bar for notes
-      if (data.includes("|")) {
-        const parts = data.split("|").map((p) => p.trim());
-        const suffix = parts[0];
-        const note = parts.length > 1 ? parts.slice(1).join("|").trim() : "";
-
-        result[regionCode] = {
-          status: suffix,
-          notes: note,
-        };
-      } else {
-        // Just the suffix
-        result[regionCode] = {
-          status: data.trim(),
-          notes: "",
-        };
-      }
-    }
-  });
-
-  return result;
 }

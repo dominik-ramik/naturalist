@@ -112,31 +112,6 @@ export function filterTerminalLeaves(nodes) {
   }
 }
 
-export function parseRegionCode(region) {
-  // Handle both legacy and new formats
-  if (typeof region === "string") {
-    let parts = region.split(":");
-
-    if (parts.length < 2) {
-      console.error("Map suffix inconsistent", region);
-      return { region: parts[0] || "", suffix: "", note: "" };
-    }
-
-    // Legacy format: "region:suffix" or new format: "region:suffix:note"
-    return {
-      region: parts[0],
-      suffix: parts[1],
-      note: parts.length > 2 ? parts.slice(2).join(":") : "",
-    };
-  } else if (typeof region === "object" && region.region) {
-    // Already parsed object
-    return region;
-  }
-
-  console.error("Invalid region format", region);
-  return { region: "", suffix: "", note: "" };
-}
-
 export function getRegionColors(regions, fixForWorldMap) {
   let regionColors = {
     //regionCode: #color

@@ -26,10 +26,9 @@ export let nlDataStructure = {
 
               if (tableKey == "taxa") {
                 formatting = "checklist-taxon"; //can have .name and .authority
-              } 
-              else if (tableKey == "customDataDefinition") {
+              } else if (tableKey == "customDataDefinition") {
                 console.log("customDataDefinition", row);
-                formatting = row["formatting"] || "text"; 
+                formatting = row["formatting"] || "text";
               }
 
               if (row[columnKey] === undefined) {
@@ -294,15 +293,15 @@ export let nlDataStructure = {
             code: {
               name: "Region code",
               description:
-                "On each line a suffix of map regions to be matched against.",
+                "On each line a code of map regions to be matched against.",
               integrity: {
                 description:
-                  "Single or several characters representing a region suffix. E.g. on the map of the world, 'ca:x' (arbitrary suffix 'x' we may chose to mark present taxa) could represent the taxon is native to Canada, while 'ca:i' could represent 'Introduced' and 'ca:e' could represent the taxon is endemic to Canada. In this case, three rows would be used, the first with suffix 'x', the second with suffix 'i' and the third with suffix value 'e'.",
+                  "Single or several characters representing a region code (e.g. 'fr'). Region codes can only be composed of lowercase letters a-z.",
                 allowEmpty: true,
                 allowDuplicates: "no",
                 defaultValue: "",
                 allowedContent: "regex",
-                regex: "[a-z]+",
+                regex: "^[a-z]+$",
                 regexExplanation: "only lowercase letters a-z",
                 supportsMultilingual: false,
               },
@@ -326,13 +325,13 @@ export let nlDataStructure = {
           description:
             "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
           columns: {
-            suffix: {
-              name: "Suffix",
+            status: {
+              name: "Status code",
               description:
-                "On each line a suffix of map regions to be matched against.",
+                "On each line a status code (can be empty, indicates different types of presence in a region) of map regions to be matched against.",
               integrity: {
                 description:
-                  "Single or several characters representing a region suffix. E.g. on the map of the world, 'ca:x' (arbitrary suffix 'x' we may chose to mark present taxa) could represent the taxon is native to Canada, while 'ca:i' could represent 'Introduced' and 'ca:e' could represent the taxon is endemic to Canada. In this case, three rows would be used, the first with suffix 'x', the second with suffix 'i' and the third with suffix value 'e'.",
+                  "Single or several characters representing a region status code. E.g. on the map of the world, 'ca:x' (arbitrary status 'x' we may chose to mark present taxa) could represent the taxon is native to Canada, while 'ca:i' could represent 'Introduced'. In this case, two rows would be used: 'x' and 'i'.",
                 allowEmpty: true,
                 allowDuplicates: "no",
                 defaultValue: "",
@@ -355,7 +354,7 @@ export let nlDataStructure = {
             legend: {
               name: "Legend",
               description:
-                "The content of this column will serve as the text for the legend for the matching suffix. As this column is multilingual, you na create several columns e.g. Legend:en and Legend:fr to represent the English and French translations of the legend.",
+                "The content of this column will serve as the text for the legend for the matching status. As this column is multilingual, you can create several columns e.g. Legend:en and Legend:fr.",
               integrity: {
                 description:
                   "A single word or a short text to appear in the legend.",
@@ -572,7 +571,7 @@ export let nlDataStructure = {
                 "Most of the data in the checklist sheet data columns will probably be plain text. However, if a particular column contains a taxon name, image, map region, number or another type of data, you can specify it here. It will have impact on how the data are shown (e.g. <b>taxon</b> type will be rendered as a clickable taxon name, or <b>number</b> type will enable a special numeric filter if you use that column as a filter category)",
               integrity: {
                 description:
-                  "Several values are possible: <ul><li><b>text:</b> (or just empty cell) means the content of this data column in the checklist sheet is treated as a normal text. If 'Search category title' is set, it will be displayed with a text filter button.</li><li><b>number:</b> means the content of this data column in the checklist sheet is treated as a number (integer or decimal, you need to ensure the column contains only properly formatted numbers in your checklist sheet). If 'Search category title' is set, it will be displayed with a numeric filter button.</li><li><b>taxon:</b> instructs the checklist app to render the column as a clickable taxon. Note that if the column is called e.g. 'basionym', then the checklist sheet may contain just that column, or can actually contain columns <b>basionym.name</b> and <b>basionym.authority</b> where you fill the appropriate data.</li><li><b>date:</b> if you enter a properly formatted date in your spreadsheet to this column, it will be parsed and formatted according to the format you defined on the <b>nl_appearance</b> sheet in the <a href=\"#table-customization\">Customization</a> table under the <b>Date format</b> item.</li></ul>",
+                  "Several values are possible: <ul><li><b>text:</b> (or just empty cell) means the content of this data column in the checklist sheet is treated as a normal text. If 'Search category title' is set, it will be displayed with a text filter button.</li><li><b>number:</b> means the content of this data column in the checklist sheet is treated as a number (integer or decimal, you need to ensure the column contains only properly formatted numbers in your checklist sheet). If 'Search category title' is set, it will be displayed with a numeric filter button.</li><li><b>taxon:</b> instructs the checklist app to render the column as a clickable taxon. Note that if the column is called e.g. 'basionym', then the checklist sheet may contain just that column, or can actually contain columns <b>basionym.name</b> and <b>basionym.authority</b> where you fill the appropriate data.</li><li><b>date:</b> if you enter a properly formatted date in your spreadsheet to this column, it will be parsed and formatted according to the format you defined on the <b>nl_appearance</b> sheet in the <a href=\"#table-customization\">Customization</a> table under the <b>Date format</b> item.</li><li><b>map regions:</b> defines geographical distribution data. You can encode it in two ways:<br>1. <b>Inline (Single Cell):</b> Encodes multiple regions in one cell using the syntax <code>Code:Status#Note</code>. Separate distinct regions with a pipe <code>|</code>. Example: <code>fr:native#Verified | de:introduced#Year 2020#Source X</code>.<br>2. <b>Per-column:</b> The region code is defined by the column header (e.g. <code>map.fr</code>). The cell content uses the syntax <code>Status#Note</code>. Example: <code>native#Verified</code>.<br>In both formats, the Status is optional (e.g. <code>fr#Note</code>) and you can add multiple notes by repeating the hash <code>#</code> separator. To use a literal hash symbol inside a note, escape it as <code>\\#</code>. Region codes must be lowercase letters (a-z) only.</li></ul>",
                 allowEmpty: true,
                 defaultValue: "text",
                 allowDuplicates: "yes",
@@ -617,7 +616,20 @@ export let nlDataStructure = {
                 allowDuplicates: "yes",
                 defaultValue: "top",
                 allowedContent: "list",
-                listItems: ["top", "bottom", "left", "middle", "right", "details", "top|details", "bottom|details", "left|details", "middle|details", "right|details", ""],
+                listItems: [
+                  "top",
+                  "bottom",
+                  "left",
+                  "middle",
+                  "right",
+                  "details",
+                  "top|details",
+                  "bottom|details",
+                  "left|details",
+                  "middle|details",
+                  "right|details",
+                  "",
+                ],
                 supportsMultilingual: false,
               },
             },
@@ -638,7 +650,7 @@ export let nlDataStructure = {
           },
           data: [],
         },
-                searchOnline: {
+        searchOnline: {
           name: "Search online",
           description:
             "When you click on any taxon in the checklist app, a 'Details' pane opens with the taxon details. If you fill this table, you can display a series of links to search engines of herbaria, collections, encyclopedia or other where the taxon may be found through a template URL adress. You can find some exemples in the <a href=\"us-birds.xlsx\">Birds of the US</a> sample checklist.\nThis table can be left completely empty, if you do not want to provide users means to search the taxa in external search engines. This being said, adding appropriate search engines will help users find relevant information about the taxa you present (e.g. digitalized specimens, if you provide a link to a muzeum or herbarium collection).",

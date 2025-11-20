@@ -696,7 +696,7 @@ export let Checklist = {
     if (returnDefault) {
       return this.getData().meta.mapRegionsLegend.default;
     } else {
-      return this.getData().meta.mapRegionsLegend.suffixes;
+      return this.getData().meta.mapRegionsLegend.statuses;
     }
   },
   getMapRegionsNamesMeta: function () {
