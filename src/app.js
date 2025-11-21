@@ -242,7 +242,7 @@ function runApp() {
       let parsed = "";
       try {
         parsed = JSON.parse(compressor.decompress(xhr.responseText));
-        if (import.meta.env.DEV || 1 == 1) {
+        if (import.meta.env.DEV) {
           console.log("Data:", parsed);
         }
       } catch (ex) {
@@ -379,8 +379,6 @@ function isDataReady(checklistData) {
 function readyPreloadableAssets() {
   // Send asset URLs to service worker for caching
   const assets = Checklist.getPreloadableAssets();
-
-  console.log("Preloadable assets to cache:", assets);
 
   if (assets && assets.length > 0) {
     messageChannel.port1.postMessage({

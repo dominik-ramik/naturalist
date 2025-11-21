@@ -185,7 +185,9 @@ async function handleAppMessage(message) {
                     }
                 }
 
-                console.log("All assets to cache:", assets, "Missing assets:", missingAssets);
+                if (import.meta.env.DEV) {
+                    console.log("All assets to cache:", assets, "Missing assets:", missingAssets);
+                }
 
                 if (missingAssets.length > 0) {
                     console.log(`[SW] Attempting to cache ${missingAssets.length} new assets...`);
