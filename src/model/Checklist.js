@@ -149,7 +149,7 @@ export let Checklist = {
       this._bibFormatterCache[lang] = new TinyBibFormatter(
         bibliography,
         {
-          style: style,
+          style: style ? style : "apa",
           format: "markdown",
         }
       );

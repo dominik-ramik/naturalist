@@ -20,8 +20,11 @@ export let LiteratureView = {
       citeKeysToProcess = Checklist.getBibliographyKeys();
     }
 
-    const references = citeKeysToProcess.map((key) =>
-      Checklist.getBibFormatter().getFullReferenceApa(key)
+    const references = citeKeysToProcess.map((key) => {
+      let formatted = Checklist.getBibFormatter().getFullReferenceApa(key);
+      console.log("Formatted reference for key " + key + ": " + formatted);
+      return formatted ? formatted : key;
+    }
     ).sort((a, b) => a.localeCompare(b));
 
     text +=
