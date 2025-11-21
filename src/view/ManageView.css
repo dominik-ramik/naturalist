@@ -1,0 +1,184 @@
+.manage-ui {
+  text-align: center;
+  font-size: 80%;
+}
+
+.manage-ui a {
+  display: inline-block;
+  background-color: #ffffff2e;
+  color: white;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  border-radius: 0.25em;
+  font-weight: bold;
+  text-decoration: none;
+  border: 1px dashed white;
+}
+
+.manage-ui .log {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.manage-ui .log .log-item {
+  user-select: text;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  color: white;
+  margin: var(--pad-small);
+  border-radius: var(--pad-small);
+  padding: var(--pad-large);
+}
+
+.manage-ui .log .log-item.critical {
+  background-color: red;
+}
+
+.manage-ui .log .log-item.error {
+  background-color: brown;
+}
+
+.manage-ui .log .log-item.warning {
+  background-color: orange;
+}
+
+.manage-ui .log .log-item.info {
+  background-color: rgb(72, 72, 245);
+}
+
+.manage-ui .uploadbutton {
+  padding: 1em;
+  margin: var(--pad-large);
+  text-align: center;
+  display: inline-block;
+  background: white;
+  color: black;
+  cursor: pointer;
+  border-radius: var(--pad-small);
+  border: 0px solid transparent;
+}
+
+.manage-ui .uploadbutton.uploadbutton-small {
+  font-size: 90%;
+  padding: 0.5em;
+  margin: var(--pad-large);  
+}
+
+.manage-ui .dropzone {
+  border: 0.25em dashed white;
+  border-radius: var(--pad-large);
+  padding-top: 1em;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+  text-align: center;
+  height: 17em;
+  display: flex;
+}
+
+.manage-ui .dropzone .wrap {
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5em;
+  box-sizing: border-box;
+}
+
+.manage-ui h2{
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.manage-ui .upload-icon {
+  width: 5em;
+  height: 5em;
+  margin-right: 1em;
+  margin-left: 1em;
+}
+
+.manage-ui .dropzone.entered {
+  background-color: #ffffff55;
+}
+
+.manage-ui .manage-message {
+  margin-top: var(--pad-large);
+  margin-bottom: 1em;
+}
+
+.processing-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2em;
+  margin-bottom: 3em;
+}
+
+.manage-ui .draft-options {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.manage-ui .draft-options > div {
+  flex-grow: 1;
+  width: 50%;
+}
+
+.spinner {
+  display: inline-block;
+  width: 2.5em;
+  height: 2.5em;
+  border: 0.25em solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 1em;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.manage-ui .no-data {
+  color: white;
+  margin-top: 1em;
+  text-align: center;
+}
+
+.manage-ui .static-download {
+  margin-top: var(--pad-large);
+  padding-top: var(--pad-large);
+}
+
+#updateform {
+  border-bottom: 1px solid white;
+  margin-bottom: 1em;
+  padding-bottom: 1em;
+}
+
+#updateform input[type="text"],
+#updateform input[type="password"] {
+  font-family: var(--font-normal);
+  padding: var(--pad-small);
+  width: 12em;
+  text-align: center;
+}
+
+#updateform label {
+  font-weight: bold;
+  text-align: center;
+  margin-right: 1em;
+}
+
+.check-assets-size {
+  margin-top: 2em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}

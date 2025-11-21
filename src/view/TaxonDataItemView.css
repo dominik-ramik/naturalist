@@ -1,0 +1,153 @@
+span.simple-value {
+  user-select: text;
+}
+
+span.badge {
+  border-radius: var(--pad-large);
+  padding-left: var(--pad-small);
+  padding-right: var(--pad-small);
+  font-size: 85%;
+}
+
+span.simple-value p:first-child {
+  display: inline-block;
+}
+
+span.simple-value p {
+  margin-top: 0;
+  margin-bottom: var(--pad-small);
+}
+
+span.simple-value img {
+  max-width: 6em;
+  max-height: 6em;
+}
+
+span.simple-value h1 {
+  font-size: 125%;
+  margin-bottom: 0.5em;
+}
+
+span.simple-value h2 {
+  font-size: 115%;
+  margin-bottom: 0.5em;
+  padding-left: 0.25em;
+}
+
+span.simple-value h3 {
+  font-size: 107%;
+  margin-bottom: 0.5em;
+  padding-left: 0.5em;
+}
+
+span.simple-value h4 {
+  font-size: 100%;
+  margin-bottom: 0.5em;
+  padding-left: 1em;
+}
+
+.data-item-title {
+  font-weight: bold;
+  color: hsl(212, 29%, 24%);
+  font-variant: small-caps;
+  margin-left: -0.5em;
+}
+
+.data-item-view {
+  margin-bottom: var(--pad-small);
+  margin-right: var(--pad-small);
+  margin-left: var(--pad-small);
+}
+
+.data-item-view span.bullet-list {
+  display: block;
+  list-style: disc;
+  padding-left: 1.5em;
+}
+
+.data-item-view span.bullet-list > span {
+  display: list-item;
+  padding: -1em;
+}
+
+.data-item-view ol.numbered-list {
+  display: block;
+  list-style: decimal;
+  padding-left: 2em;
+}
+
+.data-item-view ol.numbered-list > span {
+  display: list-item;
+}
+
+.data-item-view ul.unmarked-list {
+  display: block;
+  list-style: none;
+  padding-left: 0em;
+}
+
+.data-item-view ul.unmarked-list > span {
+  display: list-item;
+}
+
+.data-item-view span.plain {
+  display: inline;
+}
+
+.data-item-view span.separator {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+}
+
+.data-item-view .map-regions-data {
+  display: inline;
+}
+.data-item-view .map-regions-data p {
+  display: inline;
+}
+
+.data-item-view img.image-in-view {
+  width: 6em;
+  height: 6em;
+  max-height: 6em;
+  max-width: 6em;
+  object-fit: cover;
+  margin-top: 0.1em;
+  margin-right: 0.1em;
+  background-image: url("../../public/img/ui/checklist/offline.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 2.5em;
+  cursor: pointer;
+}
+
+.found {
+  background-color: #ffa50047;
+  border-radius: var(--pad-large);
+  padding-left: var(--pad-small);
+  padding-right: var(--pad-small);
+}
+
+a.citation {
+  color: #1565c0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.region-footnotes {
+  margin-top: 0.5em;
+}
+
+.region-footnote{
+  display: inline-block;
+  margin-right: 0.25em;;
+}
+
+.region-footnotes-number {
+    border: 1px solid #8d8d8d;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+    border-radius: 0.2em;
+    margin-left: 0.2em;
+}
