@@ -130,6 +130,14 @@ let translations = {
     en: "References",
     fr: "Références",
   },
+  show_about: {
+    en: "Do you want to read about this checklist?",
+    fr: "Voulez-vous lire à propos de cette liste taxonomique ?",
+  },
+  open_about_page: {
+    en: "Open about page",
+    fr: "Ouvrir la page à propos",
+  },
   about_nl: {
     en: "About NaturaList app",
     fr: "Par rapport à l'appli NaturaList",

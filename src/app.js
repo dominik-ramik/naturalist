@@ -273,7 +273,13 @@ function runApp() {
           !Settings.alreadyViewedAboutSection() &&
           Checklist.getProjectAbout()?.trim() != ""
         ) {
-          m.route.set("/about/checklist");
+          Toast.show(_t("show_about"), {
+            timeout: 10000,
+            actionLabel: _t("open_about_page"),
+            actionCallback: () => {
+              m.route.set("/about/checklist");
+            },
+          });
         }
 
         Settings.alreadyViewedAboutSection(true);
