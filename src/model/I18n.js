@@ -107,8 +107,8 @@ let translations = {
     fr: "Liste des résultats",
   },
   float_filter: {
-    en: "Advanced search",
-    fr: "Recherche avancée",
+    en: "Filters",
+    fr: "Filtres",
   },
   float_results: {
     en: "Show $1 results",

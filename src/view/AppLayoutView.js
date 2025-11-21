@@ -60,14 +60,15 @@ let FloatingSearch = {
             m(RoundedButton, {
                 icon: "filter",
                 label: _t("float_filter"),
+                style: "padding: 0px;",
                 onclick: function () {
                     routeTo("/search");
                 }
             }),
-            m(".floating-search[style=flex-grow: 1; margin-left: -0.25em;]", m(SearchBoxImmediate)),
+            m(".floating-search[style=flex-grow: 1; padding: 0px;]", m(SearchBoxImmediate)),
             
             Filter.numberOfActive() > 0 ? m(RoundedButton, {
-                icon: "filter",
+                icon: "filter-clear",
                 badge: Filter.numberOfActive(),
                 onclick: function () {
                     Filter.clear();
@@ -82,7 +83,7 @@ let FloatingSearch = {
 let SearchBoxImmediate = {
     typingTimer: null,
     view: function () {
-        return m(".round-envelope", m(".search-box[style=flex-grow: 1;]",
+        return m(".round-envelope", m(".search-box[style=flex-grow: 1; padding: 0px;]",
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + _t("free_text_search") + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
                     Checklist.filter.text = this.value;
