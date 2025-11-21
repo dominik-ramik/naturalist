@@ -6,7 +6,7 @@
 
 _The flexible taxonomic checklist app_
 
-[[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/demo/docs/)]
+[[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/)]
 
 ## About
 

@@ -135,8 +135,8 @@ let translations = {
     fr: "Par rapport à l'appli NaturaList",
   },
   about_app: {
-    en: "# NaturaList\n\n## A flexible checklist app\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** is a flexible taxonomic checklist app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies with powerful filtering and search capacities.\n\n**NaturaList** doesn't come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.\n\n**NaturaList** has been originally developed for the [Checklist of the vascular flora of Vanuatu](https://pvnh.net) under the **Plants mo Pipol blong Vanuatu** (Plants and People of Vanuatu) project.\n\n## Get NaturaList\n\nVisit [naturalist.netlify.app](https://naturalist.netlify.app/) for more details about NaturaList app including its latest version and a demo implementation.\n\nRead the app documentation there to see how to build or manage your own checklist.\n\n## How to cite the app\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contact the author\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
-    fr: "# NaturaList\n\n## Une application de listes taxonomiques flexible\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** est une application flexible de listes taxonomiques capable de visualiser une grande variété de données pour les taxonomies formelles et indigènes / folkloriques avec de puissantes capacités de filtrage et de recherche.\n\n**NaturaList** n'est pas livré avec un ensemble prédéfini de structures taxonomiques que vous auriez à adapter à votre projet. Vous avez la liberté de définir quel type de données est affiché et comment. Vos données taxonomiques sont extraites d'une feuille de calcul, ce qui facilite les mises à jour, les changements d'apparence ou même l'ajout de nouveaux types d'informations, sans avoir besoin d'une grande expertise informatique et de progiciels complexes. \n\n**NaturaList** a été développé à l'origine pour le [Checklist of the vascular flora of Vanuatu](https://pvnh.net) dans le cadre du projet **Plants mo Pipol blong Vanuatu** (Plantes et gens du Vanuatu).\n## Get NaturaList\n\nVisitez [naturalist.netlify.app](https://naturalist.netlify.app/) pour plus de détails sur l'application NaturaList, y compris sa dernière version et une démo.\n\nLisez y la documentation de l'application pour voir comment construire ou gérer votre propre liste taxonomique.\n\n## Comment citer l'appli\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contacter l'auteur\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
+    en: "# NaturaList\n\n## A flexible checklist app\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** is a flexible taxonomic checklist app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies with powerful filtering and search capacities.\n\n**NaturaList** doesn't come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.\n\n**NaturaList** has been originally developed for the [Checklist of the vascular flora of Vanuatu](https://pvnh.net) under the **Plants mo Pipol blong Vanuatu** (Plants and People of Vanuatu) project.\n\n## Get NaturaList\n\nVisit [naturalist.netlify.app](https://naturalist.netlify.app/) for more details about NaturaList app including its latest version and a demo implementation.\n\nYou can also find the source code on [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nRead the app documentation there to see how to build or manage your own checklist.\n\n## How to cite the app\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contact the author\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
+    fr: "# NaturaList\n\n## Une application de listes taxonomiques flexible\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** est une application flexible de listes taxonomiques capable de visualiser une grande variété de données pour les taxonomies formelles et indigènes / folkloriques avec de puissantes capacités de filtrage et de recherche.\n\n**NaturaList** n'est pas livré avec un ensemble prédéfini de structures taxonomiques que vous auriez à adapter à votre projet. Vous avez la liberté de définir quel type de données est affiché et comment. Vos données taxonomiques sont extraites d'une feuille de calcul, ce qui facilite les mises à jour, les changements d'apparence ou même l'ajout de nouveaux types d'informations, sans avoir besoin d'une grande expertise informatique et de progiciels complexes. \n\n**NaturaList** a été développé à l'origine pour le [Checklist of the vascular flora of Vanuatu](https://pvnh.net) dans le cadre du projet **Plants mo Pipol blong Vanuatu** (Plantes et gens du Vanuatu).\n## Get NaturaList\n\nVisitez [naturalist.netlify.app](https://naturalist.netlify.app/) pour plus de détails sur l'application NaturaList, y compris sa dernière version et une démo.\n\nVous pouvez également trouver le code source sur [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nLisez la documentation de l'application pour voir comment construire ou gérer votre propre liste taxonomique.\n\n## Comment citer l'appli\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contacter l'auteur\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
   },
   manage: {
     en: "Manage",
@@ -679,36 +679,36 @@ let translations = {
     fr: "La valeur de la colonne $1 du tableau $2 ne peut pas être vide",
   },
   dm_incorrect_list: {
-    en: "Incorrect value$1 in column $2 (table $3); allowed values are: $4",
-    fr: "Valeur$1 incorrecte dans la colonne $2 (tableau $3) ; les valeurs autorisées sont : $4",
+    en: "Incorrect value[$1] in column $2 (table $3); allowed values are: $4",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (tableau $3) ; les valeurs autorisées sont : $4",
   },
   dm_incorrect_simple_column_name: {
-    en: "Incorrect value $1 in column $2 (table $3); The column name should only be composed of lowercase or uppercase letters without accents",
-    fr: "Valeur incorrecte $1 dans la colonne $2 (table $3) ; Le nom de la colonne doit être composé uniquement de lettres minuscules ou majuscules sans accents",
+    en: "Incorrect value [$1] in column $2 (table $3); The column name should only be composed of lowercase or uppercase letters without accents",
+    fr: "Valeur incorrecte [$1] dans la colonne $2 (table $3) ; Le nom de la colonne doit être composé uniquement de lettres minuscules ou majuscules sans accents",
   },
   dm_incorrect_hlsa: {
-    en: "Incorrect value $1 in column $2 (table $3); The value should be a color in CSS notation (name, rgb, rgba, hsl or hsla)",
-    fr: "Valeur $1 incorrecte dans la colonne $2 (table $3) ; La valeur doit être une couleur en notation CSS (nom, rgb, rgba, hsl ou hsla)",
+    en: "Incorrect value [$1] in column $2 (table $3); The value should be a color in CSS notation (name, rgb, rgba, hsl or hsla)",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (table $3) ; La valeur doit être une couleur en notation CSS (nom, rgb, rgba, hsl ou hsla)",
   },
   dm_incorrect_filename: {
-    en: "Incorrect value $1 in column $2 (table $3); The value should be a filename (allowed extensions: $4)",
-    fr: "Valeur $1 incorrecte dans la colonne $2 (table $3) ; La valeur doit être un nom de fichier (extensions autorisées : $4)",
+    en: "Incorrect value [$1] in column $2 (table $3); The value should be a filename (allowed extensions: $4)",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (table $3) ; La valeur doit être un nom de fichier (extensions autorisées : $4)",
   },
   dm_incorrect_http: {
-    en: "Incorrect value $1 in column $2 (table $3); The value should be a valid URL begining with HTTP or HTTPS",
-    fr: "Valeur incorrecte $1 dans la colonne $2 (table $3) ; La valeur doit être une URL valide commençant par HTTP ou HTTPS",
+    en: "Incorrect value [$1] in column $2 (table $3); The value should be a valid URL begining with HTTP or HTTPS",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (table $3) ; La valeur doit être une URL valide commençant par HTTP ou HTTPS",
   },
   dm_regex_failed: {
-    en: "Incorrect value $1 in column $2 (table $3). The value should be formatted as follows: $4. It has to satisfy the following regular expression: $5",
-    fr: "Valeur $1 incorrecte dans la colonne $2 (table $3). La valeur doit être formatée comme suit: $4. Elle doit satisfaire à l'expression régulière suivante: $5",
+    en: "Incorrect value [$1] in column $2 (table $3). The value should be formatted as follows: $4. It has to satisfy the following regular expression: $5",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (table $3). La valeur doit être formatée comme suit: $4. Elle doit satisfaire à l'expression régulière suivante: $5",
   },
   dm_incorrect_datapath: {
-    en: "Incorrect value $1 in column $2 (table $3); The column name should be a valid data path (see documentation)",
-    fr: "Valeur $1 incorrecte dans la colonne $2 (table $3) ; Le nom de la colonne doit être un chemin de données valide (voir la documentation)",
+    en: "Incorrect value [$1] in column $2 (table $3); The column name should be a valid data path (see documentation)",
+    fr: "Valeur [$1] incorrecte dans la colonne $2 (table $3) ; Le nom de la colonne doit être un chemin de données valide (voir la documentation)",
   },
   dm_incorrect_must_be_unique: {
-    en: "Value $1 in column $2 in table $3 must be unique, appearing only once in the column",
-    fr: "La valeur $1 de la colonne $2 du tableau $3 doit être unique et n'apparaître qu'une seule fois dans la colonne",
+    en: "Value [$1] in column $2 in table $3 must be unique, appearing only once in the column",
+    fr: "La valeur [$1] de la colonne $2 du tableau $3 doit être unique et n'apparaître qu'une seule fois dans la colonne",
   },
   dm_column_name_duplicate: {
     en: "Column name $1 in table $2 is a duplicate already used in table $3, you need to rename one or the other as all column names must be unique",

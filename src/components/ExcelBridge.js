@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style"
 
 import { _t, _tf } from "../model/I18n.js";
 import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";

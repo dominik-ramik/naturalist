@@ -9,6 +9,7 @@ import { DataManager } from "../model/DataManager.js";
 import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 import { Logger } from "../components/Logger.js";
+import { exportTemplateSpreadsheet } from "../model/DataManagerData.js";
 
 // --- INTERNAL STATE STORE ---
 const ManageStore = {
@@ -319,7 +320,9 @@ function renderTemplateHelpers(showContinuedText) {
     m(".manage-message", m.trust(marked.parse(_t("starting_from_scratch_links")))),
     m("button.uploadbutton.uploadbutton-small", {
       style: "margin-top: 0.5em; margin-bottom: 1em;",
-      onclick: () => console.log("unimplemented")
+      onclick: () => {
+        exportTemplateSpreadsheet();
+      },
     }, _t("download_blank_sheet_button")),
 
     // Show "Once ready, upload below..." text only if requested (Fresh install)

@@ -65,7 +65,7 @@ span.simple-value h4 {
   padding-left: 1.5em;
 }
 
-.data-item-view span.bullet-list > span {
+.data-item-view span.bullet-list>span {
   display: list-item;
   padding: -1em;
 }
@@ -76,7 +76,7 @@ span.simple-value h4 {
   padding-left: 2em;
 }
 
-.data-item-view ol.numbered-list > span {
+.data-item-view ol.numbered-list>span {
   display: list-item;
 }
 
@@ -86,7 +86,7 @@ span.simple-value h4 {
   padding-left: 0em;
 }
 
-.data-item-view ul.unmarked-list > span {
+.data-item-view ul.unmarked-list>span {
   display: list-item;
 }
 
@@ -103,6 +103,7 @@ span.simple-value h4 {
 .data-item-view .map-regions-data {
   display: inline;
 }
+
 .data-item-view .map-regions-data p {
   display: inline;
 }
@@ -139,15 +140,17 @@ a.citation {
   margin-top: 0.5em;
 }
 
-.region-footnote{
+.region-footnote {
   display: inline-block;
-  margin-right: 0.25em;;
+  margin-right: 0.25em;
+  ;
 }
 
 .region-footnotes-number {
-    border: 1px solid #8d8d8d;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    border-radius: 0.2em;
-    margin-left: 0.2em;
+  border: 1px solid #8d8d8d;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  border-radius: 0.2em;
+  margin-left: 0.2em;
+  background: #eceff1;
 }

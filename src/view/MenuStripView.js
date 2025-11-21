@@ -128,15 +128,6 @@ function menuPanel() {
             title: _t("manage"),
           }),
           m(MenuDivider),
-          /*
-          m(MenuItem, {
-            onclick: function () {
-              window.location.replace("./docs/");
-            },
-            icon: "./img/ui/menu/docs.svg",
-            title: _t("docs"),
-          }),
-          */
           m(MenuItem, {
             onclick: function () {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
