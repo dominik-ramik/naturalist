@@ -1,8 +1,6 @@
-**!!! IMPORTANT !!!** If you are updating from another version below 2.0.0, follow the [update procedure](https://github.com/dominik-ramik/naturalist/releases/tag/v2.0.0)
-
 # NaturaList
 
-<img src="./img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
+<img src="./public/img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
 
 _The flexible taxonomic checklist app_
 
