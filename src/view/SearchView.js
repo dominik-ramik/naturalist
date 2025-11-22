@@ -67,8 +67,9 @@ let SearchBox = {
             m("button.filter-button.mobile-filter-toggle", {
                 onclick: toggleHandler,
             }, [
-                m("img.toggle-icon[src=img/ui/checklist/" + (isExpanded ? "filter" : "filter") + ".svg]"),
-                isExpanded ? _t("hide_filters") : _t("show_filters"),
+                m("img.toggle-icon[src=img/ui/checklist/filter.svg]"),
+                _t("filters"),
+                m("img.toggle-icon[src=img/ui/menu/" + (isExpanded ? "expand_more" : "expand_less") + ".svg]"),
             ]),
             !Checklist.filter.isEmpty() ? m("button.filter-button.mobile-clear-filters", {
                 onclick: function () {

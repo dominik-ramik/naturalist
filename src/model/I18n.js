@@ -178,13 +178,9 @@ let translations = {
     en: "Clear",
     fr: "Effacer",
   },
-  hide_filters: {
-    en: "Hide filters",
-    fr: "Masquer les filtres",
-  },
-  show_filters: {
-    en: "Show filters",
-    fr: "Afficher les filtres",
+  filters: {
+    en: "Filters",
+    fr: "Filtres",
   },
   problem_loading_data: {
     en: "Problem loading data",
