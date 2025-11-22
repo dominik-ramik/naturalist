@@ -439,8 +439,8 @@ let translations = {
     fr: "Télécharger les données",
   },
   download_for_manual_update: {
-    en: "You can download the checklist data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published checklist unless you upload the data file to the **usercontent/data** folder on your site. See the [documentation]https://naturalist.netlify.app/ for more information.",
-    fr: "Vous pouvez télécharger le fichier de données de la liste et l'utiliser pour une mise à jour manuelle si vous utilisez un hébergement web statique, ou le conserver à des fins d'archivage. Aucune modification ne sera apportée à la liste de contrôle actuellement publiée si vous ne chargez pas le fichier de données dans le dossier **usercontent/data** de votre site. Consultez la [documentation]https://naturalist.netlify.app/ pour plus d'informations.",
+    en: "You can download the checklist data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published checklist unless you upload the data file to the **usercontent/data** folder on your site. See the [documentation](https://naturalist.netlify.app/) for more information.",
+    fr: "Vous pouvez télécharger le fichier de données de la liste et l'utiliser pour une mise à jour manuelle si vous utilisez un hébergement web statique, ou le conserver à des fins d'archivage. Aucune modification ne sera apportée à la liste de contrôle actuellement publiée si vous ne chargez pas le fichier de données dans le dossier **usercontent/data** de votre site. Consultez la [documentation](https://naturalist.netlify.app/) pour plus d'informations.",
   },
   download_checklist: {
     en: "Download checklist data file",
