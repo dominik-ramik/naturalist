@@ -9,6 +9,9 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         sourcemap: true,
+        rollupOptions: {
+
+        },
     },
     define: {
         'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
@@ -34,3 +37,28 @@ export default defineConfig({
     ]
 });
 
+const skipInBuild = [
+    'public/usercontent/data/checklist.json',
+    'public/usercontent/images',
+    'public/usercontent/maps/vu.svg',
+    'public/usercontent/sounds',
+    'public/usercontent/texts',
+    'public/usercontent/about.md',
+    'public/usercontent/online_search_icons/avh.png',
+    'public/usercontent/online_search_icons/birdlife.png',
+    'public/usercontent/online_search_icons/ebird.png',
+    'public/usercontent/online_search_icons/harvard.png',
+    'public/usercontent/online_search_icons/ipni.png',
+    'public/usercontent/online_search_icons/jstor.png',
+    'public/usercontent/online_search_icons/kew_plants.png',
+    'public/usercontent/online_search_icons/kew.png',
+    'public/usercontent/online_search_icons/london.png',
+    'public/usercontent/online_search_icons/noumea.png',
+    'public/usercontent/online_search_icons/nsf.png',
+    'public/usercontent/online_search_icons/nybg.png',
+    'public/usercontent/online_search_icons/paris.png',
+    'public/usercontent/online_search_icons/pvnh.png',
+    'public/usercontent/online_search_icons/recolnat.png',
+    'public/usercontent/online_search_icons/smithsonian.png',
+    'public/usercontent/online_search_icons/tropicos.png'
+],
