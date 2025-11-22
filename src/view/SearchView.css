@@ -96,7 +96,6 @@ ul.filter-buttons li {
     .filter-groups-wrapper {
         display: flex;
         flex-direction: column;
-        border-top: 2px solid white;
     }
 
     /* Ensure search box padding is correct for mobile */

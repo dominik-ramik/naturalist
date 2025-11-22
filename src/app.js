@@ -289,8 +289,6 @@ function runApp() {
       readyPreloadableAssets();
 
       function onMatchGuard() {
-        console.log("CHECKLIST DATA READY:", isDataReady(checklistData) , checklistData);
-
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (
           !Settings.alreadyViewedAboutSection() &&
