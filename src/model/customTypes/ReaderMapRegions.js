@@ -1,8 +1,31 @@
+/*
+ * MAP REGIONS DATA FORMATS
+ *
+ * The reader automatically detects the format based on column headers:
+ *
+ * 1. INLINE FORMAT (Single Cell)
+ * Target: All regions listed in one cell.
+ * Header: [root] (e.g., "map")
+ * Syntax: "RegionCode:Status#Note | RegionCode:Status"
+ * - Pipe (|): Separates distinct regions.
+ * - Colon (:): Separates Region Code from Status.
+ *
+ * 2. MULTICOLUMN FORMAT (Column-per-Region)
+ * Target: Dedicated columns for specific regions.
+ * Header: [root].[regionCode] (e.g., "map.fr", "map.de")
+ * Syntax: "Status#Note" (Region code is derived from header).
+ *
+ * COMMON SYNTAX RULES:
+ * - Notes: Start with a hash (#). Multiple notes allowed (e.g., "Status#Note1#Note2").
+ * - Escaping: Use "\#" to represent a literal hash symbol in text.
+ */
+
 import m from "mithril";
 
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
 import { processMarkdownWithBibliography, relativeToUsercontent, colorSVGMap } from "../../components/Utils.js";
+import { Logger } from "../../components/Logger.js";
 
 const nlData = nlDataStructure;
 
@@ -10,22 +33,34 @@ export let readerMapRegions = {
   dataType: "map regions",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
-    // Optimization: strict prefix check to avoid false positives if column names are subsets of each other
+    const lowerPath = computedPath.toLowerCase();
+
+    // Optimization: strict prefix check to avoid false positives
     const concernedColumns = headers.filter((h) =>
-      h === computedPath.toLowerCase() ||
-      h.toLowerCase().startsWith(computedPath.toLowerCase() + ".")
+      h === lowerPath ||
+      h.toLowerCase().startsWith(lowerPath + ".")
     );
 
     let resultObject = {};
 
-    if (concernedColumns.length === 0) {
+    // DETECT MODE:
+    // We use Multi-column mode ONLY if we detect columns that are children 
+    // (longer than the root path). 
+    // If we only found the root column (or nothing), we default to Inline.
+    const hasChildColumns = concernedColumns.some(col => col.length > lowerPath.length);
+
+    if (concernedColumns.length === 0 || !hasChildColumns) {
       // Inline format (single cell)
       const mapRegions = readSimpleData(context, computedPath);
       resultObject = parseInlineMapRegions(mapRegions);
     } else {
       // Column-per-region format
+      // We filter out the root column itself to prevent it from being parsed 
+      // as a region with an empty code in the multi-column parser.
+      const childColumnsOnly = concernedColumns.filter(col => col.length > lowerPath.length);
+
       resultObject = parseColumnMapRegions(
-        concernedColumns,
+        childColumnsOnly,
         context,
         computedPath
       );
@@ -39,7 +74,7 @@ export let readerMapRegions = {
     Object.keys(resultObject).forEach((regionCode) => {
       if (!knownRegionCodes.includes(regionCode)) {
         Logger.error(
-          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z`
+          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z. The data is ${JSON.stringify(resultObject)}`
         );
       }
     });
@@ -254,7 +289,7 @@ function renderDetailsMap(data, uiContext) {
 
     // Create string for Utils.colorSVGMap: "code:status code:status"
     // We strictly ignore notes here as they don't affect coloring
-    
+
     // Get source from meta template
     let source = "";
     if (uiContext.meta.template && uiContext.meta.template !== "") {
