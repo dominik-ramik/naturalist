@@ -316,17 +316,17 @@ ul.stats {
 @media (max-width: 1200px) {
   .filter-dropdown .dropdown-area {
     position: fixed;
-    top: 1em;
     bottom: 1em;
-    left: var(--pad-large);
-    right: var(--pad-large);
-    height: 85vh;
-    max-height: 85vh;
     font-size: 125%;
     display: flex;
     flex-direction: column;
     overflow-x: auto;
-    font-size: 100%;
+    max-height: 50vh;
+    max-width: 20em;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    font-size: 110%;
   }
 
   .filter-dropdown .inner-dropdown-area {

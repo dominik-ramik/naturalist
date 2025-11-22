@@ -274,6 +274,11 @@ path {
 }
 
 @media (max-width: 1200px) {
+  .details {
+    padding: var(--pad-small);
+  }
+
+  
   .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
     max-width: 100%;
   }

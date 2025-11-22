@@ -77,7 +77,7 @@ let SearchBox = {
                     Checklist.filter.commit();
                 },
             }, [
-                m("img.toggle-icon[src=img/ui/search/clear_filter_dark.svg]"),
+                m("img.toggle-icon[src=img/ui/search/clear_filter.svg]"),
                 _t("reset_filter_mobile"),
             ]) : null,
         ]);

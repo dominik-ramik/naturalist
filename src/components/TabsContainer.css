@@ -68,3 +68,9 @@
     border-bottom-left-radius: var(--pad-small);
     border-bottom-right-radius: var(--pad-small);
 }
+
+@media (max-width: 1200px) {
+    .tabs-container-content {
+        min-height: 10em;
+    }
+}
