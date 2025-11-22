@@ -15,46 +15,75 @@ import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
 
-
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 
 const messageChannel = new MessageChannel();
 
 console.log("NaturaList version " + appVersion);
 
+let hasCriticalError = false;
+
+const updateServiceWorker = registerSW({
+  immediate: false, // You can keep this false if you prefer
+  onNeedRefresh() {
+    // If the app has already crashed, do not wait for user input.
+    // FORCE the update immediately to unbrick the client.
+    if (hasCriticalError) {
+      console.warn("App in critical state. Forcing Service Worker update...");
+      updateServiceWorker(true); // Triggers SKIP_WAITING
+      return;
+    }
+
+    // Standard behavior: Ask the user
+    Toast.show(_t("new_version_available"), {
+      showPermanently: true,
+      whenClosed: function () {
+        updateServiceWorker(true);
+      },
+    });
+  },
+  onOfflineReady() {
+    console.log("App ready to work offline");
+  },
+});
+
+// --- EMERGENCY VALVE: Catch rendering crashes ---
+function handleCriticalError(event) {
+  hasCriticalError = true;
+  console.error("CRITICAL APP FAILURE DETECTED:", event);
+
+  // If an update is pending, apply it immediately to recover
+  // We check if the SW is registered; registerSW exposes the update function
+  if (updateServiceWorker) {
+     // We force the check. If onNeedRefresh was already pending, 
+     // calling this with true might not work directly depending on PWA plugin internals,
+     // but usually, strictly calling updateServiceWorker(true) works if it's in 'waiting' state.
+     updateServiceWorker(true);
+  }
+}
+
+window.addEventListener("unhandledrejection", handleCriticalError);
+window.addEventListener("error", handleCriticalError);
+
 window.addEventListener("load", (event) => {
-  // Initialize the PWA
-  const updateServiceWorker = registerSW({
-    immediate: false,
-    onRegisterError(error) {
-      console.log("SW registration failed", error);
-    },
-    onNeedRefresh() {
-      // New service worker is installed and waiting.
-      // Ask the user to refresh or force a refresh to activate the new SW.
-      Toast.show(_t("new_version_available"), {
-        showPermanently: true,
-        whenClosed: function () {
-          updateServiceWorker(true);
-          window.location.reload();
-        },
-      });
-    },
-  });
+  // Remove the registerSW call from here, it is now at the top
 
   makeStoragePersistent();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.ready.then((registration) => {
       openComChannel(registration.active);
-      // At this point, the SW is definitely active and listening
       checkForChecklistUpdate(registration.active);
+      
+      // Extra safety: If the controller changes (update applied), reload the page
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+         window.location.reload();
+      });
     });
   }
 
-  // 4. Run your app
   runApp();
-})
+});
 
 function makeStoragePersistent() {
   if (navigator.storage && navigator.storage.persist) {
@@ -260,6 +289,8 @@ function runApp() {
       readyPreloadableAssets();
 
       function onMatchGuard() {
+        console.log("CHECKLIST DATA READY:", isDataReady(checklistData) , checklistData);
+
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (
           !Settings.alreadyViewedAboutSection() &&

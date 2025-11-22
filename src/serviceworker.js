@@ -11,7 +11,36 @@ let communicationPort;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
+// 1. WORKBOX CLEANUP (Cleans precache-v... files)
 cleanupOutdatedCaches();
+
+// 2. FORCE IMMEDIATE ACTIVATION (The "Emergency Valve")
+// This ensures the new SW installs immediately, even if the app is crashed.
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+// 3. MANUAL CACHE CLEANUP (The "Nuclear Option")
+// This runs immediately after 'install'. We delete ANY cache that is 
+// 1) A 'static-' cache AND 2) NOT the current version.
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    // Check if it's an old static cache
+                    if (cacheName.startsWith(appCacheNameBase) && cacheName !== appCacheName) {
+                        console.log(`[SW] Deleting old cache: ${cacheName}`);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            // Take control of all clients immediately
+            return self.clients.claim();
+        })
+    );
+});
 
 //* Cache first
 self.addEventListener('fetch', function (e) {
@@ -42,7 +71,6 @@ self.addEventListener('fetch', function (e) {
             e.request.url.toLowerCase().endsWith(".md")
         );
         if (isUserMdFile) {
-            // Always fetch from network, never cache
             try {
                 return await fetch(e.request, { cache: "no-cache" });
             } catch (ex) {
@@ -51,6 +79,9 @@ self.addEventListener('fetch', function (e) {
             }
         }
 
+        // IMPORTANT: Because we deleted old caches in 'activate', 
+        // this match will now ONLY find assets in the current 'appCacheName'
+        // or the 'user' cache. The broken v3.0.8 assets are gone.
         const r = await caches.match(e.request);
         if (r) { return r; }
 
@@ -61,9 +92,8 @@ self.addEventListener('fetch', function (e) {
         } else {
             response = await fetch(e.request).then(function (response) {
                 if (!response.ok && response.status != 304) {
-                    // Got error response and status is not 304 (already cached)
                     console.log("Fetching problems", response.status, e.request.url);
-                    communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
+                    if(communicationPort) communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
                     return null;
                 }
                 return response;
@@ -73,7 +103,6 @@ self.addEventListener('fetch', function (e) {
         let cache = null;
 
         function urlForUserCache(url) {
-            // Do not cache .md files in /usercontent/
             if (url.includes("/usercontent/") && url.endsWith(".md")) return false;
             return url.includes("/usercontent/") && !url.includes("/usercontent/identity");
         }
@@ -92,6 +121,7 @@ self.addEventListener('fetch', function (e) {
     })());
 });
 
+// ... (Keep your existing refreshCachedChecklistData, message listener, and handleAppMessage functions here exactly as they were)
 function refreshCachedChecklistData() {
     let dataRequest = new Request(checklistURL, {
         method: 'GET',
@@ -104,19 +134,16 @@ function refreshCachedChecklistData() {
             });
         })
         .catch(function (err) {
-            //failed to fetch
             console.log("Could not update the data. Fetch failed.", err);
         });
 }
 
-//Save reference to port
 self.addEventListener('message', function (message) {
     if (message.data && message.data.type === 'PORT_INITIALIZATION') {
         communicationPort = message.ports[0];
         communicationPort.onmessage = function (portEvent) {
             handleAppMessage(portEvent.data);
         };
-
         communicationPort.postMessage({ type: 'PORT_INITIALIZED' });
     } else {
         handleAppMessage(message.data);
@@ -137,9 +164,10 @@ async function handleAppMessage(message) {
         self.skipWaiting();
     }
     else if (message.type === "CACHE_ASSETS" && Array.isArray(message.assets)) {
+       // ... (Keep your existing CACHE_ASSETS logic)
         // Utility to check internet connectivity
         const checkInternetConnection = async () => {
-            if (!navigator.onLine) return false; // Simple check first
+            if (!navigator.onLine) return false; 
             try {
                 const response = await fetch(self.location.origin, { method: 'HEAD', cache: 'no-store' });
                 return response.ok;
@@ -158,7 +186,6 @@ async function handleAppMessage(message) {
             try {
                 const cache = await caches.open(userCacheName);
                 const assets = message.assets || [];
-
                 const assetMap = new Map();
                 assets.forEach(asset => {
                     try {
@@ -181,18 +208,12 @@ async function handleAppMessage(message) {
                 for (const [absUrl, relUrl] of assetMap) {
                     const match = await cache.match(absUrl);
                     if (!match) {
-                        missingAssets.push(relUrl); // Push the relative path for fetching
+                        missingAssets.push(relUrl);
                     }
-                }
-
-                if (import.meta.env.DEV) {
-                    console.log("All assets to cache:", assets, "Missing assets:", missingAssets);
                 }
 
                 if (missingAssets.length > 0) {
                     console.log(`[SW] Attempting to cache ${missingAssets.length} new assets...`);
-
-                    // We allow individual downloads to fail without stopping the others
                     await Promise.all(missingAssets.map(async (url) => {
                         try {
                             const req = new Request(url);
@@ -206,12 +227,7 @@ async function handleAppMessage(message) {
                             console.warn(`[SW] Network error for ${url}`, error);
                         }
                     }));
-
-                    console.log("[SW] Asset sync complete.");
-                } else {
-                    console.log("[SW] All assets already cached.");
-                }
-
+                } 
             } catch (error) {
                 console.error("[SW] Critical error during asset caching:", error);
             }
