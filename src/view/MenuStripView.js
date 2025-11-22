@@ -14,8 +14,7 @@ export let MenuStripView = {
   view: function () {
     return m(".app-menu", [
       //"ADD persistent Filters below the menu that will allow filtering by search categoires (e.g. island or others) and will be sticky in the url",
-      m.route.get().startsWith("/checklist") ||
-        (m.route.get().startsWith("/search") && !AppLayoutView.mobile())
+      m.route.get().startsWith("/checklist")
         ? menuTopBar()
         : backButton(),
       this.menuOpen ? menuPanel() : null,
@@ -224,24 +223,21 @@ function menuTopBar() {
       [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
     m(".menu-project-name", Checklist.getProjectName()),
-    AppLayoutView.mobile()
-      ? m(".menu-action-button", [
-        m("img[src=./img/ui/menu/cite.svg]"),
-        m(
-          ".action-button-title",
-          {
-            onclick: function () {
-              routeTo("/about/cite");
-            },
+    m(".menu-action-button.mobile-cite-button", [
+      m("img[src=./img/ui/menu/cite.svg]"),
+      m(
+        ".action-button-title",
+        {
+          onclick: function () {
+            routeTo("/about/cite");
           },
-          "Cite"
-        ),
-      ])
-      : null,
+        },
+        "Cite"
+      ),
+    ]),
     m(ActionButtonWithMenu, {
       icon: "img/ui/menu/" + Settings.viewType() + ".svg",
       title: currentViewName,
-      imageReverse: true,
       items: [].concat(
         { type: "label", title: _t("view_checklist_as") },
         {
@@ -321,7 +317,12 @@ function backButton() {
     ".menu-button.clickable",
     {
       onclick: function () {
-        routeTo("/checklist");
+        // Use history.back() for better UX on detail pages, then fallback to /checklist
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          routeTo("/checklist");
+        }
       },
     },
     Checklist._isDataReady
@@ -329,9 +330,7 @@ function backButton() {
         m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
         m(
           ".menu-button-description",
-          AppLayoutView.mobile()
-            ? _t("back_to_checklist")
-            : _t("back_to_search")
+          _t("back_to_checklist") // Use the clearer description
         ),
       ]
       : null
@@ -383,13 +382,9 @@ let ActionButtonWithMenu = function (initialVnode) {
             },
           },
           [
-            vnode.attrs.imageReverse !== true
-              ? m("img[src=" + vnode.attrs.icon + "]")
-              : null,
+            m("img[src=" + vnode.attrs.icon + "]"),
             m(".action-button-title", vnode.attrs.title),
-            vnode.attrs.imageReverse === true
-              ? m("img[src=" + vnode.attrs.icon + "]")
-              : null,
+            m("img[src=img/ui/menu/expand_" + (open ? "less" : "more") + ".svg]"),
           ]
         ),
         open

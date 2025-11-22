@@ -9,7 +9,6 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { _t } from "../model/I18n.js";
-import { AppLayoutView } from "./AppLayoutView.js";
 
 export let FilterDropdown = function (initialVnode) {
   let _open = false;
@@ -77,14 +76,13 @@ export let FilterDropdown = function (initialVnode) {
         detectedUiType = "number";
       }
 
+      let isSelectableAndHasSelectedItems = ["text", "badge", "map regions"].includes(Checklist.filter[type][dataPath].type) && Checklist.filter[type][dataPath].selected.length > 0;
+
       let showOrb = false;
-      if (
-        Checklist.filter[type][dataPath].type == "text" &&
-        Checklist.filter[type][dataPath].selected.length > 0
-      ) {
+      if (isSelectableAndHasSelectedItems) {
         showOrb = true;
       }
-      if (
+      else if (
         Checklist.filter[type][dataPath].type == "number" &&
         Checklist.filter[type][dataPath].numeric.operation != ""
       ) {
@@ -92,32 +90,24 @@ export let FilterDropdown = function (initialVnode) {
       }
 
       return [
-        AppLayoutView.mobile() && isOpen()
-          ? m(".filter-dropdown-backdrop", {
-              onclick: function (e) {},
-            })
-          : null,
         m(".filter-dropdown[tabindex=0][id=" + filterDropdownId + "]", [
           m(
-            ".label",
+            ".label" + (showOrb ? ".active-filter[style=background-color: " + color + "]" : ""),
             {
               onclick: function () {
                 setOpen(!isOpen());
-
-                if (!AppLayoutView.mobile()) {
-                  if (isOpen()) {
-                    window.setTimeout(function () {
-                      if (
-                        document.getElementById(
-                          filterDropdownId + "_inner_text"
-                        )
-                      ) {
-                        document
-                          .getElementById(filterDropdownId + "_inner_text")
-                          .focus();
-                      }
-                    }, 200);
-                  }
+                if (isOpen()) {
+                  window.setTimeout(function () {
+                    if (
+                      document.getElementById(
+                        filterDropdownId + "_inner_text"
+                      )
+                    ) {
+                      document
+                        .getElementById(filterDropdownId + "_inner_text")
+                        .focus();
+                    }
+                  }, 200);
                 }
               },
             },
@@ -125,49 +115,42 @@ export let FilterDropdown = function (initialVnode) {
               m(".arrow", m("img[src=./img/ui/search/expand.svg]")),
               m(".title", title),
               m(
-                ".orb" +
-                  (showOrb
-                    ? "[style=background-color: " + color + "; color: white]"
-                    : ""),
-                m.trust("&nbsp;")
-              ),
-              m(
                 ".count",
                 Object.keys(Checklist.filter[type][dataPath].possible).length
               ),
               type == "taxa"
                 ? m(
-                    "img.clickable.copy[title=" +
-                      _t("copy_taxa_dropdown", [title]) +
-                      "][src=img/ui/search/copy.svg]",
-                    {
-                      onclick: function (e) {
-                        let listOfTaxa = Object.keys(
-                          Checklist.filter[type][dataPath].possible
-                        )
-                          .sort()
-                          .join("\n");
+                  "img.clickable.copy[title=" +
+                  _t("copy_taxa_dropdown", [title]) +
+                  "][src=img/ui/search/copy.svg]",
+                  {
+                    onclick: function (e) {
+                      let listOfTaxa = Object.keys(
+                        Checklist.filter[type][dataPath].possible
+                      )
+                        .sort()
+                        .join("\n");
 
-                        copyToClipboard(
-                          listOfTaxa,
-                          _t("list_of_taxa", [title])
-                        );
-                        e.stopPropagation();
-                      },
-                    }
-                  )
+                      copyToClipboard(
+                        listOfTaxa,
+                        _t("list_of_taxa", [title])
+                      );
+                      e.stopPropagation();
+                    },
+                  }
+                )
                 : null,
             ]
           ),
           isOpen()
             ? m(Dropdown, {
-                openHandler: setOpen,
-                type: type,
-                dataPath: dataPath,
-                color: color,
-                ui: detectedUiType,
-                dropdownId: filterDropdownId + "_inner",
-              })
+              openHandler: setOpen,
+              type: type,
+              dataPath: dataPath,
+              color: color,
+              ui: detectedUiType,
+              dropdownId: filterDropdownId + "_inner",
+            })
             : null,
         ]),
       ];
@@ -318,34 +301,34 @@ let DropdownText = function (initialVnode) {
                   itemsConcerned.length == 0
                     ? null
                     : m(DropdownCheckItemSkeleton, {
-                        state: state,
-                        item: thisGroup,
-                        count: "",
-                        action:
-                          state == "inactive"
-                            ? undefined
-                            : function () {
-                                if (state == "checked") {
-                                  Checklist.filter[type][dataPath].selected =
-                                    Checklist.filter[type][
-                                      dataPath
-                                    ].selected.filter(
-                                      (e) => itemsConcerned.indexOf(e) < 0
-                                    );
-                                } else if (state == "unchecked") {
-                                  let newSelected = [
-                                    ...new Set([
-                                      ...Checklist.filter[type][dataPath]
-                                        .selected,
-                                      ...itemsConcerned,
-                                    ]),
-                                  ];
-                                  Checklist.filter[type][dataPath].selected =
-                                    newSelected;
-                                }
-                                Checklist.filter.commit();
-                              },
-                      });
+                      state: state,
+                      item: thisGroup,
+                      count: "",
+                      action:
+                        state == "inactive"
+                          ? undefined
+                          : function () {
+                            if (state == "checked") {
+                              Checklist.filter[type][dataPath].selected =
+                                Checklist.filter[type][
+                                  dataPath
+                                ].selected.filter(
+                                  (e) => itemsConcerned.indexOf(e) < 0
+                                );
+                            } else if (state == "unchecked") {
+                              let newSelected = [
+                                ...new Set([
+                                  ...Checklist.filter[type][dataPath]
+                                    .selected,
+                                  ...itemsConcerned,
+                                ]),
+                              ];
+                              Checklist.filter[type][dataPath].selected =
+                                newSelected;
+                            }
+                            Checklist.filter.commit();
+                          },
+                    });
 
                 checkItems.push(groupCheckItem);
               }
@@ -415,10 +398,10 @@ let DropdownText = function (initialVnode) {
           ".search-filter",
           m(
             "input.options-search[type=search][placeholder=" +
-              _t("search") +
-              "][id=" +
-              vnode.attrs.dropdownId +
-              "_text]",
+            _t("search") +
+            "][id=" +
+            vnode.attrs.dropdownId +
+            "_text]",
             {
               oninput: function () {
                 filter = this.value
@@ -432,26 +415,24 @@ let DropdownText = function (initialVnode) {
         m(".options", [
           showSelected
             ? m(
-                ".options-section[style=background-color: " +
-                  vnode.attrs.color +
-                  "20;]",
-                selected
-              )
+              ".options-section",
+              selected
+            )
             : null,
           showPossible ? m(".options-section", possible) : null,
           showImpossible ? m(".options-section", impossible) : null,
           itemsOverflowing
             ? m(
-                ".show-next-items",
-                {
-                  onclick: function () {
-                    itemsOverflowLimit =
-                      itemsOverflowLimit + initialOverflowLimit;
-                    console.log(itemsOverflowLimit);
-                  },
+              ".show-next-items",
+              {
+                onclick: function () {
+                  itemsOverflowLimit =
+                    itemsOverflowLimit + initialOverflowLimit;
+                  console.log(itemsOverflowLimit);
                 },
-                _t("next_items_dropdown", [initialOverflowLimit])
-              )
+              },
+              _t("next_items_dropdown", [initialOverflowLimit])
+            )
             : null,
           showSelected + showPossible + showImpossible == 0
             ? m(".no-items-filter", _t("no_items_filter"))
@@ -459,30 +440,28 @@ let DropdownText = function (initialVnode) {
         ]),
         filter.length > 0 && totalPossibleUnchecked > 1
           ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  Checklist.filter[type][dataPath].selected =
-                    Checklist.filter[type][dataPath].selected.concat(
-                      filteredPossible
-                    );
-                  console.log(Checklist.filter[type][dataPath].selected);
-                },
+            ".apply",
+            {
+              onclick: function () {
+                Checklist.filter[type][dataPath].selected =
+                  Checklist.filter[type][dataPath].selected.concat(
+                    filteredPossible
+                  );
+                console.log(Checklist.filter[type][dataPath].selected);
               },
-              _t("check_all_shown")
-            )
+            },
+            _t("check_all_shown")
+          )
           : null,
-        AppLayoutView.mobile()
-          ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  vnode.attrs.openHandler(false);
-                },
-              },
-              _t("apply_selection")
-            )
-          : null,
+        m(
+          ".apply",
+          {
+            onclick: function () {
+              vnode.attrs.openHandler(false);
+            },
+          },
+          _t("apply_selection")
+        ),
       ]);
     },
   };
@@ -497,16 +476,16 @@ let DropdownCheckItemSkeleton = function (initialVnode) {
 
       return m(
         ".option-item" +
-          (vnode.attrs.group ? ".group-member" : "") +
-          (vnode.attrs.state == "inactive" ? ".inactive" : ""),
+        (vnode.attrs.group ? ".group-member" : "") +
+        (vnode.attrs.state == "inactive" ? ".inactive" : ""),
         {
           onclick: vnode.attrs.action,
         },
         [
           m(
             "img.item-checkbox[src=img/ui/search/checkbox_" +
-              (vnode.attrs.state == "checked" ? "checked" : "unchecked") +
-              ".svg]"
+            (vnode.attrs.state == "checked" ? "checked" : "unchecked") +
+            ".svg]"
           ),
           m(".item-label", vnode.attrs.item),
           m(".item-count", vnode.attrs.count),
@@ -544,7 +523,7 @@ let DropdownCheckItem = function (initialVnode) {
                 // only splice array when item is found
                 Checklist.filter[vnode.attrs.type][
                   vnode.attrs.dataPath
-                ].selected.splice(index, 1);                
+                ].selected.splice(index, 1);
                 Checklist.filter.commit();
               }
               break;
@@ -659,21 +638,21 @@ let DropdownNumber = function (initialVnode) {
 
     return m(
       "input" +
-        (actualThresholds[thresholdNumber] !== null && isInputError
-          ? ".error"
-          : "") +
-        "[id=threshold" +
-        thresholdNumber +
-        "_" +
-        dropdownId +
-        "][type=text][name=threshold" +
-        thresholdNumber +
-        "][increment=1][min=" +
-        min +
-        "][max=" +
-        max +
-        "]" +
-        (currentValue !== null ? "[value=" + currentValue + "]" : ""),
+      (actualThresholds[thresholdNumber] !== null && isInputError
+        ? ".error"
+        : "") +
+      "[id=threshold" +
+      thresholdNumber +
+      "_" +
+      dropdownId +
+      "][type=text][name=threshold" +
+      thresholdNumber +
+      "][increment=1][min=" +
+      min +
+      "][max=" +
+      max +
+      "]" +
+      (currentValue !== null ? "[value=" + currentValue + "]" : ""),
       {
         oninput: function () {
           initialThresholds[thresholdNumber] = null;
@@ -727,9 +706,9 @@ let DropdownNumber = function (initialVnode) {
       .attr(
         "viewBox",
         "0 0 " +
-          wrapper.getBoundingClientRect().width +
-          " " +
-          wrapper.getBoundingClientRect().height
+        wrapper.getBoundingClientRect().width +
+        " " +
+        wrapper.getBoundingClientRect().height
       )
       .attr("style", "background-color: white;")
       .attr("class", "clickable")
@@ -924,7 +903,7 @@ let DropdownNumber = function (initialVnode) {
             return [
               m(
                 ".numeric-filter-button.clickable" +
-                  (actualOperation == filterKey ? ".selected" : ""),
+                (actualOperation == filterKey ? ".selected" : ""),
                 {
                   onclick: function () {
                     actualOperation = filterKey;
@@ -940,8 +919,8 @@ let DropdownNumber = function (initialVnode) {
                 },
                 m(
                   "img[src=img/ui/search/numeric_" +
-                    Checklist.filter.numericFilters[filterKey].icon +
-                    ".svg]"
+                  Checklist.filter.numericFilters[filterKey].icon +
+                  ".svg]"
                 )
               ),
               filterKey == "equal" || filterKey == "greaterequal"
@@ -955,53 +934,53 @@ let DropdownNumber = function (initialVnode) {
           actualOperation == ""
             ? null
             : m(
-                ".clear-button.clickable",
-                {
-                  onclick: function () {
-                    actualOperation = "";
-                    Checklist.filter.data[dataPath].numeric.operation = "";
-                    initialThresholds = [null, null, null];
-                    Checklist.filter.data[dataPath].numeric.threshold1 = null;
-                    Checklist.filter.data[dataPath].numeric.threshold2 = null;
-                    Checklist.filter.commit();
-                    window.setTimeout(function () {
-                      drawHistogram(
-                        Checklist.filter.data[dataPath].all,
-                        Checklist.filter.data[dataPath].possible
-                      );
-                    }, 200);
-                  },
+              ".clear-button.clickable",
+              {
+                onclick: function () {
+                  actualOperation = "";
+                  Checklist.filter.data[dataPath].numeric.operation = "";
+                  initialThresholds = [null, null, null];
+                  Checklist.filter.data[dataPath].numeric.threshold1 = null;
+                  Checklist.filter.data[dataPath].numeric.threshold2 = null;
+                  Checklist.filter.commit();
+                  window.setTimeout(function () {
+                    drawHistogram(
+                      Checklist.filter.data[dataPath].all,
+                      Checklist.filter.data[dataPath].possible
+                    );
+                  }, 200);
                 },
-                m("img[src=img/ui/search/clear_filter_dark.svg]")
-              ),
+              },
+              m("img[src=img/ui/search/clear_filter_dark.svg]")
+            ),
         ]),
         actualOperation == ""
           ? null
           : m(
-              ".apply.clickable" +
-                (actualOperation == "" || !canApply() ? ".inactive" : ""),
-              {
-                onclick: function () {
-                  if (actualOperation != "" && canApply()) {
-                    Checklist.filter.data[dataPath].numeric.operation =
-                      actualOperation;
-                    Checklist.filter.data[dataPath].numeric.threshold1 =
-                      actualThresholds[1];
-                    Checklist.filter.data[dataPath].numeric.threshold2 =
-                      actualThresholds[2];
-                    vnode.attrs.openHandler(false);
-                    Checklist.filter.commit();
-                  }
-                },
+            ".apply.clickable" +
+            (actualOperation == "" || !canApply() ? ".inactive" : ""),
+            {
+              onclick: function () {
+                if (actualOperation != "" && canApply()) {
+                  Checklist.filter.data[dataPath].numeric.operation =
+                    actualOperation;
+                  Checklist.filter.data[dataPath].numeric.threshold1 =
+                    actualThresholds[1];
+                  Checklist.filter.data[dataPath].numeric.threshold2 =
+                    actualThresholds[2];
+                  vnode.attrs.openHandler(false);
+                  Checklist.filter.commit();
+                }
               },
-              countResults() == 0
-                ? _t("numeric_apply_show_results_no_results")
-                : _t("numeric_apply_show_results", [countResults()])
-            ),
+            },
+            countResults() == 0
+              ? _t("numeric_apply_show_results_no_results")
+              : _t("numeric_apply_show_results", [countResults()])
+          ),
         m(".histogram-wrap", [
           m(
             ".histogram#histogram_" +
-              dropdownId,
+            dropdownId,
             {
               onclick: function (e) {
                 this.classList.toggle("fullscreen");
@@ -1021,8 +1000,8 @@ let DropdownNumber = function (initialVnode) {
             m(".legend-item", [
               m(
                 ".map-fill[style=background-color: " +
-                  Checklist.getThemeHsl("light") +
-                  "]"
+                Checklist.getThemeHsl("light") +
+                "]"
               ),
               m(".map-legend-title", _t("histogram_displayed_data")),
             ]),

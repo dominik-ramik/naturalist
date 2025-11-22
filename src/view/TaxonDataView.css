@@ -9,11 +9,7 @@
 }
 
 .middle-row .column:first-child {
-flex-grow: 1;
-}
-
-.app.mobile .middle-row {
-    flex-direction: column;
+    flex-grow: 1;
 }
 
 .top-row {}
@@ -24,10 +20,6 @@ flex-grow: 1;
 
 .column {
     width: 33%;
-}
-
-.app.mobile .column {
-    width: auto;
 }
 
 .column:not(:first-child) {
@@ -42,3 +34,13 @@ flex-grow: 1;
 .right-column {}
 
 .bottom-row {}
+
+@media (max-width: 1200px) {
+    .middle-row {
+        flex-direction: column;
+    }
+
+    .column {
+        width: auto;
+    }
+}

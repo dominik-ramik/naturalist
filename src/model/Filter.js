@@ -1,7 +1,7 @@
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { _t } from "./I18n.js";
-import { getGradedColor, textLowerCaseAccentless } from "../components/Utils.js";
+import { textLowerCaseAccentless } from "../components/Utils.js";
 
 // The filter object and all its methods, as previously in Checklist.js
 export let Filter = {
@@ -15,7 +15,7 @@ export let Filter = {
     if (specificRoute) {
       routeTo(specificRoute);
     } else {
-      routeTo("/search");
+      routeTo("/checklist");
     }
   },
 

@@ -4,10 +4,6 @@
   background: linear-gradient(28deg, #1d2834, #55769b);
 }
 
-.app.mobile .checklist {
-  height: 100%;
-}
-
 .checklist-inner-wrapper {
   display: flex;
   flex-direction: column;
@@ -22,10 +18,6 @@
   color: black;
   font-size: 85%;
   flex-grow: 1;
-}
-
-.app.mobile .listed-taxa {
-  padding-bottom: 9em;
 }
 
 .show-more-items {
@@ -110,6 +102,10 @@
   margin-right: var(--pad-large);
 }
 
+.temporary-notice.mobile-filter-on {
+  display: none;
+}
+
 .button-group {
   margin: 0;
   margin-left: 0.5em;
@@ -139,6 +135,7 @@
   border-top-left-radius: var(--pad-small);
   border-bottom-left-radius: var(--pad-small);
 }
+
 .button-group button:not(:first-child) {
   border-left: 1px solid gray;
 }
@@ -157,4 +154,10 @@
 .button-group-label {
   font-size: 80%;
   color: white;
+}
+
+@media (max-width: 1200px) {
+  .temporary-notice.mobile-filter-on {
+    display: block;
+  }
 }

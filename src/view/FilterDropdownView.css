@@ -38,16 +38,10 @@
   margin-left: var(--pad-large);
 }
 
-.filter-dropdown .orb {
-  border-radius: 1.5em;
-  padding: var(--pad-small);
-  margin-right: var(--pad-large);
-  text-align: center;
-  height: 0.5em;
-  min-width: 0.5em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.filter-dropdown .label .title {
+  flex-grow: 1;
+  font-weight: bold;
+  margin-left: var(--pad-large);
 }
 
 .filter-dropdown .copy {
@@ -93,25 +87,6 @@
   flex-wrap: nowrap;
   height: auto;
   max-height: 100%;
-}
-
-.app.mobile .filter-dropdown .dropdown-area {
-  position: fixed;
-  top: 1em;
-  bottom: 1em;
-  left: var(--pad-large);
-  right: var(--pad-large);
-  height: 85vh;
-  max-height: 85vh;
-  font-size: 125%;
-  display: flex;
-  flex-direction: column;
-  overflow-x: auto;
-}
-
-.app.mobile .filter-dropdown .inner-dropdown-area {
-  max-height: 100%;
-  height: 100%;
 }
 
 .filter-dropdown .inner-dropdown-area .search-filter {
@@ -183,11 +158,12 @@
 }
 
 .filter-dropdown .options .option-item.group-member {
-    margin-left: 0.25em;
-    padding-left: 0.3em;
+  margin-left: 0.25em;
+  padding-left: 0.3em;
 }
+
 .filter-dropdown .options .option-item.group-member::before {
-    content: "┕"
+  content: "┕"
 }
 
 .filter-dropdown .options .show-next-items {
@@ -239,18 +215,11 @@
   border-left: 0.2em solid #e9e9e9;
 }
 
-.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button {
-}
+.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button {}
 
-.inner-dropdown-area.numeric
-  .numeric-filter-buttons
-  .numeric-filter-button.selected {
-}
+.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button.selected {}
 
-.inner-dropdown-area.numeric
-  .numeric-filter-buttons
-  .numeric-filter-button
-  img {
+.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button img {
   height: 1.5em;
   padding: var(--pad-small);
 }
@@ -342,4 +311,25 @@
 
 ul.stats {
   padding: var(--pad-small);
+}
+
+@media (max-width: 1200px) {
+  .filter-dropdown .dropdown-area {
+    position: fixed;
+    top: 1em;
+    bottom: 1em;
+    left: var(--pad-large);
+    right: var(--pad-large);
+    height: 85vh;
+    max-height: 85vh;
+    font-size: 125%;
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+  }
+
+  .filter-dropdown .inner-dropdown-area {
+    max-height: 100%;
+    height: 100%;
+  }
 }

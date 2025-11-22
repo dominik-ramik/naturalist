@@ -11,86 +11,13 @@
 .app .app-content {
     flex-grow: 1;
     display: flex;
-    flex-direction: row;
+    flex-direction: row; /* Desktop: Side-by-side (Checklist | Filters) */
     overflow: hidden;
 }
 
-.app.mobile .app-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.app.mobile .floating-search-container {
-    bottom: 1em;
-    left: 0.25em;
-    right: 0.25em;
-    height: 3em;
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: right;
-}
-
-.app.mobile .round-envelope {
-    background-color: #ffffffe6;
-    color: black;
-    height: 3em;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
-    margin-left: 0.12em;
-    margin-right: 0.12em;
-    border-radius: 0.75em;
-    border: 1px solid black;
-    /*box-shadow: 0 0 1em 0em #000000e0;*/
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.app.mobile .round-envelope .image-wrapper {
-    position: relative;
-}
-
-.app.mobile .round-envelope .round-button-badge {
-    background-color: red;
-    color: white;
-    width: 1.25em;
-    text-align: center;
-    border-radius: 0.75em;
-    padding: 0.1em;
-    font-size: 75%;
-    position: absolute;
-    top: -0.25em;
-    right: -0.5em;
-}
-
-.app.mobile .round-envelope input[type=search] {
-    background-color: transparent !important;
-}
-
-.app.mobile .rounded-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.app.mobile .rounded-button.disabled {
-    opacity: 0.8;
-}
-
-.app.mobile .rounded-button .label {
-    font-size: 85%;
-}
-
-.app.mobile .rounded-button img {
-    margin-right: var(--pad-large);
-    height: 1.75em;
-}
-
-.app.mobile .rounded-button-notext img {
-    margin-right: 0em;
-    height: 1.75em;
+/* The following media query handles the layout change: */
+@media (max-width: 1200px) {
+    .app .app-content {
+        flex-direction: column; /* Mobile: Stacked (Checklist then Filters) */
+    }
 }

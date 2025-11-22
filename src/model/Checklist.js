@@ -425,11 +425,11 @@ export let Checklist = {
 
     //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
     Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
-      Checklist.filter.taxa[dataPath].color = getGradedColor("taxa", index);
+      Checklist.filter.taxa[dataPath].color = getGradedColor("taxa", "filter");
     });
 
     Object.keys(Checklist.filter.data).forEach(function (dataPath, index) {
-      Checklist.filter.data[dataPath].color = getGradedColor("data", index);
+      Checklist.filter.data[dataPath].color = getGradedColor("data", "filter");
     });
 
     // This has ABSOLUTELY to go AFTER the "possible" and "all" content generation, otherwise we may miss many values that are not present when the data wree filteres with an URL query

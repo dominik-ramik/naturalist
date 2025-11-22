@@ -12,24 +12,15 @@
   flex-wrap: nowrap;
 }
 
-.app.mobile .interaction-area {
-  max-width: unset;
-  width: 100%;
-  min-width: unset;
-  height: 100%;
-  padding-bottom: 4em;
-}
-
 .interaction-area .branding {
+  text-align: right;
   font-family: var(--font-light);
   font-size: 0.75em;
-  position: relative;
   opacity: 0.45;
   user-select: none;
   bottom: var(--pad-small);
-  right: -20em;
-  bottom: 1.5em;
   display: inline-block;
+  margin-right: 2em;
 }
 
 .interaction-area .branding img {
@@ -42,8 +33,10 @@
   background-size: 16em;
   background-position: bottom 1.5em right 0em;
   padding: var(--pad-large);
-  min-height: 100%;
-  box-sizing: border-box;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 .interaction-area .desktop-cite {
@@ -53,4 +46,54 @@
   border-radius: 0.25em;
   padding: 0.25em;
   font-size: 80%;
+}
+
+/* NEW/EDITED: Mobile/Tablet Layout (Max Width 1200px) */
+@media (max-width: 1200px) {
+  .interaction-area {
+    max-width: unset;
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    flex-grow: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 0;
+    max-height: 100%;
+  }
+
+  /* Hide desktop branding and citation */
+  .interaction-area .branding,
+  .interaction-area .desktop-cite {
+    display: none;
+  }
+
+  /* EDITED: Branding wrapper now holds the SearchView, padding is now inside SearchBox */
+  .interaction-area .interaction-area-branding-wrapper {
+    background-image: none;
+    padding: 0;
+    flex-grow: 1;
+    min-height: unset;
+    display: block;
+    /* Search and button are now internally laid out by SearchView */
+  }
+
+  /* COLLAPSE LOGIC */
+
+  /* HIDE filter groups when collapsed */
+  .interaction-area.collapsed .filter-groups-wrapper {
+    display: none;
+  }
+
+  /* Ensure SearchBox is visible when collapsed */
+  .interaction-area.collapsed .search-box {
+    display: flex !important;
+  }
+
+  /* Expanded content scrolling for the filters */
+  .filter-groups-wrapper {
+    overflow-y: auto;
+    max-height: 50vh;
+    padding-top: var(--pad-small);
+  }
 }

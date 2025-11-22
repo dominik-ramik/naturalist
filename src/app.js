@@ -257,14 +257,6 @@ function runApp() {
         Checklist.loadData(checklistData, false);
       }
 
-      let w = document.documentElement.clientWidth;
-      let h = document.documentElement.clientHeight;
-      if (w > 1024 || (w > 800 && w > h)) {
-        AppLayoutView.mode = "desktop";
-      } else {
-        AppLayoutView.mode = "mobile";
-      }
-
       readyPreloadableAssets();
 
       function onMatchGuard() {
@@ -286,16 +278,9 @@ function runApp() {
       }
 
       m.route(document.body, "/checklist", {
-        "/search": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SearchView)]);
-          },
-          onmatch: onMatchGuard,
-        },
         "/checklist": {
           render: function () {
-            AppLayoutView.display = "checklist";
+            // AppLayoutView.display = "checklist"; // DELETE display setting
             return m(AppLayoutView, [m(SearchView)]);
           },
           onmatch: onMatchGuard,

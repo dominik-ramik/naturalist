@@ -9,33 +9,17 @@ import { _t } from "../model/I18n.js";
 import { Filter } from "../model/Filter.js";
 
 export let AppLayoutView = {
-    mode: "desktop",
     display: "checklist",
-
-    mobile: function () {
-        return AppLayoutView.mode === "mobile";
-    },
 
     view: function (vnode) {
 
-        let resultsNumber = Checklist.getTaxaForCurrentQuery().length;
+        //let resultsNumber = Checklist.getTaxaForCurrentQuery().length;
 
         return m(".app." + AppLayoutView.mode, [
             m(MenuStripView),
             m(".app-content", [
                 m(ChecklistView),
-                m(InteractionAreaView, vnode.children),
-                m(FloatingContainer,
-                    AppLayoutView.mobile() && (AppLayoutView.display == "checklist") ? m(FloatingSearch) : null,
-                    AppLayoutView.mobile() && m.route.get().startsWith("/search") ? m(RoundedButton, {
-                        icon: "results",
-                        disabled: resultsNumber == 0,
-                        label: _t("float_results", [resultsNumber]),
-                        onclick: function () {
-                            routeTo("/checklist");
-                        }
-                    }) : null,
-                )
+                m(InteractionAreaView, vnode.children),                
             ]),
             m(Toast),
         ])
@@ -46,6 +30,8 @@ export let AppLayoutView = {
         //m.redraw();
     }
 }
+
+/*
 
 let FloatingContainer = {
     view: function (vnode) {
@@ -113,6 +99,8 @@ let RoundedButton = {
         ]))
     }
 }
+
+*/
 
 export let Toast = {
     visible: false,

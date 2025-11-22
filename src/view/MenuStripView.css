@@ -157,13 +157,6 @@
   font-size: 85%;
 }
 
-.app.mobile .menu-action-button .action-button-title {
-  padding: 0;
-  margin: 0;
-  padding-left: var(--pad-large);
-  padding-right: var(--pad-large);
-}
-
 .multi-item-menu-button:hover {
   background-color: var(--hover-background);
 }
@@ -198,12 +191,19 @@
 .menu-action-button-with-menu-wrapper {
   position: relative;
   height: 100%;
+  margin: 0.5em;
+  border: 1px solid gray;
+  box-sizing: border-box;
+  height: auto;
+  padding: 0.3em;
+  margin-right: 0;
+  border-radius: 0.3em;
 }
 
 .menu-action-button-with-menu-wrapper .submenu {
   position: absolute;
   right: var(--pad-small);
-  top: 2.5em;
+  top: var(--pad-small);
   width: 19em;
   max-width: 80vw;
   max-height: 75vh;
@@ -240,9 +240,34 @@
   flex-grow: 1;
 }
 
-@media (orientation: portrait) {
+.menu-action-button.mobile-cite-button {
+  display: none;
+}
+
+@media (max-width: 1200px) {
   .menu-item {
     padding-top: var(--pad-large);
     padding-bottom: var(--pad-large);
+  }
+
+  .menu-action-button.mobile-cite-button {
+    display: flex;
+    /* Ensure it matches the appearance of the other action button */
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .menu-action-button .action-button-title {
+    padding: 0;
+    margin: 0;
+    padding-left: var(--pad-large);
+    padding-right: var(--pad-large);
+  }
+
+  .menu-action-button .action-button-title {
+    padding: 0;
+    margin: 0;
+    padding-left: var(--pad-large);
+    padding-right: var(--pad-large);
   }
 }

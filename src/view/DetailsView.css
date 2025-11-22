@@ -113,6 +113,7 @@
   margin-bottom: 0.5em;
   margin-left: 0.33em
 }
+
 .tabs-container-content-text .image-wrap img {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
@@ -160,7 +161,7 @@
   justify-content: center;
 }
 
-.media-list .media-set-list >div {
+.media-list .media-set-list>div {
   margin-bottom: 0.5em;
 }
 
@@ -220,10 +221,6 @@
   max-width: 28em;
 }
 
-.app.mobile .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
-  max-width: 100%;
-}
-
 .tabs-container-content-map .media-list .media-type-image .image-wrap img {
   max-height: 20em;
   max-width: 24em;
@@ -274,4 +271,10 @@ path {
 
 .image-in-view-wrap.fullscreenable-image {
   width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
+    max-width: 100%;
+  }
 }

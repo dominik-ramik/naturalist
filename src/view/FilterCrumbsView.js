@@ -25,7 +25,7 @@ export let FilterCrumbsView = {
                             cat = Checklist.getMetaForDataPath(dataPath).searchCategory;
                         }
 
-                        crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: selectedItem, color: Checklist.filter[type][dataPath].color }));
+                        crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: selectedItem, color: getGradedColor(type, "crumb") }));
                     });
                 } else if (Checklist.filter[type][dataPath].type == "number") {
                     if (Checklist.filter[type][dataPath].numeric.operation != "") {
@@ -36,7 +36,7 @@ export let FilterCrumbsView = {
                         }
 
                         let title = Checklist.filter.numericFilterToHumanReadable(dataPath, Checklist.filter[type][dataPath].numeric.operation, Checklist.filter[type][dataPath].numeric.threshold1, Checklist.filter[type][dataPath].numeric.threshold2, true);
-                        crumbs.push(m(Crumb, { type: type, category: Checklist.getMetaForDataPath(dataPath).searchCategory, dataPath: dataPath, title: title, color: Checklist.filter[type][dataPath].color }));
+                        crumbs.push(m(Crumb, { type: type, category: Checklist.getMetaForDataPath(dataPath).searchCategory, dataPath: dataPath, title: title, color: getGradedColor(type, "crumb") }));
                     };
                 }
             });
@@ -45,7 +45,7 @@ export let FilterCrumbsView = {
 
         if (Checklist.filter.text.length > 0) {
 
-            crumbs.push(m(Crumb, { type: "text", category: _t("filter_cat_text"), dataPath: "", title: Checklist.filter.text, color: getGradedColor("text") }));
+            crumbs.push(m(Crumb, { type: "text", category: _t("filter_cat_text"), dataPath: "", title: Checklist.filter.text, color: getGradedColor("text", "crumb") }));
         }
 
         return m(".filter-crumbs", [

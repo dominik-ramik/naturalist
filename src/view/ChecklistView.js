@@ -27,13 +27,8 @@ export let ChecklistView = {
     ChecklistView.totalItemsToShow = this.itemsNumberStep;
   },
   view: function () {
-    let display =
-      AppLayoutView.mobile() && AppLayoutView.display != "checklist"
-        ? "display: none; "
-        : "";
-
     if (!Checklist._isDataReady) {
-      return m(".checklist[style=" + display + "]");
+      return m(".checklist");
     }
 
     let currentQuery = JSON.stringify(Checklist.queryKey());
@@ -107,9 +102,7 @@ export let ChecklistView = {
     }
 
     return m(
-      ".checklist[style=" +
-      display +
-      "background: linear-gradient(45deg, " +
+      ".checklist[style=background: linear-gradient(45deg, " +
       Checklist.getThemeHsl("dark") +
       ", " +
       Checklist.getThemeHsl("light") +
@@ -126,10 +119,8 @@ export let ChecklistView = {
             ),
           ])
           : m(".checklist-inner-wrapper", [
-            AppLayoutView.mobile() && !Checklist.filter.isEmpty()
-              ? mobileFilterOnNotice()
-              : null,
             Checklist._isDraft ? draftNotice() : null,
+            !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
             Settings.viewType() === "view_details" &&
               ChecklistView.displayMode != ""
               ? temporaryFilterNotice()
@@ -270,7 +261,7 @@ function circlePackingView() {
 let Notice = {
   view: function (vnode) {
     return m(
-      ".temporary-notice",
+      ".temporary-notice" + (vnode.attrs.additionalClasses === undefined ? "" : "." + vnode.attrs.additionalClasses),
       {
         onclick: vnode.attrs.action,
       },
@@ -297,6 +288,22 @@ let Notice = {
   },
 };
 
+function mobileFilterOnNotice() {
+  return m(Notice, {
+    additionalClasses: ".mobile-filter-on",
+    action: function () {
+      ChecklistView.displayMode = "";
+    },
+    notice: m.trust(
+      _tf(
+        "mobile_filter_notice",
+        [Settings.pinnedSearches.getHumanNameForSearch()],
+        true
+      )
+    ),
+  });
+}
+
 function draftNotice() {
   return m(Notice, {
     action: function () {
@@ -310,21 +317,6 @@ function draftNotice() {
       icon: "manage",
       text: _t("temporary_draft_goto_manage"),
     },
-  });
-}
-
-function mobileFilterOnNotice() {
-  return m(Notice, {
-    action: function () {
-      ChecklistView.displayMode = "";
-    },
-    notice: m.trust(
-      _tf(
-        "mobile_filter_notice",
-        [Settings.pinnedSearches.getHumanNameForSearch()],
-        true
-      )
-    ),
   });
 }
 

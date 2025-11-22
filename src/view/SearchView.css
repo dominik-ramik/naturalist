@@ -1,11 +1,11 @@
+.search {
+    flex-grow: 1;
+}
+
 ul.filter-buttons {
     display: flex;
     flex-wrap: wrap;
     padding-left: 0;
-}
-
-ul.filter-buttons.taxa-filter li:first-child {
-    flex: 1 0 50%;
 }
 
 ul.filter-buttons li {
@@ -13,18 +13,108 @@ ul.filter-buttons li {
     flex-basis: 50%;
 }
 
-.app.mobile ul.filter-buttons li {
-    flex-basis: 50%;
-}
-
+/* FIX: Make search-box a flex container for the button */
 .search-box {
     padding: var(--pad-small);
+    display: flex;
+    /* Enable flex layout for search input + button */
+    flex-wrap: nowrap;
+    align-items: center;
 }
 
-#free-text {
+.search-box input[type=search] {
+    flex-grow: 1;
+    /* Text input takes up available space */
     padding: var(--pad-large);
     font-family: var(--font-normal);
     width: 100%;
     border-radius: 0.25em;
     border: 0px solid transparent;
+}
+
+.search-box .filter-button {
+    align-items: center;
+    border: 0px solid transparent;
+    padding: 0.5em 0.75em;
+    margin-left: var(--pad-small);
+    cursor: pointer;
+    border-radius: 0.25em;
+    height: 2.35em;
+    background-color: white;
+    color: black;
+    max-width: 12em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-box .filter-button img {
+    height: 1.5em;
+    min-height: 1.5em;
+    margin-right: 0.5em;
+}
+
+/* NEW: Toggle Button Styling (Visible on Mobile Only) */
+.search-box .mobile-filter-toggle {
+    display: none;
+    /* Hidden by default (desktop) */
+}
+
+.search-box .mobile-clear-filters {
+    display: none;
+    /* Hidden by default (desktop) */
+}
+
+/* MOBILE LAYOUT AND CLEANUP (Max Width 1200px) */
+@media (max-width: 1200px) {
+    /* Filters should stack vertically on mobile (single column) */
+    ul.filter-buttons{
+        margin-top: 0px;
+        margin-bottom: 0.5em;
+    }
+
+    ul.filter-buttons li {
+        flex-basis: 25%;
+    }
+
+    /* Show the toggle button on mobile */
+    .search-box .mobile-filter-toggle {
+        display: flex;
+    }
+
+    .search-box .mobile-clear-filters {
+        display: flex;
+    }
+
+    .search-box .mobile-filter-toggle .toggle-icon {
+        height: 1em;
+        margin-left: 0.5em;
+    }
+
+    /* Style for the filter groups wrapper */
+    .filter-groups-wrapper {
+        display: flex;
+        flex-direction: column;
+        border-top: 2px solid white;
+    }
+
+    /* Ensure search box padding is correct for mobile */
+    .search-box {
+        padding: var(--pad-small);
+    }
+}
+
+@media (max-width: 840px) {
+    /* Filters should stack vertically on mobile (single column) */
+
+    ul.filter-buttons li {
+        flex-basis: 33%;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Filters should stack vertically on mobile (single column) */
+
+    ul.filter-buttons li {
+        flex-basis: 50%;
+    }
 }

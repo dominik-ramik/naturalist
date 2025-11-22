@@ -174,6 +174,18 @@ let translations = {
     en: "Clear filter",
     fr: "Effacer le filtre",
   },
+  reset_filter_mobile: {
+    en: "Clear",
+    fr: "Effacer",
+  },
+  hide_filters: {
+    en: "Hide filters",
+    fr: "Masquer les filtres",
+  },
+  show_filters: {
+    en: "Show filters",
+    fr: "Afficher les filtres",
+  },
   problem_loading_data: {
     en: "Problem loading data",
     fr: "Problème en chargeant les données",

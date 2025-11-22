@@ -643,16 +643,26 @@ export function filterMatches(data) {
   return false;
 }
 
-export function getGradedColor(type, index) {
+export function getGradedColor(type, context) {
+  let lightness = "700";
+  
+  switch (context) {
+    case "filter":
+      lightness = "200";
+      break;
+      case "crumb":
+      lightness = "700";
+      break;
+  }
+
   if (type == "taxa") {
-    return materialColors["lightGreen"]["700"];
+    return materialColors["lightGreen"][lightness];
   }
   if (type == "data") {
-    //return materialColors[usableHues[index]]["400"];
-    return materialColors["orange"]["700"];
+    return materialColors["lightGreen"][lightness];
   }
   if (type == "text") {
-    return materialColors["blue"]["700"];
+    return materialColors["blue"][lightness];
   }
 
   return "#000000";
