@@ -326,6 +326,7 @@ ul.stats {
     display: flex;
     flex-direction: column;
     overflow-x: auto;
+    font-size: 100%;
   }
 
   .filter-dropdown .inner-dropdown-area {
