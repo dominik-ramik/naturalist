@@ -90,11 +90,4 @@
   .interaction-area.collapsed .search-box {
     display: flex !important;
   }
-
-  /* Expanded content scrolling for the filters */
-  .filter-groups-wrapper {
-    overflow-y: auto;
-    max-height: 50vh;
-    padding-top: var(--pad-small);
-  }
 }

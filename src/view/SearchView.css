@@ -13,23 +13,25 @@ ul.filter-buttons li {
     flex-basis: 50%;
 }
 
-/* FIX: Make search-box a flex container for the button */
 .search-box {
     padding: var(--pad-small);
     display: flex;
-    /* Enable flex layout for search input + button */
     flex-wrap: nowrap;
     align-items: center;
 }
 
 .search-box input[type=search] {
     flex-grow: 1;
-    /* Text input takes up available space */
     padding: var(--pad-large);
     font-family: var(--font-normal);
     width: 100%;
     border-radius: 0.25em;
     border: 0px solid transparent;
+}
+
+.search-box input[type=search]:focus {
+    border: 0px;
+    outline: none;
 }
 
 .search-box .filter-button {
@@ -39,7 +41,7 @@ ul.filter-buttons li {
     margin-left: var(--pad-small);
     cursor: pointer;
     border-radius: 0.25em;
-    height: 2.35em;
+    height: 2.85em;
     background-color: white;
     color: black;
     max-width: 12em;
@@ -66,8 +68,9 @@ ul.filter-buttons li {
 
 /* MOBILE LAYOUT AND CLEANUP (Max Width 1200px) */
 @media (max-width: 1200px) {
+
     /* Filters should stack vertically on mobile (single column) */
-    ul.filter-buttons{
+    ul.filter-buttons {
         margin-top: 0px;
         margin-bottom: 0.5em;
     }
@@ -94,13 +97,23 @@ ul.filter-buttons li {
 
     /* Style for the filter groups wrapper */
     .filter-groups-wrapper {
+        overflow-y: auto;
+        max-height: 50vh;
+        padding-top: var(--pad-small);
         display: flex;
         flex-direction: column;
+        font-size: 120%;
+        border-bottom: 1px solid #9d9d9d;
+        margin-bottom: 0.2em;
     }
 
     /* Ensure search box padding is correct for mobile */
     .search-box {
-        padding: var(--pad-small);
+        padding: 0.15rem;
+    }
+
+    .search-box input[type=search] {
+        font-size: 100%;
     }
 }
 

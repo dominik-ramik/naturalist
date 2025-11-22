@@ -6,7 +6,7 @@ import { FilterCrumbsView } from "./FilterCrumbsView.js";
 // DELETE: import { AppLayoutView } from "./AppLayoutView.js";
 
 export let InteractionAreaView = {
-  isExpanded: false,
+  isExpanded: true,
 
   view: function (vnode) {
     const expandedClass = InteractionAreaView.isExpanded ? "expanded" : "collapsed";

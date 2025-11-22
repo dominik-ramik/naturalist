@@ -71,8 +71,8 @@
   border: 1px solid black;
   margin-left: var(--pad-small);
   margin-right: var(--pad-small);
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
+  padding-top: 0em;
+  padding-bottom: 0em;
   max-height: 75vh;
   top: 2.5em;
   bottom: 0;
@@ -191,12 +191,11 @@
   border-radius: var(--pad-large);
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   background-color: #ffffff87;
-  border: 1px solid white !important;
+  border: 1px solid #a3a3a3  !important;
   padding-left: 0em;
   list-style: none;
   display: block;
-  margin: var(--pad-small);
-  margin-bottom: var(--pad-large);
+  margin: var(--pad-large);
 }
 
 .inner-dropdown-area.numeric .numeric-filter-buttons {
@@ -317,7 +316,6 @@ ul.stats {
   .filter-dropdown .dropdown-area {
     position: fixed;
     bottom: 1em;
-    font-size: 125%;
     display: flex;
     flex-direction: column;
     overflow-x: auto;
@@ -326,7 +324,6 @@ ul.stats {
     margin-left: auto;
     margin-right: auto;
     margin-top: auto;
-    font-size: 110%;
     overflow-x: hidden;
   }
 
