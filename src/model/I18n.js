@@ -102,10 +102,6 @@ let translations = {
     en: "Back to search",
     fr: "Rétour à la recherche",
   },
-  back_to_checklist: {
-    en: "Checklist results",
-    fr: "Liste des résultats",
-  },
   float_filter: {
     en: "Filters",
     fr: "Filtres",
@@ -935,7 +931,7 @@ let translations = {
     en: "Select a map above",
     fr: "Sélectionnez une carte ci-dessus",
   },
-  "back_to_upload_small": {
+  back_to_upload_small: {
     en: "Back to upload",
     fr: "Retour au téléchargement",
   },

@@ -675,122 +675,111 @@ let DropdownNumber = function (initialVnode) {
   }
 
   function drawHistogram(dataAll, dataPossible) {
-    dataAll = dataAll.filter(function (item) {
-      if (item !== null && item !== undefined && !isNaN(item)) {
-        return item;
-      }
-    });
-    dataPossible = dataPossible.filter(function (item) {
-      if (item !== null && item !== undefined && !isNaN(item)) {
-        return item;
-      }
-    });
+    const NUMBER_OF_BINS = 20;
+
+    // 1. Clean Data
+    const cleanDataAll = dataAll.filter(d => d !== null && d !== undefined && !isNaN(d));
+    const cleanDataPossible = dataPossible.filter(d => d !== null && d !== undefined && !isNaN(d));
 
     let wrapper = document.getElementById("histogram_" + dropdownId);
-    if (wrapper.getElementsByTagName("svg").length > 0) {
-      for (const element of wrapper.getElementsByTagName("svg")) {
-        element.remove();
-      }
+    if (!wrapper) return;
+
+    // Clear previous SVG
+    d3.select(wrapper).selectAll("svg").remove();
+
+    // 2. Setup Dimensions
+    const margin = { top: 10, right: 10, bottom: 30, left: 45 };
+    const width = wrapper.getBoundingClientRect().width - margin.left - margin.right;
+    const height = wrapper.getBoundingClientRect().height - margin.top - margin.bottom;
+
+    // 3. Create Scale with "Nice" Domain
+    // We use d3.extent to find min/max, then .nice() to round them out.
+    // This prevents "runt" bins at the edges.
+    let [minVal, maxVal] = d3.extent(cleanDataAll);
+
+    // Handle edge case: no data or singular data point
+    if (minVal === undefined) { minVal = 0; maxVal = 0; }
+    if (minVal === maxVal) {
+      minVal -= 0.5;
+      maxVal += 0.5;
     }
 
-    let margin = { top: 10, right: 10, bottom: 40, left: 30 };
-    let width =
-      wrapper.getBoundingClientRect().width - margin.left - margin.right;
-    let height =
-      wrapper.getBoundingClientRect().height - margin.top - margin.bottom;
+    const x = d3.scaleLinear()
+      .domain([minVal, maxVal])
+      .nice() // key fix: extends domain to nearest round numbers (e.g., 0 to 220)
+      .range([0, width]);
 
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#histogram_" + dropdownId)
+    // 4. Generate Bins
+    // Use the ticks from the "nice" scale as thresholds. 
+    // This ensures bins align perfectly with the axis ticks.
+    const thresholds = x.ticks(NUMBER_OF_BINS);
+
+    const histogram = d3.histogram()
+      .value(d => d)
+      .domain(x.domain()) // Use the nice domain for binning
+      .thresholds(thresholds);
+
+    const binsAll = histogram(cleanDataAll);
+    const binsPossible = histogram(cleanDataPossible);
+
+    // 5. Y Scale
+    const y = d3.scaleLinear()
+      .range([height, 0])
+      .domain([0, d3.max(binsAll, d => d.length) || 1]);
+
+    // 6. Render SVG
+    const svg = d3.select(wrapper)
       .append("svg")
-      .attr(
-        "viewBox",
-        "0 0 " +
-        wrapper.getBoundingClientRect().width +
-        " " +
-        wrapper.getBoundingClientRect().height
-      )
+      .attr("viewBox", `0 0 ${wrapper.getBoundingClientRect().width} ${wrapper.getBoundingClientRect().height}`)
       .attr("style", "background-color: white;")
       .attr("class", "clickable")
       .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // get the data
+    // X Axis
+    svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x)
+        .ticks(5) // Limit the number of labels to prevent overcrowding
+        .tickFormat(d3.format("~f")) // "2000" instead of "2,000" or "2k"
+      );
 
-    // X axis: scale and draw:
-    let x = d3
-      .scaleLinear()
-      .domain([Math.min(...dataAll), Math.max(...dataAll)]) // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
-      .range([0, width]);
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-      .style("text-anchor", "end")
-      .attr("dx", "-.8em")
-      .attr("dy", ".15em")
-      .attr("transform", "rotate(-65)");
+    // Y Axis
+    svg.append("g")
+      .call(d3.axisLeft(y).ticks(5));
 
-    // set the parameters for the histogram
-    let histogram = d3
-      .histogram()
-      .value(function (d) {
-        return d;
-      }) // I need to give the vector of value
-      .domain(x.domain()) // then the domain of the graphic
-      .thresholds(x.ticks(15)); // then the numbers of bins
+    // 7. Draw Bars
+    // Helper functions to add 1px visual gap between bars
+    // Since bins are now equal width and "nice", the widths will be large enough to see.
+    const getBarX = (d) => x(d.x0) + 1;
+    const getBarWidth = (d) => Math.max(0, x(d.x1) - x(d.x0) - 1);
 
-    // And apply this function to data to get the bins
-    let bins = histogram(dataAll);
-    let bins2 = histogram(dataPossible);
-
-    // Y axis: scale and draw:
-    let y = d3.scaleLinear().range([height, 0]);
-    y.domain([
-      0,
-      d3.max(bins, function (d) {
-        return d.length;
-      }),
-    ]); // d3.hist has to be called before the Y axis obviously
-    svg.append("g").call(d3.axisLeft(y));
-
-    // append the bar rectangles to the svg element
-    svg
-      .selectAll("rect")
-      .data(bins)
+    // Background Bars (All Data)
+    svg.selectAll(".bar-all")
+      .data(binsAll)
       .enter()
       .append("rect")
-      .attr("x", 1)
-      .attr("transform", function (d) {
-        return "translate(" + x(d.x0) + "," + y(d.length) + ")";
-      })
-      .attr("width", function (d) {
-        return x(d.x1) - x(d.x0) - 1;
-      })
-      .attr("height", function (d) {
-        return height - y(d.length);
-      })
+      .attr("class", "bar-all")
+      .attr("x", getBarX)
+      .attr("y", d => y(d.length))
+      .attr("width", getBarWidth)
+      .attr("height", d => height - y(d.length))
       .style("fill", "#d3d3d3");
 
-    svg
-      .selectAll("rect2")
-      .data(bins2)
+    // Foreground Bars (Filtered Data)
+    svg.selectAll(".bar-filtered")
+      .data(binsPossible)
       .enter()
       .append("rect")
-      .attr("x", 1)
-      .attr("transform", function (d) {
-        return "translate(" + x(d.x0) + "," + y(d.length) + ")";
-      })
-      .attr("width", function (d) {
-        return x(d.x1) - x(d.x0) - 1;
-      })
-      .attr("height", function (d) {
-        return height - y(d.length);
-      })
+      .attr("class", "bar-filtered")
+      .attr("x", getBarX)
+      .attr("y", d => y(d.length))
+      .attr("width", getBarWidth)
+      .attr("height", d => height - y(d.length))
       .style("fill", Checklist.getThemeHsl("light"))
       .style("opacity", 0.6);
   }
+
 
   return {
     oninit: function (vnode) {

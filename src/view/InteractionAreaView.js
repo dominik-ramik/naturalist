@@ -26,24 +26,25 @@ export let InteractionAreaView = {
         m(".interaction-area-branding-wrapper", [
           vnode.children,
           // Branding
-          m(".branding", _t("powered_by_nl")),
 
-          // Citation
-          !Checklist.getProjectHowToCite() ||
-            Checklist.getProjectHowToCite().trim() == ""
-            ? null
-            : m(
-              ".desktop-cite",
-              m("div", [
-                m("b[style=margin-right: 0.75em;]", _t("how_to_cite")),
-                m(
-                  "span[style=user-select: all]",
-                  Checklist.getProjectHowToCite()
-                ),
-              ])
-            ),
         ]),
-      ]
+      ],
+      m(".branding", _t("powered_by_nl")),
+
+      // Citation
+      !Checklist.getProjectHowToCite() ||
+        Checklist.getProjectHowToCite().trim() == ""
+        ? null
+        : m(
+          ".desktop-cite",
+          m("div", [
+            m("b[style=margin-right: 0.75em;]", _t("how_to_cite")),
+            m(
+              "span[style=user-select: all]",
+              Checklist.getProjectHowToCite()
+            ),
+          ])
+        ),
     );
   },
 };

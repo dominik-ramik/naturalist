@@ -317,6 +317,8 @@ function backButton() {
     ".menu-button.clickable",
     {
       onclick: function () {
+        routeTo("/checklist");
+        return;
         // Use history.back() for better UX on detail pages, then fallback to /checklist
         if (window.history.length > 1) {
           window.history.back();
@@ -330,7 +332,7 @@ function backButton() {
         m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
         m(
           ".menu-button-description",
-          _t("back_to_checklist") // Use the clearer description
+          _t("back_to_search")
         ),
       ]
       : null
