@@ -145,7 +145,14 @@ function parseRegionString(inputString) {
     notes: [], // Always array
   };
 
-  if (!inputString || inputString.trim() === "") {
+  if (inputString === null || inputString === undefined) {
+    return result;
+  }
+
+  // FORCE STRING: Handle numbers (e.g. 2024) or booleans being passed in
+  const safeStringSource = String(inputString);
+
+  if (safeStringSource.trim() === "") {
     return result;
   }
 
