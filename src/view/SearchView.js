@@ -56,10 +56,21 @@ let SearchBox = {
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + _t("free_text_search") + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
                     Checklist.filter.text = e.target.value;
+                    
+                    // Clear the previous timer
+                    clearTimeout(SearchBox.typingTimer);
+                    
+                    // Set a new timer to commit to URL after 500ms
+                    SearchBox.typingTimer = setTimeout(function () {
+                        Checklist.filter.commit();
+                    }, 500);
                 },
                 onkeydown: function (e) {
                     if (e.key == "Enter") {
-                        routeTo("/checklist");
+                        // Cancel any pending timer to avoid double-commit
+                        clearTimeout(SearchBox.typingTimer);
+                        // Commit immediately
+                        Checklist.filter.commit();
                     }
                 }
             }),
