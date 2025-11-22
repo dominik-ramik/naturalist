@@ -25,10 +25,8 @@ export let DataManager = function () {
 
   function compileChecklist(checkAssetsSize) {
     if (compiledChecklistCache) {
-      console.log("## Using cached checklist");
       return compiledChecklistCache;
     }
-    console.log("## Compiling new checklist");
 
     let currentDate = new Date();
 
@@ -95,6 +93,7 @@ export let DataManager = function () {
     // Now that all F: directives are processed, gather assets
     checklist.general.assets = gatherPreloadableAssets();
 
+    //We can output this here as the user has the source data anyways
     console.log("New checklist", checklist);
 
     compiledChecklistCache = checklist; // Cache the compiled checklist
@@ -297,7 +296,7 @@ export let DataManager = function () {
       });
 
       // Add assets from F: directives, avoiding duplicates
-      console.log("Assets from F: directives to add:", assetsFromFDirectives);
+      console.log("Assets from F: directives to add:", assetsFromFDirectives.length);
 
       assetsFromFDirectives.forEach(function (asset) {
         if (!assets.includes(asset)) {
@@ -760,8 +759,6 @@ export let DataManager = function () {
   }
 
   function loadData(table) {
-
-    console.log("## Loading data, invalidating checklist cache");
     compiledChecklistCache = null; // Invalidate compiled checklist cache
 
     if (table == null) {
