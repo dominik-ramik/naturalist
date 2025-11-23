@@ -3,32 +3,33 @@ import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 const checklistURL = "./usercontent/data/checklist.json";
 const checklistFileName = "checklist.json";
 
+// --- CACHE DEFINITIONS ---
 let appCacheNameBase = "static";
 let appCacheName = appCacheNameBase + "-v" + import.meta.env.VITE_APP_VERSION;
 let userCacheName = "user";
+// NEW: Dedicated cache for the critical data file
+let dataCacheName = "checklist-data";
 
 let communicationPort;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
-// 1. WORKBOX CLEANUP (Cleans precache-v... files)
+// 1. WORKBOX CLEANUP
 cleanupOutdatedCaches();
 
-// 2. FORCE IMMEDIATE ACTIVATION (The "Emergency Valve")
-// This ensures the new SW installs immediately, even if the app is crashed.
+// 2. FORCE IMMEDIATE ACTIVATION
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// 3. MANUAL CACHE CLEANUP (The "Nuclear Option")
-// This runs immediately after 'install'. We delete ANY cache that is 
-// 1) A 'static-' cache AND 2) NOT the current version.
+// 3. CACHE CLEANUP
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    // Check if it's an old static cache
+                    // Only delete old STATIC caches.
+                    // Explicitly ignore 'user' and 'checklist-data' caches.
                     if (cacheName.startsWith(appCacheNameBase) && cacheName !== appCacheName) {
                         console.log(`[SW] Deleting old cache: ${cacheName}`);
                         return caches.delete(cacheName);
@@ -36,72 +37,92 @@ self.addEventListener("activate", (event) => {
                 })
             );
         }).then(() => {
-            // Take control of all clients immediately
             return self.clients.claim();
         })
     );
 });
 
-//* Cache first
+//* Fetch Strategy
 self.addEventListener('fetch', function (e) {
-    let isChecklistHeadReques = (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName));
+    let isChecklistHeadRequest = (e.request.method.toLowerCase() == "head" && e.request.url.toLowerCase().endsWith("/" + checklistFileName));
     let isUpdatePHPRequest = e.request.url.toLowerCase().includes("/update.php");
 
-    if (isChecklistHeadReques || isUpdatePHPRequest) {
-        let response = null;
-        e.respondWith((async function () {
-            try {
-                response = await fetch(e.request, { cache: "no-cache" });
-            }
-            catch (ex) {
-                console.error("[SW] Fetching error", e.request.url, ex);
-            }
-
-            return response;
-        })());
-
+    // A. Network-Only requests (HEAD checks, PHP scripts)
+    if (isChecklistHeadRequest || isUpdatePHPRequest) {
+        e.respondWith(fetch(e.request, { cache: "no-cache" }).catch((ex) => {
+            return new Response(null, { status: 404, statusText: "Offline" });
+        }));
         return;
     }
 
-    e.respondWith((async function () {
+    // B. Network-Only for Markdown files (User content)
+    const isUserMdFile = (
+        e.request.url.toLowerCase().includes("/usercontent/") &&
+        e.request.url.toLowerCase().endsWith(".md")
+    );
+    if (isUserMdFile) {
+        e.respondWith(fetch(e.request, { cache: "no-cache" }).catch((ex) => {
+            return new Response("", { status: 404 });
+        }));
+        return;
+    }
 
-        // Do not serve from cache for /usercontent/ ... .md files
-        const isUserMdFile = (
-            e.request.url.toLowerCase().includes("/usercontent/") &&
-            e.request.url.toLowerCase().endsWith(".md")
-        );
-        if (isUserMdFile) {
-            try {
-                return await fetch(e.request, { cache: "no-cache" });
-            } catch (ex) {
-                console.error("[SW] Fetching error (md file)", e.request.url, ex);
-                return new Response("", { status: 404 });
+    // C. STALE-WHILE-REVALIDATE for Checklist.json
+    // 1. Serve from 'checklist-data' cache immediately.
+    // 2. Update 'checklist-data' cache in background.
+    if (e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
+        e.respondWith((async function () {
+            const dataCache = await caches.open(dataCacheName);
+            let cachedResponse = await dataCache.match(e.request);
+
+            // 1. SAFETY NET: If new cache is empty, check legacy caches
+            if (!cachedResponse) {
+                const userCache = await caches.open(userCacheName); // Check old 'user' cache
+                cachedResponse = await userCache.match(e.request);
+
+                if (cachedResponse) {
+                    // Copy to new cache so we don't have to check legacy next time
+                    dataCache.put(e.request, cachedResponse.clone());
+                }
             }
-        }
 
-        // IMPORTANT: Because we deleted old caches in 'activate', 
-        // this match will now ONLY find assets in the current 'appCacheName'
-        // or the 'user' cache. The broken v3.0.8 assets are gone.
+            // 2. NETWORK UPDATE: Always try to update in the background
+            const networkPromise = fetch(e.request).then(networkResponse => {
+                if (networkResponse && networkResponse.status === 200) {
+                    dataCache.put(e.request, networkResponse.clone());
+                }
+                return networkResponse;
+            });
+
+            // 3. RETURN STRATEGY: 
+            // If we have data (new or old), return it fast & update in background.
+            if (cachedResponse) {
+                e.waitUntil(networkPromise.catch(() => { }));
+                return cachedResponse;
+            }
+
+            // If we have absolutely nothing, we must wait for the network.
+            return networkPromise;
+        })());
+        return;
+    }
+
+    // D. Cache-First Strategy for all other assets (App Shell & Images)
+    e.respondWith((async function () {
         const r = await caches.match(e.request);
         if (r) { return r; }
 
-        //make sure we always have a fresh reply for checklist data
-        let response = null;
-        if (e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
-            response = await fetch(e.request, { cache: "no-cache" });
-        } else {
-            response = await fetch(e.request).then(function (response) {
-                if (!response.ok && response.status != 304) {
-                    console.log("Fetching problems", response.status, e.request.url);
-                    if (communicationPort) communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
-                    return null;
-                }
-                return response;
-            });
-        }
-        //
-        let cache = null;
+        const response = await fetch(e.request).then(function (response) {
+            if (!response.ok && response.status != 304) {
+                if (communicationPort) communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
+                return null;
+            }
+            return response;
+        });
 
+        if (!response) return null;
+
+        let cache = null;
         function urlForUserCache(url) {
             if (url.includes("/usercontent/") && url.endsWith(".md")) return false;
             return url.includes("/usercontent/") && !url.includes("/usercontent/identity");
@@ -113,7 +134,7 @@ self.addEventListener('fetch', function (e) {
             cache = await caches.open(appCacheName);
         }
 
-        if (cache !== null && response?.status == 200 && e.request.method.toLowerCase() != "head") {
+        if (cache !== null && response.status == 200 && e.request.method.toLowerCase() != "head") {
             cache.put(e.request, response.clone());
         }
 
@@ -121,7 +142,7 @@ self.addEventListener('fetch', function (e) {
     })());
 });
 
-// ... (Keep your existing refreshCachedChecklistData, message listener, and handleAppMessage functions here exactly as they were)
+// Update function now uses the dedicated cache
 function refreshCachedChecklistData() {
     let dataRequest = new Request(checklistURL, {
         method: 'GET',
@@ -129,7 +150,8 @@ function refreshCachedChecklistData() {
     });
     fetch(dataRequest)
         .then(function (response) {
-            caches.open(appCacheName).then(function (cache) {
+            // FIX: Save to dedicated data cache
+            caches.open(dataCacheName).then(function (cache) {
                 cache.put(dataRequest.clone(), response.clone());
             });
         })
@@ -164,8 +186,6 @@ async function handleAppMessage(message) {
         self.skipWaiting();
     }
     else if (message.type === "CACHE_ASSETS" && Array.isArray(message.assets)) {
-        // ... (Keep your existing CACHE_ASSETS logic)
-        // Utility to check internet connectivity
         const checkInternetConnection = async () => {
             if (!navigator.onLine) return false;
             try {
@@ -179,11 +199,11 @@ async function handleAppMessage(message) {
         (async () => {
             const isOnline = await checkInternetConnection();
             if (!isOnline) {
-                console.log("[SW] Skipping asset caching: offline or network issue.");
                 return;
             }
 
             try {
+                // We still use userCacheName for images/assets
                 const cache = await caches.open(userCacheName);
                 const assets = message.assets || [];
                 const assetMap = new Map();
@@ -198,18 +218,21 @@ async function handleAppMessage(message) {
 
                 const cachedRequests = await cache.keys();
                 for (const request of cachedRequests) {
+                    // Safety check: though checklist.json should be in dataCacheName now,
+                    // we keep this check just in case a migration happens weirdly.
                     if (request.url.toLowerCase().endsWith("/" + checklistFileName)) {
-                        continue; // Never purge checklist.json
+                        continue;
                     }
 
                     if (!assetMap.has(request.url)) {
                         await cache.delete(request);
-                        console.log("[SW] Purged abandoned asset from cache:", request.url);
                     }
                 }
 
+                // Fetch missing assets...
                 const missingAssets = [];
                 for (const [absUrl, relUrl] of assetMap) {
+                    // Check specific user cache first
                     const match = await cache.match(absUrl);
                     if (!match) {
                         missingAssets.push(relUrl);
@@ -217,15 +240,12 @@ async function handleAppMessage(message) {
                 }
 
                 if (missingAssets.length > 0) {
-                    console.log(`[SW] Attempting to cache ${missingAssets.length} new assets...`);
                     await Promise.all(missingAssets.map(async (url) => {
                         try {
                             const req = new Request(url);
                             const res = await fetch(req);
                             if (res.ok) {
                                 await cache.put(req, res);
-                            } else {
-                                console.warn(`[SW] Failed to fetch ${url}: ${res.status}`);
                             }
                         } catch (error) {
                             console.warn(`[SW] Network error for ${url}`, error);

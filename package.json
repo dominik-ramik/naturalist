@@ -1,6 +1,6 @@
 {
   "name": "naturalist",
-  "version": "3.0.17",
+  "version": "3.0.18",
   "description": "The flexible taxonomic checklist app",
   "main": "index.html",
   "scripts": {
