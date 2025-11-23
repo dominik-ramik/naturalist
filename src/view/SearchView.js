@@ -55,21 +55,35 @@ let SearchBox = {
         return m(".search-box", [
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + _t("free_text_search") + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
-                    Checklist.filter.text = e.target.value;
+                    const oldText = Checklist.filter.text;
+                    const newText = e.target.value;
                     
-                    // Clear the previous timer
-                    clearTimeout(SearchBox.typingTimer);
+                    Checklist.filter.text = newText;
                     
-                    // Set a new timer to commit to URL after 500ms
-                    SearchBox.typingTimer = setTimeout(function () {
+                    // Clear any existing timer
+                    if (SearchBox.typingTimer) {
+                        clearTimeout(SearchBox.typingTimer);
+                        SearchBox.typingTimer = null;
+                    }
+                    
+                    // LOGIC: 
+                    // 1. If starting a search (oldText was empty), commit immediately to establish URL state.
+                    // 2. If clearing a search (newText is empty), commit immediately to reset view.
+                    // 3. Otherwise (refining search), debounce to avoid flooding history.
+                    if (oldText.length === 0 || newText.length === 0) {
                         Checklist.filter.commit();
-                    }, 500);
+                    } else {
+                        SearchBox.typingTimer = setTimeout(function () {
+                            Checklist.filter.commit();
+                        }, 500);
+                    }
                 },
                 onkeydown: function (e) {
                     if (e.key == "Enter") {
-                        // Cancel any pending timer to avoid double-commit
-                        clearTimeout(SearchBox.typingTimer);
-                        // Commit immediately
+                        if (SearchBox.typingTimer) {
+                            clearTimeout(SearchBox.typingTimer);
+                            SearchBox.typingTimer = null;
+                        }
                         Checklist.filter.commit();
                     }
                 }
