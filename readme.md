@@ -6,6 +6,8 @@ _The flexible taxonomic checklist app_
 
 [[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/)]
 
+▶️ [Watch Naturalist v3 features vide on YouTube](https://youtu.be/qxJAtrlJO8I)
+
 ## About
 
 NaturaList is an open source flexible taxonomic checklist web app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies. It doesn’t come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.
