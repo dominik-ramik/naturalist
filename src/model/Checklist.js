@@ -484,6 +484,13 @@ export let Checklist = {
     return Checklist._data.versions[Checklist.getCurrentLanguage()].name || "";
   },
 
+  getDataCompilerVersion: function () {
+    if (!this._isDataReady) {
+      return null;
+    }
+    return Checklist._data?.general?.compiledForVersion;
+  },
+
   getLastUpdatedTimestamp: function () {
     if (!this._isDataReady) {
       return null;

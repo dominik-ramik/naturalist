@@ -45,6 +45,7 @@ export let DataManager = function () {
 
     let checklist = {
       general: {
+        compiledForVersion: import.meta.env.VITE_APP_VERSION,
         lastUpdate: currentDateString,
         defaultVersion: data.common.languages.defaultLanguageCode,
         bibliography: gatherReferences(),
