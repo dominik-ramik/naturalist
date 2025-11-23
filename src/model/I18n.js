@@ -446,6 +446,10 @@ let translations = {
     en: "A critical issue prevents the app from working correctly. If you just updated to a new version, it may be that  Please try to refresh the page or contact the administrator.",
     fr: "",
   },
+  dm_total_precache_size_too_large: {
+    en: "Total precache size $1 MB exceeds the configured maximum of $2 MB. Consider compressing your assets or increasing the limit in the configuration.",
+    fr: "La taille totale du précache de $1 Mo dépasse le maximum configuré de $2 Mo. Envisagez de compresser vos ressources ou d'augmenter la limite dans la configuration.",
+  },
   include_match_children: {
     en: "Show child taxa of taxa that match the filters",
     fr: "Afficher les taxons enfants des taxons qui correspondent aux filtres",

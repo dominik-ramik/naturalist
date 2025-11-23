@@ -49,10 +49,10 @@ const SubViews = {
     }
 
     return [
+      renderUploaderComponent(),
       Logger.hasErrors()
         ? m(".manage-message", _t("data_upload_import_dirty"))
         : null,
-      renderUploaderComponent()
     ];
   },
 
@@ -227,15 +227,19 @@ function renderUploaderComponent() {
       let extractor = new ExcelBridge(evt.target.result);
       ManageStore.dataman.loadData(extractor, checkAssetsSize);
 
+      // Pre-calculate the compiled checklist to trigger F-directive/asset errors immediately
+      const compiledData = ManageStore.dataman.getCompiledChecklist();
+
       if (Logger.hasErrors()) {
         m.route.set("/manage/upload", null, { replace: true });
       } else {
-        Checklist.loadData(ManageStore.dataman.getCompiledChecklist(), true);
+        Checklist.loadData(compiledData, true); // Use the variable we already generated
         Checklist.getTaxaForCurrentQuery();
         m.route.set("/manage/review", null, { replace: true });
       }
       filepicker.value = "";
     });
+    
     reader.readAsArrayBuffer(file);
   }
 
@@ -287,10 +291,10 @@ function renderUploaderComponent() {
             m("img.upload-icon[src=img/ui/manage/upload.svg]"),
             m("div", [
               m(".check-assets-size", [
-              m("input[checked][type=checkbox][id=checkassetssize][style=margin-right: 0.5em; width: 1.5em; height: 1.5em;]"),
-              m("label[for=checkassetssize]", _t("check_assets_size1")),
-            ]),
-            m("div[style=font-size: 85%; margin-top: 0.5em; text-align: left]", _t("check_assets_size2")),
+                m("input[checked][type=checkbox][id=checkassetssize][style=margin-right: 0.5em; width: 1.5em; height: 1.5em;]"),
+                m("label[for=checkassetssize]", _t("check_assets_size1")),
+              ]),
+              m("div[style=font-size: 85%; margin-top: 0.5em; text-align: left]", _t("check_assets_size2")),
             ])
           ]),
         ]),

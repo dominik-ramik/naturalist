@@ -134,11 +134,11 @@ export let DataManager = function () {
 
     function gatherReferences() {
       let useCitations = getItem(
-          data.sheets.appearance.tables.customization.data,
-          "Use citations",
-          data.common.languages.defaultLanguageCode, //only support bibtex in default language code
-          ""
-        )
+        data.sheets.appearance.tables.customization.data,
+        "Use citations",
+        data.common.languages.defaultLanguageCode, //only support bibtex in default language code
+        ""
+      )
         .toLowerCase();
 
       if (useCitations.trim() == "") {
@@ -308,29 +308,43 @@ export let DataManager = function () {
       if (checkAssetsSize) {
         const assetsSizesMsg = "Checking " + assets.length + " assets sizes";
         console.time(assetsSizesMsg);
-        let precachedImageMaxSizeMb = parseFloat(
+
+        let totalPrecacheSize = 0;
+        let precacheMaxTotalSizeMb = parseFloat(
           getItem(
             data.sheets.appearance.tables.customization.data,
-            "Precached image max size",
+            "Precache max total size",
+            data.common.languages.defaultLanguageCode,
+            200
+          )
+        );
+
+        let precacheMaxFileSizeMb = parseFloat(
+          getItem(
+            data.sheets.appearance.tables.customization.data,
+            "Precache max file size",
             data.common.languages.defaultLanguageCode,
             0.5
           )
         );
 
-        assets.forEach(function (asset) {
+        (new Set(assets)).forEach(function (asset) {
           let contentLengthInfo = getContentLengthInfo(asset);
 
           if (contentLengthInfo.responseStatus == 200) {
+
+            totalPrecacheSize += contentLengthInfo.contentLength / 1024 / 1024; // in MB
+
             if (
               contentLengthInfo.contentLength > 0 &&
               contentLengthInfo.contentLength / 1024 / 1024 >
-              precachedImageMaxSizeMb
+              precacheMaxFileSizeMb
             ) {
               Logger.warning(
                 _tf("dm_asset_too_large", [
                   asset,
                   (contentLengthInfo.contentLength / 1024 / 1024).toFixed(2),
-                  precachedImageMaxSizeMb,
+                  precacheMaxFileSizeMb,
                 ])
               );
             }
@@ -340,6 +354,15 @@ export let DataManager = function () {
             }
           }
         });
+
+        if (totalPrecacheSize > precacheMaxTotalSizeMb) {
+          Logger.error(
+            _tf("dm_total_precache_size_too_large", [
+              totalPrecacheSize.toFixed(2),
+              precacheMaxTotalSizeMb,
+            ])
+          );
+        }
 
         console.timeEnd(assetsSizesMsg);
       }
@@ -418,11 +441,11 @@ export let DataManager = function () {
         "YYYY-MM-DD"
       );
       let useCitations = getItem(
-          data.sheets.appearance.tables.customization.data,
-          "Use citations",
-          lang.code,
-          ""
-        )
+        data.sheets.appearance.tables.customization.data,
+        "Use citations",
+        lang.code,
+        ""
+      )
         ?.toLowerCase();
       let precachedImageMaxSize = getItem(
         data.sheets.appearance.tables.customization.data,
