@@ -136,6 +136,12 @@ function menuPanel() {
             title: _t("about_nl"),
           }),
         ]),
+      m(".version-info",
+        [
+          m(".div", "Naturalist v" + import.meta.env.VITE_APP_VERSION),
+          Checklist.getLastUpdatedTimestamp() ? m(".div", "Checklist " + Checklist.getLastUpdatedTimestamp()) : null,
+        ]
+      )
     ]),
     m(".menu-background", {
       onclick: function () {

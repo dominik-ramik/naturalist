@@ -484,6 +484,14 @@ export let Checklist = {
     return Checklist._data.versions[Checklist.getCurrentLanguage()].name || "";
   },
 
+  getLastUpdatedTimestamp: function () {
+    if (!this._isDataReady) {
+      return null;
+    }
+    return Checklist._data?.general?.lastUpdate;
+  },
+
+
   getProjectAbout: function () {
     let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
     return text;
