@@ -139,14 +139,24 @@ export let Settings = {
     }
   },
 
+  mobileFiltersPaneCollapsed: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("mobileFiltersPaneCollapsed");
+      return stored === null ? true : stored === "true";
+
+    } else {
+      window.localStorage.setItem("mobileFiltersPaneCollapsed", value);
+    }
+  },
+
   includeMatchChildren: function (value) {
     if (value === undefined) {
-    const stored = window.localStorage.getItem("includeMatchChildren");
-    return stored === null ? true : stored === "true"; 
-    
-  } else {
-    window.localStorage.setItem("includeMatchChildren", value);
-  }
+      const stored = window.localStorage.getItem("includeMatchChildren");
+      return stored === null ? true : stored === "true";
+
+    } else {
+      window.localStorage.setItem("includeMatchChildren", value);
+    }
   },
 
   lastKnownUploadFormAvailability: function (value) {

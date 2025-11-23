@@ -8,6 +8,7 @@ import { _t } from "../model/I18n.js";
 import { routeTo, shouldHide } from "../components/Utils.js";
 import { Filter } from "../model/Filter.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
+import { Settings } from "../model/Settings.js";
 
 export let SearchView = {
 
@@ -39,7 +40,11 @@ export let SearchView = {
             // 2. SearchBox with integrated toggle button (Now at the bottom)
             m(SearchBox, {
                 isExpanded: InteractionAreaView.isExpanded,
-                toggleHandler: () => (InteractionAreaView.isExpanded = !InteractionAreaView.isExpanded)
+                toggleHandler: () => {
+                    InteractionAreaView.isExpanded = !InteractionAreaView.isExpanded;
+
+                    Settings.mobileFiltersPaneCollapsed(InteractionAreaView.isExpanded);
+                }
             }),
             m(FilterCrumbsView),
         ]);
@@ -57,15 +62,15 @@ let SearchBox = {
                 oninput: function (e) {
                     const oldText = Checklist.filter.text;
                     const newText = e.target.value;
-                    
+
                     Checklist.filter.text = newText;
-                    
+
                     // Clear any existing timer
                     if (SearchBox.typingTimer) {
                         clearTimeout(SearchBox.typingTimer);
                         SearchBox.typingTimer = null;
                     }
-                    
+
                     // LOGIC: 
                     // 1. If starting a search (oldText was empty), commit immediately to establish URL state.
                     // 2. If clearing a search (newText is empty), commit immediately to reset view.

@@ -3,10 +3,11 @@ import m from "mithril";
 import { Checklist } from "../model/Checklist.js";
 import { _t } from "../model/I18n.js";
 import { FilterCrumbsView } from "./FilterCrumbsView.js";
+import { Settings } from "../model/Settings.js";
 // DELETE: import { AppLayoutView } from "./AppLayoutView.js";
 
 export let InteractionAreaView = {
-  isExpanded: true, // on first visit let filters be open for convenience
+  isExpanded: Settings.mobileFiltersPaneCollapsed(),
 
   view: function (vnode) {
     const expandedClass = InteractionAreaView.isExpanded ? "expanded" : "collapsed";
