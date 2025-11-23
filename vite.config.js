@@ -61,4 +61,4 @@ const skipInBuild = [
     'public/usercontent/online_search_icons/recolnat.png',
     'public/usercontent/online_search_icons/smithsonian.png',
     'public/usercontent/online_search_icons/tropicos.png'
-],
+];
