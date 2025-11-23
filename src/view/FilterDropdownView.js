@@ -447,7 +447,8 @@ let DropdownText = function (initialVnode) {
                   Checklist.filter[type][dataPath].selected.concat(
                     filteredPossible
                   );
-                console.log(Checklist.filter[type][dataPath].selected);
+                Checklist.filter.commit();
+                vnode.attrs.openHandler(false);
               },
             },
             _t("check_all_shown")
