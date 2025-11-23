@@ -286,8 +286,29 @@ function menuTopBar() {
           },
         Settings.viewType() === "view_details"
           ? [
-            { type: "label", title: _t("limit_view") },
             { type: "divider" },
+            ChecklistView.displayMode == "" ? null : { type: "divider" },
+
+            {
+              type: "button",
+              title: _t("include_match_children"),
+              // Use existing checkbox icons or fallback
+              icon: Settings.includeMatchChildren() ? "ui/search/checkbox_checked" : "ui/search/checkbox_unchecked",
+              action: function () {
+                // Toggle setting
+                Settings.includeMatchChildren(!Settings.includeMatchChildren());
+
+                // Force cache invalidation since query params won't change
+                Checklist.filter._queryResultCache = {};
+
+                // Close menu and redraw
+                ActionButtonWithMenu.open = false;
+                m.redraw();
+              }
+            },
+            { type: "divider" },
+
+            { type: "label", title: _t("limit_view") },
             ChecklistView.displayMode == ""
               ? null
               : {
@@ -298,7 +319,6 @@ function menuTopBar() {
                 },
               },
             ,
-            ChecklistView.displayMode == "" ? null : { type: "divider" },
             ...Object.keys(Checklist.getTaxaMeta()).map(function (taxonName) {
               return {
                 type: "button",

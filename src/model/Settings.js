@@ -139,6 +139,16 @@ export let Settings = {
     }
   },
 
+  includeMatchChildren: function (value) {
+    if (value === undefined) {
+    const stored = window.localStorage.getItem("includeMatchChildren");
+    return stored === null ? true : stored === "true"; 
+    
+  } else {
+    window.localStorage.setItem("includeMatchChildren", value);
+  }
+  },
+
   lastKnownUploadFormAvailability: function (value) {
     if (value === undefined) {
       return window.localStorage.getItem("lastKnownUploadFormAvailability");

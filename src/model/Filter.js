@@ -2,6 +2,7 @@ import { routeTo } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { _t } from "./I18n.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
+import { Settings } from "./Settings.js";
 
 // The filter object and all its methods, as previously in Checklist.js
 export let Filter = {
@@ -28,7 +29,7 @@ export let Filter = {
 
     ["taxa", "data"].forEach(type => {
       Object.keys(Filter[type]).forEach(filterKey => {
-        if (Filter[type][filterKey].selected.length > 0){
+        if (Filter[type][filterKey].selected.length > 0) {
           count++;
         }
       })
@@ -417,20 +418,22 @@ export let Filter = {
 
     // Phase 2.2: Pre-compute filter criteria
     let activeFilters = Filter._getActiveFilters();
+    let includeChildren = Settings.includeMatchChildren();
 
     let matchedItems = [];
     let parentKeySet = new Set();
     let matchedKeySet = new Set();
 
+    // New: Track keys of direct matches for hierarchical inclusion
+    let directMatchKeySet = new Set();
+    let directMatchesIndices = new Set();
+
     let checklistData = Checklist.getData().checklist;
 
-    // Single pass with early termination
+    // PASS 1: Identify Direct Matches
     checklistData.forEach(function (item, itemIndex) {
-      let itemKey = item._key || item.t.map((t) => t.name).join("|");
-
       if (emptyFilter) {
-        matchedItems.push(item);
-        matchedKeySet.add(itemKey);
+        directMatchesIndices.add(itemIndex);
         return;
       }
 
@@ -454,10 +457,39 @@ export let Filter = {
       }
 
       if (found) {
+        directMatchesIndices.add(itemIndex);
+        let itemKey = item._key || item.t.map((t) => t.name).join("|");
+        directMatchKeySet.add(itemKey);
+      }
+    });
+
+    // PASS 2: Assemble Results (Include Children)
+    checklistData.forEach(function (item, itemIndex) {
+      let itemKey = item._key || item.t.map((t) => t.name).join("|");
+
+      let shouldInclude = directMatchesIndices.has(itemIndex);
+
+      // If not a direct match, check if it is a child of a direct match
+      if (!shouldInclude && includeChildren && !emptyFilter) {
+        // Construct keys for all ancestors and check if any are in directMatchKeySet
+        // t array looks like: [Family, Genus, Species]
+        // We check: "Family", "Family|Genus"
+        let currentPath = "";
+        for (let i = 0; i < item.t.length - 1; i++) {
+          let segment = item.t[i].name;
+          currentPath += (currentPath.length > 0 ? "|" : "") + segment;
+          if (directMatchKeySet.has(currentPath)) {
+            shouldInclude = true;
+            break;
+          }
+        }
+      }
+
+      if (shouldInclude) {
         matchedItems.push(item);
         matchedKeySet.add(itemKey);
 
-        // Collect parent keys
+        // Collect parent keys to ensure tree structure is maintained
         for (let i = 1; i < item.t.length; i++) {
           let parentKey = item.t.slice(0, i).map((t) => t.name).join("|");
           if (!matchedKeySet.has(parentKey)) {

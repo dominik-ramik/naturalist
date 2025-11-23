@@ -437,6 +437,18 @@ let translations = {
   download_data: {
     en: "Download the data",
     fr: "Télécharger les données",
+  },  
+  critical_error_possible_data_issue: { // TODO
+    en: "A critical issue prevents the app from working correctly. If you just updated to a new version, it may be that  Please try to refresh the page or contact the administrator.",
+    fr: "",
+  },
+  critical_error_general: {
+    en: "A critical issue prevents the app from working correctly. If you just updated to a new version, it may be that  Please try to refresh the page or contact the administrator.",
+    fr: "",
+  },
+  include_match_children: {
+    en: "Show child taxa of taxa that match the filters",
+    fr: "Afficher les taxons enfants des taxons qui correspondent aux filtres",
   },
   download_for_manual_update: {
     en: "You can download the checklist data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published checklist unless you upload the data file to the **usercontent/data** folder on your site. See the [documentation](https://naturalist.netlify.app/) for more information.",
