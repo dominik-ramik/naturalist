@@ -55,10 +55,10 @@ function handleCriticalError(event) {
   // If an update is pending, apply it immediately to recover
   // We check if the SW is registered; registerSW exposes the update function
   if (updateServiceWorker) {
-     // We force the check. If onNeedRefresh was already pending, 
-     // calling this with true might not work directly depending on PWA plugin internals,
-     // but usually, strictly calling updateServiceWorker(true) works if it's in 'waiting' state.
-     updateServiceWorker(true);
+    // We force the check. If onNeedRefresh was already pending, 
+    // calling this with true might not work directly depending on PWA plugin internals,
+    // but usually, strictly calling updateServiceWorker(true) works if it's in 'waiting' state.
+    updateServiceWorker(true);
   }
 }
 
@@ -74,10 +74,10 @@ window.addEventListener("load", (event) => {
     navigator.serviceWorker.ready.then((registration) => {
       openComChannel(registration.active);
       checkForChecklistUpdate(registration.active);
-      
+
       // Extra safety: If the controller changes (update applied), reload the page
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-         window.location.reload();
+        window.location.reload();
       });
     });
   }
@@ -398,7 +398,8 @@ function isDataReady(checklistData) {
 
 function readyPreloadableAssets() {
   // Send asset URLs to service worker for caching
-  const assets = Checklist.getPreloadableAssets();
+  // Ensure checklist.json is always included
+  const assets = ['./usercontent/data/checklist.json', ...Checklist.getPreloadableAssets()];
 
   if (assets && assets.length > 0) {
     messageChannel.port1.postMessage({

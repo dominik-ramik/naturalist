@@ -93,7 +93,7 @@ self.addEventListener('fetch', function (e) {
             response = await fetch(e.request).then(function (response) {
                 if (!response.ok && response.status != 304) {
                     console.log("Fetching problems", response.status, e.request.url);
-                    if(communicationPort) communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
+                    if (communicationPort) communicationPort.postMessage({ type: "FETCHING_RESSOURCE_FAILED" });
                     return null;
                 }
                 return response;
@@ -164,10 +164,10 @@ async function handleAppMessage(message) {
         self.skipWaiting();
     }
     else if (message.type === "CACHE_ASSETS" && Array.isArray(message.assets)) {
-       // ... (Keep your existing CACHE_ASSETS logic)
+        // ... (Keep your existing CACHE_ASSETS logic)
         // Utility to check internet connectivity
         const checkInternetConnection = async () => {
-            if (!navigator.onLine) return false; 
+            if (!navigator.onLine) return false;
             try {
                 const response = await fetch(self.location.origin, { method: 'HEAD', cache: 'no-store' });
                 return response.ok;
@@ -198,9 +198,13 @@ async function handleAppMessage(message) {
 
                 const cachedRequests = await cache.keys();
                 for (const request of cachedRequests) {
+                    if (request.url.toLowerCase().endsWith("/" + checklistFileName)) {
+                        continue; // Never purge checklist.json
+                    }
+
                     if (!assetMap.has(request.url)) {
                         await cache.delete(request);
-                        console.log("[SW] Purged abandoned asset:", request.url);
+                        console.log("[SW] Purged abandoned asset from cache:", request.url);
                     }
                 }
 
@@ -227,7 +231,7 @@ async function handleAppMessage(message) {
                             console.warn(`[SW] Network error for ${url}`, error);
                         }
                     }));
-                } 
+                }
             } catch (error) {
                 console.error("[SW] Critical error during asset caching:", error);
             }
