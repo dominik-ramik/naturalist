@@ -31,6 +31,7 @@ export let AppLayoutView = {
     }
 }
 
+
 export let Toast = {
     visible: false,
     message: "",
@@ -54,7 +55,7 @@ export let Toast = {
         Toast.message = text;
         Toast.permanent = options.showPermanently || false;
         Toast.whenClosed = options.whenClosed || null;
-        Toast.icon = options.icon || null; // Fixed bug: previously assigned options.whenClosed
+        Toast.icon = options.icon || null; 
 
         // 3. Set Action Button Props
         Toast.actionLabel = options.actionLabel || null;
@@ -96,21 +97,17 @@ export let Toast = {
         return m("div#snack-wrap", [
             m("div#snackbar", {
                 onclick: function () {
-                    // Only hide on background click if not permanent? 
-                    // Or always hide? Preserving your original logic (always hide).
+                    // Clicking the toast body (background) generally hides it
+                    // unless it's an interactive permanent toast, but consistent UX is to dismiss.
                     Toast.hide();
-                },
-                style: "display:flex;align-items:center;justify-content:space-between;max-width:32em;margin-left:auto;margin-right:auto;"
+                }
             }, [
                 // Message Text
-                m("span", {
-                    style: "flex:1 1 auto;overflow-wrap:break-word;"
-                }, Toast.message),
+                m("span.toast-message", Toast.message),
 
                 // --- NEW: Action Button ---
                 (Toast.actionLabel && Toast.actionCallback) 
-                    ? m("button", {
-                        style: "flex:0 0 auto; margin: 0 0.5em; background: transparent; border: none; color: #4dabf5; font-weight: bold; cursor: pointer; text-transform: uppercase;",
+                    ? m("button.toast-action", {
                         onclick: function(e) {
                             e.stopPropagation(); // Prevent triggering the container's hide
                             Toast.actionCallback();
@@ -121,8 +118,7 @@ export let Toast = {
 
                 // Close Button (X) - Only if permanent
                 Toast.permanent
-                    ? m("button", {
-                        style: "flex:0 0 auto;color:white;margin-left:0.75em;padding:0.15em 0.5em;min-width:1.8em;min-height:1.8em;line-height:1.2em;font-size:1.2em;border:none;background:transparent;cursor:pointer;border-radius:0.2em;vertical-align:middle;display:inline-block;",
+                    ? m("button.toast-close", {
                         onclick: function (e) {
                             e.stopPropagation();
                             Toast.hide();

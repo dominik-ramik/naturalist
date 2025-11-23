@@ -1,0 +1,81 @@
+#snack-wrap {
+    text-align: center;
+    position: fixed;
+    z-index: 9999;
+    bottom: 2em;
+    left: 0;
+    right: 0;
+    /* Crucial: allows clicks to pass through the empty area around the toast */
+    pointer-events: none;
+    padding: 0 1em; /* Prevent edge-touching on small mobile screens */
+}
+
+#snackbar {
+    /* Restore pointer events for the toast itself so buttons work */
+    pointer-events: auto;
+    
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 288px;
+    max-width: 568px;
+    margin: 0 auto;
+    padding: 0.8em 1.5em;
+    
+    /* Visuals */
+    background-color: #323232;
+    color: #fff;
+    font-size: 0.9em;
+    text-align: left;
+    border-radius: 4px;
+    
+    /* Elevation / Shadow */
+    box-shadow: 0 3px 5px -1px rgba(0,0,0,1), 
+                0 6px 10px 0 rgba(0,0,0,0.5), 
+                0 1px 18px 0 rgba(0,0,0,0.3);
+
+    /* Animation */
+    animation: fadein 0.3s;
+}
+
+/* Message Text */
+.toast-message {
+    flex: 1 1 auto;
+    overflow-wrap: break-word;
+}
+
+/* Action Button */
+.toast-action {
+    flex: 0 0 auto;
+    margin: 0 0.5em;
+    background: transparent;
+    border: none;
+    color: #4dabf5;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+/* Close Button (X) */
+.toast-close {
+    flex: 0 0 auto;
+    color: white;
+    margin-left: 0.75em;
+    padding: 0.15em 0.5em;
+    min-width: 1.8em;
+    min-height: 1.8em;
+    line-height: 1.2em;
+    font-size: 1.2em;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 0.2em;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+@keyframes fadein {
+    from { bottom: 0; opacity: 0; }
+    to { bottom: 2em; opacity: 1; }
+}
