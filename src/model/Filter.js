@@ -389,121 +389,128 @@ export let Filter = {
   },
 
   getTaxaForCurrentQuery: function () {
-    if (!Checklist._isDataReady) {
-      return [];
-    }
+    if (!Checklist._isDataReady) return [];
 
-    // Phase 1.1: Pre-sanitize filters once
     Filter._sanitizeFilters();
 
-    let emptyFilter = Filter.isEmpty();
+    if (Filter.isEmpty()) {
+      let allData = Checklist.getData().checklist;
+      Filter.calculatePossibleFilterValues(allData);
+      return allData;
+    }
 
-    // Phase 1.2: Early return for cached results
     let cacheResult = Filter.queryCache.retrieve();
-
     if (cacheResult) {
       Filter.calculatePossibleFilterValues(cacheResult.taxa);
       return cacheResult.taxa;
     }
 
-    // Phase 2.1: Pre-compile regex once
-    let textFilterRegex = null;
+    let includeChildren = Settings.includeMatchChildren();
+    let checklistData = Checklist.getData().checklist;
+    let fullTextIndex = Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()];
+
+    // --- PREPARE REQUIREMENTS ---
+    let requirements = [];
+    let activeFilters = Filter._getActiveFilters();
+
+    activeFilters.taxa.forEach((f) => {
+      requirements.push({ type: "taxa", filter: f, bit: 1 << requirements.length });
+    });
+
+    activeFilters.data.forEach((f) => {
+      requirements.push({ type: "data", filter: f, bit: 1 << requirements.length });
+    });
+
     if (Filter.text.length > 0) {
-      let textFilter = textLowerCaseAccentless(Filter.text).replace(
-        /[-\/\\^$*+?.()|[\]{}]/g,
-        "\\$&"
-      );
-      textFilterRegex = new RegExp("\\b" + textFilter);
+      let textFilter = textLowerCaseAccentless(Filter.text).replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+      let regex = new RegExp("\\b" + textFilter);
+      requirements.push({ type: "text", regex: regex, bit: 1 << requirements.length });
     }
 
-    // Phase 2.2: Pre-compute filter criteria
-    let activeFilters = Filter._getActiveFilters();
-    let includeChildren = Settings.includeMatchChildren();
+    const TARGET_MASK = (1 << requirements.length) - 1;
+    const dataLength = checklistData.length;
+
+    // --- DATA STRUCTURES ---
+    // Stores the local match mask for every item (Order Independent)
+    let localMasks = new Int32Array(dataLength);
+    // Maps unique path string -> index in checklistData
+    let pathMap = new Map();
+    // Cache path keys to avoid regenerating strings in Pass 2
+    let pathKeys = new Array(dataLength);
+
+    // --- PASS 1: CALCULATE LOCAL COMPLIANCE ---
+    for (let i = 0; i < dataLength; i++) {
+      let item = checklistData[i];
+      // Generate and cache the unique path key
+      let pathKey = item.t.map((t) => t.name).join("|");
+      pathKeys[i] = pathKey;
+      pathMap.set(pathKey, i);
+
+      let localMask = 0;
+      for (let r = 0; r < requirements.length; r++) {
+        let req = requirements[r];
+        let passed = false;
+
+        if (req.type === "taxa") {
+          if (req.filter.index < item.t.length && req.filter.selected.includes(item.t[req.filter.index].name)) {
+            passed = true;
+          }
+        } else if (req.type === "data") {
+          passed = Filter._checkDataFilters(item, [req.filter]);
+        } else if (req.type === "text") {
+          passed = req.regex.test(fullTextIndex[i]);
+        }
+
+        if (passed) localMask |= req.bit;
+      }
+      localMasks[i] = localMask;
+    }
 
     let matchedItems = [];
-    let parentKeySet = new Set();
     let matchedKeySet = new Set();
+    let parentKeySet = new Set();
 
-    // New: Track keys of direct matches for hierarchical inclusion
-    let directMatchKeySet = new Set();
-    let directMatchesIndices = new Set();
+    // --- PASS 2: RESOLVE INHERITANCE ---
+    for (let i = 0; i < dataLength; i++) {
+      let item = checklistData[i];
+      let currentMask = localMasks[i];
 
-    let checklistData = Checklist.getData().checklist;
+      // If local match isn't perfect and we are allowed to inherit...
+      if (currentMask !== TARGET_MASK && includeChildren) {
+        let tempPath = pathKeys[i];
 
-    // PASS 1: Identify Direct Matches
-    checklistData.forEach(function (item, itemIndex) {
-      if (emptyFilter) {
-        directMatchesIndices.add(itemIndex);
-        return;
-      }
+        // Walk up the tree to find ancestors
+        while (tempPath.indexOf("|") > -1) {
+          tempPath = tempPath.substring(0, tempPath.lastIndexOf("|"));
 
-      let found = true;
-
-      // Taxa filter
-      if (activeFilters.taxa.length > 0) {
-        found = Filter._checkTaxaFilters(item, activeFilters.taxa);
-      }
-
-      // Data filter
-      if (found && activeFilters.data.length > 0) {
-        found = Filter._checkDataFilters(item, activeFilters.data);
-      }
-
-      // Text filter
-      if (found && textFilterRegex) {
-        found = textFilterRegex.test(
-          Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()][itemIndex]
-        );
-      }
-
-      if (found) {
-        directMatchesIndices.add(itemIndex);
-        let itemKey = item._key || item.t.map((t) => t.name).join("|");
-        directMatchKeySet.add(itemKey);
-      }
-    });
-
-    // PASS 2: Assemble Results (Include Children)
-    checklistData.forEach(function (item, itemIndex) {
-      let itemKey = item._key || item.t.map((t) => t.name).join("|");
-
-      let shouldInclude = directMatchesIndices.has(itemIndex);
-
-      // If not a direct match, check if it is a child of a direct match
-      if (!shouldInclude && includeChildren && !emptyFilter) {
-        // Construct keys for all ancestors and check if any are in directMatchKeySet
-        // t array looks like: [Family, Genus, Species]
-        // We check: "Family", "Family|Genus"
-        let currentPath = "";
-        for (let i = 0; i < item.t.length - 1; i++) {
-          let segment = item.t[i].name;
-          currentPath += (currentPath.length > 0 ? "|" : "") + segment;
-          if (directMatchKeySet.has(currentPath)) {
-            shouldInclude = true;
-            break;
+          if (pathMap.has(tempPath)) {
+            let parentIndex = pathMap.get(tempPath);
+            currentMask |= localMasks[parentIndex];
           }
+
+          // Optimization: If we already match everything, stop looking up
+          if (currentMask === TARGET_MASK) break;
         }
       }
 
-      if (shouldInclude) {
+      if (currentMask === TARGET_MASK) {
         matchedItems.push(item);
+        let itemKey = item._key || pathKeys[i];
         matchedKeySet.add(itemKey);
 
-        // Collect parent keys to ensure tree structure is maintained
-        for (let i = 1; i < item.t.length; i++) {
-          let parentKey = item.t.slice(0, i).map((t) => t.name).join("|");
-          if (!matchedKeySet.has(parentKey)) {
-            parentKeySet.add(parentKey);
+        // Ensure tree structure (parents) are added to results later
+        let tempPath = "";
+        for (let k = 0; k < item.t.length - 1; k++) {
+          tempPath += (k > 0 ? "|" : "") + item.t[k].name;
+          if (!matchedKeySet.has(tempPath)) {
+            parentKeySet.add(tempPath);
           }
         }
       }
-    });
+    }
 
-    // Assemble final results
     let finalSearchResults = Filter._assembleResults(matchedItems, parentKeySet, checklistData);
-
     Filter.calculatePossibleFilterValues(finalSearchResults);
-
     Filter.queryCache.cache(finalSearchResults);
 
     return finalSearchResults;
@@ -537,10 +544,14 @@ export let Filter = {
   _getActiveFilters: function () {
     let active = { taxa: [], data: [] };
 
-    Object.keys(Filter.taxa).forEach(dataPath => {
+    // Get the keys once to establish the index order
+    let taxaKeys = Object.keys(Filter.taxa);
+
+    taxaKeys.forEach((dataPath, index) => {
       if (Filter.taxa[dataPath].selected.length > 0) {
         active.taxa.push({
           dataPath,
+          index: index, // Store the pre-calculated index
           selected: Filter.taxa[dataPath].selected
         });
       }
@@ -569,8 +580,10 @@ export let Filter = {
 
   _checkTaxaFilters: function (item, taxaFilters) {
     for (let filter of taxaFilters) {
-      let taxonIndex = Object.keys(Filter.taxa).indexOf(filter.dataPath);
-      if (taxonIndex >= item.t.length) continue;
+      // Use the pre-calculated index from _getActiveFilters
+      let taxonIndex = filter.index;
+
+      if (taxonIndex >= item.t.length) return false;
 
       let value = item.t[taxonIndex].name;
       if (!filter.selected.includes(value)) {
