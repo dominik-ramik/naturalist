@@ -15,7 +15,7 @@ export let AppLayoutView = {
 
         //let resultsNumber = Checklist.getTaxaForCurrentQuery().length;
 
-        return m(".app." + AppLayoutView.mode, [
+        return m(".app", [
             m(MenuStripView),
             m(".app-content", [
                 m(ChecklistView),
