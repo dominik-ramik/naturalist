@@ -130,6 +130,12 @@ span.simple-value h4 {
   padding-right: var(--pad-small);
 }
 
+.found::before {
+  content: "✓ ";
+  color: #ff6f00;
+  font-weight: bold;
+}
+
 a.citation {
   color: #1565c0;
   cursor: pointer;
