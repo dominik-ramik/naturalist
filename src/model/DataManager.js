@@ -30,7 +30,7 @@ export let DataManager = function () {
 
     let currentDate = new Date();
 
-    let assetsFromFDirectives = [];
+    let additionalAssets = [];
 
     let currentDateString =
       currentDate.getFullYear() +
@@ -73,7 +73,7 @@ export let DataManager = function () {
       let runSpecificCache = {};
 
       let rowNumber = 1;
-      checklist.versions[lang.code].dataset.checklist.forEach(function (entry) {
+      (checklist.versions[lang.code].dataset.checklist || []).forEach(function (entry) {
         rowNumber++;
         let entryData = entry.d;
 
@@ -82,7 +82,7 @@ export let DataManager = function () {
 
           if (data && data != "") {
             // Pass assetsFromFDirectives as an argument to processFDirective
-            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsFromFDirectives);
+            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber, additionalAssets);
             if (result) {
               setDataAtDataPath(entryData, dataPath, result);
             }
@@ -233,7 +233,7 @@ export let DataManager = function () {
             }
 
             // Process each checklist entry to gather actual assets
-            data.sheets.checklist.data[lang.code].forEach(function (entry) {
+            (data.sheets.checklist.data[lang.code] || []).forEach(function (entry) {
               const mediaData = Checklist.getDataFromDataPath(
                 entry.d,
                 row.columnName
@@ -297,9 +297,9 @@ export let DataManager = function () {
       });
 
       // Add assets from F: directives, avoiding duplicates
-      console.log("Assets from F: directives to add:", assetsFromFDirectives.length);
+      console.log("Assets from F: directives to add:", additionalAssets.length);
 
-      assetsFromFDirectives.forEach(function (asset) {
+      additionalAssets.forEach(function (asset) {
         if (!assets.includes(asset)) {
           assets.push(asset);
         }
@@ -331,7 +331,7 @@ export let DataManager = function () {
         (new Set(assets)).forEach(function (asset) {
           let contentLengthInfo = getContentLengthInfo(asset);
 
-          if (contentLengthInfo.responseStatus == 200) {
+          if (contentLengthInfo && contentLengthInfo.responseStatus == 200) {
 
             totalPrecacheSize += contentLengthInfo.contentLength / 1024 / 1024; // in MB
 
@@ -349,7 +349,7 @@ export let DataManager = function () {
               );
             }
           } else {
-            if (contentLengthInfo.responseStatus == 404) {
+            if (contentLengthInfo && contentLengthInfo.responseStatus == 404) {
               Logger.error(_tf("dm_asset_not_found", [asset]));
             }
           }
@@ -375,6 +375,8 @@ export let DataManager = function () {
     function getContentLengthInfo(url) {
       const result = { url: "", contentLength: null, responseStatus: 0 };
 
+      url = new URL(url, window.location.href).href;
+
       try {
         const xhr = new XMLHttpRequest();
         xhr.open("HEAD", url, false); // false makes the request synchronous
@@ -385,17 +387,27 @@ export let DataManager = function () {
         result.url = url;
 
         if (xhr.status === 200) {
-          const contentLength = xhr.getResponseHeader("Content-Length");
-          result.contentLength = contentLength
-            ? parseInt(contentLength, 10)
-            : 0;
+          let contentType = xhr.getResponseHeader("Content-Type");
+
+          if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
+            console.error("Asset not found or not an image: " + url, contentType);
+            Logger.error(_tf("dm_asset_head_error", [asset]));
+            return null;
+          } else {
+            const contentLength = xhr.getResponseHeader("Content-Length");
+            result.contentLength = contentLength
+              ? parseInt(contentLength, 10)
+              : 0;
+          }
         } else {
           result.responseStatus = xhr.status;
+          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status);
           console.error(
             "Error fetching HEAD for " + url + " status: " + xhr.status
           );
         }
       } catch (error) {
+        Logger.error("Error fetching HEAD for " + url + ": " + error.message);
         console.error("Error:", error.message);
       }
 
@@ -422,7 +434,7 @@ export let DataManager = function () {
         _t("generic_about")
       );
 
-      let aboutResult = processFDirective(about, {}, log, null, null, assetsFromFDirectives);
+      let aboutResult = processFDirective(about, {}, log, null, null, additionalAssets);
       if (aboutResult) {
         about = aboutResult;
       }
@@ -474,11 +486,264 @@ export let DataManager = function () {
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],
+          singleAccessKeys: compileSingleAccessKeys(lang, data.sheets.checklist.data[lang.code], additionalAssets),
         },
       };
 
       return version;
     }
+
+    function compileSingleAccessKeys(lang, checklistData, additionalKeysAssets) {
+  if (!data.sheets.content.tables.singleAccessKeys ||
+    !data.sheets.content.tables.singleAccessKeys.data ||
+    !data.sheets.content.tables.singleAccessKeys.data[lang.code]) {
+    return [];
+  }
+
+  const rows = data.sheets.content.tables.singleAccessKeys.data[lang.code];
+  const keys = [];
+  let currentKey = null;
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  // Helper: Normalize and track image paths
+  function processImageCell(imageCell, rowIndex) {
+    if (!imageCell || typeof imageCell !== 'string' || imageCell.trim() === '') {
+      return [];
+    }
+
+    const filenames = imageCell.split('|').map(f => f.trim()).filter(f => f);
+    const normalized = [];
+
+    for (const filename of filenames) {
+      if (!filename) continue;
+
+      try {
+        // Validate file extension
+        const lowerFilename = filename.toLowerCase();
+        const hasValidExtension = allowedExtensions.some(ext => lowerFilename.endsWith(ext));
+
+        if (!hasValidExtension) {
+          Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image '" + filename + "' has invalid extension (allowed: .jpg, .jpeg, .png, .webp)");
+          continue;
+        }
+
+        // Normalize path: ensure no double slashes, handle edge cases
+        let normalizedPath = filename.startsWith('/') ? filename.slice(1) : filename;
+        normalizedPath = './usercontent/keys/' + normalizedPath;
+        normalizedPath = normalizedPath.replace(/\/+/g, '/'); // Remove duplicate slashes
+
+        normalized.push(normalizedPath);
+
+        // Track asset if not already present
+        if (!additionalKeysAssets.includes(normalizedPath)) {
+          additionalKeysAssets.push(normalizedPath);
+        }
+      } catch (e) {
+        Logger.error("Error normalizing image path '" + filename + "' at row " + (rowIndex + 1) + ": " + e);
+      }
+    }
+
+    return normalized;
+  }
+
+  // Process rows
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+
+    try {
+      const step = row.step;
+      const text = row.text;
+      const target = row.target;
+      const images = row.images || "";
+
+      // Validate row completeness
+      if (!step || !text || target === undefined || target === null || target === '') {
+        Logger.error("Taxonomic key row " + (i + 1) + ": Missing required field (Step, Text, or Target)");
+        continue;
+      }
+
+      const stepType = typeof step;
+      const isKeyDefinition = stepType === 'string';
+      const isStepDefinition = stepType === 'number';
+
+      if (!isKeyDefinition && !isStepDefinition) {
+        Logger.error("Taxonomic key row " + (i + 1) + ": Step must be string (Key ID) or number (Step ID)");
+        continue;
+      }
+
+      // KEY DEFINITION
+      if (isKeyDefinition) {
+        // Check for numeric key IDs
+        if (!isNaN(step)) {
+          Logger.error("Taxonomic key row " + (i + 1) + ": Key ID '" + step + "' appears numeric - use text IDs only");
+          continue;
+        }
+
+        // Check uniqueness
+        if (keys.find(k => k.id === step)) {
+          Logger.error("Taxonomic key row " + (i + 1) + ": Duplicate Key ID '" + step + "'");
+          continue;
+        }
+
+        // --- VALIDATION: Ensure NO images on Key Definition ---
+        if (images && typeof images === 'string' && images.trim() !== "") {
+          Logger.error("Taxonomic key row " + (i + 1) + ": Key definition '" + step + "' cannot contain images. Images are only allowed on numeric steps.");
+        }
+        // -----------------------------------------------------
+
+        // Finalize previous key if exists
+        if (currentKey) {
+          validateKey(currentKey, checklistData);
+        }
+
+        // Parse title | description
+        const textParts = text.split('|').map(p => p.trim());
+        const title = textParts[0] || '';
+        const description = textParts[1] || '';
+
+        currentKey = {
+          id: step,
+          title: title,
+          description: description,
+          // 'images' property is deliberately omitted here
+          steps: []
+        };
+
+        keys.push(currentKey);
+        continue;
+      }
+
+      // STEP DEFINITION
+      if (isStepDefinition) {
+        // Check if orphaned
+        if (!currentKey) {
+          Logger.error("Taxonomic key row " + (i + 1) + ": Step " + step + " appears before any Key definition");
+          continue;
+        }
+
+        // Determine target type
+        const targetType = typeof target;
+        let targetValue = target;
+        let stepTypeValue = 'external';
+
+        if (targetType === 'number') {
+          stepTypeValue = 'internal';
+
+          // Validate no targeting step 1
+          if (target === 1) {
+            Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets 1 (forbidden)");
+            continue;
+          }
+
+          // Validate strict progression
+          if (target <= step) {
+            Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets " + target + " (must be > " + step + ")");
+            continue;
+          }
+        } else if (targetType === 'string') {
+          targetValue = target.trim();
+        } else {
+          Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Target must be number or string");
+          continue;
+        }
+
+        // Process step images (allowed here)
+        const stepImagePaths = processImageCell(images, i);
+
+        currentKey.steps.push({
+          step_id: step,
+          text: text,
+          target: targetValue,
+          type: stepTypeValue,
+          images: stepImagePaths // 'images' property exists here
+        });
+      }
+    } catch (e) {
+      Logger.error("Error processing taxonomic key row " + (i + 1) + ": " + e);
+    }
+  }
+
+  // Validate final key
+  if (currentKey) {
+    validateKey(currentKey, checklistData);
+  }
+
+  console.log("###### keys", keys);
+
+  return keys;
+
+  // VALIDATION HELPER
+  function validateKey(key, checklistData) {
+    try {
+      const steps = key.steps;
+      const keyId = key.id;
+
+      // Check entry point
+      const hasStartStep = steps.some(s => s.step_id === 1);
+      if (!hasStartStep) {
+        Logger.error("Taxonomic key '" + keyId + "': Missing Step 1 (entry point required)");
+        return;
+      }
+
+      // Get unique step IDs
+      const stepIds = [...new Set(steps.map(s => s.step_id))].sort((a, b) => a - b);
+
+      if (stepIds.length === 0) return;
+
+      const maxStep = Math.max(...stepIds);
+
+      // Check continuity
+      for (let i = 1; i <= maxStep; i++) {
+        if (!stepIds.includes(i)) {
+          Logger.error("Taxonomic key '" + keyId + "': Missing Step " + i + " (steps must be continuous from 1 to " + maxStep + ")");
+        }
+      }
+
+      // Check internal integrity
+      const internalTargets = steps
+        .filter(s => s.type === 'internal')
+        .map(s => s.target);
+
+      for (const target of internalTargets) {
+        if (!stepIds.includes(target)) {
+          Logger.error("Taxonomic key '" + keyId + "': Target Step " + target + " does not exist");
+        }
+      }
+
+      // Check external integrity with exit taxa
+      const externalTargets = new Set(steps
+        .filter(s => s.type === 'external')
+        .map(s => s.target));
+
+      for (const taxon of checklistData) {
+        if (externalTargets.size === 0) {
+          break;
+        }
+        for (const taxonLevel of taxon.t) {
+          if (externalTargets.has(taxonLevel.name)) {
+            externalTargets.delete(taxonLevel.name);
+          }
+        }
+      }
+
+      if (externalTargets.size > 0) {
+        for (const target of externalTargets) {
+          Logger.warning("Taxonomic key '" + keyId + "': Taxon '" + target + "' does not exist in the checklist. This is alright if your key is expected to point to taxa outside of this checklist, but it will prevent the automatic display of the taxon details when reaching the taxon via the key.");
+        }
+      }
+
+      // Check reachability (all steps except 1 must be targeted)
+      const targetedSteps = new Set(internalTargets);
+      for (const stepId of stepIds) {
+        if (stepId !== 1 && !targetedSteps.has(stepId)) {
+          Logger.error("Taxonomic key '" + keyId + "': Step " + stepId + " is never reached (dead code)");
+        }
+      }
+    } catch (e) {
+      Logger.error("Error validating taxonomic key '" + key.id + "': " + e);
+    }
+  }
+}
 
     function compileMeta(lang) {
       let meta = {
@@ -579,7 +844,11 @@ export let DataManager = function () {
     }
 
     function compileDataMeta(lang, expectedDataTypes) {
-      let allDataPaths = data.common.allUsedDataPaths[lang.code].sort();
+      console.log("Compiling meta", lang, expectedDataTypes, data.common)
+      console.log("CDD", data.sheets.content.tables.customDataDefinition.data)
+      console.log("Full data", data.sheets)
+
+      let allDataPaths = (data.common.allUsedDataPaths[lang.code] || []).sort();
 
       let meta = {};
 
@@ -761,6 +1030,7 @@ export let DataManager = function () {
               );
             }
           }
+
           if (dataType == "image" || dataType == "sound") {
             meta[computedDataPath].type = info.fullRow.typeOfData;
             meta[computedDataPath].title = info.fullRow.title;
@@ -775,6 +1045,7 @@ export let DataManager = function () {
           if (dataType == "text") {
             meta[computedDataPath].title = info.fullRow.title;
           }
+
         });
       });
 
@@ -800,9 +1071,14 @@ export let DataManager = function () {
 
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
+
+    console.log("All used dataPaths created");
+
     data.common.languages.supportedLanguages.forEach(function (lang) {
       data.sheets.checklist.data[lang.code] = [];
       data.common.allUsedDataPaths[lang.code] = [];
+
+      console.log("All used dataPaths initialized for", lang.code)
 
       let headers = table[0].map(function (item) {
         return item.toLowerCase();
@@ -1696,6 +1972,23 @@ export let DataManager = function () {
       Logger.clear();
 
       extractor.loadMeta(data);
+
+      console.log("After extractor.loadMeta: supportedLanguages=", data.common.languages.supportedLanguages);
+      console.log("After extractor.loadMeta: tables content:", {
+        content: data.sheets.content.tables,
+        appearance: data.sheets.appearance.tables,
+      });
+      console.log("Logger messages (so far):", dataManager.loggedMessages);
+
+      const rawChecklist = typeof extractor.getRawChecklistData === "function" ? extractor.getRawChecklistData() : null;
+      if (!rawChecklist) {
+        Logger.critical(
+          "Could not load checklist data sheet. Make sure the checklist sheet exists and its name matches the 'Name of checklist data sheet' setting."
+        );
+        console.error("DataManager.loadData: extractor.getRawChecklistData() returned null or undefined.");
+        return;
+      }
+
       checkMetaValidity();
       if (!Logger.hasErrors()) {
         postprocessMetadata();

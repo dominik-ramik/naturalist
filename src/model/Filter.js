@@ -67,21 +67,6 @@ export let Filter = {
     if (query.text && query.text.length > 0)
       Filter.text = query.text;
   },
-  addTaxaByName: function (taxonNames) {
-    if (!Array.isArray(taxonNames)) return;
-
-    taxonNames.forEach(function (name) {
-      Object.keys(Filter.taxa).forEach(function (dataPath) {
-        // Check if the provided name is a valid option for this taxonomic level (exists in 'all')
-        if (Filter.taxa[dataPath].all.indexOf(name) > -1) {
-          // Add to 'selected' only if not already present to avoid duplicates
-          if (Filter.taxa[dataPath].selected.indexOf(name) < 0) {
-            Filter.taxa[dataPath].selected.push(name);
-          }
-        }
-      });
-    });
-  },
   clear: function () {
     Object.keys(Filter.taxa).forEach(function (dataPath) {
       Filter.taxa[dataPath].selected = [];

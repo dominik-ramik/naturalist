@@ -4,7 +4,6 @@
   width: 33em;
   min-width: 30em;
   background-color: var(--nlblue);
-  color: white;
   padding: var(--small-pad);
   background: var(--gradient-background);
   display: flex;
@@ -28,7 +27,8 @@
 }
 
 .interaction-area-branding-wrapper {
-  background-image: url("../../public/img/icon_transparent_fine.svg");
+  color: white;
+  background-image: url("/img/icon_transparent_fine.svg");
   background-repeat: no-repeat;
   background-size: 16em;
   background-position: bottom 1.5em right 0em;
@@ -37,6 +37,25 @@
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
+}
+
+.interaction-area-generic-wrapper {
+  background-color: white;
+  color: black;
+  flex-grow: 1;
+  padding: 0.5em;
+}
+
+.interaction-area-generic-wrapper h1 {
+  color: black;
+}
+
+.interaction-area-generic-wrapper h2 {
+  color: black;
+}
+
+.interaction-area-generic-wrapper h3 {
+  color: black;
 }
 
 .interaction-area .desktop-cite {
@@ -71,7 +90,6 @@
 
   /* EDITED: Branding wrapper now holds the SearchView, padding is now inside SearchBox */
   .interaction-area .interaction-area-branding-wrapper {
-    background-image: none;
     padding: 0;
     flex-grow: 1;
     min-height: unset;

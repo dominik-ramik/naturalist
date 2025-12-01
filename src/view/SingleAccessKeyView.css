@@ -1,0 +1,310 @@
+/* Container for the whole view */
+.single-access-key-view {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.single-access-key-view h2 {
+    margin-left: 0.25em;
+}
+
+/* ==========================================================================
+   Result Section
+   ========================================================================== */
+.sak-result {
+    padding: 20px;
+    text-align: center;
+}
+
+.sak-result h2 {
+    margin-top: 0;
+    line-height: 1.2;
+}
+
+.sak-result h3 {
+    margin: 0;
+}
+
+.sak-result-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* ==========================================================================
+   Key Card Component
+   ========================================================================== */
+.sak-card {
+    /* Inherited .card styles */
+    border-radius: var(--pad-large, 1em);
+    /* Added fallback for var */
+    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+    background-color: #eceff2;
+    border: 1px solid white !important;
+    color: black;
+
+    /* Component specific */
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.sak-card p {
+    margin: 0;
+}
+
+/* --- Header --- */
+.sak-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    user-select: none;
+    min-height: 24px;
+}
+
+.sak-title {
+    margin: 0;
+    font-size: 1.1em;
+    line-height: 110%;
+    font-weight: unset;
+    flex: 1;
+}
+
+.sak-icon {
+    width: 24px;
+    height: 24px;
+    opacity: 0.6;
+    margin-left: 10px;
+}
+
+/* --- Description --- */
+.sak-description {
+    padding: 0 15px 15px 15px;
+    font-size: 0.95em;
+    line-height: 1.4;
+    transition: background-color 0.2s;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.sak-description p {
+    color: #6f6f6f;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* --- Separators --- */
+.sak-separator-dashed {
+    border: none;
+    border-top: 2px dashed #6d6d6d;
+    margin: 0.5em 0;
+    height: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.sak-separator-dashed::after {
+    /* 1. The Fallback / Default */
+    content: "OR";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 0 0.6em;
+    color: #6d6d6d;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 1em;
+}
+
+/* 2. The Override */
+.sak-separator-dashed[data-text]::after {
+    content: attr(data-text);
+}
+
+/* ==========================================================================
+   Steps Section (Active View)
+   ========================================================================== */
+.sak-steps-container {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    ;
+}
+
+.sak-steps-container p {
+    margin: 0;
+    display: initial;
+}
+
+/* The stack "borders" visualization */
+.sak-stack-wrapper {
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sak-stack-line {
+    width: 100%;
+    height: 0.75em;
+    margin-bottom: 0;
+    border: 1px solid white;
+    border-bottom: none;
+    border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
+    box-shadow: 0 -3px 3px rgba(0, 0, 0, 0.25);
+    /* Ensure it behaves like a block in the flow for transitions */
+    display: block;
+    transition: margin 0.3s ease;
+}
+
+/* Options List */
+.sak-options-list {
+    padding: 0;
+    border: 1px solid #6d6d6d !important;
+}
+
+.sak-option {
+    padding: 15px;
+    cursor: pointer;
+}
+
+.sak-option-text {
+    font-size: 1em;
+    display: block;
+}
+
+.sak-options-list .sak-option-text {
+    display: list-item;
+    list-style: disc;
+    margin-left: 1em;
+}
+
+/* Images inside options */
+.sak-option-images {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sak-thumb {
+    height: 60px;
+    width: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: zoom-in;
+    background: #fff;
+}
+
+/* Fullscreen Image Overlay */
+.sak-fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+
+.sak-fullscreen-img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+}
+
+/* ==========================================================================
+   History Items & Transitions
+   ========================================================================== */
+.sak-history-item {
+    overflow: hidden;
+    /* Transition properties for smooth sliding */
+    transition: max-height 0.5s ease-in-out,
+        opacity 0.4s ease-in-out,
+        padding 0.4s ease,
+        margin 0.4s ease;
+}
+
+.sak-history-item .sak-option-text::before {
+    content: "✔ ";
+    color: green;
+}
+
+/* STATE: COLLAPSED (Default) */
+.sak-collapsed .sak-history-item {
+    max-height: 0;
+    opacity: 0;
+    /* Remove vertical spacing so stack lines touch each other */
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border: none;
+}
+
+/* STATE: EXPANDED */
+.sak-expanded .sak-history-item {
+    /* Set a max-height large enough to fit content */
+    max-height: 1000px;
+    opacity: 1;
+    padding: 15px;
+}
+
+/* ==========================================================================
+   Footer (Taxa)
+   ========================================================================== */
+.sak-footer {
+    border-top: 1px solid #ccc;
+}
+
+/* Remove top border when in single key view */
+.sak-footer.sak-footer-noborder {
+    border-top: none;
+}
+
+.sak-footer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.sak-chips-container {
+    padding: 0 15px 15px 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.sak-chip {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    border: 1px solid #ddd;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.sak-chip.reachable {
+    color: #000;
+    border-color: #999;
+}
+
+.sak-chip.unreachable {
+    color: #aaa;
+    border-color: #b9b9b9;
+    background-color: rgba(240, 240, 240, 0.5);
+}

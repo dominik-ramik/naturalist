@@ -12,6 +12,8 @@ export let InteractionAreaView = {
   view: function (vnode) {
     const expandedClass = InteractionAreaView.isExpanded ? "expanded" : "collapsed";
 
+    const isSearchRoute = m.route.get().startsWith("/checklist");
+
     return m(
       ".interaction-area" + "." + expandedClass,
       {
@@ -22,30 +24,42 @@ export let InteractionAreaView = {
           Checklist.getThemeHsl("light") +
           ");",
       },
-      [
-        // DELETE: mobile-header-wrapper and the toggle button
-        m(".interaction-area-branding-wrapper", [
-          vnode.children,
-          // Branding
 
-        ]),
-      ],
-      m(".branding", _t("powered_by_nl")),
-
-      // Citation
-      !Checklist.getProjectHowToCite() ||
-        Checklist.getProjectHowToCite().trim() == ""
-        ? null
-        : m(
-          ".desktop-cite",
-          m("div", [
-            m("b[style=margin-right: 0.75em;]", _t("how_to_cite")),
-            m(
-              "span[style=user-select: all]",
-              Checklist.getProjectHowToCite()
-            ),
-          ])
-        ),
+      isSearchRoute
+        ? renderSearchView(vnode)
+        : renderGenericView(vnode)
     );
   },
 };
+
+function renderGenericView(vnode) {
+  return [
+    m(".interaction-area-generic-wrapper", [
+      vnode.children,
+    ]),
+  ]
+}
+
+function renderSearchView(vnode) {
+  return [
+    [
+      m(".interaction-area-branding-wrapper", [
+        vnode.children,
+      ]),
+    ],
+    m(".branding", _t("powered_by_nl")),
+    !Checklist.getProjectHowToCite() ||
+      Checklist.getProjectHowToCite().trim() == ""
+      ? null
+      : m(
+        ".desktop-cite",
+        m("div", [
+          m("b[style=margin-right: 0.75em;]", _t("how_to_cite")),
+          m(
+            "span[style=user-select: all]",
+            Checklist.getProjectHowToCite()
+          ),
+        ])
+      )
+  ];
+}

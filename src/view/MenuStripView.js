@@ -59,6 +59,24 @@ function menuPanel() {
               icon: "cite",
               title: _t("how_to_cite"),
             }),
+          Checklist.getSingleAccessTaxonomicKeys().length > 0 ? m(MenuItem, {
+            onclick: function () {
+              MenuStripView.menuOpen = !MenuStripView.menuOpen;
+              routeTo("/single-access-keys");
+            },
+            icon: "single_access_key",
+            title: _t("keys"),
+          }) : null,
+          Checklist.getBibliographyKeys().length > 0
+            ? m(MenuItem, {
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/references");
+              },
+              icon: "literature",
+              title: _t("literature"),
+            })
+            : null,
           m(MenuDivider),
           m(MenuItem, {
             onclick: function () {
@@ -87,16 +105,6 @@ function menuPanel() {
             icon: "push_pin",
             title: _t("pin_search"),
           }),
-          Checklist.getBibliographyKeys().length > 0
-            ? m(MenuItem, {
-              onclick: function () {
-                MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                routeTo("/references");
-              },
-              icon: "literature",
-              title: _t("literature"),
-            })
-            : null,
           m(MenuDivider),
           Checklist.getAllLanguages().length > 1
             ? m(MenuExpandable, { title: _t("languages") }, [
@@ -229,18 +237,6 @@ function menuTopBar() {
       [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
     m(".menu-project-name", Checklist.getProjectName()),
-    m(".menu-action-button.mobile-cite-button", [
-      m("img[src=./img/ui/menu/cite.svg]"),
-      m(
-        ".action-button-title",
-        {
-          onclick: function () {
-            routeTo("/about/cite");
-          },
-        },
-        "Cite"
-      ),
-    ]),
     m(ActionButtonWithMenu, {
       icon: "img/ui/menu/" + Settings.viewType() + ".svg",
       title: currentViewName,

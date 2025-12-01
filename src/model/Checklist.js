@@ -129,6 +129,13 @@ export let Checklist = {
     return this.nameForMapRegionCache.get(regionCode);
   },
 
+  getSingleAccessTaxonomicKeys: function () {
+    if (this._isDataReady) {
+      return this.getData().singleAccessKeys || [];
+    }
+
+    return [];
+  },
   getBibliographyKeys: function () {
     if (!this._isDataReady || this._data.general.bibliography === undefined) {
       return [];

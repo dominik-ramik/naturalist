@@ -312,7 +312,7 @@ function draftNotice() {
     notice: _t("draft_notice"),
     additionalButton: {
       action: function () {
-        routeTo("/manage");
+        routeTo("/manage/review");
       },
       icon: "manage",
       text: _t("temporary_draft_goto_manage"),

@@ -168,7 +168,7 @@ function TabMedia(tabData, taxon, taxonName) {
                 placement: "details",
               };
               const reader = dataReaders[meta.formatting];
-              let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+              let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               // Render meta.title for each item if present
               if (renderedItem && meta.title) {
                 return m(".media-item", [
@@ -195,7 +195,7 @@ function TabMedia(tabData, taxon, taxonName) {
           placement: "details",
         };
         const reader = dataReaders[meta.formatting];
-        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {
             renderedContent.push(
@@ -247,7 +247,7 @@ function TabMap(tabData, taxon, taxonName) {
                 placement: "details",
               };
               const reader = dataReaders[meta.formatting];
-              let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+              let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               if (renderedItem && meta.title) {
                 return m(".media-item", [
                   m(".details-item-title", meta.title),
@@ -272,7 +272,7 @@ function TabMap(tabData, taxon, taxonName) {
           placement: "details",
         };
         const reader = dataReaders[meta.formatting];
-        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {
             renderedContent.push(
@@ -377,7 +377,7 @@ function TabText(tabData, taxon, taxonName) {
           placement: "details",
         };
         const reader = dataReaders[meta.formatting] || dataReaders["text"];
-        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem && meta.title) {
           return m("div", [
             m("div.details-item-title", { id: itemId }, itemNumber + " " + meta.title),
@@ -421,7 +421,7 @@ function TabText(tabData, taxon, taxonName) {
           placement: "details",
         };
         const reader = dataReaders[meta.formatting] || dataReaders["text"];
-        let renderedItem = reader && reader.dataToUI ? reader.dataToUI(data, uiContext) : null;
+        let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {
             // Use details-group-title style for top-level titles in non-grouped items

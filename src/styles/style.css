@@ -11,6 +11,7 @@
 @import "../view/TaxonDataView.css";
 @import "../view/DetailsView.css";
 @import "../view/TaxonDataItemView.css";
+@import "../view/SingleAccessKeyView.css";
 @import "../view/TaxonView.css";
 @import "../view/AboutView.css";
 @import "../view/ManageView.css";
@@ -38,7 +39,6 @@ a[target="_blank"]:after {
 
 .clickable {
   cursor: default;
-  cursor: pointer;
 }
 
 .clickable:hover {

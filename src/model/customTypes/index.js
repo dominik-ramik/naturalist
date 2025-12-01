@@ -65,11 +65,11 @@ function verifyReaders() {
     }
 
     if (
-      !reader.hasOwnProperty("dataToUI") ||
-      typeof reader.dataToUI !== "function"
+      !reader.hasOwnProperty("render") ||
+      typeof reader.render !== "function"
     ) {
       console.error(
-        `Reader at index ${index} is missing required 'dataToUI' property or it's not a function`
+        `Reader at index ${index} is missing required 'render' property or it's not a function`
       );
     }
 

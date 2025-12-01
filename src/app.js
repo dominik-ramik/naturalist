@@ -11,6 +11,7 @@ import { DetailsView } from "./view/DetailsView.js";
 import { AboutView } from "./view/AboutView.js";
 import { ManageView } from "./view/ManageView.js";
 import { LiteratureView } from "./view/LiteratureView.js";
+import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
@@ -356,6 +357,27 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [m(LiteratureView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/single-access-keys": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/single-access-keys/:key": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+          },
+          onmatch: onMatchGuard,
+        },
+        "/single-access-keys/:key/:steps": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(SingleAccessKeyView)]);
           },
           onmatch: onMatchGuard,
         },

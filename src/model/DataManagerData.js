@@ -21,7 +21,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure) {
   const FIXED_WIDTHS = {
     "Customization": { "Value": 180 },
     "Step": { "Value": 150 },
-    "Single access keys": { "Value": 480 },
+    "Single-access keys": { "Value": 480 },
     "Target": { "Value": 180 },
     "Bibliography": { "Value": 480 },
   };
@@ -635,14 +635,14 @@ export let nlDataStructure = {
           data: [],
         },
         singleAccessKeys: {
-          name: "Single access keys",
+          name: "Single-access keys",
           description:
-            "This table allows you to define identification keys directly in the spreadsheet. It uses a simplified 4-column structure to create both dichotomous and polytomous keys.",
+            "This table allows you to define identification keys directly in the spreadsheet. It uses a simplified 4-column structure that permits you to create both dichotomous and polytomous keys.",
           columns: {
             step: {
               name: "Step",
               description:
-                "Unique Identifier for the row. Use a <b>text code</b> (e.g. 'key_beetles') to start a new Identification Key. Use a <b>number</b> (e.g. 1) to define a Question Step within that key.",
+                "Unique Identifier for the row. Use a <b>text code</b> (e.g. 'key_beetles'), or the taxon name of the key (e.g. 'Turdus' if you are wiriting a key to this genus). If you define multiple keys and the result of one key (e.g. another key to genera of family 'Turdidae' would lead to genus 'Turdus' as the result, with another key labeled as 'Turdus' the user will be automatically offered the key to this genus upon completing the family key - in this way you can allow the user to conveniently go from one key to another). This starts a new Identification Key. Use an integer <b>number</b> without additional letters (e.g. 1, not 1a, 1b) to define a Question Step within that key. Choices on the same level should have the same number.",
               integrity: {
                 description:
                   "Text strings define Key Headers; Integers define Steps. Step numbers must be sequential and contiguous within a key (1, 2, 3...).",
@@ -651,11 +651,12 @@ export let nlDataStructure = {
                 allowedContent: "any",
                 supportsMultilingual: false,
               },
+              templateData: [],
             },
             text: {
               name: "Text",
               description:
-                "The content to display. For a Key Header, use the format 'Title | Description'. For a Question Step, this is the text of the choice button. Supports Markdown.",
+                "The content to display. For a Key Header, use the format 'Title | Description'. For a Question Step, this is the text describing the choice. Supports Markdown.",
               integrity: {
                 description: "Primary text content. Can use Markdown (e.g. **Bold**).",
                 allowEmpty: false,
@@ -663,11 +664,12 @@ export let nlDataStructure = {
                 allowedContent: "any",
                 supportsMultilingual: true,
               },
+              templateData: [],
             },
             target: {
               name: "Target",
               description:
-                "Where this choice leads. Enter a <b>number</b> to go to the next Question Step (must be higher than current step). Enter <b>text</b> to define the Result (species name) or to link to another key ID.",
+                "Where this choice leads. Enter a <b>number</b> to go to the next Question Step (must be higher than current step). Enter <b>text</b> to define the Result (taxon name) or to link to another key ID.",
               integrity: {
                 description: "Step ID (Number) or Result (Text).",
                 allowEmpty: false,
@@ -675,19 +677,20 @@ export let nlDataStructure = {
                 allowedContent: "any",
                 supportsMultilingual: false,
               },
+              templateData: [],
             },
-            image: {
-              name: "Image",
+            images: {
+              name: "Images",
               description:
-                "Filename of an image in the 'usercontent' folder. You can add a caption by adding a vertical bar and text after the filename (e.g. 'beetle.jpg | Dorsal view'). To use multiple images, add columns Image1, Image2, etc.",
+                "Filename of an image in the 'usercontent/keys' folder. You can add multiple images by separating the filenames by a vertical bar | (e.g. image1.jpg | image2.png).",
               integrity: {
                 description: "Filename (e.g. image.jpg) or Filename with caption (e.g. image.jpg | Caption).",
                 allowEmpty: true,
                 allowDuplicates: "yes",
-                allowedContent: "filename",
-                allowedExtensions: [".jpg", ".png", "webp", ".svg"],
+                allowedContent: "any",
                 supportsMultilingual: false,
               },
+              templateData: [],
             },
           },
           data: [],
@@ -713,7 +716,6 @@ export let nlDataStructure = {
       },
     },
     appearance: {
-      skipAutoImport: true,
       name: "nl_appearance",
       description:
         "This sheet allows you to configure the appearance of the data from the checklist sheet in the app.",

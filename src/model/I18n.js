@@ -139,8 +139,8 @@ let translations = {
     fr: "Par rapport à l'appli NaturaList",
   },
   about_app: {
-    en: "# NaturaList\n\n## A flexible checklist app\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** is a flexible taxonomic checklist app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies with powerful filtering and search capacities.\n\n**NaturaList** doesn't come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.\n\n**NaturaList** has been originally developed for the [Checklist of the vascular flora of Vanuatu](https://pvnh.net) under the **Plants mo Pipol blong Vanuatu** (Plants and People of Vanuatu) project.\n\n## Get NaturaList\n\nVisit [naturalist.netlify.app](https://naturalist.netlify.app/) for more details about NaturaList app including its latest version and a demo implementation.\n\nYou can also find the source code on [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nRead the app documentation there to see how to build or manage your own checklist.\n\n## How to cite the app\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contact the author\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
-    fr: "# NaturaList\n\n## Une application de listes taxonomiques flexible\n\n![NaturaList logo](img/icon.svg)\n\n**NaturaList** est une application flexible de listes taxonomiques capable de visualiser une grande variété de données pour les taxonomies formelles et indigènes / folkloriques avec de puissantes capacités de filtrage et de recherche.\n\n**NaturaList** n'est pas livré avec un ensemble prédéfini de structures taxonomiques que vous auriez à adapter à votre projet. Vous avez la liberté de définir quel type de données est affiché et comment. Vos données taxonomiques sont extraites d'une feuille de calcul, ce qui facilite les mises à jour, les changements d'apparence ou même l'ajout de nouveaux types d'informations, sans avoir besoin d'une grande expertise informatique et de progiciels complexes. \n\n**NaturaList** a été développé à l'origine pour le [Checklist of the vascular flora of Vanuatu](https://pvnh.net) dans le cadre du projet **Plants mo Pipol blong Vanuatu** (Plantes et gens du Vanuatu).\n## Get NaturaList\n\nVisitez [naturalist.netlify.app](https://naturalist.netlify.app/) pour plus de détails sur l'application NaturaList, y compris sa dernière version et une démo.\n\nVous pouvez également trouver le code source sur [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nLisez la documentation de l'application pour voir comment construire ou gérer votre propre liste taxonomique.\n\n## Comment citer l'appli\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contacter l'auteur\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
+    en: "# NaturaList\n\n## A flexible checklist app\n\n![NaturaList logo](img/icon_transparent_blue.svg)\n\n**NaturaList** is a flexible taxonomic checklist app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies with powerful filtering and search capacities.\n\n**NaturaList** doesn't come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.\n\n**NaturaList** has been originally developed for the [Checklist of the vascular flora of Vanuatu](https://pvnh.net) under the **Plants mo Pipol blong Vanuatu** (Plants and People of Vanuatu) project.\n\n## Get NaturaList\n\nVisit [naturalist.netlify.app](https://naturalist.netlify.app/) for more details about NaturaList app including its latest version and a demo implementation.\n\nYou can also find the source code on [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nRead the app documentation there to see how to build or manage your own checklist.\n\n## How to cite the app\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contact the author\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
+    fr: "# NaturaList\n\n## Une application de listes taxonomiques flexible\n\n![NaturaList logo](img/icon_transparent_blue.svg)\n\n**NaturaList** est une application flexible de listes taxonomiques capable de visualiser une grande variété de données pour les taxonomies formelles et indigènes / folkloriques avec de puissantes capacités de filtrage et de recherche.\n\n**NaturaList** n'est pas livré avec un ensemble prédéfini de structures taxonomiques que vous auriez à adapter à votre projet. Vous avez la liberté de définir quel type de données est affiché et comment. Vos données taxonomiques sont extraites d'une feuille de calcul, ce qui facilite les mises à jour, les changements d'apparence ou même l'ajout de nouveaux types d'informations, sans avoir besoin d'une grande expertise informatique et de progiciels complexes. \n\n**NaturaList** a été développé à l'origine pour le [Checklist of the vascular flora of Vanuatu](https://pvnh.net) dans le cadre du projet **Plants mo Pipol blong Vanuatu** (Plantes et gens du Vanuatu).\n## Get NaturaList\n\nVisitez [naturalist.netlify.app](https://naturalist.netlify.app/) pour plus de détails sur l'application NaturaList, y compris sa dernière version et une démo.\n\nVous pouvez également trouver le code source sur [GitHub](https://github.com/dominik-ramik/naturalist/).\n\nLisez la documentation de l'application pour voir comment construire ou gérer votre propre liste taxonomique.\n\n## Comment citer l'appli\n\nD.M. Ramík. 2022. NaturaList, a flexible taxonomic checklist app. (version $1)\n\n## Contacter l'auteur\n\nDominik M. Ramík, [dominik.ramik@seznam.cz](mailto:dominik.ramik@seznam.cz)",
   },
   manage: {
     en: "Manage",
@@ -183,8 +183,8 @@ let translations = {
     fr: "Problème en chargeant les données",
   },
   free_text_search: {
-    en: "Full-text search",
-    fr: "Recherche plein texte",
+    en: "Full-text search; use | between terms to find either one",
+    fr: "Recherche de texte ; utilisez | entre les termes pour trouver l'un ou l'autre",
   },
   languages: {
     en: "Other languages",
@@ -366,9 +366,33 @@ let translations = {
     en: "All looks right?",
     fr: "Tout semble correct ?",
   },
+  keys: {
+    en: "Single-access keys",
+    fr: "Clés à accès simple",
+  },
   proceed_to_update: {
     en: "Publish the update",
     fr: "Publier la mise à jour",
+  },
+  dm_data_after_empty_rows: {
+    en: "There is data below an empty row in sheet '$1' (empty row at line $2, next non-empty row at line $3). This may indicate some rows were accidentally left blank and the data below could be overlooked. Please check the sheet to ensure rows meant to be together are contiguous.",
+    fr: "Il y a des données sous une ligne vide dans la feuille '$1' (ligne vide à $2, prochaine ligne non vide à $3). Cela peut indiquer que des lignes ont été laissées vides par erreur et que les données suivantes risquent d'être oubliées. Veuillez vérifier la feuille pour vous assurer que les lignes devant être contiguës le sont bien.",
+  },
+  dm_data_after_empty_rows: {
+    en: "There is data below an empty row in sheet '$1' (empty row at line $2, next non-empty row at line $3). This may indicate some rows were accidentally left blank and the data below could be overlooked. Please check the sheet to ensure rows meant to be together are contiguous.",
+    fr: "Il y a des données sous une ligne vide dans la feuille '$1' (ligne vide à $2, prochaine ligne non vide à $3). Cela peut indiquer que des lignes ont été laissées vides par erreur et que les données suivantes risquent d'être oubliées. Veuillez vérifier la feuille pour vous assurer que les lignes devant être contiguës le sont bien.",
+  },
+  dm_empty_row_in_data: {
+    en: "Empty row detected in sheet '$1' at line $2.",
+    fr: "Ligne vide détectée dans la feuille '$1' à la ligne $2.",
+  },
+  dm_data_after_empty_row_ignored: {
+    en: "Data found after the empty row will be ignored.",
+    fr: "Les données trouvées après la ligne vide seront ignorées.",
+  },
+  data_upload_import_dirty: {
+    en: "Some problems with your spreadsheet to be addressed before you can proceed:",
+    fr: "Certains problèmes de votre feuille de calcul doivent être réglés avant que vous puissiez continuer :",
   },
   data_upload_import_dirty: {
     en: "Some problems with your spreadsheet to be addressed before you can proceed:",
@@ -437,7 +461,7 @@ let translations = {
   download_data: {
     en: "Download the data",
     fr: "Télécharger les données",
-  },  
+  },
   critical_error_possible_data_issue: { // TODO
     en: "A critical issue prevents the app from working correctly. If you just updated to a new version, it may be that  Please try to refresh the page or contact the administrator.",
     fr: "",
@@ -790,6 +814,10 @@ let translations = {
     en: "The linked file $1 is not found on the server",
     fr: "Le fichier lié $1 n'est pas trouvé sur le serveur",
   },
+  dm_asset_head_error: {
+    en: "The linked file $1 is not found on the server or has wrong format",
+    fr: "Le fichier lié $1 n'est pas trouvé sur le serveur ou a un format incorrect",
+  },
   dm_hidden_syntax: {
     en: "The column 'Hidden' in 'Custom data definition' on line $1 has incorrect syntax $2. It should start with 'if' or 'unless'",
     fr: "La colonne 'Hidden' dans 'Définition des données personnalisées' à la ligne $1 a une syntaxe incorrecte $2. Elle doit commencer par 'if' ou 'unless'",
@@ -818,6 +846,10 @@ let translations = {
     en: "Media $1 has is set to precache but its 'Link base' is an absolute address $2. Media with Precache set to 'yes' must have 'Link base' set to an URL relative to 'usercontent' folder",
     //TODO translate
     fr: "Le média $1 est configuré pour le précache mais son 'Link base' est une adresse absolue $2. Le média dont le précache est configuré sur 'oui' doit avoir son 'Link base' configurée sur une URL relative au dossier 'usercontent'.",
+  },
+  key_or: {
+    en: "or",
+    fr: "ou",
   },
   filter_or: {
     en: "or",

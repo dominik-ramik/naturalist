@@ -1,7 +1,5 @@
 .about-view {
-    font-size: 90%;
     user-select: text;
-    padding: var(--pad-large);
 }
 
 .about-view h1,
@@ -9,7 +7,6 @@
 .about-view h3,
 .about-view h4 {
     text-align: center;
-    color: #ffffffa3;
     line-height: 120%;
 }
 
@@ -35,11 +32,7 @@
 }
 
 .about-view a {
-    display: inline-block;
-    background-color: #ffffff33;
-    color: #ffffffd9;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    border-radius: 0.25em;
+    color: #1565c0;
+    cursor: pointer;
     text-decoration: none;
 }
