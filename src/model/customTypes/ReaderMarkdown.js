@@ -10,7 +10,7 @@ export let readerMarkdown = {
     let value = readDataFromPath(context, computedPath, {});
     return value;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (data === null || data === undefined || data.toString().trim() === "") {
       return null;
     }

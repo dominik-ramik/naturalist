@@ -33,7 +33,7 @@ export let readerMap = {
 
     return mapData;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
       return null;
     }

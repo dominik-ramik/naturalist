@@ -33,7 +33,7 @@ export let LiteratureView = {
       "</ul>";
 
     return m(
-      ".literature-view[style=background-color: white; color: black; padding: 1em; border-radius: 0.5em]",
+      ".literature-view",
       m.trust(text)
     );
   },

@@ -24,11 +24,6 @@ export let PinnedView = {
       [
         Settings.pinnedSearches.getAll().length == 0
           ? null
-          : { type: "divider" },
-      ],
-      [
-        Settings.pinnedSearches.getAll().length == 0
-          ? null
           : { type: "label", title: _t("pined_searches") },
       ],
       Settings.pinnedSearches.getAll().map(function (pinnedItem) {
@@ -73,7 +68,7 @@ export let PinnedView = {
 
         if (item.type == "button") {
           return m(
-            ".multi-item-menu-button",
+            ".card.multi-item-menu-button[style=display: flex; flex-direction: row;]",
             {
               onclick: function (e) {
                 if (item.state != "inactive") {

@@ -1,4 +1,4 @@
-.listed-taxa .card {
+.card {
   border-radius: var(--pad-large);
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   background-color: #ffffff87;
@@ -8,6 +8,7 @@
   display: block;
   margin: var(--pad-small);
   margin-bottom: var(--pad-large);
+  color: black;
 }
 
 .listed-taxa .taxon-level1:hover,

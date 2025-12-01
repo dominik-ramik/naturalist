@@ -34,7 +34,7 @@ export let readerSound = {
 
     return soundData;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
       return null;
     }

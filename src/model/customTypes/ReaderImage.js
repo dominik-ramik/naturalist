@@ -33,7 +33,7 @@ export let readerImage = {
 
     return imageData;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     //console.log("Rendering ReaderImage with data:", data, "and uiContext:", uiContext);
     if (!data || data.source.toString().trim() === "") {
       return null;

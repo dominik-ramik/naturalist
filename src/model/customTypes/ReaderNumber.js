@@ -34,7 +34,7 @@ export let readerNumber = {
 
     return parsedNumber;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (data === undefined || data === null || data === "") {
       return "";
     }

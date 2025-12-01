@@ -81,7 +81,7 @@ export let readerMapRegions = {
 
     return resultObject;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (uiContext.placement === "details") {
       return renderDetailsMap(data, uiContext);
     } else {

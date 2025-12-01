@@ -16,7 +16,7 @@ export let readerText = {
 
     return text;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     if (data === null || data === undefined || data.toString().trim() === "" ) {
       return null;
     }

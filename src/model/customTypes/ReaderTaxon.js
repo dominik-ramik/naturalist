@@ -14,7 +14,7 @@ export let readerTaxon = {
 
     return taxon;
   },
-  dataToUI: function (data, uiContext) {
+  render: function (data, uiContext) {
     // If data has taxonTree structure, use it directly
     if (data && data.taxonTree && data.taxonTree.taxon) {
       return m(ClickableTaxonName, {

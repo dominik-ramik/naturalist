@@ -87,7 +87,7 @@ export let TaxonDataItemView = {
     if (itemType == "object") {
       let dataLength = Object.getOwnPropertyNames(data).length;
 
-      // Check whether we have a reader for meta.formatting and if so, return the dataToUI, otherwise continue
+      // Check whether we have a reader for meta.formatting and if so, return the render, otherwise continue
       const readerResult = TaxonDataItemView.renderWithReader(
         data,
         meta,
@@ -144,7 +144,7 @@ export let TaxonDataItemView = {
    */
   renderWithReader: function (data, meta, dataPath, taxon, tailingSeparator) {
     const reader = dataReaders[meta.formatting];
-    if (reader && reader.dataToUI) {
+    if (reader && reader.render) {
       // Normalize taxon to { name, authority }
       let taxonObj = taxon;
       if (taxon && typeof taxon === "object" && Array.isArray(taxon.t)) {
@@ -161,7 +161,7 @@ export let TaxonDataItemView = {
         taxon: taxonObj,
         originalData: TaxonDataItemView.originalData,
       };
-      let rendered = reader.dataToUI(data, uiContext);
+      let rendered = reader.render(data, uiContext);
       if (rendered === null) {
         return null;
       }
