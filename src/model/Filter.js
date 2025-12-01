@@ -67,6 +67,21 @@ export let Filter = {
     if (query.text && query.text.length > 0)
       Filter.text = query.text;
   },
+  addTaxaByName: function (taxonNames) {
+    if (!Array.isArray(taxonNames)) return;
+
+    taxonNames.forEach(function (name) {
+      Object.keys(Filter.taxa).forEach(function (dataPath) {
+        // Check if the provided name is a valid option for this taxonomic level (exists in 'all')
+        if (Filter.taxa[dataPath].all.indexOf(name) > -1) {
+          // Add to 'selected' only if not already present to avoid duplicates
+          if (Filter.taxa[dataPath].selected.indexOf(name) < 0) {
+            Filter.taxa[dataPath].selected.push(name);
+          }
+        }
+      });
+    });
+  },
   clear: function () {
     Object.keys(Filter.taxa).forEach(function (dataPath) {
       Filter.taxa[dataPath].selected = [];
@@ -422,9 +437,32 @@ export let Filter = {
     });
 
     if (Filter.text.length > 0) {
-      let textFilter = textLowerCaseAccentless(Filter.text).replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-      let regex = new RegExp("\\b" + textFilter);
-      requirements.push({ type: "text", regex: regex, bit: 1 << requirements.length });
+      // 1. Split by pipe to identify potential terms
+      let rawTerms = Filter.text.split('|');
+
+      // 2. Process terms: Normalize, Trim, Escape, and Filter invalid ones
+      let validTerms = rawTerms.map(function (term) {
+        // Normalize (lowercase/accents) and remove surrounding whitespace
+        let clean = textLowerCaseAccentless(term).trim();
+
+        // Escape Regex characters to ensure text is treated literally
+        return clean.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+      }).filter(function (term) {
+        // Remove empty strings caused by "||", "| ", or trailing pipes
+        return term.length > 0;
+      });
+
+      // 3. Construct Regex only if we have valid terms
+      if (validTerms.length > 0) {
+        // Join terms with OR operator, prepending word boundary (\b) to each
+        // Example: "term1" and "term2" becomes "\bterm1|\bterm2"
+        let pattern = validTerms.map(t => "\\b" + t).join("|");
+
+        // Wrap in non-capturing group for safety: (?:\bterm1|\bterm2)
+        let regex = new RegExp("(?:" + pattern + ")");
+
+        requirements.push({ type: "text", regex: regex, bit: 1 << requirements.length });
+      }
     }
 
     const TARGET_MASK = (1 << requirements.length) - 1;
