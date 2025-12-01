@@ -25,6 +25,10 @@
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
+    border: 1px solid black;
+    border-radius: 0;
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
 }
 
 .tabs-container-tab-button-title {
@@ -33,6 +37,8 @@
 
 .tabs-container-active-tab-button {
     opacity: 1;
+    background-color: white;
+    border-bottom: none;
 }
 
 .tabs-container-tab-button:first-child {
@@ -63,7 +69,6 @@
 .tabs-container-content {
     background-color: white;
     color: black;
-    padding: var(--pad-large);
     padding-top: 1em;
     border-bottom-left-radius: var(--pad-small);
     border-bottom-right-radius: var(--pad-small);

@@ -1,6 +1,7 @@
 .details-taxon-zone {
   text-align: center;
   user-select: all;
+  font-size: 120%;
   margin-bottom: 1em;
 }
 
@@ -14,11 +15,13 @@
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  width: 33%;
+  width: 32%;
   align-items: center;
   text-align: left;
   padding: var(--pad-large);
-  border: 1px solid transparent;
+  border: 1px solid gray;
+  border-radius: 0.5em;
+  margin: 0.1em;
   box-sizing: border-box;
 }
 
@@ -31,6 +34,7 @@
   font-size: var(--font-smaller);
   line-height: 100%;
   margin-left: var(--pad-large);
+  overflow-wrap: anywhere;
 }
 
 .search-engine .engine-icon {
@@ -42,6 +46,8 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
+  justify-content: space-between;
 }
 
 .details-taxon-crumbs-zone {
@@ -76,7 +82,7 @@
 }
 
 .crumb-taxon-name {
-  color: white;
+  color: black;
 }
 
 .crumb-taxon-authority {
@@ -99,6 +105,10 @@
   color: #444;
   margin-top: 1em;
   margin-bottom: 0.5em;
+}
+
+.tabs-container-content-text a {
+  color: #1565c0 !important;
 }
 
 .tabs-container-content-text .details-group-title {
@@ -278,7 +288,7 @@ path {
     padding: var(--pad-small);
   }
 
-  
+
   .tabs-container-content-map .media-list .media-type-regions .image-wrap object {
     max-width: 100%;
   }
