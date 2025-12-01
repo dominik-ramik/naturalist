@@ -143,7 +143,7 @@ const KeyCard = {
     },
 
     view: (vnode) => {
-        const { keyData, isActive, currentPath, history, onSelect, onStepClick, onRestart } = vnode.attrs;
+        const { keyData, isActive, currentPath, history, onSelect, onStepClick, onRestart, onBack } = vnode.attrs;
         const state = vnode.state;
         const isListView = !isActive;
 
@@ -198,6 +198,13 @@ const KeyCard = {
                 }
             }
         }, [
+            (!isListView && onBack) ? m("img.sak-icon.sak-icon-left", { 
+                src: "img/ui/menu/arrow_circle_left.svg",
+                onclick: (e) => {
+                    e.stopPropagation();
+                    onBack();
+                }
+            }) : null,
             m("h3.sak-title", m.trust(processMarkdownWithBibliography(keyData.title))),
             showIcon
                 ? m("img.sak-icon", { src: iconSrc })
@@ -335,9 +342,9 @@ const KeyCard = {
                         class: isPossible ? "reachable" : "unreachable",
                         onclick: (e) => {
                             e.stopPropagation();
-                            if (!isPossible) return;
+                            //if (!isPossible) return;
 
-                            // [DRY/KISS] Calculate path once.
+                            // Calculate path once.
                             const fullPath = KeyLogic.getPathToTaxon(keyData, taxon);
                             if (!fullPath || fullPath.length === 0) return;
 
@@ -408,9 +415,8 @@ export const SingleAccessKeyView = {
                 history: historyData,
                 onStepClick: (newPathStr) => m.route.set("/single-access-keys/:key/:steps", { key: activeKey.id, steps: newPathStr }),
                 onRestart: () => m.route.set("/single-access-keys/:key", { key: activeKey.id }),
-            }),
-            //m("br"), m("br"),
-            m("button", { onclick: () => m.route.set("/single-access-keys") }, "← Back to Keys List"),
+                onBack: () => m.route.set("/single-access-keys")
+            })
         ]);
     }
 };
@@ -419,7 +425,7 @@ function setFilterForPossibleTaxa(reachableTaxa) {
     // 1. Construct the pipe-delimited regex string for the filter
     // Filter.js handles '|' as an OR operator automatically
     const newFilterText = reachableTaxa && reachableTaxa.length > 0
-        ? reachableTaxa.join("|")
+        ? reachableTaxa.join(" | ")
         : "";
 
     // 2. CRITICAL: Infinite Loop Prevention

@@ -847,6 +847,10 @@ let translations = {
     //TODO translate
     fr: "Le média $1 est configuré pour le précache mais son 'Link base' est une adresse absolue $2. Le média dont le précache est configuré sur 'oui' doit avoir son 'Link base' configurée sur une URL relative au dossier 'usercontent'.",
   },
+  crumb_or: {
+    en: "or",
+    fr: "ou",
+  },
   key_or: {
     en: "or",
     fr: "ou",

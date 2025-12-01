@@ -44,8 +44,28 @@ export let FilterCrumbsView = {
 
 
         if (Checklist.filter.text.length > 0) {
+            let displayTitle = Checklist.filter.text;
 
-            crumbs.push(m(Crumb, { type: "text", category: _t("filter_cat_text"), dataPath: "", title: Checklist.filter.text, color: getGradedColor("text", "crumb") }));
+            // Check if the search text contains the OR pipe
+            if (displayTitle.indexOf("|") !== -1) {
+                const parts = displayTitle.split("|");
+                displayTitle = parts.map(function(part, index) {
+                    // If it is not the last item, append the OR text
+                    if (index < parts.length - 1) {
+                        // Return an array fragment containing the part and the separator
+                        return [part, m("b", " " + _t("crumb_or") + " ")];
+                    }
+                    return part;
+                });
+            }
+
+            crumbs.push(m(Crumb, { 
+                type: "text", 
+                category: _t("filter_cat_text"), 
+                dataPath: "", 
+                title: displayTitle, 
+                color: getGradedColor("text", "crumb") 
+            }));
         }
 
         return m(".filter-crumbs", [

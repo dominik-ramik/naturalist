@@ -286,11 +286,27 @@ export let Settings = {
       });
 
       if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
+        let textDisplay = itemObject.text;
+
+        // Check if the search text contains the OR pipe
+        if (textDisplay.indexOf("|") !== -1) {
+          let parts = textDisplay.split("|");
+          
+          // If output is HTML, we interrupt the surrounding <strong> tags 
+          // to insert a bolded OR separator.
+          // Example result: <strong>Term1</strong> <b> OR </b> <strong>Term2</strong>
+          let joiner = usePlainTextOutput ? 
+            (" " + _t("crumb_or") + " ") : 
+            ("</strong> " + _t("crumb_or") + " <strong>");
+
+          textDisplay = parts.join(joiner);
+        }
+
         names.push(
           _t("text_is_list_joiner") +
           " " +
           (usePlainTextOutput ? "" : "<strong>") +
-          itemObject.text +
+          textDisplay +
           (usePlainTextOutput ? "" : "</strong>")
         );
       }

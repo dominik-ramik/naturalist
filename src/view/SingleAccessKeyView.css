@@ -84,6 +84,11 @@
     margin-left: 10px;
 }
 
+.sak-icon-left {
+    margin-left: 0px;
+    margin-right: 10px;
+}
+
 /* --- Description --- */
 .sak-description {
     padding: 0 15px 15px 15px;
@@ -196,9 +201,10 @@
 }
 
 .sak-thumb {
-    height: 60px;
-    width: auto;
-    border: 1px solid #ddd;
+    height: 7em;
+    width: 7em;
+    object-fit: cover;
+    object-position: center;
     border-radius: 4px;
     cursor: zoom-in;
     background: #fff;
@@ -296,15 +302,18 @@
     font-size: 0.85em;
     border: 1px solid #ddd;
     background-color: rgba(255, 255, 255, 0.8);
-}
-
-.sak-chip.reachable {
-    color: #000;
-    border-color: #999;
+    cursor: pointer;
 }
 
 .sak-chip.unreachable {
     color: #aaa;
     border-color: #b9b9b9;
     background-color: rgba(240, 240, 240, 0.5);
+}
+
+.sak-chip.reachable,
+.sak-chip.unreachable:hover {
+    color: #000;
+    border-color: #999;
+    background-color: rgba(255, 255, 255, 0.8);
 }
