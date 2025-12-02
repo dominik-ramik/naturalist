@@ -3,6 +3,7 @@ import m from "mithril";
 import { getGradedColor } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { _t } from "../model/I18n.js";
+import { Settings } from "../model/Settings.js";
 
 export let FilterCrumbsView = {
     view: function() {
@@ -46,9 +47,9 @@ export let FilterCrumbsView = {
         if (Checklist.filter.text.length > 0) {
             let displayTitle = Checklist.filter.text;
 
-            // Check if the search text contains the OR pipe
-            if (displayTitle.indexOf("|") !== -1) {
-                const parts = displayTitle.split("|");
+            // Check if the search text contains the OR separator
+            if (displayTitle.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
+                const parts = displayTitle.split(Settings.SEARCH_OR_SEPARATOR);
                 displayTitle = parts.map(function(part, index) {
                     // If it is not the last item, append the OR text
                     if (index < parts.length - 1) {

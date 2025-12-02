@@ -422,8 +422,8 @@ export let Filter = {
     });
 
     if (Filter.text.length > 0) {
-      // 1. Split by pipe to identify potential terms
-      let rawTerms = Filter.text.split('|');
+      // 1. Split by the OR separator to identify potential terms
+      let rawTerms = Filter.text.split(Settings.SEARCH_OR_SEPARATOR);
 
       // 2. Process terms: Normalize, Trim, Escape, and Filter invalid ones
       let validTerms = rawTerms.map(function (term) {

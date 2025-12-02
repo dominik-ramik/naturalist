@@ -2,6 +2,7 @@ import m from "mithril";
 import { Checklist } from "../model/Checklist.js";
 import { processMarkdownWithBibliography } from "../components/Utils.js";
 import { _t } from "../model/I18n.js";
+import { Settings } from "../model/Settings.js";
 
 // ==========================================
 // 1. DATA & LOGIC HELPERS
@@ -422,10 +423,10 @@ export const SingleAccessKeyView = {
 };
 
 function setFilterForPossibleTaxa(reachableTaxa) {
-    // 1. Construct the pipe-delimited regex string for the filter
-    // Filter.js handles '|' as an OR operator automatically
+    // 1. Construct the separator-delimited regex string for the filter
+    // Filter.js handles the separator as an OR operator automatically
     const newFilterText = reachableTaxa && reachableTaxa.length > 0
-        ? reachableTaxa.join(" | ")
+        ? reachableTaxa.join(" " + Settings.SEARCH_OR_SEPARATOR + " ")
         : "";
 
     // 2. CRITICAL: Infinite Loop Prevention

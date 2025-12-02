@@ -183,8 +183,8 @@ let translations = {
     fr: "Problème en chargeant les données",
   },
   free_text_search: {
-    en: "Full-text search; use | between terms to find either one",
-    fr: "Recherche de texte ; utilisez | entre les termes pour trouver l'un ou l'autre",
+    en: "Full-text search; use $1 between terms to find either one",
+    fr: "Recherche de texte ; utilisez $1 entre les termes pour trouver l'un ou l'autre",
   },
   languages: {
     en: "Other languages",
@@ -764,7 +764,7 @@ let translations = {
   },
   dm_column_name_duplicate: {
     en: "Column name $1 in table $2 is a duplicate already used in table $3, you need to rename one or the other as all column names must be unique",
-    fr: "Le nom de la colonne $1 dans la table $2 est un doublon déjà utilisé dans la table $3, vous devez renommer l'un ou l'autre car tous les noms de colonnes doivent être uniques",
+    fr: "Le nom de la colonne $1 dans le tableau $2 est un doublon déjà utilisé dans la table $3, vous devez renommer l'un ou l'autre car tous les noms de colonnes doivent être uniques",
   },
   dm_hue_value: {
     en: "The hue in table $1 under item 'Color theme hue' has to be an integer number between 0 and 360",

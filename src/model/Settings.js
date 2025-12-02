@@ -3,6 +3,9 @@ import { Checklist } from "./Checklist.js";
 import { _t } from "./I18n.js";
 
 export let Settings = {
+  // Full-text search OR separator symbol
+  SEARCH_OR_SEPARATOR: "/",
+
   lastKnownDataVersion(objToSet) {
     const key = "lastKnownDataVersion";
     if (objToSet === undefined) {
@@ -288,9 +291,9 @@ export let Settings = {
       if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
         let textDisplay = itemObject.text;
 
-        // Check if the search text contains the OR pipe
-        if (textDisplay.indexOf("|") !== -1) {
-          let parts = textDisplay.split("|");
+        // Check if the search text contains the OR separator
+        if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
+          let parts = textDisplay.split(Settings.SEARCH_OR_SEPARATOR);
           
           // If output is HTML, we interrupt the surrounding <strong> tags 
           // to insert a bolded OR separator.
