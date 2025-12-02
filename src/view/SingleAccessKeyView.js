@@ -404,7 +404,7 @@ export const SingleAccessKeyView = {
             return m(".single-access-key-view", [
                 filterTaxon
                     ? m(".sak-filter-header", [
-                        m("span.sak-filter-title", `Keys for ${filterTaxon} (${displayedKeys.length})`),
+                        m("span.sak-filter-title", `Keys including ${filterTaxon} (${displayedKeys.length})`),
                         m("button.sak-clear-filter", {
                             onclick: () => routeTo("/single-access-keys")
                         }, "✕ Clear Filter")

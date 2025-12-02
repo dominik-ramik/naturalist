@@ -359,13 +359,31 @@ export let ExcelBridge = function (excelFile) {
         return null;
       }
 
-      // Determine table width based on header row
+      let headerRowIndex = -1;
+      if (data.common && data.common.checklistHeadersStartRow) {
+        headerRowIndex = data.common.checklistHeadersStartRow - 1;
+      }
+      else{
+        headerRowIndex = 0;
+      }
+
+      // Ensure we don't go out of bounds if the sheet is empty/small
+      if (headerRowIndex < 0) headerRowIndex = 0;
+      if (headerRowIndex >= sheetData.length) headerRowIndex = 0;
+
+      const headerRow = sheetData[headerRowIndex];
+
+      // 2. Determine table width based on the ACTUAL header row, not sheetData[0]
       let tableEndCol = 1;
-      sheetData[0].forEach((header, index) => {
-        if (header !== undefined && header.toString().trim() !== "") {
-          tableEndCol = index + 1;
-        }
-      });
+      if (headerRow) {
+        headerRow.forEach((header, index) => {
+          if (header !== undefined && header.toString().trim() !== "") {
+            tableEndCol = index + 1;
+          }
+        });
+      }
+
+      console.log("Table end column:", tableEndCol);
 
       const rawChecklistTable = [];
 
@@ -390,6 +408,8 @@ export let ExcelBridge = function (excelFile) {
         if (isArrayOfEmptyStrings(cells)) break;
         rawChecklistTable.push(cells);
       }
+
+      console.log("Raw checklist data:", rawChecklistTable);
 
       return rawChecklistTable;
     },

@@ -494,256 +494,256 @@ export let DataManager = function () {
     }
 
     function compileSingleAccessKeys(lang, checklistData, additionalKeysAssets) {
-  if (!data.sheets.content.tables.singleAccessKeys ||
-    !data.sheets.content.tables.singleAccessKeys.data ||
-    !data.sheets.content.tables.singleAccessKeys.data[lang.code]) {
-    return [];
-  }
-
-  const rows = data.sheets.content.tables.singleAccessKeys.data[lang.code];
-  const keys = [];
-  let currentKey = null;
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-
-  // Helper: Normalize and track image paths
-  function processImageCell(imageCell, rowIndex) {
-    if (!imageCell || typeof imageCell !== 'string' || imageCell.trim() === '') {
-      return [];
-    }
-
-    const filenames = imageCell.split('|').map(f => f.trim()).filter(f => f);
-    const normalized = [];
-
-    for (const filename of filenames) {
-      if (!filename) continue;
-
-      try {
-        // Validate file extension
-        const lowerFilename = filename.toLowerCase();
-        const hasValidExtension = allowedExtensions.some(ext => lowerFilename.endsWith(ext));
-
-        if (!hasValidExtension) {
-          Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image '" + filename + "' has invalid extension (allowed: .jpg, .jpeg, .png, .webp)");
-          continue;
-        }
-
-        // Normalize path: ensure no double slashes, handle edge cases
-        let normalizedPath = filename.startsWith('/') ? filename.slice(1) : filename;
-        normalizedPath = './usercontent/keys/' + normalizedPath;
-        normalizedPath = normalizedPath.replace(/\/+/g, '/'); // Remove duplicate slashes
-
-        normalized.push(normalizedPath);
-
-        // Track asset if not already present
-        if (!additionalKeysAssets.includes(normalizedPath)) {
-          additionalKeysAssets.push(normalizedPath);
-        }
-      } catch (e) {
-        Logger.error("Error normalizing image path '" + filename + "' at row " + (rowIndex + 1) + ": " + e);
-      }
-    }
-
-    return normalized;
-  }
-
-  // Process rows
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-
-    try {
-      const step = row.step;
-      const text = row.text;
-      const target = row.target;
-      const images = row.images || "";
-
-      // Validate row completeness
-      if (!step || !text || target === undefined || target === null || target === '') {
-        Logger.error("Taxonomic key row " + (i + 1) + ": Missing required field (Step, Text, or Target)");
-        continue;
+      if (!data.sheets.content.tables.singleAccessKeys ||
+        !data.sheets.content.tables.singleAccessKeys.data ||
+        !data.sheets.content.tables.singleAccessKeys.data[lang.code]) {
+        return [];
       }
 
-      const stepType = typeof step;
-      const isKeyDefinition = stepType === 'string';
-      const isStepDefinition = stepType === 'number';
+      const rows = data.sheets.content.tables.singleAccessKeys.data[lang.code];
+      const keys = [];
+      let currentKey = null;
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
 
-      if (!isKeyDefinition && !isStepDefinition) {
-        Logger.error("Taxonomic key row " + (i + 1) + ": Step must be string (Key ID) or number (Step ID)");
-        continue;
+      // Helper: Normalize and track image paths
+      function processImageCell(imageCell, rowIndex) {
+        if (!imageCell || typeof imageCell !== 'string' || imageCell.trim() === '') {
+          return [];
+        }
+
+        const filenames = imageCell.split('|').map(f => f.trim()).filter(f => f);
+        const normalized = [];
+
+        for (const filename of filenames) {
+          if (!filename) continue;
+
+          try {
+            // Validate file extension
+            const lowerFilename = filename.toLowerCase();
+            const hasValidExtension = allowedExtensions.some(ext => lowerFilename.endsWith(ext));
+
+            if (!hasValidExtension) {
+              Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image '" + filename + "' has invalid extension (allowed: .jpg, .jpeg, .png, .webp)");
+              continue;
+            }
+
+            // Normalize path: ensure no double slashes, handle edge cases
+            let normalizedPath = filename.startsWith('/') ? filename.slice(1) : filename;
+            normalizedPath = './usercontent/keys/' + normalizedPath;
+            normalizedPath = normalizedPath.replace(/\/+/g, '/'); // Remove duplicate slashes
+
+            normalized.push(normalizedPath);
+
+            // Track asset if not already present
+            if (!additionalKeysAssets.includes(normalizedPath)) {
+              additionalKeysAssets.push(normalizedPath);
+            }
+          } catch (e) {
+            Logger.error("Error normalizing image path '" + filename + "' at row " + (rowIndex + 1) + ": " + e);
+          }
+        }
+
+        return normalized;
       }
 
-      // KEY DEFINITION
-      if (isKeyDefinition) {
-        // Check for numeric key IDs
-        if (!isNaN(step)) {
-          Logger.error("Taxonomic key row " + (i + 1) + ": Key ID '" + step + "' appears numeric - use text IDs only");
-          continue;
-        }
+      // Process rows
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
 
-        // Check uniqueness
-        if (keys.find(k => k.id === step)) {
-          Logger.error("Taxonomic key row " + (i + 1) + ": Duplicate Key ID '" + step + "'");
-          continue;
-        }
+        try {
+          const step = row.step;
+          const text = row.text;
+          const target = row.target;
+          const images = row.images || "";
 
-        // --- VALIDATION: Ensure NO images on Key Definition ---
-        if (images && typeof images === 'string' && images.trim() !== "") {
-          Logger.error("Taxonomic key row " + (i + 1) + ": Key definition '" + step + "' cannot contain images. Images are only allowed on numeric steps.");
-        }
-        // -----------------------------------------------------
-
-        // Finalize previous key if exists
-        if (currentKey) {
-          validateKey(currentKey, checklistData);
-        }
-
-        // Parse title | description
-        const textParts = text.split('|').map(p => p.trim());
-        const title = textParts[0] || '';
-        const description = textParts[1] || '';
-
-        currentKey = {
-          id: step,
-          title: title,
-          description: description,
-          // 'images' property is deliberately omitted here
-          steps: []
-        };
-
-        keys.push(currentKey);
-        continue;
-      }
-
-      // STEP DEFINITION
-      if (isStepDefinition) {
-        // Check if orphaned
-        if (!currentKey) {
-          Logger.error("Taxonomic key row " + (i + 1) + ": Step " + step + " appears before any Key definition");
-          continue;
-        }
-
-        // Determine target type
-        const targetType = typeof target;
-        let targetValue = target;
-        let stepTypeValue = 'external';
-
-        if (targetType === 'number') {
-          stepTypeValue = 'internal';
-
-          // Validate no targeting step 1
-          if (target === 1) {
-            Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets 1 (forbidden)");
+          // Validate row completeness
+          if (!step || !text || target === undefined || target === null || target === '') {
+            Logger.error("Taxonomic key row " + (i + 1) + ": Missing required field (Step, Text, or Target)");
             continue;
           }
 
-          // Validate strict progression
-          if (target <= step) {
-            Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets " + target + " (must be > " + step + ")");
+          const stepType = typeof step;
+          const isKeyDefinition = stepType === 'string';
+          const isStepDefinition = stepType === 'number';
+
+          if (!isKeyDefinition && !isStepDefinition) {
+            Logger.error("Taxonomic key row " + (i + 1) + ": Step must be string (Key ID) or number (Step ID)");
             continue;
           }
-        } else if (targetType === 'string') {
-          targetValue = target.trim();
-        } else {
-          Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Target must be number or string");
-          continue;
-        }
 
-        // Process step images (allowed here)
-        const stepImagePaths = processImageCell(images, i);
+          // KEY DEFINITION
+          if (isKeyDefinition) {
+            // Check for numeric key IDs
+            if (!isNaN(step)) {
+              Logger.error("Taxonomic key row " + (i + 1) + ": Key ID '" + step + "' appears numeric - use text IDs only");
+              continue;
+            }
 
-        currentKey.steps.push({
-          step_id: step,
-          text: text,
-          target: targetValue,
-          type: stepTypeValue,
-          images: stepImagePaths // 'images' property exists here
-        });
-      }
-    } catch (e) {
-      Logger.error("Error processing taxonomic key row " + (i + 1) + ": " + e);
-    }
-  }
+            // Check uniqueness
+            if (keys.find(k => k.id === step)) {
+              Logger.error("Taxonomic key row " + (i + 1) + ": Duplicate Key ID '" + step + "'");
+              continue;
+            }
 
-  // Validate final key
-  if (currentKey) {
-    validateKey(currentKey, checklistData);
-  }
+            // --- VALIDATION: Ensure NO images on Key Definition ---
+            if (images && typeof images === 'string' && images.trim() !== "") {
+              Logger.error("Taxonomic key row " + (i + 1) + ": Key definition '" + step + "' cannot contain images. Images are only allowed on numeric steps.");
+            }
+            // -----------------------------------------------------
 
-  console.log("###### keys", keys);
+            // Finalize previous key if exists
+            if (currentKey) {
+              validateKey(currentKey, checklistData);
+            }
 
-  return keys;
+            // Parse title | description
+            const textParts = text.split('|').map(p => p.trim());
+            const title = textParts[0] || '';
+            const description = textParts[1] || '';
 
-  // VALIDATION HELPER
-  function validateKey(key, checklistData) {
-    try {
-      const steps = key.steps;
-      const keyId = key.id;
+            currentKey = {
+              id: step,
+              title: title,
+              description: description,
+              // 'images' property is deliberately omitted here
+              steps: []
+            };
 
-      // Check entry point
-      const hasStartStep = steps.some(s => s.step_id === 1);
-      if (!hasStartStep) {
-        Logger.error("Taxonomic key '" + keyId + "': Missing Step 1 (entry point required)");
-        return;
-      }
-
-      // Get unique step IDs
-      const stepIds = [...new Set(steps.map(s => s.step_id))].sort((a, b) => a - b);
-
-      if (stepIds.length === 0) return;
-
-      const maxStep = Math.max(...stepIds);
-
-      // Check continuity
-      for (let i = 1; i <= maxStep; i++) {
-        if (!stepIds.includes(i)) {
-          Logger.error("Taxonomic key '" + keyId + "': Missing Step " + i + " (steps must be continuous from 1 to " + maxStep + ")");
-        }
-      }
-
-      // Check internal integrity
-      const internalTargets = steps
-        .filter(s => s.type === 'internal')
-        .map(s => s.target);
-
-      for (const target of internalTargets) {
-        if (!stepIds.includes(target)) {
-          Logger.error("Taxonomic key '" + keyId + "': Target Step " + target + " does not exist");
-        }
-      }
-
-      // Check external integrity with exit taxa
-      const externalTargets = new Set(steps
-        .filter(s => s.type === 'external')
-        .map(s => s.target));
-
-      for (const taxon of checklistData) {
-        if (externalTargets.size === 0) {
-          break;
-        }
-        for (const taxonLevel of taxon.t) {
-          if (externalTargets.has(taxonLevel.name)) {
-            externalTargets.delete(taxonLevel.name);
+            keys.push(currentKey);
+            continue;
           }
+
+          // STEP DEFINITION
+          if (isStepDefinition) {
+            // Check if orphaned
+            if (!currentKey) {
+              Logger.error("Taxonomic key row " + (i + 1) + ": Step " + step + " appears before any Key definition");
+              continue;
+            }
+
+            // Determine target type
+            const targetType = typeof target;
+            let targetValue = target;
+            let stepTypeValue = 'external';
+
+            if (targetType === 'number') {
+              stepTypeValue = 'internal';
+
+              // Validate no targeting step 1
+              if (target === 1) {
+                Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets 1 (forbidden)");
+                continue;
+              }
+
+              // Validate strict progression
+              if (target <= step) {
+                Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Step " + step + " targets " + target + " (must be > " + step + ")");
+                continue;
+              }
+            } else if (targetType === 'string') {
+              targetValue = target.trim();
+            } else {
+              Logger.error("Taxonomic key '" + currentKey.id + "' row " + (i + 1) + ": Target must be number or string");
+              continue;
+            }
+
+            // Process step images (allowed here)
+            const stepImagePaths = processImageCell(images, i);
+
+            currentKey.steps.push({
+              step_id: step,
+              text: text,
+              target: targetValue,
+              type: stepTypeValue,
+              images: stepImagePaths // 'images' property exists here
+            });
+          }
+        } catch (e) {
+          Logger.error("Error processing taxonomic key row " + (i + 1) + ": " + e);
         }
       }
 
-      if (externalTargets.size > 0) {
-        for (const target of externalTargets) {
-          Logger.warning("Taxonomic key '" + keyId + "': Taxon '" + target + "' does not exist in the checklist. This is alright if your key is expected to point to taxa outside of this checklist, but it will prevent the automatic display of the taxon details when reaching the taxon via the key.");
-        }
+      // Validate final key
+      if (currentKey) {
+        validateKey(currentKey, checklistData);
       }
 
-      // Check reachability (all steps except 1 must be targeted)
-      const targetedSteps = new Set(internalTargets);
-      for (const stepId of stepIds) {
-        if (stepId !== 1 && !targetedSteps.has(stepId)) {
-          Logger.error("Taxonomic key '" + keyId + "': Step " + stepId + " is never reached (dead code)");
+      console.log("###### keys", keys);
+
+      return keys;
+
+      // VALIDATION HELPER
+      function validateKey(key, checklistData) {
+        try {
+          const steps = key.steps;
+          const keyId = key.id;
+
+          // Check entry point
+          const hasStartStep = steps.some(s => s.step_id === 1);
+          if (!hasStartStep) {
+            Logger.error("Taxonomic key '" + keyId + "': Missing Step 1 (entry point required)");
+            return;
+          }
+
+          // Get unique step IDs
+          const stepIds = [...new Set(steps.map(s => s.step_id))].sort((a, b) => a - b);
+
+          if (stepIds.length === 0) return;
+
+          const maxStep = Math.max(...stepIds);
+
+          // Check continuity
+          for (let i = 1; i <= maxStep; i++) {
+            if (!stepIds.includes(i)) {
+              Logger.error("Taxonomic key '" + keyId + "': Missing Step " + i + " (steps must be continuous from 1 to " + maxStep + ")");
+            }
+          }
+
+          // Check internal integrity
+          const internalTargets = steps
+            .filter(s => s.type === 'internal')
+            .map(s => s.target);
+
+          for (const target of internalTargets) {
+            if (!stepIds.includes(target)) {
+              Logger.error("Taxonomic key '" + keyId + "': Target Step " + target + " does not exist");
+            }
+          }
+
+          // Check external integrity with exit taxa
+          const externalTargets = new Set(steps
+            .filter(s => s.type === 'external')
+            .map(s => s.target));
+
+          for (const taxon of checklistData) {
+            if (externalTargets.size === 0) {
+              break;
+            }
+            for (const taxonLevel of taxon.t) {
+              if (externalTargets.has(taxonLevel.name)) {
+                externalTargets.delete(taxonLevel.name);
+              }
+            }
+          }
+
+          if (externalTargets.size > 0) {
+            for (const target of externalTargets) {
+              Logger.warning("Taxonomic key '" + keyId + "': Taxon '" + target + "' does not exist in the checklist. This is alright if your key is expected to point to taxa outside of this checklist, but it will prevent the automatic display of the taxon details when reaching the taxon via the key.");
+            }
+          }
+
+          // Check reachability (all steps except 1 must be targeted)
+          const targetedSteps = new Set(internalTargets);
+          for (const stepId of stepIds) {
+            if (stepId !== 1 && !targetedSteps.has(stepId)) {
+              Logger.error("Taxonomic key '" + keyId + "': Step " + stepId + " is never reached (dead code)");
+            }
+          }
+        } catch (e) {
+          Logger.error("Error validating taxonomic key '" + key.id + "': " + e);
         }
       }
-    } catch (e) {
-      Logger.error("Error validating taxonomic key '" + key.id + "': " + e);
     }
-  }
-}
 
     function compileMeta(lang) {
       let meta = {
@@ -1108,13 +1108,10 @@ export let DataManager = function () {
 
         allColumnInfos.forEach(function (info) {
           let position = dataPath.analyse.position(allColumnNames, info.name);
-          if (!position.isLeaf) {
-            return;
-          }
-
-          //console.log("INFO", info.name, info);
-
-          if (info.formatting == "checklist-taxon") {
+          
+          // For checklist-taxon, we need to process even if not a leaf
+          // because taxon columns have .authority children but should still be read
+          if (info.formatting === "checklist-taxon") {
             let taxon = loadDataByType(context, info.name, {
               ...info,
               formatting: "taxon",
@@ -1138,16 +1135,22 @@ export let DataManager = function () {
                 );
               }
             }
-          } else {
-            includeTreefiedData(
-              rowObj.d,
-              context,
-              dataPath.modify.pathToSegments(info.name),
-              0,
-              info,
-              ""
-            );
+            return; // Skip the rest of the loop for taxon columns
           }
+          
+          if (!position.isLeaf) {
+            return;
+          }
+
+          // ...existing code for non-taxon columns...
+          includeTreefiedData(
+            rowObj.d,
+            context,
+            dataPath.modify.pathToSegments(info.name),
+            0,
+            info,
+            ""
+          );
         });
 
         data.sheets.checklist.data[lang.code].push(rowObj);
@@ -2000,7 +2003,11 @@ export let DataManager = function () {
     },
 
     getCompiledChecklist() {
-      return compileChecklist(this.checkAssetsSize);
+      let jsonData = compileChecklist(this.checkAssetsSize);
+
+      console.log("### JD:", JSON.stringify(jsonData.versions.en.dataset.checklist.slice(0, 3), null, 2));
+
+      return jsonData;
     },
   };
 

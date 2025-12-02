@@ -346,6 +346,7 @@ export let Checklist = {
   },
 
   loadData: function (jsonData, isDraft) {
+
     if (
       jsonData === undefined ||
       jsonData === null ||
