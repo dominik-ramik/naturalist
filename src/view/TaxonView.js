@@ -57,7 +57,7 @@ export let TaxonView = {
         tabsData[tabKey] &&
         tabsData[tabKey].length > 0
       );
-    } 
+    }
 
     return m("ul.card.taxon-level" + inverseTaxonLevel, [
       m("li.taxon", [
@@ -69,44 +69,50 @@ export let TaxonView = {
           }),
           m(".spacer"),
           m(".details-icons-wrapper", [
+            m(".show-all-of-taxon.clickable",
+              {
+                onclick: function (e) {
+                  routeTo("/single-access-keys/filter/" + taxonName);
+                },
+              }, m(".taxon-details-icon", [m("img[src=./img/ui/checklist/key_vertical.svg]")])),
             shouldRenderTab(tabsData, "media") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.name, "media"),
+            detailsIcon(taxonName, "media"),
             shouldRenderTab(tabsData, "map") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.name, "maps"),
+            detailsIcon(taxonName, "maps"),
             shouldRenderTab(tabsData, "text") &&
-              detailsIcon(vnode.attrs.taxonTree.taxon.name, "text"),
+            detailsIcon(taxonName, "text"),
             (shouldRenderTab(tabsData, "media") ||
               shouldRenderTab(tabsData, "map") ||
               shouldRenderTab(tabsData, "text")) &&
-              showSearchAll &&
-              m(".vertical-separator"),
+            showSearchAll &&
+            m(".vertical-separator"),
             vnode.attrs.taxonTree && inverseTaxonLevel > 1 && showSearchAll
               ? m(
-                  ".show-all-of-taxon.clickable",
-                  {
-                    onclick: function (e) {
-                      Checklist.filter.clear();
-                      let taxonLevelKey = Object.keys(Checklist.filter.taxa)[
-                        vnode.attrs.currentTaxonLevel
-                      ];
-                      Checklist.filter.taxa[taxonLevelKey].selected = [
-                        vnode.attrs.taxonTree.taxon.name,
-                      ];
-                      Checklist.filter.commit("/checklist");
-                    },
+                ".show-all-of-taxon.clickable",
+                {
+                  onclick: function (e) {
+                    Checklist.filter.clear();
+                    let taxonLevelKey = Object.keys(Checklist.filter.taxa)[
+                      vnode.attrs.currentTaxonLevel
+                    ];
+                    Checklist.filter.taxa[taxonLevelKey].selected = [
+                      vnode.attrs.taxonTree.taxon.name,
+                    ];
+                    Checklist.filter.commit("/checklist");
                   },
-                  m(".search-all-of-taxon", [
-                    m("img[src=./img/ui/checklist/search.svg]"),
-                    vnode.attrs.taxonTree.taxon.name,
-                  ])
-                )
+                },
+                m(".search-all-of-taxon", [
+                  m("img[src=./img/ui/checklist/search.svg]"),
+                  vnode.attrs.taxonTree.taxon.name,
+                ])
+              )
               : null,
           ]),
         ]),
         vnode.attrs.displayMode == ""
           ? m(TaxonDataView, {
-              taxon: vnode.attrs.taxonTree,
-            })
+            taxon: vnode.attrs.taxonTree,
+          })
           : null,
       ]),
       Object.keys(vnode.attrs.taxonTree.children).map(function (

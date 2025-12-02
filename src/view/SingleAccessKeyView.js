@@ -3,6 +3,7 @@ import { Checklist } from "../model/Checklist.js";
 import { processMarkdownWithBibliography } from "../components/Utils.js";
 import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
+import { routeTo } from "../components/Utils.js";
 
 // ==========================================
 // 1. DATA & LOGIC HELPERS
@@ -199,7 +200,7 @@ const KeyCard = {
                 }
             }
         }, [
-            (!isListView && onBack) ? m("img.sak-icon.sak-icon-left", { 
+            (!isListView && onBack) ? m("img.sak-icon.sak-icon-left", {
                 src: "img/ui/menu/arrow_circle_left.svg",
                 onclick: (e) => {
                     e.stopPropagation();
@@ -387,16 +388,37 @@ export const SingleAccessKeyView = {
     view: (vnode) => {
         const allKeys = KeyLogic.getAllKeys();
         const keyId = m.route.param("key");
-        const stepsParam = m.route.param("steps");
+        const stepsParam = m.route.param("steps"); 
+        const filterTaxon = m.route.param("taxon");
 
         // --- List of Keys View ---
         if (!keyId) {
+            let displayedKeys = allKeys;
+
+            if (filterTaxon) {
+                displayedKeys = allKeys.filter(k =>
+                    KeyLogicExtensions.isKeyRelevantToTaxon(k, filterTaxon)
+                );
+            }
+
             return m(".single-access-key-view", [
-                allKeys.map(k => m(KeyCard, {
-                    keyData: k,
-                    isActive: false,
-                    onSelect: () => m.route.set("/single-access-keys/:key", { key: k.id })
-                }))
+                filterTaxon
+                    ? m(".sak-filter-header", [
+                        m("span", `Keys for ${filterTaxon} (${displayedKeys.length})`),
+                        m("button.sak-clear-filter", {
+                            onclick: () => routeTo("/single-access-keys")
+                        }, "Show All")
+                    ])
+                    : null,
+
+                // [CHANGED] Render displayedKeys instead of allKeys
+                displayedKeys.length > 0
+                    ? displayedKeys.map(k => m(KeyCard, {
+                        keyData: k,
+                        isActive: false,
+                        onSelect: () => m.route.set("/single-access-keys/:key", { key: k.id })
+                    }))
+                    : m(".sak-empty", `No keys found for ${filterTaxon}.`)
             ]);
         }
 
@@ -419,6 +441,24 @@ export const SingleAccessKeyView = {
                 onBack: () => m.route.set("/single-access-keys")
             })
         ]);
+    }
+};
+
+const KeyLogicExtensions = {
+    isKeyRelevantToTaxon: (key, filterTaxonName) => {
+        // 1. Get all leaf taxa this key can resolve to
+        const reachableTaxa = KeyLogic.getRecursiveTaxa(key, 1);
+
+        // 2. Check if ANY result taxon is the filter taxon or a descendant
+        return reachableTaxa.some(resultTaxonName => {
+            if (resultTaxonName === filterTaxonName) return true;
+
+            const taxonData = Checklist.getTaxonByName(resultTaxonName);
+            if (!taxonData || !taxonData.t) return false;
+
+            // Check hierarchy (t) for the filter name
+            return taxonData.t.some(ancestor => ancestor.name === filterTaxonName);
+        });
     }
 };
 

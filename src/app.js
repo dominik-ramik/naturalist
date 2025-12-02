@@ -367,6 +367,13 @@ function runApp() {
           },
           onmatch: onMatchGuard,
         },
+        "/single-access-keys/filter/:taxon": {
+          render: function () {
+            AppLayoutView.display = "details";
+            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+          },
+          onmatch: onMatchGuard,
+        },
         "/single-access-keys/:key": {
           render: function () {
             AppLayoutView.display = "details";
