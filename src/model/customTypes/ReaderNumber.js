@@ -44,10 +44,19 @@ export let readerNumber = {
   },
 
   render: function (data, uiContext) {
+    // Only handle actual numbers
     if (data === null || data === undefined) {
       return null;
     }
 
-    return m("span", data.toString());
+    if (typeof data !== "number") {
+      // Not a number, don't handle
+      return null;
+    }
+
+    // Apply template if available
+    let displayData = helpers.processTemplate(data, uiContext);
+
+    return m("span", displayData);
   },
 };

@@ -55,72 +55,90 @@ export let TaxonDataItemView = {
         break;
     }
 
-    let nullValuesCount = 0;
-    let totalValuesCount = 0;
-
     if (itemType == "array") {
-      let dataLength = data.length;
+      // Filter out null/empty items first
+      let filteredData = data.filter((item) => item !== null && item != "");
 
-      let result = m(
-        listDisplayType,
-        data
-          .filter((item) => item !== null && item != "")
-          .map(function (item, counter) {
-            let titleValue = TaxonDataItemView.titleValuePair(
-              item,
-              dataPath + (counter + 1),
-              taxon,
-              isRealList || counter == dataLength - 1 ? null : listSeparator
-            );
-            if (titleValue === null) {
-              nullValuesCount++;
-            }
-            totalValuesCount++;
-            return titleValue;
-          })
-      );
-      if (nullValuesCount == totalValuesCount) {
+      // Early return if no valid data
+      if (filteredData.length === 0) {
         return null;
       }
-      return result;
+
+      let dataLength = filteredData.length;
+      let renderedItems = [];
+
+      filteredData.forEach(function (item, counter) {
+        // Find original index for correct dataPath
+        let originalIndex = data.indexOf(item);
+        let titleValue = TaxonDataItemView.titleValuePair(
+          item,
+          dataPath + (originalIndex + 1),
+          taxon,
+          isRealList || counter == dataLength - 1 ? null : listSeparator
+        );
+        if (titleValue !== null) {
+          renderedItems.push(titleValue);
+        }
+      });
+
+      // Return null if all items were filtered out
+      if (renderedItems.length === 0) {
+        return null;
+      }
+
+      return m(listDisplayType, renderedItems);
     }
-    if (itemType == "object") {
-      let dataLength = Object.getOwnPropertyNames(data).length;
 
-      // Check whether we have a reader for meta.formatting and if so, return the render, otherwise continue
-      const readerResult = TaxonDataItemView.renderWithReader(
-        data,
-        meta,
-        dataPath,
-        taxon,
-        null
-      );
-      if (readerResult !== DOMPurify.sanitize(data.toString().trim())) {
-        return readerResult;
+    if (itemType == "object") {
+      // Only try specialized readers for object types that have special handling
+      // (e.g., "map regions"). Skip for generic "text" formatting.
+      const specializedObjectFormattings = ["map regions"];
+      
+      if (specializedObjectFormattings.includes(meta.formatting)) {
+        const readerResult = TaxonDataItemView.renderWithReader(
+          data,
+          meta,
+          dataPath,
+          taxon,
+          null
+        );
+        // If reader returned something (not null), use it
+        if (readerResult !== null) {
+          return readerResult;
+        }
       }
 
-      let result = m(
-        listDisplayType,
-        Object.getOwnPropertyNames(data)
-          .filter((key) => data[key] !== null && data[key] != "")
-          .map(function (item, counter) {
-            let titleValue = TaxonDataItemView.titleValuePair(
-              data[item],
-              dataPath + "." + item,
-              taxon,
-              isRealList || counter == dataLength - 1 ? null : listSeparator
-            );
-            if (titleValue === null) {
-              nullValuesCount++;
-            }
-            totalValuesCount++;
-            return titleValue;
-          })
+      // Filter out null/empty properties first
+      let validKeys = Object.getOwnPropertyNames(data).filter(
+        (key) => data[key] !== null && data[key] != ""
       );
-      if (nullValuesCount == totalValuesCount) {
+
+      // Early return if no valid data
+      if (validKeys.length === 0) {
         return null;
       }
-      return result;
+
+      let dataLength = validKeys.length;
+      let renderedItems = [];
+
+      validKeys.forEach(function (item, counter) {
+        let titleValue = TaxonDataItemView.titleValuePair(
+          data[item],
+          dataPath + "." + item,
+          taxon,
+          isRealList || counter == dataLength - 1 ? null : listSeparator
+        );
+        if (titleValue !== null) {
+          renderedItems.push(titleValue);
+        }
+      });
+
+      // Return null if all items were filtered out
+      if (renderedItems.length === 0) {
+        return null;
+      }
+
+      return m(listDisplayType, renderedItems);
     }
   },
 

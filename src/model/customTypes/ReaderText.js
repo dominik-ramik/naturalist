@@ -41,12 +41,34 @@ export let readerText = {
   },
 
   render: function (data, uiContext) {
-    if (!data || data.toString().trim() === "") {
+    // Handle null/undefined
+    if (data === null || data === undefined) {
+      return null;
+    }
+
+    // Handle empty strings
+    if (typeof data === "string" && data.trim() === "") {
+      return null;
+    }
+
+    // For non-string types (numbers, booleans), convert to string
+    let displayData;
+    if (typeof data === "string") {
+      displayData = data;
+    } else if (typeof data === "number" || typeof data === "boolean") {
+      displayData = data.toString();
+    } else {
+      // Objects and arrays should not be handled by text reader
+      // Return the raw toString which will signal to caller this wasn't handled
+      return null;
+    }
+
+    if (displayData.trim() === "") {
       return null;
     }
 
     // Apply template if available
-    let displayData = helpers.processTemplate(data, uiContext);
+    displayData = helpers.processTemplate(displayData, uiContext);
 
     return m("span", displayData);
   },
