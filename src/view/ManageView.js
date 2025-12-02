@@ -40,6 +40,49 @@ const ManageStore = {
   }
 };
 
+// --- STEP DEFINITIONS ---
+const STEPS = [
+  { id: "upload", label: "Upload", icon: "img/ui/manage/upload.svg" },
+  { id: "processing", label: "Processing", icon: "img/ui/manage/processing.svg" },
+  { id: "review", label: "Review", icon: "img/ui/manage/review.svg" },
+  { id: "publish", label: "Publish", icon: "img/ui/manage/publish.svg" },
+];
+
+// --- UI COMPONENTS ---
+
+const ManageCard = {
+  view: function (vnode) {
+    const { title, icon, description, children, headerAction } = vnode.attrs;
+
+    return m(".manage-card", [
+      m(".manage-card-header", [
+        icon ? m("img.manage-card-icon", { src: icon }) : null,
+        m("h3.manage-card-title", title),
+        headerAction ? headerAction : null,
+      ]),
+      description ? m(".manage-card-description", m.trust(description)) : null,
+      m(".manage-card-content", children),
+    ]);
+  }
+};
+
+const ActionButton = {
+  view: function (vnode) {
+    const { label, onclick, primary, small, icon, fixedWidth } = vnode.attrs;
+    const classes = [
+      "manage-btn",
+      primary ? "manage-btn-primary" : "",
+      small ? "manage-btn-small" : "",
+      fixedWidth ? "manage-btn-fixed" : "",
+    ].filter(Boolean).join(".");
+
+    return m("button." + classes, { onclick }, [
+      icon ? m("img.manage-btn-icon", { src: icon }) : null,
+      label,
+    ]);
+  }
+};
+
 // --- VIEW HELPERS ---
 const SubViews = {
   // Step: 'upload'
@@ -48,11 +91,61 @@ const SubViews = {
       ManageStore.reset();
     }
 
+    const isDataReady = Checklist._isDataReady;
+
     return [
-      renderUploaderComponent(),
-      Logger.hasErrors()
-        ? m(".manage-message", _t("data_upload_import_dirty"))
-        : null,
+      // Welcome section for fresh install
+      !isDataReady ? m(ManageCard, {
+        title: _t("fresh_install_welcome"),
+        icon: "img/icon_maskable.svg",
+        children: [
+          m("p.manage-welcome-text", _t("fresh_install_welcome_message")),
+        ]
+      }) : null,
+
+      // Getting Started card (for fresh install)
+      !isDataReady ? m(ManageCard, {
+        title: _t("start_scratch_title"),
+        icon: "img/ui/menu/help.svg",
+        description: marked.parse(_t("starting_from_scratch_links")),
+        children: [
+          m(ActionButton, {
+            label: _t("download_blank_sheet_button"),
+            onclick: () => exportTemplateSpreadsheet(),
+            small: true,
+          }),
+        ]
+      }) : null,
+
+      // Upload card
+      m(ManageCard, {
+        title: isDataReady ? _t("update_checklist_title") : _t("upload_spreadsheet_title"),
+        icon: "img/ui/manage/upload.svg",
+        description: isDataReady ? _t("data_upload_waiting") : _t("starting_from_scratch_continued"),
+        children: [
+          renderDropzone(),
+          Logger.hasErrors()
+            ? m(".manage-notice.manage-notice-error", [
+              m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
+              m("span", _t("data_upload_import_dirty")),
+            ])
+            : null,
+        ]
+      }),
+
+      // Help card (when data exists)
+      isDataReady ? m(ManageCard, {
+        title: _t("start_scratch_title"),
+        icon: "img/ui/menu/help.svg",
+        description: marked.parse(_t("starting_from_scratch_links")),
+        children: [
+          m(ActionButton, {
+            label: _t("download_blank_sheet_button"),
+            onclick: () => exportTemplateSpreadsheet(),
+            small: true,
+          }),
+        ]
+      }) : null,
     ];
   },
 
@@ -63,11 +156,17 @@ const SubViews = {
       return null;
     }
 
-    return m("div", [
-      m("h2", _t("processing")),
-      m(".processing-wrapper", [m(".spinner"), _t("data_upload_processing")]),
-      m(".manage-message", _t("this_may_take_time")),
-    ]);
+    return m(ManageCard, {
+      title: _t("processing"),
+      icon: "img/ui/manage/processing.svg",
+      children: [
+        m(".manage-processing", [
+          m(".manage-spinner"),
+          m("p", _t("data_upload_processing")),
+          m("p.manage-processing-hint", _t("this_may_take_time")),
+        ]),
+      ]
+    });
   },
 
   // Step: 'review'
@@ -77,26 +176,34 @@ const SubViews = {
       return null;
     }
 
-    return [
-      m("h2", _t("review_draft_heading")),
-      m(".manage-message", _t("review_draft")),
-      m(".draft-options", [
-        m("div", [
-          m("img[src=img/ui/manage/errors.svg]"),
-          m("div", _t("not_all_good")),
-          m("button.uploadbutton", {
-            onclick: () => m.route.set("/manage/upload")
-          }, _t("back_to_upload")),
+    return m(ManageCard, {
+      title: _t("review_draft_heading"),
+      icon: "img/ui/manage/review.svg",
+      description: _t("review_draft"),
+      children: [
+        m(".manage-review-options", [
+          m(".manage-review-option.manage-review-issues", [
+            m("p", _t("not_all_good")),
+            m(ActionButton, {
+              label: _t("back_to_upload"),
+              onclick: () => m.route.set("/manage/upload"),
+              icon: "img/ui/manage/errors.svg",
+              fixedWidth: true,
+            }),
+          ]),
+          m(".manage-review-option.manage-review-success", [
+            m("p", _t("all_good")),
+            m(ActionButton, {
+              label: _t("proceed_to_update"),
+              onclick: () => m.route.set("/manage/publish"),
+              primary: true,
+              icon: "img/ui/manage/clean.svg",
+              fixedWidth: true,
+            }),
+          ]),
         ]),
-        m("div", [
-          m("img[src=img/ui/manage/clean.svg]"),
-          m("div", _t("all_good")),
-          m("button.uploadbutton", {
-            onclick: () => m.route.set("/manage/publish")
-          }, _t("proceed_to_update")),
-        ]),
-      ]),
-    ];
+      ]
+    });
   },
 
   // Step: 'publish'
@@ -104,62 +211,84 @@ const SubViews = {
     if (!ManageStore.dataman) { m.route.set("/manage/upload"); return null; }
 
     return [
-      ManageStore.shouldShowUploadForm === true ? renderServerUploadForm() : null,
-      m(".static-download", [
-        m("h2", _t("download_data")),
-        m(".manage-message", m.trust(marked.parse(_t("download_for_manual_update")))),
-        m("button.uploadbutton", {
-          onclick: function () {
-            let json = ManageStore.dataman.getCompiledChecklist();
-            var blob = new Blob(
-              [compressor.compress(JSON.stringify(json))],
-              { type: "application/json;charset=utf-8" }
-            );
-            downloadCompiledData(blob, "checklist.json");
-          },
-        }, _t("download_checklist")),
+      // Server upload card (if PHP available)
+      ManageStore.shouldShowUploadForm === true ? m(ManageCard, {
+        title: _t("data_upload_integrate_data"),
+        icon: "img/ui/manage/publish.svg",
+        description: _t("enter_creds_to_publish"),
+        children: [renderServerUploadForm()]
+      }) : null,
 
-        m("div[style=margin-top:1.5em;]",
-          m("button.uploadbutton.uploadbutton-small", {
-            style: "margin-top:1em;",
-            onclick: () => m.route.set("/manage/upload"),
-          }, _t("back_to_upload_small"))
-        )
-      ]),
+      // Manual download card
+      m(ManageCard, {
+        title: _t("download_data"),
+        icon: "img/ui/menu/download.svg",
+        description: marked.parse(_t("download_for_manual_update")),
+        children: [
+          m(ActionButton, {
+            label: _t("download_checklist"),
+            primary: true,
+            onclick: function () {
+              let json = ManageStore.dataman.getCompiledChecklist();
+              var blob = new Blob(
+                [compressor.compress(JSON.stringify(json))],
+                { type: "application/json;charset=utf-8" }
+              );
+              downloadCompiledData(blob, "checklist.json");
+            },
+          }),
+          m("div", { style: "margin-top: 1em;" },
+            m(ActionButton, {
+              label: _t("back_to_upload_small"),
+              onclick: () => m.route.set("/manage/upload"),
+              small: true,
+            })
+          ),
+        ]
+      }),
     ];
   },
 
   // Step: 'error'
   error: function () {
-    return [
-      m("div", [
-        m("img[src=img/ui/manage/error.svg]"),
-        m("h2", _t("error_publishing")),
-        ManageStore.messageCode?.length > 0 && ManageStore.messageCode != "other_upload_error"
-          ? m(".manage-message", _t(ManageStore.messageCode))
-          : m(".manage-message", ManageStore.errorDetails),
-        m("button.uploadbutton", {
-          onclick: () => m.route.set("/manage/publish"),
-        }, _t("back_to_upload_after_error")),
-      ]),
-    ];
+    return m(ManageCard, {
+      title: _t("error_publishing"),
+      icon: "img/ui/manage/error.svg",
+      children: [
+        m(".manage-error-content", [
+          ManageStore.messageCode?.length > 0 && ManageStore.messageCode != "other_upload_error"
+            ? m("p", _t(ManageStore.messageCode))
+            : m("p", ManageStore.errorDetails),
+          m(ActionButton, {
+            label: _t("back_to_upload_after_error"),
+            onclick: () => m.route.set("/manage/publish"),
+          }),
+        ]),
+      ]
+    });
   },
 
   // Step: 'done'
   done: function () {
-    return m("div", [
-      m("img[src=img/ui/manage/update_done.svg]"),
-      m("h2", _t("done")),
-      m(".manage-message", _t("update_published")),
-      m("button.uploadbutton", {
-        onclick: function () {
-          Checklist._isDraft = false;
-          checkForChecklistUpdate(navigator.serviceWorker);
-          ManageStore.reset();
-          routeTo("/checklist");
-        },
-      }, _t("manage_back_to_search")),
-    ]);
+    return m(ManageCard, {
+      title: _t("done"),
+      icon: "img/ui/manage/update_done.svg",
+      children: [
+        m(".manage-success-content", [
+          m("p", _t("update_published")),
+          m(ActionButton, {
+            label: _t("manage_back_to_search"),
+            primary: true,
+            onclick: function () {
+              Checklist._isDraft = false;
+              checkForChecklistUpdate(navigator.serviceWorker);
+              ManageStore.reset();
+              routeTo("/checklist");
+            },
+          }),
+        ]),
+      ]
+    });
   }
 };
 
@@ -178,9 +307,11 @@ export let ManageView = {
     const step = vnode.attrs.step || "upload";
     const content = SubViews[step] ? SubViews[step]() : SubViews.upload();
 
-    return m(".manage-ui", [
-      content,
-      (step !== "processing" && step !== "done") ? renderLogs() : null
+    const showLogs = !["processing", "done"].includes(step);
+
+    return m(".manage-view", [
+      m(".manage-content", content),
+      showLogs ? renderLogs() : null,
     ]);
   },
 };
@@ -196,18 +327,35 @@ function downloadCompiledData(blob, fileName) {
 }
 
 function renderLogs() {
-  return m(".log",
-    Logger.getMessagesForDisplay().map(function (logItem) {
-      return m(".log-item." + logItem.level, [
-        m(".message", m.trust("<strong>" + _t("log_" + logItem.level) + ": </strong>" + logItem.message)),
-      ]);
-    })
-  );
+  const messages = Logger.getMessagesForDisplay();
+  if (messages.length === 0) return null;
+
+  return m(".manage-logs", [
+    m(".manage-logs-header", [
+      m("span", _t("log_messages") || "Messages"),
+      m("span.manage-logs-count", messages.length),
+    ]),
+    m(".manage-logs-list",
+      messages.map(function (logItem) {
+        const iconMap = {
+          critical: "img/ui/manage/error.svg",
+          error: "img/ui/manage/errors.svg",
+          warning: "img/ui/menu/warning.svg",
+          info: "img/ui/menu/info.svg",
+        };
+        return m(".manage-log-item." + logItem.level, [
+          m("img.manage-log-icon", { src: iconMap[logItem.level] || iconMap.info }),
+          m(".manage-log-content", [
+            m("span.manage-log-level", _t("log_" + logItem.level)),
+            m("span.manage-log-message", m.trust(logItem.message)),
+          ]),
+        ]);
+      })
+    ),
+  ]);
 }
 
-function renderUploaderComponent() {
-  const isDataReady = Checklist._isDataReady;
-
+function renderDropzone() {
   function processUpload(filepicker, file, checkAssetsSize) {
     if (!file || !file.name) {
       Logger.error(_t("chose_a_file"));
@@ -223,13 +371,10 @@ function renderUploaderComponent() {
 
     let reader = new FileReader();
     reader.addEventListener("loadend", (evt) => {
-      // Defer heavy processing to next frame so spinner can render
       setTimeout(() => {
         ManageStore.dataman = new DataManager();
         let extractor = new ExcelBridge(evt.target.result);
         ManageStore.dataman.loadData(extractor, checkAssetsSize);
-
-        // Pre-calculate the compiled checklist to trigger F-directive/asset errors immediately
         const compiledData = ManageStore.dataman.getCompiledChecklist();
 
         if (Logger.hasErrors()) {
@@ -242,7 +387,7 @@ function renderUploaderComponent() {
         filepicker.value = "";
       }, 50);
     });
-    
+
     reader.readAsArrayBuffer(file);
   }
 
@@ -251,163 +396,118 @@ function renderUploaderComponent() {
     e.stopPropagation();
   }
 
-  return m("div", [
-    // 1. Intro or Waiting Message
-    isDataReady
-      ? m(".manage-message", _t("data_upload_waiting"))
-      : renderEmptyStateIntro(),
-
-    // 2. Help/Templates (Only if NO data - appears above dropzone)
-    !isDataReady ? renderTemplateHelpers(true) : null,
-
-    // 3. Dropzone
-    m(".dropzone#dropzone", {
-      ondrag: preventDefaults,
-      ondragstart: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
-      ondragend: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
-      ondragover: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
-      ondragenter: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
-      ondragleave: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.remove("entered"); },
-      ondrop: function (e) {
-        preventDefaults(e);
-        var dt = e.dataTransfer;
-        document.getElementById("dropzone").classList.remove("entered");
-        processUpload(
-          document.getElementById("excelupload"),
-          dt.files[0],
-          document.getElementById("checkassetssize").checked
-        );
-      },
+  return m(".manage-dropzone#dropzone", {
+    ondrag: preventDefaults,
+    ondragstart: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
+    ondragend: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.remove("entered"); },
+    ondragover: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
+    ondragenter: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.add("entered"); },
+    ondragleave: (e) => { preventDefaults(e); document.getElementById("dropzone").classList.remove("entered"); },
+    ondrop: function (e) {
+      preventDefaults(e);
+      var dt = e.dataTransfer;
+      document.getElementById("dropzone").classList.remove("entered");
+      processUpload(
+        document.getElementById("excelupload"),
+        dt.files[0],
+        document.getElementById("checkassetssize").checked
+      );
     },
-      m("div", [
-        m("div", [
-          m("label.uploadbutton[for=excelupload]", _t("click_to_upload")),
-          m("br"),
-          m("label", _t("or_drag_it")),
-          m("input[type=file][id=excelupload][accept=.xlsx][style=display: none]", {
-            onchange: function (e) {
-              processUpload(this, e.target.files[0], document.getElementById("checkassetssize").checked);
-            },
-          }
-          ),
-          m(".wrap", [
-            m("img.upload-icon[src=img/ui/manage/upload.svg]"),
-            m("div", [
-              m(".check-assets-size", [
-                m("input[checked][type=checkbox][id=checkassetssize][style=margin-right: 0.5em; width: 1.5em; height: 1.5em;]"),
-                m("label[for=checkassetssize]", _t("check_assets_size1")),
-              ]),
-              m("div[style=font-size: 85%; margin-top: 0.5em; text-align: left]", _t("check_assets_size2")),
-            ])
-          ]),
-        ]),
-      ])
-    ),
-
-    // 4. Help/Templates (Only if Data exists - appears below dropzone)
-    isDataReady ? renderTemplateHelpers(false) : null
-  ]);
-}
-
-// --- New helper for just the intro part of the empty state ---
-function renderEmptyStateIntro() {
-  return m(".no-data", [
-    m("div[style=text-align: center;]", [
-      m("img.upload-icon[src=img/icon_maskable.svg][style=width: auto; height: 15em; margin: 0px]"),
-      m("h1", _t("fresh_install_welcome")),
-      m("div", _t("fresh_install_welcome_message")),
-    ])
-  ]);
-}
-
-// --- New helper for the blank spreadsheet/docs/buttons ---
-function renderTemplateHelpers(showContinuedText) {
-  return m("div", [
-    m("h2", _t("start_scratch_title")),
-    m(".manage-message", m.trust(marked.parse(_t("starting_from_scratch_links")))),
-    m("button.uploadbutton.uploadbutton-small", {
-      style: "margin-top: 0.5em; margin-bottom: 1em;",
-      onclick: () => {
-        exportTemplateSpreadsheet();
-      },
-    }, _t("download_blank_sheet_button")),
-
-    // Show "Once ready, upload below..." text only if requested (Fresh install)
-    showContinuedText
-      ? m("h2", _t("starting_from_scratch_continued"))
-      : null
+  }, [
+    m(".manage-dropzone-content", [
+      m("img.manage-dropzone-icon", { src: "img/ui/manage/upload.svg" }),
+      m(".manage-dropzone-text", [
+        m("label.manage-btn.manage-btn-primary[for=excelupload]", _t("click_to_upload")),
+        m("span.manage-dropzone-or", _t("or_drag_it")),
+      ]),
+      m("input[type=file][id=excelupload][accept=.xlsx]", {
+        style: "display: none",
+        onchange: function (e) {
+          processUpload(this, e.target.files[0], document.getElementById("checkassetssize").checked);
+        },
+      }),
+    ]),
+    m(".manage-dropzone-options", [
+      m("label.manage-checkbox", [
+        m("input[type=checkbox][id=checkassetssize][checked]"),
+        m("span", _t("check_assets_size1")),
+      ]),
+      m("p.manage-dropzone-hint", _t("check_assets_size2")),
+    ]),
   ]);
 }
 
 function renderServerUploadForm() {
-  return [
-    m("h2", _t("data_upload_integrate_data")),
-    m(".manage-message", _t("enter_creds_to_publish")),
-    m("form#updateform[method=post]", {
-      onsubmit: function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+  return m("form#updateform.manage-form", {
+    onsubmit: function (e) {
+      e.preventDefault();
+      e.stopPropagation();
 
-        const formData = new FormData(this);
-        let compressed = compressor.compress(JSON.stringify(ManageStore.dataman.getCompiledChecklist()));
-        formData.append("checklist_data", compressed);
-        const request = new XMLHttpRequest();
+      const formData = new FormData(this);
+      let compressed = compressor.compress(JSON.stringify(ManageStore.dataman.getCompiledChecklist()));
+      formData.append("checklist_data", compressed);
+      const request = new XMLHttpRequest();
 
-        request.onreadystatechange = function (event) {
-          if (request.readyState === 4) {
-            if (request.status === 200) {
-              let result = "";
+      request.onreadystatechange = function (event) {
+        if (request.readyState === 4) {
+          if (request.status === 200) {
+            let result = "";
+            try {
+              if (request.responseText.indexOf("POST Content-Length") >= 0 && request.responseText.indexOf("exceeds") >= 0) {
+                throw "the POST Content-Length exceeds the limit";
+              }
               try {
-                if (request.responseText.indexOf("POST Content-Length") >= 0 && request.responseText.indexOf("exceeds") >= 0) {
-                  throw "the POST Content-Length exceeds the limit";
-                }
-                try {
-                  result = JSON.parse(request.responseText);
-                } catch {
-                  throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
-                }
-              } catch (ex) {
-                result = {
-                  state: "error",
-                  details: [
-                    m("div", _t("server_returned_odd_message")),
-                    m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex),
-                  ],
-                };
+                result = JSON.parse(request.responseText);
+              } catch {
+                throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
               }
+            } catch (ex) {
+              result = {
+                state: "error",
+                details: [
+                  m("div", _t("server_returned_odd_message")),
+                  m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex),
+                ],
+              };
+            }
 
-              if (result.state == "success") {
-                m.route.set("/manage/done");
-              } else {
-                ManageStore.errorDetails = result.details;
-                ManageStore.messageCode = result.messageCode;
-                m.route.set("/manage/error");
-              }
+            if (result.state == "success") {
+              m.route.set("/manage/done");
             } else {
-              if (request.statusText.toLowerCase() == "not found") {
-                ManageStore.errorDetails = _t("upload_disabled");
-              } else {
-                ManageStore.errorDetails = _t("network_error") + " " + request.statusText;
-              }
+              ManageStore.errorDetails = result.details;
+              ManageStore.messageCode = result.messageCode;
               m.route.set("/manage/error");
             }
-            m.redraw();
+          } else {
+            if (request.statusText.toLowerCase() == "not found") {
+              ManageStore.errorDetails = _t("upload_disabled");
+            } else {
+              ManageStore.errorDetails = _t("network_error") + " " + request.statusText;
+            }
+            m.route.set("/manage/error");
           }
-        };
-        request.open("POST", "../update.php");
-        request.send(formData);
-      },
+          m.redraw();
+        }
+      };
+      request.open("POST", "../update.php");
+      request.send(formData);
     },
-      [
-        m("label", _t("user_name")), m("br"),
-        m("input[type=text][name=username][id=username]", ""), m("br"),
-        m("label", _t("password")), m("br"),
-        m("input[type=password][name=password][id=password]", ""), m("br"),
-        m("button.uploadbutton", {
-          onclick: function (e) { document.getElementById("updateform").requestSubmit(); },
-        }, _t("publish_checklist")
-        ),
-      ]
-    ),
-  ];
+  }, [
+    m(".manage-form-group", [
+      m("label[for=username]", _t("user_name")),
+      m("input[type=text][name=username][id=username]"),
+    ]),
+    m(".manage-form-group", [
+      m("label[for=password]", _t("password")),
+      m("input[type=password][name=password][id=password]"),
+    ]),
+    m(ActionButton, {
+      label: _t("publish_checklist"),
+      primary: true,
+      onclick: function (e) {
+        e.preventDefault();
+        document.getElementById("updateform").requestSubmit();
+      },
+    }),
+  ]);
 }

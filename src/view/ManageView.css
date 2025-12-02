@@ -1,184 +1,526 @@
-.manage-ui {
-  text-align: center;
-  font-size: 80%;
+/* ==========================================================================
+   ManageView - Main Container
+   ========================================================================== */
+.manage-view {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1em;
 }
 
-.manage-ui a {
-  display: inline-block;
-  background-color: #ffffff2e;
-  color: white;
-  padding-left: 0.25em;
-  padding-right: 0.25em;
-  border-radius: 0.25em;
-  font-weight: bold;
-  text-decoration: none;
-  border: 1px dashed white;
+/* ==========================================================================
+   Step Indicator
+   ========================================================================== */
+.manage-steps {
+  display: flex;
+  justify-content: center;
+  gap: 0.5em;
+  margin-bottom: 1.5em;
+  padding: 1em;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--pad-large, 1em);
 }
 
-.manage-ui .log {
+.manage-step {
   display: flex;
   flex-direction: column;
-  flex-wrap: nowrap;
-}
-
-.manage-ui .log .log-item {
-  user-select: text;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  color: white;
-  margin: var(--pad-small);
-  border-radius: var(--pad-small);
-  padding: var(--pad-large);
-}
-
-.manage-ui .log .log-item.critical {
-  background-color: red;
-}
-
-.manage-ui .log .log-item.error {
-  background-color: brown;
-}
-
-.manage-ui .log .log-item.warning {
-  background-color: orange;
-}
-
-.manage-ui .log .log-item.info {
-  background-color: rgb(72, 72, 245);
-}
-
-.manage-ui .uploadbutton {
-  padding: 1em;
-  margin: var(--pad-large);
-  text-align: center;
-  display: inline-block;
-  background: white;
-  color: black;
-  cursor: pointer;
-  border-radius: var(--pad-small);
-  border: 0px solid transparent;
-}
-
-.manage-ui .uploadbutton.uploadbutton-small {
-  font-size: 90%;
-  padding: 0.5em;
-  margin: var(--pad-large);  
-}
-
-.manage-ui .dropzone {
-  border: 0.25em dashed white;
-  border-radius: var(--pad-large);
-  padding-top: 1em;
-  padding-bottom: 1em;
-  margin-bottom: 1em;
-  text-align: center;
-  height: 17em;
-  display: flex;
-}
-
-.manage-ui .dropzone .wrap {
-  margin: auto;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
   align-items: center;
-  padding: 1.5em;
-  box-sizing: border-box;
+  gap: 0.25em;
+  padding: 0.5em 1em;
+  opacity: 0.5;
+  transition: opacity 0.2s;
 }
 
-.manage-ui h2{
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+.manage-step.active {
+  opacity: 1;
 }
 
-.manage-ui .upload-icon {
-  width: 5em;
-  height: 5em;
-  margin-right: 1em;
-  margin-left: 1em;
+.manage-step.completed {
+  opacity: 0.8;
 }
 
-.manage-ui .dropzone.entered {
-  background-color: #ffffff55;
-}
-
-.manage-ui .manage-message {
-  margin-top: var(--pad-large);
-  margin-bottom: 1em;
-}
-
-.processing-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 2em;
-  margin-bottom: 3em;
-}
-
-.manage-ui .draft-options {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
-
-.manage-ui .draft-options > div {
-  flex-grow: 1;
-  width: 50%;
-}
-
-.spinner {
-  display: inline-block;
-  width: 2.5em;
-  height: 2.5em;
-  border: 0.25em solid rgba(255, 255, 255, 0.3);
+.manage-step-number {
+  width: 2em;
+  height: 2em;
   border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-  margin-right: 1em;
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
 }
 
-@keyframes spin {
+.manage-step.active .manage-step-number {
+  background-color: white;
+  color: var(--nlblue, #55769b);
+}
+
+.manage-step.completed .manage-step-number {
+  background-color: #7cb342;
+  color: white;
+}
+
+.manage-step-label {
+  font-size: 0.75em;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   Card Component (matches .sak-card)
+   ========================================================================== */
+.manage-card {
+  border-radius: var(--pad-large, 1em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  background-color: #eceff2;
+  border: 1px solid white;
+  color: black;
+  margin-bottom: 1em;
+  overflow: hidden;
+}
+
+.manage-card-header {
+  display: flex;
+  align-items: center;
+  padding: 1em;
+  background-color: rgba(255, 255, 255, 0.5);
+  gap: 0.75em;
+}
+
+.manage-card-icon {
+  width: 2em;
+  height: 2em;
+  object-fit: contain;
+}
+
+.manage-card-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  flex: 1;
+}
+
+.manage-card-description {
+  padding: 0 1em 1em 1em;
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: #555;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.manage-card-description p {
+  margin: 0 0 0.5em 0;
+}
+
+.manage-card-description a {
+  color: #3366cc;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.manage-card-description a:hover {
+  text-decoration: underline;
+}
+
+.manage-card-content {
+  padding: 1em;
+}
+
+/* ==========================================================================
+   Buttons (matches app style)
+   ========================================================================== */
+.manage-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.6em 1.25em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  background-color: white;
+  color: black;
+  font-family: var(--font-normal);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.manage-btn:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.manage-btn-primary {
+  background-color: var(--nlblue, #55769b);
+  color: white;
+  border-color: var(--nlblue, #55769b);
+}
+
+.manage-btn-primary:hover {
+  background-color: #466a8a;
+}
+
+.manage-btn-small {
+  padding: 0.4em 0.8em;
+  font-size: 0.8em;
+}
+
+.manage-btn-fixed {
+  min-width: 12em;
+}
+
+.manage-btn-icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Dropzone
+   ========================================================================== */
+.manage-dropzone {
+  border: 2px dashed #aaa;
+  border-radius: var(--pad-large, 1em);
+  padding: 2em;
+  text-align: center;
+  transition: all 0.2s;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.manage-dropzone.entered {
+  border-color: var(--nlblue, #55769b);
+  background-color: rgba(85, 118, 155, 0.1);
+}
+
+.manage-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
+}
+
+.manage-dropzone-icon {
+  width: 4em;
+  height: 4em;
+  opacity: 0.6;
+}
+
+.manage-dropzone-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.manage-dropzone-or {
+  font-size: 0.85em;
+  color: #666;
+}
+
+.manage-dropzone-options {
+  margin-top: 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid #ddd;
+}
+
+.manage-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.manage-checkbox input[type="checkbox"] {
+  width: 1.25em;
+  height: 1.25em;
+  cursor: pointer;
+}
+
+.manage-dropzone-hint {
+  font-size: 0.8em;
+  color: #888;
+  margin: 0.5em 0 0 0;
+}
+
+/* ==========================================================================
+   Notices
+   ========================================================================== */
+.manage-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 1em;
+  border-radius: 0.5em;
+  margin-top: 1em;
+}
+
+.manage-notice-icon {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.manage-notice-error {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+/* ==========================================================================
+   Processing State
+   ========================================================================== */
+.manage-processing {
+  text-align: center;
+  padding: 2em;
+}
+
+.manage-spinner {
+  display: inline-block;
+  width: 3em;
+  height: 3em;
+  border: 0.3em solid #ddd;
+  border-radius: 50%;
+  border-top-color: var(--nlblue, #55769b);
+  animation: manage-spin 1s ease-in-out infinite;
+  margin-bottom: 1em;
+}
+
+@keyframes manage-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.manage-ui .no-data {
-  color: white;
-  margin-top: 1em;
-  text-align: center;
+.manage-processing-hint {
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 0.5em;
 }
 
-.manage-ui .static-download {
-  margin-top: var(--pad-large);
-  padding-top: var(--pad-large);
-}
-
-#updateform {
-  border-bottom: 1px solid white;
-  margin-bottom: 1em;
-  padding-bottom: 1em;
-}
-
-#updateform input[type="text"],
-#updateform input[type="password"] {
-  font-family: var(--font-normal);
-  padding: var(--pad-small);
-  width: 12em;
-  text-align: center;
-}
-
-#updateform label {
-  font-weight: bold;
-  text-align: center;
-  margin-right: 1em;
-}
-
-.check-assets-size {
-  margin-top: 2em;
+/* ==========================================================================
+   Review Options
+   ========================================================================== */
+.manage-review-options {
   display: flex;
-  flex-direction: row;
+  gap: 1em;
+}
+
+.manage-review-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 1em;
+  border-radius: 0.5em;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid #ddd;
+}
+
+.manage-review-option p {
+  margin: 0 0 0.75em 0;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.manage-review-issues {
+  border-color: #ffc107;
+}
+
+.manage-review-success {
+  border-color: #7cb342;
+}
+
+/* ==========================================================================
+   Form Styling
+   ========================================================================== */
+.manage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.manage-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+.manage-form-group label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #555;
+}
+
+.manage-form-group input[type="text"],
+.manage-form-group input[type="password"] {
+  padding: 0.75em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  font-family: var(--font-normal);
+  font-size: 1em;
+  transition: border-color 0.2s;
+}
+
+.manage-form-group input:focus {
+  outline: none;
+  border-color: var(--nlblue, #55769b);
+}
+
+/* ==========================================================================
+   Logs Section
+   ========================================================================== */
+.manage-logs {
+  margin-top: 1em;
+  border-radius: var(--pad-large, 1em);
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  overflow: hidden;
+}
+
+.manage-logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75em 1em;
+  background-color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.manage-logs-count {
+  background-color: #555;
+  color: white;
+  padding: 0.15em 0.5em;
+  border-radius: 1em;
+  font-size: 0.85em;
+}
+
+.manage-logs-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.manage-log-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.75em 1em;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.85em;
+  user-select: text;
+}
+
+.manage-log-item:last-child {
+  border-bottom: none;
+}
+
+.manage-log-icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+  margin-top: 0.1em;
+}
+
+.manage-log-content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.manage-log-level {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
+.manage-log-item.critical {
+  background-color: #ffebee;
+}
+
+.manage-log-item.critical .manage-log-level {
+  color: #c62828;
+}
+
+.manage-log-item.error {
+  background-color: #fff3e0;
+}
+
+.manage-log-item.error .manage-log-level {
+  color: #e65100;
+}
+
+.manage-log-item.warning {
+  background-color: #fff8e1;
+}
+
+.manage-log-item.warning .manage-log-level {
+  color: #f57c00;
+}
+
+.manage-log-item.info {
+  background-color: #e3f2fd;
+}
+
+.manage-log-item.info .manage-log-level {
+  color: #1976d2;
+}
+
+/* ==========================================================================
+   Success/Error Content
+   ========================================================================== */
+.manage-success-content,
+.manage-error-content {
+  text-align: center;
+  padding: 1em;
+}
+
+.manage-success-content p,
+.manage-error-content p {
+  margin: 0 0 1.5em 0;
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Welcome Text
+   ========================================================================== */
+.manage-welcome-text {
+  font-size: 1em;
+  line-height: 1.5;
+  color: #555;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 600px) {
+  .manage-view {
+    padding: 0.5em;
+  }
+
+  .manage-steps {
+    gap: 0.25em;
+    padding: 0.75em;
+  }
+
+  .manage-step {
+    padding: 0.25em 0.5em;
+  }
+
+  .manage-step-label {
+    display: none;
+  }
+
+  .manage-review-options {
+    flex-direction: column;
+  }
+
+  .manage-dropzone {
+    padding: 1.5em 1em;
+  }
 }
