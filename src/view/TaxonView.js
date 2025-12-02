@@ -69,12 +69,15 @@ export let TaxonView = {
           }),
           m(".spacer"),
           m(".details-icons-wrapper", [
-            m(".show-all-of-taxon.clickable",
-              {
-                onclick: function (e) {
-                  routeTo("/single-access-keys/filter/" + taxonName);
-                },
-              }, m(".taxon-details-icon", [m("img[src=./img/ui/checklist/key_vertical.svg]")])),
+            (Checklist.getSingleAccessTaxonomicKeys().some(k => Checklist.isKeyRelevantToTaxon(k, taxonName)))
+              ? m(".show-all-of-taxon.clickable",
+                {
+                  onclick: function (e) {
+                    routeTo("/single-access-keys/filter/" + taxonName);
+                  },
+                }, m(".taxon-details-icon", [m("img[src=./img/ui/checklist/key_vertical.svg]")]))
+              : null,
+            shouldRenderTab(tabsData, "media") &&
             shouldRenderTab(tabsData, "media") &&
             detailsIcon(taxonName, "media"),
             shouldRenderTab(tabsData, "map") &&

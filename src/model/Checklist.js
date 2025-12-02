@@ -29,6 +29,8 @@ export let Checklist = {
   _dataFulltextIndex: {},
   _isDraft: false,
   _isDataReady: false,
+  _taxonCache: new Map(),
+  _keyReachableTaxaCache: new Map(),
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
@@ -139,6 +141,72 @@ export let Checklist = {
     }
 
     return [];
+  },
+  getRecursiveTaxaFromKey: function (key, currentId) {
+    if (typeof currentId === 'string') return [currentId];
+    // Default start
+    if (currentId === undefined) currentId = 1;
+
+    const choices = key.steps.filter(s => s.step_id === currentId);
+    let taxa = [];
+    choices.forEach(choice => {
+      if (choice.type === 'external') {
+        taxa.push(choice.target);
+      } else {
+        taxa = taxa.concat(Checklist.getRecursiveTaxaFromKey(key, choice.target));
+      }
+    });
+    return [...new Set(taxa)].sort();
+  },
+  getKeyReachableTaxa: function (key) {
+    if (!key || !key.id) return [];
+    if (!this._keyReachableTaxaCache.has(key.id)) {
+      this._keyReachableTaxaCache.set(key.id, this.getRecursiveTaxaFromKey(key, 1));
+    }
+    return this._keyReachableTaxaCache.get(key.id);
+  },
+  setFilterForPossibleTaxa: function (reachableTaxa) {
+    // 1. Construct the separator-delimited regex string for the filter
+    // Filter.js handles the separator as an OR operator automatically
+    const newFilterText = reachableTaxa && reachableTaxa.length > 0
+      ? reachableTaxa.join(" " + Settings.SEARCH_OR_SEPARATOR + " ")
+      : "";
+
+    // 2. CRITICAL: Infinite Loop Prevention
+    // Only commit if the filter text has actually changed.
+    // Without this check: View -> setFilter -> Route Update -> View -> ... (Crash)
+    if (Checklist.filter.text !== newFilterText) {
+
+      // 3. Clear previous filters (Data/Taxa dropdowns)
+      // This ensures the user only sees results relevant to the Key
+      Checklist.filter.clear();
+
+      // 4. Set the new text filter
+      Checklist.filter.text = newFilterText;
+
+      // 5. Commit to the CURRENT Route
+      // We get the current path (e.g., "/single-access-keys/gbif/1-2")
+      // splitting at '?' ensures we don't duplicate existing query params.
+      const currentRoutePath = m.route.get().split("?")[0];
+
+      // This triggers routeTo() which appends the new ?q=... param
+      Checklist.filter.commit(currentRoutePath);
+    }
+  },
+  isKeyRelevantToTaxon: function (key, filterTaxonName) {
+    // 1. Get all leaf taxa this key can resolve to (Cached)
+    const reachableTaxa = Checklist.getKeyReachableTaxa(key);
+
+    // 2. Check if ANY result taxon is the filter taxon or a descendant
+    return reachableTaxa.some(resultTaxonName => {
+      if (resultTaxonName === filterTaxonName) return true;
+
+      const taxonData = Checklist.getTaxonByName(resultTaxonName);
+      if (!taxonData || !taxonData.t) return false;
+
+      // Check hierarchy (t) for the filter name
+      return taxonData.t.some(ancestor => ancestor.name === filterTaxonName);
+    });
   },
   getBibliographyKeys: function () {
     if (!this._isDataReady || this._data.general.bibliography === undefined) {
@@ -311,6 +379,9 @@ export let Checklist = {
     Checklist.filter.delayCommitDataPath = "";
     Checklist.filter._queryResultCache = {};
 
+    Checklist._taxonCache = new Map();
+    Checklist._keyReachableTaxaCache = new Map();
+
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
     Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
@@ -371,6 +442,13 @@ export let Checklist = {
     });
 
     Checklist.filter.calculatePossibleFilterValues(this.getData().checklist);
+
+    this.getData().checklist.forEach(t => {
+      if (t.t && t.t.length > 0) {
+        // Map the leaf name (last item in t) to the taxon object
+        Checklist._taxonCache.set(t.t[t.t.length - 1].name, t);
+      }
+    });
 
     //fill "all" data
     Checklist.getData().checklist.forEach(function (taxon) {
@@ -816,6 +894,12 @@ export let Checklist = {
   },
 
   getTaxonByName: function (taxonNameFind) {
+    if (this._taxonCache && this._taxonCache.has(taxonNameFind)) {
+      // Return a copy or extended object to match the expected format (isInChecklist)
+      const cached = this._taxonCache.get(taxonNameFind);
+      return Object.assign({ isInChecklist: true }, cached);
+    }
+
     let reconstructedTaxonomy = [];
 
     let found = this.getData().checklist.find(function (taxon) {

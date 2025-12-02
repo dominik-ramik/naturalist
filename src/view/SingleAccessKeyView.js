@@ -162,8 +162,8 @@ const KeyCard = {
 
         // --- EXTERNAL CALL: Set Filter ---
         // Called immediately on render if in single view (isActive)
-        if (isActive && typeof setFilterForPossibleTaxa === 'function') {
-            setFilterForPossibleTaxa(reachableTaxa);
+        if (isActive) {
+            Checklist.setFilterForPossibleTaxa(reachableTaxa);
         }
 
         // --- 1. Header Logic ---
@@ -397,17 +397,17 @@ export const SingleAccessKeyView = {
 
             if (filterTaxon) {
                 displayedKeys = allKeys.filter(k =>
-                    KeyLogicExtensions.isKeyRelevantToTaxon(k, filterTaxon)
+                    Checklist.isKeyRelevantToTaxon(k, filterTaxon)
                 );
             }
 
             return m(".single-access-key-view", [
                 filterTaxon
                     ? m(".sak-filter-header", [
-                        m("span", `Keys for ${filterTaxon} (${displayedKeys.length})`),
+                        m("span.sak-filter-title", `Keys for ${filterTaxon} (${displayedKeys.length})`),
                         m("button.sak-clear-filter", {
                             onclick: () => routeTo("/single-access-keys")
-                        }, "Show All")
+                        }, "✕ Clear Filter")
                     ])
                     : null,
 
@@ -443,50 +443,3 @@ export const SingleAccessKeyView = {
         ]);
     }
 };
-
-const KeyLogicExtensions = {
-    isKeyRelevantToTaxon: (key, filterTaxonName) => {
-        // 1. Get all leaf taxa this key can resolve to
-        const reachableTaxa = KeyLogic.getRecursiveTaxa(key, 1);
-
-        // 2. Check if ANY result taxon is the filter taxon or a descendant
-        return reachableTaxa.some(resultTaxonName => {
-            if (resultTaxonName === filterTaxonName) return true;
-
-            const taxonData = Checklist.getTaxonByName(resultTaxonName);
-            if (!taxonData || !taxonData.t) return false;
-
-            // Check hierarchy (t) for the filter name
-            return taxonData.t.some(ancestor => ancestor.name === filterTaxonName);
-        });
-    }
-};
-
-function setFilterForPossibleTaxa(reachableTaxa) {
-    // 1. Construct the separator-delimited regex string for the filter
-    // Filter.js handles the separator as an OR operator automatically
-    const newFilterText = reachableTaxa && reachableTaxa.length > 0
-        ? reachableTaxa.join(" " + Settings.SEARCH_OR_SEPARATOR + " ")
-        : "";
-
-    // 2. CRITICAL: Infinite Loop Prevention
-    // Only commit if the filter text has actually changed.
-    // Without this check: View -> setFilter -> Route Update -> View -> ... (Crash)
-    if (Checklist.filter.text !== newFilterText) {
-
-        // 3. Clear previous filters (Data/Taxa dropdowns)
-        // This ensures the user only sees results relevant to the Key
-        Checklist.filter.clear();
-
-        // 4. Set the new text filter
-        Checklist.filter.text = newFilterText;
-
-        // 5. Commit to the CURRENT Route
-        // We get the current path (e.g., "/single-access-keys/gbif/1-2")
-        // splitting at '?' ensures we don't duplicate existing query params.
-        const currentRoutePath = m.route.get().split("?")[0];
-
-        // This triggers routeTo() which appends the new ?q=... param
-        Checklist.filter.commit(currentRoutePath);
-    }
-}

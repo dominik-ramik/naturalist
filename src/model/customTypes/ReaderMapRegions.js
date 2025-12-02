@@ -81,6 +81,31 @@ export let readerMapRegions = {
 
     return resultObject;
   },
+  
+  /**
+   * Extract searchable text from map regions data
+   * @param {any} data - The map regions object
+   * @param {Object} uiContext - UI context with langCode
+   * @returns {string[]} Array of searchable strings (region names)
+   */
+  getSearchableText: function(data, uiContext) {
+    if (!data || typeof data !== "object") return [];
+    
+    const result = [];
+    
+    // Use Checklist API to get region names (handles language internally)
+    // This is safer than accessing nlDataStructure directly
+    Object.keys(data).forEach(regionCode => {
+      // Use the cached nameForMapRegion function from Checklist
+      const regionName = Checklist.nameForMapRegion(regionCode);
+      if (regionName && !result.includes(regionName)) {
+        result.push(regionName);
+      }
+    });
+    
+    return result;
+  },
+  
   render: function (data, uiContext) {
     if (uiContext.placement === "details") {
       return renderDetailsMap(data, uiContext);

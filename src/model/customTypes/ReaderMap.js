@@ -33,6 +33,20 @@ export let readerMap = {
 
     return mapData;
   },
+  
+  /**
+   * Extract searchable text from map data
+   * @param {any} data - The map object with source and title
+   * @param {Object} uiContext - UI context (optional)
+   * @returns {string[]} Array of searchable strings
+   */
+  getSearchableText: function(data, uiContext) {
+    if (!data || typeof data !== "object") return [];
+    const result = [];
+    if (data.title) result.push(data.title);
+    return result;
+  },
+  
   render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
       return null;

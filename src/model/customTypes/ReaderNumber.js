@@ -1,50 +1,53 @@
-import { readDataFromPath } from "../ReadDataFromPath.js";
-import { Logger } from "../../components/Logger.js";
+import m from "mithril";
 import { helpers } from "./helpers.js";
-import { Checklist } from "../Checklist.js";
 
 export let readerNumber = {
   dataType: "number",
   readData: function (context, computedPath) {
-    let rawValue = readDataFromPath(context, computedPath, {});
+    const { headers, row, langCode } = context;
+    let columnIndex = headers.indexOf(computedPath.toLowerCase());
 
-    // Return null for invalid input types (only strings and numbers are acceptable)
-    if (
-      !(typeof rawValue === "string" && rawValue.length > 0) &&
-      typeof rawValue !== "number"
-    ) {
+    if (columnIndex < 0) {
+      columnIndex = headers.indexOf(
+        computedPath.toLowerCase() + ":" + langCode
+      );
+    }
+
+    if (columnIndex < 0 || row[columnIndex] === undefined) {
       return null;
     }
 
-    // Parse the value based on its type
-    let parsedNumber;
-    if (typeof rawValue === "number") {
-      parsedNumber = rawValue;
-    } else if (Number.isInteger(Number(rawValue))) {
-      parsedNumber = parseInt(rawValue, 10);
-    } else {
-      parsedNumber = parseFloat(rawValue);
-    }
+    let value = row[columnIndex];
 
-    // Validate the parsed result
-    if (Number.isNaN(parsedNumber)) {
-      Logger.error(`Value not a number: ${rawValue} in ${computedPath}`);
+    if (value === "" || value === null || value === undefined) {
       return null;
     }
 
-    return parsedNumber;
+    // Convert to number
+    let numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      return null;
+    }
+
+    return numValue;
   },
+
+  /**
+   * Extract searchable text from number data
+   * @param {any} data - The number value
+   * @param {Object} uiContext - UI context (optional)
+   * @returns {string[]} Array of searchable strings
+   */
+  getSearchableText: function (data, uiContext) {
+    if (data === null || data === undefined) return [];
+    return [data.toString()];
+  },
+
   render: function (data, uiContext) {
-    if (data === undefined || data === null || data === "") {
-      return "";
+    if (data === null || data === undefined) {
+      return null;
     }
 
-    let displayValue = (typeof data === "number") ? data.toLocaleString(Checklist.getCurrentLanguage(), { useGrouping: false }) : data;
-
-    if (uiContext.meta.template && uiContext.meta.template !== "") {
-      return helpers.processTemplate(displayValue, uiContext);
-    }
-
-    return displayValue.toString();
+    return m("span", data.toString());
   },
 };

@@ -9,6 +9,49 @@
     margin-left: 0.25em;
 }
 
+
+/* ==========================================================================
+   Filter Header Component (New)
+   ========================================================================== */
+.sak-filter-header {
+    /* Match .sak-card aesthetics */
+    background-color: #eceff2;
+    border: 1px solid white;
+    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+    border-radius: var(--pad-large, 1em);
+    color: black;
+    
+    /* Layout */
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sak-filter-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #444;
+}
+
+.sak-clear-filter {
+    /* Match .sak-chip aesthetics */
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    border: 1px solid #999; /* reachable style */
+    background-color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    color: #000;
+    transition: background-color 0.2s;
+}
+
+.sak-clear-filter:hover {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
 /* ==========================================================================
    Result Section
    ========================================================================== */

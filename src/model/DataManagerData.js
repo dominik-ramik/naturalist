@@ -422,7 +422,7 @@ export let nlDataStructure = {
               templateData: ["", "", "", "", "yes"],
             },
           },
-          data: [],
+          data: {},
         },
         customDataDefinition: {
           name: "Custom data definition",
@@ -572,7 +572,7 @@ export let nlDataStructure = {
               },
             },
           },
-          data: [],
+          data: {},
         },
         searchOnline: {
           name: "Search online",
@@ -632,7 +632,7 @@ export let nlDataStructure = {
               },
             },
           },
-          data: [],
+          data: {},
         },
         singleAccessKeys: {
           name: "Single-access keys",
@@ -693,7 +693,7 @@ export let nlDataStructure = {
               templateData: [],
             },
           },
-          data: [],
+          data: {},
         },
         bibliography: {
           name: "Bibliography",
@@ -711,7 +711,7 @@ export let nlDataStructure = {
               },
             },
           },
-          data: [],
+          data: {},
         },
       },
     },
@@ -813,7 +813,7 @@ export let nlDataStructure = {
               templateData: [212, "My new checklist", "This is a template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) to see how to configure it to create a rich taxonomic checklists.\n\nRemember the few things are set in stone with **NaturaList**. The values in this template are there only to get you started. Feel free to modify them and add your own.", "Your citation goes here", "checklist", 1, "MMM D, YYYY", "apa", 4, 0.5, 200],
             },
           },
-          data: [],
+          data: {},
         },
         dataCodes: {
           name: "Data codes",
@@ -857,7 +857,7 @@ export let nlDataStructure = {
               templateData: ["Least Concern", "Critically Endangered", "Endangered", "Near Threatened", "Vulnerable", "Data Deficient", "Conservation Dependent", "Least Concern", "Not Evaluated", "Native", "Endemic", "Near-endemic", "Introduced", "Rare / Vagrant", "Unknown"],
             },
           },
-          data: [],
+          data: {},
         },
         badges: {
           name: "Colored badges",
@@ -934,7 +934,7 @@ export let nlDataStructure = {
               },
             },
           },
-          data: [],
+          data: {},
         },
         mapRegionsNames: {
           name: "Map regions information",
@@ -1072,14 +1072,14 @@ export let nlDataStructure = {
               },
             },
           },
-          data: [],
+          data: {},
         },
       },
     },
     checklist: {
       name: "checklist",
       type: "data",
-      data: [],
+      data: {},
       templateData: [
         {
           "columnName": "Class",

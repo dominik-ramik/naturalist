@@ -33,6 +33,19 @@ export let readerImage = {
 
     return imageData;
   },
+  /**
+   * Extract searchable text from image data
+   * @param {any} data - The image object with source and title
+   * @param {Object} uiContext - UI context (optional)
+   * @returns {string[]} Array of searchable strings
+   */
+  getSearchableText: function(data, uiContext) {
+    if (!data || typeof data !== "object") return [];
+    const result = [];
+    if (data.title) result.push(data.title);
+    if (data.source) result.push(data.source);
+    return result;
+  },
   render: function (data, uiContext) {
     //console.log("Rendering ReaderImage with data:", data, "and uiContext:", uiContext);
     if (!data || data.source.toString().trim() === "") {

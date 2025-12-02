@@ -34,6 +34,19 @@ export let readerSound = {
 
     return soundData;
   },
+  /**
+   * Extract searchable text from sound data
+   * @param {any} data - The sound object with source and title
+   * @param {Object} uiContext - UI context (optional)
+   * @returns {string[]} Array of searchable strings
+   */
+  getSearchableText: function (data, uiContext) {
+    if (!data || typeof data !== "object") return [];
+    const result = [];
+    if (data.title) result.push(data.title);
+    if (data.source) result.push(data.source);
+    return result;
+  },
   render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
       return null;
@@ -47,16 +60,16 @@ export let readerSound = {
 
     source = relativeToUsercontent(source);
 
-    return m(".media-sound", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
+    return m(
+      ".media-sound",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
       },
-    },
-    [
-      m(MinimalAudioPlayer, { src: source }),
-      title ? m(".title", title) : null,
-    ]);
+      [m(MinimalAudioPlayer, { src: source }), title ? m(".title", title) : null]
+    );
   },
 };

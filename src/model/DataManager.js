@@ -1122,7 +1122,7 @@ export let DataManager = function () {
 
             let taxonIsEmpty =
               taxon == null ||
-              (taxon?.n?.trim() == "" && taxon?.a?.trim() == "");
+              (taxon?.name?.trim() == "" && taxon?.authority?.trim() == "");
 
             if (taxonIsEmpty) {
               doneWithTaxa = true;

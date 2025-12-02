@@ -407,7 +407,11 @@ export let Filter = {
 
     let includeChildren = Settings.includeMatchChildren();
     let checklistData = Checklist.getData().checklist;
-    let fullTextIndex = Checklist._dataFulltextIndex[Checklist.getCurrentLanguage()];
+
+    let currentLang = Checklist.getCurrentLanguage();
+    let fullTextIndexArray = Checklist._dataFulltextIndex
+      ? Checklist._dataFulltextIndex[currentLang]
+      : null;
 
     // --- PREPARE REQUIREMENTS ---
     let requirements = [];
@@ -433,7 +437,7 @@ export let Filter = {
         // Escape Regex characters to ensure text is treated literally
         return clean.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
       }).filter(function (term) {
-        // Remove empty strings caused by "||", "| ", or trailing pipes
+        // Remove empty strings
         return term.length > 0;
       });
 
@@ -441,10 +445,11 @@ export let Filter = {
       if (validTerms.length > 0) {
         // Join terms with OR operator, prepending word boundary (\b) to each
         // Example: "term1" and "term2" becomes "\bterm1|\bterm2"
+        // Note: We use "|" here as it is the standard Regex OR operator, regardless of the UI separator
         let pattern = validTerms.map(t => "\\b" + t).join("|");
 
         // Wrap in non-capturing group for safety: (?:\bterm1|\bterm2)
-        let regex = new RegExp("(?:" + pattern + ")");
+        let regex = new RegExp("(?:" + pattern + ")", "i");
 
         requirements.push({ type: "text", regex: regex, bit: 1 << requirements.length });
       }
@@ -481,7 +486,11 @@ export let Filter = {
         } else if (req.type === "data") {
           passed = Filter._checkDataFilters(item, [req.filter]);
         } else if (req.type === "text") {
-          passed = req.regex.test(Checklist.getSearchableTextForTaxon(i));
+          let searchableText = fullTextIndexArray
+            ? fullTextIndexArray[i]
+            : Checklist.getSearchableTextForTaxon(i);
+
+          passed = req.regex.test(searchableText);
         }
 
         if (passed) localMask |= req.bit;
@@ -508,6 +517,7 @@ export let Filter = {
 
           if (pathMap.has(tempPath)) {
             let parentIndex = pathMap.get(tempPath);
+            // INHERITANCE LOGIC: Child inherits the requirements met by the parent
             currentMask |= localMasks[parentIndex];
           }
 
