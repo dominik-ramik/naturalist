@@ -105,5 +105,55 @@ export const helpers = {
       return Checklist.handlebarsTemplates[uiContext.dataPath](templateData);
     }
     return data;
+  },
+
+  /**
+   * Extract plain text from markdown for search indexing.
+   * Keeps only link text, alt-text from images, strips formatting syntax.
+   * @param {string} markdown - Markdown string
+   * @returns {string} Plain text suitable for search
+   */
+  extractSearchableTextFromMarkdown: function(markdown) {
+    if (!markdown || typeof markdown !== "string") return "";
+    
+    let text = markdown;
+    
+    // Extract alt text from images: ![alt](url) -> alt
+    text = text.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+    
+    // Extract link text from links: [text](url) -> text
+    text = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+    
+    // Remove inline code: `code` -> code
+    text = text.replace(/`([^`]*)`/g, '$1');
+    
+    // Remove bold: **text** or __text__ -> text
+    text = text.replace(/\*\*([^*]*)\*\*/g, '$1');
+    text = text.replace(/__([^_]*)__/g, '$1');
+    
+    // Remove italic: *text* or _text_ -> text
+    text = text.replace(/\*([^*]*)\*/g, '$1');
+    text = text.replace(/_([^_]*)_/g, '$1');
+    
+    // Remove strikethrough: ~~text~~ -> text
+    text = text.replace(/~~([^~]*)~~/g, '$1');
+    
+    // Remove headers: # Header -> Header
+    text = text.replace(/^#+\s*/gm, '');
+    
+    // Remove blockquotes: > text -> text
+    text = text.replace(/^>\s*/gm, '');
+    
+    // Remove horizontal rules
+    text = text.replace(/^[-*_]{3,}$/gm, '');
+    
+    // Remove list markers: - item or * item or 1. item -> item
+    text = text.replace(/^[\s]*[-*+]\s+/gm, '');
+    text = text.replace(/^[\s]*\d+\.\s+/gm, '');
+    
+    // Normalize whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
   }
 };

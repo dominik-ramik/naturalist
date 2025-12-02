@@ -96,6 +96,13 @@ function verifyReaders() {
       `Duplicate dataType(s) found in readers: ${duplicateDataTypes.join(", ")}`
     );
   }
+
+  // Additional check for getSearchableText method
+  Object.entries(dataReaders).forEach(([dataType, reader]) => {
+    if (!reader.hasOwnProperty("getSearchableText") || typeof reader.getSearchableText !== "function") {
+      console.error(`Reader '${dataType}' is missing 'getSearchableText' method - search may not work properly`);
+    }
+  });
 }
 
 // Run verification
@@ -104,6 +111,18 @@ verifyReaders();
 // Cache management function
 export function clearDataCodesCache() {
   helpers.dataCodesCache.clear();
+}
+
+/**
+ * Get searchable text for a data value using the appropriate reader
+ * @param {any} data - The data value
+ * @param {string} formatting - The formatting type (reader dataType)
+ * @param {Object} uiContext - UI context for the reader
+ * @returns {string[]} Array of searchable strings
+ */
+export function getSearchableTextByType(data, formatting, uiContext) {
+  const reader = dataReaders[formatting];
+  return reader.getSearchableText(data, uiContext);
 }
 
 /**

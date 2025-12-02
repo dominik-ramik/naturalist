@@ -11,6 +11,7 @@ import {
 import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
 import { Filter } from "./Filter.js";
+import { getSearchableTextByType } from "./customTypes/index.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -28,6 +29,9 @@ export let Checklist = {
   _dataFulltextIndex: {},
   _isDraft: false,
   _isDataReady: false,
+
+  // Pre-computed searchable text cache per language
+  _searchableTextCache: {},
 
   // Replace single _bibFormatter with a per-language cache
   _bibFormatterCache: {},
@@ -283,8 +287,6 @@ export let Checklist = {
       console.log("Data not present or malformed");
       this._isDataReady = false;
       m.route.set("/manage");
-      //m.redraw();
-      //return false;
     }
 
     console.time("Data loaded in");
@@ -292,7 +294,6 @@ export let Checklist = {
       document.title = Checklist.getProjectName() + " | NaturaList";
     }
 
-    //try {
     this._data = jsonData;
 
     this._isDraft = isDraft;
@@ -454,15 +455,102 @@ export let Checklist = {
     }
 
     this._isDataReady = true;
-    /*
-    } catch (ex) {
-      console.log("Error loading data: " + ex);
-      this._isDataReady = false;
-      m.route.set("/manage");
-      m.redraw();
-      return false;
+
+    // Clear and recompute searchable text cache
+    this._searchableTextCache = {};
+    this.precomputeSearchableText();
+
+    console.timeEnd("Data loaded in");
+  },
+
+  /**
+   * Pre-compute searchable text for all checklist items
+   * Called during data loading
+   */
+  precomputeSearchableText: function () {
+    const lang = Checklist.getCurrentLanguage();
+
+    if (this._searchableTextCache[lang]) {
+      return; // Already computed for this language
     }
-    */
+
+    console.time("Precompute searchable text");
+
+    const checklist = this.getData().checklist;
+    const dataMeta = this.getDataMeta();
+
+    this._searchableTextCache[lang] = [];
+
+    checklist.forEach((taxon, index) => {
+      const searchableStrings = [];
+
+      // Add taxa names and authorities
+      taxon.t.forEach((taxonLevel) => {
+        if (taxonLevel.name) searchableStrings.push(taxonLevel.name);
+        if (taxonLevel.authority) searchableStrings.push(taxonLevel.authority);
+      });
+
+      // Add data fields using readers
+      this._collectSearchableData(taxon.d, "", dataMeta, searchableStrings, lang);
+
+      // Join and normalize for fulltext search
+      this._searchableTextCache[lang][index] = textLowerCaseAccentless(
+        searchableStrings.join("\n")
+      );
+    });
+
+    console.timeEnd("Precompute searchable text");
+  },
+
+  /**
+   * Recursively collect searchable data from a data object
+   */
+  _collectSearchableData: function (dataObj, currentPath, dataMeta, results, langCode) {
+    if (!dataObj || typeof dataObj !== "object") return;
+
+    Object.keys(dataObj).forEach((key) => {
+      const value = dataObj[key];
+      const dataPath = currentPath ? `${currentPath}.${key}` : key;
+
+      if (Array.isArray(value)) {
+        // Handle arrays
+        value.forEach((item, idx) => {
+          const arrayPath = `${dataPath}${idx + 1}`;
+          const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
+
+          if (meta && meta.formatting) {
+            const searchable = getSearchableTextByType(item, meta.formatting, { langCode });
+            results.push(...searchable);
+          } else if (typeof item === "object") {
+            this._collectSearchableData(item, arrayPath, dataMeta, results, langCode);
+          } else if (item !== null && item !== undefined) {
+            results.push(String(item));
+          }
+        });
+      } else {
+        const meta = dataMeta[dataPath];
+
+        if (meta && meta.formatting) {
+          const searchable = getSearchableTextByType(value, meta.formatting, { langCode });
+          results.push(...searchable);
+        } else if (typeof value === "object") {
+          this._collectSearchableData(value, dataPath, dataMeta, results, langCode);
+        } else if (value !== null && value !== undefined) {
+          results.push(String(value));
+        }
+      }
+    });
+  },
+
+  /**
+   * Get precomputed searchable text for a taxon by index
+   */
+  getSearchableTextForTaxon: function (index) {
+    const lang = Checklist.getCurrentLanguage();
+    if (!this._searchableTextCache[lang]) {
+      this.precomputeSearchableText();
+    }
+    return this._searchableTextCache[lang][index] || "";
   },
 
   getDataObjectForHandlebars: function (

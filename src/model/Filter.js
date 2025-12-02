@@ -481,7 +481,7 @@ export let Filter = {
         } else if (req.type === "data") {
           passed = Filter._checkDataFilters(item, [req.filter]);
         } else if (req.type === "text") {
-          passed = req.regex.test(fullTextIndex[i]);
+          passed = req.regex.test(Checklist.getSearchableTextForTaxon(i));
         }
 
         if (passed) localMask |= req.bit;
