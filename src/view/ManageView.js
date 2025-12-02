@@ -223,21 +223,24 @@ function renderUploaderComponent() {
 
     let reader = new FileReader();
     reader.addEventListener("loadend", (evt) => {
-      ManageStore.dataman = new DataManager();
-      let extractor = new ExcelBridge(evt.target.result);
-      ManageStore.dataman.loadData(extractor, checkAssetsSize);
+      // Defer heavy processing to next frame so spinner can render
+      setTimeout(() => {
+        ManageStore.dataman = new DataManager();
+        let extractor = new ExcelBridge(evt.target.result);
+        ManageStore.dataman.loadData(extractor, checkAssetsSize);
 
-      // Pre-calculate the compiled checklist to trigger F-directive/asset errors immediately
-      const compiledData = ManageStore.dataman.getCompiledChecklist();
+        // Pre-calculate the compiled checklist to trigger F-directive/asset errors immediately
+        const compiledData = ManageStore.dataman.getCompiledChecklist();
 
-      if (Logger.hasErrors()) {
-        m.route.set("/manage/upload", null, { replace: true });
-      } else {
-        Checklist.loadData(compiledData, true); // Use the variable we already generated
-        Checklist.getTaxaForCurrentQuery();
-        m.route.set("/manage/review", null, { replace: true });
-      }
-      filepicker.value = "";
+        if (Logger.hasErrors()) {
+          m.route.set("/manage/upload", null, { replace: true });
+        } else {
+          Checklist.loadData(compiledData, true);
+          Checklist.getTaxaForCurrentQuery();
+          m.route.set("/manage/review", null, { replace: true });
+        }
+        filepicker.value = "";
+      }, 50);
     });
     
     reader.readAsArrayBuffer(file);
