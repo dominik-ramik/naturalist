@@ -110,6 +110,16 @@ const KeyLogic = {
 // 2. SUB-COMPONENTS
 // ==========================================
 
+// Helper to check if click was on a link
+const isLinkClick = (e) => {
+    let el = e.target;
+    while (el && el !== e.currentTarget) {
+        if (el.tagName === 'A') return true;
+        el = el.parentElement;
+    }
+    return false;
+};
+
 const ImageToggler = {
     view: ({ attrs, state }) => {
         return m("span", [
@@ -188,6 +198,9 @@ const KeyCard = {
 
         const renderHeader = () => m(".sak-header", {
             onclick: (e) => {
+                // Allow links to work normally
+                if (isLinkClick(e)) return;
+                
                 // List View: Clicking header selects key
                 if (isListView && onSelect) {
                     onSelect();
@@ -215,6 +228,9 @@ const KeyCard = {
             if (!showDescription) return null;
             return m(".sak-description", {
                 onclick: (e) => {
+                    // Allow links to work normally
+                    if (isLinkClick(e)) return;
+                    
                     // List View: Clicking header selects key
                     if (isListView && onSelect) {
                         onSelect();
@@ -266,7 +282,10 @@ const KeyCard = {
                 history && history.length > 0 ? m("div.sak-history-list", history.map((hItem) => [
                     renderStackLine(),
                     m(".sak-option.sak-history-item", {
-                        onclick: () => onStepClick(hItem.pathSubset)
+                        onclick: (e) => {
+                            if (isLinkClick(e)) return;
+                            onStepClick(hItem.pathSubset);
+                        }
                     }, [
                         m("span.sak-option-text", m.trust(processMarkdownWithBibliography(hItem.text))),
                         hItem.images && hItem.images.length > 0
@@ -296,7 +315,8 @@ const KeyCard = {
                     : m(".sak-options-list.sak-card", currentOptions.map((opt, idx) => [
                         idx > 0 ? renderDashedSeparator() : null,
                         m(".sak-option", {
-                            onclick: () => {
+                            onclick: (e) => {
+                                if (isLinkClick(e)) return;
                                 const nextVal = opt.type === 'external' ? opt.target : opt.target;
                                 const newPath = currentPath.join('-') + '-' + nextVal;
                                 onStepClick(newPath);
