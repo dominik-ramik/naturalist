@@ -1,8 +1,6 @@
 import m from "mithril";
 import { Checklist } from "../model/Checklist.js";
 import { processMarkdownWithBibliography } from "../components/Utils.js";
-import { _t } from "../model/I18n.js";
-import { Settings } from "../model/Settings.js";
 import { routeTo } from "../components/Utils.js";
 
 // ==========================================
@@ -239,7 +237,7 @@ const KeyCard = {
         };
 
         const renderDashedSeparator = () => {
-            return m("hr.sak-separator-dashed", { "data-text": _t("key_or") });
+            return m("hr.sak-separator-dashed", { "data-text": t("key_or") });
         };
 
         const renderStepsArea = () => {

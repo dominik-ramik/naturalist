@@ -8,9 +8,7 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { _t, _tf } from "../model/I18n.js";
 import { TaxonView } from "../view/TaxonView.js";
-import { AppLayoutView } from "./AppLayoutView.js";
 import { circlePacking } from "./charts/CirclePacking.js";
 import { D3ChartView } from "./D3ChartView.js";
 import { categoryChart } from "./charts/CategoryChart.js";
@@ -110,9 +108,9 @@ export let ChecklistView = {
       m(".checklist-inner-wrapper", [
         clampedFilteredTaxa.length == 0
           ? m(".nothing-found-wrapper", [
-            m("h2", _t("nothing_found_oops")),
+            m("h2", t("nothing_found_oops")),
             m("img.search-world[src=img/ui/checklist/search_world.svg]"),
-            m(".nothing-found-message", _t("nothing_found_checklist")),
+            m(".nothing-found-message", t("nothing_found_checklist")),
             m(
               ".query",
               m.trust(Settings.pinnedSearches.getHumanNameForSearch())
@@ -155,7 +153,7 @@ function detailedTaxonView(treeTaxa, overflowing) {
             ChecklistView.totalItemsToShow += ChecklistView.itemsNumberStep;
           },
         },
-        _t(
+        t(
           "next_items_checklist",
           overflowing < ChecklistView.itemsNumberStep
             ? overflowing
@@ -295,7 +293,7 @@ function mobileFilterOnNotice() {
       ChecklistView.displayMode = "";
     },
     notice: m.trust(
-      _tf(
+      tf(
         "mobile_filter_notice",
         [Settings.pinnedSearches.getHumanNameForSearch()],
         true
@@ -309,13 +307,13 @@ function draftNotice() {
     action: function () {
       ChecklistView.displayMode = "";
     },
-    notice: _t("draft_notice"),
+    notice: t("draft_notice"),
     additionalButton: {
       action: function () {
         routeTo("/manage/review");
       },
       icon: "manage",
-      text: _t("temporary_draft_goto_manage"),
+      text: t("temporary_draft_goto_manage"),
     },
   });
 }
@@ -326,7 +324,7 @@ function temporaryFilterNotice() {
       ChecklistView.displayMode = "";
     },
     notice: m.trust(
-      _t("temporary_filter", [
+      t("temporary_filter", [
         Checklist.getTaxaMeta()[ChecklistView.displayMode].name,
       ])
     ),
@@ -335,7 +333,7 @@ function temporaryFilterNotice() {
         ChecklistView.displayMode = "";
       },
       icon: "filter_list_off",
-      text: _t("temporary_filter_show_all"),
+      text: t("temporary_filter_show_all"),
     },
   });
 }

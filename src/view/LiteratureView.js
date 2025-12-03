@@ -2,7 +2,6 @@ import m from "mithril";
 import { marked } from "marked";
 
 
-import { _t } from "../model/I18n.js";
 import { Checklist } from "../model/Checklist.js";
 
 export let LiteratureView = {
@@ -16,7 +15,7 @@ export let LiteratureView = {
     if (citeKey && Checklist.getBibliographyKeys().includes(citeKey)) {
       citeKeysToProcess = [citeKey];
     } else {
-      text += "<h2>" + _t("literature") + "</h2>";
+      text += "<h2>" + t("literature") + "</h2>";
       citeKeysToProcess = Checklist.getBibliographyKeys();
     }
 

@@ -6,27 +6,26 @@ import {
   filterTerminalLeaves,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { _t, _tf } from "../../model/I18n.js";
 import { ButtonGroup } from "../ChecklistView.js";
 
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
 // ------------------------------------------------------
 const sumMethods = [
-  { name: _t("view_cat_sum_by_taxon"), method: "taxon" },
-  { name: _t("view_cat_sum_by_category"), method: "category" },
+  { name: t("view_cat_sum_by_taxon"), method: "taxon" },
+  { name: t("view_cat_sum_by_category"), method: "category" },
 ];
 
 const displayStyles = [
   {
-    name: _t("view_cat_percentages_name"),
+    name: t("view_cat_percentages_name"),
     method: "percentages",
-    info: _t("view_cat_percentages_info"),
+    info: t("view_cat_percentages_info"),
   },
   {
-    name: _t("view_cat_counts_name"),
+    name: t("view_cat_counts_name"),
     method: "counts",
-    info: _t("view_cat_counts_info"),
+    info: t("view_cat_counts_info"),
   },
 ];
 
@@ -35,7 +34,7 @@ let categoryRoot = Settings.categoryChartRoot();
 let sumMethod = Settings.categoryChartSumMethod();
 let display = Settings.categoryChartDisplayMode();
 
-let currentCellVerb = _t("view_cat_click_on_cell");
+let currentCellVerb = t("view_cat_click_on_cell");
 
 // Fallbacks if settings are invalid
 if (!displayStyles.find((ds) => ds.method === display)) {
@@ -60,13 +59,13 @@ const categoryVerb = (catView, sumMethodOption) => {
   let verb = "";
   switch (sumMethodOption) {
     case "taxon":
-      verb = _tf("view_cat_category_verb_taxon", [
+      verb = tf("view_cat_category_verb_taxon", [
         displayStyles.find((ds) => ds.method === display).info,
         meta.searchCategory,
       ]);
       break;
     case "category":
-      verb = _tf("view_cat_category_verb_category", [meta.searchCategory]);
+      verb = tf("view_cat_category_verb_category", [meta.searchCategory]);
       break;
     default:
       break;
@@ -81,7 +80,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
   let verb = "";
   switch (sumMethod) {
     case "taxon":
-      verb = _tf("view_cat_cell_verb_taxon", [
+      verb = tf("view_cat_cell_verb_taxon", [
         percentage,
         matchingCount,
         taxonKey,
@@ -89,7 +88,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
       ]);
       break;
     case "category":
-      verb = _tf("view_cat_cell_verb_category", [
+      verb = tf("view_cat_cell_verb_category", [
         percentage,
         matchingCount,
         cKey,
@@ -104,7 +103,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
     verb =
       verb +
       " " +
-      _tf(
+      tf(
         "view_cat_cell_verb_category_filtered",
         [
           Settings.pinnedSearches.getHumanNameForSearch(
@@ -302,7 +301,7 @@ export function categoryChart(filteredTaxa) {
   result.push(
     m("div[style=margin: 0.25em; display: flex; flex-wrap: wrap;]", [
       m(ButtonGroup, {
-        label: _t("view_cat_category_to_analyze"),
+        label: t("view_cat_category_to_analyze"),
         buttons: filtersToDisplay.map((f) => {
           const title = Checklist.getMetaForDataPath(f).searchCategory;
           return m(
@@ -322,7 +321,7 @@ export function categoryChart(filteredTaxa) {
         ? null
         : [
             m(ButtonGroup, {
-              label: _t("view_cat_sum_method"),
+              label: t("view_cat_sum_method"),
               buttons: sumMethods.map((mt) =>
                 m(
                   "button" + (mt.method === sumMethod ? ".selected" : ""),
@@ -340,7 +339,7 @@ export function categoryChart(filteredTaxa) {
             sumMethod === ""
               ? null
               : m(ButtonGroup, {
-                  label: _t("view_cat_display"),
+                  label: t("view_cat_display"),
                   buttons: displayStyles.map((ds) =>
                     m(
                       "button" + (ds.method === display ? ".selected" : ""),
@@ -367,10 +366,10 @@ export function categoryChart(filteredTaxa) {
             ".info-label",
             m.trust(
               Checklist.filter.isEmpty()
-                ? _t("view_cat_counted_all", [
+                ? t("view_cat_counted_all", [
                     categoryVerb(categoryToView, sumMethod),
                   ])
-                : _tf("view_cat_counted_filter", [
+                : tf("view_cat_counted_filter", [
                     categoryVerb(categoryToView, sumMethod),
                     Settings.pinnedSearches.getHumanNameForSearch(),
                   ])

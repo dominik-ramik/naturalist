@@ -90,11 +90,9 @@ export let TaxonDataItemView = {
     }
 
     if (itemType == "object") {
-      // Only try specialized readers for object types that have special handling
-      // (e.g., "map regions"). Skip for generic "text" formatting.
-      const specializedObjectFormattings = ["map regions"];
-      
-      if (specializedObjectFormattings.includes(meta.formatting)) {
+      // Try the reader first - let readers decide if they can handle object data
+      const reader = dataReaders[meta.formatting];
+      if (reader && reader.render) {
         const readerResult = TaxonDataItemView.renderWithReader(
           data,
           meta,
@@ -108,6 +106,7 @@ export let TaxonDataItemView = {
         }
       }
 
+      // Reader doesn't exist or returned null - fall back to property decomposition
       // Filter out null/empty properties first
       let validKeys = Object.getOwnPropertyNames(data).filter(
         (key) => data[key] !== null && data[key] != ""

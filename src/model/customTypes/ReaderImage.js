@@ -3,8 +3,6 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
-import { Checklist } from "../Checklist.js";
-import { _tf } from "../I18n.js";
 
 export let readerImage = {
   dataType: "image",
@@ -14,7 +12,7 @@ export let readerImage = {
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
-          _tf("dm_generic_column_names", [
+          tf("dm_generic_column_names", [
             "image",
             computedPath,
             String.join(", ", columnNames),

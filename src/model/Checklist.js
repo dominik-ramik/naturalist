@@ -8,7 +8,6 @@ import {
   routeTo,
   textLowerCaseAccentless,
 } from "../components/Utils.js";
-import { _t } from "./I18n.js";
 import { Settings } from "./Settings.js";
 import { Filter } from "./Filter.js";
 import { getSearchableTextByType } from "./customTypes/index.js";

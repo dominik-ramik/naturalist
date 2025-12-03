@@ -8,7 +8,6 @@ import {
   relativeToUsercontent,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { _t, _tf } from "../../model/I18n.js";
 import { ButtonGroup } from "../ChecklistView.js";
 
 let currentMap = Settings.mapChartCurrentMap();
@@ -24,9 +23,9 @@ let oldColoredRegionsJSON = "";
 let colors = null;
 
 const sumMethods = [
-  { name: _t("view_map_sum_by_filter"), method: "filter" },
-  { name: _t("view_map_sum_by_region"), method: "region" },
-  { name: _t("view_map_sum_by_total"), method: "total" },
+  { name: t("view_map_sum_by_filter"), method: "filter" },
+  { name: t("view_map_sum_by_region"), method: "region" },
+  { name: t("view_map_sum_by_total"), method: "total" },
 ];
 
 export function mapChart(filteredTaxa) {
@@ -149,7 +148,7 @@ function renderControlPanel() {
 
   function sumMethodSelector() {
     return Checklist.filter.isEmpty()
-      ? m("span.hint", _t("view_map_no_filter"))
+      ? m("span.hint", t("view_map_no_filter"))
       : m(ButtonGroup, {
           label: "Method",
           buttons: sumMethods.map((mt) =>
@@ -173,7 +172,7 @@ function mapVerb() {
   let verb = "";
 
   if (currentMap === null) {
-    return _t("view_map_select_map");
+    return t("view_map_select_map");
   }
 
   let filterVerb = Settings.pinnedSearches.getHumanNameForSearch(
@@ -183,19 +182,19 @@ function mapVerb() {
 
   switch (currentSumMethod) {
     case "filter":
-      verb = _tf(
+      verb = tf(
         "view_map_verb_filter" + (Checklist.filter.isEmpty() ? "_all" : ""),
         [filterVerb]
       );
       break;
     case "region":
-      verb = _tf(
+      verb = tf(
         "view_map_verb_region" + (Checklist.filter.isEmpty() ? "_all" : ""),
         [filterVerb]
       );
       break;
     case "total":
-      verb = _tf(
+      verb = tf(
         "view_map_verb_total" + (Checklist.filter.isEmpty() ? "_all" : ""),
         [filterVerb]
       );
@@ -263,7 +262,7 @@ function renderDataTable(dataPath, sumMethod) {
     m("tr", [
       m("th.underline[colspan=2]", "Region"),
       m("th.underline", "%"),
-      m("th.underline", _t("view_map_count")),
+      m("th.underline", t("view_map_count")),
     ]),
     ...[
       sortedRegions.map((regionKey) => {

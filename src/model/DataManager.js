@@ -9,7 +9,6 @@ import {
   splitN,
 } from "../components/Utils.js";
 import { getAllColumnInfos, getItem, nlDataStructure } from "./DataManagerData.js";
-import { i18n, _t, _tf } from "./I18n.js";
 import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
@@ -341,7 +340,7 @@ export let DataManager = function () {
               precacheMaxFileSizeMb
             ) {
               Logger.warning(
-                _tf("dm_asset_too_large", [
+                tf("dm_asset_too_large", [
                   asset,
                   (contentLengthInfo.contentLength / 1024 / 1024).toFixed(2),
                   precacheMaxFileSizeMb,
@@ -350,14 +349,14 @@ export let DataManager = function () {
             }
           } else {
             if (contentLengthInfo && contentLengthInfo.responseStatus == 404) {
-              Logger.error(_tf("dm_asset_not_found", [asset]));
+              Logger.error(tf("dm_asset_not_found", [asset]));
             }
           }
         });
 
         if (totalPrecacheSize > precacheMaxTotalSizeMb) {
           Logger.error(
-            _tf("dm_total_precache_size_too_large", [
+            tf("dm_total_precache_size_too_large", [
               totalPrecacheSize.toFixed(2),
               precacheMaxTotalSizeMb,
             ])
@@ -391,7 +390,7 @@ export let DataManager = function () {
 
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
             console.error("Asset not found or not an image: " + url, contentType);
-            Logger.error(_tf("dm_asset_head_error", [asset]));
+            Logger.error(tf("dm_asset_head_error", [asset]));
             return null;
           } else {
             const contentLength = xhr.getResponseHeader("Content-Length");
@@ -431,7 +430,7 @@ export let DataManager = function () {
         data.sheets.appearance.tables.customization.data,
         "About section",
         lang.code,
-        _t("generic_about")
+        t("generic_about")
       );
 
       let aboutResult = processFDirective(about, {}, log, null, null, additionalAssets);
@@ -755,7 +754,7 @@ export let DataManager = function () {
           default: {
             status: "",
             fill: "#55769b",
-            legend: _t("default_legend"),
+            legend: t("default_legend"),
           },
           statuses: [],
         },
@@ -952,7 +951,7 @@ export let DataManager = function () {
               let split = splitN(expr, " ", 3);
               if (split.length < 3 || split.length > 4) {
                 Logger.error(
-                  _tf("dm_hidden_syntax_wrong_length", [
+                  tf("dm_hidden_syntax_wrong_length", [
                     info.fullRow.columnName,
                     expr,
                   ])
@@ -961,14 +960,14 @@ export let DataManager = function () {
 
               if (!["if", "unless"].includes(split[0])) {
                 Logger.error(
-                  _tf("dm_hidden_syntax", [info.fullRow.columnName, expr])
+                  tf("dm_hidden_syntax", [info.fullRow.columnName, expr])
                 );
               }
 
               let filter = split[1];
               if (!dataPath.validate.isDataPath(filter)) {
                 Logger.error(
-                  _tf("dm_hidden_syntax_wrong_filter", [
+                  tf("dm_hidden_syntax_wrong_filter", [
                     info.fullRow.columnName,
                     filter,
                   ])
@@ -977,7 +976,7 @@ export let DataManager = function () {
 
               if (!["is", "isset", "notset", "notsetor"].includes(split[2])) {
                 Logger.error(
-                  _tf("dm_hidden_syntax_wrong_operator", [
+                  tf("dm_hidden_syntax_wrong_operator", [
                     info.fullRow.columnName,
                     expr,
                   ])
@@ -992,7 +991,7 @@ export let DataManager = function () {
                   }
                 } catch (e) {
                   Logger.error(
-                    _tf("dm_hidden_syntax_wrong_value", [
+                    tf("dm_hidden_syntax_wrong_value", [
                       info.fullRow.columnName,
                       expr,
                     ])
@@ -1057,7 +1056,7 @@ export let DataManager = function () {
     compiledChecklistCache = null; // Invalidate compiled checklist cache
 
     if (table == null) {
-      Logger.error(_t("problem_loading_data"));
+      Logger.error(t("problem_loading_data"));
       return null;
     }
 
@@ -1093,7 +1092,7 @@ export let DataManager = function () {
         if (headersCache.indexOf(header) < 0) {
           headersCache.push(header);
         } else {
-          Logger.error(_tf("dm_column_names_duplicate", [header]));
+          Logger.error(tf("dm_column_names_duplicate", [header]));
         }
       });
       // Create context object once per row
@@ -1128,7 +1127,7 @@ export let DataManager = function () {
                 rowObj.t.push(taxon);
               } else {
                 Logger.error(
-                  _tf("dm_incomplete_taxa_info_row", [
+                  tf("dm_incomplete_taxa_info_row", [
                     rowIndex + data.common.checklistHeadersStartRow,
                     info.name,
                   ])
@@ -1200,7 +1199,7 @@ export let DataManager = function () {
             if (pathPosition == pathSegments.length - 1) {
               //terminal node
               if (rowObjData.hasOwnProperty(currentSegment)) {
-                throw _tf("dm_duplicate_segment", [currentSegment]);
+                throw tf("dm_duplicate_segment", [currentSegment]);
               }
               let genericData = loadDataByType(
                 context,
@@ -1218,7 +1217,7 @@ export let DataManager = function () {
                 ) {
                   // lastSuccesfullCount must be as is and not with -1 to give the user a 1 based index and not a 0 based one
                   Logger.error(
-                    _tf("dm_array_with_empty_cells_in_the_middle", [
+                    tf("dm_array_with_empty_cells_in_the_middle", [
                       computedPath,
                       lastSuccesfullCount,
                       row.join(", "),
@@ -1368,7 +1367,7 @@ export let DataManager = function () {
                     " in table " +
                     table.name +
                     ". " +
-                    _t("dm_verify_doc")
+                    t("dm_verify_doc")
                   );
                   return;
                 }
@@ -1391,7 +1390,7 @@ export let DataManager = function () {
                     " in table " +
                     table.name +
                     " " +
-                    _t("dm_verify_doc")
+                    t("dm_verify_doc")
                   );
                   return;
                 }
@@ -1404,7 +1403,7 @@ export let DataManager = function () {
                 if (!integrity.allowEmpty && isEmpty) {
                   console.log("XX", dataRow, integrity);
                   Logger.error(
-                    _tf("dm_value_cannot_be_empty", [column.name, table.name])
+                    tf("dm_value_cannot_be_empty", [column.name, table.name])
                   );
                 }
 
@@ -1427,7 +1426,7 @@ export let DataManager = function () {
                       });
                       if (!found) {
                         Logger.error(
-                          _tf("dm_incorrect_list", [
+                          tf("dm_incorrect_list", [
                             value,
                             column.name,
                             table.name,
@@ -1445,7 +1444,7 @@ export let DataManager = function () {
                     case "columnName":
                       if (!dataPath.validate.isSimpleColumnName(value)) {
                         Logger.error(
-                          _tf("dm_incorrect_simple_column_name", [
+                          tf("dm_incorrect_simple_column_name", [
                             value,
                             column.name,
                             table.name,
@@ -1463,7 +1462,7 @@ export let DataManager = function () {
                         cssColorNames.indexOf(value.toLowerCase()) < 0
                       ) {
                         Logger.error(
-                          _tf("dm_incorrect_hlsa", [
+                          tf("dm_incorrect_hlsa", [
                             value,
                             column.name,
                             table.name,
@@ -1481,7 +1480,7 @@ export let DataManager = function () {
                         0
                       ) {
                         Logger.error(
-                          _tf("dm_incorrect_filename", [
+                          tf("dm_incorrect_filename", [
                             value,
                             column.name,
                             table.name,
@@ -1493,7 +1492,7 @@ export let DataManager = function () {
                     case "url":
                       if (!isValidHttpUrl(value)) {
                         Logger.error(
-                          _tf("dm_incorrect_http", [
+                          tf("dm_incorrect_http", [
                             value,
                             column.name,
                             table.name,
@@ -1504,7 +1503,7 @@ export let DataManager = function () {
                     case "dataPath":
                       if (!dataPath.validate.isDataPath(value)) {
                         Logger.error(
-                          _tf("dm_incorrect_datapath", [
+                          tf("dm_incorrect_datapath", [
                             value,
                             column.name,
                             table.name,
@@ -1524,7 +1523,7 @@ export let DataManager = function () {
                       let regex = new RegExp(integrity.regex);
                       if (regex.test(value) == false) {
                         Logger.error(
-                          _tf("dm_regex_failed", [
+                          tf("dm_regex_failed", [
                             value,
                             column.name,
                             table.name,
@@ -1559,7 +1558,7 @@ export let DataManager = function () {
                   });
                   if (count > 1) {
                     Logger.error(
-                      _tf("dm_incorrect_must_be_unique", [
+                      tf("dm_incorrect_must_be_unique", [
                         value,
                         column.name,
                         table.name,
@@ -1585,7 +1584,7 @@ export let DataManager = function () {
         i18n.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
       ) {
         Logger.warning(
-          _tf("dm_specify_fallback_language", [
+          tf("dm_specify_fallback_language", [
             lang.name,
             "Supported languages",
             data.sheets.appearance.name,
@@ -1616,7 +1615,7 @@ export let DataManager = function () {
           }
 
           Logger.error(
-            _tf("dm_column_name_duplicate", [
+            tf("dm_column_name_duplicate", [
               item.name,
               item.table,
               uniqueColumnNames[item.name].table,
@@ -1641,7 +1640,7 @@ export let DataManager = function () {
       let hue = parseInt(hueString);
       if (isNaN(hue) || hue < 0 || hue > 360) {
         Logger.error(
-          _tf("dm_hue_value", [
+          tf("dm_hue_value", [
             data.sheets.appearance.tables.customization.name,
           ])
         );
@@ -1681,7 +1680,7 @@ export let DataManager = function () {
           !(colPosition.isSimpleItem || colPosition.isRoot)
         ) {
           Logger.error(
-            _tf("dm_wrong_placement", [
+            tf("dm_wrong_placement", [
               columnName,
               row.placement,
               columnName.substring(0, columnName.indexOf(".")),
@@ -1691,13 +1690,13 @@ export let DataManager = function () {
 
         // Only leaf column can have "template"
         if (row.template != "" && !colPosition.isLeaf) {
-          Logger.error(_tf("dm_wrong_template", [columnName]));
+          Logger.error(tf("dm_wrong_template", [columnName]));
         }
 
         // Only leaf column can have badge "formatting"
         if (row.formatting.toLowerCase() == "badge" && !colPosition.isLeaf) {
           Logger.error(
-            _tf("dm_wrong_badge", [
+            tf("dm_wrong_badge", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns.formatting
                 .name,
@@ -1708,7 +1707,7 @@ export let DataManager = function () {
         // Only columns with children or # can have subitems separator
         if (row.subitemsSeparator != "" && !colPosition.hasChildren) {
           Logger.error(
-            _tf("dm_wrong_separator", [
+            tf("dm_wrong_separator", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns
                 .subitemsSeparator.name,
@@ -1744,7 +1743,7 @@ export let DataManager = function () {
               console.log(columnKey);
               console.log(row[columnKey]);
               Logger.warning(
-                _tf("dm_hidden_column_name", [
+                tf("dm_hidden_column_name", [
                   columnName,
                   data.sheets.content.tables.customDataDefinition.columns[
                     columnKey
@@ -1761,7 +1760,7 @@ export let DataManager = function () {
           const allowedFormatting = ["", "text", "markdown", "image", "sound", "map", "map regions"];
           if (!allowedFormatting.includes((row.formatting || "").trim().toLowerCase())) {
             Logger.error(
-              _tf("dm_details_formatting_invalid", [
+              tf("dm_details_formatting_invalid", [
                 row.columnName,
                 row.formatting,
                 row.placement
@@ -1774,7 +1773,7 @@ export let DataManager = function () {
           const children = dataPath.analyse.getChildrenOf(allColumnNames, thisDataPath);
           if (children.length > 0) {
             Logger.error(
-              _tf("dm_details_with_children_invalid", [
+              tf("dm_details_with_children_invalid", [
                 row.columnName,
                 children.join(", ")
               ])
@@ -1920,7 +1919,7 @@ export let DataManager = function () {
 
             if (allDataPaths.indexOf(cumulative) < 0) {
               Logger.error(
-                _tf("dm_hidden_missing_index", [
+                tf("dm_hidden_missing_index", [
                   cumulative,
                   data.sheets.content.tables.customDataDefinition.name,
                   data.sheets.content.tables.customDataDefinition.columns
@@ -2066,19 +2065,19 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, ass
 
     // Disallow backward slashes
     if (filePath.includes("\\")) {
-      Logger.error(_t("dm_fdirective_backslash", [filePath]));
+      Logger.error(t("dm_fdirective_backslash", [filePath]));
       return null;
     }
 
     // Disallow absolute or relative paths starting with / or ./
     if (filePath.startsWith("/") || filePath.startsWith("./")) {
-      Logger.error(_t("dm_fdirective_absolute_or_dot_slash", [filePath]));
+      Logger.error(t("dm_fdirective_absolute_or_dot_slash", [filePath]));
       return null;
     }
 
     // Disallow directory traversal
     if (filePath.includes("..")) {
-      Logger.error(_t("dm_fdirective_directory_traversals", [filePath]));
+      Logger.error(t("dm_fdirective_directory_traversals", [filePath]));
       return null;
     }
 
@@ -2087,7 +2086,7 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, ass
     // Must end with .md (or will be appended)
     const validPathRegex = /^([a-zA-Z0-9_\-~.]+\/)*[a-zA-Z0-9_\-~]+(\.md)?$/;
     if (!validPathRegex.test(filePath)) {
-      Logger.error(_t("dm_fdirective_invalid_path", [filePath]));
+      Logger.error(t("dm_fdirective_invalid_path", [filePath]));
       return null;
     }
 
@@ -2158,12 +2157,12 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, ass
         return processedContent;
       } else {
         Logger.error(
-          _tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])
+          tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])
         );
         return null;
       }
     } else {
-      Logger.error(_t("dm_fdirective_invalid_url", [data, fileUrl]));
+      Logger.error(t("dm_fdirective_invalid_url", [data, fileUrl]));
       console.log("F: is not valid URL", data, fileUrl);
       return null;
     }

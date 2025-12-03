@@ -8,7 +8,6 @@ import {
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
-import { _t } from "../model/I18n.js";
 
 export let FilterDropdown = function (initialVnode) {
   let _open = false;
@@ -121,7 +120,7 @@ export let FilterDropdown = function (initialVnode) {
               type == "taxa"
                 ? m(
                   "img.clickable.copy[title=" +
-                  _t("copy_taxa_dropdown", [title]) +
+                  t("copy_taxa_dropdown", [title]) +
                   "][src=img/ui/search/copy.svg]",
                   {
                     onclick: function (e) {
@@ -133,7 +132,7 @@ export let FilterDropdown = function (initialVnode) {
 
                       copyToClipboard(
                         listOfTaxa,
-                        _t("list_of_taxa", [title])
+                        t("list_of_taxa", [title])
                       );
                       e.stopPropagation();
                     },
@@ -398,7 +397,7 @@ let DropdownText = function (initialVnode) {
           ".search-filter",
           m(
             "input.options-search[type=search][placeholder=" +
-            _t("search") +
+            t("search") +
             "][id=" +
             vnode.attrs.dropdownId +
             "_text]",
@@ -431,11 +430,11 @@ let DropdownText = function (initialVnode) {
                   console.log(itemsOverflowLimit);
                 },
               },
-              _t("next_items_dropdown", [initialOverflowLimit])
+              t("next_items_dropdown", [initialOverflowLimit])
             )
             : null,
           showSelected + showPossible + showImpossible == 0
-            ? m(".no-items-filter", _t("no_items_filter"))
+            ? m(".no-items-filter", t("no_items_filter"))
             : null,
         ]),
         filter.length > 0 && totalPossibleUnchecked > 1
@@ -451,7 +450,7 @@ let DropdownText = function (initialVnode) {
                 vnode.attrs.openHandler(false);
               },
             },
-            _t("check_all_shown")
+            t("check_all_shown")
           )
           : null,
         m(
@@ -461,7 +460,7 @@ let DropdownText = function (initialVnode) {
               vnode.attrs.openHandler(false);
             },
           },
-          _t("apply_selection")
+          t("apply_selection")
         ),
       ]);
     },
@@ -833,51 +832,51 @@ let DropdownNumber = function (initialVnode) {
 
       switch (actualOperation) {
         case "":
-          inputUi = [m(".label1.centered", _t("numeric_filter_select"))];
+          inputUi = [m(".label1.centered", t("numeric_filter_select"))];
           break;
         case "equal":
           inputUi = [
-            m(".label1", _t("numeric_filter_equal")),
+            m(".label1", t("numeric_filter_equal")),
             numericInput(1, min, max),
           ];
           break;
         case "lesser":
           inputUi = [
-            m(".label1", _t("numeric_filter_lesser")),
+            m(".label1", t("numeric_filter_lesser")),
             numericInput(1, min, max),
           ];
           break;
         case "lesserequal":
           inputUi = [
-            m(".label1", _t("numeric_filter_lesserequal")),
+            m(".label1", t("numeric_filter_lesserequal")),
             numericInput(1, min, max),
           ];
           break;
         case "greater":
           inputUi = [
-            m(".label1", _t("numeric_filter_greater")),
+            m(".label1", t("numeric_filter_greater")),
             numericInput(1, min, max),
           ];
           break;
         case "greaterequal":
           inputUi = [
-            m(".label1", _t("numeric_filter_greaterequal")),
+            m(".label1", t("numeric_filter_greaterequal")),
             numericInput(1, min, max),
           ];
           break;
         case "between":
           inputUi = [
-            m(".label1", _t("numeric_filter_between")),
+            m(".label1", t("numeric_filter_between")),
             numericInput(1, min, max),
-            m(".label2", _t("numeric_filter_and")),
+            m(".label2", t("numeric_filter_and")),
             numericInput(2, min, max),
           ];
           break;
         case "around":
           inputUi = [
-            m(".label1", _t("numeric_filter_around")),
+            m(".label1", t("numeric_filter_around")),
             numericInput(1, min, max),
-            m(".label2", _t("numeric_filter_plusminus")),
+            m(".label2", t("numeric_filter_plusminus")),
             numericInput(2, min, max),
           ];
           break;
@@ -964,8 +963,8 @@ let DropdownNumber = function (initialVnode) {
               },
             },
             countResults() == 0
-              ? _t("numeric_apply_show_results_no_results")
-              : _t("numeric_apply_show_results", [countResults()])
+              ? t("numeric_apply_show_results_no_results")
+              : t("numeric_apply_show_results", [countResults()])
           ),
         m(".histogram-wrap", [
           m(
@@ -985,7 +984,7 @@ let DropdownNumber = function (initialVnode) {
           m(".legend", [
             m(".legend-item", [
               m(".map-fill[style=background-color: #d3d3d3]"),
-              m(".map-legend-title", _t("histogram_all_data")),
+              m(".map-legend-title", t("histogram_all_data")),
             ]),
             m(".legend-item", [
               m(
@@ -993,15 +992,15 @@ let DropdownNumber = function (initialVnode) {
                 Checklist.getThemeHsl("light") +
                 "]"
               ),
-              m(".map-legend-title", _t("histogram_displayed_data")),
+              m(".map-legend-title", t("histogram_displayed_data")),
             ]),
           ]),
         ]),
         m("ul.stats", [
-          m("li", _t("stats_min") + ": " + min.toLocaleString()),
-          m("li", _t("stats_max") + ": " + max.toLocaleString()),
-          m("li", _t("stats_avg") + ": " + avg.toLocaleString()),
-          m("li", _t("stats_distinct") + ": " + distinct.toLocaleString()),
+          m("li", t("stats_min") + ": " + min.toLocaleString()),
+          m("li", t("stats_max") + ": " + max.toLocaleString()),
+          m("li", t("stats_avg") + ": " + avg.toLocaleString()),
+          m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
         ]),
       ]);
     },

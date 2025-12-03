@@ -1,7 +1,6 @@
 import m from "mithril";
 
 import { routeTo } from "../components/Utils.js";
-import { _t } from "../model/I18n.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 
@@ -15,7 +14,7 @@ export let PinnedView = {
               type: "button",
               state: "",
               icon: "ui/menu/push_pin",
-              title: _t("pin_this_search"),
+              title: t("pin_this_search"),
               action: function () {
                 Settings.pinnedSearches.addCurrent();
               },
@@ -24,7 +23,7 @@ export let PinnedView = {
       [
         Settings.pinnedSearches.getAll().length == 0
           ? null
-          : { type: "label", title: _t("pined_searches") },
+          : { type: "label", title: t("pined_searches") },
       ],
       Settings.pinnedSearches.getAll().map(function (pinnedItem) {
         return {

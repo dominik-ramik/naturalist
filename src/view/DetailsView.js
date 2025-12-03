@@ -7,7 +7,6 @@ import {
 } from "../components/TabsContainer.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { _t } from "../model/I18n.js";
 import {
   routeTo,
 } from "../components/Utils.js";
@@ -99,7 +98,7 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
   Object.keys(detailsTabs).forEach(function (key) {
     let icon = "./img/ui/tabs/" + key + ".svg";
     let tabData = null;
-    let title = _t("tab_title_" + key);
+    let title = t("tab_title_" + key);
     let onClickCallback = function () {
       Settings.currentDetailsTab(key);
       routeTo(

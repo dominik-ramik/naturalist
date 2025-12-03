@@ -3,10 +3,6 @@ import m from "mithril"
 import { MenuStripView } from "./MenuStripView.js";
 import { ChecklistView } from "./ChecklistView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
-import { Checklist } from "../model/Checklist.js";
-import { routeTo } from "../components/Utils.js";
-import { _t } from "../model/I18n.js";
-import { Filter } from "../model/Filter.js";
 
 export let AppLayoutView = {
     display: "checklist",

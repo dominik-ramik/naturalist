@@ -3,8 +3,6 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
-import { Checklist } from "../Checklist.js";
-import { _tf, _t } from "../I18n.js";
 
 export let readerMap = {
   dataType: "map",
@@ -14,7 +12,7 @@ export let readerMap = {
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
-          _tf("dm_generic_column_names", [
+          tf("dm_generic_column_names", [
             "map",
             computedPath,
             String.join(", ", columnNames),

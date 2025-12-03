@@ -1,6 +1,5 @@
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
-import { _t } from "./I18n.js";
 
 export let Settings = {
   // Full-text search OR separator symbol
@@ -257,11 +256,11 @@ export let Settings = {
               names.push(
                 categoryName +
                 " " +
-                _t("is_list_joiner") +
+                t("is_list_joiner") +
                 " " +
                 formatList(
                   itemObject[type][dataPath],
-                  _t("or_list_joiner"),
+                  t("or_list_joiner"),
                   usePlainTextOutput ? "" : "<strong>",
                   usePlainTextOutput ? "" : "</strong>"
                 )
@@ -299,14 +298,14 @@ export let Settings = {
           // to insert a bolded OR separator.
           // Example result: <strong>Term1</strong> <b> OR </b> <strong>Term2</strong>
           let joiner = usePlainTextOutput ? 
-            (" " + _t("crumb_or") + " ") : 
-            ("</strong> " + _t("crumb_or") + " <strong>");
+            (" " + t("crumb_or") + " ") : 
+            ("</strong> " + t("crumb_or") + " <strong>");
 
           textDisplay = parts.join(joiner);
         }
 
         names.push(
-          _t("text_is_list_joiner") +
+          t("text_is_list_joiner") +
           " " +
           (usePlainTextOutput ? "" : "<strong>") +
           textDisplay +

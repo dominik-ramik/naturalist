@@ -1,8 +1,6 @@
 import m from "mithril";
 
 import { Checklist } from "../model/Checklist.js";
-import { _t } from "../model/I18n.js";
-import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { Settings } from "../model/Settings.js";
 // DELETE: import { AppLayoutView } from "./AppLayoutView.js";
 
@@ -47,14 +45,14 @@ function renderSearchView(vnode) {
         vnode.children,
       ]),
     ],
-    m(".branding", _t("powered_by_nl")),
+    m(".branding", t("powered_by_nl")),
     !Checklist.getProjectHowToCite() ||
       Checklist.getProjectHowToCite().trim() == ""
       ? null
       : m(
         ".desktop-cite",
         m("div", [
-          m("b[style=margin-right: 0.75em;]", _t("how_to_cite")),
+          m("b[style=margin-right: 0.75em;]", t("how_to_cite")),
           m(
             "span[style=user-select: all]",
             Checklist.getProjectHowToCite()

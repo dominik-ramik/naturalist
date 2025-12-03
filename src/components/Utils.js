@@ -5,7 +5,6 @@ import DOMPurify from "dompurify";
 
 import { Checklist } from "../model/Checklist.js";
 import { Toast } from "../view/AppLayoutView.js";
-import { _t } from "../model/I18n.js";
 
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
@@ -610,7 +609,7 @@ export let cssColorNames = [
 
 export function formatList(list, finalJoiner, preItem, postItem) {
   if (!finalJoiner) {
-    finalJoiner = _t("and_list_joiner");
+    finalJoiner = t("and_list_joiner");
   }
 
   list = list.map(function (item) {

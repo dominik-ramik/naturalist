@@ -4,7 +4,6 @@ import m from "mithril";
 import { FilterDropdown } from "../view/FilterDropdownView.js";
 import { Checklist } from "../model/Checklist.js";
 import { FilterCrumbsView } from "./FilterCrumbsView.js";
-import { _t, _tf } from "../model/I18n.js";
 import { routeTo, shouldHide } from "../components/Utils.js";
 import { Filter } from "../model/Filter.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
@@ -58,7 +57,7 @@ let SearchBox = {
 
         // SearchBox is now a flex container (styled in CSS)
         return m(".search-box", [
-            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + _tf("free_text_search", Settings.SEARCH_OR_SEPARATOR, true) + "][value=" + Checklist.filter.text + "]", {
+            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", Settings.SEARCH_OR_SEPARATOR, true) + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
                     const oldText = Checklist.filter.text;
                     const newText = e.target.value;
@@ -98,7 +97,7 @@ let SearchBox = {
                 onclick: toggleHandler,
             }, [
                 m("img.toggle-icon[src=img/ui/checklist/filter.svg]"),
-                _t("filters"),
+                t("filters"),
                 m("img.toggle-icon[src=img/ui/menu/" + (isExpanded ? "expand_more" : "expand_less") + ".svg]"),
             ]),
             !Checklist.filter.isEmpty() ? m("button.filter-button.mobile-clear-filters", {
@@ -108,7 +107,7 @@ let SearchBox = {
                 },
             }, [
                 m("img.toggle-icon[src=img/ui/search/clear_filter.svg]"),
-                _t("reset_filter_mobile"),
+                t("reset_filter_mobile"),
             ]) : null,
         ]);
     }

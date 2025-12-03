@@ -3,8 +3,6 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
-import { Checklist } from "../Checklist.js";
-import { _tf } from "../I18n.js";
 import { MinimalAudioPlayer } from "../../components/MinimalAudioPlayer.js";
 
 export let readerSound = {
@@ -15,7 +13,7 @@ export let readerSound = {
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
-          _tf("dm_generic_column_names", [
+          tf("dm_generic_column_names", [
             "sound",
             computedPath,
             String.join(", ", columnNames),

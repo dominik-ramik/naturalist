@@ -2,7 +2,6 @@ import m from "mithril";
 
 import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
 import { Checklist } from "../model/Checklist.js";
-import { _t } from "../model/I18n.js";
 import { copyToClipboard } from "../components/Utils.js";
 
 export let TaxonNameView = {
@@ -39,7 +38,7 @@ export let TaxonNameView = {
                       (vnode.attrs.taxonTree.taxon.authority
                         ? " " + vnode.attrs.taxonTree.taxon.authority
                         : ""),
-                    _t("taxon")
+                    t("taxon")
                   );
                 },
                 oncontextmenu: function (e) {
@@ -61,7 +60,7 @@ export let TaxonNameView = {
 
                   textToCopy = textToCopy.trim();
 
-                  copyToClipboard(textToCopy, _t("taxon"));
+                  copyToClipboard(textToCopy, t("taxon"));
 
                   return false; // Prevent default and stop propagation
                 },
@@ -84,7 +83,7 @@ export let TaxonNameView = {
                 Checklist.filter.commit("/checklist");
               },
             },
-            _t("in_taxon_group", [
+            t("in_taxon_group", [
               parentTaxonIndicator.rank.toLowerCase(),
               parentTaxonIndicator.taxon.name,
             ])

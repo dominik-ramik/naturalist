@@ -3,7 +3,7 @@ import { registerSW } from 'virtual:pwa-register';
 import Handlebars from "handlebars";
 import "./styles/style.css";
 
-import { _t, _tf } from "./model/I18n.js";
+import { t, tf, setLocale } from "./i18n/index.js";
 import { AppLayoutView, Toast } from "./view/AppLayoutView.js";
 import { Checklist } from "./model/Checklist.js";
 import { SearchView } from "./view/SearchView.js";
@@ -36,7 +36,7 @@ const updateServiceWorker = registerSW({
     }
 
     // Standard behavior: Ask the user
-    Toast.show(_t("new_version_available"), {
+    Toast.show(t("new_version_available"), {
       showPermanently: true,
       whenClosed: function () {
         updateServiceWorker(true);
@@ -113,7 +113,7 @@ function openComChannel(sw) {
         if (message.data.updateMeta) {
           Settings.lastKnownDataVersion(message.data.updateMeta);
         }
-        Toast.show(_t("checklist_data_updated"), {
+        Toast.show(t("checklist_data_updated"), {
           whenClosed: function () {
             window.location.href =
               window.location.origin + window.location.pathname;
@@ -122,7 +122,7 @@ function openComChannel(sw) {
         break;
 
       case "FETCHING_RESSOURCE_FAILED":
-        Toast.show(_t("offline_fetch_failed"));
+        Toast.show(t("offline_fetch_failed"));
         break;
 
       default:
@@ -288,16 +288,24 @@ function runApp() {
       }
 
       readyPreloadableAssets();
+      
+      function updateLanguage() {
+        const lang = m.route.param("l");
+        if (lang) {
+          setLocale(lang);
+        }
+      }
 
       function onMatchGuard() {
+        updateLanguage(); // Ensure language is set based on URL
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (
           !Settings.alreadyViewedAboutSection() &&
           Checklist.getProjectAbout()?.trim() != ""
         ) {
-          Toast.show(_t("show_about"), {
+          Toast.show(t("show_about"), {
             timeout: 10000,
-            actionLabel: _t("open_about_page"),
+            actionLabel: t("open_about_page"),
             actionCallback: () => {
               m.route.set("/about/checklist");
             },
@@ -337,7 +345,7 @@ function runApp() {
             return m(AppLayoutView, [
               m(AboutView, {
                 text:
-                  _tf("how_to_cite_header", [Checklist.getProjectName()]) +
+                  tf("how_to_cite_header", [Checklist.getProjectName()]) +
                   "\n\n<p style='user-select: all'>" +
                   Checklist.getProjectHowToCite() +
                   " </p>",
@@ -399,7 +407,7 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
-              m(AboutView, { text: _t("about_app", appVersion) }),
+              m(AboutView, { text: t("about_app", appVersion) }),
             ]);
           },
           onmatch: onMatchGuard,

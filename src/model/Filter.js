@@ -1,6 +1,5 @@
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
-import { _t } from "./I18n.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 
@@ -119,15 +118,15 @@ export let Filter = {
         (formatPost ? formatPost : "") +
         " ";
     }
-    title += _t("numeric_filter_" + operation + "_short") + " ";
+    title += t("numeric_filter_" + operation + "_short") + " ";
     title += threshold1.toLocaleString();
     if (Filter.numericFilters[operation].values > 1) {
       switch (operation) {
         case "between":
-          title += " " + _t("numeric_filter_and") + " ";
+          title += " " + t("numeric_filter_and") + " ";
           break;
         case "around":
-          title += " " + _t("numeric_filter_plusminus") + " ";
+          title += " " + t("numeric_filter_plusminus") + " ";
         default:
           break;
       }

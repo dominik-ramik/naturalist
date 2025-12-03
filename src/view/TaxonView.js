@@ -4,8 +4,6 @@ import { Settings } from "../model/Settings.js";
 import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { TaxonDataView } from "../view/TaxonDataView.js";
-import { _t } from "../model/I18n.js";
-import { filterMatches } from "../components/Utils.js";
 import { TaxonNameView } from "./TaxonNameView.js";
 
 export let TaxonView = {

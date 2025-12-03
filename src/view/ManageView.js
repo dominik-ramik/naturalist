@@ -6,7 +6,6 @@ import { ExcelBridge } from "../components/ExcelBridge.js";
 import { compressor, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
-import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 import { Logger } from "../components/Logger.js";
 import { exportTemplateSpreadsheet } from "../model/DataManagerData.js";
@@ -96,21 +95,21 @@ const SubViews = {
     return [
       // Welcome section for fresh install
       !isDataReady ? m(ManageCard, {
-        title: _t("fresh_install_welcome"),
+        title: t("fresh_install_welcome"),
         icon: "img/icon_maskable.svg",
         children: [
-          m("p.manage-welcome-text", _t("fresh_install_welcome_message")),
+          m("p.manage-welcome-text", t("fresh_install_welcome_message")),
         ]
       }) : null,
 
       // Getting Started card (for fresh install)
       !isDataReady ? m(ManageCard, {
-        title: _t("start_scratch_title"),
+        title: t("start_scratch_title"),
         icon: "img/ui/menu/help.svg",
-        description: marked.parse(_t("starting_from_scratch_links")),
+        description: marked.parse(t("starting_from_scratch_links")),
         children: [
           m(ActionButton, {
-            label: _t("download_blank_sheet_button"),
+            label: t("download_blank_sheet_button"),
             onclick: () => exportTemplateSpreadsheet(),
             small: true,
           }),
@@ -119,15 +118,15 @@ const SubViews = {
 
       // Upload card
       m(ManageCard, {
-        title: isDataReady ? _t("update_checklist_title") : _t("upload_spreadsheet_title"),
+        title: isDataReady ? t("update_checklist_title") : t("upload_spreadsheet_title"),
         icon: "img/ui/manage/upload.svg",
-        description: isDataReady ? _t("data_upload_waiting") : _t("starting_from_scratch_continued"),
+        description: isDataReady ? t("data_upload_waiting") : t("starting_from_scratch_continued"),
         children: [
           renderDropzone(),
           Logger.hasErrors()
             ? m(".manage-notice.manage-notice-error", [
               m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
-              m("span", _t("data_upload_import_dirty")),
+              m("span", t("data_upload_import_dirty")),
             ])
             : null,
         ]
@@ -135,12 +134,12 @@ const SubViews = {
 
       // Help card (when data exists)
       isDataReady ? m(ManageCard, {
-        title: _t("start_scratch_title"),
+        title: t("start_scratch_title"),
         icon: "img/ui/menu/help.svg",
-        description: marked.parse(_t("starting_from_scratch_links")),
+        description: marked.parse(t("starting_from_scratch_links")),
         children: [
           m(ActionButton, {
-            label: _t("download_blank_sheet_button"),
+            label: t("download_blank_sheet_button"),
             onclick: () => exportTemplateSpreadsheet(),
             small: true,
           }),
@@ -157,13 +156,13 @@ const SubViews = {
     }
 
     return m(ManageCard, {
-      title: _t("processing"),
+      title: t("processing"),
       icon: "img/ui/manage/processing.svg",
       children: [
         m(".manage-processing", [
           m(".manage-spinner"),
-          m("p", _t("data_upload_processing")),
-          m("p.manage-processing-hint", _t("this_may_take_time")),
+          m("p", t("data_upload_processing")),
+          m("p.manage-processing-hint", t("this_may_take_time")),
         ]),
       ]
     });
@@ -177,24 +176,24 @@ const SubViews = {
     }
 
     return m(ManageCard, {
-      title: _t("review_draft_heading"),
+      title: t("review_draft_heading"),
       icon: "img/ui/manage/review.svg",
-      description: _t("review_draft"),
+      description: t("review_draft"),
       children: [
         m(".manage-review-options", [
           m(".manage-review-option.manage-review-issues", [
-            m("p", _t("not_all_good")),
+            m("p", t("not_all_good")),
             m(ActionButton, {
-              label: _t("back_to_upload"),
+              label: t("back_to_upload"),
               onclick: () => m.route.set("/manage/upload"),
               icon: "img/ui/manage/errors.svg",
               fixedWidth: true,
             }),
           ]),
           m(".manage-review-option.manage-review-success", [
-            m("p", _t("all_good")),
+            m("p", t("all_good")),
             m(ActionButton, {
-              label: _t("proceed_to_update"),
+              label: t("proceed_to_update"),
               onclick: () => m.route.set("/manage/publish"),
               primary: true,
               icon: "img/ui/manage/clean.svg",
@@ -213,20 +212,20 @@ const SubViews = {
     return [
       // Server upload card (if PHP available)
       ManageStore.shouldShowUploadForm === true ? m(ManageCard, {
-        title: _t("data_upload_integrate_data"),
+        title: t("data_upload_integrate_data"),
         icon: "img/ui/manage/publish.svg",
-        description: _t("enter_creds_to_publish"),
+        description: t("enter_creds_to_publish"),
         children: [renderServerUploadForm()]
       }) : null,
 
       // Manual download card
       m(ManageCard, {
-        title: _t("download_data"),
+        title: t("download_data"),
         icon: "img/ui/menu/download.svg",
-        description: marked.parse(_t("download_for_manual_update")),
+        description: marked.parse(t("download_for_manual_update")),
         children: [
           m(ActionButton, {
-            label: _t("download_checklist"),
+            label: t("download_checklist"),
             primary: true,
             onclick: function () {
               let json = ManageStore.dataman.getCompiledChecklist();
@@ -239,7 +238,7 @@ const SubViews = {
           }),
           m("div", { style: "margin-top: 1em;" },
             m(ActionButton, {
-              label: _t("back_to_upload_small"),
+              label: t("back_to_upload_small"),
               onclick: () => m.route.set("/manage/upload"),
               small: true,
             })
@@ -252,15 +251,15 @@ const SubViews = {
   // Step: 'error'
   error: function () {
     return m(ManageCard, {
-      title: _t("error_publishing"),
+      title: t("error_publishing"),
       icon: "img/ui/manage/error.svg",
       children: [
         m(".manage-error-content", [
           ManageStore.messageCode?.length > 0 && ManageStore.messageCode != "other_upload_error"
-            ? m("p", _t(ManageStore.messageCode))
+            ? m("p", t(ManageStore.messageCode))
             : m("p", ManageStore.errorDetails),
           m(ActionButton, {
-            label: _t("back_to_upload_after_error"),
+            label: t("back_to_upload_after_error"),
             onclick: () => m.route.set("/manage/publish"),
           }),
         ]),
@@ -271,13 +270,13 @@ const SubViews = {
   // Step: 'done'
   done: function () {
     return m(ManageCard, {
-      title: _t("done"),
+      title: t("done"),
       icon: "img/ui/manage/update_done.svg",
       children: [
         m(".manage-success-content", [
-          m("p", _t("update_published")),
+          m("p", t("update_published")),
           m(ActionButton, {
-            label: _t("manage_back_to_search"),
+            label: t("manage_back_to_search"),
             primary: true,
             onclick: function () {
               Checklist._isDraft = false;
@@ -332,7 +331,7 @@ function renderLogs() {
 
   return m(".manage-logs", [
     m(".manage-logs-header", [
-      m("span", _t("log_messages") || "Messages"),
+      m("span", t("log_messages") || "Messages"),
       m("span.manage-logs-count", messages.length),
     ]),
     m(".manage-logs-list",
@@ -346,7 +345,7 @@ function renderLogs() {
         return m(".manage-log-item." + logItem.level, [
           m("img.manage-log-icon", { src: iconMap[logItem.level] || iconMap.info }),
           m(".manage-log-content", [
-            m("span.manage-log-level", _t("log_" + logItem.level)),
+            m("span.manage-log-level", t("log_" + logItem.level)),
             m("span.manage-log-message", m.trust(logItem.message)),
           ]),
         ]);
@@ -358,11 +357,11 @@ function renderLogs() {
 function renderDropzone() {
   function processUpload(filepicker, file, checkAssetsSize) {
     if (!file || !file.name) {
-      Logger.error(_t("chose_a_file"));
+      Logger.error(t("chose_a_file"));
       return;
     }
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      Logger.error(_t("wrong_filetype"));
+      Logger.error(t("wrong_filetype"));
       return;
     }
     ManageStore.reset();
@@ -417,8 +416,8 @@ function renderDropzone() {
     m(".manage-dropzone-content", [
       m("img.manage-dropzone-icon", { src: "img/ui/manage/upload.svg" }),
       m(".manage-dropzone-text", [
-        m("label.manage-btn.manage-btn-primary[for=excelupload]", _t("click_to_upload")),
-        m("span.manage-dropzone-or", _t("or_drag_it")),
+        m("label.manage-btn.manage-btn-primary[for=excelupload]", t("click_to_upload")),
+        m("span.manage-dropzone-or", t("or_drag_it")),
       ]),
       m("input[type=file][id=excelupload][accept=.xlsx]", {
         style: "display: none",
@@ -430,9 +429,9 @@ function renderDropzone() {
     m(".manage-dropzone-options", [
       m("label.manage-checkbox", [
         m("input[type=checkbox][id=checkassetssize][checked]"),
-        m("span", _t("check_assets_size1")),
+        m("span", t("check_assets_size1")),
       ]),
-      m("p.manage-dropzone-hint", _t("check_assets_size2")),
+      m("p.manage-dropzone-hint", t("check_assets_size2")),
     ]),
   ]);
 }
@@ -465,8 +464,8 @@ function renderServerUploadForm() {
               result = {
                 state: "error",
                 details: [
-                  m("div", _t("server_returned_odd_message")),
-                  m("div[style=margin-top: 1em;]", _t("server_returned_odd_message_details") + ex),
+                  m("div", t("server_returned_odd_message")),
+                  m("div[style=margin-top: 1em;]", t("server_returned_odd_message_details") + ex),
                 ],
               };
             }
@@ -480,9 +479,9 @@ function renderServerUploadForm() {
             }
           } else {
             if (request.statusText.toLowerCase() == "not found") {
-              ManageStore.errorDetails = _t("upload_disabled");
+              ManageStore.errorDetails = t("upload_disabled");
             } else {
-              ManageStore.errorDetails = _t("network_error") + " " + request.statusText;
+              ManageStore.errorDetails = t("network_error") + " " + request.statusText;
             }
             m.route.set("/manage/error");
           }
@@ -494,15 +493,15 @@ function renderServerUploadForm() {
     },
   }, [
     m(".manage-form-group", [
-      m("label[for=username]", _t("user_name")),
+      m("label[for=username]", t("user_name")),
       m("input[type=text][name=username][id=username]"),
     ]),
     m(".manage-form-group", [
-      m("label[for=password]", _t("password")),
+      m("label[for=password]", t("password")),
       m("input[type=password][name=password][id=password]"),
     ]),
     m(ActionButton, {
-      label: _t("publish_checklist"),
+      label: t("publish_checklist"),
       primary: true,
       onclick: function (e) {
         e.preventDefault();

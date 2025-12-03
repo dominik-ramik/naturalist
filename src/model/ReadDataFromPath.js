@@ -2,7 +2,6 @@ import { helpers } from "./customTypes/helpers.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { dataPath } from "./DataPath.js";
 import { Logger } from "../components/Logger.js";
-import { _tf } from "./I18n.js";
 
 const data = nlDataStructure;
 
@@ -161,7 +160,7 @@ export function readDataFromPath(
     ];
 
     Logger.error(
-      _tf("dm_generic_column_names", [
+      tf("dm_generic_column_names", [
         dataType,
         path,
         columnNames.join(", "),

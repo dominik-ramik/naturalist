@@ -2,7 +2,6 @@ import m from "mithril";
 
 import { getGradedColor } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
-import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 
 export let FilterCrumbsView = {
@@ -54,7 +53,7 @@ export let FilterCrumbsView = {
                     // If it is not the last item, append the OR text
                     if (index < parts.length - 1) {
                         // Return an array fragment containing the part and the separator
-                        return [part, m("b", " " + _t("crumb_or") + " ")];
+                        return [part, m("b", " " + t("crumb_or") + " ")];
                     }
                     return part;
                 });
@@ -62,7 +61,7 @@ export let FilterCrumbsView = {
 
             crumbs.push(m(Crumb, { 
                 type: "text", 
-                category: _t("filter_cat_text"), 
+                category: t("filter_cat_text"), 
                 dataPath: "", 
                 title: displayTitle, 
                 color: getGradedColor("text", "crumb") 
@@ -80,7 +79,7 @@ export let FilterCrumbsView = {
                     }
                 }, [
                     m(".crumb-text", [
-                        m(".filter-value", _t("reset_filter")),
+                        m(".filter-value", t("reset_filter")),
                     ]),
                     m("img[src=img/ui/search/clear_filter.svg]")
                 ])

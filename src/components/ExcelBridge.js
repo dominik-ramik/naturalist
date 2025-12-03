@@ -1,5 +1,4 @@
 import * as XLSX from "xlsx-js-style";
-import { _t, _tf } from "../model/I18n.js";
 import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";
 import { Logger } from "./Logger.js";
 
@@ -25,7 +24,7 @@ function readWorkbook(excelFile) {
  */
 function parseSheetData(workbook, sheetName) {
   if (workbook.SheetNames.indexOf(sheetName) < 0) {
-    Logger.critical(_tf("dm_cannot_find_sheet", [sheetName]));
+    Logger.critical(tf("dm_cannot_find_sheet", [sheetName]));
     return null;
   }
 
@@ -62,9 +61,9 @@ function parseSheetData(workbook, sheetName) {
     // If data is found after the first empty row, issue a warning.
     if (foundNonEmpty) {
       Logger.warning(
-        _tf("dm_empty_row_in_data", [sheetName, row + 1]) +
+        tf("dm_empty_row_in_data", [sheetName, row + 1]) +
         " " +
-        _t("dm_data_after_empty_row_ignored")
+        t("dm_data_after_empty_row_ignored")
       );
     }
 
@@ -104,7 +103,7 @@ function isRowArrayEmpty(rowArray) {
  */
 function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCode, defaultLangCode) {
   if (!sheetData || sheetData.length < 2) {
-    Logger.critical(_tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + _t("dm_verify_doc"));
+    Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
     return null;
   }
 
@@ -112,7 +111,7 @@ function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCod
   const tableStartCol = indexOfCaseInsensitive(headers, tableName);
 
   if (tableStartCol < 0) {
-    Logger.critical(_tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + _t("dm_verify_doc"));
+    Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
     return null;
   }
 
@@ -163,7 +162,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
     });
 
     if (match === undefined) {
-      Logger.critical(`Could not find expected column '${expectedHeader}' in table ${tableInfo.name} ${_t("dm_verify_doc")}`);
+      Logger.critical(`Could not find expected column '${expectedHeader}' in table ${tableInfo.name} ${t("dm_verify_doc")}`);
       return;
     }
   }
@@ -181,7 +180,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
         });
 
         if (multilingualCols.length > 0) {
-          Logger.error(_tf("dm_cannot_have_language_indicators", [columnMeta.name, tableInfo.name, multilingualCols.join(", ")]));
+          Logger.error(tf("dm_cannot_have_language_indicators", [columnMeta.name, tableInfo.name, multilingualCols.join(", ")]));
         }
       }
     });
@@ -221,7 +220,7 @@ function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) 
       const colIndex = getMultilingualColumnIndex(headers, colName, langCode, defaultLangCode);
 
       if (colIndex < 0) {
-        Logger.error(_tf("dm_column_not_found", [colName, tableInfo.name]));
+        Logger.error(tf("dm_column_not_found", [colName, tableInfo.name]));
         hasError = true;
       } else {
         lineObject[columnKey] = rawSubTable[row][colIndex];

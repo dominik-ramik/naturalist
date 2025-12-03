@@ -3,7 +3,6 @@ import m from "mithril";
 import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { ChecklistView } from "../view/ChecklistView.js";
-import { _t } from "../model/I18n.js";
 import { Settings } from "../model/Settings.js";
 import { AppLayoutView } from "./AppLayoutView.js";
 import { getAvailableMaps, mapChart } from "./charts/MapChart.js";
@@ -34,7 +33,7 @@ function menuPanel() {
         },
         [
           m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
-          m(".menu-button-description", _t("menu")),
+          m(".menu-button-description", t("menu")),
         ]
       ),
       !Checklist.getProjectAbout() || Checklist.getProjectAbout().trim() == ""
@@ -46,7 +45,7 @@ function menuPanel() {
               routeTo("/about/checklist");
             },
             icon: "about",
-            title: _t("about_this"),
+            title: t("about_this"),
           }),
           !Checklist.getProjectHowToCite() ||
             Checklist.getProjectHowToCite().trim() == ""
@@ -57,7 +56,7 @@ function menuPanel() {
                 routeTo("/about/cite");
               },
               icon: "cite",
-              title: _t("how_to_cite"),
+              title: t("how_to_cite"),
             }),
           Checklist.getSingleAccessTaxonomicKeys().length > 0 ? m(MenuItem, {
             onclick: function () {
@@ -65,7 +64,7 @@ function menuPanel() {
               routeTo("/single-access-keys");
             },
             icon: "single_access_key",
-            title: _t("keys"),
+            title: t("keys"),
           }) : null,
           Checklist.getBibliographyKeys().length > 0
             ? m(MenuItem, {
@@ -74,7 +73,7 @@ function menuPanel() {
                 routeTo("/references");
               },
               icon: "literature",
-              title: _t("literature"),
+              title: t("literature"),
             })
             : null,
           m(MenuDivider),
@@ -95,7 +94,7 @@ function menuPanel() {
               }
             },
             icon: "share",
-            title: _t("share_url"),
+            title: t("share_url"),
           }),
           m(MenuItem, {
             onclick: function () {
@@ -103,11 +102,11 @@ function menuPanel() {
               routeTo("/pinned");
             },
             icon: "push_pin",
-            title: _t("pin_search"),
+            title: t("pin_search"),
           }),
           m(MenuDivider),
           Checklist.getAllLanguages().length > 1
-            ? m(MenuExpandable, { title: _t("languages") }, [
+            ? m(MenuExpandable, { title: t("languages") }, [
               Checklist.getAllLanguages().map(function (lang) {
                 if (lang.code == Checklist.getCurrentLanguage()) {
                   return null; //skip this version
@@ -132,7 +131,7 @@ function menuPanel() {
               routeTo("/manage");
             },
             icon: "manage",
-            title: _t("manage"),
+            title: t("manage"),
           }),
           m(MenuDivider),
           m(MenuItem, {
@@ -141,7 +140,7 @@ function menuPanel() {
               routeTo("/about/app");
             },
             icon: "./img/icon_transparent_dark.svg",
-            title: _t("about_nl"),
+            title: t("about_nl"),
           }),
         ]),
       m(".version-info",
@@ -224,7 +223,7 @@ let MenuExpandable = function (initialVnode) {
 };
 
 function menuTopBar() {
-  let currentViewName = _t(Settings.viewType()); //settings view type is the same as the i18n tag for that view
+  let currentViewName = t(Settings.viewType()); //settings view type is the same as the i18n tag for that view
 
   return [
     m(
@@ -241,10 +240,10 @@ function menuTopBar() {
       icon: "img/ui/menu/" + Settings.viewType() + ".svg",
       title: currentViewName,
       items: [].concat(
-        { type: "label", title: _t("view_checklist_as") },
+        { type: "label", title: t("view_checklist_as") },
         {
           type: "button",
-          title: _t("view_details"),
+          title: t("view_details"),
           icon: "ui/menu/view_details",
           selected: Settings.viewType() === "view_details",
           action: function () {
@@ -253,7 +252,7 @@ function menuTopBar() {
         },
         {
           type: "button",
-          title: _t("view_circle_pack"),
+          title: t("view_circle_pack"),
           icon: "ui/menu/view_circle_pack",
           selected: Settings.viewType() === "view_circle_pack",
           action: function () {
@@ -262,7 +261,7 @@ function menuTopBar() {
         },
         {
           type: "button",
-          title: _t("view_category_density"),
+          title: t("view_category_density"),
           icon: "ui/menu/view_category_density",
           selected: Settings.viewType() === "view_category_density",
           action: function () {
@@ -273,7 +272,7 @@ function menuTopBar() {
           ? null
           : {
             type: "button",
-            title: _t("view_map"),
+            title: t("view_map"),
             icon: "ui/menu/view_map",
             selected: Settings.viewType() === "view_map",
             action: function () {
@@ -287,7 +286,7 @@ function menuTopBar() {
 
             {
               type: "button",
-              title: _t("include_match_children"),
+              title: t("include_match_children"),
               // Use existing checkbox icons or fallback
               icon: Settings.includeMatchChildren() ? "ui/search/checkbox_checked" : "ui/search/checkbox_unchecked",
               action: function () {
@@ -304,12 +303,12 @@ function menuTopBar() {
             },
             { type: "divider" },
 
-            { type: "label", title: _t("limit_view") },
+            { type: "label", title: t("limit_view") },
             ChecklistView.displayMode == ""
               ? null
               : {
                 type: "button",
-                title: _t("cancel_details_filter"),
+                title: t("cancel_details_filter"),
                 action: function () {
                   ChecklistView.displayMode = "";
                 },
@@ -354,7 +353,7 @@ function backButton() {
         m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
         m(
           ".menu-button-description",
-          _t("back_to_search")
+          t("back_to_search")
         ),
       ]
       : null
