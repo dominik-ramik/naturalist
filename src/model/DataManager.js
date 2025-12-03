@@ -13,6 +13,7 @@ import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
+import { i18nMetadata } from "../i18n/index.js";
 
 // Global array to collect assets from F: directives
 
@@ -1580,15 +1581,15 @@ export let DataManager = function () {
     // Ensure all languages are displayable and proper fallback language is provided if translation is missing
     data.common.languages.supportedLanguages.forEach(function (lang) {
       if (
-        i18n.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
-        i18n.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
+        i18nMetadata.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
+        i18nMetadata.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
       ) {
         Logger.warning(
           tf("dm_specify_fallback_language", [
             lang.name,
             "Supported languages",
             data.sheets.appearance.name,
-            i18n.getSupportedLanguageCodes().join(", "),
+            i18nMetadata.getSupportedLanguageCodes().join(", "),
           ])
         );
       }
