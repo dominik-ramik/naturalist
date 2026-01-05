@@ -16,43 +16,72 @@ export let readerTaxon = {
       nameIndex = headers.indexOf(explicitNameColumn + ":" + langCode);
     }
 
-    // Strategy 2: If no .name column, check if base column exists AND
-    // there's no .name column defined (meaning base column IS the name)
-    if (nameIndex < 0) {
-      // Only use base column if there's no .name variant in headers at all
-      const hasExplicitNameColumn = headers.some((h) =>
-        h === explicitNameColumn || h.startsWith(explicitNameColumn + ":")
-      );
-
-      if (!hasExplicitNameColumn) {
-        nameIndex = headers.indexOf(baseColumn);
-        if (nameIndex < 0) {
-          nameIndex = headers.indexOf(baseColumn + ":" + langCode);
-        }
-      }
-    }
-
     // Look for authority column
     let authorityIndex = headers.indexOf(authorityColumn);
     if (authorityIndex < 0) {
       authorityIndex = headers.indexOf(authorityColumn + ":" + langCode);
     }
 
-    if (nameIndex < 0) {
+    // Strategy 2: If explicit .name column found, use structured approach
+    if (nameIndex >= 0) {
+      const name = row[nameIndex]?.toString().trim() || "";
+      const authority =
+        authorityIndex >= 0 ? row[authorityIndex]?.toString().trim() || "" : "";
+
+      if (name === "") {
+        return null;
+      }
+
+      return {
+        name: name,
+        authority: authority,
+      };
+    }
+
+    // Strategy 3: Check if base column exists for pipe-separated or name-only format
+    let baseIndex = headers.indexOf(baseColumn);
+    if (baseIndex < 0) {
+      baseIndex = headers.indexOf(baseColumn + ":" + langCode);
+    }
+
+    if (baseIndex < 0 || row[baseIndex] === undefined || row[baseIndex] === null) {
       return null;
     }
 
-    const name = row[nameIndex]?.toString().trim() || "";
-    const authority =
-      authorityIndex >= 0 ? row[authorityIndex]?.toString().trim() || "" : "";
-
-    if (name === "") {
+    const cellValue = row[baseIndex].toString().trim();
+    if (cellValue === "") {
       return null;
     }
 
+    // Check if there's a pipe separator (single-cell format: "Name|Authority")
+    if (cellValue.includes("|")) {
+      const parts = cellValue.split("|").map((p) => p.trim());
+      const name = parts[0] || "";
+      const authority = parts[1] || "";
+
+      if (name === "") {
+        return null;
+      }
+
+      return {
+        name: name,
+        authority: authority,
+      };
+    }
+
+    // No pipe separator - check if authority column exists separately
+    if (authorityIndex >= 0) {
+      const authority = row[authorityIndex]?.toString().trim() || "";
+      return {
+        name: cellValue,
+        authority: authority,
+      };
+    }
+
+    // Base column only, no authority
     return {
-      name: name,
-      authority: authority,
+      name: cellValue,
+      authority: "",
     };
   },
 
