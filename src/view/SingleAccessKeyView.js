@@ -308,7 +308,7 @@ const KeyCard = {
                             linkedKey
                                 ? m("button", {
                                     onclick: () => m.route.set("/single-access-keys/:key", { key: linkedKey.id })
-                                }, "Go to " + linkedKey.title)
+                                }, m.trust("Continue to " + processMarkdownWithBibliography(linkedKey.title)))
                                 : null,
                         ])
                     ])

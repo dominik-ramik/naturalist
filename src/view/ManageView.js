@@ -67,15 +67,15 @@ const ManageCard = {
 
 const ActionButton = {
   view: function (vnode) {
-    const { label, onclick, primary, small, icon, fixedWidth } = vnode.attrs;
+    const { label, onclick, primary, small, icon, background, tall } = vnode.attrs;
     const classes = [
       "manage-btn",
       primary ? "manage-btn-primary" : "",
       small ? "manage-btn-small" : "",
-      fixedWidth ? "manage-btn-fixed" : "",
+      tall ? "manage-btn-tall" : "",
     ].filter(Boolean).join(".");
 
-    return m("button." + classes, { onclick }, [
+    return m("button." + classes + "[style=" + (background ? `background-color: ${background};` : "") + "]", { onclick }, [
       icon ? m("img.manage-btn-icon", { src: icon }) : null,
       label,
     ]);
@@ -105,7 +105,7 @@ const SubViews = {
       // Getting Started card (for fresh install)
       !isDataReady ? m(ManageCard, {
         title: t("start_scratch_title"),
-        icon: "img/ui/menu/help.svg",
+        icon: "img/ui/manage/docs.svg",
         description: marked.parse(t("starting_from_scratch_links")),
         children: [
           m(ActionButton, {
@@ -135,7 +135,7 @@ const SubViews = {
       // Help card (when data exists)
       isDataReady ? m(ManageCard, {
         title: t("start_scratch_title"),
-        icon: "img/ui/menu/help.svg",
+        icon: "img/ui/manage/docs.svg",
         description: marked.parse(t("starting_from_scratch_links")),
         children: [
           m(ActionButton, {
@@ -186,8 +186,9 @@ const SubViews = {
             m(ActionButton, {
               label: t("back_to_upload"),
               onclick: () => m.route.set("/manage/upload"),
+              background: "#ffc107",
               icon: "img/ui/manage/errors.svg",
-              fixedWidth: true,
+              tall: true,
             }),
           ]),
           m(".manage-review-option.manage-review-success", [
@@ -195,9 +196,9 @@ const SubViews = {
             m(ActionButton, {
               label: t("proceed_to_update"),
               onclick: () => m.route.set("/manage/publish"),
-              primary: true,
+              background: "#7cb342",
               icon: "img/ui/manage/clean.svg",
-              fixedWidth: true,
+              tall: true,
             }),
           ]),
         ]),
@@ -221,7 +222,7 @@ const SubViews = {
       // Manual download card
       m(ManageCard, {
         title: t("download_data"),
-        icon: "img/ui/menu/download.svg",
+        icon: "img/ui/manage/download.svg",
         description: marked.parse(t("download_for_manual_update")),
         children: [
           m(ActionButton, {
@@ -336,14 +337,7 @@ function renderLogs() {
     ]),
     m(".manage-logs-list",
       messages.map(function (logItem) {
-        const iconMap = {
-          critical: "img/ui/manage/error.svg",
-          error: "img/ui/manage/errors.svg",
-          warning: "img/ui/menu/warning.svg",
-          info: "img/ui/menu/info.svg",
-        };
         return m(".manage-log-item." + logItem.level, [
-          m("img.manage-log-icon", { src: iconMap[logItem.level] || iconMap.info }),
           m(".manage-log-content", [
             m("span.manage-log-level", t("log_" + logItem.level)),
             m("span.manage-log-message", m.trust(logItem.message)),

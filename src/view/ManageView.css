@@ -169,6 +169,10 @@
   font-size: 0.8em;
 }
 
+.manage-btn-tall {
+  min-height: 8em;
+}
+
 .manage-btn-fixed {
   min-width: 12em;
 }
@@ -325,14 +329,6 @@
   margin: 0 0 0.75em 0;
   font-size: 0.9em;
   color: #555;
-}
-
-.manage-review-issues {
-  border-color: #ffc107;
-}
-
-.manage-review-success {
-  border-color: #7cb342;
 }
 
 /* ==========================================================================
