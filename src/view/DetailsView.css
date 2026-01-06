@@ -140,7 +140,29 @@
   cursor: pointer;
 }
 
-/* Remove old .textGroupHeading and .textHeading rules */
+/* Text Tab TOC styling */
+.text-tab-toc {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5em;
+  padding: 1em 1.5em;
+  margin-bottom: 1.5em;
+  list-style: none;
+}
+
+.text-tab-toc-entry {
+  padding: 0.25em 0;
+}
+
+.text-tab-toc-entry a {
+  color: var(--nlblue, #55769b);
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.text-tab-toc-entry a:hover {
+  text-decoration: underline;
+}
 
 /* MEDIIA TAB */
 

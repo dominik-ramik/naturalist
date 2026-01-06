@@ -7,75 +7,161 @@
 .tabs-container-buttons {
     display: flex;
     flex-direction: row;
-    justify-content: start;
-    overflow: hidden;
+    justify-content: center;
+    gap: 0.5em;
+    padding: 0.75em;
+    background: linear-gradient(to bottom, #f5f7f9, #e8ecef);
+    border-radius: 0.75em 0.75em 0 0;
+    border: 1px solid #ddd;
+    border-bottom: none;
     flex-wrap: wrap;
 }
 
 .tabs-container-tab-button {
     font-family: var(--font-normal);
     text-align: center;
-    background-color: white;
-    border: 0px solid;
-    flex-grow: 1;
+    background-color: transparent;
+    border: none;
     opacity: 0.7;
-    margin-right: 1px;
-    margin-left: 1px;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    border: 1px solid black;
-    border-radius: 0;
-    border-top-left-radius: 0.5em;
-    border-top-right-radius: 0.5em;
+    justify-content: center;
+    padding: 0.6em 1.25em;
+    border-radius: 2em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 0.5em;
+    min-width: 5em;
+}
+
+.tabs-container-tab-button:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.6);
 }
 
 .tabs-container-tab-button-title {
-    margin-left: var(--pad-large);
+    margin-left: 0;
+    font-size: 0.9em;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .tabs-container-active-tab-button {
     opacity: 1;
     background-color: white;
-    border-bottom: none;
-}
-
-.tabs-container-tab-button:first-child {
-    margin-right: 1px;
-    margin-left: 0px;
-    border-top-left-radius: var(--pad-small);
-}
-
-.tabs-container-tab-button:last-child {
-    margin-left: 1px;
-    margin-right: 0px;
-    border-top-right-radius: var(--pad-small);
-}
-
-.tabs-container-tab-button:hover {
-    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    color: var(--nlblue, #55769b);
 }
 
 .tabs-container-active-tab-button:hover {
-    opacity: 1;
+    background-color: white;
+}
+
+.tabs-container-tab-button:first-child {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.tabs-container-tab-button:last-child {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .tabs-container-tab-button-icon {
-    max-height: 2em;
-    max-width: 2em;
+    max-height: 1.5em;
+    max-width: 1.5em;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.tabs-container-active-tab-button .tabs-container-tab-button-icon {
+    opacity: 1;
 }
 
 .tabs-container-content {
     background-color: white;
     color: black;
-    padding-top: 1em;
-    border-bottom-left-radius: var(--pad-small);
-    border-bottom-right-radius: var(--pad-small);
+    padding: 1.5em;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 0.75em 0.75em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Alternate style: Underline tabs (add .tabs-underline class to container) */
+.tabs-container.tabs-underline .tabs-container-buttons {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #e0e0e0;
+    border-radius: 0;
+    padding: 0;
+    gap: 0;
+}
+
+.tabs-container.tabs-underline .tabs-container-tab-button {
+    border-radius: 0;
+    padding: 0.75em 1.5em;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tabs-container.tabs-underline .tabs-container-active-tab-button {
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom-color: var(--nlblue, #55769b);
+}
+
+.tabs-container.tabs-underline .tabs-container-tab-button:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tabs-container.tabs-underline .tabs-container-content {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 1.5em 0;
 }
 
 @media (max-width: 1200px) {
+    .tabs-container-buttons {
+        padding: 0.5em;
+        gap: 0.35em;
+    }
+
+    .tabs-container-tab-button {
+        padding: 0.5em 1em;
+        min-width: auto;
+    }
+
+    .tabs-container-tab-button-title {
+        font-size: 0.85em;
+    }
+
+    .tabs-container-tab-button-icon {
+        max-height: 1.25em;
+        max-width: 1.25em;
+    }
+
     .tabs-container-content {
         min-height: 10em;
+        padding: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs-container-tab-button-title {
+        display: none;
+    }
+
+    .tabs-container-tab-button {
+        padding: 0.75em;
+        min-width: 3em;
+    }
+
+    .tabs-container-tab-button-icon {
+        max-height: 1.75em;
+        max-width: 1.75em;
     }
 }

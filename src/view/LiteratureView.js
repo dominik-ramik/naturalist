@@ -31,9 +31,10 @@ export let LiteratureView = {
       marked.parse(references.map((r) => "- " + r).join("\n")) +
       "</ul>";
 
-    return m(
-      ".literature-view",
+    return m("div.literature-view", { 
+      style: { padding: "1em" } 
+    }, [
       m.trust(text)
-    );
-  },
+    ]);
+  }
 };

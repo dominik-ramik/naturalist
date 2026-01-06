@@ -9,7 +9,7 @@ import { Toast } from "../view/AppLayoutView.js";
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
-export function processMarkdownWithBibliography(data, tailingSeparator = "") {
+export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false) {
   //process bibliography
   try {
     data = Checklist.transformDatabaseShortcodes(data);
@@ -33,7 +33,9 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "") {
   data = DOMPurify.sanitize(data, { ADD_ATTR: ["target"] });
   data = data.trim() + (tailingSeparator ? tailingSeparator : "");
 
-  data = mdImagesClickableAndUsercontentRelative(data);
+  if (!skipInterpolationToUserContentFolder) {
+    data = mdImagesClickableAndUsercontentRelative(data);
+  }
 
   return data;
 }
@@ -644,12 +646,12 @@ export function filterMatches(data) {
 
 export function getGradedColor(type, context) {
   let lightness = "700";
-  
+
   switch (context) {
     case "filter":
       lightness = "200";
       break;
-      case "crumb":
+    case "crumb":
       lightness = "700";
       break;
   }

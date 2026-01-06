@@ -407,7 +407,7 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             return m(AppLayoutView, [
-              m(AboutView, { text: t("about_app", appVersion) }),
+              m(AboutView, { text: t("about_app", { version: appVersion }) }),
             ]);
           },
           onmatch: onMatchGuard,
