@@ -7,6 +7,7 @@ _The flexible taxonomic checklist app_
 [[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/)]
 
 ▶️ [Watch Naturalist v3 features vide on YouTube](https://youtu.be/qxJAtrlJO8I)
+▶️ [New taxonomic key functionality in v3](https://youtu.be/SamwqQMQyG8)
 
 ## About
 
