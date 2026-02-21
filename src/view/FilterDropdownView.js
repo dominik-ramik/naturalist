@@ -392,6 +392,8 @@ let DropdownText = function (initialVnode) {
         }
       );
 
+      itemsOverflowing = totalItems > itemsOverflowLimit;
+
       return m(".inner-dropdown-area", [
         m(
           ".search-filter",
