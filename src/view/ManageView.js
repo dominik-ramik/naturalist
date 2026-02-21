@@ -284,7 +284,9 @@ const SubViews = {
             primary: true,
             onclick: function () {
               Checklist._isDraft = false;
-              checkForChecklistUpdate(navigator.serviceWorker);
+              if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                checkForChecklistUpdate(navigator.serviceWorker.controller);
+              }
               ManageStore.reset();
               routeTo("/checklist");
             },
