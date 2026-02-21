@@ -67,7 +67,9 @@ export function filterTerminalLeaves(nodes) {
     const nodePath = node.t;
     // Check if there is any other node for which node.t is a prefix of other.t.
     const isIntermediate = nodes.some((other) => {
-      if (other === node) return false;
+      if (other === node) {
+        return false;
+      }
       return isPrefix(nodePath, other.t);
     });
     return !isIntermediate;
@@ -91,7 +93,9 @@ export function filterTerminalLeaves(nodes) {
    * Each node is compared by concatenating `n` and `a` with a space.
    */
   function isPrefix(smallPath, bigPath) {
-    if (smallPath.length >= bigPath.length) return false;
+    if (smallPath.length >= bigPath.length) {
+      return false;
+    }
     for (let i = 0; i < smallPath.length; i++) {
       const smallNode = `${smallPath[i].name} ${smallPath[i].authority}`;
       const bigNode = `${bigPath[i].name} ${bigPath[i].authority}`;
