@@ -2,3 +2,8 @@
     Order Allow,Deny
     Deny from all
 </Files>
+
+<Files "login_lock.json">
+    Order Allow,Deny
+    Deny from all
+</Files>
