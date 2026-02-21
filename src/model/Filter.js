@@ -34,7 +34,7 @@ export let Filter = {
       })
     })
 
-    console.log(Filter.taxa, Filter.data, Filter.text, count);
+    //console.log(Filter.taxa, Filter.data, Filter.text, count);
 
     return count;
   },
@@ -111,7 +111,7 @@ export let Filter = {
     ommitSearchCategory
   ) {
     let title = "";
-    if (ommitSearchCategory) {
+    if (!ommitSearchCategory) {
       title +=
         (formatPre ? formatPre : "") +
         Checklist.getMetaForDataPath(dataPath).searchCategory +

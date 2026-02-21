@@ -200,7 +200,7 @@ const KeyCard = {
             onclick: (e) => {
                 // Allow links to work normally
                 if (isLinkClick(e)) return;
-                
+
                 // List View: Clicking header selects key
                 if (isListView && onSelect) {
                     onSelect();
@@ -230,7 +230,7 @@ const KeyCard = {
                 onclick: (e) => {
                     // Allow links to work normally
                     if (isLinkClick(e)) return;
-                    
+
                     // List View: Clicking header selects key
                     if (isListView && onSelect) {
                         onSelect();
@@ -366,7 +366,9 @@ const KeyCard = {
 
                             // Calculate path once.
                             const fullPath = KeyLogic.getPathToTaxon(keyData, taxon);
-                            if (!fullPath || fullPath.length === 0) return;
+                            if (!fullPath || fullPath.length === 0) {
+                                return;
+                            }
 
                             const pathStr = fullPath.join('-');
 
@@ -406,7 +408,7 @@ export const SingleAccessKeyView = {
     view: (vnode) => {
         const allKeys = KeyLogic.getAllKeys();
         const keyId = m.route.param("key");
-        const stepsParam = m.route.param("steps"); 
+        const stepsParam = m.route.param("steps");
         const filterTaxon = m.route.param("taxon");
 
         // --- List of Keys View ---
