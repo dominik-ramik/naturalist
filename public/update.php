@@ -1,10 +1,12 @@
 <?php
 
+$require_https = true; // DO NOT change this line in production and keep it 'true', set to 'false' only temporarily for local development without SSL
+
 // 1. HTTPS ENFORCEMENT (Security Best Practice)
 // If the connection is not secure, reject immediately to protect plain text password.
 $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
-// Note: If you are testing on localhost without SSL, comment out the next 3 lines.
-if (!$isSecure) {
+
+if ($require_https && !$isSecure) {
     http_response_code(403);
     die(jsonState("error", "ssl_required", "HTTPS is required for updates"));
 }
