@@ -640,7 +640,7 @@ export let Checklist = {
       return; // Already computed for this language
     }
 
-    console.time("Precompute searchable text");
+    //console.time("Precompute searchable text");
 
     const checklist = this.getData().checklist;
     const dataMeta = this.getDataMeta();
@@ -665,7 +665,7 @@ export let Checklist = {
       );
     });
 
-    console.timeEnd("Precompute searchable text");
+    //console.timeEnd("Precompute searchable text");
   },
 
   /**

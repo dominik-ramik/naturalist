@@ -28,7 +28,7 @@ function parseSheetData(workbook, sheetName) {
     return null;
   }
 
-  console.log("Reading sheet " + sheetName);
+  //console.log("Reading sheet " + sheetName);
   const worksheet = workbook.Sheets[sheetName];
   // fallback for empty sheets
   if (!worksheet["!ref"]) return [];
@@ -339,7 +339,7 @@ export let ExcelBridge = function (excelFile) {
   return {
     loadMeta: function (dataManagerData) {
       data = dataManagerData;
-      console.log("### Loading meta from Excel ######################");
+      //console.log("### Loading meta from Excel ######################");
 
       // 1. Load Languages (bootstraps the schema with lang codes)
       processLanguages(workbook, data);
@@ -408,7 +408,7 @@ export let ExcelBridge = function (excelFile) {
         rawChecklistTable.push(cells);
       }
 
-      console.log("Raw checklist data:", rawChecklistTable);
+      //console.log("Raw checklist data:", rawChecklistTable);
 
       return rawChecklistTable;
     },

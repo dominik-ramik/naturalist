@@ -95,7 +95,10 @@ export let DataManager = function () {
     checklist.general.assets = gatherPreloadableAssets();
 
     //We can output this here as the user has the source data anyways
-    console.log("New checklist", checklist);
+    // Only log in development to avoid leaking data or noisy logs in production builds
+    if (import.meta.env && import.meta.env.DEV) {
+      console.log("New checklist", checklist);
+    }
 
     compiledChecklistCache = checklist; // Cache the compiled checklist
 
@@ -297,7 +300,7 @@ export let DataManager = function () {
       });
 
       // Add assets from F: directives, avoiding duplicates
-      console.log("Assets from F: directives to add:", additionalAssets.length);
+      //console.log("Assets from F: directives to add:", additionalAssets.length);
 
       additionalAssets.forEach(function (asset) {
         if (!assets.includes(asset)) {
@@ -307,7 +310,7 @@ export let DataManager = function () {
 
       if (checkAssetsSize) {
         const assetsSizesMsg = "Checking " + assets.length + " assets sizes";
-        console.time(assetsSizesMsg);
+        //console.time(assetsSizesMsg);
 
         let totalPrecacheSize = 0;
         let precacheMaxTotalSizeMb = parseFloat(
@@ -364,10 +367,10 @@ export let DataManager = function () {
           );
         }
 
-        console.timeEnd(assetsSizesMsg);
+        //console.timeEnd(assetsSizesMsg);
       }
 
-      console.log("Assets", assets.length, "gathered:", assets);
+      //console.log("Assets", assets.length, "gathered:", assets);
 
       return assets;
     }
@@ -668,7 +671,7 @@ export let DataManager = function () {
         validateKey(currentKey, checklistData);
       }
 
-      console.log("###### keys", keys);
+      //console.log("###### keys", keys);
 
       return keys;
 
@@ -844,9 +847,9 @@ export let DataManager = function () {
     }
 
     function compileDataMeta(lang, expectedDataTypes) {
-      console.log("Compiling meta", lang, expectedDataTypes, data.common)
-      console.log("CDD", data.sheets.content.tables.customDataDefinition.data)
-      console.log("Full data", data.sheets)
+      //console.log("Compiling meta", lang, expectedDataTypes, data.common)
+      //console.log("CDD", data.sheets.content.tables.customDataDefinition.data)
+      //console.log("Full data", data.sheets)
 
       let allDataPaths = (data.common.allUsedDataPaths[lang.code] || []).sort();
 
@@ -1072,13 +1075,13 @@ export let DataManager = function () {
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
 
-    console.log("All used dataPaths created");
+    //console.log("All used dataPaths created");
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
       data.sheets.checklist.data[lang.code] = [];
       data.common.allUsedDataPaths[lang.code] = [];
 
-      console.log("All used dataPaths initialized for", lang.code)
+      //console.log("All used dataPaths initialized for", lang.code)
 
       let headers = table[0].map(function (item) {
         return item.toLowerCase();
@@ -1976,12 +1979,12 @@ export let DataManager = function () {
 
       extractor.loadMeta(data);
 
-      console.log("After extractor.loadMeta: supportedLanguages=", data.common.languages.supportedLanguages);
-      console.log("After extractor.loadMeta: tables content:", {
-        content: data.sheets.content.tables,
-        appearance: data.sheets.appearance.tables,
-      });
-      console.log("Logger messages (so far):", dataManager.loggedMessages);
+      //console.log("After extractor.loadMeta: supportedLanguages=", data.common.languages.supportedLanguages);
+      //console.log("After extractor.loadMeta: tables content:", {
+      //  content: data.sheets.content.tables,
+      //  appearance: data.sheets.appearance.tables,
+      //});
+      //console.log("Logger messages (so far):", dataManager.loggedMessages);
 
       checkMetaValidity();
       if (!Logger.hasErrors()) {
