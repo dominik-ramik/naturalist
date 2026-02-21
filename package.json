@@ -4,7 +4,7 @@
   "description": "The flexible taxonomic checklist app",
   "main": "index.html",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5500",
     "build": "vite build",
     "preview": "vite preview",
     "docs:dev": "vitepress dev docs",
