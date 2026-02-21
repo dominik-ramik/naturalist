@@ -233,5 +233,7 @@
   "view_map_count": "nombre de taxons",
   "view_map_select_map": "Sélectionnez une carte ci-dessus",
   "dm_generic_column_names": "Erreur dans les noms de colonnes pour le formatage de type {0} dans la feuille de check-list ; nous attendons soit une seule colonne appelée {1}, soit plusieurs colonnes avec les suffixes suivants : {2}. Aussi vérifie qu'il n'y a pas de valeur manquante dans la colonne {3} tout en ayant les valeurs dans les autres colones",
-  "keys": "Clés à accès simple"
+  "keys": "Clés à accès simple",
+  "storage_persistent": "Médias disponibles hors ligne",
+  "storage_not_persistent": "Médias en ligne uniquement"
 }

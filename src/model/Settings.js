@@ -5,6 +5,9 @@ export let Settings = {
   // Full-text search OR separator symbol
   SEARCH_OR_SEPARATOR: "/",
 
+  // Storage persistence status (set at runtime)
+  _storagePersistent: null,
+
   lastKnownDataVersion(objToSet) {
     const key = "lastKnownDataVersion";
     if (objToSet === undefined) {

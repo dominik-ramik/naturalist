@@ -89,12 +89,16 @@ window.addEventListener("load", (event) => {
 function makeStoragePersistent() {
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().then((persistent) => {
+      Settings._storagePersistent = persistent;
       if (persistent) {
         console.log("Storage is persistent");
       } else {
         console.log("No persistency for storage granted by UA");
       }
+      m.redraw();
     });
+  } else {
+    Settings._storagePersistent = false;
   }
 }
 function openComChannel(sw) {
