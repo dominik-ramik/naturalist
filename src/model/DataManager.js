@@ -391,7 +391,7 @@ export let DataManager = function () {
 
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
             console.error("Asset not found or not an image: " + url, contentType);
-            Logger.error(tf("dm_asset_head_error", [asset]));
+            Logger.error(tf("dm_asset_head_error", [url]));
             return null;
           } else {
             const contentLength = xhr.getResponseHeader("Content-Length");
@@ -1983,6 +1983,15 @@ export let DataManager = function () {
       });
       console.log("Logger messages (so far):", dataManager.loggedMessages);
 
+      checkMetaValidity();
+      if (!Logger.hasErrors()) {
+        postprocessMetadata();
+      }
+
+      if (Logger.hasErrors()) {
+        return;
+      }
+
       const rawChecklist = typeof extractor.getRawChecklistData === "function" ? extractor.getRawChecklistData() : null;
       if (!rawChecklist) {
         Logger.critical(
@@ -1992,21 +2001,19 @@ export let DataManager = function () {
         return;
       }
 
-      checkMetaValidity();
       if (!Logger.hasErrors()) {
-        postprocessMetadata();
-      }
-
-      if (!Logger.hasErrors()) {
-        loadData(extractor.getRawChecklistData());
+        loadData(rawChecklist);
       }
     },
 
     getCompiledChecklist() {
       let jsonData = compileChecklist(this.checkAssetsSize);
 
-      console.log("### JD:", JSON.stringify(jsonData.versions.en.dataset.checklist.slice(0, 3), null, 2));
-
+      const defaultVersion = jsonData.general?.defaultVersion;
+      const firstVersion = defaultVersion && jsonData.versions[defaultVersion]
+        ? jsonData.versions[defaultVersion]
+        : jsonData.versions[Object.keys(jsonData.versions)[0]];
+      
       return jsonData;
     },
   };

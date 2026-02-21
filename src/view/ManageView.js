@@ -131,6 +131,9 @@ const SubViews = {
             : null,
         ]
       }),
+      // Place log messages after the upload card but before the "Need a template?" help card
+      // so messages appear above the template/help card when present.
+      renderLogs(),
 
       // Help card (when data exists)
       isDataReady ? m(ManageCard, {
@@ -311,7 +314,9 @@ export let ManageView = {
 
     return m(".manage-view", [
       m(".manage-content", content),
-      showLogs ? renderLogs() : null,
+      // For the upload step we render logs inside the upload subview so they appear
+      // above the "Need a template?" panel. For other steps, keep previous behavior.
+      showLogs && step !== "upload" ? renderLogs() : null,
     ]);
   },
 };
