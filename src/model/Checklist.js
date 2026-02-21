@@ -201,45 +201,45 @@ export let Checklist = {
    */
   getKeyLCA: function (key) {
     if (!key || !key.id) return [];
-    
+
     if (!this._keyLCACache.has(key.id)) {
       const reachableTaxa = this.getKeyReachableTaxa(key);
-      
+
       if (reachableTaxa.length === 0) {
         this._keyLCACache.set(key.id, []);
         return [];
       }
-      
+
       // Get ancestry paths for all result taxa
       const ancestryPaths = reachableTaxa.map(taxonName => {
         const taxonData = this.getTaxonByName(taxonName);
         if (!taxonData || !taxonData.t) return [];
         return taxonData.t.map(t => t.name);
       }).filter(path => path.length > 0);
-      
+
       if (ancestryPaths.length === 0) {
         this._keyLCACache.set(key.id, []);
         return [];
       }
-      
+
       // Find LCA by comparing paths from root
       const lcaPath = [];
       const minLength = Math.min(...ancestryPaths.map(p => p.length));
-      
+
       for (let i = 0; i < minLength; i++) {
         const ancestorAtLevel = ancestryPaths[0][i];
         const allMatch = ancestryPaths.every(path => path[i] === ancestorAtLevel);
-        
+
         if (allMatch) {
           lcaPath.push(ancestorAtLevel);
         } else {
           break; // Divergence found, stop here
         }
       }
-      
+
       this._keyLCACache.set(key.id, lcaPath);
     }
-    
+
     return this._keyLCACache.get(key.id);
   },
 
@@ -255,40 +255,40 @@ export let Checklist = {
    */
   isKeyRelevantToTaxon: function (key, filterTaxonName) {
     const lcaPath = this.getKeyLCA(key);
-    
+
     // If no LCA (no valid results), not relevant
     if (lcaPath.length === 0) return false;
-    
+
     const lcaName = lcaPath[lcaPath.length - 1]; // The LCA taxon name
-    
+
     // Case 1: The filter taxon IS the LCA
     if (filterTaxonName === lcaName) return true;
-    
+
     // Case 2: Check if filter taxon is BELOW the LCA (descendant of LCA, ancestor of a result)
     // First, check if filterTaxonName is in the LCA path (above LCA) - if so, NOT relevant
     if (lcaPath.includes(filterTaxonName)) {
       // filterTaxonName is an ancestor of LCA, not the LCA itself
       return false;
     }
-    
+
     // Check if filterTaxonName is a descendant of LCA AND ancestor of at least one result taxon
     const reachableTaxa = this.getKeyReachableTaxa(key);
-    
+
     return reachableTaxa.some(resultTaxonName => {
       // Direct match
       if (resultTaxonName === filterTaxonName) return true;
-      
+
       // Check if filterTaxonName is an ancestor of this result taxon
       const taxonData = this.getTaxonByName(resultTaxonName);
       if (!taxonData || !taxonData.t) return false;
-      
+
       // Get the ancestry path of the result taxon
       const resultPath = taxonData.t.map(t => t.name);
-      
+
       // Check if filterTaxonName is in the path AND comes after the LCA
       const filterIndex = resultPath.indexOf(filterTaxonName);
       const lcaIndex = resultPath.indexOf(lcaName);
-      
+
       // filterTaxonName must be in the path, and at or after the LCA position
       return filterIndex !== -1 && filterIndex >= lcaIndex;
     });
@@ -444,7 +444,9 @@ export let Checklist = {
       m.route.set("/manage");
     }
 
-    console.time("Data loaded in");
+    if (import.meta.env && import.meta.env.DEV) {
+      console.time("Data loaded in");
+    }
     if (this._isDataReady) {
       document.title = Checklist.getProjectName() + " | NaturaList";
     }
@@ -469,7 +471,7 @@ export let Checklist = {
     Checklist._taxonCache = new Map();
     Checklist._keyReachableTaxaCache = new Map();
     Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
-    
+
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
     Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
@@ -626,7 +628,9 @@ export let Checklist = {
     this._searchableTextCache = {};
     this.precomputeSearchableText();
 
-    console.timeEnd("Data loaded in");
+    if (import.meta.env && import.meta.env.DEV) {
+      console.timeEnd("Data loaded in");
+    }
   },
 
   /**

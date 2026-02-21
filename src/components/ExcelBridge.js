@@ -382,7 +382,7 @@ export let ExcelBridge = function (excelFile) {
         });
       }
 
-      console.log("Table end column:", tableEndCol);
+      //console.log("Table end column:", tableEndCol);
 
       const rawChecklistTable = [];
 
