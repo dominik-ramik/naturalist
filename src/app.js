@@ -410,8 +410,9 @@ function runApp() {
         "/about/app": {
           render: function () {
             AppLayoutView.display = "details";
+            console.log("Rendering about app with version: " + appVersion);
             return m(AppLayoutView, [
-              m(AboutView, { text: t("about_app", { version: appVersion }) }),
+              m(AboutView, { text: t("about_app", appVersion) }),
             ]);
           },
           onmatch: onMatchGuard,
