@@ -214,7 +214,7 @@ export let Checklist = {
       const ancestryPaths = reachableTaxa.map(taxonName => {
         const taxonData = this.getTaxonByName(taxonName);
         if (!taxonData || !taxonData.t) return [];
-        return taxonData.t.map(t => t.name);
+        return taxonData.t.filter(t => t !== null).map(t => t.name);
       }).filter(path => path.length > 0);
 
       if (ancestryPaths.length === 0) {
@@ -283,7 +283,7 @@ export let Checklist = {
       if (!taxonData || !taxonData.t) return false;
 
       // Get the ancestry path of the result taxon
-      const resultPath = taxonData.t.map(t => t.name);
+      const resultPath = taxonData.t.filter(t => t !== null).map(t => t.name);
 
       // Check if filterTaxonName is in the path AND comes after the LCA
       const filterIndex = resultPath.indexOf(filterTaxonName);
@@ -471,6 +471,7 @@ export let Checklist = {
     Checklist._taxonCache = new Map();
     Checklist._keyReachableTaxaCache = new Map();
     Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
+    Checklist.treefiedTaxaCache = null;
 
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
@@ -656,6 +657,7 @@ export let Checklist = {
 
       // Add taxa names and authorities
       taxon.t.forEach((taxonLevel) => {
+        if (!taxonLevel) return;   // skip null gaps
         if (taxonLevel.name) searchableStrings.push(taxonLevel.name);
         if (taxonLevel.authority) searchableStrings.push(taxonLevel.authority);
       });
@@ -797,6 +799,7 @@ export let Checklist = {
     let primitives = [];
 
     taxon.t.forEach(function (scientificName) {
+      if (!scientificName) return;   // skip null gaps
       primitives.push(scientificName.name + " " + scientificName.authority);
       if (scientificName.authority) primitives.push(scientificName.authority);
     });
@@ -997,6 +1000,7 @@ export let Checklist = {
     let found = this.getData().checklist.find(function (taxon) {
       for (let index = 0; index < taxon.t.length; index++) {
         const taxonName = taxon.t[index];
+        if (taxonName === null) continue;
         if (taxonName.name == taxonNameFind) {
           if (reconstructedTaxonomy.length == 0) {
             reconstructedTaxonomy = taxon.t.slice(0, index + 1);
@@ -1047,16 +1051,22 @@ export let Checklist = {
     taxa.forEach(function (taxon) {
       let currentParent = treefied;
       taxon.t.forEach(function (taxonOfThisLevel, index) {
+        // Skip missing taxonomic levels so we can support "specimens" as dangling taxon without a full taxonomy above them
+        if (taxonOfThisLevel === null || taxonOfThisLevel === undefined) {
+          return;
+        }
+
         if (!currentParent.children.hasOwnProperty(taxonOfThisLevel.name)) {
           currentParent.children[taxonOfThisLevel.name] = {
             taxon: taxonOfThisLevel,
+            taxonMetaIndex: index,
             data: {},
             children: {},
           };
         }
 
-        if (taxon.t.length == index + 1) {
-          //add data to the last item
+        const isLastNonNull = taxon.t.slice(index + 1).every(x => x === null);
+        if (taxon.t.length == index + 1 || isLastNonNull) {
           currentParent.children[taxonOfThisLevel.name].data = taxon.d;
         }
 

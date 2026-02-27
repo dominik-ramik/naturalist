@@ -723,6 +723,8 @@ export let DataManager = function () {
               break;
             }
             for (const taxonLevel of taxon.t) {
+              if (!taxonLevel) continue; // skip null gaps
+
               if (externalTargets.has(taxonLevel.name)) {
                 externalTargets.delete(taxonLevel.name);
               }
@@ -1111,7 +1113,7 @@ export let DataManager = function () {
 
         allColumnInfos.forEach(function (info) {
           let position = dataPath.analyse.position(allColumnNames, info.name);
-          
+
           // For checklist-taxon, we need to process even if not a leaf
           // because taxon columns have .authority children but should still be read
           if (info.formatting === "checklist-taxon") {
@@ -1130,17 +1132,35 @@ export let DataManager = function () {
               if (!doneWithTaxa) {
                 rowObj.t.push(taxon);
               } else {
-                Logger.error(
-                  tf("dm_incomplete_taxa_info_row", [
-                    rowIndex + data.common.checklistHeadersStartRow,
-                    info.name,
-                  ])
-                );
+                // Skip the check for taxon name "specimen"
+                if (info.fullRow.taxonName.trim().toLowerCase() == "specimen") {
+                  // Pad t with nulls so the specimen lands at its correct positional index,
+                  // preserving the positional contract that the rest of the codebase relies on.
+                  const taxonColumnInfos = allColumnInfos.filter(
+                    i => i.formatting === "checklist-taxon"
+                  );
+                  const specimenMetaIndex = taxonColumnInfos.indexOf(info);
+                  while (rowObj.t.length < specimenMetaIndex) {
+                    rowObj.t.push(null);
+                  }
+                  rowObj.t.push(taxon);
+                  if (rowObj.t.some(x => x === null)) {
+                    console.log("Sparse specimen row compiled:", JSON.stringify(rowObj.t.map(x => x?.name ?? null)));
+                  }
+                }
+                else {
+                  Logger.error(
+                    tf("dm_incomplete_taxa_info_row", [
+                      rowIndex + data.common.checklistHeadersStartRow,
+                      info.name,
+                    ])
+                  );
+                }
               }
             }
             return; // Skip the rest of the loop for taxon columns
           }
-          
+
           if (!position.isLeaf) {
             return;
           }
@@ -2016,7 +2036,7 @@ export let DataManager = function () {
       const firstVersion = defaultVersion && jsonData.versions[defaultVersion]
         ? jsonData.versions[defaultVersion]
         : jsonData.versions[Object.keys(jsonData.versions)[0]];
-      
+
       return jsonData;
     },
   };

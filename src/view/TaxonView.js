@@ -57,7 +57,18 @@ export let TaxonView = {
       );
     }
 
+    const specimenMetaIndex = Object.keys(Checklist.getTaxaMeta()).indexOf("specimenid");
+
+    const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children).sort(function (a, b) {
+      const aIsSpecimen = vnode.attrs.taxonTree.children[a].taxonMetaIndex === specimenMetaIndex;
+      const bIsSpecimen = vnode.attrs.taxonTree.children[b].taxonMetaIndex === specimenMetaIndex;
+      if (aIsSpecimen && !bIsSpecimen) return -1;
+      if (!aIsSpecimen && bIsSpecimen) return 1;
+      return 0;
+    });
+
     return m("ul.card.taxon-level" + inverseTaxonLevel, [
+
       m("li.taxon", [
         m(".taxon-name-stripe", [
           m(TaxonNameView, {
@@ -116,9 +127,7 @@ export let TaxonView = {
           })
           : null,
       ]),
-      Object.keys(vnode.attrs.taxonTree.children).map(function (
-        currentTaxonKey
-      ) {
+      sortedChildKeys.map(function (currentTaxonKey) {
         if (
           vnode.attrs.displayMode != "" &&
           Object.keys(Checklist.getTaxaMeta()).indexOf(
@@ -135,7 +144,9 @@ export let TaxonView = {
               : [...vnode.attrs.parents, vnode.attrs.taxonTree.taxon],
           taxonKey: currentTaxonKey,
           taxonTree: vnode.attrs.taxonTree.children[currentTaxonKey],
-          currentTaxonLevel: vnode.attrs.currentTaxonLevel + 1,
+          // used to be currentTaxonLevel: vnode.attrs.currentTaxonLevel + 1, but this was wrong because of missing taxonomic levels
+          // in the checklist tree, so we need to get the taxon level from the taxon meta index of the taxon tree node
+          currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
           displayMode: vnode.attrs.displayMode,
         });
       }),

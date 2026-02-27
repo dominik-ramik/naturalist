@@ -226,7 +226,7 @@ export let Filter = {
         if (Filter.delayCommitDataPath == "taxa." + dataPath) {
           return; //delay this dataPath
         }
-        if (index >= taxon.t.length) {
+        if (index >= taxon.t.length || taxon.t[index] === null) {
           return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
         }
         let value = taxon.t[index].name;
@@ -469,7 +469,7 @@ export let Filter = {
     for (let i = 0; i < dataLength; i++) {
       let item = checklistData[i];
       // Generate and cache the unique path key
-      let pathKey = item.t.map((t) => t.name).join("|");
+      let pathKey = item.t.filter(t => t !== null).map(t => t.name).join("|");
       pathKeys[i] = pathKey;
       pathMap.set(pathKey, i);
 
@@ -479,7 +479,7 @@ export let Filter = {
         let passed = false;
 
         if (req.type === "taxa") {
-          if (req.filter.index < item.t.length && req.filter.selected.includes(item.t[req.filter.index].name)) {
+          if (req.filter.index < item.t.length && item.t[req.filter.index] !== null && req.filter.selected.includes(item.t[req.filter.index].name)) {
             passed = true;
           }
         } else if (req.type === "data") {
@@ -533,7 +533,8 @@ export let Filter = {
         // Ensure tree structure (parents) are added to results later
         let tempPath = "";
         for (let k = 0; k < item.t.length - 1; k++) {
-          tempPath += (k > 0 ? "|" : "") + item.t[k].name;
+          if (item.t[k] === null) continue;
+          tempPath += (tempPath.length > 0 ? "|" : "") + item.t[k].name;
           if (!matchedKeySet.has(tempPath)) {
             parentKeySet.add(tempPath);
           }
@@ -615,9 +616,9 @@ export let Filter = {
       // Use the pre-calculated index from _getActiveFilters
       let taxonIndex = filter.index;
 
-      if (taxonIndex >= item.t.length) return false;
-
+      if (taxonIndex >= item.t.length || item.t[taxonIndex] === null) return false;
       let value = item.t[taxonIndex].name;
+
       if (!filter.selected.includes(value)) {
         return false;
       }
@@ -656,7 +657,7 @@ export let Filter = {
     // Add parent taxa
     if (parentKeySet.size > 0) {
       checklistData.forEach(item => {
-        let itemKey = item._key || item.t.map(t => t.name).join("|");
+        let itemKey = item._key || item.t.filter(t => t !== null).map(t => t.name).join("|");
         if (parentKeySet.has(itemKey)) {
           finalResults.push(item);
         }
