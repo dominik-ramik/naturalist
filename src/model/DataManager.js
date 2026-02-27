@@ -1074,6 +1074,19 @@ export let DataManager = function () {
       return item.name;
     });
 
+    const taxonColumnInfos = allColumnInfos.filter(i => i.formatting === "checklist-taxon");
+    const specimenColIndex = taxonColumnInfos.findIndex(
+      i => i.fullRow.taxonName.trim().toLowerCase() === "specimen"
+    );
+    if (specimenColIndex !== -1 && specimenColIndex !== taxonColumnInfos.length - 1) {
+      Logger.error(
+        tf("dm_specimen_must_be_last_taxon", [
+          taxonColumnInfos[specimenColIndex].name,
+          taxonColumnInfos[taxonColumnInfos.length - 1].name,
+        ])
+      );
+    }
+
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
 
@@ -1144,9 +1157,6 @@ export let DataManager = function () {
                     rowObj.t.push(null);
                   }
                   rowObj.t.push(taxon);
-                  if (rowObj.t.some(x => x === null)) {
-                    console.log("Sparse specimen row compiled:", JSON.stringify(rowObj.t.map(x => x?.name ?? null)));
-                  }
                 }
                 else {
                   Logger.error(
@@ -1177,6 +1187,64 @@ export let DataManager = function () {
         });
 
         data.sheets.checklist.data[lang.code].push(rowObj);
+      }
+      const seenPaths = new Map(); // path string -> first row number
+
+      // ensure all taxon tree paths are unique
+      data.sheets.checklist.data[lang.code].forEach(function (rowObj, arrayIndex) {
+        const pathKey = rowObj.t
+          .filter(t => t !== null)
+          .map(t => t.name)
+          .join(" > ");
+
+        if (pathKey === "") return; // skip empty rows
+
+        const rowNumber = arrayIndex + 1 + data.common.checklistHeadersStartRow;
+
+        if (seenPaths.has(pathKey)) {
+          Logger.error(
+            tf("dm_duplicate_taxon_path", [
+              pathKey,
+              seenPaths.get(pathKey),
+              rowNumber,
+            ])
+          );
+        } else {
+          seenPaths.set(pathKey, rowNumber);
+        }
+      });
+
+      //ensure all specimen names are unique if specimen column is present
+      console.log("Specimen column info:", Checklist.getTaxaMeta());
+
+      const specimenMetaKeys = Object.values(Checklist.getTaxaMeta()).map(m => m.name.toLowerCase().trim());
+      console.log("Specimen column key:", specimenMetaKeys);
+      const specimenMetaIndex = specimenMetaKeys.indexOf("specimen");
+      console.log("Specimen column info:", specimenMetaIndex);
+
+
+      if (specimenMetaIndex !== -1) {
+        const seenSpecimenIds = new Map(); // specimen name -> first row number
+
+        data.sheets.checklist.data[lang.code].forEach(function (rowObj, arrayIndex) {
+          const specimenEntry = rowObj.t[specimenMetaIndex];
+          if (!specimenEntry || specimenEntry.name.trim() === "") return;
+
+          const specimenName = specimenEntry.name.trim();
+          const rowNumber = arrayIndex + 1 + data.common.checklistHeadersStartRow;
+
+          if (seenSpecimenIds.has(specimenName)) {
+            Logger.error(
+              tf("dm_duplicate_specimen_id", [
+                specimenName,
+                seenSpecimenIds.get(specimenName),
+                rowNumber,
+              ])
+            );
+          } else {
+            seenSpecimenIds.set(specimenName, rowNumber);
+          }
+        });
       }
     });
 

@@ -45,18 +45,27 @@ export { i18nMetadata as i18n };
  * Main translation function
  */
 export function t(tag, substitute) {
-    let params = [];
-    if (substitute !== undefined && substitute !== null) {
-        params = Array.isArray(substitute) ? substitute : [substitute];
-    }
-    
-    // Logging for missing keys (optional, matches your old logic)
+  // If substitute is a number, use pluralization API
+  if (substitute !== undefined && substitute !== null && typeof substitute === 'number') {
     if (!composer.te(tag, composer.locale.value) && !composer.te(tag, composer.fallbackLocale.value)) {
-         console.log("Missing translation for: " + tag);
-         return "[" + tag + "]";
+      console.log("Missing translation for: " + tag);
+      return "[" + tag + "]";
     }
+    return composer.tc ? composer.tc(tag, substitute) : composer.t(tag, substitute);
+  }
 
-    return composer.t(tag, params);
+  let params = undefined;
+  if (substitute !== undefined && substitute !== null) {
+    params = Array.isArray(substitute) ? substitute : substitute;
+  }
+
+  // Logging for missing keys (optional, matches your old logic)
+  if (!composer.te(tag, composer.locale.value) && !composer.te(tag, composer.fallbackLocale.value)) {
+     console.log("Missing translation for: " + tag);
+     return "[" + tag + "]";
+  }
+
+  return composer.t(tag, params);
 }
 
 /**
@@ -64,17 +73,21 @@ export function t(tag, substitute) {
  * Preserves the logic of wrapping substitutes in <strong> tags
  */
 export function tf(tag, substitute, usePlainTextOutput) {
-    let params = [];
-    if (substitute !== undefined && substitute !== null) {
-        params = Array.isArray(substitute) ? substitute : [substitute];
+  let params = undefined;
+  if (substitute !== undefined && substitute !== null) {
+    if (Array.isArray(substitute)) {
+      params = substitute.map(s => usePlainTextOutput ? s : `<strong>${s}</strong>`);
+    } else if (typeof substitute === 'object' && !(substitute instanceof Array)) {
+      params = {};
+      Object.keys(substitute).forEach(k => {
+        params[k] = usePlainTextOutput ? substitute[k] : `<strong>${substitute[k]}</strong>`;
+      });
+    } else {
+      params = usePlainTextOutput ? substitute : `<strong>${substitute}</strong>`;
     }
+  }
 
-    if (!usePlainTextOutput) {
-        // Wrap parameters in strong tags before passing to vue-i18n
-        params = params.map(s => `<strong>${s}</strong>`);
-    }
-
-    return t(tag, params);
+  return t(tag, params);
 }
 
 window.t = t;

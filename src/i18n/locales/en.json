@@ -141,8 +141,8 @@
   "stats_avg": "Average",
   "stats_distinct": "Distinct values",
   "log_critical": "Critical error",
-  "log_error": "Error",
-  "log_warning": "Warning",
+  "log_error": "Error | Errors",
+  "log_warning": "Warning | Warnings",
   "log_info": "Info",
   "check_assets_size1": "Verify the size of linked media files",
   "check_assets_size2": "Verify the size of linked media files during spreadsheet upload to make sure they are not too large. This may take some time if your checklist contains links to many media files.",
@@ -235,5 +235,8 @@
   "dm_generic_column_names": "Error in column names for formatting of type {0} in the checklist sheet; we expect either a single column called {1} or multiple columns with the following suffixes: {2}. Also check you don't have the column {3} empty while filling-in the other columns",
   "keys": "Single-access keys",
   "storage_persistent": "Media available offline",
-  "storage_not_persistent": "Media online only"
+  "storage_not_persistent": "Media online only",
+  "dm_duplicate_taxon_path": "Duplicate taxon path '{0}' — first seen at row {1}, repeated at row {2}. Each taxon path should be unique in the checklist.",
+  "dm_duplicate_specimen_id": "Duplicate specimen ID '{0}' — first seen at row {1}, repeated at row {2}. Specimen IDs must be globally unique.",
+  "dm_specimen_must_be_last_taxon": "In 'Taxa definition', taxon level 'specimen' (column '{0}') must be the last taxon column, but '{1}' comes after it."
 }
