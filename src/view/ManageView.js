@@ -337,10 +337,21 @@ function renderLogs() {
   const messages = Logger.getMessagesForDisplay();
   if (messages.length === 0) return null;
 
+  const counts = Logger.getCounts();
+
   return m(".manage-logs", [
     m(".manage-logs-header", [
       m("span", t("log_messages") || "Messages"),
-      m("span.manage-logs-count", messages.length),
+      m(".manage-logs-counts", [
+        (counts.critical + counts.error) > 0
+          ? m("span.manage-logs-count.manage-logs-count--error",
+            (counts.critical + counts.error) + " " + t("log_error", counts.critical + counts.error))
+          : null,
+        counts.warning > 0
+          ? m("span.manage-logs-count.manage-logs-count--warning",
+            counts.warning + " " + t("log_warning", counts.warning))
+          : null,
+      ]),
     ]),
     m(".manage-logs-list",
       messages.map(function (logItem) {

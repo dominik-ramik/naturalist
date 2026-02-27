@@ -390,12 +390,32 @@
   font-size: 0.9em;
 }
 
+.manage-logs-counts {
+  display: flex;
+  gap: 0.4em;
+  align-items: center;
+}
+
 .manage-logs-count {
-  background-color: #555;
-  color: white;
-  padding: 0.15em 0.5em;
+  padding: 0.15em 0.6em;
   border-radius: 1em;
   font-size: 0.85em;
+  font-weight: 600;
+}
+
+.manage-logs-count--error {
+  background-color: #c62828;
+  color: white;
+}
+
+.manage-logs-count--warning {
+  background-color: #f57c00;
+  color: white;
+}
+
+.manage-logs-count--total {
+  background-color: #555;
+  color: white;
 }
 
 .manage-logs-list {

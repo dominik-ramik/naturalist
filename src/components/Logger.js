@@ -17,8 +17,8 @@ class LoggerClass {
     let hasCritical = this.messages.some(msg => msg.level === 'critical');
 
     // Check for duplicates using the same logic as the original code
-    let index = this.messages.findIndex(msg => 
-      msg.level + "-" + msg.message.toLowerCase() === 
+    let index = this.messages.findIndex(msg =>
+      msg.level + "-" + msg.message.toLowerCase() ===
       level + "-" + message.toLowerCase()
     );
 
@@ -87,6 +87,14 @@ class LoggerClass {
   getMessagesForDisplay() {
     // Messages are already deduplicated in log(), so just reverse them
     return [...this.messages].reverse();
+  }
+
+  getCounts() {
+    return this.messages.reduce((acc, msg) => {
+      acc[msg.level] = (acc[msg.level] || 0) + 1;
+      acc.total++;
+      return acc;
+    }, { critical: 0, error: 0, warning: 0, info: 0, total: 0 });
   }
 
   /**
