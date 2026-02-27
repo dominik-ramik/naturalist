@@ -1271,6 +1271,11 @@ export let Checklist = {
 
     // Helper: add to correct tab if formatting and value are valid
     function tryAddToTab(formatting, data, meta, dataPath, tabType, arr) {
+      // Reject empty containers that exist as placeholders on every row
+      if (data === null || data === undefined) return false;
+      if (Array.isArray(data) && data.length === 0) return false;
+      if (typeof data === "object" && !Array.isArray(data) && Object.keys(data).length === 0) return false;
+
       if (tabType === "media" && allowedMedia.includes(formatting)) {
         arr.push({ data, meta, dataPath });
         return true;
@@ -1278,8 +1283,8 @@ export let Checklist = {
         arr.push({ data, meta, dataPath });
         return true;
       } else if (tabType === "text" && allowedText.includes(formatting)) {
-        // Only add "text" if it's a string
         if (formatting === "text" && typeof data !== "string") return false;
+        if (typeof data === "string" && data.trim() === "") return false;
         arr.push({ data, meta, dataPath });
         return true;
       }

@@ -137,10 +137,10 @@ const numericDisplay = (number, percentage) => {
  */
 function parentOf(taxon, filteredTaxa) {
   const foundTaxon = filteredTaxa.find((tx) =>
-    tx.t.find((tn) => tn.name === taxon)
+    tx.t.find((tn) => tn && tn.name === taxon)
   );
   if (foundTaxon) {
-    const tIndex = foundTaxon.t.findIndex((t) => t.name === taxon);
+    const tIndex = foundTaxon.t.findIndex((t) => t && t.name === taxon);
     if (tIndex === 0) return "";
     const parent = foundTaxon.t[tIndex - 1].name;
     return parent;
@@ -181,7 +181,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
   if (Object.keys(allCategories).length === 0) return null;
 
   taxa.forEach((taxon) => {
-    const currentRootIndex = taxon.t.findIndex((x) => x.name === rootTaxon);
+    const currentRootIndex = taxon.t.findIndex((x) => x && x.name === rootTaxon);
     if (currentRootIndex < 0 && rootTaxon !== "") return;
     const child = taxon.t[currentRootIndex + 1]?.name;
     if (child !== undefined) {

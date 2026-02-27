@@ -1,4 +1,4 @@
-import m from "mithril"; 
+import m from "mithril";
 import Handlebars from "handlebars";
 
 import {
@@ -55,23 +55,17 @@ export let DetailsView = {
 function taxonomyCrumbs(taxonName) {
   let taxon = Checklist.getTaxonByName(taxonName);
 
-  return taxon.t.map(function (taxonName, index) {
-    if (index == taxon.t.length - 1) {
-      return null;
+  const nonNullTaxa = taxon.t.filter(t => t !== null);
+  return nonNullTaxa.map(function (taxonEntry, index) {
+    if (index == nonNullTaxa.length - 1) {
+      return null; // skip the taxon itself, only show ancestors
     }
     return m(".details-taxon-crumb", [
-      /* Experimental hide names
-      m(
-        ".crumb-taxon-level",
-        Checklist.getTaxaMeta()[Object.keys(Checklist.getTaxaMeta())[index]]
-          .name
-      ),
-      */
       m(".crumb-taxon-name-wrap", [
-        m(".crumb-taxon-name", taxonName.name),
-        taxonName.authority == ""
+        m(".crumb-taxon-name", taxonEntry.name),
+        taxonEntry.authority == ""
           ? null
-          : m(".crumb-taxon-authority", taxonName.authority),
+          : m(".crumb-taxon-authority", taxonEntry.authority),
       ]),
     ]);
   });
@@ -493,7 +487,7 @@ function TabExternalSearch(tabData, taxon, taxonName) {
           .map((i) => i.trim().toLowerCase())
           .filter((i) => i !== null && i !== "");
 
-        if (!taxon.t.find((t) => restricted.includes(t.name.toLowerCase()))) {
+        if (!taxon.t.find((t) => t !== null && restricted.includes(t.name.toLowerCase()))) {
           return null; // If taxon to which this should be restricted is not found in the taxonomic branch, then don't show this engine
         }
       }
