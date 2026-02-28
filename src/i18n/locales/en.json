@@ -54,7 +54,7 @@
   "crumb_or": "or",
   "key_or": "or",
   "draft_notice": "You are viewing a draft version of the checklist only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
-  "in_taxon_group": "({0} {1})",
+  "in_taxon_group": "{0} {1}",
   "list_of_taxa": "List of {0} taxa",
   "taxon": "Taxon",
   "show_map": "Show map: ",

@@ -57,7 +57,10 @@ export let TaxonView = {
       );
     }
 
-    const specimenMetaIndex = Object.keys(Checklist.getTaxaMeta()).indexOf("specimenid");
+    const specimenColumnName = Object.keys(Checklist.getTaxaMeta()).find(
+      (key) => Checklist.getTaxaMeta()[key].name.toLowerCase() === "specimen"
+    );
+    const specimenMetaIndex = specimenColumnName ? Object.keys(Checklist.getTaxaMeta()).indexOf("specimenid") : -1;
 
     const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children).sort(function (a, b) {
       const aIsSpecimen = vnode.attrs.taxonTree.children[a].taxonMetaIndex === specimenMetaIndex;
@@ -67,7 +70,9 @@ export let TaxonView = {
       return 0;
     });
 
-    return m("ul.card.taxon-level" + inverseTaxonLevel, [
+    const isSpecimenLevel = vnode.attrs.currentTaxonLevel === specimenMetaIndex;
+
+    return m("ul.card.taxon-level" + inverseTaxonLevel + (isSpecimenLevel ? ".specimen-level" : ""), [
 
       m("li.taxon", [
         m(".taxon-name-stripe", [

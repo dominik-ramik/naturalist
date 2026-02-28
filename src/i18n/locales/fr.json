@@ -54,7 +54,7 @@
   "crumb_or": "ou",
   "key_or": "ou",
   "draft_notice": "Vous visualisez une version brouillon de la liste qui n'est visible que par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
-  "in_taxon_group": "({0} {1})",
+  "in_taxon_group": "{0} {1}",
   "list_of_taxa": "Liste de {0} taxons",
   "taxon": "Taxon",
   "show_map": "Montrer la carte: ",

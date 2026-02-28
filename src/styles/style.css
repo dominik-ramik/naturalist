@@ -89,3 +89,60 @@ a[target="_blank"]:after {
   pointer-events: none;
   text-align: center;
 }
+
+ul.card.specimen-level {
+  /* Solidify the background slightly so text is highly readable, like a data table */
+  background-color: #ffffffff;
+  /* No outer shadow, pure flat design */
+  box-shadow: none;
+  /* Only border the top and bottom with a subtle white line, like list items */
+  border: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8) !important;
+  /* Anchor the left with your slate blue */
+  border-left: 4px solid var(--nlblue) !important;
+  /* Sharp corners to strongly contrast with the rounded (var(--pad-large)) parent taxa */
+  /* Close the gap between sibling specimens so they look like one continuous table */
+  margin-bottom: 1px;
+  margin-left: 0.5em;
+}
+
+/* Give the specimen ID a distinct, technical feel */
+.specimen-level .taxon-name-stripe .taxon-name {
+  font-family: var(--font-light);
+  background-color: var(--nlblue);
+  color: white;
+  padding: 0.4em 0.6em;
+  border-radius: 3px;
+  font-size: 85% !important; /* Override inline styles */
+  letter-spacing: 0.05em;
+}
+
+/* ------------- */
+
+/* 1. Style the entire copiable wrapper as the ID Badge with the SVG background */
+.specimen-level .copiable {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--nlblue); 
+  color: white;
+  
+  /* Use extra padding on the left (1.8em) to make room for the background icon */
+  padding: 0.0em 0.6em 0.0em 1.8em; 
+  
+  /* Set the SVG as the background image */
+  background-image: url('../../img/ui/checklist/tag.svg');
+  background-repeat: no-repeat;
+  
+  /* Position it 0.4em from the left edge, and perfectly centered vertically */
+  background-position: 0.4em center; 
+  
+  /* Control the size of the icon so it doesn't scale out of bounds */
+  background-size: 1.1em; 
+  
+  border-radius: var(--pad-small); 
+  font-family: var(--font-light); 
+  letter-spacing: 0.05em;
+  font-size: 85% !important; 
+  box-shadow: 0.05em 0.05em 0.1em rgba(0,0,0,0.2);
+}
