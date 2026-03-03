@@ -153,10 +153,9 @@ a.citation {
 }
 
 .region-footnotes-number {
-  border: 1px solid #8d8d8d;
+  border-bottom: 1px solid var(--nlblue);
+  margin-left: 0.5em;
   padding-left: 0.2em;
   padding-right: 0.2em;
-  border-radius: 0.2em;
-  margin-left: 0.2em;
-  background: #eceff1;
+  color: var(--nlblue);
 }
