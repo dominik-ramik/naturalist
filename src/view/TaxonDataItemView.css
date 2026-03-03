@@ -153,9 +153,13 @@ a.citation {
 }
 
 .region-footnotes-number {
-  border-bottom: 1px solid var(--nlblue);
-  margin-left: 0.5em;
-  padding-left: 0.2em;
-  padding-right: 0.2em;
   color: var(--nlblue);
+  margin-left: var(--pad-large); 
+  padding-left: var(--pad-small); 
+  font-size: var(--font-smaller);
+}
+
+.region-footnote p{
+  border-left: 1px solid var(--nlblue);
+  padding-left: var(--pad-small);  
 }
