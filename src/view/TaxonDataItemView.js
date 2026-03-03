@@ -237,7 +237,8 @@ export let TaxonDataItemView = {
               })
             )
             : null,
-          m("span", m.trust("&#8201;:&nbsp;"))
+          //m("span", m.trust("&#8201;:&nbsp;"))
+          m("span", m.trust("&nbsp;"))
         ]
       );
     }

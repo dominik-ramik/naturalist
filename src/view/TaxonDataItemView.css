@@ -154,20 +154,40 @@ a.citation {
 
 .region-footnotes-number {
   color: var(--nlblue);
-  margin-left: var(--pad-small); /* Reduced slightly so it hugs the word it references */
-  padding-left: var(--pad-small); 
+  margin-left: var(--pad-small);
+  /* Reduced slightly so it hugs the word it references */
+  padding-left: var(--pad-small);
   font-size: var(--font-smaller);
-  
+
   /* Strongly recommended: Raises the number so it reads clearly as a footnote indicator */
-  vertical-align: super; 
+  vertical-align: super;
 }
 
 .region-footnote p {
-  border-left: 2px solid var(--nlblue); /* Slightly thicker line to make the indent pop */
-  padding-left: var(--pad-large); /* Gives the text a bit more breathing room from the line */
-  
+  border-left: 2px solid var(--nlblue);
+  /* Slightly thicker line to make the indent pop */
+  padding-left: var(--pad-large);
+  /* Gives the text a bit more breathing room from the line */
+
   /* New additions to separate the footnote from the main taxon data */
   margin-top: var(--pad-small);
   margin-bottom: var(--pad-small);
-  font-size: var(--font-smaller);  
+  font-size: var(--font-smaller);
+}
+
+/**************************/
+
+.data-item-view {
+  margin-bottom: 0;
+  margin-right: var(--pad-small);
+  margin-left: var(--pad-small);
+}
+
+.data-item-title {
+  display: inline-block;
+  font-family: var(--font-light);
+  color: var(--nlblue);
+  text-transform: uppercase;
+  font-size: var(--font-smaller);
+  letter-spacing: 0.025em;
 }
