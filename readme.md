@@ -2,11 +2,14 @@
 
 <img src="./public/img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
 
-_The flexible taxonomic checklist app_
+_The flexible taxonomic checklist app, free and open source_
 
-[[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/)]
+[[Website](https://naturalist.netlify.app/)] [[Demo (older v2)](https://naturalist.netlify.app/demo/)] [[Documentation (older v2, docs for v3 underway)](https://naturalist.netlify.app/)]
+
+Paper: [Ramík, D.M., Plunkett, G.M. <b>NaturaList, a flexible app for creating taxonomic checklists</b>. Brittonia 76, 183–188 (2024)](https://link.springer.com/article/10.1007/s12228-024-09805-y)
 
 ▶️ [Watch Naturalist v3 features vide on YouTube](https://youtu.be/qxJAtrlJO8I)
+
 ▶️ [New taxonomic key functionality in v3](https://youtu.be/SamwqQMQyG8)
 
 ## About
