@@ -295,7 +295,7 @@ th.ss-corner-cell,
 .ss-row-num {
   position: sticky !important;
   left: 0 !important;
-  z-index: 999 !important;
+  z-index: 20 !important;
   background: var(--ss-chrome-bg) !important;
   border-right: 2px solid var(--ss-chrome-border) !important;
   text-align: center !important;
