@@ -90,6 +90,9 @@ function resolveVariant(variant, cfg) {
 /* ── CSS classes ────────────────────────────────────────────── */
 const tdClasses = computed(() => {
   if (isEmpty.value) return ["ss-cell-empty-col"];
+  const colDef = colDefs?.value?.[colIndex];
+  const colHighlight = colDef && colDef.highlight;
+
   return [
     ...rowCellClasses.value,
     isFrozenCol.value && "ss-cell-frozen-col",
@@ -97,6 +100,7 @@ const tdClasses = computed(() => {
     props.italic && "ss-italic",
     props.align && `ss-align-${props.align}`,
     props.highlight && "ss-cell-highlight",
+    colHighlight && "ss-col-highlight",
     props.type === "formula" && "ss-cell-formula",
     props.type === "number" && "ss-cell-number",
     props.note && "ss-cell-has-note",

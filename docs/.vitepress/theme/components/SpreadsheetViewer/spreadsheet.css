@@ -397,9 +397,31 @@ th.ss-corner-cell,
 
 /* Highlight */
 .ss-cell-highlight {
+  /* Keep cell-level highlight only as background (no per-cell outline) */
   background: var(--ss-highlight-bg) !important;
-  outline: 2px solid var(--ss-highlight-outline);
-  outline-offset: -2px;
+  z-index: 1;
+}
+
+/* Row-level highlight: draw a single rectangular border around the whole row */
+.ss-row-highlight td:not(.ss-row-num) {
+  background: var(--ss-highlight-bg) !important;
+  /* top/bottom border across the data cells in the row (exclude row-num) */
+  border-top: 2px solid var(--ss-highlight-outline) !important;
+  border-bottom: 2px solid var(--ss-highlight-outline) !important;
+}
+/* Left border: first data cell after the row-number cell */
+.ss-row-highlight td.ss-row-num + td {
+  border-left: 2px solid var(--ss-highlight-outline) !important;
+}
+.ss-row-highlight td:last-child {
+  border-right: 2px solid var(--ss-highlight-outline) !important;
+}
+
+/* Column-level highlight: background + vertical borders (excludes headers/row-num) */
+.ss-col-highlight {
+  background: var(--ss-highlight-bg) !important;
+  border-left: 2px solid var(--ss-highlight-outline) !important;
+  border-right: 2px solid var(--ss-highlight-outline) !important;
   z-index: 1;
 }
 

@@ -84,6 +84,7 @@ const trClasses = computed(() => {
     'ss-row',
     isFrozen.value && 'ss-row-frozen',
     striped.value && isEven.value && 'ss-row-stripe-even',
+    props.highlight && 'ss-row-highlight',
   ].filter(Boolean)
 })
 
@@ -104,13 +105,6 @@ const cellStyleFromRow = computed(() => {
     ...(props.bg    ? { background:  props.bg    } : {}),
     ...(props.color ? { color:       props.color } : {}),
     ...(props.align ? { textAlign:   props.align } : {}),
-    ...(props.highlight
-          ? {
-              background:    config.value.highlight.background,
-              outline:       config.value.highlight.outline,
-              outlineOffset: config.value.highlight.outlineOffset,
-            }
-          : {}),
     ...(typeof props.style === 'object' ? props.style : {}),
   }
 })
@@ -119,7 +113,7 @@ const cellClassFromRow = computed(() => [
   props.bold      && 'ss-bold',
   props.italic    && 'ss-italic',
   props.align     && `ss-align-${props.align}`,
-  props.highlight && 'ss-cell-highlight',
+  // row-level highlight is handled on the <tr> via 'ss-row-highlight'
 ].filter(Boolean))
 
 provide('ss:rowCellStyle',  cellStyleFromRow)

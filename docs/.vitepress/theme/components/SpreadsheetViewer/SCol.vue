@@ -20,6 +20,7 @@ import { inject, onMounted, onUnmounted, computed } from 'vue'
 const props = defineProps({
   width: { type: String,  default: null },
   empty: { type: [Boolean, Number, String], default: false },
+  highlight: { type: [Boolean, String], default: false },
 })
 
 const registerColDef   = inject('ss:registerColDef')
@@ -36,7 +37,8 @@ onMounted(()   => {
   colId = registerColDef({ 
     width: props.width, 
     empty: emptyCount.value > 0, 
-    skipCount: emptyCount.value 
+    skipCount: emptyCount.value,
+    highlight: props.highlight,
   }) 
 })
 onUnmounted(() => { if (colId !== null) unregisterColDef(colId) })
