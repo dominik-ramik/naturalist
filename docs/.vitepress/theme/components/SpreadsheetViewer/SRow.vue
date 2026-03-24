@@ -1,22 +1,6 @@
 <script setup>
 /**
  * SRow.vue — one data row.
- *
- * Renders as a <tr>.  Automatically prepends a sticky row-number cell.
- * Provides `getCellIndex` and `rowIndex` to child <SCell> components.
- * Intercepts slot children to automatically weave empty columns defined in <SCol>.
- *
- * Props
- * ─────
- * empty     Visual break row (dashed lines, no row number). Also accepts string/number to skip rows.
- * bold      Bold all cells in this row.
- * italic    Italic all cells in this row.
- * bg        Background colour for all cells (CSS colour string).
- * color     Text colour for all cells.
- * align     Text alignment: 'left' | 'center' | 'right'.
- * highlight Apply the highlight style (config.highlight).
- * variant   String or string[] — maps to config.classes entries.
- * style     Extra inline styles (object or string).
  */
 import { ref, computed, inject, provide, onMounted, useSlots, h, Fragment, Comment } from 'vue'
 import SCell from './SCell.vue'
@@ -54,7 +38,7 @@ const isBreak = computed(() => emptyCount.value > 0)
 /* ── Row index (skip for empty break rows) ───────────────────── */
 const rowIndex = (() => {
   if (isBreak.value) {
-    getNextRowIndex(emptyCount.value) // Advance the counter by the skip amount
+    getNextRowIndex(emptyCount.value) 
     return -1
   }
   return getNextRowIndex(1)
@@ -85,7 +69,6 @@ const trClasses = computed(() => {
   ].filter(Boolean)
 })
 
-/* ── Sticky top for frozen rows ─────────────────────────────── */
 const trStyle = computed(() => ({ }))
 
 /* ── Inline styles for all data cells from row-level props ──── */
@@ -104,7 +87,6 @@ const cellClassFromRow = computed(() => [
   props.bold      && 'ss-bold',
   props.italic    && 'ss-italic',
   props.align     && `ss-align-${props.align}`,
-  // row-level highlight is handled on the <tr> via 'ss-row-highlight'
 ].filter(Boolean))
 
 provide('ss:rowCellStyle',  cellStyleFromRow)
@@ -138,7 +120,6 @@ function flattenVNodes(nodes) {
   return result
 }
 
-// Functional component to weave user-defined slots and empty columns
 const RenderCells = () => {
   const defaultSlot = slots.default ? slots.default() : []
   const flatCells = flattenVNodes(defaultSlot)
@@ -161,7 +142,6 @@ const RenderCells = () => {
           renderedCells.push(cellVNode)
           userCellIdx++
         } else {
-          // Auto-insert missing gap cell
           renderedCells.push(h(SCell, { empty: true }))
         }
         colIdx++
@@ -173,7 +153,6 @@ const RenderCells = () => {
           colIdx += parseInt(colspan, 10) || 1
           userCellIdx++
         } else if (colIdx < colDefs.value.length) {
-          // Fallback: Fill missing normal columns to preserve grid
           renderedCells.push(h(SCell))
           colIdx++
         } else {
@@ -188,12 +167,33 @@ const RenderCells = () => {
 </script>
 
 <template>
-  <tr v-if="isBreak" class="ss-row-empty">
+  <tr 
+    v-if="isBreak" 
+    class="ss-row-empty" 
+    :style="{ 'counter-increment': `ss-row-num-counter ${emptyCount}` }"
+  >
     <td :colspan="colCount + 1" />
   </tr>
 
   <tr v-else :class="trClasses" :style="trStyle">
-    <td class="ss-row-num">{{ rowIndex + 1 }}</td>
+    <td class="ss-row-num"></td>
     <RenderCells />
   </tr>
 </template>
+
+<style>
+/* CSS Counters guarantee numbering strictly follows DOM order */
+.ss-table {
+  counter-reset: ss-row-num-counter;
+}
+
+/* Increment counter for every rendered normal row */
+.ss-row {
+  counter-increment: ss-row-num-counter;
+}
+
+/* Display the calculated physical number */
+.ss-row-num::after {
+  content: counter(ss-row-num-counter);
+}
+</style>

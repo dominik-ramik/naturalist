@@ -329,6 +329,7 @@ th.ss-corner-cell,
   background: var(--ss-bg) !important;
   position: relative;
   overflow: visible;
+  height: 20px !important;
 }
 .ss-row-empty td::before,
 .ss-row-empty td::after {
@@ -466,8 +467,8 @@ th.ss-corner-cell,
 .ss-note-tooltip {
   position: fixed;
   z-index: 9999;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+  background: #fff9dc;
+  border: 1px solid #535353;
   box-shadow: 0 4px 20px rgba(0,0,0,.13), 0 1px 4px rgba(0,0,0,.08);
   border-radius: 5px;
   padding: 8px 11px;
