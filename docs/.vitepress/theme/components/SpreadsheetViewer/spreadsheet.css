@@ -159,6 +159,67 @@
 .ss-scroll-container::-webkit-scrollbar-track { background: transparent; }
 
 /* ------------------------------------------------------------------
+   Additional layout & stacking rules (merged updates)
+   ------------------------------------------------------------------ */
+
+/* Ensure the scrolling wrapper establishes a clean layout context */
+.ss-sheet-container { /* Note: Match this to your actual wrapper class, e.g., .ss-sheet-wrapper */
+  overflow: auto;
+  position: relative;
+  /* Remove any forced heights here if they exist, Vue will inject them */
+}
+
+/* Base Data Cells - Level 1 (Default is auto/0) */
+.ss-cell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Frozen Rows & Columns - Level 2 */
+.ss-row-frozen td,
+.ss-cell-frozen-col {
+  position: sticky;
+  z-index: 2;
+  /* Crucial: Sticky elements MUST have a background color to hide scrolling text */
+  background-color: var(--ss-bg, #ffffff); 
+  background-clip: padding-box;
+}
+
+/* Intersection of Frozen Row + Frozen Column - Level 3 */
+.ss-row-frozen td.ss-cell-frozen-col {
+  z-index: 3;
+}
+
+/* Row Numbers (Left Sidebar) - Level 4 */
+.ss-row-num {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background-color: var(--ss-th-bg, #f6f8fa); /* Or your specific header background */
+  background-clip: padding-box;
+}
+
+/* Column Headers (Top Row) - Level 5 */
+.ss-header-row th,
+.ss-col-num {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--ss-th-bg, #f6f8fa);
+  background-clip: padding-box;
+}
+
+/* Top-Left Corner (Intersection of row numbers & col headers) - Level 6 (Highest) */
+th.ss-corner-cell,
+.ss-header-row .ss-corner-cell {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  background-color: var(--ss-th-bg, #f6f8fa);
+}
+
+/* ------------------------------------------------------------------
    6. Table
    ------------------------------------------------------------------ */
 .ss-table {
@@ -404,23 +465,32 @@
   cursor: default;
 }
 
-/* Tooltip — fixed positioning computed in JS */
+/* Tooltip — fixed positioning computed in JS.
+   Uses explicit colour values because the element is <Teleport>-ed to
+   <body>, outside .ss-root where the CSS custom properties are defined. */
 .ss-note-tooltip {
   position: fixed;
   z-index: 9999;
-  background: var(--ss-note-tooltip-bg);
-  border: 1px solid var(--ss-note-tooltip-border);
-  box-shadow: var(--ss-note-tooltip-shadow);
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 20px rgba(0,0,0,.13), 0 1px 4px rgba(0,0,0,.08);
   border-radius: 5px;
   padding: 8px 11px;
   min-width: 160px;
   max-width: 300px;
   font-size: 12px;
+  font-family: 'Calibri', 'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
   line-height: 1.55;
-  color: var(--ss-text);
+  color: #1a1a1a;
   white-space: normal;
   word-break: break-word;
   pointer-events: none;
+}
+.dark .ss-note-tooltip {
+  background: #252525;
+  border-color: #3f3f3f;
+  box-shadow: 0 4px 20px rgba(0,0,0,.45);
+  color: #d4d4d4;
 }
 
 /* Markdown rendering inside tooltip */
