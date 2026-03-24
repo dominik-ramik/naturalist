@@ -77,7 +77,7 @@ let SearchBox = {
 
         // SearchBox is now a flex container (styled in CSS)
         return m(".search-box", [
-            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", Settings.SEARCH_OR_SEPARATOR, true) + "][value=" + Checklist.filter.text + "]", {
+            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", [Settings.SEARCH_OR_SEPARATOR], true) + "][value=" + Checklist.filter.text + "]", {
                 oninput: function (e) {
                     const oldText = Checklist.filter.text;
                     const newText = e.target.value;
