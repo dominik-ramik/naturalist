@@ -28,7 +28,6 @@ export let SearchView = {
             return m("li", m(FilterDropdown, { color: Checklist.filter.data[dataPath].color, title: Checklist.getDataMeta()[dataPath].searchCategory, type: "data", dataPath: dataPath }))
         })
 
-        // FIX: Reverse order to put SearchBox BELOW filters and crumbs
         return m(".search", [
             // 1. Filter Groups Wrapper (Filters + Crumbs)
             m(".filter-groups-wrapper", [

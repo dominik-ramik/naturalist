@@ -55,7 +55,7 @@
   width: 100%;
   align-items: center;
   font-size: var(--font-smaller);
-  margin-top: var(--pad-large);
+  margin-top: 1.5em;
   margin-bottom: var(--pad-large);
   flex-direction: row;
   flex-wrap: wrap;
