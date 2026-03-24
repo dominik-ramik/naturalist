@@ -5,9 +5,10 @@ import { FilterDropdown } from "../view/FilterDropdownView.js";
 import { Checklist } from "../model/Checklist.js";
 import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { routeTo, shouldHide } from "../components/Utils.js";
-import { Filter } from "../model/Filter.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
+
+const SEARCH_CATEGORY_SEPARATOR = "|";
 
 export let SearchView = {
 
@@ -17,22 +18,42 @@ export let SearchView = {
         Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
             taxaFilterDropdown.push(m("li", m(FilterDropdown, { color: Checklist.filter.taxa[dataPath].color, title: Checklist.getNameOfTaxonLevel(dataPath), type: "taxa", dataPath: dataPath })));
         });
-        let dataFilterDropdown = [];
 
-        dataFilterDropdown = Object.keys(Checklist.filter.data).map(function (dataPath, index) {
+        let categorizedDataFilters = {};
 
-            if (shouldHide(dataPath, Checklist.getMetaForDataPath(dataPath).hidden, Checklist.filter.data, "filter")) {
-                return null;
+        Object.keys(Checklist.filter.data).forEach(function (dataPath) {
+            let category = "";
+            let title = "";
+
+            if (!Checklist.getDataMeta()[dataPath].searchCategory) {
+                console.warn("Data path '" + dataPath + "' is missing 'searchCategory' metadata. It will be grouped under an empty category.");
+                return;
             }
 
-            return m("li", m(FilterDropdown, { color: Checklist.filter.data[dataPath].color, title: Checklist.getDataMeta()[dataPath].searchCategory, type: "data", dataPath: dataPath }))
-        })
+            if (Checklist.getDataMeta()[dataPath].searchCategory.includes(SEARCH_CATEGORY_SEPARATOR)) {
+                category = Checklist.getDataMeta()[dataPath].searchCategory.split(SEARCH_CATEGORY_SEPARATOR)[0].trim();
+                title = Checklist.getDataMeta()[dataPath].searchCategory.split(SEARCH_CATEGORY_SEPARATOR)[1].trim();
+            } else {
+                category = "";
+                title = Checklist.getDataMeta()[dataPath].searchCategory;
+            }
+
+            categorizedDataFilters[category] = categorizedDataFilters[category] || [];
+            categorizedDataFilters[category].push({ category, title, dataPath });
+        });
+
+        console.log("categorizedDataFilters", categorizedDataFilters);
 
         return m(".search", [
             // 1. Filter Groups Wrapper (Filters + Crumbs)
             m(".filter-groups-wrapper", [
                 m("ul.filter-buttons.taxa-filter", taxaFilterDropdown),
-                m("ul.filter-buttons.data-filter", dataFilterDropdown),
+                ...Object.keys(categorizedDataFilters).map(category => {
+                    return m("div.data-filter-category", [
+                        category == "" ? null : m("h4.search-category-group", category),
+                        m("ul.filter-buttons.data-filter", categorizedDataFilters[category].map(item => m("li", m(FilterDropdown, { color: Checklist.filter.data[item.dataPath].color, title: item.title, type: "data", dataPath: item.dataPath }))))
+                    ]);
+                }),
             ]),
 
             // 2. SearchBox with integrated toggle button (Now at the bottom)

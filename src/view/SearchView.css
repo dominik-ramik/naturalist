@@ -6,6 +6,8 @@ ul.filter-buttons {
     display: flex;
     flex-wrap: wrap;
     padding-left: 0;
+    margin-bottom: 1em;
+    margin-top: 0.5em;
 }
 
 ul.filter-buttons li {
@@ -64,6 +66,15 @@ ul.filter-buttons li {
 .search-box .mobile-clear-filters {
     display: none;
     /* Hidden by default (desktop) */
+}
+
+.search-category-group {
+    font-size: 85%;
+    margin: 0em;
+    margin-top: 1em;
+    margin-left: 0.25em;
+    font-weight: bold;
+    padding: 0;
 }
 
 /* MOBILE LAYOUT AND CLEANUP (Max Width 1200px) */
