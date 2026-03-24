@@ -175,20 +175,7 @@
   z-index: 1;
 }
 
-/* Frozen Rows & Columns - Level 2 */
-.ss-row-frozen td,
-.ss-cell-frozen-col {
-  position: sticky;
-  z-index: 2;
-  /* Crucial: Sticky elements MUST have a background color to hide scrolling text */
-  background-color: var(--ss-bg, #ffffff); 
-  background-clip: padding-box;
-}
-
-/* Intersection of Frozen Row + Frozen Column - Level 3 */
-.ss-row-frozen td.ss-cell-frozen-col {
-  z-index: 3;
-}
+/* frozen rows/columns support removed */
 
 /* Row Numbers (Left Sidebar) - Level 4 */
 .ss-row-num {
@@ -308,7 +295,7 @@ th.ss-corner-cell,
 .ss-row-num {
   position: sticky !important;
   left: 0 !important;
-  z-index: 2 !important;
+  z-index: 999 !important;
   background: var(--ss-chrome-bg) !important;
   border-right: 2px solid var(--ss-chrome-border) !important;
   text-align: center !important;
@@ -318,17 +305,10 @@ th.ss-corner-cell,
   min-width: var(--ss-row-num-width);
   width: var(--ss-row-num-width);
   max-width: var(--ss-row-num-width);
-  user-select: none;
+  user-select: none;  
 }
 
-/* Frozen data rows */
-.ss-row-frozen {
-  position: sticky;
-  z-index: 2;
-}
-.ss-row-frozen .ss-row-num {
-  z-index: 4 !important;
-}
+/* frozen rows support removed */
 
 /* Striped even rows */
 .ss-row-stripe-even td:not(.ss-row-num):not(.ss-cell-empty-col) {
@@ -365,14 +345,7 @@ th.ss-corner-cell,
    10. Cell variants
    ------------------------------------------------------------------ */
 
-/* Frozen data column */
-.ss-cell-frozen-col {
-  position: sticky;
-  z-index: 2;
-}
-.ss-row-frozen .ss-cell-frozen-col {
-  z-index: 3;
-}
+/* frozen columns support removed */
 
 /* Empty-column break cell */
 .ss-cell-empty-col {

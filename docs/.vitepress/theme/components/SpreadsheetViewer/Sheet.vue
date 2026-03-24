@@ -7,8 +7,7 @@
  *  - Render the scroll container → table → colgroup → col-header row
  *  - Provide context for child <SCols>/<SRow>/<SCell> components:
  *      getNextRowIndex, registerColDef, colDefs, colCount,
- *      updateColCount, freezeRows, freezeCols, striped, config,
- *      getStickyLeft, CELL_H, HEADER_H, ROW_NUM_W
+ *      updateColCount, striped, config, CELL_H, HEADER_H, ROW_NUM_W
  *  - Expose a TSV-serialiser to <Spreadsheet>
  */
 import {
@@ -27,10 +26,7 @@ const props = defineProps({
   name: { type: String, required: true },
   /** Accent colour for this tab's dot and active top-border */
   color: { type: String, default: "" },
-  /** How many data rows to freeze (sticky top) */
-  freezeRows: { type: Number, default: 0 },
-  /** How many data columns to freeze (sticky left) */
-  freezeCols: { type: Number, default: 0 },
+  /** frozen rows/cols support removed */
   /**
    * Max visible rows before vertical scroll kicks in.
    * Includes the column-header row in the count.
@@ -96,34 +92,7 @@ function updateColCount(n) {
   if (n > colCount.value) colCount.value = n;
 }
 
-/* ── Sticky-left offset calculator for frozen columns ────────── */
-function getStickyLeft(colIndex) {
-  let px = ROW_NUM_W;
-  for (let i = 0; i < colIndex; i++) {
-    const def = colDefs.value[i];
-    if (!def) {
-      px += DEF_COL_W;
-      continue;
-    }
-    if (def.empty) {
-      px += EMPTY_COL_W;
-      continue;
-    }
-    const w = def.width;
-    if (w && w.endsWith("px")) {
-      px += parseFloat(w);
-      continue;
-    }
-    if (w && w.endsWith("rem")) {
-      px += parseFloat(w) * 16;
-      continue;
-    }
-    px += DEF_COL_W;
-  }
-  return px + "px";
-}
-
-/* ── Provide context to descendants ─────────────────────────── */
+/* sticky helpers and freeze providers removed */
 provide("ss:getNextRowIndex", getNextRowIndex);
 provide("ss:registerColDef", registerColDef);
 provide("ss:unregisterColDef", unregisterColDef);
@@ -131,19 +100,10 @@ provide("ss:colDefs", colDefs);
 provide("ss:colCount", colCount);
 provide("ss:updateColCount", updateColCount);
 provide(
-  "ss:freezeRows",
-  computed(() => props.freezeRows),
-);
-provide(
-  "ss:freezeCols",
-  computed(() => props.freezeCols),
-);
-provide(
   "ss:striped",
   computed(() => props.striped),
 );
 provide("ss:config", config);
-provide("ss:getStickyLeft", getStickyLeft);
 provide("ss:CELL_H", CELL_H);
 provide("ss:HEADER_H", HEADER_H);
 provide("ss:ROW_NUM_W", ROW_NUM_W);

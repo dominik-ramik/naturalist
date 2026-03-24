@@ -37,7 +37,6 @@ const props = defineProps({
 const getNextRowIndex = inject('ss:getNextRowIndex')
 const updateColCount  = inject('ss:updateColCount')
 const colCount        = inject('ss:colCount')
-const freezeRows      = inject('ss:freezeRows')
 const striped         = inject('ss:striped')
 const config          = inject('ss:config')
 const CELL_H          = inject('ss:CELL_H')
@@ -74,7 +73,6 @@ provide('ss:getCellIndex', getCellIndex)
 provide('ss:rowIndex',     rowIndex)
 
 /* ── Computed state ─────────────────────────────────────────── */
-const isFrozen = computed(() => !isBreak.value && rowIndex < freezeRows.value)
 const isEven   = computed(() => !isBreak.value && rowIndex % 2 === 1)
 
 /* ── CSS classes for <tr> ────────────────────────────────────── */
@@ -82,20 +80,13 @@ const trClasses = computed(() => {
   if (isBreak.value) return ['ss-row-empty']
   return [
     'ss-row',
-    isFrozen.value && 'ss-row-frozen',
     striped.value && isEven.value && 'ss-row-stripe-even',
     props.highlight && 'ss-row-highlight',
   ].filter(Boolean)
 })
 
 /* ── Sticky top for frozen rows ─────────────────────────────── */
-const trStyle = computed(() => {
-  const styles = {}
-  if (isFrozen.value) {
-    styles.top = HEADER_H + rowIndex * CELL_H + 'px'
-  }
-  return styles
-})
+const trStyle = computed(() => ({ }))
 
 /* ── Inline styles for all data cells from row-level props ──── */
 const cellStyleFromRow = computed(() => {

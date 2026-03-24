@@ -53,28 +53,13 @@ const rowCellClasses = inject(
   computed(() => []),
 );
 const colDefs = inject("ss:colDefs");
-const freezeCols = inject("ss:freezeCols");
-const getStickyLeft = inject("ss:getStickyLeft");
+// removed freeze/sticky support
 const config = inject("ss:config");
 
 /* ── Column index (called synchronously — Vue setup order == DOM order) */
 const colIndex = getCellIndex(props.colspan);
 
-/* ── Frozen column ──────────────────────────────────────────── */
-const isFrozenCol = computed(
-  () => !isEmpty.value && colIndex < freezeCols.value,
-);
-
-/* Sticky-left for frozen columns (computed via provider from Sheet) */
-const stickyLeft = computed(() => {
-  if (!isFrozenCol.value) return undefined;
-  if (typeof getStickyLeft !== "function") return undefined;
-  try {
-    return getStickyLeft(colIndex);
-  } catch (e) {
-    return undefined;
-  }
-});
+/* frozen columns/rows removed — no sticky-left computation */
 
 /* ── Variant resolver ───────────────────────────────────────── */
 function resolveVariant(variant, cfg) {
@@ -95,7 +80,7 @@ const tdClasses = computed(() => {
 
   return [
     ...rowCellClasses.value,
-    isFrozenCol.value && "ss-cell-frozen-col",
+    // frozen column class removed
     props.bold && "ss-bold",
     props.italic && "ss-italic",
     props.align && `ss-align-${props.align}`,
@@ -130,7 +115,7 @@ const tdStyle = computed(() => {
     //(props.color ? { color: props.color } : {}),
     //(props.align ? { textAlign: props.align } : {}),
     ...extraStyle,
-    ...(stickyLeft.value ? { left: stickyLeft.value } : {}),
+    // sticky-left removed
   };
 });
 
