@@ -2,11 +2,14 @@
 
 <img src="./public/img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
 
-_The flexible taxonomic checklist app_
+_The flexible taxonomic checklist app, free and open source_
 
-[[Website](https://naturalist.netlify.app/)] [[Demo](https://naturalist.netlify.app/demo/)] [[Documentation](https://naturalist.netlify.app/)]
+[[Website](https://naturalist.netlify.app/)] [[Demo (older v2)](https://naturalist.netlify.app/demo/)] [[Documentation (older v2, docs for v3 underway)](https://naturalist.netlify.app/)]
+
+Paper: [Ramík, D.M., Plunkett, G.M. <b>NaturaList, a flexible app for creating taxonomic checklists</b>. Brittonia 76, 183–188 (2024)](https://link.springer.com/article/10.1007/s12228-024-09805-y)
 
 ▶️ [Watch Naturalist v3 features vide on YouTube](https://youtu.be/qxJAtrlJO8I)
+
 ▶️ [New taxonomic key functionality in v3](https://youtu.be/SamwqQMQyG8)
 
 ## About
@@ -15,7 +18,7 @@ NaturaList is an open source flexible taxonomic checklist web app capable of vis
 
 ## Quick start
 
-- Download the [latest release](https://github.com/dominik-ramik/naturalist/releases/latest) and upload it into a webhosting of your choice. Static webhosting is enough but HTTPS needs to be enabled for the app to work offline. 
+- Download the [latest release](https://github.com/dominik-ramik/naturalist/releases/latest) and upload it into a webhosting of your choice. Static webhosting (like [Netlify](https://netlify.com)) is enough but HTTPS needs to be enabled for the app to work offline. 
 - This will give you an empty instance of the app, which you will need to fill with your data.
 - Open the web address on which you installed the app. You will see a message saying you need to upload some data first. Download the blank spreadsheet which you can use to bootstrap your project.
 - Fill the spreadsheet with your data. Read the documentation to learn more about different parts of the spreasheet you can configure and for a sample spreadsheet with a fully developed project to explore.
