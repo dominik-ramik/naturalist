@@ -351,6 +351,24 @@ export function circlePacking(options) {
         .join(" ▹ ")}`
     );
 
+    function getNodeStatsText(d) {
+      return isFilterMode
+        ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
+          ? "< 1%"
+          : matchingRatio(d.data, 1) + "%") +
+        " | " +
+        d.data.matchingLeafCount +
+        " of " +
+        d.data.totalLeafCount +
+        " match"
+        : "(" + String(d.data.totalLeafCount) + " members)";
+    }
+
+    function getFullTooltipText(d) {
+      const breadcrumbs = d.ancestors().map((a) => a.data.name).reverse().slice(1).join(" ▹ ");
+      return `${breadcrumbs}\n${getNodeStatsText(d)}`;
+    }
+
     renderBreadcrumbs(newFocus);
     renderDownloadButton();
 
@@ -407,6 +425,7 @@ export function circlePacking(options) {
       });
 
     const labelNodes = tree.descendants().filter((d) => d.parent === tree);
+    
     const labelGroups = gContent
       .append("g")
       .attr("pointer-events", "none")
@@ -431,40 +450,40 @@ export function circlePacking(options) {
           .attr("transform", `translate(0, ${d.r * 0.15}) scale(${scale}) translate(-480, -480)`);
       }
 
-      labelGroup
+      const textNode = labelGroup
         .append("text")
         .attr("fill", inferColor(d, "label"))
         .attr("opacity", labelOpacity)
-        .attr("dominant-baseline", "middle")
-        .attr("y", specimen ? specimenIconSize(d) * 0.4 : 0)
-        .text(d.data.name)
+        // Pushes the text to the top for parent nodes to prevent overlap
+        .attr("dominant-baseline", d.children ? "hanging" : "middle")
+        .attr("y", d.children ? -d.r + 12 : (specimen ? specimenIconSize(d) * 0.4 : 0))
         .style("font-family", fontFamily)
+        .style("text-anchor", "middle");
+
+      // 1. Append the main name
+      textNode
+        .append("tspan")
+        .attr("x", 0)
+        .text(d.data.name)
         .style("font-size", adaptLabelFontSize(d))
         .style("font-weight", "bold");
+
+      const baseFontSize = parseFloat(adaptLabelFontSize(d));
+
+      // 2. Append ONLY the extracted stats below the name
+      textNode
+        .append("tspan")
+        .attr("x", 0)
+        .attr("dy", "2.2em")
+        .text(getNodeStatsText(d))
+        .style("font-size", (baseFontSize * 0.5) + "em")
+        .style("font-weight", "normal");
     });
 
     gHeader.raise();
     gDownload.raise();
 
-    nodeSelection.append("title").text(
-      (d) =>
-        `${d
-          .ancestors()
-          .map((d) => d.data.name)
-          .reverse()
-          .slice(1)
-          .join(" ▹ ")}\n${isFilterMode
-            ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
-              ? "< 1%"
-              : matchingRatio(d.data, 1) + "%") +
-            " | " +
-            d.data.matchingLeafCount +
-            " of " +
-            d.data.totalLeafCount +
-            " matching"
-            : d.data.totalLeafCount
-        }`
-    );
+    nodeSelection.append("title").text(getFullTooltipText)
   }
 
   // 4b. DETERMINE STARTING ROOT
