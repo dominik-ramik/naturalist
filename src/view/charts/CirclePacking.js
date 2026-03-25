@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 
 import { colorFromRatio } from "../../components/Utils.js";
+import { Checklist } from "../../model/Checklist.js";
 
 const specimenTagIconPath =
   "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
@@ -20,7 +21,78 @@ export function circlePacking(options) {
   let isFilterMode = data.matchingLeafCount != data.totalLeafCount;
 
   function downloadSVG() {
-    var svgBlob = new Blob([svg.node().outerHTML], {
+    // 1. Fetch the citation text
+    const citationText = Checklist.getProjectHowToCite() || "";
+
+    // 2. Configure text format and boundaries
+    const fontSize = 14;
+    const lineHeight = fontSize * 1.4; // approx 19.6px
+    const paddingX = 20;
+    const paddingY = 20;
+    const maxWidth = width - (paddingX * 2); // strictly constrains width to chart boundaries
+
+    // 3. Accurately measure and wrap lines using a temporary DOM element
+    // This perfectly calculates the exact pixel width of the font in the browser
+    const tmpText = svg.append("text")
+      .style("font-family", fontFamily)
+      .style("font-size", fontSize + "px")
+      .style("visibility", "hidden");
+
+    const words = citationText.split(/\s+/);
+    const lines = [];
+    let currentLine = [];
+
+    words.forEach(word => {
+      currentLine.push(word);
+      tmpText.text(currentLine.join(" "));
+
+      // If the line exceeds our pixel boundary, push the previous line and start a new one
+      if (tmpText.node().getComputedTextLength() > maxWidth && currentLine.length > 1) {
+        currentLine.pop(); // Remove the word that caused the overflow
+        lines.push(currentLine.join(" "));
+        currentLine = [word]; // Start the new line with the overflowed word
+      }
+    });
+    // Push the final remaining line
+    if (currentLine.length > 0) {
+      lines.push(currentLine.join(" "));
+    }
+
+    tmpText.remove(); // Cleanup the temporary measuring element
+
+    // 4. Now that we have perfectly wrapped lines, clone the SVG node
+    const clonedSvgNode = svg.node().cloneNode(true);
+    const clonedSvg = d3.select(clonedSvgNode);
+
+    // 5. Calculate dynamic height based on the number of actual lines
+    const textHeightSpace = (lines.length * lineHeight) + paddingY;
+    const newHeight = height + textHeightSpace;
+
+    // 6. Expand the cloned SVG's viewBox and background rect to make space
+    clonedSvg.attr("viewBox", `0 0 ${width} ${newHeight}`);
+    clonedSvg.select("rect").attr("height", newHeight);
+
+    // 7. Create the text container in the cloned SVG
+    const textGroup = clonedSvg.append("text")
+      .attr("text-anchor", "end") // Aligns text to the right boundary
+      .attr("fill", "black")
+      .style("font-family", fontFamily)
+      .style("font-size", `${fontSize}px`);
+
+    // 8. Append each line as a <tspan>, progressively building upwards from the bottom
+    const bottomY = newHeight - 15; // Anchor 15px above the absolute bottom edge
+
+    lines.forEach((lineText, index) => {
+      const yOffset = bottomY - ((lines.length - 1 - index) * lineHeight);
+
+      textGroup.append("tspan")
+        .attr("x", width - paddingX) // Locks the right edge exactly 20px from the border
+        .attr("y", yOffset)
+        .text(lineText);
+    });
+
+    // 9. Generate Blob and trigger download
+    var svgBlob = new Blob([clonedSvgNode.outerHTML], {
       type: "image/svg+xml;charset=utf-8",
     });
     var svgUrl = URL.createObjectURL(svgBlob);
@@ -353,7 +425,7 @@ export function circlePacking(options) {
         const scale = iconSize / 960;
         labelGroup.append("path")
           .attr("d", specimenTagIconPath)
-          .style("fill", "#ffffffbb")
+          .style("fill", "black")
           .style("stroke", "#000000")
           .attr("stroke-width", 2)
           .attr("transform", `translate(0, ${d.r * 0.15}) scale(${scale}) translate(-480, -480)`);
