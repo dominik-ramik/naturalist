@@ -384,11 +384,17 @@ function backButton() {
 let ActionButtonWithMenu = function (initialVnode) {
   let menuId = "";
   let open = false;
+  let handleDocumentClick = null;
 
-  function attachMenuClosingEventListener() {
-    document.addEventListener(
-      "click",
-      function (event) {
+  return {
+    oninit: function (vnode) {
+      menuId =
+        "action_button_menu_" + (Math.random() + 1).toString(36).substring(2);
+      handleDocumentClick = function (event) {
+        if (!open) {
+          return;
+        }
+
         let thisDropdown = document.getElementById(menuId);
         if (!thisDropdown) {
           return;
@@ -401,20 +407,14 @@ let ActionButtonWithMenu = function (initialVnode) {
         }
 
         open = false;
-        //m.redraw();
-      },
-      { once: true }
-    );
-  }
-
-  return {
-    oninit: function (vnode) {
-      menuId =
-        "action_button_menu_" + (Math.random() + 1).toString(36).substring(2);
-      attachMenuClosingEventListener();
+        m.redraw();
+      };
     },
-    onupdate: function () {
-      attachMenuClosingEventListener();
+    oncreate: function () {
+      document.addEventListener("click", handleDocumentClick);
+    },
+    onremove: function () {
+      document.removeEventListener("click", handleDocumentClick);
     },
     view: function (vnode) {
       return m(".menu-action-button-with-menu-wrapper[id=" + menuId + "]", [

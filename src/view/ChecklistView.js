@@ -324,12 +324,10 @@ function circlePackingView(allTaxa, matchingTaxa) {
       });
 
       if (cachedData == null || cacheKey != oldQueryKey) {
-        console.log("recalc");
         oldQueryKey = cacheKey;
         cachedData = checklistDataForD3(Checklist.treefiedTaxa(allTaxa));
         assignLeavesCount(cachedData, matchingTaxa);
         shouldUpdate = true;
-        console.log(cachedData);
       }
 
       return {

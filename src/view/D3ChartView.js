@@ -8,20 +8,34 @@ export let D3ChartView = function (initialVnode) {
 
   const getEl = () => document.getElementById(uid);
 
+  function renderChart(forceUpdate) {
+    const el = getEl();
+    if (!el) {
+      return;
+    }
+
+    const nextOptions = options();
+    if (!forceUpdate && nextOptions.shouldUpdate === false) {
+      return;
+    }
+
+    el.innerHTML = "";
+    el.appendChild(chart(nextOptions));
+  }
+
   return {
     oninit: function (vnode) {},
     oncreate: function (vnode) {
-      getEl().appendChild(chart(options()));
-      m.redraw();
+      renderChart(true);
     },
     onupdate: function (vnode) {
-        getEl().innerHTML = "";
-        console.time("redraw");
-        getEl().appendChild(chart(options()));
-        console.timeEnd("redraw");
+      renderChart(false);
     },
     onbeforeremove: function (vnode) {
-      getEl().innerHTML = "";
+      const el = getEl();
+      if (el) {
+        el.innerHTML = "";
+      }
     },
     view: function (vnode) {
       return m(
