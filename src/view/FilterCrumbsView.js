@@ -1,8 +1,29 @@
+import dayjs from "dayjs";
 import m from "mithril";
 
 import { getGradedColor } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
+
+const selectableFilterTypes = ["text", "map regions", "badge"];
+const rangeFilterTypes = ["number", "date"];
+
+function formatDateValue(timestamp) {
+    const dateObj = dayjs(timestamp);
+    if (!dateObj.isValid()) {
+        return timestamp?.toString?.() || "";
+    }
+
+    return dateObj.format(Checklist.getCurrentDateFormat());
+}
+
+function formatRangeValue(type, value) {
+    if (type == "date") {
+        return formatDateValue(value);
+    }
+
+    return value?.toLocaleString?.() || value?.toString?.() || "";
+}
 
 export let FilterCrumbsView = {
     view: function() {
@@ -11,7 +32,7 @@ export let FilterCrumbsView = {
 
         types.forEach(function(type) {
             Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
-                if (Checklist.filter[type][dataPath].type == "text" || Checklist.filter[type][dataPath].type == "map regions" || Checklist.filter[type][dataPath].type == "badge") {
+                if (selectableFilterTypes.includes(Checklist.filter[type][dataPath].type)) {
                     Checklist.filter[type][dataPath].selected.forEach(function(selectedItem) {
                         if (Object.keys(Checklist.filter[type][dataPath].possible).indexOf(selectedItem) < 0) {
                             return;
@@ -27,15 +48,26 @@ export let FilterCrumbsView = {
 
                         crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: selectedItem, color: getGradedColor(type, "crumb") }));
                     });
-                } else if (Checklist.filter[type][dataPath].type == "number") {
+                } else if (
+                    ["number", "date"].includes(Checklist.filter[type][dataPath].type) &&
+                    Checklist.filter[type][dataPath].numeric.operation == ""
+                ) {
+                    Checklist.filter[type][dataPath].selected.forEach(function(selectedItem) {
+                        crumbs.push(m(Crumb, {
+                            type: type,
+                            category: Checklist.getMetaForDataPath(dataPath).searchCategory,
+                            dataPath: dataPath,
+                            title: formatRangeValue(Checklist.filter[type][dataPath].type, selectedItem),
+                            rawValue: selectedItem,
+                            color: getGradedColor(type, "crumb")
+                        }));
+                    });
+                } else if (rangeFilterTypes.includes(Checklist.filter[type][dataPath].type)) {
                     if (Checklist.filter[type][dataPath].numeric.operation != "") {
-
-                        let thresholdJoiner = "numeric_filter_and";
-                        if (Checklist.filter[type][dataPath].numeric.operation == "around") {
-                            thresholdJoiner = "numeric_filter_plusminus";
-                        }
-
-                        let title = Checklist.filter.numericFilterToHumanReadable(dataPath, Checklist.filter[type][dataPath].numeric.operation, Checklist.filter[type][dataPath].numeric.threshold1, Checklist.filter[type][dataPath].numeric.threshold2, true);
+                        let title =
+                            Checklist.filter[type][dataPath].type == "date"
+                                ? Checklist.filter.dateFilterToHumanReadable(dataPath, Checklist.filter[type][dataPath].numeric.operation, Checklist.filter[type][dataPath].numeric.threshold1, Checklist.filter[type][dataPath].numeric.threshold2, undefined, undefined, true)
+                                : Checklist.filter.numericFilterToHumanReadable(dataPath, Checklist.filter[type][dataPath].numeric.operation, Checklist.filter[type][dataPath].numeric.threshold1, Checklist.filter[type][dataPath].numeric.threshold2, undefined, undefined, true);
                         crumbs.push(m(Crumb, { type: type, category: Checklist.getMetaForDataPath(dataPath).searchCategory, dataPath: dataPath, title: title, color: getGradedColor(type, "crumb") }));
                     };
                 }
@@ -96,16 +128,27 @@ let Crumb = {
                     Checklist.filter.text = "";
                     Checklist.filter.commit();
                 } else {
-                    if (Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "text" || Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "map regions" || Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "badge") {
+                    if (
+                        ["number", "date"].includes(Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type) &&
+                        Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].numeric.operation == ""
+                    ) {
+                        const index = Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.indexOf(vnode.attrs.rawValue);
+                        if (index > -1) {
+                            Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.splice(index, 1);
+                            Checklist.filter.commit();
+                        }
+                    } else if (selectableFilterTypes.includes(Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type)) {
                         const index = Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.indexOf(vnode.attrs.title);
                         if (index > -1) { // only splice array when item is found
                             Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.splice(index, 1);
                             Checklist.filter.commit();
                         }
-                    } else if (Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type == "number") {
+                    } else if (rangeFilterTypes.includes(Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type)) {
+                        Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected = [];
                         Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].numeric.operation = "";
                         Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].numeric.threshold1 = null;
                         Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].numeric.threshold2 = null;
+                        Checklist.filter.commit();
                     }
                 }
             }

@@ -413,6 +413,11 @@ export let Checklist = {
     return lang;
   },
 
+  getCurrentDateFormat: function (langCode) {
+    const resolvedLang = langCode || Checklist.getCurrentLanguage();
+    return Checklist._data?.versions?.[resolvedLang]?.dateFormat || "YYYY-MM-DD";
+  },
+
   getReferences: function () {
     return Checklist.getData().references;
   },
@@ -573,9 +578,13 @@ export let Checklist = {
                 Checklist.filter[dataType][dataPath].all.push(value);
               }
             });
-          } else if (Checklist.filter.data[dataPath].type == "number") {
+          } else if (
+            ["number", "date"].includes(Checklist.filter.data[dataPath].type)
+          ) {
             leafData.forEach(function (value) {
-              Checklist.filter[dataType][dataPath].all.push(value);
+              if (typeof value === "number" && !isNaN(value)) {
+                Checklist.filter[dataType][dataPath].all.push(value);
+              }
             });
           }
         });

@@ -1,7 +1,58 @@
+import dayjs from "dayjs";
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
+
+const selectableFilterTypes = ["text", "map regions", "badge"];
+const rangeFilterTypes = ["number", "date"];
+const exactSelectableRangeTypes = ["number", "date"];
+
+function getSortedUniqueNumericValues(values) {
+  return [...new Set(
+    (values || []).filter(
+      (value) => typeof value === "number" && !isNaN(value)
+    )
+  )].sort((a, b) => a - b);
+}
+
+function buildHumanReadableRangeFilter(
+  dataPath,
+  operation,
+  threshold1,
+  threshold2,
+  formatThreshold,
+  formatPre,
+  formatPost,
+  ommitSearchCategory
+) {
+  let title = "";
+  if (!ommitSearchCategory) {
+    title +=
+      (formatPre ? formatPre : "") +
+      Checklist.getMetaForDataPath(dataPath).searchCategory +
+      (formatPost ? formatPost : "") +
+      " ";
+  }
+
+  title += t("numeric_filter_" + operation + "_short") + " ";
+  title += formatThreshold(threshold1);
+
+  if (Filter.numericFilters[operation].values > 1) {
+    switch (operation) {
+      case "between":
+        title += " " + t("numeric_filter_and") + " ";
+        break;
+      case "around":
+        title += " " + t("numeric_filter_plusminus") + " ";
+      default:
+        break;
+    }
+    title += formatThreshold(threshold2);
+  }
+
+  return title;
+}
 
 // The filter object and all its methods, as previously in Checklist.js
 export let Filter = {
@@ -28,7 +79,13 @@ export let Filter = {
 
     ["taxa", "data"].forEach(type => {
       Object.keys(Filter[type]).forEach(filterKey => {
-        if (Filter[type][filterKey].selected.length > 0) {
+        if (
+          Filter[type][filterKey].selected.length > 0 ||
+          (
+            rangeFilterTypes.includes(Filter[type][filterKey].type) &&
+            Filter[type][filterKey].numeric.operation != ""
+          )
+        ) {
           count++;
         }
       })
@@ -44,20 +101,29 @@ export let Filter = {
     ["taxa", "data"].forEach(function (type) {
       if (query[type]) {
         Object.keys(query[type]).forEach(function (dataPath) {
+          const filterDef = Filter[type][dataPath];
+          const queryValue = query[type][dataPath];
+
           if (
-            Filter[type][dataPath].type == "text" ||
-            Filter[type][dataPath].type == "map regions" ||
-            Filter[type][dataPath].type == "badge"
+            selectableFilterTypes.includes(filterDef.type) ||
+            (
+              exactSelectableRangeTypes.includes(filterDef.type) &&
+              Array.isArray(queryValue)
+            )
           ) {
-            Filter[type][dataPath].selected = query[type][dataPath];
-          } else if (Filter[type][dataPath].type == "number") {
-            Filter[type][dataPath].numeric.operation =
-              query[type][dataPath].o;
-            Filter[type][dataPath].numeric.threshold1 =
-              query[type][dataPath].a;
-            if (query[type][dataPath].hasOwnProperty("b")) {
-              Filter[type][dataPath].numeric.threshold2 =
-                query[type][dataPath].b;
+            filterDef.selected = queryValue;
+          } else if (
+            rangeFilterTypes.includes(filterDef.type) &&
+            queryValue &&
+            typeof queryValue === "object"
+          ) {
+            filterDef.numeric.operation =
+              queryValue.o;
+            filterDef.numeric.threshold1 =
+              queryValue.a;
+            if (queryValue.hasOwnProperty("b")) {
+              filterDef.numeric.threshold2 =
+                queryValue.b;
             }
           }
         });
@@ -85,12 +151,16 @@ export let Filter = {
     ["taxa", "data"].forEach(function (type) {
       Object.keys(Filter[type]).forEach(function (dataPath) {
         if (
-          Filter[type][dataPath].type == "text" ||
-          Filter[type][dataPath].type == "map regions" ||
-          Filter[type][dataPath].type == "badge"
+          selectableFilterTypes.includes(Filter[type][dataPath].type)
         ) {
           countFilters += Filter[type][dataPath].selected.length;
-        } else if (Filter[type][dataPath].type == "number") {
+        } else if (
+          exactSelectableRangeTypes.includes(Filter[type][dataPath].type) &&
+          Filter[type][dataPath].selected.length > 0 &&
+          !Filter[type][dataPath].numeric.operation
+        ) {
+          countFilters++;
+        } else if (rangeFilterTypes.includes(Filter[type][dataPath].type)) {
           if (Filter[type][dataPath].numeric.operation != "") {
             countFilters++;
           }
@@ -110,30 +180,50 @@ export let Filter = {
     formatPost,
     ommitSearchCategory
   ) {
-    let title = "";
-    if (!ommitSearchCategory) {
-      title +=
-        (formatPre ? formatPre : "") +
-        Checklist.getMetaForDataPath(dataPath).searchCategory +
-        (formatPost ? formatPost : "") +
-        " ";
-    }
-    title += t("numeric_filter_" + operation + "_short") + " ";
-    title += threshold1.toLocaleString();
-    if (Filter.numericFilters[operation].values > 1) {
-      switch (operation) {
-        case "between":
-          title += " " + t("numeric_filter_and") + " ";
-          break;
-        case "around":
-          title += " " + t("numeric_filter_plusminus") + " ";
-        default:
-          break;
-      }
-      title += threshold2.toLocaleString();
-    }
+    return buildHumanReadableRangeFilter(
+      dataPath,
+      operation,
+      threshold1,
+      threshold2,
+      (threshold) =>
+        threshold === null || threshold === undefined
+          ? ""
+          : threshold.toLocaleString(),
+      formatPre,
+      formatPost,
+      ommitSearchCategory
+    );
+  },
+  dateFilterToHumanReadable: function (
+    dataPath,
+    operation,
+    threshold1,
+    threshold2,
+    formatPre,
+    formatPost,
+    ommitSearchCategory
+  ) {
+    const dateFormat = Checklist.getCurrentDateFormat();
 
-    return title;
+    return buildHumanReadableRangeFilter(
+      dataPath,
+      operation,
+      threshold1,
+      threshold2,
+      (threshold) => {
+        if (threshold === null || threshold === undefined) {
+          return "";
+        }
+
+        const dateObj = dayjs(threshold);
+        return dateObj.isValid()
+          ? dateObj.format(dateFormat)
+          : threshold.toString();
+      },
+      formatPre,
+      formatPost,
+      ommitSearchCategory
+    );
   },
   numericFilters: {
     equal: {
@@ -205,13 +295,11 @@ export let Filter = {
           return; //delay this dataPath
         } else {
           if (
-            Filter[dataType][dataPath].type == "text" ||
-            Filter[dataType][dataPath].type == "map regions" ||
-            Filter[dataType][dataPath].type == "badge"
+            selectableFilterTypes.includes(Filter[dataType][dataPath].type)
           ) {
             Filter[dataType][dataPath].possible = {};
           }
-          if (Filter[dataType][dataPath].type == "number") {
+          if (rangeFilterTypes.includes(Filter[dataType][dataPath].type)) {
             Filter[dataType][dataPath].possible = [];
             Filter[dataType][dataPath].min = null;
             Filter[dataType][dataPath].max = null;
@@ -253,9 +341,7 @@ export let Filter = {
 
         let leafData = Checklist.getAllLeafData(value, false, dataPath);
         if (
-          Filter.data[dataPath].type == "text" ||
-          Filter.data[dataPath].type == "map regions" ||
-          Filter.data[dataPath].type == "badge"
+          selectableFilterTypes.includes(Filter.data[dataPath].type)
         ) {
           leafData.forEach(function (value) {
             if (typeof value === "string" && value.trim() == "") {
@@ -269,29 +355,27 @@ export let Filter = {
             }
             Filter.data[dataPath].possible[value]++;
           });
-        } else if (Filter.data[dataPath].type == "number") {
+        } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
           leafData.forEach(function (value) {
-            if (
-              Filter.data[dataPath].min === null ||
-              value < Filter.data[dataPath].min
-            ) {
-              Filter.data[dataPath].min = value;
+            if (typeof value !== "number" || isNaN(value)) {
+              return;
             }
-            if (
-              Filter.data[dataPath].max === null ||
-              value > Filter.data[dataPath].max
-            ) {
-              Filter.data[dataPath].max = value;
-            }
-
             Filter.data[dataPath].possible.push(value);
+            Filter.data[dataPath].min =
+              Filter.data[dataPath].min === null
+                ? value
+                : Math.min(Filter.data[dataPath].min, value);
+            Filter.data[dataPath].max =
+              Filter.data[dataPath].max === null
+                ? value
+                : Math.max(Filter.data[dataPath].max, value);
           });
         }
       });
     });
 
     Object.keys(Filter.data).forEach(function (dataPath) {
-      if (Filter.data[dataPath].type == "number") {
+      if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
         if (
           Filter.data[dataPath].globalMin === undefined ||
           Filter.data[dataPath].globalMin === null
@@ -306,6 +390,15 @@ export let Filter = {
           Filter.data[dataPath].globalMax =
             Filter.data[dataPath].max;
         }
+
+        if (
+          exactSelectableRangeTypes.includes(Filter.data[dataPath].type) &&
+          Filter.data[dataPath].numeric.operation != ""
+        ) {
+          Filter.data[dataPath].selected = getSortedUniqueNumericValues(
+            Filter.data[dataPath].possible
+          );
+        }
       }
     });
   },
@@ -315,9 +408,7 @@ export let Filter = {
     Object.keys(key).forEach(function (type) {
       Object.keys(Filter[type]).forEach(function (dataPath) {
         if (
-          Filter[type][dataPath].type == "text" ||
-          Filter[type][dataPath].type == "map regions" ||
-          Filter[type][dataPath].type == "badge"
+          selectableFilterTypes.includes(Filter[type][dataPath].type)
         ) {
           if (Filter[type][dataPath].selected.length > 0) {
             key[type][dataPath] = [];
@@ -327,7 +418,16 @@ export let Filter = {
           ) {
             key[type][dataPath].push(selected);
           });
-        } else if (Filter[type][dataPath].type == "number") {
+        } else if (
+          exactSelectableRangeTypes.includes(Filter[type][dataPath].type) &&
+          Filter[type][dataPath].selected.length > 0 &&
+          !Filter[type][dataPath].numeric.operation
+        ) {
+          key[type][dataPath] = [];
+          Filter[type][dataPath].selected.forEach(function (selected) {
+            key[type][dataPath].push(selected);
+          });
+        } else if (rangeFilterTypes.includes(Filter[type][dataPath].type)) {
           if (Filter[type][dataPath].numeric.operation != "") {
             key[type][dataPath] = {};
             key[type][dataPath].o =
@@ -591,11 +691,21 @@ export let Filter = {
     });
 
     Object.keys(Filter.data).forEach(dataPath => {
-      if (Filter.data[dataPath].type === "number") {
+      if (
+        exactSelectableRangeTypes.includes(Filter.data[dataPath].type) &&
+        Filter.data[dataPath].selected.length > 0 &&
+        !Filter.data[dataPath].numeric.operation
+      ) {
+        active.data.push({
+          dataPath,
+          type: "date",
+          selected: Filter.data[dataPath].selected
+        });
+      } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
         if (Filter.data[dataPath].numeric.operation) {
           active.data.push({
             dataPath,
-            type: "number",
+            type: Filter.data[dataPath].type,
             numeric: Filter.data[dataPath].numeric
           });
         }
@@ -632,7 +742,14 @@ export let Filter = {
 
       if (value === null) return false;
 
-      if (filter.type === "number") {
+      if (
+        exactSelectableRangeTypes.includes(filter.type) &&
+        (!filter.numeric || !filter.numeric.operation)
+      ) {
+        let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
+        let found = leafData.some(v => filter.selected.includes(v));
+        if (!found) return false;
+      } else if (rangeFilterTypes.includes(filter.type)) {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
         let passes = leafData.some(v =>
           Filter.numericFilters[filter.numeric.operation].comparer(

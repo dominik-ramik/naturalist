@@ -136,6 +136,8 @@
   "numeric_apply_show_results": "Show {0} results",
   "histogram_all_data": "All data",
   "histogram_displayed_data": "Currently displayed data",
+  "histogram_toggle_show": "Show distribution",
+  "histogram_toggle_hide": "Hide distribution",
   "stats_min": "Minimum",
   "stats_max": "Maximum",
   "stats_avg": "Average",

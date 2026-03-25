@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 
@@ -254,36 +255,70 @@ export let Settings = {
               Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "badge" ||
               Checklist.getMetaForDataPath(dataPath).formatting ==
-              "map regions"
+              "map regions" ||
+              (
+                ["number", "date"].includes(
+                  Checklist.getMetaForDataPath(dataPath).formatting
+                ) &&
+                Array.isArray(itemObject[type][dataPath])
+              )
             ) {
+              let displayValues = itemObject[type][dataPath];
+
+              if (Checklist.getMetaForDataPath(dataPath).formatting == "date") {
+                displayValues = itemObject[type][dataPath].map((value) => {
+                  const dateObj = dayjs(value);
+                  return dateObj.isValid()
+                    ? dateObj.format(Checklist.getCurrentDateFormat())
+                    : value?.toString?.() || "";
+                });
+              } else if (
+                Checklist.getMetaForDataPath(dataPath).formatting == "number"
+              ) {
+                displayValues = itemObject[type][dataPath].map((value) =>
+                  value?.toLocaleString?.() || value?.toString?.() || ""
+                );
+              }
+
               names.push(
                 categoryName +
                 " " +
                 t("is_list_joiner") +
                 " " +
                 formatList(
-                  itemObject[type][dataPath],
+                  displayValues,
                   t("or_list_joiner"),
                   usePlainTextOutput ? "" : "<strong>",
                   usePlainTextOutput ? "" : "</strong>"
                 )
               );
             } else if (
-              Checklist.getMetaForDataPath(dataPath).formatting == "number"
+              ["number", "date"].includes(
+                Checklist.getMetaForDataPath(dataPath).formatting
+              )
             ) {
               let operation = itemObject[type][dataPath].o;
               let t1 = itemObject[type][dataPath].a;
               let t2 = itemObject[type][dataPath].b;
 
               names.push(
-                Checklist.filter.numericFilterToHumanReadable(
-                  dataPath,
-                  operation,
-                  t1,
-                  t2,
-                  usePlainTextOutput ? "" : "<strong>",
-                  usePlainTextOutput ? "" : "</strong>"
-                )
+                Checklist.getMetaForDataPath(dataPath).formatting == "date"
+                  ? Checklist.filter.dateFilterToHumanReadable(
+                    dataPath,
+                    operation,
+                    t1,
+                    t2,
+                    usePlainTextOutput ? "" : "<strong>",
+                    usePlainTextOutput ? "" : "</strong>"
+                  )
+                  : Checklist.filter.numericFilterToHumanReadable(
+                    dataPath,
+                    operation,
+                    t1,
+                    t2,
+                    usePlainTextOutput ? "" : "<strong>",
+                    usePlainTextOutput ? "" : "</strong>"
+                  )
               );
             }
           });

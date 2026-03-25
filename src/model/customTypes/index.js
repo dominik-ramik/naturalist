@@ -18,6 +18,7 @@ import { readerText } from "./ReaderText.js";
 import { readerMarkdown } from "./ReaderMarkdown.js";
 import { readerTaxon } from "./ReaderTaxon.js";
 import { readerNumber } from "./ReaderNumber.js";
+import { readerDate } from "./ReaderDate.js";
 import { readerBadge } from "./ReaderBadge.js";
 import { helpers } from "./helpers.js";
 import { readerImage } from "./ReaderImage.js";
@@ -29,6 +30,7 @@ const dataReaders = buildReaders(
   readerMarkdown,
   readerTaxon,
   readerNumber,
+  readerDate,
   readerBadge,
   readerImage,
   readerMapRegions,

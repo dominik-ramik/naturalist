@@ -178,6 +178,19 @@
   background-color: var(--hover-background);
 }
 
+.filter-dropdown .distribution-toggle {
+  text-align: center;
+  cursor: pointer;
+  padding-top: var(--pad-large);
+  padding-bottom: var(--pad-large);
+  font-size: 110%;
+  border-top: 1px solid #e9e9e9;
+}
+
+.filter-dropdown .distribution-toggle:hover {
+  background-color: var(--hover-background);
+}
+
 .filter-dropdown .options .no-items-filter {
   text-align: center;
   font-style: italic;

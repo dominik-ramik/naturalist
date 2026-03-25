@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import dayjs from "dayjs";
 import m from "mithril";
 
 import {
@@ -8,6 +9,133 @@ import {
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
+
+const selectableFilterTypes = ["text", "badge", "map regions"];
+const rangeFilterTypes = ["number", "date"];
+const dateInputFormat = "YYYY-MM-DD";
+const numberFilterOperations = [
+  "list",
+  "equal",
+  "lesser",
+  "lesserequal",
+  "greater",
+  "greaterequal",
+  "between",
+  "around",
+];
+const dateFilterOperations = [
+  "list",
+  "equal",
+  "lesserequal",
+  "greaterequal",
+  "between",
+];
+
+function normalizeDateOperation(operation) {
+  if (operation == "lesser") {
+    return "lesserequal";
+  }
+
+  if (operation == "greater") {
+    return "greaterequal";
+  }
+
+  if (!operation || !dateFilterOperations.includes(operation)) {
+    return "list";
+  }
+
+  return operation;
+}
+
+function getDateOperationIcon(operation) {
+  if (operation == "list") {
+    return "list";
+  }
+
+  return Checklist.filter.numericFilters[operation].icon;
+}
+
+function normalizeNumberOperation(operation) {
+  if (!operation || !numberFilterOperations.includes(operation)) {
+    return "list";
+  }
+
+  return operation;
+}
+
+function getNumberOperationIcon(operation) {
+  if (operation == "list") {
+    return "list";
+  }
+
+  return Checklist.filter.numericFilters[operation].icon;
+}
+
+function getSortedUniqueNumericValues(values) {
+  return [...new Set(
+    (values || []).filter(
+      (value) => typeof value === "number" && !isNaN(value)
+    )
+  )].sort((a, b) => a - b);
+}
+
+function getNumericValueCounts(values) {
+  let counts = {};
+
+  (values || []).forEach((value) => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return;
+    }
+
+    counts[value] = (counts[value] || 0) + 1;
+  });
+
+  return counts;
+}
+
+function formatNumericValue(value) {
+  return value?.toLocaleString?.() || value?.toString?.() || "";
+}
+
+function getSortedUniqueDateValues(values) {
+  return [...new Set(
+    (values || []).filter(
+      (value) => typeof value === "number" && !isNaN(value)
+    )
+  )].sort((a, b) => a - b);
+}
+
+function getDateValueCounts(values) {
+  let counts = {};
+
+  (values || []).forEach((value) => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return;
+    }
+
+    counts[value] = (counts[value] || 0) + 1;
+  });
+
+  return counts;
+}
+
+function formatDateValue(timestamp) {
+  const dateObj = dayjs(timestamp);
+  if (!dateObj.isValid()) {
+    return timestamp?.toString?.() || "";
+  }
+
+  return dateObj.format(Checklist.getCurrentDateFormat());
+}
+
+function getDateGroupTitle(timestamp) {
+  const dateObj = dayjs(timestamp);
+  if (!dateObj.isValid()) {
+    return "";
+  }
+
+  return dateObj.format("YYYY");
+}
 
 export let FilterDropdown = function (initialVnode) {
   let _open = false;
@@ -67,23 +195,42 @@ export let FilterDropdown = function (initialVnode) {
     },
     view: function (vnode) {
       let detectedUiType = "text";
+      let filterDef = Checklist.filter[type][dataPath];
 
       if (
         type == "data" &&
         Checklist.getDataMeta()[dataPath].formatting == "number"
       ) {
         detectedUiType = "number";
+      } else if (
+        type == "data" &&
+        Checklist.getDataMeta()[dataPath].formatting == "date"
+      ) {
+        detectedUiType = "date";
       }
 
-      let isSelectableAndHasSelectedItems = ["text", "badge", "map regions"].includes(Checklist.filter[type][dataPath].type) && Checklist.filter[type][dataPath].selected.length > 0;
+      let isSelectableAndHasSelectedItems =
+        selectableFilterTypes.includes(filterDef.type) &&
+        filterDef.selected.length > 0;
+      let hasSelectedDates =
+        ["number", "date"].includes(filterDef.type) && filterDef.selected.length > 0;
+      let count =
+        filterDef.type == "date"
+          ? getSortedUniqueDateValues(filterDef.possible).length
+          : filterDef.type == "number"
+            ? getSortedUniqueNumericValues(filterDef.possible).length
+          : Object.keys(filterDef.possible).length;
 
       let showOrb = false;
       if (isSelectableAndHasSelectedItems) {
         showOrb = true;
       }
+      else if (hasSelectedDates) {
+        showOrb = true;
+      }
       else if (
-        Checklist.filter[type][dataPath].type == "number" &&
-        Checklist.filter[type][dataPath].numeric.operation != ""
+        rangeFilterTypes.includes(filterDef.type) &&
+        filterDef.numeric.operation != ""
       ) {
         showOrb = true;
       }
@@ -115,7 +262,7 @@ export let FilterDropdown = function (initialVnode) {
               m(".title", title),
               m(
                 ".count",
-                Object.keys(Checklist.filter[type][dataPath].possible).length
+                count
               ),
               type == "taxa"
                 ? m(
@@ -202,6 +349,14 @@ let Dropdown = function (initialVnode) {
           break;
         case "number":
           innerDropdown = m(DropdownNumber, {
+            openHandler: vnode.attrs.openHandler,
+            type: type,
+            dataPath: dataPath,
+            dropdownId: dropdownId,
+          });
+          break;
+        case "date":
+          innerDropdown = m(DropdownDate, {
             openHandler: vnode.attrs.openHandler,
             type: type,
             dataPath: dataPath,
@@ -557,11 +712,19 @@ let DropdownNumber = function (initialVnode) {
   let actualOperation = "";
   let thresholdsShown = 0;
   let dropdownId = initialVnode.attrs.dropdownId;
+  let filter = "";
+  let initialOverflowLimit = 100;
+  let itemsOverflowLimit = initialOverflowLimit;
+  let showDistribution = false;
+
+  function isListMode() {
+    return actualOperation == "list";
+  }
 
   function countResults() {
     let results = 0;
 
-    if (actualOperation == "") {
+    if (isListMode()) {
       return 0;
     }
 
@@ -597,7 +760,15 @@ let DropdownNumber = function (initialVnode) {
   }
 
   function canApply() {
-    return inputsOk() && countResults() > 0;
+    return !isListMode() && inputsOk() && countResults() > 0;
+  }
+
+  function matchesFilter(value) {
+    if (filter == "") {
+      return true;
+    }
+
+    return textLowerCaseAccentless(formatNumericValue(value)).includes(filter);
   }
 
   function numericInput(thresholdNumber, min, max) {
@@ -673,6 +844,58 @@ let DropdownNumber = function (initialVnode) {
           actualThresholds[thresholdNumber] = inputValue;
         },
       }
+    );
+  }
+
+  function commitSelectedNumbers(mutator) {
+    actualOperation = "list";
+    initialThresholds = [null, null, null];
+    actualThresholds = [null, null, null];
+    Checklist.filter.delayCommitDataPath = "data." + dataPath;
+    Checklist.filter.data[dataPath].numeric.operation = "";
+    Checklist.filter.data[dataPath].numeric.threshold1 = null;
+    Checklist.filter.data[dataPath].numeric.threshold2 = null;
+    Checklist.filter.data[dataPath].selected = getSortedUniqueNumericValues(
+      mutator([...(Checklist.filter.data[dataPath].selected || [])])
+    );
+    Checklist.filter.commit();
+  }
+
+  function createNumericDropdownItems(
+    items,
+    state,
+    counts,
+    conditionFn,
+    updateFn
+  ) {
+    let visibleItems = getSortedUniqueNumericValues(items).filter((item) => {
+      return matchesFilter(item) && conditionFn(item);
+    });
+
+    visibleItems.forEach((item) => updateFn(item));
+
+    return visibleItems.map((item) =>
+      m(DropdownCheckItemSkeleton, {
+        item: formatNumericValue(item),
+        state: state,
+        count: counts[item] || 0,
+        action:
+          state == "inactive"
+            ? undefined
+            : function () {
+                commitSelectedNumbers((selectedValues) => {
+                  if (state == "checked") {
+                    return selectedValues.filter((value) => value !== item);
+                  }
+
+                  if (state == "unchecked") {
+                    return [...selectedValues, item];
+                  }
+
+                  return selectedValues;
+                });
+              },
+      })
     );
   }
 
@@ -782,26 +1005,39 @@ let DropdownNumber = function (initialVnode) {
       .style("opacity", 0.6);
   }
 
+  function redrawHistogramIfVisible() {
+    if (isListMode() && !showDistribution) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      drawHistogram(
+        Checklist.filter.data[dataPath].all,
+        Checklist.filter.data[dataPath].possible
+      );
+    }, 0);
+  }
+
 
   return {
     oninit: function (vnode) {
       dataPath = vnode.attrs.dataPath;
+      itemsOverflowLimit = initialOverflowLimit;
       initialThresholds[1] =
         Checklist.filter.data[vnode.attrs.dataPath].numeric.threshold1;
       initialThresholds[2] =
         Checklist.filter.data[vnode.attrs.dataPath].numeric.threshold2;
       actualThresholds = [null, initialThresholds[1], initialThresholds[2]];
-      actualOperation =
-        Checklist.filter.data[vnode.attrs.dataPath].numeric.operation;
+      actualOperation = normalizeNumberOperation(
+        Checklist.filter.data[vnode.attrs.dataPath].numeric.operation
+      );
+      showDistribution = !isListMode();
     },
     oncreate: function () {
-      drawHistogram(
-        Checklist.filter.data[dataPath].all,
-        Checklist.filter.data[dataPath].possible
-      );
+      redrawHistogramIfVisible();
     },
     onupdate: function () {
-      //drawChart();
+      redrawHistogramIfVisible();
     },
     view: function (vnode) {
       let dataPath = "";
@@ -811,6 +1047,10 @@ let DropdownNumber = function (initialVnode) {
       color = vnode.attrs.color;
 
       let inputUi = null;
+      let totalItems = 0;
+      let itemsOverflowing = false;
+      let filteredPossible = [];
+      let totalPossibleUnchecked = 0;
 
       thresholdsShown = 0;
       let distinct = new Set(Checklist.filter.data[dataPath].possible).size;
@@ -831,11 +1071,16 @@ let DropdownNumber = function (initialVnode) {
         sum / Checklist.filter.data[dataPath].possible.length || 0,
         2
       );
+      let possibleCounts = getNumericValueCounts(
+        Checklist.filter.data[dataPath].possible
+      );
+      let selectedValues = Checklist.filter.data[dataPath].selected || [];
+      let allValues = getSortedUniqueNumericValues(Checklist.filter.data[dataPath].all);
+      let possibleValues = getSortedUniqueNumericValues(
+        Checklist.filter.data[dataPath].possible
+      );
 
       switch (actualOperation) {
-        case "":
-          inputUi = [m(".label1.centered", t("numeric_filter_select"))];
-          break;
         case "equal":
           inputUi = [
             m(".label1", t("numeric_filter_equal")),
@@ -886,9 +1131,53 @@ let DropdownNumber = function (initialVnode) {
           break;
       }
 
+      let showSelected = false;
+      let selected = createNumericDropdownItems(
+        selectedValues,
+        "checked",
+        possibleCounts,
+        () => true,
+        () => {
+          showSelected = true;
+        }
+      );
+
+      let showPossible = false;
+      let possible = createNumericDropdownItems(
+        possibleValues,
+        "unchecked",
+        possibleCounts,
+        (item) =>
+          selectedValues.indexOf(item) < 0 && totalItems <= itemsOverflowLimit,
+        (item) => {
+          showPossible = true;
+          totalItems++;
+          totalPossibleUnchecked++;
+          filteredPossible.push(item);
+        }
+      );
+
+      let showImpossible = false;
+      let impossible = createNumericDropdownItems(
+        allValues.filter(
+          (item) =>
+            !Object.prototype.hasOwnProperty.call(possibleCounts, item) &&
+            selectedValues.indexOf(item) < 0
+        ),
+        "inactive",
+        possibleCounts,
+        () => totalItems <= itemsOverflowLimit,
+        () => {
+          showImpossible = true;
+          totalItems++;
+        }
+      );
+
+      itemsOverflowing = totalItems > itemsOverflowLimit;
+
       return m(".inner-dropdown-area.numeric", [
         m(".numeric-filter-buttons", [
-          Object.keys(Checklist.filter.numericFilters).map(function (
+          numberFilterOperations.map(function (
             filterKey
           ) {
             return [
@@ -898,112 +1187,769 @@ let DropdownNumber = function (initialVnode) {
                 {
                   onclick: function () {
                     actualOperation = filterKey;
+                    if (isListMode()) {
+                      return;
+                    }
+
+                    showDistribution = true;
                     window.setTimeout(function () {
-                      document
-                        .getElementById("threshold1_" + dropdownId)
-                        .focus();
-                      document
-                        .getElementById("threshold1_" + dropdownId)
-                        .select();
+                      let input = document.getElementById(
+                        "threshold1_" + dropdownId
+                      );
+                      if (input) {
+                        input.focus();
+                        if (typeof input.select === "function") {
+                          input.select();
+                        }
+                      }
                     }, 200);
                   },
                 },
                 m(
                   "img[src=img/ui/search/numeric_" +
-                  Checklist.filter.numericFilters[filterKey].icon +
+                  getNumberOperationIcon(filterKey) +
                   ".svg]"
                 )
               ),
-              filterKey == "equal" || filterKey == "greaterequal"
+              filterKey == "list" ||
+              filterKey == "equal" ||
+              filterKey == "greaterequal"
                 ? m(".separator")
                 : null,
             ];
           }),
         ]),
-        m(".input-ui", [
-          inputUi,
-          actualOperation == ""
-            ? null
-            : m(
-              ".clear-button.clickable",
-              {
-                onclick: function () {
-                  actualOperation = "";
-                  Checklist.filter.data[dataPath].numeric.operation = "";
-                  initialThresholds = [null, null, null];
-                  Checklist.filter.data[dataPath].numeric.threshold1 = null;
-                  Checklist.filter.data[dataPath].numeric.threshold2 = null;
-                  Checklist.filter.commit();
-                  window.setTimeout(function () {
-                    drawHistogram(
-                      Checklist.filter.data[dataPath].all,
-                      Checklist.filter.data[dataPath].possible
-                    );
-                  }, 200);
+        !isListMode()
+          ? m(".input-ui", [
+              inputUi,
+              m(
+                ".clear-button.clickable",
+                {
+                  onclick: function () {
+                    actualOperation = "list";
+                    Checklist.filter.data[dataPath].selected = [];
+                    Checklist.filter.data[dataPath].numeric.operation = "";
+                    initialThresholds = [null, null, null];
+                    actualThresholds = [null, null, null];
+                    Checklist.filter.data[dataPath].numeric.threshold1 = null;
+                    Checklist.filter.data[dataPath].numeric.threshold2 = null;
+                    Checklist.filter.commit();
+                  },
                 },
-              },
-              m("img[src=img/ui/search/clear_filter_dark.svg]")
-            ),
-        ]),
-        actualOperation == ""
+                m("img[src=img/ui/search/clear_filter_dark.svg]")
+              ),
+            ])
+          : null,
+        isListMode()
           ? null
           : m(
-            ".apply.clickable" +
-            (actualOperation == "" || !canApply() ? ".inactive" : ""),
-            {
-              onclick: function () {
-                if (actualOperation != "" && canApply()) {
-                  Checklist.filter.data[dataPath].numeric.operation =
-                    actualOperation;
-                  Checklist.filter.data[dataPath].numeric.threshold1 =
-                    actualThresholds[1];
-                  Checklist.filter.data[dataPath].numeric.threshold2 =
-                    actualThresholds[2];
-                  vnode.attrs.openHandler(false);
-                  Checklist.filter.commit();
-                }
+              ".apply.clickable" +
+              (isListMode() || !canApply() ? ".inactive" : ""),
+              {
+                onclick: function () {
+                  if (!isListMode() && canApply()) {
+                    let comparer =
+                      Checklist.filter.numericFilters[actualOperation].comparer;
+                    Checklist.filter.data[dataPath].selected =
+                      getSortedUniqueNumericValues(
+                        Checklist.filter.data[dataPath].possible.filter(
+                          (value) =>
+                            comparer(value, actualThresholds[1], actualThresholds[2])
+                        )
+                      );
+                    Checklist.filter.data[dataPath].numeric.operation =
+                      actualOperation;
+                    Checklist.filter.data[dataPath].numeric.threshold1 =
+                      actualThresholds[1];
+                    Checklist.filter.data[dataPath].numeric.threshold2 =
+                      actualThresholds[2];
+                    vnode.attrs.openHandler(false);
+                    Checklist.filter.commit();
+                  }
+                },
               },
-            },
-            countResults() == 0
-              ? t("numeric_apply_show_results_no_results")
-              : t("numeric_apply_show_results", [countResults()])
-          ),
-        m(".histogram-wrap", [
-          m(
-            ".histogram#histogram_" +
-            dropdownId,
-            {
-              onclick: function (e) {
-                this.classList.toggle("fullscreen");
-                this.getElementsByTagName("svg")[0].classList.toggle(
-                  "clickable"
-                );
-                e.preventDefault();
-                e.stopPropagation();
-              },
-            }
-          ),
-          m(".legend", [
-            m(".legend-item", [
-              m(".map-fill[style=background-color: #d3d3d3]"),
-              m(".map-legend-title", t("histogram_all_data")),
-            ]),
-            m(".legend-item", [
+              countResults() == 0
+                ? t("numeric_apply_show_results_no_results")
+                : t("numeric_apply_show_results", [countResults()])
+            ),
+        isListMode()
+          ? m(
+              ".search-filter",
               m(
-                ".map-fill[style=background-color: " +
-                Checklist.getThemeHsl("light") +
-                "]"
+                "input.options-search[type=search][placeholder=" +
+                t("search") +
+                "][id=" +
+                vnode.attrs.dropdownId +
+                "_text]",
+                {
+                  oninput: function () {
+                    filter = this.value
+                      .toLowerCase()
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "");
+                  },
+                }
+              )
+            )
+          : null,
+        isListMode()
+          ? m(".options", [
+              showSelected ? m(".options-section", selected) : null,
+              showPossible ? m(".options-section", possible) : null,
+              showImpossible ? m(".options-section", impossible) : null,
+              itemsOverflowing
+                ? m(
+                    ".show-next-items",
+                    {
+                      onclick: function () {
+                        itemsOverflowLimit =
+                          itemsOverflowLimit + initialOverflowLimit;
+                      },
+                    },
+                    t("next_items_dropdown", [initialOverflowLimit])
+                  )
+                : null,
+              showSelected + showPossible + showImpossible == 0
+                ? m(".no-items-filter", t("no_items_filter"))
+                : null,
+            ])
+          : null,
+        isListMode() && filter.length > 0 && totalPossibleUnchecked > 1
+          ? m(
+              ".apply",
+              {
+                onclick: function () {
+                  commitSelectedNumbers((selectedValues) => {
+                    return [...selectedValues, ...filteredPossible];
+                  });
+                  vnode.attrs.openHandler(false);
+                },
+              },
+              t("check_all_shown")
+            )
+          : null,
+        isListMode()
+          ? m(
+              ".distribution-toggle.clickable",
+              {
+                onclick: function () {
+                  showDistribution = !showDistribution;
+                },
+              },
+              showDistribution
+                ? t("histogram_toggle_hide")
+                : t("histogram_toggle_show")
+            )
+          : null,
+        !isListMode() || showDistribution
+          ? m(".histogram-wrap", [
+              m(
+                ".histogram#histogram_" +
+                dropdownId,
+                {
+                  onclick: function (e) {
+                    let svg = this.getElementsByTagName("svg")[0];
+                    this.classList.toggle("fullscreen");
+                    if (svg) {
+                      svg.classList.toggle("clickable");
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                  },
+                }
               ),
-              m(".map-legend-title", t("histogram_displayed_data")),
-            ]),
-          ]),
+              m(".legend", [
+                m(".legend-item", [
+                  m(".map-fill[style=background-color: #d3d3d3]"),
+                  m(".map-legend-title", t("histogram_all_data")),
+                ]),
+                m(".legend-item", [
+                  m(
+                    ".map-fill[style=background-color: " +
+                    Checklist.getThemeHsl("light") +
+                    "]"
+                  ),
+                  m(".map-legend-title", t("histogram_displayed_data")),
+                ]),
+              ]),
+            ])
+          : null,
+        !isListMode() || showDistribution
+          ? m("ul.stats", [
+              min === null
+                ? null
+                : m("li", t("stats_min") + ": " + min.toLocaleString()),
+              max === null
+                ? null
+                : m("li", t("stats_max") + ": " + max.toLocaleString()),
+              m("li", t("stats_avg") + ": " + avg.toLocaleString()),
+              m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
+            ])
+          : null,
+        isListMode()
+          ? m(
+              ".apply",
+              {
+                onclick: function () {
+                  if (
+                    Checklist.filter.data[dataPath].numeric.operation != ""
+                  ) {
+                    commitSelectedNumbers((selectedValues) => selectedValues);
+                    vnode.attrs.openHandler(false);
+                    return;
+                  }
+
+                  vnode.attrs.openHandler(false);
+                },
+              },
+              t("apply_selection")
+            )
+          : null,
+      ]);
+    },
+  };
+};
+
+let DropdownDate = function (initialVnode) {
+  let dataPath = "";
+  let initialThresholds = [null, null, null];
+  let actualThresholds = [null, null, null];
+  let actualOperation = "";
+  let thresholdsShown = 0;
+  let dropdownId = initialVnode.attrs.dropdownId;
+  let filter = "";
+  let initialOverflowLimit = 100;
+  let itemsOverflowLimit = initialOverflowLimit;
+
+  function isListMode() {
+    return actualOperation == "list";
+  }
+
+  function countResults() {
+    let results = 0;
+
+    if (isListMode()) {
+      return 0;
+    }
+
+    let comparer = Checklist.filter.numericFilters[actualOperation].comparer;
+
+    Checklist.filter.data[dataPath].possible.forEach(function (value) {
+      if (comparer(value, actualThresholds[1], actualThresholds[2])) {
+        results++;
+      }
+    });
+
+    return results;
+  }
+
+  function inputsOk() {
+    let allInputsOk = true;
+
+    for (
+      let thresholdIndex = 0;
+      thresholdIndex < thresholdsShown;
+      thresholdIndex++
+    ) {
+      let index = thresholdIndex + 1;
+      if (
+        typeof actualThresholds[index] !== "number" ||
+        isNaN(actualThresholds[index])
+      ) {
+        allInputsOk = false;
+      }
+    }
+
+    return allInputsOk;
+  }
+
+  function canApply() {
+    return !isListMode() && inputsOk() && countResults() > 0;
+  }
+
+  function matchesFilter(timestamp) {
+    if (filter == "") {
+      return true;
+    }
+
+    return textLowerCaseAccentless(formatDateValue(timestamp)).includes(filter);
+  }
+
+  function formatDateForInput(timestamp) {
+    if (timestamp === null || timestamp === undefined) {
+      return null;
+    }
+
+    const dateObj = dayjs(timestamp);
+    return dateObj.isValid() ? dateObj.format(dateInputFormat) : null;
+  }
+
+  function dateInput(thresholdNumber, min, max) {
+    thresholdsShown++;
+
+    let currentValue = null;
+    if (initialThresholds[thresholdNumber] === null) {
+      currentValue = formatDateForInput(actualThresholds[thresholdNumber]);
+    } else {
+      currentValue = formatDateForInput(initialThresholds[thresholdNumber]);
+    }
+
+    let isInputError = false;
+    if (
+      actualThresholds[thresholdNumber] !== null &&
+      (
+        typeof actualThresholds[thresholdNumber] !== "number" ||
+        isNaN(actualThresholds[thresholdNumber])
+      )
+    ) {
+      isInputError = true;
+    }
+    if (
+      actualOperation == "between" &&
+      thresholdNumber == 2 &&
+      actualThresholds[thresholdNumber] !== null &&
+      actualThresholds[1] !== null &&
+      actualThresholds[thresholdNumber] < actualThresholds[1]
+    ) {
+      isInputError = true;
+    }
+
+    return m(
+      "input" +
+      (actualThresholds[thresholdNumber] !== null && isInputError
+        ? ".error"
+        : "") +
+      "[id=threshold" +
+      thresholdNumber +
+      "_" +
+      dropdownId +
+      "][type=date][name=threshold" +
+      thresholdNumber +
+      "]" +
+      (min ? "[min=" + min + "]" : "") +
+      (max ? "[max=" + max + "]" : "") +
+      (currentValue ? "[value=" + currentValue + "]" : ""),
+      {
+        oninput: function () {
+          initialThresholds[thresholdNumber] = null;
+
+          if (this.value.trim() == "") {
+            actualThresholds[thresholdNumber] = null;
+            return;
+          }
+
+          const parsedValue = dayjs(this.value);
+          actualThresholds[thresholdNumber] = parsedValue.isValid()
+            ? parsedValue.valueOf()
+            : null;
+        },
+      }
+    );
+  }
+
+  function commitSelectedDates(mutator) {
+    actualOperation = "list";
+    initialThresholds = [null, null, null];
+    actualThresholds = [null, null, null];
+    Checklist.filter.delayCommitDataPath = "data." + dataPath;
+    Checklist.filter.data[dataPath].numeric.operation = "";
+    Checklist.filter.data[dataPath].numeric.threshold1 = null;
+    Checklist.filter.data[dataPath].numeric.threshold2 = null;
+    Checklist.filter.data[dataPath].selected = getSortedUniqueDateValues(
+      mutator([...(Checklist.filter.data[dataPath].selected || [])])
+    );
+    Checklist.filter.commit();
+  }
+
+  function createDateDropdownItems(
+    items,
+    state,
+    counts,
+    conditionFn,
+    updateFn
+  ) {
+    let visibleItems = getSortedUniqueDateValues(items).filter((item) => {
+      return matchesFilter(item) && conditionFn(item);
+    });
+
+    visibleItems.forEach((item) => updateFn(item));
+
+    let currentGroup = "";
+    let checkItems = [];
+
+    visibleItems.forEach((item) => {
+      let thisGroup = getDateGroupTitle(item);
+
+      if (currentGroup != thisGroup) {
+        let itemsConcerned = visibleItems.filter(
+          (candidate) => getDateGroupTitle(candidate) == thisGroup
+        );
+
+        let groupCheckItem =
+          itemsConcerned.length == 0
+            ? null
+            : m(DropdownCheckItemSkeleton, {
+                state: state,
+                item: thisGroup,
+                count: "",
+                action:
+                  state == "inactive"
+                    ? undefined
+                    : function () {
+                        commitSelectedDates((selectedValues) => {
+                          if (state == "checked") {
+                            return selectedValues.filter(
+                              (value) => itemsConcerned.indexOf(value) < 0
+                            );
+                          }
+
+                          if (state == "unchecked") {
+                            return [...selectedValues, ...itemsConcerned];
+                          }
+
+                          return selectedValues;
+                        });
+                      },
+              });
+
+        if (groupCheckItem !== null) {
+          checkItems.push(groupCheckItem);
+        }
+
+        currentGroup = thisGroup;
+      }
+
+      checkItems.push(
+        m(DropdownCheckItemSkeleton, {
+          item: formatDateValue(item),
+          group: thisGroup,
+          state: state,
+          count: counts[item] || 0,
+          action:
+            state == "inactive"
+              ? undefined
+              : function () {
+                  commitSelectedDates((selectedValues) => {
+                    if (state == "checked") {
+                      return selectedValues.filter((value) => value !== item);
+                    }
+
+                    if (state == "unchecked") {
+                      return [...selectedValues, item];
+                    }
+
+                    return selectedValues;
+                  });
+                },
+        })
+      );
+    });
+
+    return checkItems;
+  }
+
+  return {
+    oninit: function (vnode) {
+      dataPath = vnode.attrs.dataPath;
+      itemsOverflowLimit = initialOverflowLimit;
+      initialThresholds[1] =
+        Checklist.filter.data[vnode.attrs.dataPath].numeric.threshold1;
+      initialThresholds[2] =
+        Checklist.filter.data[vnode.attrs.dataPath].numeric.threshold2;
+      actualThresholds = [null, initialThresholds[1], initialThresholds[2]];
+      actualOperation = normalizeDateOperation(
+        Checklist.filter.data[vnode.attrs.dataPath].numeric.operation
+      );
+    },
+    view: function (vnode) {
+      dataPath = vnode.attrs.dataPath;
+
+      let inputUi = null;
+      let totalItems = 0;
+      let itemsOverflowing = false;
+      let filteredPossible = [];
+      let totalPossibleUnchecked = 0;
+
+      thresholdsShown = 0;
+      let minValue =
+        Checklist.filter.data[dataPath].min === null
+          ? Checklist.filter.data[dataPath].globalMin
+          : Checklist.filter.data[dataPath].min;
+      let maxValue =
+        Checklist.filter.data[dataPath].max === null
+          ? Checklist.filter.data[dataPath].globalMax
+          : Checklist.filter.data[dataPath].max;
+      let min = formatDateForInput(minValue);
+      let max = formatDateForInput(maxValue);
+      let dateFormat = Checklist.getCurrentDateFormat();
+      let possibleCounts = getDateValueCounts(
+        Checklist.filter.data[dataPath].possible
+      );
+      let selectedDates = Checklist.filter.data[dataPath].selected || [];
+      let allDates = getSortedUniqueDateValues(Checklist.filter.data[dataPath].all);
+      let possibleDates = getSortedUniqueDateValues(
+        Checklist.filter.data[dataPath].possible
+      );
+
+      switch (actualOperation) {
+        case "equal":
+          inputUi = [
+            m(".label1", t("numeric_filter_equal")),
+            dateInput(1, min, max),
+          ];
+          break;
+        case "lesser":
+          inputUi = [
+            m(".label1", t("numeric_filter_lesser")),
+            dateInput(1, min, max),
+          ];
+          break;
+        case "lesserequal":
+          inputUi = [
+            m(".label1", t("numeric_filter_lesserequal")),
+            dateInput(1, min, max),
+          ];
+          break;
+        case "greater":
+          inputUi = [
+            m(".label1", t("numeric_filter_greater")),
+            dateInput(1, min, max),
+          ];
+          break;
+        case "greaterequal":
+          inputUi = [
+            m(".label1", t("numeric_filter_greaterequal")),
+            dateInput(1, min, max),
+          ];
+          break;
+        case "between":
+          inputUi = [
+            m(".label1", t("numeric_filter_between")),
+            dateInput(1, min, max),
+            m(".label2", t("numeric_filter_and")),
+            dateInput(2, min, max),
+          ];
+          break;
+        default:
+          break;
+      }
+
+      let showSelected = false;
+      let selected = createDateDropdownItems(
+        selectedDates,
+        "checked",
+        possibleCounts,
+        () => true,
+        () => {
+          showSelected = true;
+        }
+      );
+
+      let showPossible = false;
+      let possible = createDateDropdownItems(
+        possibleDates,
+        "unchecked",
+        possibleCounts,
+        (item) =>
+          selectedDates.indexOf(item) < 0 && totalItems <= itemsOverflowLimit,
+        (item) => {
+          showPossible = true;
+          totalItems++;
+          totalPossibleUnchecked++;
+          filteredPossible.push(item);
+        }
+      );
+
+      let showImpossible = false;
+      let impossible = createDateDropdownItems(
+        allDates.filter(
+          (item) =>
+            !Object.prototype.hasOwnProperty.call(possibleCounts, item) &&
+            selectedDates.indexOf(item) < 0
+        ),
+        "inactive",
+        possibleCounts,
+        () => totalItems <= itemsOverflowLimit,
+        () => {
+          showImpossible = true;
+          totalItems++;
+        }
+      );
+
+      itemsOverflowing = totalItems > itemsOverflowLimit;
+
+      return m(".inner-dropdown-area.numeric", [
+        m(".numeric-filter-buttons", [
+          dateFilterOperations.map(function (filterKey) {
+            return [
+              m(
+                ".numeric-filter-button.clickable" +
+                (actualOperation == filterKey ? ".selected" : ""),
+                {
+                  onclick: function () {
+                    actualOperation = filterKey;
+                    if (!isListMode()) {
+                      window.setTimeout(function () {
+                        let input = document.getElementById(
+                          "threshold1_" + dropdownId
+                        );
+                        if (input) {
+                          input.focus();
+                        }
+                      }, 200);
+                    }
+                  },
+                },
+                m(
+                  "img[src=img/ui/search/numeric_" +
+                  getDateOperationIcon(filterKey) +
+                  ".svg]"
+                )
+              ),
+              filterKey == "list"
+                ? m(".separator")
+                : null,
+            ];
+          }),
         ]),
+        !isListMode()
+          ? m(".input-ui", [
+              inputUi,
+              isListMode()
+                ? null
+                : m(
+                    ".clear-button.clickable",
+                    {
+                      onclick: function () {
+                        actualOperation = "list";
+                        Checklist.filter.data[dataPath].selected = [];
+                        Checklist.filter.data[dataPath].numeric.operation = "";
+                        initialThresholds = [null, null, null];
+                        actualThresholds = [null, null, null];
+                        Checklist.filter.data[dataPath].numeric.threshold1 = null;
+                        Checklist.filter.data[dataPath].numeric.threshold2 = null;
+                        Checklist.filter.commit();
+                      },
+                    },
+                    m("img[src=img/ui/search/clear_filter_dark.svg]")
+                  ),
+            ])
+          : null,
+        isListMode()
+          ? null
+          : m(
+              ".apply.clickable" +
+              (isListMode() || !canApply() ? ".inactive" : ""),
+              {
+                onclick: function () {
+                  if (!isListMode() && canApply()) {
+                    let comparer =
+                      Checklist.filter.numericFilters[actualOperation].comparer;
+                    Checklist.filter.data[dataPath].selected =
+                      getSortedUniqueDateValues(
+                        Checklist.filter.data[dataPath].possible.filter(
+                          (value) =>
+                            comparer(value, actualThresholds[1], actualThresholds[2])
+                        )
+                      );
+                    Checklist.filter.data[dataPath].numeric.operation =
+                      actualOperation;
+                    Checklist.filter.data[dataPath].numeric.threshold1 =
+                      actualThresholds[1];
+                    Checklist.filter.data[dataPath].numeric.threshold2 =
+                      actualThresholds[2];
+                    vnode.attrs.openHandler(false);
+                    Checklist.filter.commit();
+                  }
+                },
+              },
+              countResults() == 0
+                ? t("numeric_apply_show_results_no_results")
+                : t("numeric_apply_show_results", [countResults()])
+            ),
+        isListMode()
+          ? m(
+              ".search-filter",
+              m(
+                "input.options-search[type=search][placeholder=" +
+                t("search") +
+                "][id=" +
+                vnode.attrs.dropdownId +
+                "_text]",
+                {
+                  oninput: function () {
+                    filter = this.value
+                      .toLowerCase()
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "");
+                  },
+                }
+              )
+            )
+          : null,
+        isListMode()
+          ? m(".options", [
+              showSelected ? m(".options-section", selected) : null,
+              showPossible ? m(".options-section", possible) : null,
+              showImpossible ? m(".options-section", impossible) : null,
+              itemsOverflowing
+                ? m(
+                    ".show-next-items",
+                    {
+                      onclick: function () {
+                        itemsOverflowLimit =
+                          itemsOverflowLimit + initialOverflowLimit;
+                      },
+                    },
+                    t("next_items_dropdown", [initialOverflowLimit])
+                  )
+                : null,
+              showSelected + showPossible + showImpossible == 0
+                ? m(".no-items-filter", t("no_items_filter"))
+                : null,
+            ])
+          : null,
+        isListMode() && filter.length > 0 && totalPossibleUnchecked > 1
+          ? m(
+              ".apply",
+              {
+                onclick: function () {
+                  commitSelectedDates((selectedValues) => {
+                    return [...selectedValues, ...filteredPossible];
+                  });
+                  vnode.attrs.openHandler(false);
+                },
+              },
+              t("check_all_shown")
+            )
+          : null,
         m("ul.stats", [
-          m("li", t("stats_min") + ": " + min.toLocaleString()),
-          m("li", t("stats_max") + ": " + max.toLocaleString()),
-          m("li", t("stats_avg") + ": " + avg.toLocaleString()),
-          m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
+          minValue === null
+            ? null
+            : m("li", t("stats_min") + ": " + dayjs(minValue).format(dateFormat)),
+          maxValue === null
+            ? null
+            : m("li", t("stats_max") + ": " + dayjs(maxValue).format(dateFormat)),
         ]),
+        isListMode()
+          ? m(
+              ".apply",
+              {
+                onclick: function () {
+                  if (
+                    Checklist.filter.data[dataPath].numeric.operation != ""
+                  ) {
+                    commitSelectedDates((selectedValues) => selectedValues);
+                    vnode.attrs.openHandler(false);
+                    return;
+                  }
+
+                  vnode.attrs.openHandler(false);
+                },
+              },
+              t("apply_selection")
+            )
+          : null,
       ]);
     },
   };
