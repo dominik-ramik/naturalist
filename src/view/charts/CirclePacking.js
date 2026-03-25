@@ -350,17 +350,13 @@ export function circlePacking(options) {
 
       if (specimen) {
         const iconSize = specimenIconSize(d);
-        labelGroup
-          .append("image")
-          // Update this href to wherever your app serves static images (e.g., "img/ui/checklist/tag.svg")
-          .attr("href", "img/ui/checklist/tag.svg")
-          .attr("width", iconSize)
-          .attr("height", iconSize)
-          // X: shift left by half the width to perfectly center it
-          .attr("x", -iconSize / 2)
-          // Y: shift it UP by 90% of its size so it sits just above the middle text
-          .attr("y", -d.r * 0.9)
-          .attr("opacity", 0.95);
+        const scale = iconSize / 960;
+        labelGroup.append("path")
+          .attr("d", specimenTagIconPath)
+          .style("fill", "#ffffffbb")
+          .style("stroke", "#000000")
+          .attr("stroke-width", 2)
+          .attr("transform", `translate(0, ${d.r * 0.15}) scale(${scale}) translate(-480, -480)`);
       }
 
       labelGroup
