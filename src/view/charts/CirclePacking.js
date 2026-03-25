@@ -328,7 +328,8 @@ export function circlePacking(options) {
     }
 
     svg.on("click", () => {
-      if (currentRoot && currentRoot.parent) {
+      // Add a check to ensure we don't zoom out past our designated startingRoot
+      if (currentRoot && currentRoot.parent && currentRoot !== startingRoot) {
         updateChart(currentRoot.parent);
         resetZoom();
       }
@@ -382,7 +383,7 @@ export function circlePacking(options) {
         labelGroup
           .append("image")
           // Update this href to wherever your app serves static images (e.g., "img/ui/checklist/tag.svg")
-          .attr("href", "img/ui/checklist/tag.svg") 
+          .attr("href", "img/ui/checklist/tag.svg")
           .attr("width", iconSize)
           .attr("height", iconSize)
           // X: shift left by half the width to perfectly center it
@@ -415,21 +416,29 @@ export function circlePacking(options) {
           .reverse()
           .slice(1)
           .join(" ▹ ")}\n${isFilterMode
-          ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
-            ? "< 1%"
-            : matchingRatio(d.data, 1) + "%") +
-          " | " +
-          d.data.matchingLeafCount +
-          " of " +
-          d.data.totalLeafCount +
-          " matching"
-          : d.data.totalLeafCount
+            ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
+              ? "< 1%"
+              : matchingRatio(d.data, 1) + "%") +
+            " | " +
+            d.data.matchingLeafCount +
+            " of " +
+            d.data.totalLeafCount +
+            " matching"
+            : d.data.totalLeafCount
         }`
     );
   }
 
+  // 4b. DETERMINE STARTING ROOT
+  // If the tree has only one child at the top level, skip the redundant root 
+  // and make that single child the top-most level.
+  let startingRoot = root;
+  while (startingRoot.children && startingRoot.children.length === 1) {
+    startingRoot = startingRoot.children[0];
+  }
+
   // Initial render.
-  updateChart(root);
+  updateChart(startingRoot);
 
   // ───────────────────────────────
   // 5. D3 ZOOM BEHAVIOR
