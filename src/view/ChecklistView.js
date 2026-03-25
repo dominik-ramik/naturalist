@@ -227,14 +227,39 @@ function checklistDataForD3(node, level) {
   if (!node.children || Object.keys(node.children).length === 0) {
     return [];
   } else {
-    let children = Object.keys(node.children).map((key) => {
-      return {
+    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+    const specimenGroupName =
+      Checklist.getNameOfTaxonLevel(specimenMetaIndex) || "Specimen";
+
+    let children = [];
+    let specimenChildren = [];
+
+    Object.keys(node.children).forEach((key) => {
+      const childNode = {
         name: key,
         children: checklistDataForD3(node.children[key], level + 1),
         data: node.children[key].data,
         taxon: node.children[key].taxon,
+        taxonMetaIndex: node.children[key].taxonMetaIndex,
       };
+
+      if (node.children[key].taxonMetaIndex === specimenMetaIndex) {
+        specimenChildren.push(childNode);
+      } else {
+        children.push(childNode);
+      }
     });
+
+    if (specimenChildren.length > 0) {
+      children.push({
+        name: specimenGroupName,
+        children: specimenChildren,
+        taxon: null,
+        data: {},
+        taxonMetaIndex: specimenMetaIndex,
+        isSyntheticSpecimenGroup: true,
+      });
+    }
 
     if (level == 0) {
       return {

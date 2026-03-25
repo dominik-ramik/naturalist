@@ -110,6 +110,14 @@ export function circlePacking(options) {
     }
   }
 
+  function nodePathKey(node) {
+    return node
+      .ancestors()
+      .map((item) => item.data.name)
+      .reverse()
+      .join(">");
+  }
+
   // ───────────────────────────────
   // 3. SVG CONTAINER AND GROUPS
   // ───────────────────────────────
@@ -216,7 +224,7 @@ export function circlePacking(options) {
     const nodeSelection = gContent
       .append("g")
       .selectAll("circle")
-      .data(nodes, (d) => d.data.name + "-" + d.depth)
+      .data(nodes, (d) => nodePathKey(d))
       .join("circle")
       .attr("fill", (d) => inferColor(d, "circle"))
       .attr("opacity", (d) => (1 + d.depth) * opacityStep)
@@ -245,7 +253,7 @@ export function circlePacking(options) {
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .selectAll("text")
-      .data(tree.descendants(), (d) => d.data.name + "-" + d.depth)
+      .data(tree.descendants(), (d) => nodePathKey(d))
       .join("text")
       .filter((d) => d.parent === tree)
       .attr("fill", (d) => inferColor(d, "label"))
