@@ -131,7 +131,7 @@ ul.card.specimen-level {
   padding: 0.0em 0.6em 0.0em 1.8em; 
   
   /* Set the SVG as the background image */
-  background-image: url('../../img/ui/checklist/tag.svg');
+  background-image: url('../assets/ui/checklist/tag.svg');
   background-repeat: no-repeat;
   
   /* Position it 0.4em from the left edge, and perfectly centered vertically */

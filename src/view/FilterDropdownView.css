@@ -179,6 +179,10 @@
 }
 
 .filter-dropdown .distribution-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pad-small);
   text-align: center;
   cursor: pointer;
   padding-top: var(--pad-large);
@@ -189,6 +193,16 @@
 
 .filter-dropdown .distribution-toggle:hover {
   background-color: var(--hover-background);
+}
+
+.filter-dropdown .distribution-toggle-icon {
+  width: 1em;
+  height: 1em;
+  transition: transform 0.15s ease;
+}
+
+.filter-dropdown .distribution-toggle.expanded .distribution-toggle-icon {
+  transform: rotate(180deg);
 }
 
 .filter-dropdown .options .no-items-filter {

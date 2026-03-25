@@ -1330,15 +1330,24 @@ let DropdownNumber = function (initialVnode) {
           : null,
         isListMode()
           ? m(
-              ".distribution-toggle.clickable",
+              ".distribution-toggle.clickable" +
+                (showDistribution ? ".expanded" : ""),
               {
                 onclick: function () {
                   showDistribution = !showDistribution;
                 },
               },
-              showDistribution
-                ? t("histogram_toggle_hide")
-                : t("histogram_toggle_show")
+              [
+                m(
+                  "img.distribution-toggle-icon[src=img/ui/search/expand.svg]"
+                ),
+                m(
+                  ".distribution-toggle-label",
+                  showDistribution
+                    ? t("histogram_toggle_hide")
+                    : t("histogram_toggle_show")
+                ),
+              ]
             )
           : null,
         !isListMode() || showDistribution
