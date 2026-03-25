@@ -147,6 +147,13 @@ export function circlePacking(options) {
     .style("cursor", "pointer")
     .style("background-color", backgroundColor);
 
+  svg.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("fill", "#ffffff");
+
   // Create a header group outside of our zoomable content.
 
   const gHeader = svg.append("g").attr("class", "header");
@@ -287,45 +294,8 @@ export function circlePacking(options) {
       .append("rect")
       .attr("width", width)
       .attr("height", height)
-      .attr("fill", "transparent")
+      .attr("fill", "white")
       .attr("pointer-events", "all");
-
-    if (false && showDownloadButton) {
-      const gDownloadButton = svg.append("g").attr("class", "download");
-
-      // Append the download icon as a group inside gDownloadButton
-      const downloadButton = gDownloadButton
-        .append("g")
-        .attr("transform", `translate(${width - 40}, ${10})`) // Position the icon in the top-right corner with some padding
-        .attr("opacity", 1)
-        .on("click", (event, d) => {
-          console.log("Download");
-          downloadSVG();
-          event.stopPropagation();
-        });
-
-      // Add a rectangle behind the download button to capture clicks
-      downloadButton
-        .append("rect")
-        .attr("x", -4) // Center the rectangle around the icon
-        .attr("y", -6)
-        .attr("width", 36) // Make the rectangle 32x32
-        .attr("height", 36)
-        .attr("fill", "white") // Keep the rectangle invisible
-        .attr("opacity", 0.7)
-        .attr("cursor", "pointer"); // Change cursor to pointer to indicate interactivity
-
-      // Add the provided SVG path for the download icon
-      downloadButton
-        .append("path")
-        .attr(
-          "d",
-          "M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
-        ) // Provided path data
-        .style("fill", "black")
-        .style("stroke", "transparent")
-        .attr("transform", "translate(-5, 30) scale(0.04)"); // Scale and align path within the icon size // Scale and align path within the icon size
-    }
 
     svg.on("click", () => {
       // Add a check to ensure we don't zoom out past our designated startingRoot
