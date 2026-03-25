@@ -26,9 +26,17 @@ export let D3ChartView = function (initialVnode) {
   return {
     oninit: function (vnode) {},
     oncreate: function (vnode) {
+      chart = vnode.attrs.chart;
+      options = vnode.attrs.options;
       renderChart(true);
     },
+    onbeforeupdate: function (vnode) {
+      chart = vnode.attrs.chart;
+      options = vnode.attrs.options;
+    },
     onupdate: function (vnode) {
+      chart = vnode.attrs.chart;
+      options = vnode.attrs.options;
       renderChart(false);
     },
     onbeforeremove: function (vnode) {

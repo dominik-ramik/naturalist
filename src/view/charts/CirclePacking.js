@@ -2,6 +2,9 @@ import * as d3 from "d3";
 
 import { colorFromRatio } from "../../components/Utils.js";
 
+const specimenTagIconPath =
+  "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
+
 export function circlePacking(options) {
   let data = options.dataSource;
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || 4;
@@ -12,6 +15,7 @@ export function circlePacking(options) {
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";
   let showDownloadButton = options.showDownloadButton === false ? false : true;
+  let specimenMetaIndex = options.specimenMetaIndex;
 
   let isFilterMode = data.matchingLeafCount != data.totalLeafCount;
 
@@ -118,6 +122,18 @@ export function circlePacking(options) {
       .join(">");
   }
 
+  function isSpecimenNode(node) {
+    return (
+      specimenMetaIndex !== undefined &&
+      specimenMetaIndex !== -1 &&
+      node?.data?.taxonMetaIndex === specimenMetaIndex
+    );
+  }
+
+  function specimenIconSize(node) {
+    return Math.max(14, Math.min(28, node.r * 0.38));
+  }
+
   // ───────────────────────────────
   // 3. SVG CONTAINER AND GROUPS
   // ───────────────────────────────
@@ -134,14 +150,8 @@ export function circlePacking(options) {
   // Create a header group outside of our zoomable content.
 
   const gHeader = svg.append("g").attr("class", "header");
-  const headerLabel = gHeader
-    .append("text")
-    .attr("x", 5)
-    .attr("y", 20)
-    .attr("fill", "black")
-    .style("font", "18px " + fontFamily)
-    .style("font-weight", "bold")
-    .text("");
+  const gDownload = svg.append("g").attr("class", "download");
+  const headerLabel = { text: () => {} };
 
   // Create a zoomable group that contains the actual chart content.
   const gContent = svg.append("g").attr("class", "content");
@@ -149,6 +159,108 @@ export function circlePacking(options) {
   // ───────────────────────────────
   // 4. updateChart: Rebuild Chart from New Focus
   // ───────────────────────────────
+  function renderBreadcrumbs(focusNode) {
+    gHeader.selectAll("*").remove();
+
+    const breadcrumbNodes = focusNode.ancestors().reverse().slice(1);
+    let currentX = 5;
+    const breadcrumbY = 10;
+
+    breadcrumbNodes.forEach((node, index) => {
+      const segment = gHeader
+        .append("g")
+        .attr("class", "breadcrumb-segment")
+        .attr("transform", `translate(${currentX}, ${breadcrumbY})`)
+        .style("cursor", "pointer")
+        .on("click", (event) => {
+          event.stopPropagation();
+          updateChart(node);
+          resetZoom();
+        });
+
+      const label = segment
+        .append("text")
+        .attr("x", 10)
+        .attr("y", 17)
+        .attr("fill", "black")
+        .style("font", "16px " + fontFamily)
+        .style(
+          "font-weight",
+          index === breadcrumbNodes.length - 1 ? "bold" : "normal"
+        )
+        .style("pointer-events", "none")
+        .text(node.data.name);
+
+      const labelBox = label.node().getBBox();
+      segment
+        .insert("rect", "text")
+        .attr("x", labelBox.x - 8)
+        .attr("y", labelBox.y - 5)
+        .attr("width", labelBox.width + 16)
+        .attr("height", labelBox.height + 10)
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("fill", "white")
+        .attr("opacity", index === breadcrumbNodes.length - 1 ? 0.95 : 0.8)
+        .attr("stroke", "#00000020")
+        .attr("stroke-width", 1);
+
+      currentX += labelBox.width + 22;
+
+      if (index < breadcrumbNodes.length - 1) {
+        const separator = gHeader
+          .append("text")
+          .attr("x", currentX)
+          .attr("y", breadcrumbY + 17)
+          .attr("fill", "black")
+          .style("font", "16px " + fontFamily)
+          .style("pointer-events", "none")
+          .text(">");
+
+        currentX += separator.node().getBBox().width + 8;
+      }
+    });
+  }
+
+  function renderDownloadButton() {
+    gDownload.selectAll("*").remove();
+
+    if (!showDownloadButton) {
+      return;
+    }
+
+    const downloadButton = gDownload
+      .append("g")
+      .attr("transform", `translate(${width - 40}, ${10})`)
+      .attr("opacity", 1)
+      .style("cursor", "pointer")
+      .on("click", (event) => {
+        event.stopPropagation();
+        downloadSVG();
+      });
+
+    downloadButton
+      .append("rect")
+      .attr("x", -4)
+      .attr("y", -6)
+      .attr("width", 36)
+      .attr("height", 36)
+      .attr("fill", "white")
+      .attr("opacity", 0.7)
+      .attr("rx", 6)
+      .attr("ry", 6);
+
+    downloadButton
+      .append("path")
+      .attr(
+        "d",
+        "M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+      )
+      .style("fill", "black")
+      .style("stroke", "transparent")
+      .attr("transform", "translate(-5, 30) scale(0.04)");
+  }
+
   function updateChart(newFocus) {
     currentRoot = newFocus;
     headerLabel.text(
@@ -159,6 +271,9 @@ export function circlePacking(options) {
         .slice(1)
         .join(" ▹ ")}`
     );
+
+    renderBreadcrumbs(newFocus);
+    renderDownloadButton();
 
     const tree = pack(newFocus.data);
     tree.parent = newFocus.parent;
@@ -175,7 +290,7 @@ export function circlePacking(options) {
       .attr("fill", "transparent")
       .attr("pointer-events", "all");
 
-    if (showDownloadButton) {
+    if (false && showDownloadButton) {
       const gDownloadButton = svg.append("g").attr("class", "download");
 
       // Append the download icon as a group inside gDownloadButton
@@ -248,22 +363,50 @@ export function circlePacking(options) {
         }
       });
 
-    gContent
+    const labelNodes = tree.descendants().filter((d) => d.parent === tree);
+    const labelGroups = gContent
       .append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
-      .selectAll("text")
-      .data(tree.descendants(), (d) => nodePathKey(d))
-      .join("text")
-      .filter((d) => d.parent === tree)
-      .attr("fill", (d) => inferColor(d, "label"))
-      .attr("opacity", labelOpacity)
-      .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-      .attr("dominant-baseline", "middle")
-      .text((d) => d.data.name)
-      .style("font-family", fontFamily)
-      .style("font-size", (d) => adaptLabelFontSize(d))
-      .style("font-weight", "bold");
+      .selectAll("g")
+      .data(labelNodes, (d) => nodePathKey(d))
+      .join("g")
+      .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+
+    labelGroups.each(function (d) {
+      const labelGroup = d3.select(this);
+      const specimen = isSpecimenNode(d);
+
+      if (specimen) {
+        const iconSize = specimenIconSize(d);
+        labelGroup
+          .append("path")
+          .attr("d", specimenTagIconPath)
+          .attr(
+            "transform",
+            `translate(${-iconSize / 2}, ${-iconSize * 0.2}) scale(${iconSize / 960})`
+          )
+          .attr("fill", "#ffffff")
+          .attr("stroke", "#00000055")
+          .attr("stroke-width", 28)
+          .attr("paint-order", "stroke")
+          .attr("opacity", 0.95);
+      }
+
+      labelGroup
+        .append("text")
+        .attr("fill", inferColor(d, "label"))
+        .attr("opacity", labelOpacity)
+        .attr("dominant-baseline", "middle")
+        .attr("y", specimen ? specimenIconSize(d) * 0.4 : 0)
+        .text(d.data.name)
+        .style("font-family", fontFamily)
+        .style("font-size", adaptLabelFontSize(d))
+        .style("font-weight", "bold");
+    });
+
+    gHeader.raise();
+    gDownload.raise();
 
     nodeSelection.append("title").text(
       (d) =>

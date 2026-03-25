@@ -272,6 +272,124 @@ function checklistDataForD3(node, level) {
   }
 }
 
+function checklistDataForD3FromTaxa(taxa) {
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+
+  const root = {
+    name: "root",
+    data: {},
+    taxon: null,
+    taxonMetaIndex: -1,
+    childrenByKey: {},
+  };
+
+  taxa.forEach(function (taxonRow) {
+    const nonNullTaxa = (taxonRow.t || [])
+      .map(function (taxon, index) {
+        if (taxon === null || taxon === undefined) {
+          return null;
+        }
+
+        return {
+          taxon: taxon,
+          index: index,
+        };
+      })
+      .filter(Boolean);
+
+    if (nonNullTaxa.length === 0) {
+      return;
+    }
+
+    const specimenEntry =
+      specimenMetaIndex === -1 ? null : taxonRow.t?.[specimenMetaIndex];
+    const isSpecimenRow =
+      specimenEntry !== null &&
+      specimenEntry !== undefined &&
+      specimenEntry.name?.trim() !== "";
+
+    const ancestry = isSpecimenRow
+      ? nonNullTaxa.filter(function (item) {
+          return item.index !== specimenMetaIndex;
+        })
+      : nonNullTaxa;
+
+    let currentNode = root;
+    ancestry.forEach(function (item) {
+      currentNode = ensureCirclePackChild(
+        currentNode,
+        item.taxon.name,
+        item.taxon,
+        item.index
+      );
+    });
+
+    if (isSpecimenRow) {
+      const specimenNode = ensureCirclePackChild(
+        currentNode,
+        "__specimen__" + specimenEntry.name,
+        specimenEntry,
+        specimenMetaIndex,
+        {
+          displayName: specimenEntry.name,
+        }
+      );
+
+      specimenNode.data = taxonRow.d;
+      specimenNode.taxon = specimenEntry;
+      specimenNode.taxonMetaIndex = specimenMetaIndex;
+      return;
+    }
+
+    const lastTaxon = nonNullTaxa[nonNullTaxa.length - 1];
+    currentNode.data = taxonRow.d;
+    currentNode.taxon = lastTaxon.taxon;
+    currentNode.taxonMetaIndex = lastTaxon.index;
+  });
+
+  return finalizeCirclePackNode(root);
+}
+
+function ensureCirclePackChild(
+  parentNode,
+  key,
+  taxon,
+  taxonMetaIndex,
+  extraProps = {}
+) {
+  if (!parentNode.childrenByKey[key]) {
+    parentNode.childrenByKey[key] = {
+      name: extraProps.displayName || key,
+      data: {},
+      taxon: taxon,
+      taxonMetaIndex: taxonMetaIndex,
+      childrenByKey: {},
+      ...extraProps,
+    };
+  }
+
+  return parentNode.childrenByKey[key];
+}
+
+function finalizeCirclePackNode(node) {
+  const children = Object.values(node.childrenByKey || {}).map(
+    finalizeCirclePackNode
+  );
+
+  const finalizedNode = {
+    name: node.name,
+    data: node.data,
+    taxon: node.taxon,
+    taxonMetaIndex: node.taxonMetaIndex,
+  };
+
+  if (children.length > 0) {
+    finalizedNode.children = children;
+  }
+
+  return finalizedNode;
+}
+
 function assignLeavesCount(node, allMatchingData) {
   if (!node.children || node.children.length === 0) {
     let isMatch = allMatchingData.find(
@@ -320,12 +438,13 @@ function circlePackingView(allTaxa, matchingTaxa) {
       let shouldUpdate = false;
       const cacheKey = JSON.stringify({
         queryKey: Checklist.queryKey(),
+        includeMatchChildren: Settings.includeMatchChildren(),
         includeSpecimensInView: Settings.includeSpecimensInView(),
       });
 
       if (cachedData == null || cacheKey != oldQueryKey) {
         oldQueryKey = cacheKey;
-        cachedData = checklistDataForD3(Checklist.treefiedTaxa(allTaxa));
+        cachedData = checklistDataForD3FromTaxa(allTaxa);
         assignLeavesCount(cachedData, matchingTaxa);
         shouldUpdate = true;
       }
@@ -335,6 +454,7 @@ function circlePackingView(allTaxa, matchingTaxa) {
         dataSource: cachedData,
         colorInterpolation: colorFromRatio,
         fontFamily: "Regular",
+        specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
         maxDataLevelsDisplayed:
           Checklist._data.versions[Checklist.getCurrentLanguage()]
             .stackingCirclesDepth || 4,
