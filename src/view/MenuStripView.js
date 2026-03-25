@@ -288,46 +288,41 @@ function menuTopBar() {
               Settings.viewType("view_map");
             },
           },
+        { type: "divider" },
+        {
+          type: "button",
+          title: t("include_match_children"),
+          icon: Settings.includeMatchChildren()
+            ? "ui/search/checkbox_checked"
+            : "ui/search/checkbox_unchecked",
+          action: function () {
+            Settings.includeMatchChildren(!Settings.includeMatchChildren());
+            Checklist.filter._queryResultCache = {};
+            ActionButtonWithMenu.open = false;
+            m.redraw();
+          }
+        },
+        Checklist.hasSpecimens()
+          ? {
+            type: "button",
+            title: t("show_specimens"),
+            icon: Settings.includeSpecimensInView()
+              ? "ui/search/checkbox_checked"
+              : "ui/search/checkbox_unchecked",
+            action: function () {
+              Settings.includeSpecimensInView(
+                !Settings.includeSpecimensInView()
+              );
+
+              ActionButtonWithMenu.open = false;
+              m.redraw();
+            }
+          }
+          : null,
         Settings.viewType() === "view_details"
           ? [
             { type: "divider" },
             ChecklistView.displayMode == "" ? null : { type: "divider" },
-
-            {
-              type: "button",
-              title: t("include_match_children"),
-              // Use existing checkbox icons or fallback
-              icon: Settings.includeMatchChildren() ? "ui/search/checkbox_checked" : "ui/search/checkbox_unchecked",
-              action: function () {
-                // Toggle setting
-                Settings.includeMatchChildren(!Settings.includeMatchChildren());
-
-                // Force cache invalidation since query params won't change
-                Checklist.filter._queryResultCache = {};
-
-                // Close menu and redraw
-                ActionButtonWithMenu.open = false;
-                m.redraw();
-              }
-            },
-            Checklist.hasSpecimens()
-              ? {
-                type: "button",
-                title: t("show_specimens"),
-                icon: Settings.includeSpecimensInView()
-                  ? "ui/search/checkbox_checked"
-                  : "ui/search/checkbox_unchecked",
-                action: function () {
-                  Settings.includeSpecimensInView(
-                    !Settings.includeSpecimensInView()
-                  );
-
-                  ActionButtonWithMenu.open = false;
-                  m.redraw();
-                }
-              }
-              : null,
-            { type: "divider" },
 
             { type: "label", title: t("limit_view") },
             ChecklistView.displayMode == ""

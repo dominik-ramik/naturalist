@@ -59,20 +59,12 @@ export let ChecklistView = {
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
-    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-    const detailViewTaxa =
-      Settings.viewType() === "view_details" &&
-      Checklist.hasSpecimens() &&
-      !Settings.includeSpecimensInView()
-        ? allFilteredTaxa.filter(function (taxon) {
-          return (
-            taxon.t?.[specimenMetaIndex] === null ||
-            taxon.t?.[specimenMetaIndex] === undefined
-          );
-        })
-        : allFilteredTaxa;
+    const visibleFilteredTaxa = filterOutSpecimenTaxa(allFilteredTaxa);
+    const visibleFullChecklistTaxa = filterOutSpecimenTaxa(
+      Checklist.getData().checklist
+    );
 
-    let clampedFilteredTaxa = detailViewTaxa;
+    let clampedFilteredTaxa = visibleFilteredTaxa;
 
     let overflowing = 0;
     if (
@@ -98,13 +90,19 @@ export let ChecklistView = {
         );
         break;
       case "view_circle_pack":
-        specificChecklistView = circlePackingView();
+        specificChecklistView = circlePackingView(
+          visibleFullChecklistTaxa,
+          visibleFilteredTaxa
+        );
         break;
       case "view_category_density":
-        specificChecklistView = categoryChartView(allFilteredTaxa);
+        specificChecklistView = categoryChartView(visibleFilteredTaxa);
         break;
       case "view_map":
-        specificChecklistView = mapChart(allFilteredTaxa);
+        specificChecklistView = mapChart(
+          visibleFilteredTaxa,
+          visibleFullChecklistTaxa
+        );
         break;
       default:
         console.error("Unknown view type: " + Settings.viewType());
@@ -131,14 +129,15 @@ export let ChecklistView = {
           : m(".checklist-inner-wrapper", [
             Checklist._isDraft ? draftNotice() : null,
             !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
+            !Checklist.filter.isEmpty() && !Settings.includeMatchChildren()
+              ? hiddenChildTaxaNotice()
+              : null,
+            shouldHideSpecimensInView()
+              ? hiddenSpecimensNotice()
+              : null,
             Settings.viewType() === "view_details" &&
               ChecklistView.displayMode != ""
               ? temporaryFilterNotice()
-              : null,
-            Settings.viewType() === "view_details" &&
-              Checklist.hasSpecimens() &&
-              !Settings.includeSpecimensInView()
-              ? hiddenSpecimensNotice()
               : null,
             specificChecklistView,
           ]),
@@ -146,6 +145,34 @@ export let ChecklistView = {
     );
   },
 };
+
+function shouldHideSpecimensInView() {
+  return Checklist.hasSpecimens() && !Settings.includeSpecimensInView();
+}
+
+function filterOutSpecimenTaxa(taxa) {
+  if (!shouldHideSpecimensInView()) {
+    return taxa;
+  }
+
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+
+  return taxa.filter(function (taxon) {
+    return (
+      taxon.t?.[specimenMetaIndex] === null ||
+      taxon.t?.[specimenMetaIndex] === undefined
+    );
+  });
+}
+
+function restoreChildTaxa() {
+  Settings.includeMatchChildren(true);
+  Checklist.filter._queryResultCache = {};
+}
+
+function restoreSpecimens() {
+  Settings.includeSpecimensInView(true);
+}
 
 function categoryChartView(filteredTaxa) {
   return categoryChart(filteredTaxa);
@@ -256,17 +283,26 @@ function assignLeavesCount(node, allMatchingData) {
 let cachedData = null;
 let oldQueryKey = "";
 
-function circlePackingView() {
+function circlePackingView(allTaxa, matchingTaxa) {
+  if (allTaxa.length === 0) {
+    return m(".listed-taxa");
+  }
+
   return m(D3ChartView, {
     id: "d3test",
     chart: circlePacking,
     options: () => {
       let shouldUpdate = false;
-      if (cachedData == null || Checklist.queryKey() != oldQueryKey) {
+      const cacheKey = JSON.stringify({
+        queryKey: Checklist.queryKey(),
+        includeSpecimensInView: Settings.includeSpecimensInView(),
+      });
+
+      if (cachedData == null || cacheKey != oldQueryKey) {
         console.log("recalc");
-        oldQueryKey = Checklist.queryKey();
-        cachedData = checklistDataForD3(Checklist.treefiedTaxa());
-        assignLeavesCount(cachedData, Checklist.getTaxaForCurrentQuery());
+        oldQueryKey = cacheKey;
+        cachedData = checklistDataForD3(Checklist.treefiedTaxa(allTaxa));
+        assignLeavesCount(cachedData, matchingTaxa);
         shouldUpdate = true;
         console.log(cachedData);
       }
@@ -366,18 +402,38 @@ function temporaryFilterNotice() {
   });
 }
 
-function hiddenSpecimensNotice() {
+function hiddenChildTaxaNotice() {
   return m(Notice, {
     action: function () {
-      Settings.includeSpecimensInView(true);
+      restoreChildTaxa();
+    },
+    notice: t("temporary_filter_children"),
+    additionalButton: {
+      action: function () {
+        restoreChildTaxa();
+      },
+      icon: "filter_list_off",
+      text: t("temporary_filter_show_children"),
+    },
+  });
+}
+
+function hiddenSpecimensNotice() {
+  const showAllInfo = Settings.viewType() === "view_details";
+
+  return m(Notice, {
+    action: function () {
+      restoreSpecimens();
     },
     notice: m.trust(t("temporary_filter_specimens")),
     additionalButton: {
       action: function () {
-        Settings.includeSpecimensInView(true);
+        restoreSpecimens();
       },
       icon: "filter_list_off",
-      text: t("temporary_filter_show_all"),
+      text: showAllInfo
+        ? t("temporary_filter_show_all")
+        : t("temporary_filter_show_specimens"),
     },
   });
 }

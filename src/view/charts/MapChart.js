@@ -22,13 +22,17 @@ let availableMapsCache = null;
 let oldColoredRegionsJSON = "";
 let colors = null;
 
+function globalCountsCacheKey(dataPath) {
+  return dataPath + "|" + Settings.includeSpecimensInView();
+}
+
 const sumMethods = [
   { name: t("view_map_sum_by_filter"), method: "filter" },
   { name: t("view_map_sum_by_region"), method: "region" },
   { name: t("view_map_sum_by_total"), method: "total" },
 ];
 
-export function mapChart(filteredTaxa) {
+export function mapChart(filteredTaxa, allTaxa) {
   let currentMapStringified = JSON.stringify(currentMap);
   if (
     !getAvailableMaps().find(
@@ -47,6 +51,7 @@ export function mapChart(filteredTaxa) {
   if (currentMap != null) {
     colors = calculateRegionColors(
       filteredTaxa,
+      allTaxa,
       currentMap.dataPath,
       currentSumMethod
     );
@@ -248,7 +253,7 @@ function renderMap(map) {
 }
 
 function renderDataTable(dataPath, sumMethod) {
-  const globalCounts = sessionCache[dataPath];
+  const globalCounts = sessionCache[globalCountsCacheKey(dataPath)];
 
   let sortedRegions = [...Object.keys(currentRegions)];
   sortedRegions.sort((a, b) => {
@@ -307,14 +312,15 @@ function renderDataTable(dataPath, sumMethod) {
   );
 }
 
-function calculateRegionColors(filteredTaxa, dataPath, sumMethod) {
+function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
   const terminalLeaves = filterTerminalLeaves(filteredTaxa);
   currentFilterResultsLength = terminalLeaves.length;
+  const cacheKey = globalCountsCacheKey(dataPath);
 
-  if (!Object.keys(sessionCache).includes(dataPath)) {
-    sessionCache[dataPath] = cacheAllTaxa(dataPath);
+  if (!Object.keys(sessionCache).includes(cacheKey)) {
+    sessionCache[cacheKey] = cacheAllTaxa(allTaxa || Checklist.getEntireChecklist(), dataPath);
   }
-  const globalCounts = sessionCache[dataPath];
+  const globalCounts = sessionCache[cacheKey];
   const regionCounts = {};
 
   const colors = {};
@@ -403,10 +409,10 @@ function getPresentRegions(mapData) {
   return [];
 }
 
-function cacheAllTaxa(dataPath) {
+function cacheAllTaxa(allTaxa, dataPath) {
   let cache = { __all__: 0 };
 
-  filterTerminalLeaves(Checklist.getEntireChecklist()).forEach((taxon) => {
+  filterTerminalLeaves(allTaxa).forEach((taxon) => {
     const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
     const presentRegions = getPresentRegions(mapData);
 
