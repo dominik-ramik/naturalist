@@ -8,6 +8,13 @@ import { TaxonNameView } from "./TaxonNameView.js";
 
 export let TaxonView = {
   view: function (vnode) {
+    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+    const isSpecimenLevel = vnode.attrs.currentTaxonLevel === specimenMetaIndex;
+
+    if (isSpecimenLevel && !Settings.includeSpecimensInView()) {
+      return null;
+    }
+
     function detailsIcon(taxonName, detailsType) {
       let icon = "";
       let tabName = "";
@@ -45,9 +52,6 @@ export let TaxonView = {
 
     let inverseTaxonLevel = Checklist.inverseTaxonLevel(vnode.attrs.currentTaxonLevel);
 
-    const showSearchAll =
-      Object.keys(vnode.attrs.taxonTree.children).length > 0;
-
     function shouldRenderTab(tabsData, tabKey) {
       return (
         tabsData &&
@@ -57,20 +61,24 @@ export let TaxonView = {
       );
     }
 
-    const specimenColumnName = Object.keys(Checklist.getTaxaMeta()).find(
-      (key) => Checklist.getTaxaMeta()[key].name.toLowerCase() === "specimen"
-    );
-    const specimenMetaIndex = specimenColumnName ? Object.keys(Checklist.getTaxaMeta()).indexOf("specimenid") : -1;
+    const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children)
+      .filter((key) => {
+        return (
+          Settings.includeSpecimensInView() ||
+          vnode.attrs.taxonTree.children[key].taxonMetaIndex !== specimenMetaIndex
+        );
+      })
+      .sort(function (a, b) {
+        const aIsSpecimen =
+          vnode.attrs.taxonTree.children[a].taxonMetaIndex === specimenMetaIndex;
+        const bIsSpecimen =
+          vnode.attrs.taxonTree.children[b].taxonMetaIndex === specimenMetaIndex;
+        if (aIsSpecimen && !bIsSpecimen) return -1;
+        if (!aIsSpecimen && bIsSpecimen) return 1;
+        return 0;
+      });
 
-    const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children).sort(function (a, b) {
-      const aIsSpecimen = vnode.attrs.taxonTree.children[a].taxonMetaIndex === specimenMetaIndex;
-      const bIsSpecimen = vnode.attrs.taxonTree.children[b].taxonMetaIndex === specimenMetaIndex;
-      if (aIsSpecimen && !bIsSpecimen) return -1;
-      if (!aIsSpecimen && bIsSpecimen) return 1;
-      return 0;
-    });
-
-    const isSpecimenLevel = vnode.attrs.currentTaxonLevel === specimenMetaIndex;
+    const showSearchAll = sortedChildKeys.length > 0;
 
     return m("ul.card.taxon-level" + inverseTaxonLevel + (isSpecimenLevel ? ".specimen-level" : ""), [
 

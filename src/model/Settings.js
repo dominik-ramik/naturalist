@@ -165,6 +165,16 @@ export let Settings = {
     }
   },
 
+  includeSpecimensInView: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("includeSpecimensInView");
+      return stored === null ? true : stored === "true";
+
+    } else {
+      window.localStorage.setItem("includeSpecimensInView", value);
+    }
+  },
+
   lastKnownUploadFormAvailability: function (value) {
     if (value === undefined) {
       return window.localStorage.getItem("lastKnownUploadFormAvailability");

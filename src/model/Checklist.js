@@ -31,6 +31,8 @@ export let Checklist = {
   _taxonCache: new Map(),
   _keyReachableTaxaCache: new Map(),
   _keyLCACache: new Map(), // Add LCA cache
+  _specimenDataPathCache: undefined,
+  _hasSpecimensCache: null,
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
@@ -477,6 +479,8 @@ export let Checklist = {
     Checklist._keyReachableTaxaCache = new Map();
     Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
     Checklist.treefiedTaxaCache = null;
+    Checklist._specimenDataPathCache = undefined;
+    Checklist._hasSpecimensCache = null;
 
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
@@ -978,6 +982,59 @@ export let Checklist = {
 
   getTaxaMeta: function () {
     return this.getData().meta.taxa;
+  },
+
+  getSpecimenDataPath: function () {
+    if (this._specimenDataPathCache !== undefined) {
+      return this._specimenDataPathCache;
+    }
+
+    if (!this._data) {
+      return null;
+    }
+
+    this._specimenDataPathCache =
+      Object.keys(Checklist.getTaxaMeta()).find(
+        (key) =>
+          Checklist.getTaxaMeta()[key].name?.trim().toLowerCase() ===
+          "specimen"
+      ) || null;
+
+    return this._specimenDataPathCache;
+  },
+
+  getSpecimenMetaIndex: function () {
+    const specimenDataPath = Checklist.getSpecimenDataPath();
+
+    if (specimenDataPath === null) {
+      return -1;
+    }
+
+    return Object.keys(Checklist.getTaxaMeta()).indexOf(specimenDataPath);
+  },
+
+  hasSpecimens: function () {
+    if (this._hasSpecimensCache !== null) {
+      return this._hasSpecimensCache;
+    }
+
+    if (!this._data) {
+      return false;
+    }
+
+    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+    this._hasSpecimensCache =
+      specimenMetaIndex !== -1 &&
+      Checklist.getData().checklist.some(function (taxon) {
+        const specimenEntry = taxon.t?.[specimenMetaIndex];
+        return (
+          specimenEntry !== null &&
+          specimenEntry !== undefined &&
+          specimenEntry.name?.trim() !== ""
+        );
+      });
+
+    return this._hasSpecimensCache;
   },
 
   getDataMeta: function (dataType) {

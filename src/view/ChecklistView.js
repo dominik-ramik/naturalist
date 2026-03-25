@@ -59,8 +59,20 @@ export let ChecklistView = {
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
+    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+    const detailViewTaxa =
+      Settings.viewType() === "view_details" &&
+      Checklist.hasSpecimens() &&
+      !Settings.includeSpecimensInView()
+        ? allFilteredTaxa.filter(function (taxon) {
+          return (
+            taxon.t?.[specimenMetaIndex] === null ||
+            taxon.t?.[specimenMetaIndex] === undefined
+          );
+        })
+        : allFilteredTaxa;
 
-    let clampedFilteredTaxa = allFilteredTaxa;
+    let clampedFilteredTaxa = detailViewTaxa;
 
     let overflowing = 0;
     if (
@@ -106,7 +118,7 @@ export let ChecklistView = {
       Checklist.getThemeHsl("light") +
       ");]",
       m(".checklist-inner-wrapper", [
-        clampedFilteredTaxa.length == 0
+        allFilteredTaxa.length == 0
           ? m(".nothing-found-wrapper", [
             m("h2", t("nothing_found_oops")),
             m("img.search-world[src=img/ui/checklist/search_world.svg]"),
@@ -123,6 +135,11 @@ export let ChecklistView = {
               ChecklistView.displayMode != ""
               ? temporaryFilterNotice()
               : null,
+            Settings.viewType() === "view_details" &&
+              Checklist.hasSpecimens() &&
+              !Settings.includeSpecimensInView()
+              ? hiddenSpecimensNotice()
+              : null,
             specificChecklistView,
           ]),
       ])
@@ -135,13 +152,24 @@ function categoryChartView(filteredTaxa) {
 }
 
 function detailedTaxonView(treeTaxa, overflowing) {
+  const includeSpecimensInView = Settings.includeSpecimensInView();
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  const visibleTopLevelTaxa = Object.keys(treeTaxa.children).filter(
+    function (taxonLevel) {
+      return (
+        includeSpecimensInView ||
+        treeTaxa.children[taxonLevel].taxonMetaIndex !== specimenMetaIndex
+      );
+    }
+  );
+
   return m(".listed-taxa", [
-    Object.keys(treeTaxa.children).map(function (taxonLevel) {
+    visibleTopLevelTaxa.map(function (taxonLevel) {
       return m(TaxonView, {
         parents: [],
         taxonKey: taxonLevel,
         taxonTree: treeTaxa.children[taxonLevel],
-        currentTaxonLevel: 0,
+        currentTaxonLevel: treeTaxa.children[taxonLevel].taxonMetaIndex,
         displayMode: ChecklistView.displayMode,
       });
     }),
@@ -331,6 +359,22 @@ function temporaryFilterNotice() {
     additionalButton: {
       action: function () {
         ChecklistView.displayMode = "";
+      },
+      icon: "filter_list_off",
+      text: t("temporary_filter_show_all"),
+    },
+  });
+}
+
+function hiddenSpecimensNotice() {
+  return m(Notice, {
+    action: function () {
+      Settings.includeSpecimensInView(true);
+    },
+    notice: m.trust(t("temporary_filter_specimens")),
+    additionalButton: {
+      action: function () {
+        Settings.includeSpecimensInView(true);
       },
       icon: "filter_list_off",
       text: t("temporary_filter_show_all"),

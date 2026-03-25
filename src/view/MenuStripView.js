@@ -310,6 +310,23 @@ function menuTopBar() {
                 m.redraw();
               }
             },
+            Checklist.hasSpecimens()
+              ? {
+                type: "button",
+                title: t("show_specimens"),
+                icon: Settings.includeSpecimensInView()
+                  ? "ui/search/checkbox_checked"
+                  : "ui/search/checkbox_unchecked",
+                action: function () {
+                  Settings.includeSpecimensInView(
+                    !Settings.includeSpecimensInView()
+                  );
+
+                  ActionButtonWithMenu.open = false;
+                  m.redraw();
+                }
+              }
+              : null,
             { type: "divider" },
 
             { type: "label", title: t("limit_view") },
