@@ -131,7 +131,7 @@ export function circlePacking(options) {
   }
 
   function specimenIconSize(node) {
-    return Math.max(14, Math.min(28, node.r * 0.38));
+    return node.r * 0.6;
   }
 
   // ───────────────────────────────
@@ -151,7 +151,7 @@ export function circlePacking(options) {
 
   const gHeader = svg.append("g").attr("class", "header");
   const gDownload = svg.append("g").attr("class", "download");
-  const headerLabel = { text: () => {} };
+  const headerLabel = { text: () => { } };
 
   // Create a zoomable group that contains the actual chart content.
   const gContent = svg.append("g").attr("class", "content");
@@ -380,16 +380,15 @@ export function circlePacking(options) {
       if (specimen) {
         const iconSize = specimenIconSize(d);
         labelGroup
-          .append("path")
-          .attr("d", specimenTagIconPath)
-          .attr(
-            "transform",
-            `translate(${-iconSize / 2}, ${-iconSize * 0.2}) scale(${iconSize / 960})`
-          )
-          .attr("fill", "#ffffff")
-          .attr("stroke", "#00000055")
-          .attr("stroke-width", 28)
-          .attr("paint-order", "stroke")
+          .append("image")
+          // Update this href to wherever your app serves static images (e.g., "img/ui/checklist/tag.svg")
+          .attr("href", "img/ui/checklist/tag.svg") 
+          .attr("width", iconSize)
+          .attr("height", iconSize)
+          // X: shift left by half the width to perfectly center it
+          .attr("x", -iconSize / 2)
+          // Y: shift it UP by 90% of its size so it sits just above the middle text
+          .attr("y", -d.r * 0.9)
           .attr("opacity", 0.95);
       }
 
@@ -415,17 +414,16 @@ export function circlePacking(options) {
           .map((d) => d.data.name)
           .reverse()
           .slice(1)
-          .join(" ▹ ")}\n${
-          isFilterMode
-            ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
-                ? "< 1%"
-                : matchingRatio(d.data, 1) + "%") +
-              " | " +
-              d.data.matchingLeafCount +
-              " of " +
-              d.data.totalLeafCount +
-              " matching"
-            : d.data.totalLeafCount
+          .join(" ▹ ")}\n${isFilterMode
+          ? (matchingRatio(d.data, 1) > 0 && matchingRatio(d.data, 1) < 1
+            ? "< 1%"
+            : matchingRatio(d.data, 1) + "%") +
+          " | " +
+          d.data.matchingLeafCount +
+          " of " +
+          d.data.totalLeafCount +
+          " matching"
+          : d.data.totalLeafCount
         }`
     );
   }
