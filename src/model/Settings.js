@@ -265,7 +265,7 @@ export let Settings = {
             ) {
               let displayValues = itemObject[type][dataPath];
 
-              if (Checklist.getMetaForDataPath(dataPath).formatting == "date") {
+              if (Checklist.getMetaForDataPath(dataPath)?.formatting == "date") {
                 displayValues = itemObject[type][dataPath].map((value) => {
                   const dateObj = dayjs(value);
                   return dateObj.isValid()
@@ -273,7 +273,7 @@ export let Settings = {
                     : value?.toString?.() || "";
                 });
               } else if (
-                Checklist.getMetaForDataPath(dataPath).formatting == "number"
+                Checklist.getMetaForDataPath(dataPath)?.formatting == "number"
               ) {
                 displayValues = itemObject[type][dataPath].map((value) =>
                   value?.toLocaleString?.() || value?.toString?.() || ""

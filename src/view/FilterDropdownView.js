@@ -137,6 +137,49 @@ function getDateGroupTitle(timestamp) {
   return dateObj.format("YYYY");
 }
 
+function getNumericSummary(values) {
+  let min = null;
+  let max = null;
+  let sum = 0;
+  let count = 0;
+  let distinctValues = new Set();
+
+  (values || []).forEach((value) => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return;
+    }
+
+    distinctValues.add(value);
+    sum += value;
+    count++;
+    min = min === null ? value : Math.min(min, value);
+    max = max === null ? value : Math.max(max, value);
+  });
+
+  return {
+    min,
+    max,
+    avg: roundWithPrecision(sum / count || 0, 2),
+    distinct: distinctValues.size,
+  };
+}
+
+function getRangeValueBounds(values) {
+  let min = null;
+  let max = null;
+
+  (values || []).forEach((value) => {
+    if (typeof value !== "number" || isNaN(value)) {
+      return;
+    }
+
+    min = min === null ? value : Math.min(min, value);
+    max = max === null ? value : Math.max(max, value);
+  });
+
+  return { min, max };
+}
+
 export let FilterDropdown = function (initialVnode) {
   let _open = false;
   let filterDropdownId = "";
@@ -144,6 +187,7 @@ export let FilterDropdown = function (initialVnode) {
   let title = "?";
   let type = "";
   let dataPath = "";
+  let outsideClickHandler = null;
 
   function setOpen(isOpen) {
     _open = isOpen;
@@ -157,26 +201,36 @@ export let FilterDropdown = function (initialVnode) {
   }
 
   return {
-    attachMenuClosingEventListener() {
-      document.addEventListener(
-        "click",
-        function (event) {
-          let thisDropdown = document.getElementById(filterDropdownId);
-          if (!thisDropdown) {
-            return;
-          }
-          if (
-            event.target == thisDropdown ||
-            thisDropdown.contains(event.target)
-          ) {
-            return;
-          }
+    syncMenuClosingEventListener() {
+      if (!_open) {
+        if (outsideClickHandler) {
+          document.removeEventListener("click", outsideClickHandler);
+          outsideClickHandler = null;
+        }
+        return;
+      }
 
-          setOpen(false);
-          m.redraw();
-        },
-        { once: true }
-      );
+      if (outsideClickHandler) {
+        return;
+      }
+
+      outsideClickHandler = function (event) {
+        let thisDropdown = document.getElementById(filterDropdownId);
+        if (!thisDropdown) {
+          return;
+        }
+        if (
+          event.target == thisDropdown ||
+          thisDropdown.contains(event.target)
+        ) {
+          return;
+        }
+
+        setOpen(false);
+        m.redraw();
+      };
+
+      document.addEventListener("click", outsideClickHandler);
     },
 
     oninit: function (vnode) {
@@ -188,10 +242,16 @@ export let FilterDropdown = function (initialVnode) {
       filterDropdownId = (Math.random() + 1).toString(36).substring(2);
     },
     oncreate: function (vnode) {
-      this.attachMenuClosingEventListener();
+      this.syncMenuClosingEventListener();
     },
     onupdate: function (vnode) {
-      this.attachMenuClosingEventListener();
+      this.syncMenuClosingEventListener();
+    },
+    onremove: function () {
+      if (outsideClickHandler) {
+        document.removeEventListener("click", outsideClickHandler);
+        outsideClickHandler = null;
+      }
     },
     view: function (vnode) {
       let detectedUiType = "text";
@@ -716,9 +776,64 @@ let DropdownNumber = function (initialVnode) {
   let initialOverflowLimit = 100;
   let itemsOverflowLimit = initialOverflowLimit;
   let showDistribution = false;
+  let previewData = null;
+  let previewDataKey = "";
 
   function isListMode() {
     return actualOperation == "list";
+  }
+
+  function getPreviewData() {
+    let nextPreviewKey =
+      dataPath + "|" + Checklist.filter.queryKey("data." + dataPath);
+
+    if (previewData === null || previewDataKey != nextPreviewKey) {
+      previewDataKey = nextPreviewKey;
+      previewData = Checklist.filter.getRangeFilterPreviewData(dataPath);
+    }
+
+    return previewData;
+  }
+
+  function getOperatorPreviewValues() {
+    return getPreviewData().possible;
+  }
+
+  function getDisplayedOperatorValues() {
+    let previewValues = getOperatorPreviewValues();
+
+    if (
+      isListMode() ||
+      !actualOperation ||
+      !Checklist.filter.numericFilters[actualOperation]
+    ) {
+      return previewValues;
+    }
+
+    if (!inputsOk()) {
+      return previewValues;
+    }
+
+    let comparer = Checklist.filter.numericFilters[actualOperation].comparer;
+    return previewValues.filter((value) =>
+      comparer(value, actualThresholds[1], actualThresholds[2])
+    );
+  }
+
+  function getHistogramValues() {
+    if (isListMode()) {
+      return Checklist.filter.data[dataPath].possible;
+    }
+
+    return getDisplayedOperatorValues();
+  }
+
+  function getStatsValues() {
+    if (isListMode()) {
+      return Checklist.filter.data[dataPath].possible;
+    }
+
+    return getDisplayedOperatorValues();
   }
 
   function countResults() {
@@ -728,9 +843,13 @@ let DropdownNumber = function (initialVnode) {
       return 0;
     }
 
+    if (!inputsOk()) {
+      return 0;
+    }
+
     let comparer = Checklist.filter.numericFilters[actualOperation].comparer;
 
-    Checklist.filter.data[dataPath].possible.forEach(function (value) {
+    getOperatorPreviewValues().forEach(function (value) {
       if (comparer(value, actualThresholds[1], actualThresholds[2])) {
         results++;
       }
@@ -1013,7 +1132,7 @@ let DropdownNumber = function (initialVnode) {
     window.setTimeout(function () {
       drawHistogram(
         Checklist.filter.data[dataPath].all,
-        Checklist.filter.data[dataPath].possible
+        getHistogramValues()
       );
     }, 0);
   }
@@ -1053,24 +1172,17 @@ let DropdownNumber = function (initialVnode) {
       let totalPossibleUnchecked = 0;
 
       thresholdsShown = 0;
-      let distinct = new Set(Checklist.filter.data[dataPath].possible).size;
-      let min =
-        Checklist.filter.data[dataPath].min === null
+      let previewRangeData = getPreviewData();
+      let statsValues = getStatsValues();
+      let { min, max, avg, distinct } = getNumericSummary(statsValues);
+      let inputMin =
+        previewRangeData.min === null
           ? Checklist.filter.data[dataPath].globalMin
-          : Checklist.filter.data[dataPath].min;
-      let max =
-        Checklist.filter.data[dataPath].max === null
+          : previewRangeData.min;
+      let inputMax =
+        previewRangeData.max === null
           ? Checklist.filter.data[dataPath].globalMax
-          : Checklist.filter.data[dataPath].max;
-      let avg = 0;
-      const sum = Checklist.filter.data[dataPath].possible.reduce(
-        (a, b) => a + b,
-        0
-      );
-      avg = roundWithPrecision(
-        sum / Checklist.filter.data[dataPath].possible.length || 0,
-        2
-      );
+          : previewRangeData.max;
       let possibleCounts = getNumericValueCounts(
         Checklist.filter.data[dataPath].possible
       );
@@ -1084,47 +1196,47 @@ let DropdownNumber = function (initialVnode) {
         case "equal":
           inputUi = [
             m(".label1", t("numeric_filter_equal")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
           ];
           break;
         case "lesser":
           inputUi = [
             m(".label1", t("numeric_filter_lesser")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
           ];
           break;
         case "lesserequal":
           inputUi = [
             m(".label1", t("numeric_filter_lesserequal")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
           ];
           break;
         case "greater":
           inputUi = [
             m(".label1", t("numeric_filter_greater")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
           ];
           break;
         case "greaterequal":
           inputUi = [
             m(".label1", t("numeric_filter_greaterequal")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
           ];
           break;
         case "between":
           inputUi = [
             m(".label1", t("numeric_filter_between")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
             m(".label2", t("numeric_filter_and")),
-            numericInput(2, min, max),
+            numericInput(2, inputMin, inputMax),
           ];
           break;
         case "around":
           inputUi = [
             m(".label1", t("numeric_filter_around")),
-            numericInput(1, min, max),
+            numericInput(1, inputMin, inputMax),
             m(".label2", t("numeric_filter_plusminus")),
-            numericInput(2, min, max),
+            numericInput(2, inputMin, inputMax),
           ];
           break;
         default:
@@ -1252,7 +1364,7 @@ let DropdownNumber = function (initialVnode) {
                       Checklist.filter.numericFilters[actualOperation].comparer;
                     Checklist.filter.data[dataPath].selected =
                       getSortedUniqueNumericValues(
-                        Checklist.filter.data[dataPath].possible.filter(
+                        getOperatorPreviewValues().filter(
                           (value) =>
                             comparer(value, actualThresholds[1], actualThresholds[2])
                         )
@@ -1429,9 +1541,48 @@ let DropdownDate = function (initialVnode) {
   let filter = "";
   let initialOverflowLimit = 100;
   let itemsOverflowLimit = initialOverflowLimit;
+  let previewData = null;
+  let previewDataKey = "";
 
   function isListMode() {
     return actualOperation == "list";
+  }
+
+  function getPreviewData() {
+    let nextPreviewKey =
+      dataPath + "|" + Checklist.filter.queryKey("data." + dataPath);
+
+    if (previewData === null || previewDataKey != nextPreviewKey) {
+      previewDataKey = nextPreviewKey;
+      previewData = Checklist.filter.getRangeFilterPreviewData(dataPath);
+    }
+
+    return previewData;
+  }
+
+  function getOperatorPreviewValues() {
+    return getPreviewData().possible;
+  }
+
+  function getDisplayedOperatorValues() {
+    let previewValues = getOperatorPreviewValues();
+
+    if (
+      isListMode() ||
+      !actualOperation ||
+      !Checklist.filter.numericFilters[actualOperation]
+    ) {
+      return previewValues;
+    }
+
+    if (!inputsOk()) {
+      return previewValues;
+    }
+
+    let comparer = Checklist.filter.numericFilters[actualOperation].comparer;
+    return previewValues.filter((value) =>
+      comparer(value, actualThresholds[1], actualThresholds[2])
+    );
   }
 
   function countResults() {
@@ -1441,9 +1592,13 @@ let DropdownDate = function (initialVnode) {
       return 0;
     }
 
+    if (!inputsOk()) {
+      return 0;
+    }
+
     let comparer = Checklist.filter.numericFilters[actualOperation].comparer;
 
-    Checklist.filter.data[dataPath].possible.forEach(function (value) {
+    getOperatorPreviewValues().forEach(function (value) {
       if (comparer(value, actualThresholds[1], actualThresholds[2])) {
         results++;
       }
@@ -1680,14 +1835,19 @@ let DropdownDate = function (initialVnode) {
       let totalPossibleUnchecked = 0;
 
       thresholdsShown = 0;
+      let previewRangeData = getPreviewData();
+      let statsValues = isListMode()
+        ? Checklist.filter.data[dataPath].possible
+        : getDisplayedOperatorValues();
+      let statsBounds = getRangeValueBounds(statsValues);
       let minValue =
-        Checklist.filter.data[dataPath].min === null
+        previewRangeData.min === null
           ? Checklist.filter.data[dataPath].globalMin
-          : Checklist.filter.data[dataPath].min;
+          : previewRangeData.min;
       let maxValue =
-        Checklist.filter.data[dataPath].max === null
+        previewRangeData.max === null
           ? Checklist.filter.data[dataPath].globalMax
-          : Checklist.filter.data[dataPath].max;
+          : previewRangeData.max;
       let min = formatDateForInput(minValue);
       let max = formatDateForInput(maxValue);
       let dateFormat = Checklist.getCurrentDateFormat();
@@ -1856,7 +2016,7 @@ let DropdownDate = function (initialVnode) {
                       Checklist.filter.numericFilters[actualOperation].comparer;
                     Checklist.filter.data[dataPath].selected =
                       getSortedUniqueDateValues(
-                        Checklist.filter.data[dataPath].possible.filter(
+                        getOperatorPreviewValues().filter(
                           (value) =>
                             comparer(value, actualThresholds[1], actualThresholds[2])
                         )
@@ -1933,12 +2093,12 @@ let DropdownDate = function (initialVnode) {
             )
           : null,
         m("ul.stats", [
-          minValue === null
+          statsBounds.min === null
             ? null
-            : m("li", t("stats_min") + ": " + dayjs(minValue).format(dateFormat)),
-          maxValue === null
+            : m("li", t("stats_min") + ": " + dayjs(statsBounds.min).format(dateFormat)),
+          statsBounds.max === null
             ? null
-            : m("li", t("stats_max") + ": " + dayjs(maxValue).format(dateFormat)),
+            : m("li", t("stats_max") + ": " + dayjs(statsBounds.max).format(dateFormat)),
         ]),
         isListMode()
           ? m(

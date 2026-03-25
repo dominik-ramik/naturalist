@@ -403,10 +403,14 @@ export let Filter = {
     });
   },
 
-  queryKey: function () {
+  queryKey: function (excludedFilterKey = "") {
     let key = { taxa: {}, data: {} };
     Object.keys(key).forEach(function (type) {
       Object.keys(Filter[type]).forEach(function (dataPath) {
+        if (excludedFilterKey == type + "." + dataPath) {
+          return;
+        }
+
         if (
           selectableFilterTypes.includes(Filter[type][dataPath].type)
         ) {
@@ -464,8 +468,8 @@ export let Filter = {
   },
 
   queryCache: {
-    cache: function (searchResults) {
-      let queryKey = Filter.queryKey();
+    cache: function (searchResults, excludedFilterKey = "") {
+      let queryKey = Filter.queryKey(excludedFilterKey);
       Filter._queryResultCache[queryKey] = {
         taxa: searchResults,
         // Store only a lightweight snapshot of filter state instead of deep cloning
@@ -476,8 +480,8 @@ export let Filter = {
         }
       };
     },
-    retrieve: function () {
-      let queryKey = Filter.queryKey();
+    retrieve: function (excludedFilterKey = "") {
+      let queryKey = Filter.queryKey(excludedFilterKey);
 
       if (Filter._queryResultCache.hasOwnProperty(queryKey)) {
         return Filter._queryResultCache[queryKey];
@@ -488,22 +492,81 @@ export let Filter = {
   },
 
   getTaxaForCurrentQuery: function () {
+    return Filter._getTaxaForQuery();
+  },
+
+  getTaxaForCurrentQueryExcluding: function (type, dataPath) {
+    return Filter._getTaxaForQuery(type + "." + dataPath);
+  },
+
+  getRangeFilterPreviewData: function (dataPath) {
+    let previewTaxa = Filter.getTaxaForCurrentQueryExcluding("data", dataPath);
+    let possible = [];
+    let min = null;
+    let max = null;
+
+    previewTaxa.forEach(function (taxon) {
+      let value = Checklist.getDataFromDataPath(taxon.d, dataPath);
+
+      if (value === null) {
+        return;
+      }
+
+      let leafData = Checklist.getAllLeafData(value, false, dataPath);
+      leafData.forEach(function (leafValue) {
+        if (typeof leafValue !== "number" || isNaN(leafValue)) {
+          return;
+        }
+
+        possible.push(leafValue);
+        min = min === null ? leafValue : Math.min(min, leafValue);
+        max = max === null ? leafValue : Math.max(max, leafValue);
+      });
+    });
+
+    return {
+      possible,
+      min,
+      max,
+    };
+  },
+
+  _getTaxaForQuery: function (excludedFilterKey = "") {
     if (!Checklist._isDataReady) return [];
 
     Filter._sanitizeFilters();
 
-    if (Filter.isEmpty()) {
+    let activeFilters = Filter._getActiveFilters(excludedFilterKey);
+    let hasActiveFilters =
+      activeFilters.taxa.length > 0 || activeFilters.data.length > 0;
+
+    if (!hasActiveFilters && Filter.text.length == 0) {
       let allData = Checklist.getData().checklist;
-      Filter.calculatePossibleFilterValues(allData);
+      if (!excludedFilterKey) {
+        Filter.calculatePossibleFilterValues(allData);
+      }
       return allData;
     }
 
-    let cacheResult = Filter.queryCache.retrieve();
+    let cacheResult = Filter.queryCache.retrieve(excludedFilterKey);
     if (cacheResult) {
-      Filter.calculatePossibleFilterValues(cacheResult.taxa);
+      if (!excludedFilterKey) {
+        Filter.calculatePossibleFilterValues(cacheResult.taxa);
+      }
       return cacheResult.taxa;
     }
 
+    let finalSearchResults = Filter._runActiveFilterQuery(activeFilters);
+
+    if (!excludedFilterKey) {
+      Filter.calculatePossibleFilterValues(finalSearchResults);
+    }
+    Filter.queryCache.cache(finalSearchResults, excludedFilterKey);
+
+    return finalSearchResults;
+  },
+
+  _runActiveFilterQuery: function (activeFilters) {
     let includeChildren = Settings.includeMatchChildren();
     let checklistData = Checklist.getData().checklist;
 
@@ -514,8 +577,6 @@ export let Filter = {
 
     // --- PREPARE REQUIREMENTS ---
     let requirements = [];
-    let activeFilters = Filter._getActiveFilters();
-
     activeFilters.taxa.forEach((f) => {
       requirements.push({ type: "taxa", filter: f, bit: 1 << requirements.length });
     });
@@ -643,8 +704,6 @@ export let Filter = {
     }
 
     let finalSearchResults = Filter._assembleResults(matchedItems, parentKeySet, checklistData);
-    Filter.calculatePossibleFilterValues(finalSearchResults);
-    Filter.queryCache.cache(finalSearchResults);
 
     return finalSearchResults;
   },
@@ -674,13 +733,17 @@ export let Filter = {
     return snapshot;
   },
 
-  _getActiveFilters: function () {
+  _getActiveFilters: function (excludedFilterKey = "") {
     let active = { taxa: [], data: [] };
 
     // Get the keys once to establish the index order
     let taxaKeys = Object.keys(Filter.taxa);
 
     taxaKeys.forEach((dataPath, index) => {
+      if (excludedFilterKey == "taxa." + dataPath) {
+        return;
+      }
+
       if (Filter.taxa[dataPath].selected.length > 0) {
         active.taxa.push({
           dataPath,
@@ -691,6 +754,10 @@ export let Filter = {
     });
 
     Object.keys(Filter.data).forEach(dataPath => {
+      if (excludedFilterKey == "data." + dataPath) {
+        return;
+      }
+
       if (
         exactSelectableRangeTypes.includes(Filter.data[dataPath].type) &&
         Filter.data[dataPath].selected.length > 0 &&
@@ -698,7 +765,7 @@ export let Filter = {
       ) {
         active.data.push({
           dataPath,
-          type: "date",
+          type: Filter.data[dataPath].type,
           selected: Filter.data[dataPath].selected
         });
       } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
