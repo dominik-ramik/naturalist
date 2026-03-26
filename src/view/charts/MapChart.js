@@ -64,7 +64,7 @@ export function mapChart(filteredTaxa, allTaxa) {
     renderControlPanel(),
     m(".chart-info-box", [
       m(".chart-info-item", mapVerb()),
-      Checklist.hasSpecimens() ? m(".chart-info-item", 
+      Checklist.hasSpecimens() ? m(".chart-info-item",
         mapChartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
       ) : null
     ]),
@@ -152,14 +152,14 @@ function renderControlPanel() {
       Checklist.filter.isEmpty()
         ? m("div.chart-segmented-control.disabled", [m("button.selected", { disabled: true }, t("view_map_no_filter"))])
         : m(".chart-segmented-control", sumMethods.map((mt) =>
-            m("button" + (mt.method === currentSumMethod ? ".selected" : ""), {
-              onclick: () => {
-                if (mt.method === currentSumMethod) return false;
-                currentSumMethod = mt.method;
-                Settings.mapChartCurrentSumMethod(currentSumMethod);
-              }
-            }, mt.name)
-          ))
+          m("button" + (mt.method === currentSumMethod ? ".selected" : ""), {
+            onclick: () => {
+              if (mt.method === currentSumMethod) return false;
+              currentSumMethod = mt.method;
+              Settings.mapChartCurrentSumMethod(currentSumMethod);
+            }
+          }, mt.name)
+        ))
     ]),
 
     Checklist.hasSpecimens() ? m(".chart-control-group", [
@@ -289,7 +289,7 @@ function renderDataTable(dataPath, sumMethod) {
             basis = currentFilterResultsLength;
             break;
           case "region":
-            basis = globalCounts[regionKey];
+            basis = globalCounts[regionKey] || currentRegions[regionKey];
             break;
           case "total":
             basis = globalCounts.__all__;
@@ -333,7 +333,7 @@ function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
   const cacheKey = globalCountsCacheKey(dataPath);
 
   if (!Object.keys(sessionCache).includes(cacheKey)) {
-    sessionCache[cacheKey] = cacheAllTaxa(allTaxa || Checklist.getEntireChecklist(), dataPath);
+    sessionCache[cacheKey] = cacheAllTaxa(allTaxa || Checklist.getEntireChecklist(), dataPath, mapChartMode);
   }
   const globalCounts = sessionCache[cacheKey];
   const regionCounts = {};
@@ -405,7 +405,10 @@ function regionRatio(regionCount, globalCounts, regionKey, sumMethod) {
   let ratio = 0;
   switch (sumMethod) {
     case "region":
-      ratio = (1.0 * regionCount) / globalCounts[regionKey];
+      // Fallback to regionCount to prevent NaN if global cache is missing the key
+      let denom = globalCounts[regionKey];
+      if (!denom) denom = regionCount;
+      ratio = (1.0 * regionCount) / denom;
       break;
     case "filter":
       ratio = (1.0 * regionCount) / currentFilterResultsLength;
@@ -428,11 +431,20 @@ function getPresentRegions(mapData) {
   return [];
 }
 
-function cacheAllTaxa(allTaxa, dataPath) {
+function cacheAllTaxa(allTaxa, dataPath, mode) {
   let cache = { __all__: 0 };
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
 
-  filterTerminalLeaves(allTaxa).forEach((taxon) => {
-    const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
+  // Use the exact same leaf filter as the numerator
+  const terminalLeaves = filterTerminalLeavesForMode(allTaxa, mode, specimenMetaIndex);
+
+  terminalLeaves.forEach((taxon) => {
+    // Dynamically pull data based on mode, mirroring calculateRegionColors
+    const effectiveD = mode === "specimen"
+      ? Checklist.getEffectiveDataForNode(taxon, specimenMetaIndex, allTaxa)
+      : taxon.d;
+
+    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
     const presentRegions = getPresentRegions(mapData);
 
     if (presentRegions.length > 0) {

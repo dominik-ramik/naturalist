@@ -264,12 +264,15 @@ table.results-table td.region-color {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  user-select: auto;
 }
 
 table.results-table {
   width: 100%;
   border-collapse: collapse;
   margin: 0;
+  user-select: text;
+  cursor: text;
 }
 
 table.results-table th, 
