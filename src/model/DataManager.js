@@ -1087,6 +1087,11 @@ export let DataManager = function () {
       );
     }
 
+    // Sort raw checklist rows by taxa columns so the spreadsheet does not need
+    // to be manually ordered. Uses a stable sort so rows sharing the same full
+    // taxon path keep their original relative position.
+    table = sortRawChecklistByTaxa(table, taxonColumnInfos, data.common.languages.defaultLanguageCode);
+
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
 
@@ -2268,4 +2273,94 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, ass
   } else {
     return data;
   }
+}
+
+/**
+ * Stably sorts raw checklist rows by their taxon columns (in declaration order),
+ * so the display layer receives rows grouped by shared ancestry regardless of
+ * how the source spreadsheet was ordered.
+ *
+ * Rules:
+ *  - Sort is performed only on data rows (index 1+); the header row is untouched.
+ *  - Comparison is case-insensitive.
+ *  - An empty taxon cell sorts BEFORE a filled one (empty = "taxon ends here").
+ *  - Rows whose entire compared taxon path is equal retain their original order
+ *    (JavaScript's Array.sort is stable since ES2019 / all modern engines).
+ *
+ * @param {any[][]} table       - Full raw table including header row at index 0.
+ * @param {Object[]} taxonColumnInfos - Taxon column infos in declaration order,
+ *                                     each with a `.name` property.
+ * @param {string}  defaultLangCode  - Used for language-suffixed column fallback.
+ * @returns {any[][]} New table array with the same header row and sorted data rows.
+ */
+function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
+  if (table.length <= 2 || taxonColumnInfos.length === 0) {
+    return table; // Nothing meaningful to sort
+  }
+
+  const headers = table[0].map(h => h.toString().toLowerCase());
+
+  /**
+   * Resolve the header index that holds the taxon *name* for a given column.
+   * Mirrors the lookup strategy in ReaderTaxon.readData:
+   *   1. explicit "<base>.name" column (optionally language-suffixed)
+   *   2. base column itself (optionally language-suffixed)
+   * Returns -1 when no matching column is found.
+   */
+  function resolveTaxonNameIndex(baseName) {
+    const base = baseName.toLowerCase();
+
+    // 1. Explicit .name sub-column
+    let idx = headers.indexOf(base + ".name");
+    if (idx >= 0) return idx;
+    idx = headers.indexOf(base + ".name:" + defaultLangCode);
+    if (idx >= 0) return idx;
+
+    // 2. Base column (pipe-separated "Name|Authority" or name-only)
+    idx = headers.indexOf(base);
+    if (idx >= 0) return idx;
+    idx = headers.indexOf(base + ":" + defaultLangCode);
+    if (idx >= 0) return idx;
+
+    return -1;
+  }
+
+  /**
+   * Extract the taxon name string from a raw cell value.
+   * Handles the pipe-separated "Name|Authority" single-cell format.
+   */
+  function extractTaxonName(cellValue) {
+    if (cellValue === null || cellValue === undefined) return "";
+    const s = cellValue.toString().trim();
+    const pipeIdx = s.indexOf("|");
+    return pipeIdx >= 0 ? s.substring(0, pipeIdx).trim() : s;
+  }
+
+  // Pre-compute header indices for all taxon columns once
+  const taxonHeaderIndices = taxonColumnInfos.map(info =>
+    resolveTaxonNameIndex(info.name)
+  );
+
+  const dataRows = table.slice(1);
+
+  dataRows.sort((a, b) => {
+    for (let i = 0; i < taxonHeaderIndices.length; i++) {
+      const colIdx = taxonHeaderIndices[i];
+      if (colIdx < 0) continue; // column not found in this sheet – skip
+
+      const aName = extractTaxonName(a[colIdx]);
+      const bName = extractTaxonName(b[colIdx]);
+
+      // Empty values sort before non-empty
+      if (aName === "" && bName !== "") return -1;
+      if (aName !== "" && bName === "") return 1;
+      if (aName === "" && bName === "") continue; // both empty – check next column
+
+      const cmp = aName.localeCompare(bName, undefined, { sensitivity: "base" });
+      if (cmp !== 0) return cmp;
+    }
+    return 0; // identical taxon path → preserve original order (stable sort)
+  });
+
+  return [table[0], ...dataRows];
 }
