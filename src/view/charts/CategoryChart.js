@@ -7,7 +7,7 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { ButtonGroup } from "../ChecklistView.js";
+// ButtonGroup removed in favor of native selects and segmented controls
 
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
@@ -286,14 +286,7 @@ export function categoryChart(filteredTaxa) {
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
 
 
-  // Build available filter options (only small lists)
-  const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
-    (f) =>
-      (Checklist.filter.data[f].type === "text" ||
-        Checklist.filter.data[f].type === "badge" ||
-        Checklist.filter.data[f].type === "map regions") &&
-      Checklist.filter.data[f].all.length < 40
-  );
+  // (filtersToDisplay moved to control render block)
 
   // Get chart data based on current settings
   let categorizedData = dataForCategoryChart(
@@ -310,115 +303,101 @@ export function categoryChart(filteredTaxa) {
     );
   }
 
+  // Build available filter options for the dropdown (only text, badge, or map regions)
+  const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
+    (f) =>
+      (Checklist.filter.data[f].type === "text" ||
+        Checklist.filter.data[f].type === "badge" ||
+        Checklist.filter.data[f].type === "map regions") &&
+      Checklist.filter.data[f].all.length < 40
+  );
+
   // ------------------------------------------------------
   // RENDER CONTROL PANEL
   // ------------------------------------------------------
   result.push(
-    m("div[style=margin: 0.25em; display: flex; flex-wrap: wrap;]", [
-      m(ButtonGroup, {
-        label: t("view_cat_category_to_analyze"),
-        buttons: filtersToDisplay.map((f) => {
-          const title = Checklist.getMetaForDataPath(f).searchCategory;
-          return m(
-            "button" + (f === categoryToView ? ".selected" : ""),
-            {
-              onclick: () => {
-                if (f === categoryToView) return false;
-                categoryToView = f;
-                Settings.categoryChartCategory(f);
-              },
-            },
-            title
-          );
-        }),
-      }),
-      categoryToView === ""
-        ? null
-        : [
-          m(ButtonGroup, {
-            label: t("view_cat_sum_method"),
-            buttons: sumMethods.map((mt) =>
-              m(
-                "button" + (mt.method === sumMethod ? ".selected" : ""),
-                {
-                  onclick: () => {
-                    if (mt.method === sumMethod) return false;
-                    sumMethod = mt.method;
-                    Settings.categoryChartSumMethod(sumMethod);
-                  },
-                },
-                mt.name
-              )
-            ),
-          }),
-          sumMethod === ""
-            ? null
-            : m(ButtonGroup, {
-              label: t("view_cat_display"),
-              buttons: displayStyles.map((ds) =>
-                m(
-                  "button" + (ds.method === display ? ".selected" : ""),
-                  {
-                    onclick: () => {
-                      if (ds.method === display) return false;
-                      display = ds.method;
-                      Settings.categoryChartDisplayMode(display);
-                    },
-                  },
-                  ds.name
-                )
-              ),
-            }),
-          Checklist.hasSpecimens()
-            ? m(ButtonGroup, {
-              label: t("view_chart_mode_label"),
-              buttons: [
-                m("button" + (chartMode === "taxa" ? ".selected" : ""), {
-                  onclick: () => {
-                    if (chartMode === "taxa") return false;
-                    chartMode = "taxa";
-                    Settings.categoryChartMode("taxa");
-                  }
-                }, t("view_chart_mode_taxa")),
-                m("button" + (chartMode === "specimen" ? ".selected" : ""), {
-                  onclick: () => {
-                    if (chartMode === "specimen") return false;
-                    chartMode = "specimen";
-                    Settings.categoryChartMode("specimen");
-                  }
-                }, t("view_chart_mode_specimen")),
-              ],
-            })
-            : null,
-        ],
+    m(".chart-controls-card", [
+      m(".chart-control-group.chart-control-group-full", [
+        m("label", t("view_cat_category_to_analyze")),
+        m("select.chart-select", {
+          value: categoryToView,
+          onchange: (e) => {
+            categoryToView = e.target.value;
+            Settings.categoryChartCategory(categoryToView);
+          }
+        }, [
+          m("option", { value: "", disabled: true }, "— " + t("view_cat_category_to_analyze") + " —"),
+          ...filtersToDisplay.map((f) => {
+            const title = Checklist.getMetaForDataPath(f).searchCategory;
+            return m("option", { value: f }, title);
+          })
+        ])
+      ]),
+      
+      categoryToView === "" ? null : m(".chart-control-group", [
+        m("label", t("view_cat_sum_method")),
+        m(".chart-segmented-control", sumMethods.map((mt) =>
+          m("button" + (mt.method === sumMethod ? ".selected" : ""), {
+            onclick: () => {
+              if (mt.method === sumMethod) return false;
+              sumMethod = mt.method;
+              Settings.categoryChartSumMethod(sumMethod);
+            }
+          }, mt.name)
+        ))
+      ]),
+
+      sumMethod === "" ? null : m(".chart-control-group", [
+        m("label", t("view_cat_display")),
+        m(".chart-segmented-control", displayStyles.map((ds) =>
+          m("button" + (ds.method === display ? ".selected" : ""), {
+            title: ds.info,
+            onclick: () => {
+              if (ds.method === display) return false;
+              display = ds.method;
+              Settings.categoryChartDisplayMode(display);
+            }
+          }, ds.name)
+        ))
+      ]),
+
+      Checklist.hasSpecimens() ? m(".chart-control-group", [
+        m("label", t("view_chart_mode_label")),
+        m(".chart-segmented-control", [
+          m("button" + (chartMode === "taxa" ? ".selected" : ""), {
+            onclick: () => {
+              if (chartMode === "taxa") return false;
+              chartMode = "taxa";
+              Settings.categoryChartMode("taxa");
+            }
+          }, t("view_chart_mode_taxa")),
+          m("button" + (chartMode === "specimen" ? ".selected" : ""), {
+            onclick: () => {
+              if (chartMode === "specimen") return false;
+              chartMode = "specimen";
+              Settings.categoryChartMode("specimen");
+            }
+          }, t("view_chart_mode_specimen"))
+        ])
+      ]) : null
     ]),
-    // Info label (if there is data to show)
-    categoryToView === "" ||
-      sumMethod === "" ||
-      Object.keys(categorizedData.individualResults).length === 0
+
+    // Info labels rendered cleanly
+    categoryToView === "" || sumMethod === "" || Object.keys(categorizedData.individualResults).length === 0
       ? null
-      : m(".info-labels", [
-        m(
-          ".info-label",
-          m.trust(
+      : m(".chart-info-box", [
+          m(".chart-info-item", m.trust(
             Checklist.filter.isEmpty()
-              ? t("view_cat_counted_all", [
-                categoryVerb(categoryToView, sumMethod),
-              ])
+              ? t("view_cat_counted_all", [categoryVerb(categoryToView, sumMethod)])
               : tf("view_cat_counted_filter", [
-                categoryVerb(categoryToView, sumMethod),
-                Settings.pinnedSearches.getHumanNameForSearch(),
-              ])
-          )
-        ),
-        Checklist.hasSpecimens()
-          ? m(".info-label",
-            chartMode === "taxa"
-              ? t("view_chart_mode_taxa_info")
-              : t("view_chart_mode_specimen_info")
-          )
-          : null,
-      ])
+                  categoryVerb(categoryToView, sumMethod),
+                  Settings.pinnedSearches.getHumanNameForSearch()
+                ])
+          )),
+          Checklist.hasSpecimens() ? m(".chart-info-item", 
+            chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
+          ) : null
+        ])
   );
 
   // ------------------------------------------------------
@@ -531,7 +510,7 @@ export function categoryChart(filteredTaxa) {
     );
 
     result.push(
-      m(".table-flex-container", [
+      m(".table-flex-container[style=padding: 0 10px;]", [
         m(".table-wrapper", [
           m(".cell-verb", currentCellVerb),
           m("table.category-view", [

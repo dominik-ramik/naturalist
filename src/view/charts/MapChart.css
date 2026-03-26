@@ -1,3 +1,113 @@
+.chart-controls-card {
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+  padding: 15px;
+  margin: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.chart-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 200px;
+}
+
+.chart-control-group-full {
+  flex: 1 1 100%;
+}
+
+.chart-control-group label {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chart-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95em;
+  color: #333;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.chart-select:hover, .chart-select:focus {
+  border-color: var(--nlblue, #55769b);
+  box-shadow: 0 0 0 2px rgba(85, 118, 155, 0.2);
+}
+
+.chart-segmented-control {
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid #ccc;
+}
+
+.chart-segmented-control.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.chart-segmented-control button {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.9em;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chart-segmented-control button:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.chart-segmented-control button.selected {
+  background-color: #fff;
+  color: var(--nlblue, #55769b);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: bold;
+}
+
+.chart-info-box {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin: 0 10px 15px 10px;
+  border-left: 4px solid var(--nlblue, #55769b);
+  font-size: 0.85em;
+  color: #444;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.chart-info-item {
+  margin-bottom: 5px;
+}
+.chart-info-item:last-child {
+  margin-bottom: 0;
+}
+.chart-info-item::before {
+  content: "🛈";
+  margin-right: 8px;
+  color: var(--nlblue, #55769b);
+}
+
 .map-chart {
   display: flex;
   flex-direction: column;
@@ -128,20 +238,58 @@ table.results-table td.region-color {
   background-color: white;
 }
 
+/* ==========================================================================
+   Map & Table Responsive Layout
+   ========================================================================== */
+.map-and-table-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0 10px 20px 10px;
+  align-items: flex-start;
+}
+
+.map-chart-image-wrap-outer {
+  flex: 2 1 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.table-responsive-wrapper {
+  flex: 1 1 300px;
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+table.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+table.results-table th, 
+table.results-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+table.results-table th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+}
+
 .map-verb {
   display: inline-block;
   background-color: white;
   padding: 0.25em;
 }
 
-.control-panel {
-  color: white;
-  padding: 0.25em;
-  display: flex;
-  align-items: center
-;
-}
-
-.control-panel .hint {
-  font-size: 85%;
-}
+/* control-panel removed - replaced by .chart-controls-card */

@@ -9,7 +9,7 @@ import {
   relativeToUsercontent,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { ButtonGroup } from "../ChecklistView.js";
+// ButtonGroup removed in favor of native selects and segmented controls
 
 let currentMap = Settings.mapChartCurrentMap();
 let currentSumMethod = Settings.mapChartCurrentSumMethod();
@@ -62,19 +62,15 @@ export function mapChart(filteredTaxa, allTaxa) {
 
   return m(".map-chart", [
     renderControlPanel(),
-    m(".map-verb", mapVerb()),
-    Checklist.hasSpecimens()
-      ? m(".info-label",
-        mapChartMode === "taxa"
-          ? t("view_chart_mode_taxa_info")
-          : t("view_chart_mode_specimen_info")
-      )
-      : null,
-    m(".map-table-wrapper", [
+    m(".chart-info-box", [
+      m(".chart-info-item", mapVerb()),
+      Checklist.hasSpecimens() ? m(".chart-info-item", 
+        mapChartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
+      ) : null
+    ]),
+    m(".map-and-table-container", [
       currentMap == null ? null : renderMap(currentMap),
-      currentMap == null
-        ? null
-        : renderDataTable(currentMap.dataPath, currentSumMethod),
+      currentMap == null ? null : m(".table-responsive-wrapper", renderDataTable(currentMap.dataPath, currentSumMethod)),
     ]),
   ]);
 }
@@ -133,61 +129,42 @@ export function getAvailableMaps() {
 }
 
 function renderControlPanel() {
-  return m(".control-panel", [
-    mapsSelector(),
-    currentMap == null ? null : sumMethodSelector(),
-    modeSelector(),
-  ]);
-
-  function mapsSelector() {
-    return m(ButtonGroup, {
-      label: "Map",
-      buttons: getAvailableMaps().map((map) =>
-        m(
-          "button" +
-          (JSON.stringify(map) === JSON.stringify(currentMap)
-            ? ".selected"
-            : ""),
-          {
-            onclick: () => {
-              if (JSON.stringify(map) === JSON.stringify(currentMap))
-                return false;
-              currentMap = map;
-              Settings.mapChartCurrentMap(JSON.stringify(currentMap));
-            },
-          },
-          map.title
+  return m(".chart-controls-card", [
+    m(".chart-control-group.chart-control-group-full", [
+      m("label", "Map"),
+      m("select.chart-select", {
+        value: currentMap ? JSON.stringify(currentMap) : "",
+        onchange: (e) => {
+          if (!e.target.value) return;
+          currentMap = JSON.parse(e.target.value);
+          Settings.mapChartCurrentMap(e.target.value);
+        }
+      }, [
+        m("option", { value: "", disabled: true }, "— " + t("view_map_select_map") + " —"),
+        ...getAvailableMaps().map((map) =>
+          m("option", { value: JSON.stringify(map) }, map.title)
         )
-      ),
-    });
-  }
+      ])
+    ]),
 
-  function sumMethodSelector() {
-    return Checklist.filter.isEmpty()
-      ? m("span.hint", t("view_map_no_filter"))
-      : m(ButtonGroup, {
-        label: "Method",
-        buttons: sumMethods.map((mt) =>
-          m(
-            "button" + (mt.method === currentSumMethod ? ".selected" : ""),
-            {
+    currentMap == null ? null : m(".chart-control-group", [
+      m("label", "Method"),
+      Checklist.filter.isEmpty()
+        ? m("div.chart-segmented-control.disabled", [m("button.selected", { disabled: true }, t("view_map_no_filter"))])
+        : m(".chart-segmented-control", sumMethods.map((mt) =>
+            m("button" + (mt.method === currentSumMethod ? ".selected" : ""), {
               onclick: () => {
                 if (mt.method === currentSumMethod) return false;
                 currentSumMethod = mt.method;
                 Settings.mapChartCurrentSumMethod(currentSumMethod);
-              },
-            },
-            mt.name
-          )
-        ),
-      });
-  }
+              }
+            }, mt.name)
+          ))
+    ]),
 
-  function modeSelector() {
-    if (!Checklist.hasSpecimens()) return null;
-    return m(ButtonGroup, {
-      label: t("view_chart_mode_label"),
-      buttons: [
+    Checklist.hasSpecimens() ? m(".chart-control-group", [
+      m("label", t("view_chart_mode_label")),
+      m(".chart-segmented-control", [
         m("button" + (mapChartMode === "taxa" ? ".selected" : ""), {
           onclick: () => {
             if (mapChartMode === "taxa") return false;
@@ -201,10 +178,10 @@ function renderControlPanel() {
             mapChartMode = "specimen";
             Settings.mapChartMode("specimen");
           }
-        }, t("view_chart_mode_specimen")),
-      ],
-    });
-  }
+        }, t("view_chart_mode_specimen"))
+      ])
+    ]) : null
+  ]);
 }
 
 function mapVerb() {
