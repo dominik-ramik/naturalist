@@ -132,7 +132,8 @@ export let ChecklistView = {
             !Checklist.filter.isEmpty() && !Settings.includeMatchChildren()
               ? hiddenChildTaxaNotice()
               : null,
-            shouldHideSpecimensInView()
+            shouldHideSpecimensInView() &&
+              (Settings.viewType() === "view_details" || Settings.viewType() === "view_circle_pack")
               ? hiddenSpecimensNotice()
               : null,
             Settings.viewType() === "view_details" &&
@@ -310,8 +311,8 @@ function checklistDataForD3FromTaxa(taxa) {
 
     const ancestry = isSpecimenRow
       ? nonNullTaxa.filter(function (item) {
-          return item.index !== specimenMetaIndex;
-        })
+        return item.index !== specimenMetaIndex;
+      })
       : nonNullTaxa;
 
     let currentNode = root;

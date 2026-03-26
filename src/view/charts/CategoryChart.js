@@ -4,6 +4,7 @@ import { Settings } from "../../model/Settings.js";
 import {
   sortByCustomOrder,
   filterTerminalLeaves,
+  filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 import { ButtonGroup } from "../ChecklistView.js";
@@ -45,6 +46,8 @@ if (!sumMethods.find((sm) => sm.method === sumMethod)) {
   sumMethod = sumMethods[0].method;
   Settings.categoryChartSumMethod(sumMethod);
 }
+
+let chartMode = Settings.categoryChartMode(); // "taxa" or "specimen"
 
 // ------------------------------------------------------
 // HELPER FUNCTIONS
@@ -164,7 +167,7 @@ function toPctString(ratio) {
 /**
  * Build data for the category chart for the given root, taxa, and category.
  */
-function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
+function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
   const individualResults = {};
   const allCategories = {};
 
@@ -192,13 +195,25 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory) {
 
       switch (categoryType) {
         case "text":
-          categoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
+          categoryData = Checklist.getDataFromDataPath(
+            mode === "specimen"
+              ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
+              : taxon.d,
+            dataCategory
+          )
           if (!Array.isArray(categoryData)) {
             categoryData = [categoryData];
           }
           break;
         case "badge":
-          categoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
+          categoryData = Checklist.getDataFromDataPath(
+            mode === "specimen"
+              ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
+              : taxon.d,
+            dataCategory
+          )
+
+
           if (!Array.isArray(categoryData)) {
             categoryData = [categoryData];
           }
@@ -265,8 +280,12 @@ export function categoryChart(filteredTaxa) {
   const result = [];
 
   //remove all non-leaf taxa
-  filteredTaxa = filterTerminalLeaves(filteredTaxa);
-  
+  const allTaxaForInheritance = filteredTaxa;
+
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
+
+
   // Build available filter options (only small lists)
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
     (f) =>
@@ -278,9 +297,7 @@ export function categoryChart(filteredTaxa) {
 
   // Get chart data based on current settings
   let categorizedData = dataForCategoryChart(
-    categoryRoot,
-    filteredTaxa,
-    categoryToView
+    categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance  // ← changed
   );
 
   if (categorizedData == null) {
@@ -289,9 +306,7 @@ export function categoryChart(filteredTaxa) {
     categoryToView = "";
     Settings.categoryChartCategory("");
     categorizedData = dataForCategoryChart(
-      categoryRoot,
-      filteredTaxa,
-      categoryToView
+      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance  // ← changed
     );
   }
 
@@ -320,41 +335,62 @@ export function categoryChart(filteredTaxa) {
       categoryToView === ""
         ? null
         : [
-            m(ButtonGroup, {
-              label: t("view_cat_sum_method"),
-              buttons: sumMethods.map((mt) =>
+          m(ButtonGroup, {
+            label: t("view_cat_sum_method"),
+            buttons: sumMethods.map((mt) =>
+              m(
+                "button" + (mt.method === sumMethod ? ".selected" : ""),
+                {
+                  onclick: () => {
+                    if (mt.method === sumMethod) return false;
+                    sumMethod = mt.method;
+                    Settings.categoryChartSumMethod(sumMethod);
+                  },
+                },
+                mt.name
+              )
+            ),
+          }),
+          sumMethod === ""
+            ? null
+            : m(ButtonGroup, {
+              label: t("view_cat_display"),
+              buttons: displayStyles.map((ds) =>
                 m(
-                  "button" + (mt.method === sumMethod ? ".selected" : ""),
+                  "button" + (ds.method === display ? ".selected" : ""),
                   {
                     onclick: () => {
-                      if (mt.method === sumMethod) return false;
-                      sumMethod = mt.method;
-                      Settings.categoryChartSumMethod(sumMethod);
+                      if (ds.method === display) return false;
+                      display = ds.method;
+                      Settings.categoryChartDisplayMode(display);
                     },
                   },
-                  mt.name
+                  ds.name
                 )
               ),
             }),
-            sumMethod === ""
-              ? null
-              : m(ButtonGroup, {
-                  label: t("view_cat_display"),
-                  buttons: displayStyles.map((ds) =>
-                    m(
-                      "button" + (ds.method === display ? ".selected" : ""),
-                      {
-                        onclick: () => {
-                          if (ds.method === display) return false;
-                          display = ds.method;
-                          Settings.categoryChartDisplayMode(display);
-                        },
-                      },
-                      ds.name
-                    )
-                  ),
-                }),
-          ],
+          Checklist.hasSpecimens()
+            ? m(ButtonGroup, {
+              label: t("view_chart_mode_label"),
+              buttons: [
+                m("button" + (chartMode === "taxa" ? ".selected" : ""), {
+                  onclick: () => {
+                    if (chartMode === "taxa") return false;
+                    chartMode = "taxa";
+                    Settings.categoryChartMode("taxa");
+                  }
+                }, t("view_chart_mode_taxa")),
+                m("button" + (chartMode === "specimen" ? ".selected" : ""), {
+                  onclick: () => {
+                    if (chartMode === "specimen") return false;
+                    chartMode = "specimen";
+                    Settings.categoryChartMode("specimen");
+                  }
+                }, t("view_chart_mode_specimen")),
+              ],
+            })
+            : null,
+        ],
     ]),
     // Info label (if there is data to show)
     categoryToView === "" ||
@@ -362,20 +398,27 @@ export function categoryChart(filteredTaxa) {
       Object.keys(categorizedData.individualResults).length === 0
       ? null
       : m(".info-labels", [
-          m(
-            ".info-label",
-            m.trust(
-              Checklist.filter.isEmpty()
-                ? t("view_cat_counted_all", [
-                    categoryVerb(categoryToView, sumMethod),
-                  ])
-                : tf("view_cat_counted_filter", [
-                    categoryVerb(categoryToView, sumMethod),
-                    Settings.pinnedSearches.getHumanNameForSearch(),
-                  ])
-            )
-          ),
-        ])
+        m(
+          ".info-label",
+          m.trust(
+            Checklist.filter.isEmpty()
+              ? t("view_cat_counted_all", [
+                categoryVerb(categoryToView, sumMethod),
+              ])
+              : tf("view_cat_counted_filter", [
+                categoryVerb(categoryToView, sumMethod),
+                Settings.pinnedSearches.getHumanNameForSearch(),
+              ])
+          )
+        ),
+        Checklist.hasSpecimens()
+          ? m(".info-label",
+            chartMode === "taxa"
+              ? t("view_chart_mode_taxa_info")
+              : t("view_chart_mode_specimen_info")
+          )
+          : null,
+      ])
   );
 
   // ------------------------------------------------------
@@ -440,9 +483,9 @@ export function categoryChart(filteredTaxa) {
               taxon.children === 0
                 ? null
                 : m(
-                    "span[style=margin-left: 0.75em; color: gray; font-size: 85%]",
-                    taxon.children
-                  ),
+                  "span[style=margin-left: 0.75em; color: gray; font-size: 85%]",
+                  taxon.children
+                ),
             ]
           )
         );

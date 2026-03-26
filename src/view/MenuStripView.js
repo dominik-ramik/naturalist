@@ -288,37 +288,7 @@ function menuTopBar() {
               Settings.viewType("view_map");
             },
           },
-        { type: "divider" },
-        {
-          type: "button",
-          title: t("include_match_children"),
-          icon: Settings.includeMatchChildren()
-            ? "ui/search/checkbox_checked"
-            : "ui/search/checkbox_unchecked",
-          action: function () {
-            Settings.includeMatchChildren(!Settings.includeMatchChildren());
-            Checklist.filter._queryResultCache = {};
-            ActionButtonWithMenu.open = false;
-            m.redraw();
-          }
-        },
-        Checklist.hasSpecimens()
-          ? {
-            type: "button",
-            title: t("show_specimens"),
-            icon: Settings.includeSpecimensInView()
-              ? "ui/search/checkbox_checked"
-              : "ui/search/checkbox_unchecked",
-            action: function () {
-              Settings.includeSpecimensInView(
-                !Settings.includeSpecimensInView()
-              );
-
-              ActionButtonWithMenu.open = false;
-              m.redraw();
-            }
-          }
-          : null,
+        { type: "divider" },        
         Settings.viewType() === "view_details"
           ? [
             { type: "divider" },

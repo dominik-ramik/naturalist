@@ -5,6 +5,7 @@ import {
   colorFromRatio,
   colorSVGMap,
   filterTerminalLeaves,
+  filterTerminalLeavesForMode,
   relativeToUsercontent,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
@@ -22,8 +23,10 @@ let availableMapsCache = null;
 let oldColoredRegionsJSON = "";
 let colors = null;
 
+let mapChartMode = Settings.mapChartMode(); // "taxa" or "specimen"
+
 function globalCountsCacheKey(dataPath) {
-  return dataPath + "|" + Settings.includeSpecimensInView();
+  return dataPath + "|" + mapChartMode;
 }
 
 const sumMethods = [
@@ -60,6 +63,13 @@ export function mapChart(filteredTaxa, allTaxa) {
   return m(".map-chart", [
     renderControlPanel(),
     m(".map-verb", mapVerb()),
+    Checklist.hasSpecimens()
+      ? m(".info-label",
+        mapChartMode === "taxa"
+          ? t("view_chart_mode_taxa_info")
+          : t("view_chart_mode_specimen_info")
+      )
+      : null,
     m(".map-table-wrapper", [
       currentMap == null ? null : renderMap(currentMap),
       currentMap == null
@@ -126,6 +136,7 @@ function renderControlPanel() {
   return m(".control-panel", [
     mapsSelector(),
     currentMap == null ? null : sumMethodSelector(),
+    modeSelector(),
   ]);
 
   function mapsSelector() {
@@ -134,9 +145,9 @@ function renderControlPanel() {
       buttons: getAvailableMaps().map((map) =>
         m(
           "button" +
-            (JSON.stringify(map) === JSON.stringify(currentMap)
-              ? ".selected"
-              : ""),
+          (JSON.stringify(map) === JSON.stringify(currentMap)
+            ? ".selected"
+            : ""),
           {
             onclick: () => {
               if (JSON.stringify(map) === JSON.stringify(currentMap))
@@ -155,21 +166,44 @@ function renderControlPanel() {
     return Checklist.filter.isEmpty()
       ? m("span.hint", t("view_map_no_filter"))
       : m(ButtonGroup, {
-          label: "Method",
-          buttons: sumMethods.map((mt) =>
-            m(
-              "button" + (mt.method === currentSumMethod ? ".selected" : ""),
-              {
-                onclick: () => {
-                  if (mt.method === currentSumMethod) return false;
-                  currentSumMethod = mt.method;
-                  Settings.mapChartCurrentSumMethod(currentSumMethod);
-                },
+        label: "Method",
+        buttons: sumMethods.map((mt) =>
+          m(
+            "button" + (mt.method === currentSumMethod ? ".selected" : ""),
+            {
+              onclick: () => {
+                if (mt.method === currentSumMethod) return false;
+                currentSumMethod = mt.method;
+                Settings.mapChartCurrentSumMethod(currentSumMethod);
               },
-              mt.name
-            )
-          ),
-        });
+            },
+            mt.name
+          )
+        ),
+      });
+  }
+
+  function modeSelector() {
+    if (!Checklist.hasSpecimens()) return null;
+    return m(ButtonGroup, {
+      label: t("view_chart_mode_label"),
+      buttons: [
+        m("button" + (mapChartMode === "taxa" ? ".selected" : ""), {
+          onclick: () => {
+            if (mapChartMode === "taxa") return false;
+            mapChartMode = "taxa";
+            Settings.mapChartMode("taxa");
+          }
+        }, t("view_chart_mode_taxa")),
+        m("button" + (mapChartMode === "specimen" ? ".selected" : ""), {
+          onclick: () => {
+            if (mapChartMode === "specimen") return false;
+            mapChartMode = "specimen";
+            Settings.mapChartMode("specimen");
+          }
+        }, t("view_chart_mode_specimen")),
+      ],
+    });
   }
 }
 
@@ -239,9 +273,9 @@ function renderMap(map) {
       },
       m(
         "object#map" +
-          "[style=pointer-events: none;][type=image/svg+xml][data=" +
-          map.source +
-          "]",
+        "[style=pointer-events: none;][type=image/svg+xml][data=" +
+        map.source +
+        "]",
         {
           onload: function () {
             colorSVGMap(this, colors);
@@ -313,7 +347,11 @@ function renderDataTable(dataPath, sumMethod) {
 }
 
 function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
-  const terminalLeaves = filterTerminalLeaves(filteredTaxa);
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  const terminalLeaves = filterTerminalLeavesForMode(
+    filteredTaxa, mapChartMode, specimenMetaIndex
+  );
+
   currentFilterResultsLength = terminalLeaves.length;
   const cacheKey = globalCountsCacheKey(dataPath);
 
@@ -326,7 +364,11 @@ function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
   const colors = {};
 
   terminalLeaves.forEach((taxon) => {
-    const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
+    const effectiveD = mapChartMode === "specimen"
+      ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), filteredTaxa)
+      : taxon.d;
+    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
+
     const presentRegions = getPresentRegions(mapData);
 
     if (presentRegions.length > 0) {

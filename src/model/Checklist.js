@@ -968,6 +968,125 @@ export let Checklist = {
     return currentDataItem;
   },
 
+  /**
+ * Returns the effective data blob for a node, merging parent taxon data
+ * for specimen-mode charts.
+ *
+ * In taxa mode (or when no specimen level exists), returns the node's
+ * own .d unchanged.
+ *
+ * In specimen mode, finds the nearest ancestor taxon row in allTaxa and
+ * deep-merges its .d with the specimen's own .d, with the specimen's own
+ * values taking precedence. This allows specimens to inherit categorical
+ * metadata (IUCN status, distribution regions, etc.) from their parent taxon.
+ *
+ * MERGE BEHAVIOUR NOTES:
+ * - Scalar values: specimen wins if non-null/non-empty, otherwise parent.
+ * - Arrays: values are concatenated and de-duplicated. There is no
+ *   positional sensitivity since we have no ordered array data.
+ * - Nested objects (e.g. map regions): shallow merge, specimen keys win.
+ *   TODO: For deeply nested objects beyond one level, this merge is naive
+ *   and may need refinement if complex nested data types are added in future.
+ *
+ * @param {Object} node - A taxon row from the flat checklist array.
+ * @param {number} specimenMetaIndex - Index of specimen level in t[].
+ * @param {Array} allTaxa - The full or filtered checklist array (used to
+ *   locate the parent row for inheritance). The filter engine already
+ *   includes parent rows in filtered results via parentKeySet, so passing
+ *   filteredTaxa is sufficient in most cases.
+ * @returns {Object} The effective data blob to use for chart data reads.
+ */
+  getEffectiveDataForNode: function (node, specimenMetaIndex, allTaxa) {
+    const isSpecimen =
+      specimenMetaIndex !== undefined &&
+      specimenMetaIndex !== -1 &&
+      node.t[specimenMetaIndex] !== null &&
+      node.t[specimenMetaIndex] !== undefined;
+
+    if (!isSpecimen) {
+      return node.d;
+    }
+
+    // Walk up t[] to find the parent taxon row.
+    // The parent is the nearest ancestor whose row exists in allTaxa
+    // and whose t[] stops before the specimen index.
+    let parentData = null;
+    for (let i = specimenMetaIndex - 1; i >= 0; i--) {
+      if (node.t[i] === null || node.t[i] === undefined) continue;
+      const ancestorName = node.t[i].name;
+
+      const ancestorRow = allTaxa.find(
+        (tx) =>
+          tx.t[i]?.name === ancestorName &&
+          tx.t.slice(i + 1).every((x) => x === null || x === undefined)
+      );
+
+      if (ancestorRow && ancestorRow.d) {
+        parentData = ancestorRow.d;
+        break;
+      }
+    }
+
+    if (!parentData) {
+      return node.d; // No parent found, use own data as-is
+    }
+
+    return Checklist._deepMergeDataBlobs(parentData, node.d);
+  },
+
+  /**
+   * Deep merges two data blobs. specimenData values take precedence over
+   * parentData values when both are non-null and non-empty.
+   *
+   * See getEffectiveDataForNode for merge behaviour notes and TODOs.
+   *
+   * @param {Object} parentData - The parent taxon's .d blob.
+   * @param {Object} specimenData - The specimen's own .d blob.
+   * @returns {Object} Merged data blob.
+   */
+  _deepMergeDataBlobs: function (parentData, specimenData) {
+    if (!parentData) return specimenData || {};
+    if (!specimenData) return parentData || {};
+
+    const result = Object.assign({}, parentData);
+
+    Object.keys(specimenData).forEach((key) => {
+      const specimenVal = specimenData[key];
+      const parentVal = parentData[key];
+
+      if (specimenVal === null || specimenVal === undefined) {
+        // Specimen has nothing — keep parent value
+        return;
+      }
+
+      if (Array.isArray(specimenVal) && Array.isArray(parentVal)) {
+        // Merge arrays: concatenate and de-duplicate.
+        // No positional sensitivity in our data model.
+        result[key] = [...new Set([...parentVal, ...specimenVal])];
+      } else if (
+        typeof specimenVal === "object" &&
+        !Array.isArray(specimenVal) &&
+        typeof parentVal === "object" &&
+        !Array.isArray(parentVal) &&
+        parentVal !== null
+      ) {
+        // Shallow merge objects — specimen keys win.
+        // TODO: This is intentionally naive for now. If deeply nested
+        // object types are added in future (beyond map regions, which
+        // are one level deep), this should be made recursive.
+        result[key] = Object.assign({}, parentVal, specimenVal);
+      } else {
+        // Scalar: specimen wins if non-empty string or non-null value
+        const isEmpty =
+          specimenVal === "" ||
+          (typeof specimenVal === "string" && specimenVal.trim() === "");
+        result[key] = isEmpty ? parentVal : specimenVal;
+      }
+    });
+
+    return result;
+  },
+
   getI18n: function () {
     return this.getData().i18n;
   },

@@ -132,6 +132,33 @@ export let Settings = {
     }
   },
 
+  categoryChartMode: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartMode");
+      return (!value) ? "taxa" : value;
+    } else {
+      window.localStorage.setItem("categoryChartMode", data);
+    }
+  },
+
+  mapChartMode: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("mapChartMode");
+      return (!value) ? "taxa" : value;
+    } else {
+      window.localStorage.setItem("mapChartMode", data);
+    }
+  },
+
+  circlePackMode: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("circlePackMode");
+      return (!value) ? "taxa" : value;
+    } else {
+      window.localStorage.setItem("circlePackMode", data);
+    }
+  },
+
   alreadyViewedAboutSection: function (alreadyViewed) {
     if (alreadyViewed === undefined) {
       const viewed = window.localStorage.getItem("alreadyViewed");
@@ -341,12 +368,12 @@ export let Settings = {
         // Check if the search text contains the OR separator
         if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
           let parts = textDisplay.split(Settings.SEARCH_OR_SEPARATOR);
-          
+
           // If output is HTML, we interrupt the surrounding <strong> tags 
           // to insert a bolded OR separator.
           // Example result: <strong>Term1</strong> <b> OR </b> <strong>Term2</strong>
-          let joiner = usePlainTextOutput ? 
-            (" " + t("crumb_or") + " ") : 
+          let joiner = usePlainTextOutput ?
+            (" " + t("crumb_or") + " ") :
             ("</strong> " + t("crumb_or") + " <strong>");
 
           textDisplay = parts.join(joiner);

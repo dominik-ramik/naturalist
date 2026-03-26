@@ -77,6 +77,32 @@ ul.filter-buttons li {
     padding: 0;
 }
 
+.view-options-bar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25em 1em;
+    padding: 0.3em 0.5em;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.view-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    color: white;
+    font-size: 85%;
+    cursor: pointer;
+    user-select: none;
+}
+
+.view-option input[type=checkbox] {
+    cursor: pointer;
+    accent-color: #7cb342;
+    width: 1em;
+    height: 1em;
+}
+
 /* MOBILE LAYOUT AND CLEANUP (Max Width 1200px) */
 @media (max-width: 1200px) {
 
