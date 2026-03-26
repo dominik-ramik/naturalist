@@ -210,7 +210,7 @@
   "filter_or": "or",
   "filter_cat_text": "Contains text",
   "check_all_shown": "Check all shown items",
-  "view_cat_click_on_cell": "Click on a cell to get an explanation on its data",
+  "view_cat_click_on_cell": "Click on or hover over any colored cell to read its exact stats.",
   "view_cat_sum_by_taxon": "Sum by taxon",
   "view_cat_sum_by_category": "Sum by category",
   "view_cat_percentages_name": "Percentages",
@@ -225,7 +225,7 @@
   "view_cat_category_to_analyze": "Category to analyze",
   "view_cat_sum_method": "Sum method",
   "view_cat_display": "Display",
-  "view_cat_counted_all": "{0} counted through all taxa",
+  "view_cat_counted_all": "{0} counted through all taxa.",
   "view_cat_counted_filter": "{0} counted only where {1}",
   "view_map_verb_filter": "What percentage of all taxa for which {0} is found in each region",
   "view_map_verb_region": "What percentage of each region's taxa fits {0}",
@@ -250,5 +250,7 @@
   "view_chart_mode_taxa": "Taxa",
   "view_chart_mode_specimen": "Specimens",
   "view_chart_mode_taxa_info": "Each taxon counts once. Specimens are excluded.",
-  "view_chart_mode_specimen_info": "Each specimen counts once, inheriting data from its taxon."
+  "view_chart_mode_specimen_info": "Each specimen counts once, inheriting data from its taxon.",
+  "view_cat_category_root": "All taxa",
+  "view_cat_taxon_col_header": "Taxa in {0}"
 }

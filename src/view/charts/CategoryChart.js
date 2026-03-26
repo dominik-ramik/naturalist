@@ -7,7 +7,6 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-// ButtonGroup removed in favor of native selects and segmented controls
 
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
@@ -35,6 +34,10 @@ let categoryRoot = Settings.categoryChartRoot();
 let sumMethod = Settings.categoryChartSumMethod();
 let display = Settings.categoryChartDisplayMode();
 
+// Cell-verb state:
+//   currentHoverVerb — transient, set on mouseenter, cleared on mouseleave
+//   currentCellVerb  — pinned by click (persists after mouse moves away; useful on mobile)
+let currentHoverVerb = null;
 let currentCellVerb = t("view_cat_click_on_cell");
 
 // Fallbacks if settings are invalid
@@ -49,9 +52,65 @@ if (!sumMethods.find((sm) => sm.method === sumMethod)) {
 
 let chartMode = Settings.categoryChartMode(); // "taxa" or "specimen"
 
+// Sort state — null means default (taxonomy / insertion order)
+let sortColumn = null;
+let sortDirection = "desc"; // "asc" | "desc"
+
+// Sentinel key used to sort by the first (taxon-name) column
+const SORT_KEY_TAXON = "__taxon__";
+
 // ------------------------------------------------------
 // HELPER FUNCTIONS
 // ------------------------------------------------------
+
+/**
+ * Compute an inline style string for a heatmap data cell.
+ * Single-hue progression: white → nlblue.
+ * Text color flips to white when the background is dark enough.
+ */
+function heatmapStyle(ratio) {
+  if (!ratio || ratio <= 0) return "cursor: pointer;";
+  // Map ratio 0→1 to opacity 0.08→0.82
+  const opacity = Math.min(0.08 + ratio * 0.74, 0.82);
+  const textColor = opacity > 0.44 ? "#ffffff" : "#2a3a4a";
+  const fontWeight = opacity > 0.44 ? "600" : "400";
+  return (
+    `background-color: rgba(85,118,155,${opacity.toFixed(2)});` +
+    `color: ${textColor};` +
+    `font-weight: ${fontWeight};` +
+    `cursor: pointer;`
+  );
+}
+
+/**
+ * Cycle sort: null→desc→asc→null.
+ * Clicking a third time restores natural order.
+ */
+function toggleSort(cKey) {
+  if (sortColumn !== cKey) {
+    sortColumn = cKey;
+    sortDirection = "desc";
+  } else if (sortDirection === "desc") {
+    sortDirection = "asc";
+  } else {
+    sortColumn = null;
+    sortDirection = "desc";
+  }
+}
+
+/**
+ * Build the full ancestor path from root down to currentRoot.
+ * Returns e.g. ["Animalia", "Chordata", "Mammalia"] (ancestor-first, current-last).
+ */
+function buildBreadcrumbPath(currentRoot, filteredTaxa) {
+  const path = [];
+  let cursor = currentRoot;
+  while (cursor !== "") {
+    path.unshift(cursor);
+    cursor = parentOf(cursor, filteredTaxa);
+  }
+  return path;
+}
 
 /**
  * Generate a descriptive string for the category header.
@@ -77,7 +136,7 @@ const categoryVerb = (catView, sumMethodOption) => {
 };
 
 /**
- * Generate a cell tooltip describing the data.
+ * Generate the descriptive sentence shown in the cell-verb bar.
  */
 const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
   let verb = "";
@@ -121,7 +180,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
 };
 
 /**
- * Return either the percentage or number based on the display setting.
+ * Return either the percentage or count string depending on display mode.
  */
 const numericDisplay = (number, percentage) => {
   switch (display) {
@@ -136,7 +195,7 @@ const numericDisplay = (number, percentage) => {
 };
 
 /**
- * Finds the parent taxon for a given taxon.
+ * Walk up the taxonomy to find the parent of a given taxon name.
  */
 function parentOf(taxon, filteredTaxa) {
   const foundTaxon = filteredTaxa.find((tx) =>
@@ -145,27 +204,22 @@ function parentOf(taxon, filteredTaxa) {
   if (foundTaxon) {
     const tIndex = foundTaxon.t.findIndex((t) => t && t.name === taxon);
     if (tIndex === 0) return "";
-    const parent = foundTaxon.t[tIndex - 1].name;
-    return parent;
+    return foundTaxon.t[tIndex - 1].name;
   }
   return "";
 }
 
 /**
- * Convert a ratio to percent string, if lower than 1% display <1%
+ * Convert a ratio to a percent string; values < 1% display as "< 1%".
  */
 function toPctString(ratio) {
-  let pct = ratio * 100.0;
-
-  if (pct < 1 && pct > 0) {
-    return "< 1%";
-  } else {
-    return pct.toFixed(0) + "%";
-  }
+  const pct = ratio * 100.0;
+  if (pct < 1 && pct > 0) return "< 1%";
+  return pct.toFixed(0) + "%";
 }
 
 /**
- * Build data for the category chart for the given root, taxa, and category.
+ * Build the cross-tabulation data for the chart.
  */
 function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
   const individualResults = {};
@@ -175,9 +229,8 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
     return null;
   }
 
-  let categoryType = Checklist.filter.data[dataCategory].type;
+  const categoryType = Checklist.filter.data[dataCategory].type;
 
-  // Initialize categories based on filter data
   Checklist.filter.data[dataCategory]?.all.forEach((i) => {
     allCategories[i] = { color: "", sum: 0 };
   });
@@ -200,10 +253,8 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
               ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
               : taxon.d,
             dataCategory
-          )
-          if (!Array.isArray(categoryData)) {
-            categoryData = [categoryData];
-          }
+          );
+          if (!Array.isArray(categoryData)) categoryData = [categoryData];
           break;
         case "badge":
           categoryData = Checklist.getDataFromDataPath(
@@ -211,33 +262,21 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
               ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
               : taxon.d,
             dataCategory
-          )
-
-
-          if (!Array.isArray(categoryData)) {
-            categoryData = [categoryData];
-          }
+          );
+          if (!Array.isArray(categoryData)) categoryData = [categoryData];
           break;
         case "map regions":
-          let tempCategoryData = Checklist.getDataFromDataPath(
-            taxon.d,
-            dataCategory
-          );
-
-          // Work directly with object format
+          const tempCategoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
           let regionCodes = [];
           if (typeof tempCategoryData === "object" && tempCategoryData) {
             regionCodes = Object.keys(tempCategoryData);
           }
           categoryData = regionCodes.map((r) => Checklist.nameForMapRegion(r));
-
           break;
-
         default:
           break;
       }
 
-      // Count deeper levels as "children"
       if (currentRootIndex < taxon.t.length - 2) {
         individualResults[child].children++;
       }
@@ -245,16 +284,11 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
       categoryData = [...new Set(categoryData)];
 
       categoryData.forEach((cd) => {
-        // Handle null, undefined, empty string, or other falsy values
-        if (!cd || cd === "" || cd === "null") {
-          cd = "[unknown]";
-        }
+        if (!cd || cd === "" || cd === "null") cd = "[unknown]";
 
-        // Ensure the category exists in allCategories before using it
         if (!allCategories.hasOwnProperty(cd)) {
           allCategories[cd] = { color: "", sum: 0 };
         }
-
         if (!individualResults[child].categories.hasOwnProperty(cd)) {
           individualResults[child].categories[cd] = 0;
         }
@@ -266,10 +300,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
   });
 
   if (Object.keys(allCategories).length === 0) return null;
-  return {
-    individualResults,
-    sumByCategory: allCategories,
-  };
+  return { individualResults, sumByCategory: allCategories };
 }
 
 // ------------------------------------------------------
@@ -279,18 +310,13 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
 export function categoryChart(filteredTaxa) {
   const result = [];
 
-  //remove all non-leaf taxa
   const allTaxaForInheritance = filteredTaxa;
 
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
 
-
-  // (filtersToDisplay moved to control render block)
-
-  // Get chart data based on current settings
   let categorizedData = dataForCategoryChart(
-    categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance  // ← changed
+    categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance
   );
 
   if (categorizedData == null) {
@@ -299,11 +325,10 @@ export function categoryChart(filteredTaxa) {
     categoryToView = "";
     Settings.categoryChartCategory("");
     categorizedData = dataForCategoryChart(
-      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance  // ← changed
+      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance
     );
   }
 
-  // Build available filter options for the dropdown (only text, badge, or map regions)
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
     (f) =>
       (Checklist.filter.data[f].type === "text" ||
@@ -324,6 +349,9 @@ export function categoryChart(filteredTaxa) {
           onchange: (e) => {
             categoryToView = e.target.value;
             Settings.categoryChartCategory(categoryToView);
+            // Reset sort when columns change entirely
+            sortColumn = null;
+            sortDirection = "desc";
           }
         }, [
           m("option", { value: "", disabled: true }, "— " + t("view_cat_category_to_analyze") + " —"),
@@ -333,7 +361,7 @@ export function categoryChart(filteredTaxa) {
           })
         ])
       ]),
-      
+
       categoryToView === "" ? null : m(".chart-control-group", [
         m("label", t("view_cat_sum_method")),
         m(".chart-segmented-control", sumMethods.map((mt) =>
@@ -382,29 +410,27 @@ export function categoryChart(filteredTaxa) {
       ]) : null
     ]),
 
-    // Info labels rendered cleanly
-    categoryToView === "" || sumMethod === "" || Object.keys(categorizedData.individualResults).length === 0
+    categoryToView === "" || sumMethod === "" || !categorizedData || Object.keys(categorizedData.individualResults).length === 0
       ? null
       : m(".chart-info-box", [
-          m(".chart-info-item", m.trust(
-            Checklist.filter.isEmpty()
-              ? t("view_cat_counted_all", [categoryVerb(categoryToView, sumMethod)])
-              : tf("view_cat_counted_filter", [
-                  categoryVerb(categoryToView, sumMethod),
-                  Settings.pinnedSearches.getHumanNameForSearch()
-                ])
-          )),
-          Checklist.hasSpecimens() ? m(".chart-info-item", 
-            chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
-          ) : null
-        ])
+        m(".chart-info-item", m.trust(
+          Checklist.filter.isEmpty()
+            ? t("view_cat_counted_all", [categoryVerb(categoryToView, sumMethod)])
+            : tf("view_cat_counted_filter", [
+              categoryVerb(categoryToView, sumMethod),
+              Settings.pinnedSearches.getHumanNameForSearch()
+            ])
+        )),
+        Checklist.hasSpecimens() ? m(".chart-info-item",
+          chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
+        ) : null
+      ])
   );
 
   // ------------------------------------------------------
   // RENDER CATEGORY CHART TABLE
   // ------------------------------------------------------
   if (categoryToView !== "" && sumMethod !== "" && categorizedData != null) {
-    // No results? Return only the control panel.
     if (Object.keys(categorizedData.individualResults).length === 0) {
       return result;
     }
@@ -415,108 +441,226 @@ export function categoryChart(filteredTaxa) {
       categoryToView
     );
 
-    // Build header row with navigation "up" button and rotated headers.
+    // If a previously-sorted column no longer exists, clear sort
+    if (sortColumn !== null && sortColumn !== SORT_KEY_TAXON && !orderedCategories.includes(sortColumn)) {
+      sortColumn = null;
+      sortDirection = "desc";
+    }
+
+    // ── Breadcrumb path ────────────────────────────────────────────────────
+    const breadcrumbPath = categoryRoot !== ""
+      ? buildBreadcrumbPath(categoryRoot, filteredTaxa)
+      : [];
+
+    // ── Helper: compute ratio for one taxon / category cell ───────────────
+    const getRatio = (taxon, cKey) => {
+      if (!Object.keys(taxon.categories).includes(cKey)) return 0;
+      const basis = sumMethod === "category"
+        ? categorizedData.sumByCategory[cKey].sum
+        : taxon.sum;
+      return taxon.categories[cKey] / basis;
+    };
+
+    // ── Sort row keys ──────────────────────────────────────────────────────
+    let rowKeys = Object.keys(categorizedData.individualResults);
+    if (sortColumn !== null) {
+      rowKeys = [...rowKeys].sort((a, b) => {
+        let rA, rB;
+        if (sortColumn === SORT_KEY_TAXON) {
+          // Sort by each taxon's total count (taxon.sum)
+          rA = categorizedData.individualResults[a].sum;
+          rB = categorizedData.individualResults[b].sum;
+        } else {
+          rA = getRatio(categorizedData.individualResults[a], sortColumn);
+          rB = getRatio(categorizedData.individualResults[b], sortColumn);
+        }
+        return sortDirection === "desc" ? rB - rA : rA - rB;
+      });
+    }
+
+    // ── Sort icon helper ──────────────────────────────────────────────────
+    const sortIconFor = (cKey) => {
+      const isActive = sortColumn === cKey;
+      return m(
+        "span.category-sort-icon" + (isActive ? "" : ".inactive"),
+        isActive
+          ? (sortDirection === "desc" ? "▼" : "▲")
+          : "⇅"
+      );
+    };
+
+    // ── Column header cells ───────────────────────────────────────────────
     const headerCells = [
+      // Corner cell: first-column header — same style as data col headers,
+      // sticky on both axes. Sortable by taxon.sum; shows row count badge.
       m(
-        "th.sticky-row.sticky-column.up-button[style=z-index: 9999]",
+        "th.sticky-row.sticky-column.category-col-header.category-corner-header"
+        + (sortColumn === SORT_KEY_TAXON
+          ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc")
+          : ""),
         {
-          onclick: () => {
-            const parent = parentOf(categoryRoot, filteredTaxa);
-            categoryRoot = parent;
-            Settings.categoryChartRoot(parent);
-          },
+          style: "z-index: 200;",
+          onclick: () => toggleSort(SORT_KEY_TAXON),
         },
-        [
-          categoryRoot === ""
-            ? null
-            : m("img[src=img/ui/checklist/level_up.svg][style=height: 1em]"),
-          categoryRoot,
-        ]
+        m(".category-header-inner", [
+          m(".category-header-inner-content",
+            [
+              m("span.category-header-label", t("view_cat_taxon_col_header", ["s"])),
+              // Row-count badge: how many groups are currently displayed
+              m("span.category-header-row-count", rowKeys.length),
+            ]
+          ),
+          sortIconFor(SORT_KEY_TAXON),
+        ])
       ),
+
+      // Data column headers
       ...orderedCategories.map((cKey) =>
         m(
-          "th.sticky-row.rotate[style=border-bottom: 0.5em solid;]",
-          m("div", m("span", cKey))
+          "th.sticky-row.category-col-header"
+          + (sortColumn === cKey
+            ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc")
+            : ""),
+          {
+            title: cKey + " — click to sort",
+            onclick: () => toggleSort(cKey),
+          },
+          m(".category-header-inner", [
+            m("span.category-header-label", cKey),
+            sortIconFor(cKey),
+          ])
         )
       ),
     ];
 
-    // Build each row for individual taxon results.
-    const rows = Object.keys(categorizedData.individualResults).map(
-      (taxonKey) => {
-        const taxon = categorizedData.individualResults[taxonKey];
+    // ── Build data rows ───────────────────────────────────────────────────
+    const rows = rowKeys.map((taxonKey) => {
+      const taxon = categorizedData.individualResults[taxonKey];
+      const isDrillable = taxon.children > 0;
 
-        const leftCell = m(
-          "td.sticky-column" + (taxon.children === 0 ? ".noclick" : ""),
-          {
-            onclick: () => {
-              if (taxon.children === 0) return false;
+      // Left cell: taxon chip
+      const leftCell = m(
+        "td.sticky-column.category-taxon-cell",
+        {
+          onclick: isDrillable
+            ? () => {
               categoryRoot = taxonKey;
               Settings.categoryChartRoot(taxonKey);
+              sortColumn = null; // reset sort on drill-down
+            }
+            : undefined,
+        },
+        m(".category-taxon-chip" + (isDrillable ? ".drillable" : ".leaf"), [
+          m("span", taxonKey),
+          isDrillable ? m("span.category-taxon-count", taxon.children) : null,
+        ])
+      );
+
+      // Data cells
+      const dataCells = orderedCategories.map((cKey) => {
+        if (Object.keys(taxon.categories).includes(cKey)) {
+          const ratio = getRatio(taxon, cKey);
+          const verbContent = cellVerb(
+            toPctString(ratio),
+            cKey,
+            taxonKey,
+            taxon.categories[cKey]
+          );
+          return m(
+            "td.category-cell-filled",
+            {
+              style: heatmapStyle(ratio),
+              // Hover: show verb immediately (transient)
+              onmouseenter: () => { currentHoverVerb = verbContent; },
+              onmouseleave: () => { currentHoverVerb = null; },
+              // Click: pin the verb so it persists after mouse moves away (mobile)
+              onclick: () => { currentCellVerb = verbContent; },
             },
-          },
-          m(
-            "div[style=display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;]",
-            [
-              m("b[style=flex-grow: 1]", taxonKey),
-              taxon.children === 0
-                ? null
-                : m(
-                  "span[style=margin-left: 0.75em; color: gray; font-size: 85%]",
-                  taxon.children
-                ),
-            ]
-          )
-        );
+            m("span", numericDisplay(taxon.categories[cKey], toPctString(ratio)))
+          );
+        } else {
+          // Empty cell: show centered long dash
+          return m("td.category-cell-empty", "—");
+        }
+      });
 
-        const dataCells = orderedCategories.map((cKey) => {
-          let basis = 0;
-          if (sumMethod === "category") {
-            basis = categorizedData.sumByCategory[cKey].sum;
-          } else if (sumMethod === "taxon") {
-            basis = taxon.sum;
-          } else {
-            console.error("Unknown method", sumMethod);
-          }
+      return m("tr", [leftCell, ...dataCells]);
+    });
 
-          if (Object.keys(taxon.categories).includes(cKey)) {
-            const ratio = taxon.categories[cKey] / basis;
-            const borderSize = Math.max(ratio * 4, 0.01);
-            const title = cellVerb(
-              toPctString(ratio),
-              cKey,
-              taxonKey,
-              taxon.categories[cKey]
-            );
-            return m(
-              `td[style=border-left: ${borderSize}em solid;cursor:pointer]`,
-              {
-                onclick: function () {
-                  currentCellVerb = title;
-                },
-              },
-              m(
-                "div.number-container",
-                numericDisplay(taxon.categories[cKey], toPctString(ratio))
-              )
-            );
-          } else {
-            return m("td[style=border-left: 0.01em solid;]");
-          }
-        });
+    // ── Determine what to show in the cell-verb bar ───────────────────────
+    const isDefaultVerb = !currentHoverVerb && currentCellVerb === t("view_cat_click_on_cell");
+    const verbDisplay = currentHoverVerb !== null
+      ? currentHoverVerb
+      : isDefaultVerb
+        ? m("span.cell-verb-prompt", currentCellVerb)
+        : currentCellVerb;
 
-        return [leftCell, ...dataCells];
-      }
-    );
-
+    // ── Assemble the full table block ─────────────────────────────────────
     result.push(
-      m(".table-flex-container[style=padding: 0 10px;]", [
-        m(".table-wrapper", [
-          m(".cell-verb", currentCellVerb),
-          m("table.category-view", [
-            m("tr.header-row", headerCells),
-            ...rows.map((r) => m("tr", r)),
+      // Breadcrumb navigation — only shown when drilled in
+      categoryRoot !== ""
+        ? m(".category-nav-header", [
+          m(
+            "button.category-nav-up-btn",
+            {
+              onclick: () => {
+                const parent = parentOf(categoryRoot, filteredTaxa);
+                categoryRoot = parent;
+                Settings.categoryChartRoot(parent);
+                sortColumn = null;
+              },
+            },
+            [m("img[src=img/ui/checklist/level_up.svg]"), "Up"]
+          ),
+          m(".category-nav-crumb", [
+            m(
+              "span.category-nav-crumb-step",
+              {
+                onclick: () => {
+                  categoryRoot = "";
+                  Settings.categoryChartRoot("");
+                  sortColumn = null;
+                }
+              },
+              "Root"
+            ),
+            ...breadcrumbPath.map((step, i) => {
+              const isCurrent = i === breadcrumbPath.length - 1;
+              return [
+                m("span.category-nav-crumb-sep", "▸"),
+                isCurrent
+                  ? m("span.category-nav-crumb-current", step)
+                  : m(
+                    "span.category-nav-crumb-step",
+                    {
+                      onclick: () => {
+                        categoryRoot = step;
+                        Settings.categoryChartRoot(step);
+                        sortColumn = null;
+                      }
+                    },
+                    step
+                  ),
+              ];
+            }).flat(),
           ]),
+        ])
+        : null,
+
+      m(".table-flex-container", [
+        m(".table-wrapper", [
+
+          // ── Cell-verb bar: ABOVE the table, updates on hover ──────────
+          m(".cell-verb", verbDisplay),
+
+          // ── Scrollable table area ─────────────────────────────────────
+          m(".table-scroll-area", [
+            m("table.category-view", [
+              m("tr.header-row", headerCells),
+              ...rows,
+            ]),
+          ]),
+
         ]),
       ])
     );

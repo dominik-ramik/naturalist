@@ -111,149 +111,399 @@
   color: var(--nlblue, #55769b);
 }
 
+/* ==========================================================================
+   Navigation / Breadcrumb Header
+   ========================================================================== */
+.category-nav-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 7px 12px;
+  margin: 0 10px 6px 10px;
+  background-color: #eceff2;
+  border: 1px solid white;
+  border-radius: var(--pad-large, 1em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  flex-wrap: wrap;
+  min-height: 2.5em;
+}
+
+.category-nav-up-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background-color: white;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  font-size: 0.82em;
+  color: var(--nlblue, #55769b);
+  font-weight: 600;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin: 0;
+  line-height: normal;
+}
+
+.category-nav-up-btn:hover {
+  background-color: #f0f4f8;
+  border-color: var(--nlblue, #55769b);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.category-nav-up-btn img {
+  height: 0.8em;
+  opacity: 0.7;
+}
+
+.category-nav-crumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2em;
+  font-size: 0.85em;
+  flex: 1;
+  min-width: 0;
+}
+
+.category-nav-crumb-step {
+  color: var(--nlblue, #55769b);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s;
+}
+
+.category-nav-crumb-step:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.category-nav-crumb-sep {
+  color: #c8c8c8;
+  font-size: 0.8em;
+  user-select: none;
+}
+
+.category-nav-crumb-current {
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Table Container
+   ========================================================================== */
 .table-flex-container {
   display: flex;
   width: 100%;
   max-width: 100%;
-  overflow: auto;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
+/*
+   NOTE: overflow:hidden here would break position:sticky on descendant th/td.
+   We rely on the table's own scroll area for clipping. The box-shadow gives
+   the card appearance; the table cells provide the white fill to the edges.
+*/
 .table-wrapper {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: white;
   border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.09);
   flex: 1;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  /* NO overflow:hidden — that silently disables position:sticky on children */
 }
 
+/*
+   Scrollable area for the table.
+   overflow-x: auto handles wide tables; vertical scroll is handled by the page.
+   NO top padding — the sticky header row must sit at exactly top:0 with no gap,
+   otherwise scrolled content bleeds above the header.
+*/
+.table-scroll-area {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0 0 8px 0;
+}
+
+/* ==========================================================================
+   Cell Verb — info banner at the TOP of the table wrapper (above the table).
+   Triggered on cell hover; click also pins it (for mobile).
+   ========================================================================== */
+.cell-verb {
+  font-size: 0.8rem;   /* matches table base font */
+  color: #555;
+  padding: 7px 14px;
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #e0e4e8;
+  /* Top corners match the wrapper's border-radius */
+  border-radius: 8px 8px 0 0;
+  min-height: 2.4em;
+  line-height: 2;
+}
+
+.cell-verb-prompt {
+  color: #b8bfc8;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Category View Table — unified base font
+   All text in the table inherits this so everything is visually consistent.
+   ========================================================================== */
 table.category-view {
   table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+  /* Single font-size for the whole table — overrides happen only where needed */
+  font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   First column — taxon name cells (fixed 17em)
+   ========================================================================== */
+table.category-view td.category-taxon-cell {
+  width: 17em;
+  min-width: 17em;
+  max-width: 17em;
+  padding: 3px 6px;
+  background-color: white;
+  vertical-align: middle;
+}
+
+/* Chip/pill for both drillable and leaf taxa */
+.category-taxon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 7px;
+  border-radius: 20px;
+  /* font-size: inherit — matches table base 0.8rem */
+  line-height: 1.3;
   max-width: 100%;
-}
-
-table.category-view tr:first-child td:not(:first-child),
-table.category-view tr:first-child th:not(:first-child) {
-  font-size: 80%;
-}
-
-table.category-view td:first-child,
-table.category-view th:first-child {
-  cursor: pointer;
-}
-
-table.category-view td:first-child,
-table.category-view th:first-child {
-  color: #1565c0;
-}
-
-table.category-view td.noclick:first-child,
-table.category-view th.noclick:first-child {
-  color: black;
-  cursor: default;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-table.category-view td.noclick:first-child:hover,
-table.category-view th.noclick:first-child:hover {
-  color: black;
-  cursor: default;
+.category-taxon-chip.drillable {
+  background-color: #edf2f7;
+  border: 1px solid #c5d3e0;
+  color: #1565c0;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.12s, border-color 0.12s;
 }
 
-/* https://materialui.co/colors track 600 */
-table.category-view td:nth-child(2n + 0):not(:first-child),
-table.category-view th:nth-child(2n + 0):not(:first-child) {
-  background-color: #55769b07;
-  border-color: #55769b !important;
-  color: #55769b;
-}
-table.category-view td:nth-child(2n + 1):not(:first-child),
-table.category-view th:nth-child(2n + 1):not(:first-child) {
-  background-color: #7cb34207;
-  border-color: #7cb342 !important;
-  color: #7cb342;
+.category-taxon-chip.drillable:hover {
+  background-color: #daeaf7;
+  border-color: var(--nlblue, #55769b);
 }
 
+.category-taxon-chip.leaf {
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: #333;
+  font-weight: 400;
+}
+
+/* Children-count badge inside drillable chips */
+.category-taxon-count {
+  flex-shrink: 0;
+  background-color: rgba(85, 118, 155, 0.13);
+  color: var(--nlblue, #55769b);
+  border-radius: 10px;
+  padding: 1px 5px;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Data columns — sizing, borders, heatmap cells
+   ========================================================================== */
+
+/* All data columns: uniform width, center-aligned */
 table.category-view td:not(:first-child),
 table.category-view th:not(:first-child) {
-  color: black;
-  width: 6.3em !important;
-  min-width: 6.3em !important;
-  max-width: 6.3em !important;
+  width: 6.3em;
+  min-width: 6.3em;
+  max-width: 6.3em;
   box-sizing: border-box;
-  text-align: right;
-  font-size: 0.6rem;
+  text-align: center;
+  /* font-size: inherit — unified via table.category-view */
+  border-left: 1px solid rgba(0, 0, 0, 0.055);
 }
 
-table.category-view th td {
-  color: black;
+/* Filled heatmap cells: bg + text color set inline by heatmapStyle() */
+table.category-view td.category-cell-filled {
+  padding: 2px 4px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
 
-table.category-view tr:not(:first-child):hover {
-  background-color: rgb(245, 245, 245);
+/* Empty cells: dash placeholder, faint tint */
+table.category-view td.category-cell-empty {
+  background-color: rgba(0, 0, 0, 0.018);
+  padding: 2px 4px;
+  color: #ccc;
+  /* text-align: center inherited from data column rule above */
 }
 
-.up-button {
-  vertical-align: bottom;
-  padding-bottom: 0.5em;
-  background-color: white !important;
+/*
+   Row hover: inset box-shadow overlays a uniform tint on every td regardless
+   of what background it already has (white, heatmap colour, etc.).
+   filter: brightness() was wrong here — it affected sticky vs non-sticky cells
+   differently and looked bad over heatmap backgrounds.
+*/
+table.category-view tr:not(:first-child):hover td {
+  box-shadow: inset 0 0 0 9999px rgba(85, 118, 155, 0.11);
 }
 
+/* ==========================================================================
+   Column headers — horizontal wrapping text, sortable, aligned label-top / icon-bottom
+   ========================================================================== */
+.category-col-header {
+  cursor: pointer;
+  user-select: none;
+  /* Horizontal text wraps in the fixed column width */
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* Vertical alignment of the th cell itself: top so that short labels
+     don't float oddly when other headers in the same row are taller */
+  vertical-align: top;
+  text-align: center;
+  padding: 8px 4px 6px;
+  /* Sticky: top:0 so the header sits flush against the container edge —
+     any padding here would create the "content bleeds above header" gap */
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 50;
+  transition: background-color 0.12s;
+  border-bottom: 2px solid #e0e4e8;
+}
+
+.category-col-header:hover {
+  background-color: #f4f7fa;
+}
+
+.category-col-header.col-sorted-asc,
+.category-col-header.col-sorted-desc {
+  border-bottom-color: var(--nlblue, #55769b);
+}
+
+/*
+   Inner layout: label at the TOP, sort icon pinned to the BOTTOM.
+   min-height ensures there's always room for both even on short labels.
+   justify-content: space-between pushes them to opposite ends of the flex column.
+*/
+.category-header-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.2em;
+  width: 100%;
+}
+
+.category-header-inner-content{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.category-header-label {
+  /* font-size: inherit — same 0.8rem as the rest of the table */
+  font-weight: 700;   /* bold — applied to ALL header labels including first col */
+  color: #444;
+  line-height: 1.25;
+  text-align: center;
+  /* Allow the label to occupy the top portion and wrap if needed */
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 1px;
+}
+
+.category-col-header.col-sorted-asc .category-header-label,
+.category-col-header.col-sorted-desc .category-header-label {
+  color: var(--nlblue, #55769b);
+}
+
+/*
+   Sort icon: ~2× larger than the old 0.65em, pinned to the bottom.
+   Uses flex-shrink:0 so it never gets squeezed.
+*/
+.category-sort-icon {
+  font-size: 1.1em;
+  line-height: 1;
+  color: var(--nlblue, #55769b);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.category-sort-icon.inactive {
+  color: #d4d9e0;
+}
+
+/* ==========================================================================
+   Corner cell (top-left): sticky on BOTH axes.
+   No longer uses .up-button — replaced by .category-corner-header which
+   shares the full .category-col-header treatment.
+   ========================================================================== */
+.category-corner-header {
+  /* Override data-column width constraints for the first column */
+  width: 17em !important;
+  min-width: 17em !important;
+  max-width: 17em !important;
+  text-align: left !important;
+  /* Sticky on both axes */
+  position: sticky !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 200 !important;   /* above sticky-col (10) and sticky-row (50) */
+}
+
+/* Row-count badge shown in the first column header */
+.category-header-row-count {
+  flex-shrink: 0;
+  background-color: rgba(85, 118, 155, 0.13);
+  color: var(--nlblue, #55769b);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 0.82em;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Sticky first column (left) — must have opaque bg to cover scrolled data
+   ========================================================================== */
 table.category-view .sticky-column {
   position: sticky;
-  left: 0; /* Don't forget this, required for the stickiness */
+  left: 0;
+  z-index: 10;
   background-color: white;
+}
+
+/* ==========================================================================
+   Sticky header row — MUST have opaque background.
+   'transparent' was the original bug that let row content bleed above the header.
+   ========================================================================== */
+table.category-view .sticky-row {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 50;
 }
 
 table.category-view .header-row {
   background-color: white;
-  top: 0; /* Don't forget this, required for the stickiness */
-  position: sticky;
-  color: red !important;
-  z-index: 100;
-}
-
-table.category-view .sticky-row {
-  position: sticky;
-  top: 0; /* Don't forget this, required for the stickiness */
-  background-color: transparent;
-}
-
-button {
-  background-color: white;
-  border: 0px solid;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  margin: 0.2em;
-  display: inline-block;
-}
-
-.category-view th.rotate {
-  height: 12em;
-  white-space: nowrap;
-  vertical-align: bottom;
-  text-align: center;
-}
-
-.category-view th.rotate > div {
-  transform: translate(0, 50%) rotate(-45deg); /* Rotate the text */
-  transform-origin: bottom left; /* Adjust origin for rotation */
-  position: relative;
-  left: 2.5em;
-  top: -1em;
-  text-align: left;
-}
-
-.cell-verb {
-  font-size: 0.9em;
-  color: #1565c0;
-  padding: 10px;
-  background-color: #e3f2fd;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  text-align: center;
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(21, 101, 192, 0.2);
 }

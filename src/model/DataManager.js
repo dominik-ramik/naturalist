@@ -204,7 +204,7 @@ export let DataManager = function () {
 
       data.common.languages.supportedLanguages.forEach(function (lang) {
         //all online search icons
-        data.sheets.content.tables.searchOnline.data[lang.code].forEach(
+        data.sheets.content.tables.searchOnline?.data?.[lang.code]?.forEach(
           function (row) {
             let asset = relativeToUsercontent(
               "./online_search_icons/" + row.icon
@@ -808,7 +808,7 @@ export let DataManager = function () {
         );
       });
 
-      data.sheets.content.tables.searchOnline.data[lang.code].forEach(function (
+      data.sheets.content.tables.searchOnline.data[lang.code]?.forEach(function (
         row
       ) {
         meta.externalSearchEngines.push({
