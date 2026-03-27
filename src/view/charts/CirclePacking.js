@@ -11,7 +11,7 @@ export function circlePacking(options) {
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || Settings.circlePackingMaxLevels();
   let colorInterpolation = options.colorInterpolation || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
-  let opacityStep = options.opacityStep || maxDataLevelsDisplayed / 40;
+  let opacityStep = options.opacityStep || (maxDataLevelsDisplayed / (maxDataLevelsDisplayed * 12));
   let backgroundColor = options.backgroundColor || "white";
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";

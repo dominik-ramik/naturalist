@@ -11,7 +11,7 @@ import { Checklist } from "../../model/Checklist.js";
 // CONFIGURATION & INITIAL SETTINGS
 // ------------------------------------------------------
 const sumMethods = [
-  { name: t("view_cat_sum_by_taxon"), method: "taxon" },
+  { name: t(Settings.analyticalIntent() == "#T" ? "view_cat_sum_by_taxon" : "view_cat_sum_by_specimen"), method: "taxon" },
   { name: t("view_cat_sum_by_category"), method: "category" },
 ];
 

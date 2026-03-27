@@ -8,21 +8,19 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { TaxonView } from "../view/TaxonView.js";
 import { circlePacking } from "./charts/CirclePacking.js";
 import { D3ChartView } from "./D3ChartView.js";
 import { categoryChart } from "./charts/CategoryChart.js";
 import { mapChart } from "./charts/MapChart.js";
+import { ChecklistTree } from "./charts/ChecklistTree.js";
 
 export let ChecklistView = {
-  itemsNumberStep: 50,
-  totalItemsToShow: 0,
-  lastQuery: "",
-  displayMode: "", // either "" (display all) or name of any taxon level
-
   oninit: function () {
+    if (!Checklist.hasSpecimens() && Settings.analyticalIntent() !== "#T") {
+      Settings.analyticalIntent("#T");
+    }
+
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
-    ChecklistView.totalItemsToShow = this.itemsNumberStep;
   },
   view: function () {
     if (!Checklist._isDataReady) {
@@ -84,16 +82,15 @@ export let ChecklistView = {
 
     switch (Settings.viewType()) {
       case "view_details":
-        specificChecklistView = detailedTaxonView(
-          treeClampedFilteredTaxa,
-          overflowing
-        );
+        specificChecklistView = m(ChecklistTree, {
+          taxa: visibleFilteredTaxa,
+          displayLevel: Settings.checklistDisplayLevel(),
+          queryKey: ChecklistView.lastQuery
+        });
         break;
       case "view_circle_pack":
-        specificChecklistView = circlePackingView(
-          visibleFullChecklistTaxa,
-          visibleFilteredTaxa
-        );
+        const fullTaxa = filterOutSpecimenTaxa(Checklist.getData().checklist);
+        specificChecklistView = circlePackingView(fullTaxa, visibleFilteredTaxa);
         break;
       case "view_category_density":
         specificChecklistView = categoryChartView(visibleFilteredTaxa);
@@ -175,50 +172,6 @@ function filterOutSpecimenTaxa(taxa) {
 
 function categoryChartView(filteredTaxa) {
   return categoryChart(filteredTaxa);
-}
-
-function detailedTaxonView(treeTaxa, overflowing) {
-  const includeSpecimensInView = Settings.checklistShowSpecimens();
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const visibleTopLevelTaxa = Object.keys(treeTaxa.children).filter(
-    function (taxonLevel) {
-      return (
-        includeSpecimensInView ||
-        treeTaxa.children[taxonLevel].taxonMetaIndex !== specimenMetaIndex
-      );
-    }
-  );
-
-  return m(".listed-taxa", [
-    visibleTopLevelTaxa.map(function (taxonLevel) {
-      return m(TaxonView, {
-        parents: [],
-        taxonKey: taxonLevel,
-        taxonTree: treeTaxa.children[taxonLevel],
-        currentTaxonLevel: treeTaxa.children[taxonLevel].taxonMetaIndex,
-        displayMode: ChecklistView.displayMode,
-        showTaxonMeta: Settings.checklistShowTaxonMeta(),
-        showSpecimenMeta: Settings.checklistShowSpecimenMeta(),
-        terminalOnly: Settings.checklistShowTerminalOnly(),
-      });
-    }),
-    overflowing > 0
-      ? m(
-        ".show-more-items",
-        {
-          onclick: function () {
-            ChecklistView.totalItemsToShow += ChecklistView.itemsNumberStep;
-          },
-        },
-        t(
-          "next_items_checklist",
-          overflowing < ChecklistView.itemsNumberStep
-            ? overflowing
-            : ChecklistView.itemsNumberStep
-        )
-      )
-      : null,
-  ]);
 }
 
 function checklistDataForD3(node, level) {
@@ -443,6 +396,7 @@ function circlePackingView(allTaxa, matchingTaxa) {
         includeMatchChildren: Settings.checklistIncludeChildren(),
         includeSpecimensInView: Settings.checklistShowSpecimens(),
         analyticalIntent: Settings.analyticalIntent(),
+        circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
       });
 
       if (cachedData == null || cacheKey != oldQueryKey) {

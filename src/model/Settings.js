@@ -168,6 +168,15 @@ export let Settings = {
     }
   },
 
+  circlePackingMaxLevels: function (val) {
+    if (val === undefined) {
+      const stored = window.localStorage.getItem("circlePackingMaxLevels");
+      return stored ? parseInt(stored) : 4; // Default to 4 levels
+    } else {
+      window.localStorage.setItem("circlePackingMaxLevels", val);
+    }
+  },
+
   alreadyViewedAboutSection: function (alreadyViewed) {
     if (alreadyViewed === undefined) {
       const viewed = window.localStorage.getItem("alreadyViewed");

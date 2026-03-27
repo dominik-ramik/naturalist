@@ -5,23 +5,49 @@ import { ChecklistView } from "./ChecklistView.js";
 
 const SCOPE_LABELS = { "#T": "Taxa", "#S": "Specimens", "#M": "Full Catalog" };
 
-/** * Modular Parameter Components
+/** * 1. PROXY API (Commit Logic)
+ * Central gatekeeper for all setting updates.
+ */
+const commit = (accessor, value) => {
+  // Automatically cast numeric strings to Numbers (for CirclePack depth, etc.)
+  const finalValue = (typeof value === "string" && !isNaN(value) && value !== "")
+    ? parseInt(value)
+    : value;
+
+  accessor(finalValue);
+  // Redraw is triggered automatically by Mithril after the event handler.
+};
+
+/** * 2. MODULAR PARAMETER COMPONENTS (KISS & DRY)
  */
 
-const SelectSelector = (label, accessor, values) => m("label.configuration-select-label", [
-  label,
-  m("select.configuration-select", {
-    onchange: e => accessor(e.target.value)
-  }, values.map(v => m("option", { value: v, selected: accessor() == v }, v)))
-]);
+const SelectSelector = {
+  view: ({ attrs }) => {
+    const { label, accessor, values } = attrs;
+    return m("label.configuration-select-label", [
+      label,
+      m("select.configuration-select", {
+        onchange: e => commit(accessor, e.target.value)
+      }, (values || []).map(v => m("option", {
+        value: v,
+        selected: accessor() == v
+      }, v === "" ? "All taxon levels" : v)))
+    ]);
+  }
+};
 
-const ChecklistToggle = (label, accessor) => m("label.configuration-checkbox", [
-  m("input[type=checkbox]", {
-    checked: accessor(),
-    onchange: () => accessor(!accessor())
-  }),
-  label
-]);
+const ChecklistToggle = {
+  view: ({ attrs }) => {
+    const { label, accessor } = attrs;
+    return m("label.configuration-checkbox", [
+      m("input[type=checkbox]", {
+        checked: accessor(),
+        onchange: () => commit(accessor, !accessor())
+      }),
+      label
+    ]);
+  }
+};
 
 const TaxonLevelSelector = {
   view: () => {
@@ -29,23 +55,22 @@ const TaxonLevelSelector = {
     const levels = Object.keys(Checklist.getTaxaMeta() || {}).filter((_, i) => i !== specimenIndex);
     const current = Settings.checklistDisplayLevel() || ChecklistView.displayMode || "";
 
-    return m(SelectSelector,
-      "Limit checklist to taxon level:",
-      (val) => {
+    return m(SelectSelector, {
+      label: "Limit checklist to taxon level:",
+      accessor: (val) => {
         if (val === undefined) return current;
         Settings.checklistDisplayLevel(val);
         ChecklistView.displayMode = val;
       },
-      ["", ...levels] // Logic for labels handled inside if needed, or passed as objects
-    );
+      values: ["", ...levels]
+    });
   }
 };
 
-const chkIncludeChildren = ChecklistToggle("Include children in search matches", Settings.checklistIncludeChildren);
+const showTaxonMetadataToggle = m(ChecklistToggle, { label: "Show taxon metadata", accessor: Settings.checklistShowTaxonMeta })
 
 /**
- * Registry of Tool Options.
- * The 'parameters' function allows contextual UI for any analysis tool.
+ * 3. REGISTRY OF TOOL OPTIONS
  */
 const VIEW_CHOICES = [
   {
@@ -53,16 +78,17 @@ const VIEW_CHOICES = [
     label: "Checklist",
     iconPath: "./img/ui/menu/view_details.svg",
     info: "Browse the complete catalog and detailed records.",
-    parameters: (scope) => scope !== "#M" && [
+    parameters: (scope) => [
       m(TaxonLevelSelector),
       ...(scope === "#T" ? [
-        ChecklistToggle("Hide taxa without specimens", Settings.checklistPruneEmpty),
-        ChecklistToggle("Show taxon metadata", Settings.checklistShowTaxonMeta),
-        ChecklistToggle("Show terminal taxa only", Settings.checklistShowTerminalOnly),
-        chkIncludeChildren,
+        m(ChecklistToggle, { label: "Hide taxa without specimens", accessor: Settings.checklistPruneEmpty }),
+        showTaxonMetadataToggle,
+        m(ChecklistToggle, { label: "Show terminal taxa only", accessor: Settings.checklistShowTerminalOnly }),
+        m(ChecklistToggle, { label: "Include children in search matches", accessor: Settings.checklistIncludeChildren }),
       ] : [
-        ChecklistToggle("Show specimen metadata", Settings.checklistShowSpecimenMeta),
-        ChecklistToggle("Hide taxa without specimens", Settings.checklistPruneEmpty),
+        m(ChecklistToggle, { label: "Show specimen metadata", accessor: Settings.checklistShowSpecimenMeta }),
+        showTaxonMetadataToggle,
+        m(ChecklistToggle, { label: "Hide taxa without specimens", accessor: Settings.checklistPruneEmpty }),
       ])
     ]
   },
@@ -71,9 +97,19 @@ const VIEW_CHOICES = [
     label: "Proportional Stacking",
     iconPath: "./img/ui/menu/view_circle_pack.svg",
     info: "Visualise relative abundances and proportions.",
-    parameters: () => [m(".configuration-parameter-item", [
-      SelectSelector("Maximum depth of levels displayed:", Settings.circlePackingMaxLevels, [1, 2, 3, 4, 5, 6])
-    ]), chkIncludeChildren]
+    parameters: () => [
+      m(".configuration-parameter-item", [
+        m(SelectSelector, {
+          label: "Maximum depth of levels displayed:",
+          accessor: (val) => {
+            if (val === undefined) return Settings.circlePackingMaxLevels();
+            Settings.circlePackingMaxLevels(val);
+          },
+          values: [3, 4, 5, 6, 7]
+        })
+      ]),
+      m(ChecklistToggle, { label: "Include children in search matches", accessor: Settings.checklistIncludeChildren })
+    ]
   },
   {
     id: "view_category_density",
@@ -94,6 +130,27 @@ const SCOPE_CHOICES = [
   { id: "#S", label: "Specimens", iconPath: "./img/ui/checklist/tag.svg", info: "Specimen-focused record detail." },
 ];
 
+// Map a user-chosen scope to the value that should be persisted depending on
+// the currently active analysis tool.
+const persistScopeForTool = (scopeId, toolId) => {
+  // When Checklist (view_details) is active, choosing Specimens should
+  // persist as mixed-mode `#M` so the app can show taxa+specimens appropriately.
+  if (toolId === "view_details" && scopeId === "#S") return "#M";
+  return scopeId;
+};
+
+// Determine whether a scope button should appear active in the UI. If the
+// persisted value is `#M` and we're on the Checklist tool, show the Specimens
+// button as active so the user sees their choice reflected.
+const isScopeActiveForUI = (scopeId, persistedScope, toolId) => {
+  if (persistedScope === scopeId) return true;
+  if (persistedScope === "#M" && scopeId === "#S" && toolId === "view_details") return true;
+  return false;
+};
+
+/**
+ * 4. MAIN DIALOG COMPONENT
+ */
 export const ConfigurationDialog = {
   isOpen: false,
   open: () => ConfigurationDialog.isOpen = true,
@@ -103,14 +160,9 @@ export const ConfigurationDialog = {
     if (!ConfigurationDialog.isOpen) return null;
 
     // 1. Data Availability Logic
-    const hasSpecimens = Checklist.hasSpecimens(); //
+    const hasSpecimens = Checklist.hasSpecimens();
 
-    // 2. Enforcement: Force "Taxa" if no specimens are present
-    if (!hasSpecimens && Settings.analyticalIntent() !== "#T") {
-      Settings.analyticalIntent("#T");
-    }
-
-    // 3. State Determination (Defaults to Checklist/Taxa)
+    // 3. State Determination
     const currentViewId = Settings.viewType() || "view_details";
     const selectedScope = Settings.analyticalIntent() || "#T";
     const activeTool = VIEW_CHOICES.find(v => v.id === currentViewId) || VIEW_CHOICES[0];
@@ -120,16 +172,15 @@ export const ConfigurationDialog = {
       m(".configuration-dialog", { onclick: e => e.stopPropagation() }, [
         m(".configuration-dialog-header", [
           m("h3", "Configuration"),
-          m("button", { onclick: ConfigurationDialog.close }, "×"),
         ]),
 
-        // Section: Analysis Tool
+        // Section: Analysis Tool (The "How")
         m(".configuration-section", [
           m("h4", "Analysis Tool (The \"How\")"),
           m(".configuration-tool-grid", VIEW_CHOICES.map(v =>
             m("button.configuration-tool-card", {
               class: currentViewId === v.id ? "active" : "",
-              onclick: () => Settings.viewType(v.id)
+              onclick: () => commit(Settings.viewType, v.id)
             }, [
               m("img.configuration-tool-img", { src: v.iconPath }),
               m("span.configuration-tool-label", v.label),
@@ -138,13 +189,13 @@ export const ConfigurationDialog = {
           ))
         ]),
 
-        // Section: Data Scope - HIDDEN if no specimens exist
+        // Section: Data Scope (The "What")
         hasSpecimens && m(".configuration-section", [
           m("h4", "Data Scope (The \"What\")"),
           m(".configuration-scope-grid", SCOPE_CHOICES.map(s =>
             m("button.configuration-scope-btn", {
-              class: selectedScope === s.id ? "active" : "",
-              onclick: () => Settings.analyticalIntent(s.id)
+              class: isScopeActiveForUI(s.id, selectedScope, currentViewId) ? "active" : "",
+              onclick: () => commit(Settings.analyticalIntent, persistScopeForTool(s.id, currentViewId))
             }, [
               m("div", [
                 m("img.configuration-scope-img", { src: s.iconPath }),

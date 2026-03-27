@@ -290,7 +290,7 @@ function menuTopBar() {
         })()),
         Checklist.hasSpecimens() && m("span.separator", " • "),
         Checklist.hasSpecimens() && m(
-          "img.global-indicator-img[src=" + (Settings.analyticalIntent() === "#T" ? "./img/ui/checklist/taxonomy.svg" : Settings.analyticalIntent() === "#S" ? "./img/ui/checklist/tag.svg" : "./img/ui/menu/view_module.svg") + "]"
+          "img.global-indicator-img[src=" + (Settings.analyticalIntent() === "#T" ? "./img/ui/checklist/taxonomy.svg" : "./img/ui/checklist/tag.svg") + "]"
         ),
         Checklist.hasSpecimens() && m("span.global-indicator-label", (function () {
           switch (Settings.analyticalIntent()) {

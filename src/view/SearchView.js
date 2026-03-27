@@ -42,8 +42,6 @@ export let SearchView = {
             categorizedDataFilters[category].push({ category, title, dataPath });
         });
 
-        console.log("categorizedDataFilters", categorizedDataFilters);
-
         return m(".search", [
             // 1. Filter Groups Wrapper (Filters + Crumbs)
             m(".filter-groups-wrapper", [

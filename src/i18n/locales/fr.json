@@ -212,6 +212,7 @@
   "check_all_shown": "Cocher tous les éléments affichés",
   "view_cat_click_on_cell": "Cliquez sur une cellule pour obtenir une explication sur ses données",
   "view_cat_sum_by_taxon": "Somme par taxon",
+  "view_cat_sum_by_specimen": "Somme par spécimen",
   "view_cat_sum_by_category": "Somme par catégorie",
   "view_cat_percentages_name": "Pourcentages",
   "view_cat_percentages_info": "Pourcentage",

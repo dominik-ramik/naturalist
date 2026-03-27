@@ -212,6 +212,7 @@
   "check_all_shown": "Check all shown items",
   "view_cat_click_on_cell": "Click on or hover over any colored cell to read its exact stats.",
   "view_cat_sum_by_taxon": "Sum by taxon",
+  "view_cat_sum_by_specimen": "Sum by specimen",
   "view_cat_sum_by_category": "Sum by category",
   "view_cat_percentages_name": "Percentages",
   "view_cat_percentages_info": "Percentage",
