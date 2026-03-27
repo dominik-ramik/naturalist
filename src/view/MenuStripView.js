@@ -16,7 +16,7 @@ const VIEW_ICON_MAP = {
 
 // Map view modes to exact SVG filenames used in the UI (mode -> filename)
 const MODE_ICON_MAP = {
-  view_details: "view_details-clear.svg",
+  view_details: "view_details.svg",
   view_circle_pack: "view_circle_pack.svg",
   view_category_density: "view_category_density.svg",
   view_map: "view_map.svg",
@@ -288,11 +288,11 @@ function menuTopBar() {
               return "Checklist";
           }
         })()),
-        m("span.separator", " • "),
-        m(
+        Checklist.hasSpecimens() && m("span.separator", " • "),
+        Checklist.hasSpecimens() && m(
           "img.global-indicator-img[src=" + (Settings.analyticalIntent() === "#T" ? "./img/ui/checklist/taxonomy.svg" : Settings.analyticalIntent() === "#S" ? "./img/ui/checklist/tag.svg" : "./img/ui/menu/view_module.svg") + "]"
         ),
-        m("span.global-indicator-label", (function () {
+        Checklist.hasSpecimens() && m("span.global-indicator-label", (function () {
           switch (Settings.analyticalIntent()) {
             case "#S":
               return "Specimens";
@@ -302,7 +302,7 @@ function menuTopBar() {
               return "Full Catalog";
           }
         })()),
-        m("img.global-indicator-caret[src=./img/ui/search/expand-clear.svg]"),
+        m("img.global-indicator-caret[src=./img/ui/search/expand.svg]"),
       ]
     ),
   ];

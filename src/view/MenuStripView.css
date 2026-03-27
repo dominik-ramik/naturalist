@@ -280,3 +280,43 @@ font-size: 70%;
     padding-right: var(--pad-large);
   }
 }
+
+/* Global indicator button (migrated from global style.css) */
+.global-indicator-btn {
+  margin-left: auto;
+  margin-right: 1rem;
+  z-index: 1200;
+  border: 0;
+  border-radius: 0.3em;
+  padding: 0.5rem 0.8rem;
+  background: #ffbe5861;
+  color: #1f3044;
+  border: 1px solid rgba(31, 48, 68, 0.08);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 90%;
+}
+
+.global-indicator-img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.global-indicator-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.global-indicator-caret {
+  width: 0.9rem;
+  height: 0.9rem;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}

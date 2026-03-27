@@ -56,6 +56,15 @@ export let Settings = {
     }
   },
 
+  circlePackingMaxLevels: function (val) {
+    if (val === undefined) {
+      const stored = window.localStorage.getItem("circlePackingMaxLevels");
+      return stored ? parseInt(stored) : 4; // Default to 4
+    } else {
+      window.localStorage.setItem("circlePackingMaxLevels", val);
+    }
+  },
+
   mapChartCurrentMap: function (mapJSON) {
     if (mapJSON === undefined) {
       const mapJSON = window.localStorage.getItem("mapChartCurrentMap");

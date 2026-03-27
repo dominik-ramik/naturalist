@@ -468,13 +468,7 @@ export let DataManager = function () {
         lang.code,
         0.5
       );
-      let stackingCirclesDepth = getItem(
-        data.sheets.appearance.tables.customization.data,
-        "Stacking circles depth",
-        lang.code,
-        3
-      );
-
+      
       let version = {
         languageName: lang.name,
         fallbackUiLang: lang.fallbackLanguage,
@@ -485,7 +479,6 @@ export let DataManager = function () {
         dateFormat: dateFormat,
         useCitations: useCitations.toLowerCase(),
         precachedImageMaxSize: parseFloat(precachedImageMaxSize),
-        stackingCirclesDepth: stackingCirclesDepth,
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],

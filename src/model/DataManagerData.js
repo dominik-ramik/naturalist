@@ -802,13 +802,12 @@ export let nlDataStructure = {
                   "Checklist data headers row",
                   "Date format",
                   "Use citations",
-                  "Stacking circles depth",
                   "Precache max file size",
                   "Precache max total size"
                 ],
                 supportsMultilingual: false,
               },
-              templateData: ["Color theme hue", "Checklist name", "About section", "How to cite", "Name of checklist data sheet", "Checklist data headers row", "Date format", "Use citations", "Stacking circles depth", "Precache max file size", "Precache max total size"],
+              templateData: ["Color theme hue", "Checklist name", "About section", "How to cite", "Name of checklist data sheet", "Checklist data headers row", "Date format", "Use citations", "Precache max file size", "Precache max total size"],
             },
             value: {
               name: "Value",

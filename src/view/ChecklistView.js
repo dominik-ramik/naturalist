@@ -457,10 +457,7 @@ function circlePackingView(allTaxa, matchingTaxa) {
         dataSource: cachedData,
         colorInterpolation: colorFromRatio,
         fontFamily: "Regular",
-        specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
-        maxDataLevelsDisplayed:
-          Checklist._data.versions[Checklist.getCurrentLanguage()]
-            .stackingCirclesDepth || 4,
+        specimenMetaIndex: Checklist.getSpecimenMetaIndex()
       };
     },
   });

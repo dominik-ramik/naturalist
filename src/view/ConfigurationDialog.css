@@ -1,0 +1,128 @@
+/* Configuration dialog styles (migrated from global style.css) */
+.configuration-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.configuration-dialog {
+  width: min(900px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  padding-bottom: 4.5rem; /* make room for sticky footer */
+}
+
+.configuration-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.configuration-section {
+  margin-top: 1rem;
+}
+
+.configuration-tool-grid,
+.configuration-scope-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.configuration-tool-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.configuration-scope-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* Footer in the configuration dialog */
+.configuration-dialog-footer {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+  background: linear-gradient(rgba(255,255,255,0), #ffffff);
+  justify-content: center;
+}
+
+.configuration-confirm-btn {
+  width: 100%;
+  max-width: 720px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: #2d73b9;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+}
+
+.configuration-confirm-btn:active {
+  transform: translateY(1px);
+}
+
+.configuration-tool-card,
+.configuration-scope-btn {
+  border: 1px solid #ced6df;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.7rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Ensure icons and text are vertically centered and consistent size */
+.configuration-tool-card,
+.configuration-scope-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.configuration-tool-img,
+.configuration-scope-img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Slightly adjust the caret and labels to align with icons */
+.configuration-tool-label,
+.configuration-scope-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.configuration-tool-card.active,
+.configuration-scope-btn.active {
+  border-color: #2d73b9;
+  background: #eaf3ff;
+}
+
+.configuration-scope-btn.disabled,
+.configuration-checkbox.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.configuration-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
