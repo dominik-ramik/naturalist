@@ -10,10 +10,6 @@ import { Checklist } from "../../model/Checklist.js";
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
 // ------------------------------------------------------
-const sumMethods = [
-  { name: t(Settings.analyticalIntent() == "#T" ? "view_cat_sum_by_taxon" : "view_cat_sum_by_specimen"), method: "taxon" },
-  { name: t("view_cat_sum_by_category"), method: "category" },
-];
 
 const displayStyles = [
   {
@@ -30,7 +26,6 @@ const displayStyles = [
 
 let categoryToView = Settings.categoryChartCategory();
 let categoryRoot = Settings.categoryChartRoot();
-let sumMethod = Settings.categoryChartSumMethod();
 let display = Settings.categoryChartDisplayMode();
 
 // Cell-verb state:
@@ -43,10 +38,6 @@ let currentCellVerb = t("view_cat_click_on_cell");
 if (!displayStyles.find((ds) => ds.method === display)) {
   display = displayStyles[0].method;
   Settings.categoryChartDisplayMode(display);
-}
-if (!sumMethods.find((sm) => sm.method === sumMethod)) {
-  sumMethod = sumMethods[0].method;
-  Settings.categoryChartSumMethod(sumMethod);
 }
 
 // Sort state — null means default (taxonomy / insertion order)
@@ -112,18 +103,21 @@ function buildBreadcrumbPath(currentRoot, filteredTaxa) {
 /**
  * Generate a descriptive string for the category header.
  */
-const categoryVerb = (catView, sumMethodOption) => {
+const categoryVerb = (catView, chartModeOption) => {
   const meta = Checklist.getMetaForDataPath(catView);
   if (!meta) return "";
   let verb = "";
-  switch (sumMethodOption) {
-    case "taxon":
+  // Use the global chart mode to decide verbal phrasing:
+  // - 'taxa' -> use the "taxon" phrasing (counts/percentages of taxa)
+  // - 'specimen' -> use the "category" phrasing (contribution of taxa to categories)
+  switch (chartModeOption) {
+    case "taxa":
       verb = tf("view_cat_category_verb_taxon", [
         displayStyles.find((ds) => ds.method === display).info,
         meta.searchCategory,
       ]);
       break;
-    case "category":
+    case "specimen":
       verb = tf("view_cat_category_verb_category", [meta.searchCategory]);
       break;
     default:
@@ -135,10 +129,11 @@ const categoryVerb = (catView, sumMethodOption) => {
 /**
  * Generate the descriptive sentence shown in the cell-verb bar.
  */
-const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
+const cellVerb = (percentage, cKey, taxonKey, matchingCount, chartModeOption) => {
   let verb = "";
-  switch (sumMethod) {
-    case "taxon":
+  // Decide wording based on the global chart mode
+  switch (chartModeOption) {
+    case "taxa":
       verb = tf("view_cat_cell_verb_taxon", [
         percentage,
         matchingCount,
@@ -146,7 +141,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount) => {
         cKey,
       ]);
       break;
-    case "category":
+    case "specimen":
       verb = tf("view_cat_cell_verb_category", [
         percentage,
         matchingCount,
@@ -361,19 +356,6 @@ export function categoryChart(filteredTaxa) {
       ]),
 
       categoryToView === "" ? null : m(".chart-control-group", [
-        m("label", t("view_cat_sum_method")),
-        m(".chart-segmented-control", sumMethods.map((mt) =>
-          m("button" + (mt.method === sumMethod ? ".selected" : ""), {
-            onclick: () => {
-              if (mt.method === sumMethod) return false;
-              sumMethod = mt.method;
-              Settings.categoryChartSumMethod(sumMethod);
-            }
-          }, mt.name)
-        ))
-      ]),
-
-      sumMethod === "" ? null : m(".chart-control-group", [
         m("label", t("view_cat_display")),
         m(".chart-segmented-control", displayStyles.map((ds) =>
           m("button" + (ds.method === display ? ".selected" : ""), {
@@ -389,14 +371,14 @@ export function categoryChart(filteredTaxa) {
 
     ]),
 
-    categoryToView === "" || sumMethod === "" || !categorizedData || Object.keys(categorizedData.individualResults).length === 0
+    categoryToView === "" || !categorizedData || Object.keys(categorizedData.individualResults).length === 0
       ? null
       : m(".chart-info-box", [
         m(".chart-info-item", m.trust(
           Checklist.filter.isEmpty()
-            ? t("view_cat_counted_all", [categoryVerb(categoryToView, sumMethod)])
+            ? t("view_cat_counted_all", [categoryVerb(categoryToView, chartMode)])
             : tf("view_cat_counted_filter", [
-              categoryVerb(categoryToView, sumMethod),
+              categoryVerb(categoryToView, chartMode),
               Settings.pinnedSearches.getHumanNameForSearch()
             ])
         )),
@@ -409,7 +391,7 @@ export function categoryChart(filteredTaxa) {
   // ------------------------------------------------------
   // RENDER CATEGORY CHART TABLE
   // ------------------------------------------------------
-  if (categoryToView !== "" && sumMethod !== "" && categorizedData != null) {
+  if (categoryToView !== "" && categorizedData != null) {
     if (Object.keys(categorizedData.individualResults).length === 0) {
       return result;
     }
@@ -434,7 +416,7 @@ export function categoryChart(filteredTaxa) {
     // ── Helper: compute ratio for one taxon / category cell ───────────────
     const getRatio = (taxon, cKey) => {
       if (!Object.keys(taxon.categories).includes(cKey)) return 0;
-      const basis = sumMethod === "category"
+      const basis = chartMode === "specimen"
         ? categorizedData.sumByCategory[cKey].sum
         : taxon.sum;
       return taxon.categories[cKey] / basis;
@@ -543,7 +525,8 @@ export function categoryChart(filteredTaxa) {
             toPctString(ratio),
             cKey,
             taxonKey,
-            taxon.categories[cKey]
+            taxon.categories[cKey],
+            chartMode
           );
           return m(
             "td.category-cell-filled",

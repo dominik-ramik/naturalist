@@ -128,18 +128,6 @@ export let Settings = {
       window.localStorage.setItem("categoryChartDisplayMode", data);
     }
   },
-  categoryChartSumMethod: function (data) {
-    if (data === undefined) {
-      const value = window.localStorage.getItem("categoryChartSumMethod");
-      if (!value || value === undefined) {
-        return "";
-      } else {
-        return value;
-      }
-    } else {
-      window.localStorage.setItem("categoryChartSumMethod", data);
-    }
-  },
 
   categoryChartMode: function (data) {
     if (data === undefined) {
@@ -212,8 +200,15 @@ export let Settings = {
 
   analyticalIntent: function (value) {
     if (value === undefined) {
-      const stored = window.localStorage.getItem("analyticalIntent");
-      return stored === null ? "#M" : stored;
+      let stored = window.localStorage.getItem("analyticalIntent");
+
+      if (stored === null) {
+        const defaultVal = Checklist.hasSpecimens() ? "#S" : "#T";
+        window.localStorage.setItem("analyticalIntent", defaultVal);
+        return defaultVal;
+      }
+
+      return stored;
     } else {
       window.localStorage.setItem("analyticalIntent", value);
     }
