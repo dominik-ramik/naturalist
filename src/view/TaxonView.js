@@ -11,7 +11,7 @@ export let TaxonView = {
     const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
     const isSpecimenLevel = vnode.attrs.currentTaxonLevel === specimenMetaIndex;
 
-    if (isSpecimenLevel && !Settings.includeSpecimensInView()) {
+    if (isSpecimenLevel && !Settings.checklistShowSpecimens()) {
       return null;
     }
 
@@ -64,7 +64,7 @@ export let TaxonView = {
     const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children)
       .filter((key) => {
         return (
-          Settings.includeSpecimensInView() ||
+          Settings.checklistShowSpecimens() ||
           vnode.attrs.taxonTree.children[key].taxonMetaIndex !== specimenMetaIndex
         );
       })
@@ -79,6 +79,24 @@ export let TaxonView = {
       });
 
     const showSearchAll = sortedChildKeys.length > 0;
+    const isTerminalNode = sortedChildKeys.length === 0;
+    if (vnode.attrs.terminalOnly && !isTerminalNode) {
+      return sortedChildKeys.map(function (currentTaxonKey) {
+        return m(TaxonView, {
+          parents:
+            vnode.attrs.parents == null || vnode.attrs.parents.length == 0
+              ? [vnode.attrs.taxonTree.taxon]
+              : [...vnode.attrs.parents, vnode.attrs.taxonTree.taxon],
+          taxonKey: currentTaxonKey,
+          taxonTree: vnode.attrs.taxonTree.children[currentTaxonKey],
+          currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
+          displayMode: vnode.attrs.displayMode,
+          showTaxonMeta: vnode.attrs.showTaxonMeta,
+          showSpecimenMeta: vnode.attrs.showSpecimenMeta,
+          terminalOnly: vnode.attrs.terminalOnly,
+        });
+      });
+    }
 
     return m("ul.card.taxon-level" + inverseTaxonLevel + (isSpecimenLevel ? ".specimen-level" : ""), [
 
@@ -134,7 +152,9 @@ export let TaxonView = {
               : null,
           ]),
         ]),
-        vnode.attrs.displayMode == ""
+        vnode.attrs.displayMode == "" &&
+        ((isSpecimenLevel && vnode.attrs.showSpecimenMeta !== false) ||
+          (!isSpecimenLevel && vnode.attrs.showTaxonMeta !== false))
           ? m(TaxonDataView, {
             taxon: vnode.attrs.taxonTree,
           })
@@ -161,6 +181,9 @@ export let TaxonView = {
           // in the checklist tree, so we need to get the taxon level from the taxon meta index of the taxon tree node
           currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
           displayMode: vnode.attrs.displayMode,
+          showTaxonMeta: vnode.attrs.showTaxonMeta,
+          showSpecimenMeta: vnode.attrs.showSpecimenMeta,
+          terminalOnly: vnode.attrs.terminalOnly,
         });
       }),
     ]);

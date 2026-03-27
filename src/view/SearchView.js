@@ -58,27 +58,15 @@ export let SearchView = {
                 m(".view-options-bar", [
                     m("label.view-option", [
                         m("input[type=checkbox]", {
-                            checked: Settings.includeMatchChildren(),
+                            checked: Settings.checklistIncludeChildren(),
                             onchange: function () {
-                                Settings.includeMatchChildren(!Settings.includeMatchChildren());
+                                Settings.checklistIncludeChildren(!Settings.checklistIncludeChildren());
                                 Checklist.filter._queryResultCache = {};
                                 m.redraw();
                             }
                         }),
                         t("include_match_children")
                     ]),
-                    ((Settings.viewType() === "view_details" || Settings.viewType() === "view_circle_pack") && Checklist.hasSpecimens())
-                        ? m("label.view-option", [
-                            m("input[type=checkbox]", {
-                                checked: Settings.includeSpecimensInView(),
-                                onchange: function () {
-                                    Settings.includeSpecimensInView(!Settings.includeSpecimensInView());
-                                    m.redraw();
-                                }
-                            }),
-                            t("show_specimens")
-                        ])
-                        : null,
                 ]),
             ]),
 

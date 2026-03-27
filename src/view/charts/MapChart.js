@@ -4,7 +4,6 @@ import { Settings } from "../../model/Settings.js";
 import {
   colorFromRatio,
   colorSVGMap,
-  filterTerminalLeaves,
   filterTerminalLeavesForMode,
   relativeToUsercontent,
 } from "../../components/Utils.js";
@@ -23,9 +22,8 @@ let availableMapsCache = null;
 let oldColoredRegionsJSON = "";
 let colors = null;
 
-let mapChartMode = Settings.mapChartMode(); // "taxa" or "specimen"
-
 function globalCountsCacheKey(dataPath) {
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
   return dataPath + "|" + mapChartMode;
 }
 
@@ -36,6 +34,7 @@ const sumMethods = [
 ];
 
 export function mapChart(filteredTaxa, allTaxa) {
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
   let currentMapStringified = JSON.stringify(currentMap);
   if (
     !getAvailableMaps().find(
@@ -162,25 +161,6 @@ function renderControlPanel() {
         ))
     ]),
 
-    Checklist.hasSpecimens() ? m(".chart-control-group", [
-      m("label", t("view_chart_mode_label")),
-      m(".chart-segmented-control", [
-        m("button" + (mapChartMode === "taxa" ? ".selected" : ""), {
-          onclick: () => {
-            if (mapChartMode === "taxa") return false;
-            mapChartMode = "taxa";
-            Settings.mapChartMode("taxa");
-          }
-        }, t("view_chart_mode_taxa")),
-        m("button" + (mapChartMode === "specimen" ? ".selected" : ""), {
-          onclick: () => {
-            if (mapChartMode === "specimen") return false;
-            mapChartMode = "specimen";
-            Settings.mapChartMode("specimen");
-          }
-        }, t("view_chart_mode_specimen"))
-      ])
-    ]) : null
   ]);
 }
 
@@ -324,6 +304,7 @@ function renderDataTable(dataPath, sumMethod) {
 }
 
 function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
   const terminalLeaves = filterTerminalLeavesForMode(
     filteredTaxa, mapChartMode, specimenMetaIndex

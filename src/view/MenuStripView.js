@@ -4,8 +4,29 @@ import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { ChecklistView } from "../view/ChecklistView.js";
 import { Settings } from "../model/Settings.js";
-import { AppLayoutView } from "./AppLayoutView.js";
-import { getAvailableMaps, mapChart } from "./charts/MapChart.js";
+import { ConfigurationDialog } from "./ConfigurationDialog.js";
+
+// Icon metadata used in the header indicator (matches ConfigurationDialog.js)
+const VIEW_ICON_MAP = {
+  view_details: { provider: "material", name: "format_list_bulleted" },
+  view_circle_pack: { provider: "material", name: "bubble_chart" },
+  view_category_density: { provider: "material", name: "table_chart" },
+  view_map: { provider: "material", name: "map" },
+};
+
+// Map view modes to exact SVG filenames used in the UI (mode -> filename)
+const MODE_ICON_MAP = {
+  view_details: "view_details-clear.svg",
+  view_circle_pack: "view_circle_pack.svg",
+  view_category_density: "view_category_density.svg",
+  view_map: "view_map.svg",
+};
+
+const SCOPE_ICON_MAP = {
+  "#T": { provider: "material", name: "local_florist" },
+  "#S": { provider: "material", name: "science" },
+  "#M": { provider: "material", name: "view_module" },
+};
 
 export let MenuStripView = {
   menuOpen: false,
@@ -47,34 +68,35 @@ function menuPanel() {
             icon: "about",
             title: t("about_this"),
           }),
-          !Checklist.getProjectHowToCite() ||
-            Checklist.getProjectHowToCite().trim() == ""
+          !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == ""
             ? null
             : m(MenuItem, {
-              onclick: function () {
-                MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                routeTo("/about/cite");
-              },
-              icon: "cite",
-              title: t("how_to_cite"),
-            }),
-          Checklist.getSingleAccessTaxonomicKeys().length > 0 ? m(MenuItem, {
-            onclick: function () {
-              MenuStripView.menuOpen = !MenuStripView.menuOpen;
-              routeTo("/single-access-keys");
-            },
-            icon: "single_access_key",
-            title: t("keys"),
-          }) : null,
+                onclick: function () {
+                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                  routeTo("/about/cite");
+                },
+                icon: "cite",
+                title: t("how_to_cite"),
+              }),
+          Checklist.getSingleAccessTaxonomicKeys().length > 0
+            ? m(MenuItem, {
+                onclick: function () {
+                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                  routeTo("/single-access-keys");
+                },
+                icon: "single_access_key",
+                title: t("keys"),
+              })
+            : null,
           Checklist.getBibliographyKeys().length > 0
             ? m(MenuItem, {
-              onclick: function () {
-                MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                routeTo("/references");
-              },
-              icon: "literature",
-              title: t("literature"),
-            })
+                onclick: function () {
+                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                  routeTo("/references");
+                },
+                icon: "literature",
+                title: t("literature"),
+              })
             : null,
           m(MenuDivider),
           m(MenuItem, {
@@ -107,22 +129,22 @@ function menuPanel() {
           m(MenuDivider),
           Checklist.getAllLanguages().length > 1
             ? m(MenuExpandable, { title: t("languages") }, [
-              Checklist.getAllLanguages().map(function (lang) {
-                if (lang.code == Checklist.getCurrentLanguage()) {
-                  return null; //skip this version
-                } else {
-                  return m(MenuItem, {
-                    onclick: function () {
-                      Settings.language(lang.code);
-                      routeTo("/checklist", "", lang.code);
-                      MenuStripView.menuOpen = false;
-                      location.reload(true);
-                    },
-                    title: lang.name,
-                  });
-                }
-              }),
-            ])
+                Checklist.getAllLanguages().map(function (lang) {
+                  if (lang.code == Checklist.getCurrentLanguage()) {
+                    return null; //skip this version
+                  } else {
+                    return m(MenuItem, {
+                      onclick: function () {
+                        Settings.language(lang.code);
+                        routeTo("/checklist", "", lang.code);
+                        MenuStripView.menuOpen = false;
+                        location.reload(true);
+                      },
+                      title: lang.name,
+                    });
+                  }
+                }),
+              ])
             : null,
           //Checklist.getAllLanguages().length > 1 ? m(MenuDivider) : null,
           m(MenuItem, {
@@ -232,8 +254,6 @@ let MenuExpandable = function (initialVnode) {
 };
 
 function menuTopBar() {
-  let currentViewName = t(Settings.viewType()); //settings view type is the same as the i18n tag for that view
-
   return [
     m(
       ".menu-button.clickable",
@@ -245,82 +265,46 @@ function menuTopBar() {
       [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
     m(".menu-project-name", Checklist.getProjectName()),
-    m(ActionButtonWithMenu, {
-      icon: "img/ui/menu/" + Settings.viewType() + ".svg",
-      title: currentViewName,
-      items: [].concat(
-        { type: "label", title: t("view_checklist_as") },
-        {
-          type: "button",
-          title: t("view_details"),
-          icon: "ui/menu/view_details",
-          selected: Settings.viewType() === "view_details",
-          action: function () {
-            Settings.viewType("view_details");
-          },
+    m(
+      "button.global-indicator-btn",
+      {
+        onclick: function () {
+          ConfigurationDialog.open();
         },
-        {
-          type: "button",
-          title: t("view_circle_pack"),
-          icon: "ui/menu/view_circle_pack",
-          selected: Settings.viewType() === "view_circle_pack",
-          action: function () {
-            Settings.viewType("view_circle_pack");
-          },
-        },
-        {
-          type: "button",
-          title: t("view_category_density"),
-          icon: "ui/menu/view_category_density",
-          selected: Settings.viewType() === "view_category_density",
-          action: function () {
-            Settings.viewType("view_category_density");
-          },
-        },
-        getAvailableMaps().length == 0
-          ? null
-          : {
-            type: "button",
-            title: t("view_map"),
-            icon: "ui/menu/view_map",
-            selected: Settings.viewType() === "view_map",
-            action: function () {
-              Settings.viewType("view_map");
-            },
-          },
-        { type: "divider" },        
-        Settings.viewType() === "view_details"
-          ? [
-            { type: "divider" },
-            ChecklistView.displayMode == "" ? null : { type: "divider" },
-
-            { type: "label", title: t("limit_view") },
-            ChecklistView.displayMode == ""
-              ? null
-              : {
-                type: "button",
-                title: t("cancel_details_filter"),
-                action: function () {
-                  ChecklistView.displayMode = "";
-                },
-              },
-            ,
-            ...Object.keys(Checklist.getTaxaMeta()).map(function (taxonName) {
-              return {
-                type: "button",
-                title: Checklist.getTaxaMeta()[taxonName].name,
-                state:
-                  ChecklistView.displayMode == taxonName ? "inactive" : "",
-                action: function () {
-                  ChecklistView.displayMode = taxonName;
-                  ActionButtonWithMenu.open = false;
-                },
-              };
-            }),
-          ]
-          : null
-      ),
-    }),
+      },
+      [
+        // Use existing UI SVGs for analysis tool and scope
+        m("img.global-indicator-img[src=./img/ui/menu/" + (MODE_ICON_MAP[Settings.viewType()] || (Settings.viewType() + ".svg")) + "]"),
+        m("span.global-indicator-label", (function () {
+          switch (Settings.viewType()) {
+            case "view_circle_pack":
+              return "Proportional Stacking";
+            case "view_category_density":
+              return "Cross-Tab Matrix";
+            case "view_map":
+              return "Geospatial Map";
+            case "view_details":
+            default:
+              return "Checklist";
+          }
+        })()),
+        m("span.separator", " • "),
+        m(
+          "img.global-indicator-img[src=" + (Settings.analyticalIntent() === "#T" ? "./img/ui/checklist/taxonomy.svg" : Settings.analyticalIntent() === "#S" ? "./img/ui/checklist/tag.svg" : "./img/ui/menu/view_module.svg") + "]"
+        ),
+        m("span.global-indicator-label", (function () {
+          switch (Settings.analyticalIntent()) {
+            case "#S":
+              return "Specimens";
+            case "#T":
+              return "Taxa";
+            default:
+              return "Full Catalog";
+          }
+        })()),
+        m("img.global-indicator-caret[src=./img/ui/search/expand-clear.svg]"),
+      ]
+    ),
   ];
 }
 

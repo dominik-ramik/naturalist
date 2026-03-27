@@ -183,22 +183,90 @@ export let Settings = {
   },
 
   includeMatchChildren: function (value) {
-    if (value === undefined) {
-      const stored = window.localStorage.getItem("includeMatchChildren");
-      return stored === null ? true : stored === "true";
+    // Legacy alias kept for backward compatibility.
+    return Settings.checklistIncludeChildren(value);
+  },
 
+  includeSpecimensInView: function (value) {
+    // Legacy alias kept for backward compatibility.
+    return Settings.checklistShowSpecimens(value);
+  },
+
+  analyticalIntent: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("analyticalIntent");
+      return stored === null ? "#M" : stored;
     } else {
+      window.localStorage.setItem("analyticalIntent", value);
+    }
+  },
+
+  checklistShowSpecimens: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistShowSpecimens");
+      return stored === null ? true : stored === "true";
+    } else {
+      window.localStorage.setItem("checklistShowSpecimens", value);
+    }
+  },
+
+  checklistPruneEmpty: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistPruneEmpty");
+      return stored === null ? false : stored === "true";
+    } else {
+      window.localStorage.setItem("checklistPruneEmpty", value);
+    }
+  },
+
+  checklistShowTaxonMeta: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistShowTaxonMeta");
+      return stored === null ? true : stored === "true";
+    } else {
+      window.localStorage.setItem("checklistShowTaxonMeta", value);
+    }
+  },
+
+  checklistShowSpecimenMeta: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistShowSpecimenMeta");
+      return stored === null ? true : stored === "true";
+    } else {
+      window.localStorage.setItem("checklistShowSpecimenMeta", value);
+    }
+  },
+
+  checklistShowTerminalOnly: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistShowTerminalOnly");
+      return stored === null ? false : stored === "true";
+    } else {
+      window.localStorage.setItem("checklistShowTerminalOnly", value);
+    }
+  },
+
+  checklistIncludeChildren: function (value) {
+    if (value === undefined) {
+      const stored = window.localStorage.getItem("checklistIncludeChildren");
+      if (stored === null) {
+        return true;
+      }
+      return stored === "true";
+    } else {
+      window.localStorage.setItem("checklistIncludeChildren", value);
+      // Keep old key synced for older callsites.
       window.localStorage.setItem("includeMatchChildren", value);
     }
   },
 
-  includeSpecimensInView: function (value) {
+  checklistDisplayLevel: function (value) {
+    // empty string means all taxon levels
     if (value === undefined) {
-      const stored = window.localStorage.getItem("includeSpecimensInView");
-      return stored === null ? true : stored === "true";
-
+      const stored = window.localStorage.getItem("checklistDisplayLevel");
+      return stored === null ? "" : stored;
     } else {
-      window.localStorage.setItem("includeSpecimensInView", value);
+      window.localStorage.setItem("checklistDisplayLevel", value);
     }
   },
 

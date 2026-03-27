@@ -3,7 +3,6 @@ import m from "mithril";
 import { Settings } from "../../model/Settings.js";
 import {
   sortByCustomOrder,
-  filterTerminalLeaves,
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
@@ -49,8 +48,6 @@ if (!sumMethods.find((sm) => sm.method === sumMethod)) {
   sumMethod = sumMethods[0].method;
   Settings.categoryChartSumMethod(sumMethod);
 }
-
-let chartMode = Settings.categoryChartMode(); // "taxa" or "specimen"
 
 // Sort state — null means default (taxonomy / insertion order)
 let sortColumn = null;
@@ -311,6 +308,7 @@ export function categoryChart(filteredTaxa) {
   const result = [];
 
   const allTaxaForInheritance = filteredTaxa;
+  const chartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
 
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
@@ -389,25 +387,6 @@ export function categoryChart(filteredTaxa) {
         ))
       ]),
 
-      Checklist.hasSpecimens() ? m(".chart-control-group", [
-        m("label", t("view_chart_mode_label")),
-        m(".chart-segmented-control", [
-          m("button" + (chartMode === "taxa" ? ".selected" : ""), {
-            onclick: () => {
-              if (chartMode === "taxa") return false;
-              chartMode = "taxa";
-              Settings.categoryChartMode("taxa");
-            }
-          }, t("view_chart_mode_taxa")),
-          m("button" + (chartMode === "specimen" ? ".selected" : ""), {
-            onclick: () => {
-              if (chartMode === "specimen") return false;
-              chartMode = "specimen";
-              Settings.categoryChartMode("specimen");
-            }
-          }, t("view_chart_mode_specimen"))
-        ])
-      ]) : null
     ]),
 
     categoryToView === "" || sumMethod === "" || !categorizedData || Object.keys(categorizedData.individualResults).length === 0

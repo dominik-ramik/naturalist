@@ -129,17 +129,6 @@ export let ChecklistView = {
           : m(".checklist-inner-wrapper", [
             Checklist._isDraft ? draftNotice() : null,
             !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
-            !Checklist.filter.isEmpty() && !Settings.includeMatchChildren()
-              ? hiddenChildTaxaNotice()
-              : null,
-            shouldHideSpecimensInView() &&
-              (Settings.viewType() === "view_details" || Settings.viewType() === "view_circle_pack")
-              ? hiddenSpecimensNotice()
-              : null,
-            Settings.viewType() === "view_details" &&
-              ChecklistView.displayMode != ""
-              ? temporaryFilterNotice()
-              : null,
             specificChecklistView,
           ]),
       ])
@@ -148,31 +137,40 @@ export let ChecklistView = {
 };
 
 function shouldHideSpecimensInView() {
-  return Checklist.hasSpecimens() && !Settings.includeSpecimensInView();
+  return Checklist.hasSpecimens() && !Settings.checklistShowSpecimens();
 }
 
 function filterOutSpecimenTaxa(taxa) {
-  if (!shouldHideSpecimensInView()) {
-    return taxa;
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  const intent = Settings.analyticalIntent();
+  let scoped = taxa;
+
+  if (intent === "#T") {
+    scoped = scoped.filter(function (taxon) {
+      return (
+        taxon.t?.[specimenMetaIndex] === null ||
+        taxon.t?.[specimenMetaIndex] === undefined
+      );
+    });
+  } else if (intent === "#S") {
+    scoped = scoped.filter(function (taxon) {
+      return (
+        taxon.t?.[specimenMetaIndex] !== null &&
+        taxon.t?.[specimenMetaIndex] !== undefined
+      );
+    });
   }
 
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  if (!Settings.checklistShowSpecimens()) {
+    scoped = scoped.filter(function (taxon) {
+      return (
+        taxon.t?.[specimenMetaIndex] === null ||
+        taxon.t?.[specimenMetaIndex] === undefined
+      );
+    });
+  }
 
-  return taxa.filter(function (taxon) {
-    return (
-      taxon.t?.[specimenMetaIndex] === null ||
-      taxon.t?.[specimenMetaIndex] === undefined
-    );
-  });
-}
-
-function restoreChildTaxa() {
-  Settings.includeMatchChildren(true);
-  Checklist.filter._queryResultCache = {};
-}
-
-function restoreSpecimens() {
-  Settings.includeSpecimensInView(true);
+  return scoped;
 }
 
 function categoryChartView(filteredTaxa) {
@@ -180,7 +178,7 @@ function categoryChartView(filteredTaxa) {
 }
 
 function detailedTaxonView(treeTaxa, overflowing) {
-  const includeSpecimensInView = Settings.includeSpecimensInView();
+  const includeSpecimensInView = Settings.checklistShowSpecimens();
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
   const visibleTopLevelTaxa = Object.keys(treeTaxa.children).filter(
     function (taxonLevel) {
@@ -199,6 +197,9 @@ function detailedTaxonView(treeTaxa, overflowing) {
         taxonTree: treeTaxa.children[taxonLevel],
         currentTaxonLevel: treeTaxa.children[taxonLevel].taxonMetaIndex,
         displayMode: ChecklistView.displayMode,
+        showTaxonMeta: Settings.checklistShowTaxonMeta(),
+        showSpecimenMeta: Settings.checklistShowSpecimenMeta(),
+        terminalOnly: Settings.checklistShowTerminalOnly(),
       });
     }),
     overflowing > 0
@@ -439,8 +440,9 @@ function circlePackingView(allTaxa, matchingTaxa) {
       let shouldUpdate = false;
       const cacheKey = JSON.stringify({
         queryKey: Checklist.queryKey(),
-        includeMatchChildren: Settings.includeMatchChildren(),
-        includeSpecimensInView: Settings.includeSpecimensInView(),
+        includeMatchChildren: Settings.checklistIncludeChildren(),
+        includeSpecimensInView: Settings.checklistShowSpecimens(),
+        analyticalIntent: Settings.analyticalIntent(),
       });
 
       if (cachedData == null || cacheKey != oldQueryKey) {
@@ -522,62 +524,6 @@ function draftNotice() {
       },
       icon: "manage",
       text: t("temporary_draft_goto_manage"),
-    },
-  });
-}
-
-function temporaryFilterNotice() {
-  return m(Notice, {
-    action: function () {
-      ChecklistView.displayMode = "";
-    },
-    notice: m.trust(
-      t("temporary_filter", [
-        Checklist.getTaxaMeta()[ChecklistView.displayMode].name,
-      ])
-    ),
-    additionalButton: {
-      action: function () {
-        ChecklistView.displayMode = "";
-      },
-      icon: "filter_list_off",
-      text: t("temporary_filter_show_all"),
-    },
-  });
-}
-
-function hiddenChildTaxaNotice() {
-  return m(Notice, {
-    action: function () {
-      restoreChildTaxa();
-    },
-    notice: t("temporary_filter_children"),
-    additionalButton: {
-      action: function () {
-        restoreChildTaxa();
-      },
-      icon: "filter_list_off",
-      text: t("temporary_filter_show_children"),
-    },
-  });
-}
-
-function hiddenSpecimensNotice() {
-  const showAllInfo = Settings.viewType() === "view_details";
-
-  return m(Notice, {
-    action: function () {
-      restoreSpecimens();
-    },
-    notice: m.trust(t("temporary_filter_specimens")),
-    additionalButton: {
-      action: function () {
-        restoreSpecimens();
-      },
-      icon: "filter_list_off",
-      text: showAllInfo
-        ? t("temporary_filter_show_all")
-        : t("temporary_filter_show_specimens"),
     },
   });
 }

@@ -3,6 +3,33 @@ import m from "mithril"
 import { MenuStripView } from "./MenuStripView.js";
 import { ChecklistView } from "./ChecklistView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
+import { Settings } from "../model/Settings.js";
+import { ConfigurationDialog } from "./ConfigurationDialog.js";
+
+function currentViewLabel() {
+    switch (Settings.viewType()) {
+        case "view_circle_pack":
+            return "Proportional Stacking";
+        case "view_category_density":
+            return "Cross-Tab Matrix";
+        case "view_map":
+            return "Geospatial Map";
+        case "view_details":
+        default:
+            return "Checklist";
+    }
+}
+
+function currentScopeLabel() {
+    switch (Settings.analyticalIntent()) {
+        case "#S":
+            return "Specimens";
+        case "#T":
+            return "Taxa";
+        default:
+            return "Full Catalog";
+    }
+}
 
 export let AppLayoutView = {
     display: "checklist",
@@ -17,7 +44,9 @@ export let AppLayoutView = {
                 m(ChecklistView),
                 m(InteractionAreaView, vnode.children),                
             ]),
+            // moved global indicator into the menu top bar
             m(Toast),
+            m(ConfigurationDialog),
         ])
     },
 

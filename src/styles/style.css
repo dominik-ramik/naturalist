@@ -146,3 +146,129 @@ ul.card.specimen-level {
   font-size: 85% !important; 
   box-shadow: 0.05em 0.05em 0.1em rgba(0,0,0,0.2);
 }
+
+/* Global configuration dialog */
+.global-indicator-btn {
+  margin-left: auto;
+  margin-right: 1rem;
+  z-index: 1200;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+  background: #1f3044;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 90%;
+}
+
+.configuration-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.configuration-dialog {
+  width: min(900px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.configuration-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.configuration-section {
+  margin-top: 1rem;
+}
+
+.configuration-tool-grid,
+.configuration-scope-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.configuration-tool-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.configuration-scope-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.configuration-tool-card,
+.configuration-scope-btn {
+  border: 1px solid #ced6df;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.7rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Ensure icons and text are vertically centered and consistent size */
+.configuration-tool-card,
+.configuration-scope-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.configuration-tool-img,
+.configuration-scope-img,
+.global-indicator-img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Slightly adjust the caret and labels to align with icons */
+.configuration-tool-label,
+.configuration-scope-label,
+.global-indicator-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Caret/chevron on the global indicator button */
+.global-indicator-caret {
+  width: 0.9rem;
+  height: 0.9rem;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+
+.configuration-tool-card.active,
+.configuration-scope-btn.active {
+  border-color: #2d73b9;
+  background: #eaf3ff;
+}
+
+.configuration-scope-btn.disabled,
+.configuration-checkbox.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.configuration-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
