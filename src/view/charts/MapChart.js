@@ -17,7 +17,7 @@ let currentFilterResultsLength = 0;
 let sessionCache = {}; // key: map.dataPath, value: __all__ for all mapped occurrences, key:value for region:number matching
 let currentRegions = {};
 
-let availableMapsCache = null;
+let availableMapsCache = {}; // keyed by chartMode: "taxa" | "specimen"
 
 let oldColoredRegionsJSON = "";
 let colors = null;
@@ -75,15 +75,16 @@ export function mapChart(filteredTaxa, allTaxa) {
 }
 
 export function getAvailableMaps() {
-  // Return cached result if available
-  if (availableMapsCache !== null) {
-    return availableMapsCache;
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+
+  if (availableMapsCache[mapChartMode] !== undefined) {
+    return availableMapsCache[mapChartMode];
   }
 
-  let availableMaps = [];
-
-  // Get all data meta entries with "map regions" formatting
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  const checklist = Checklist.getEntireChecklist();
   const dataMeta = Checklist.getDataMeta();
+  let availableMaps = [];
 
   Object.keys(dataMeta).forEach(function (dataPath) {
     const meta = dataMeta[dataPath];
@@ -93,38 +94,56 @@ export function getAvailableMaps() {
       meta.template &&
       meta.template.trim() !== ""
     ) {
-      // Process the template to get the actual map source
       let source = meta.template;
 
-      // Check if there's a compiled Handlebars template
       if (Checklist.handlebarsTemplates[dataPath]) {
-        // Use empty template data since we just want the base source
         let templateData = Checklist.getDataObjectForHandlebars("", {}, "", "");
         source = Checklist.handlebarsTemplates[dataPath](templateData);
       }
 
       if (source && source.trim() !== "") {
-        // Remove leading slash if present
         if (source.startsWith("/")) {
           source = source.substring(1);
         }
 
-        // Convert to usercontent relative path
         const mapPath = relativeToUsercontent(source);
 
-        availableMaps.push({
-          title: meta.title || dataPath,
-          dataPath: dataPath,
-          source: mapPath,
-          isWorldMap: source.toLowerCase().endsWith("world.svg"),
+        // Only include this map if at least one row of the current mode has
+        // direct (non-inherited) data for this dataPath.
+        // In specimen mode we deliberately check taxon.d only — we never
+        // infer map availability from the parent taxon's data.
+        const hasData = checklist.some((taxon) => {
+          const isSpecimen =
+            specimenMetaIndex !== -1 &&
+            taxon.t[specimenMetaIndex] !== null &&
+            taxon.t[specimenMetaIndex] !== undefined;
+
+          if (mapChartMode === "taxa" && isSpecimen) return false;
+          if (mapChartMode === "specimen" && !isSpecimen) return false;
+
+          const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
+          return (
+            mapData !== null &&
+            mapData !== undefined &&
+            typeof mapData === "object" &&
+            Object.keys(mapData).length > 0
+          );
         });
+
+        if (hasData) {
+          availableMaps.push({
+            title: meta.title || dataPath,
+            dataPath: dataPath,
+            source: mapPath,
+            isWorldMap: source.toLowerCase().endsWith("world.svg"),
+          });
+        }
       }
     }
   });
 
-  // Cache the result
-  availableMapsCache = availableMaps;
-  return availableMapsCache;
+  availableMapsCache[mapChartMode] = availableMaps;
+  return availableMaps;
 }
 
 function renderControlPanel() {
@@ -176,24 +195,18 @@ function mapVerb() {
     true
   );
 
+  const suffix = (Settings.analyticalIntent() === "#S") ? "_specimen" : "";
+  const filterEmptySuffix = Checklist.filter.isEmpty() ? "_all" : "";
+
   switch (currentSumMethod) {
     case "filter":
-      verb = tf(
-        "view_map_verb_filter" + (Checklist.filter.isEmpty() ? "_all" : ""),
-        [filterVerb]
-      );
+      verb = tf("view_map_verb_filter" + filterEmptySuffix + suffix, [filterVerb]);
       break;
     case "region":
-      verb = tf(
-        "view_map_verb_region" + (Checklist.filter.isEmpty() ? "_all" : ""),
-        [filterVerb]
-      );
+      verb = tf("view_map_verb_region" + filterEmptySuffix + suffix, [filterVerb]);
       break;
     case "total":
-      verb = tf(
-        "view_map_verb_total" + (Checklist.filter.isEmpty() ? "_all" : ""),
-        [filterVerb]
-      );
+      verb = tf("view_map_verb_total" + filterEmptySuffix + suffix, [filterVerb]);
       break;
 
     default:
@@ -246,6 +259,9 @@ function renderMap(map) {
 function renderDataTable(dataPath, sumMethod) {
   const globalCounts = sessionCache[globalCountsCacheKey(dataPath)];
 
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+  const countKey = mapChartMode === "specimen" ? "view_map_count_specimen" : "view_map_count_taxa";
+
   let sortedRegions = [...Object.keys(currentRegions)];
   sortedRegions.sort((a, b) => {
     let rA = regionRatio(currentRegions[a], globalCounts, a, sumMethod);
@@ -256,9 +272,9 @@ function renderDataTable(dataPath, sumMethod) {
   return m(
     "table.results-table",
     m("tr", [
-      m("th.underline[colspan=2]", "Region"),
+      m("th.underline[colspan=2]", t("view_map_sum_by_region")),
       m("th.underline", "%"),
-      m("th.underline", t("view_map_count")),
+      m("th.underline", t(countKey)),
     ]),
     ...[
       sortedRegions.map((regionKey) => {

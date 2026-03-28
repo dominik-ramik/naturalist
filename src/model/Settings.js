@@ -347,7 +347,7 @@ export let Settings = {
       }
 
       if (Object.keys(itemObject).length == 0) {
-        return "All taxa";
+        return Settings.analyticalIntent() === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
       }
 
       let names = [];

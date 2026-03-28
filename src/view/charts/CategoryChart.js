@@ -302,10 +302,13 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
 export function categoryChart(filteredTaxa) {
   const result = [];
 
-  const allTaxaForInheritance = filteredTaxa;
   const chartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+
+  const allTaxaForInheritance = chartMode === "specimen"
+    ? Checklist.getEntireChecklist()
+    : filteredTaxa;
+
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
 
   let categorizedData = dataForCategoryChart(
@@ -324,16 +327,16 @@ export function categoryChart(filteredTaxa) {
 
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
     (f) =>
-      (Checklist.filter.data[f].type === "text" ||
-        Checklist.filter.data[f].type === "badge" ||
-        Checklist.filter.data[f].type === "map regions") &&
-      Checklist.filter.data[f].all.length < 40
+    ((Checklist.filter.data[f].type === "text" ||
+      Checklist.filter.data[f].type === "badge") &&
+      Checklist.filter.data[f].all.length < 40)
   );
 
   // ------------------------------------------------------
   // RENDER CONTROL PANEL
   // ------------------------------------------------------
   result.push(
+
     m(".chart-controls-card", [
       m(".chart-control-group.chart-control-group-full", [
         m("label", t("view_cat_category_to_analyze")),
@@ -376,7 +379,7 @@ export function categoryChart(filteredTaxa) {
       : m(".chart-info-box", [
         m(".chart-info-item", m.trust(
           Checklist.filter.isEmpty()
-            ? t("view_cat_counted_all", [categoryVerb(categoryToView, chartMode)])
+            ? t(chartMode === "taxa" ? "view_cat_counted_all" : "view_cat_counted_all_specimens", [categoryVerb(categoryToView, chartMode)])
             : tf("view_cat_counted_filter", [
               categoryVerb(categoryToView, chartMode),
               Settings.pinnedSearches.getHumanNameForSearch()
@@ -386,7 +389,7 @@ export function categoryChart(filteredTaxa) {
           chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
         ) : null
       ])
-  );
+  )
 
   // ------------------------------------------------------
   // RENDER CATEGORY CHART TABLE
@@ -532,9 +535,6 @@ export function categoryChart(filteredTaxa) {
             "td.category-cell-filled",
             {
               style: heatmapStyle(ratio),
-              // Hover: show verb immediately (transient)
-              onmouseenter: () => { currentHoverVerb = verbContent; },
-              onmouseleave: () => { currentHoverVerb = null; },
               // Click: pin the verb so it persists after mouse moves away (mobile)
               onclick: () => { currentCellVerb = verbContent; },
             },
@@ -550,12 +550,10 @@ export function categoryChart(filteredTaxa) {
     });
 
     // ── Determine what to show in the cell-verb bar ───────────────────────
-    const isDefaultVerb = !currentHoverVerb && currentCellVerb === t("view_cat_click_on_cell");
-    const verbDisplay = currentHoverVerb !== null
-      ? currentHoverVerb
-      : isDefaultVerb
-        ? m("span.cell-verb-prompt", currentCellVerb)
-        : currentCellVerb;
+    const isDefaultVerb = currentCellVerb === t("view_cat_click_on_cell");
+    const verbDisplay = isDefaultVerb
+      ? m("span.cell-verb-prompt", currentCellVerb)
+      : currentCellVerb;
 
     // ── Assemble the full table block ─────────────────────────────────────
     result.push(
@@ -612,7 +610,7 @@ export function categoryChart(filteredTaxa) {
       m(".table-flex-container", [
         m(".table-wrapper", [
 
-          // ── Cell-verb bar: ABOVE the table, updates on hover ──────────
+          // ── Cell-verb bar: ABOVE the table, updates on click ──────────
           m(".cell-verb", verbDisplay),
 
           // ── Scrollable table area ─────────────────────────────────────
@@ -628,5 +626,5 @@ export function categoryChart(filteredTaxa) {
     );
   }
 
-  return result;
+  return m(".category-chart-outer-wrapper", result);
 }
