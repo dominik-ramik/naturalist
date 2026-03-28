@@ -33,6 +33,7 @@ export function ChecklistTree() {
                 dataLength: clampedTaxa.length,
                 intent: Settings.analyticalIntent(),
                 showSpecimens: Settings.checklistShowSpecimens(),
+                pruneEmpty: Settings.checklistPruneEmpty(),
                 displayLevel: displayLevel
             });
 
@@ -42,12 +43,32 @@ export function ChecklistTree() {
             }
 
             const includeSpecimensInView = Settings.checklistShowSpecimens();
+            const showEmptyTaxa = Settings.checklistPruneEmpty();
+
+            // Helper for top-level filtering
+            const branchHasSpecimens = (node) => {
+                if (node.taxonMetaIndex === specimenMetaIndex) return true;
+                if (!node.children) return false;
+                return Object.values(node.children).some(branchHasSpecimens);
+            };
+
+
+
             const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
 
             const visibleTopLevelTaxa = Object.keys(cachedTree.children).filter(
-                (taxonLevel) =>
-                    includeSpecimensInView ||
-                    cachedTree.children[taxonLevel].taxonMetaIndex !== specimenMetaIndex
+                (taxonKey) => {
+                    const node = cachedTree.children[taxonKey];
+                    
+                    // Filter by "Show Specimens" setting
+                    const isNotSpecimenLevel = node.taxonMetaIndex !== specimenMetaIndex;
+                    const visibilityByLevel = includeSpecimensInView || isNotSpecimenLevel;
+
+                    // Filter by "Show taxa without specimens" setting
+                    const visibilityByContent = showEmptyTaxa || branchHasSpecimens(node);
+
+                    return visibilityByLevel && visibilityByContent;
+                }
             );
 
             return m(".listed-taxa", [

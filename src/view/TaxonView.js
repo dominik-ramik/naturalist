@@ -15,6 +15,24 @@ export let TaxonView = {
       return null;
     }
 
+    /**
+     * Recursively checks if this taxon node or any of its children 
+     * contain a specimen record.
+     */
+    const branchHasSpecimens = (node) => {
+      // If this node is a specimen, the branch has specimens.
+      if (node.taxonMetaIndex === specimenMetaIndex) return true;
+      // If it's a taxon, check if any of its children have specimens.
+      if (!node.children) return false;
+      return Object.values(node.children).some(branchHasSpecimens);
+    };
+
+    // If the setting "Show taxa without specimens" is FALSE,
+    // and this branch contains no specimens, prune it.
+    if (!Settings.checklistPruneEmpty() && !branchHasSpecimens(vnode.attrs.taxonTree)) {
+      return null;
+    }
+
     function detailsIcon(taxonName, detailsType) {
       let icon = "";
       let tabName = "";
