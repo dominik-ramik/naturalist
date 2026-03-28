@@ -1,128 +1,287 @@
-/* Configuration dialog styles (migrated from global style.css) */
+/* ==========================================================================
+   ConfigurationDialog
+   UI language: matches .manage-card / .sak-card / .chart-controls-card
+   ========================================================================== */
+
+/* ── Overlay ────────────────────────────────────────────────────────────── */
 .configuration-dialog-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.52);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
 }
 
+/* ── Dialog box — mirrors .manage-card / .sak-card ───────────────────────
+   #eceff2 bg, white border, the characteristic shadow, large border-radius  */
 .configuration-dialog {
-  width: min(900px, 100%);
+  width: min(880px, 100%);
   max-height: 90vh;
-  overflow: auto;
-  background: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  padding-bottom: 4.5rem; /* make room for sticky footer */
+  overflow-y: auto;
+  background-color: #eceff2;
+  border: 1px solid white;
+  border-radius: var(--pad-large, 1em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  /* Bottom padding makes room for the sticky footer */
+  padding-bottom: 4.5rem;
 }
 
+/* ── Header — mirrors .manage-card-header ────────────────────────────────── */
 .configuration-dialog-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 1em 1.25em;
+  background-color: rgba(255, 255, 255, 0.5);
+  /* Top corners match the outer dialog radius */
+  border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
 }
 
+.configuration-dialog-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
 .configuration-section {
-  margin-top: 1rem;
+  margin: 0.75em 1em 0 1em;
 }
 
-.configuration-tool-grid,
-.configuration-scope-grid {
-  display: grid;
-  gap: 0.6rem;
+/* Small caps section label — mirrors CategoryChart .chart-control-group label */
+.configuration-section-label {
+  font-size: 0.75em;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.5em;
 }
 
+/* ── Analysis Tool Grid ──────────────────────────────────────────────────── */
 .configuration-tool-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 0.5em;
 }
 
-.configuration-scope-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+/* Individual tool card — inert glass look, active gets nlblue tint */
+.configuration-tool-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65em;
+  padding: 0.75em 0.9em;
+  border-radius: 0.75em;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.55);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-/* Footer in the configuration dialog */
+.configuration-tool-card:hover {
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.configuration-tool-card.active {
+  border-color: var(--nlblue, #55769b);
+  background-color: rgba(85, 118, 155, 0.1);
+  box-shadow: 0 0 0 2px rgba(85, 118, 155, 0.18);
+}
+
+.configuration-tool-img {
+  width: 1.25em;
+  height: 1.25em;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-top: 0.15em;
+  opacity: 0.75;
+}
+
+.configuration-tool-card.active .configuration-tool-img {
+  opacity: 1;
+}
+
+.configuration-tool-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 0;
+}
+
+.configuration-tool-label {
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.configuration-tool-card.active .configuration-tool-label {
+  color: var(--nlblue, #55769b);
+}
+
+.configuration-tool-info {
+  font-size: 0.76em;
+  color: #666;
+  line-height: 1.35;
+}
+
+/* ── Scope — segmented control, mirrors .chart-segmented-control ──────────── */
+.configuration-scope-segmented {
+  display: inline-flex;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid #ccc;
+  gap: 2px;
+}
+
+.configuration-scope-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.45em 1.1em;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.88em;
+  color: #555;
+  font-weight: 500;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.configuration-scope-btn:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.configuration-scope-btn.active {
+  background-color: #fff;
+  color: var(--nlblue, #55769b);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.configuration-scope-img {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  opacity: 0.65;
+}
+
+.configuration-scope-btn.active .configuration-scope-img {
+  opacity: 1;
+}
+
+.configuration-scope-label {
+  /* inherits from .configuration-scope-btn */
+}
+
+/* ── Parameters card ─────────────────────────────────────────────────────── */
+.configuration-params-card {
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 0.75em;
+  padding: 0.75em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+}
+
+/* ── Shared param components (SelectParam, ToggleParam) ──────────────────── */
+.configuration-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.88em;
+  color: #333;
+  padding: 0.15em 0;
+  cursor: pointer;
+}
+
+.configuration-checkbox input[type="checkbox"] {
+  width: 1em;
+  height: 1em;
+  cursor: pointer;
+  accent-color: var(--nlblue, #55769b);
+}
+
+.configuration-select-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  font-size: 0.85em;
+  color: #555;
+  font-weight: 500;
+}
+
+.configuration-select {
+  padding: 0.45em 0.75em;
+  border-radius: 0.5em;
+  border: 1px solid #ccc;
+  background-color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95em;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.configuration-select:hover {
+  border-color: var(--nlblue, #55769b);
+}
+
+.configuration-select:focus {
+  outline: none;
+  border-color: var(--nlblue, #55769b);
+  box-shadow: 0 0 0 2px rgba(85, 118, 155, 0.2);
+}
+
+/* ── Sticky footer ───────────────────────────────────────────────────────── */
 .configuration-dialog-footer {
   position: sticky;
   bottom: 0;
   left: 0;
   width: 100%;
   display: flex;
-  padding-top: 0.75rem;
-  padding-bottom: 0.25rem;
-  background: linear-gradient(rgba(255,255,255,0), #ffffff);
   justify-content: center;
+  padding: 0.85em 1em 0.6em;
+  /* Fade from transparent #eceff2 so the button floats above the content */
+  background: linear-gradient(rgba(236, 239, 242, 0), #eceff2 35%);
+  box-sizing: border-box;
 }
 
+/* Confirm / Done button — mirrors .manage-btn-primary */
 .configuration-confirm-btn {
   width: 100%;
-  max-width: 720px;
-  padding: 0.9rem 1rem;
-  border-radius: 10px;
-  border: none;
-  background: #2d73b9;
+  max-width: 680px;
+  padding: 0.8em 1em;
+  border-radius: 0.75em;
+  border: 1px solid var(--nlblue, #55769b);
+  background-color: var(--nlblue, #55769b);
   color: #fff;
+  font-size: 0.95em;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+  transition: background-color 0.15s;
+}
+
+.configuration-confirm-btn:hover {
+  background-color: #466a8a;
 }
 
 .configuration-confirm-btn:active {
   transform: translateY(1px);
 }
 
-.configuration-tool-card,
-.configuration-scope-btn {
-  border: 1px solid #ced6df;
-  border-radius: 10px;
-  background: #f8fafc;
-  padding: 0.7rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* Ensure icons and text are vertically centered and consistent size */
-.configuration-tool-card,
-.configuration-scope-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.configuration-tool-img,
-.configuration-scope-img {
-  width: 1.2rem;
-  height: 1.2rem;
-  object-fit: contain;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-/* Slightly adjust the caret and labels to align with icons */
-.configuration-tool-label,
-.configuration-scope-label {
-  display: inline-flex;
-  align-items: center;
-}
-
-.configuration-tool-card.active,
-.configuration-scope-btn.active {
-  border-color: #2d73b9;
-  background: #eaf3ff;
-}
-
-.configuration-scope-btn.disabled,
-.configuration-checkbox.disabled {
-  opacity: 0.5;
+/* ── Disabled state (future use) ─────────────────────────────────────────── */
+.configuration-scope-btn:disabled,
+.configuration-tool-card:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
-}
-
-.configuration-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.35rem 0;
+  pointer-events: none;
 }

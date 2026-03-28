@@ -82,6 +82,18 @@ export let TaxonView = {
     const isTerminalNode = sortedChildKeys.length === 0;
     if (vnode.attrs.terminalOnly && !isTerminalNode) {
       return sortedChildKeys.map(function (currentTaxonKey) {
+        const childNode = vnode.attrs.taxonTree.children[currentTaxonKey];
+
+        if (
+          vnode.attrs.displayMode != "" &&
+          childNode.taxonMetaIndex !== specimenMetaIndex &&
+          Object.keys(Checklist.getTaxaMeta()).indexOf(
+            vnode.attrs.displayMode
+          ) < childNode.taxonMetaIndex
+        ) {
+          return null;
+        }
+
         return m(TaxonView, {
           parents:
             vnode.attrs.parents == null || vnode.attrs.parents.length == 0
@@ -153,16 +165,19 @@ export let TaxonView = {
           ]),
         ]),
         vnode.attrs.displayMode == "" &&
-        ((isSpecimenLevel && vnode.attrs.showSpecimenMeta !== false) ||
-          (!isSpecimenLevel && vnode.attrs.showTaxonMeta !== false))
+          ((isSpecimenLevel && vnode.attrs.showSpecimenMeta !== false) ||
+            (!isSpecimenLevel && vnode.attrs.showTaxonMeta !== false))
           ? m(TaxonDataView, {
             taxon: vnode.attrs.taxonTree,
           })
           : null,
       ]),
       sortedChildKeys.map(function (currentTaxonKey) {
+        const childNode = vnode.attrs.taxonTree.children[currentTaxonKey];
+
         if (
           vnode.attrs.displayMode != "" &&
+          childNode.taxonMetaIndex !== specimenMetaIndex &&
           Object.keys(Checklist.getTaxaMeta()).indexOf(
             vnode.attrs.displayMode
           ) <= vnode.attrs.currentTaxonLevel

@@ -582,7 +582,7 @@ export function categoryChart(filteredTaxa) {
                   sortColumn = null;
                 }
               },
-              "Root"
+              t("view_cat_category_root")
             ),
             ...breadcrumbPath.map((step, i) => {
               const isCurrent = i === breadcrumbPath.length - 1;

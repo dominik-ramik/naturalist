@@ -5,27 +5,20 @@ import { Checklist } from "../model/Checklist.js";
 import { ChecklistView } from "../view/ChecklistView.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
+import { VIEW_REGISTRY } from "./ViewRegistry.js";
 
-// Icon metadata used in the header indicator (matches ConfigurationDialog.js)
-const VIEW_ICON_MAP = {
-  view_details: { provider: "material", name: "format_list_bulleted" },
-  view_circle_pack: { provider: "material", name: "bubble_chart" },
-  view_category_density: { provider: "material", name: "table_chart" },
-  view_map: { provider: "material", name: "map" },
-};
-
-// Map view modes to exact SVG filenames used in the UI (mode -> filename)
-const MODE_ICON_MAP = {
-  view_details: "view_details.svg",
-  view_circle_pack: "view_circle_pack.svg",
-  view_category_density: "view_category_density.svg",
-  view_map: "view_map.svg",
-};
-
+// Scope icon lookup (scope id → SVG path)
 const SCOPE_ICON_MAP = {
-  "#T": { provider: "material", name: "local_florist" },
-  "#S": { provider: "material", name: "science" },
-  "#M": { provider: "material", name: "view_module" },
+  "#T": "./img/ui/checklist/taxonomy.svg",
+  "#S": "./img/ui/checklist/tag.svg",
+  "#M": "./img/ui/checklist/tag.svg", // Mixed — treat as specimens icon
+};
+
+// Scope label lookup
+const SCOPE_LABEL_MAP = {
+  "#T": "Taxa",
+  "#S": "Specimens",
+  "#M": "Full Catalog",
 };
 
 export let MenuStripView = {
@@ -33,7 +26,6 @@ export let MenuStripView = {
 
   view: function () {
     return m(".app-menu", [
-      //"ADD persistent Filters below the menu that will allow filtering by search categoires (e.g. island or others) and will be sticky in the url",
       m.route.get().startsWith("/checklist")
         ? menuTopBar()
         : backButton(),
@@ -131,7 +123,7 @@ function menuPanel() {
             ? m(MenuExpandable, { title: t("languages") }, [
                 Checklist.getAllLanguages().map(function (lang) {
                   if (lang.code == Checklist.getCurrentLanguage()) {
-                    return null; //skip this version
+                    return null;
                   } else {
                     return m(MenuItem, {
                       onclick: function () {
@@ -146,7 +138,6 @@ function menuPanel() {
                 }),
               ])
             : null,
-          //Checklist.getAllLanguages().length > 1 ? m(MenuDivider) : null,
           m(MenuItem, {
             onclick: function () {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
@@ -193,9 +184,7 @@ let MenuItem = {
   view: function (vnode) {
     return m(
       ".menu-item",
-      {
-        onclick: vnode.attrs.onclick,
-      },
+      { onclick: vnode.attrs.onclick },
       [
         vnode.attrs.icon
           ? m(
@@ -211,6 +200,7 @@ let MenuItem = {
     );
   },
 };
+
 let MenuLabel = {
   view: function (vnode) {
     return m(".menu-item.menu-label", [
@@ -227,7 +217,6 @@ let MenuDivider = {
 
 let MenuExpandable = function (initialVnode) {
   let open = true;
-
   return {
     view: function (vnode) {
       return m(
@@ -235,15 +224,10 @@ let MenuExpandable = function (initialVnode) {
         m(".menu-expandable-wrapper", [
           m(
             ".menu-item.expandable-main-button",
-            {
-              onclick: function () {
-                //open = !open;
-              },
-            },
+            { onclick: function () {} },
             [
               m("img.menu-item-img[src=img/ui/menu/language.svg]"),
               m(".menu-expandable-title", vnode.attrs.title),
-              //m("img.menu-expandable-expander[src=img/ui/menu/expand_" + (open ? "less" : "more") + ".svg]")
             ]
           ),
           open ? m(".menu-group-items", [vnode.children]) : null,
@@ -253,7 +237,19 @@ let MenuExpandable = function (initialVnode) {
   };
 };
 
+/**
+ * menuTopBar
+ * Renders the main header bar with the hamburger menu + project name +
+ * the configuration indicator button.
+ *
+ * Tool label and icon are now sourced directly from VIEW_REGISTRY, keeping
+ * this function free of hard-coded view-id ↔ label/icon mappings.
+ */
 function menuTopBar() {
+  const currentViewId = Settings.viewType() || VIEW_REGISTRY[0].id;
+  const activeTool    = VIEW_REGISTRY.find(v => v.id === currentViewId) || VIEW_REGISTRY[0];
+  const currentScope  = Settings.analyticalIntent() || "#T";
+
   return [
     m(
       ".menu-button.clickable",
@@ -264,49 +260,127 @@ function menuTopBar() {
       },
       [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
     ),
+
     m(".menu-project-name", Checklist.getProjectName()),
+
     m(
       "button.global-indicator-btn",
-      {
-        onclick: function () {
-          ConfigurationDialog.open();
-        },
-      },
+      { onclick: () => ConfigurationDialog.open() },
       [
-        // Use existing UI SVGs for analysis tool and scope
-        m("img.global-indicator-img[src=./img/ui/menu/" + (MODE_ICON_MAP[Settings.viewType()] || (Settings.viewType() + ".svg")) + "]"),
-        m("span.global-indicator-label", (function () {
-          switch (Settings.viewType()) {
-            case "view_circle_pack":
-              return "Proportional Stacking";
-            case "view_category_density":
-              return "Cross-Tab Matrix";
-            case "view_map":
-              return "Geospatial Map";
-            case "view_details":
-            default:
-              return "Checklist";
-          }
-        })()),
-        Checklist.hasSpecimens() && m("span.separator", " • "),
-        Checklist.hasSpecimens() && m(
-          "img.global-indicator-img[src=" + (Settings.analyticalIntent() === "#T" ? "./img/ui/checklist/taxonomy.svg" : "./img/ui/checklist/tag.svg") + "]"
-        ),
-        Checklist.hasSpecimens() && m("span.global-indicator-label", (function () {
-          switch (Settings.analyticalIntent()) {
-            case "#S":
-              return "Specimens";
-            case "#T":
-              return "Taxa";
-            default:
-              return "Full Catalog";
-          }
-        })()),
-        m("img.global-indicator-caret[src=./img/ui/search/expand.svg]"),
+        // ── Analysis tool icon + label ──────────────────────────────────────
+        m("img.global-indicator-img", { src: activeTool.iconPath, alt: "" }),
+        m("span.global-indicator-label", activeTool.label),
+
+        // ── Scope icon + label (only when specimens data is available) ───────
+        Checklist.hasSpecimens() && [
+          m("span.global-indicator-sep"),
+          m("img.global-indicator-img", {
+            src: SCOPE_ICON_MAP[currentScope] || SCOPE_ICON_MAP["#T"],
+            alt: ""
+          }),
+          m("span.global-indicator-label",
+            SCOPE_LABEL_MAP[currentScope] || "Taxa"
+          ),
+        ],
+
+        // ── Expand caret ─────────────────────────────────────────────────────
+        m("img.global-indicator-caret[src=./img/ui/search/expand.svg]", { alt: "" }),
       ]
     ),
   ];
 }
+
+let ActionButtonWithMenu = function (initialVnode) {
+  let menuId = "";
+  let open = false;
+  let handleDocumentClick = null;
+
+  return {
+    oninit: function (vnode) {
+      menuId =
+        "action_button_menu_" + (Math.random() + 1).toString(36).substring(2);
+      handleDocumentClick = function (event) {
+        if (!open) return;
+        let thisDropdown = document.getElementById(menuId);
+        if (!thisDropdown) return;
+        if (event.target == thisDropdown || thisDropdown.contains(event.target)) return;
+        open = false;
+        m.redraw();
+      };
+    },
+    oncreate: function () {
+      document.addEventListener("click", handleDocumentClick);
+    },
+    onremove: function () {
+      document.removeEventListener("click", handleDocumentClick);
+    },
+    view: function (vnode) {
+      return m(".menu-action-button-with-menu-wrapper[id=" + menuId + "]", [
+        m(
+          ".menu-action-button",
+          { onclick: function () { open = !open; } },
+          [
+            m("img[src=" + vnode.attrs.icon + "]"),
+            m(".action-button-title", vnode.attrs.title),
+            m("img[src=img/ui/menu/expand_" + (open ? "less" : "more") + ".svg]"),
+          ]
+        ),
+        open
+          ? m(
+            ".submenu" +
+            (vnode.attrs.forceWidth
+              ? "[style=width: " + vnode.attrs.forceWidth + "]"
+              : ""),
+            [
+              vnode.attrs.items.map(function (item) {
+                if (!item) return null;
+                if (item.type == "divider") return m(MenuDivider);
+                if (item.type == "label")   return m(MenuLabel, { title: item.title });
+                if (item.type == "button") {
+                  return m(
+                    ".multi-item-menu-button" + (item.selected ? ".selected" : ""),
+                    {
+                      onclick: function (e) {
+                        if (!item.selected && item.state != "inactive") {
+                          item.action();
+                          open = false;
+                        }
+                      },
+                    },
+                    [
+                      m(".menu-item-icon",
+                        item.icon
+                          ? m("img[src=./img/" + item.icon + ".svg]")
+                          : null
+                      ),
+                      m(
+                        ".menu-item" +
+                        (!item.selected && item.state == "inactive" ? ".inactive" : ""),
+                        [m(".menu-item-title", item.title)]
+                      ),
+                      item.altActionIcon
+                        ? m(
+                          ".menu-item.alt-action-item",
+                          {
+                            onclick: function (e) {
+                              item.altAction();
+                              e.stopPropagation();
+                            },
+                          },
+                          m("img[src=" + item.altActionIcon + "]")
+                        )
+                        : null,
+                    ]
+                  );
+                }
+              }),
+            ]
+          )
+          : null,
+      ]);
+    },
+  };
+};
 
 function backButton() {
   return m(
@@ -334,122 +408,3 @@ function backButton() {
       : null
   );
 }
-
-let ActionButtonWithMenu = function (initialVnode) {
-  let menuId = "";
-  let open = false;
-  let handleDocumentClick = null;
-
-  return {
-    oninit: function (vnode) {
-      menuId =
-        "action_button_menu_" + (Math.random() + 1).toString(36).substring(2);
-      handleDocumentClick = function (event) {
-        if (!open) {
-          return;
-        }
-
-        let thisDropdown = document.getElementById(menuId);
-        if (!thisDropdown) {
-          return;
-        }
-        if (
-          event.target == thisDropdown ||
-          thisDropdown.contains(event.target)
-        ) {
-          return;
-        }
-
-        open = false;
-        m.redraw();
-      };
-    },
-    oncreate: function () {
-      document.addEventListener("click", handleDocumentClick);
-    },
-    onremove: function () {
-      document.removeEventListener("click", handleDocumentClick);
-    },
-    view: function (vnode) {
-      return m(".menu-action-button-with-menu-wrapper[id=" + menuId + "]", [
-        m(
-          ".menu-action-button",
-          {
-            onclick: function () {
-              open = !open;
-            },
-          },
-          [
-            m("img[src=" + vnode.attrs.icon + "]"),
-            m(".action-button-title", vnode.attrs.title),
-            m("img[src=img/ui/menu/expand_" + (open ? "less" : "more") + ".svg]"),
-          ]
-        ),
-        open
-          ? m(
-            ".submenu" +
-            (vnode.attrs.forceWidth
-              ? "[style=width: " + vnode.attrs.forceWidth + "]"
-              : ""),
-            [
-              vnode.attrs.items.map(function (item) {
-                if (!item) {
-                  return null;
-                }
-
-                if (item.type == "divider") {
-                  return m(MenuDivider);
-                }
-                if (item.type == "label") {
-                  return m(MenuLabel, { title: item.title });
-                }
-
-                if (item.type == "button") {
-                  return m(
-                    ".multi-item-menu-button" +
-                    (item.selected ? ".selected" : ""),
-                    {
-                      onclick: function (e) {
-                        if (!item.selected && item.state != "inactive") {
-                          item.action();
-                          open = false;
-                        }
-                      },
-                    },
-                    [
-                      m(
-                        ".menu-item-icon",
-                        item.icon
-                          ? m("img[src=./img/" + item.icon + ".svg]")
-                          : null
-                      ),
-                      m(
-                        ".menu-item" +
-                        (!item.selected && item.state == "inactive"
-                          ? ".inactive"
-                          : ""),
-                        [m(".menu-item-title", item.title)]
-                      ),
-                      item.altActionIcon
-                        ? m(
-                          ".menu-item.alt-action-item",
-                          {
-                            onclick: function (e) {
-                              item.altAction();
-                              e.stopPropagation();
-                            },
-                          },
-                          m("img[src=" + item.altActionIcon + "]")
-                        )
-                        : null,
-                    ]
-                  );
-                }
-              }),
-            ]
-          )
-          : null,
-      ]);
-    },
-  };
-};
