@@ -1,9 +1,83 @@
 import m from "mithril";
 import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
-import { TaxonView } from "../../view/TaxonView.js";
+import { TaxonView } from "./TaxonomicTree/TaxonView.js";
+import { SelectParam, ToggleParam } from "../shared/FormControls.js";
 
-export function ChecklistTree() {
+export const config = {
+    id: "tool_taxonomic_tree",
+    label: "Taxonomic tree",
+    iconPath: {
+        light: "./img/ui/menu/view_checklist-light.svg",
+        dark: "./img/ui/menu/view_checklist.svg",
+    },
+    info: "Browse your data as a taxonomic tree, applying filters to easily isolate the exact records you need",
+    getTaxaAlongsideSpecimens: true,
+
+    parameters: (scope) => {
+        const specimenIndex = Checklist.getSpecimenMetaIndex();
+        const levels = Object.keys(Checklist.getTaxaMeta() || {})
+            .filter((_, i) => i !== specimenIndex);
+
+        const taxonLevelSelector = m(SelectParam, {
+            label: "Limit checklist to taxon level:",
+            accessor: (val) => {
+                if (val === undefined) return Settings.checklistDisplayLevel() || "";
+                Settings.checklistDisplayLevel(val);
+            },
+            values: ["", ...levels]
+        });
+
+        const showTaxaWithoutSpecimens = m(ToggleParam, {
+            label: "Show taxa without specimens",
+            accessor: Settings.checklistPruneEmpty
+        });
+
+        const showTaxonMeta = m(ToggleParam, {
+            label: "Show taxon metadata",
+            accessor: Settings.checklistShowTaxonMeta
+        });
+
+        const showTerminalTaxaOnly = m(ToggleParam, {
+            label: "Show terminal taxa only",
+            accessor: Settings.checklistShowTerminalOnly
+        });
+
+        const includeChildrenInMatches = m(ToggleParam, {
+            label: "Include children in search matches",
+            accessor: Settings.checklistIncludeChildren
+        });
+
+        let options = [];
+
+        options.push(taxonLevelSelector);
+        if (Checklist.hasSpecimens()) {
+            options.push(showTaxonMeta);
+        }
+        if (scope === "#S") {
+            options.push(m(ToggleParam, {
+                label: "Show specimen metadata",
+                accessor: Settings.checklistShowSpecimenMeta
+            }));
+            options.push(showTaxaWithoutSpecimens);
+        }
+        if (Checklist.hasSpecimens()) {
+            options.push(includeChildrenInMatches);
+            options.push(showTerminalTaxaOnly);
+        }
+
+        return options;
+    },
+
+    render: ({ filteredTaxa, queryKey }) =>
+        m(ChecklistTree, {
+            taxa: filteredTaxa,
+            displayLevel: Settings.checklistDisplayLevel(),
+            queryKey,
+        }),
+};
+
+function ChecklistTree() {
     // Internal component state
     let totalItemsToShow = 50;
     const itemsNumberStep = 50;

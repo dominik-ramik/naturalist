@@ -1,5 +1,5 @@
 import m from "mithril";
-import { ClickableTaxonName } from "../../view/ClickableTaxonNameView.js";
+import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
 
 export let readerTaxon = {
   dataType: "taxon",

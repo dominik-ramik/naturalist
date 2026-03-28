@@ -7,6 +7,19 @@ import {
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 
+export const config = {
+  id: "tool_trait_matrix",
+  label: "Trait Matrix",
+  iconPath: {
+    light: "./img/ui/menu/view_category_density-light.svg",
+    dark: "./img/ui/menu/view_category_density.svg",
+  },
+  info: "Evaluate the breakdown of your data by chosen traits and apply filters to focus the comparison on specific records",
+  getTaxaAlongsideSpecimens: false,
+
+  render: ({ filteredTaxa }) => categoryChart(filteredTaxa),
+};
+
 // ------------------------------------------------------
 // CONFIGURATION & INITIAL SETTINGS
 // ------------------------------------------------------
@@ -296,10 +309,10 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
 }
 
 // ------------------------------------------------------
-// MAIN EXPORT FUNCTION
+// MAIN FUNCTION
 // ------------------------------------------------------
 
-export function categoryChart(filteredTaxa) {
+function categoryChart(filteredTaxa) {
   const result = [];
 
   const chartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";

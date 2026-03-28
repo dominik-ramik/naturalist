@@ -1,7 +1,7 @@
 import m from "mithril";
 
-import { Checklist } from "../model/Checklist.js";
-import { TaxonDataCellView } from "../view/TaxonDataCellView.js";
+import { Checklist } from "../../../model/Checklist.js";
+import { TaxonDataCellView } from "./TaxonDataCellView.js";
 
 export let TaxonDataView = {
     view: function(vnode) {

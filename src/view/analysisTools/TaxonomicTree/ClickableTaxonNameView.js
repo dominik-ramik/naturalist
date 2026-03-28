@@ -1,8 +1,8 @@
 import m from "mithril";
 
-import { Checklist } from "../model/Checklist.js";
-import { Settings } from "../model/Settings.js";
-import { filterMatches,  routeTo,  } from "../components/Utils.js";
+import { Checklist } from "../../../model/Checklist.js";
+import { Settings } from "../../../model/Settings.js";
+import { filterMatches,  routeTo,  } from "../../../components/Utils.js";
 
 export let ClickableTaxonName = {
   view: function (vnode) {

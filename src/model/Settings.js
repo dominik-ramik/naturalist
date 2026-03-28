@@ -47,7 +47,7 @@ export let Settings = {
     if (viewToSet === undefined) {
       const type = window.localStorage.getItem("viewType");
       if (!type || type === undefined) {
-        return "view_checklist";
+        return "tool_taxonomic_tree";
       } else {
         return type;
       }

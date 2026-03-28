@@ -2,10 +2,9 @@ import m from "mithril";
 
 import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
-import { ChecklistView } from "../view/ChecklistView.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
+import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
 
 export let MenuStripView = {
   menuOpen: false,
@@ -229,8 +228,8 @@ let MenuExpandable = function (initialVnode) {
  * the configuration indicator button.
  */
 function menuTopBar() {
-  const currentViewId = Settings.viewType() || VIEW_REGISTRY[0].id;
-  const activeTool    = VIEW_REGISTRY.find(v => v.id === currentViewId) || VIEW_REGISTRY[0];
+  const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
+  const activeTool    = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
   const currentScope  = Settings.analyticalIntent() || "#T";
 
   // Dynamic scope lookup from ViewRegistry.

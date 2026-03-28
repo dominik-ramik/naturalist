@@ -1,12 +1,42 @@
+import m from "mithril";
 import * as d3 from "d3";
 
 import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
+import { colorFromRatio } from "../../components/Utils.js";
+import { D3ChartView } from "../shared/D3ChartView.js";
+import { SelectParam } from "../shared/FormControls.js";
+
+// ─── Tool config export ────────────────────────────────────────────────────
+
+export const config = {
+  id: "tool_hierarchy_bubbles",
+  label: "Hierarchy bubbles",
+  iconPath: {
+    light: "./img/ui/menu/view_circle_pack-light.svg",
+    dark: "./img/ui/menu/view_circle_pack.svg",
+  },
+  info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
+  getTaxaAlongsideSpecimens: false,
+
+  parameters: () => [
+    m(SelectParam, {
+      label: "Maximum depth of levels displayed:",
+      accessor: (val) => {
+        if (val === undefined) return Settings.circlePackingMaxLevels();
+        Settings.circlePackingMaxLevels(val);
+      },
+      values: [3, 4, 5, 6, 7]
+    }),
+  ],
+
+  render: ({ filteredTaxa, allTaxa }) => circlePackingView(allTaxa, filteredTaxa),
+};
 
 const specimenTagIconPath =
   "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
 
-export function circlePacking(options) {
+function circlePacking(options) {
 let data = options.dataSource;
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || Settings.circlePackingMaxLevels();
   let colorInterpolation = options.colorInterpolation || 212;
@@ -709,7 +739,7 @@ function computeTextRadiusFromLines(lines, lineHeight) {
   return radius;
 }
 
-export function computeTextRadius(text, targetWidth, options = {}) {
+function computeTextRadius(text, targetWidth, options = {}) {
   const lineHeight = options.lineHeight || defaultLineHeight;
   const cacheKey = text + "_" + targetWidth + "_" + lineHeight;
   if (textRadiusCache.has(cacheKey)) {
@@ -720,4 +750,189 @@ export function computeTextRadius(text, targetWidth, options = {}) {
   const radius = computeTextRadiusFromLines(lines, lineHeight);
   textRadiusCache.set(cacheKey, radius);
   return radius;
+}
+
+
+// ─── D3 data-transform helpers (owned by this module) ─────────────────────
+
+function checklistDataForD3FromTaxa(taxa) {
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+
+  const root = {
+    name: "root",
+    data: {},
+    taxon: null,
+    taxonMetaIndex: -1,
+    childrenByKey: {},
+  };
+
+  taxa.forEach(function (taxonRow) {
+    const nonNullTaxa = (taxonRow.t || [])
+      .map(function (taxon, index) {
+        if (taxon === null || taxon === undefined) {
+          return null;
+        }
+        return { taxon: taxon, index: index };
+      })
+      .filter(Boolean);
+
+    if (nonNullTaxa.length === 0) {
+      return;
+    }
+
+    const specimenEntry =
+      specimenMetaIndex === -1 ? null : taxonRow.t?.[specimenMetaIndex];
+    const isSpecimenRow =
+      specimenEntry !== null &&
+      specimenEntry !== undefined &&
+      specimenEntry.name?.trim() !== "";
+
+    const ancestry = isSpecimenRow
+      ? nonNullTaxa.filter(function (item) {
+          return item.index !== specimenMetaIndex;
+        })
+      : nonNullTaxa;
+
+    let currentNode = root;
+    ancestry.forEach(function (item) {
+      currentNode = ensureCirclePackChild(
+        currentNode,
+        item.taxon.name,
+        item.taxon,
+        item.index
+      );
+    });
+
+    if (isSpecimenRow) {
+      const specimenNode = ensureCirclePackChild(
+        currentNode,
+        "__specimen__" + specimenEntry.name,
+        specimenEntry,
+        specimenMetaIndex,
+        { displayName: specimenEntry.name }
+      );
+      specimenNode.data = taxonRow.d;
+      specimenNode.taxon = specimenEntry;
+      specimenNode.taxonMetaIndex = specimenMetaIndex;
+      return;
+    }
+
+    const lastTaxon = nonNullTaxa[nonNullTaxa.length - 1];
+    currentNode.data = taxonRow.d;
+    currentNode.taxon = lastTaxon.taxon;
+    currentNode.taxonMetaIndex = lastTaxon.index;
+  });
+
+  return finalizeCirclePackNode(root);
+}
+
+function ensureCirclePackChild(
+  parentNode,
+  key,
+  taxon,
+  taxonMetaIndex,
+  extraProps = {}
+) {
+  if (!parentNode.childrenByKey[key]) {
+    parentNode.childrenByKey[key] = {
+      name: extraProps.displayName || key,
+      data: {},
+      taxon: taxon,
+      taxonMetaIndex: taxonMetaIndex,
+      childrenByKey: {},
+      ...extraProps,
+    };
+  }
+  return parentNode.childrenByKey[key];
+}
+
+function finalizeCirclePackNode(node) {
+  const children = Object.values(node.childrenByKey || {}).map(
+    finalizeCirclePackNode
+  );
+
+  const finalizedNode = {
+    name: node.name,
+    data: node.data,
+    taxon: node.taxon,
+    taxonMetaIndex: node.taxonMetaIndex,
+  };
+
+  if (children.length > 0) {
+    finalizedNode.children = children;
+  }
+
+  return finalizedNode;
+}
+
+function assignLeavesCount(node, allMatchingData) {
+  if (!node.children || node.children.length === 0) {
+    let isMatch = allMatchingData.find(
+      (taxon) =>
+        taxon.t[taxon.t.length - 1].name == node.taxon.name &&
+        taxon.t[taxon.t.length - 1].authority == node.taxon.authority
+    );
+
+    node.value = 1;
+    node.totalLeafCount = 1;
+    node.matchingLeafCount = isMatch ? 1 : 0;
+    return {
+      totalLeafCount: node.totalLeafCount,
+      matchingLeafCount: node.matchingLeafCount,
+    };
+  }
+
+  let leavesCount = {
+    totalLeafCount: 0,
+    matchingLeafCount: 0,
+  };
+
+  for (const child of node.children) {
+    let assignedCount = assignLeavesCount(child, allMatchingData);
+    leavesCount.totalLeafCount += assignedCount.totalLeafCount;
+    leavesCount.matchingLeafCount += assignedCount.matchingLeafCount;
+  }
+
+  node.totalLeafCount = leavesCount.totalLeafCount;
+  node.matchingLeafCount = leavesCount.matchingLeafCount;
+  return leavesCount;
+}
+
+let cachedData = null;
+let oldQueryKey = "";
+
+function circlePackingView(allTaxa, matchingTaxa) {
+  if (allTaxa.length === 0) {
+    return m(".listed-taxa");
+  }
+
+  return m(D3ChartView, {
+    id: "d3test",
+    chart: circlePacking,
+    options: () => {
+      let shouldUpdate = false;
+      const cacheKey = JSON.stringify({
+        queryKey: Checklist.queryKey(),
+        includeMatchChildren: Settings.checklistIncludeChildren(),
+        includeSpecimensInView: Settings.checklistShowSpecimens(),
+        analyticalIntent: Settings.analyticalIntent(),
+        circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
+      });
+
+      if (cachedData == null || cacheKey != oldQueryKey) {
+        oldQueryKey = cacheKey;
+        cachedData = checklistDataForD3FromTaxa(allTaxa);
+        assignLeavesCount(cachedData, matchingTaxa);
+        shouldUpdate = true;
+      }
+
+      return {
+        shouldUpdate: shouldUpdate,
+        dataSource: cachedData,
+        colorInterpolation: colorFromRatio,
+        fontFamily: "Regular",
+        specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
+      };
+    },
+  });
 }

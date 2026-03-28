@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { TaxonDataItemView } from "../view/TaxonDataItemView.js";
+import { TaxonDataItemView } from "./TaxonDataItemView.js";
 
 export let TaxonDataCellView = {
     view: function(vnode) {

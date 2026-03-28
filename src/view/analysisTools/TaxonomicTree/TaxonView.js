@@ -1,9 +1,9 @@
 import m from "mithril";
 
-import { Settings } from "../model/Settings.js";
-import { copyToClipboard, routeTo } from "../components/Utils.js";
-import { Checklist } from "../model/Checklist.js";
-import { TaxonDataView } from "../view/TaxonDataView.js";
+import { Settings } from "../../../model/Settings.js";
+import { copyToClipboard, routeTo } from "../../../components/Utils.js";
+import { Checklist } from "../../../model/Checklist.js";
+import { TaxonDataView } from "./TaxonDataView.js";
 import { TaxonNameView } from "./TaxonNameView.js";
 
 export let TaxonView = {

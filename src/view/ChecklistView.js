@@ -1,18 +1,9 @@
 import m from "mithril";
 
-import {
-  colorFromRatio,
-  getIndexedColor,
-  routeTo,
-  sortByCustomOrder,
-} from "../components/Utils.js";
+import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { circlePacking } from "./analysisTools/CirclePacking.js";
-import { D3ChartView } from "./D3ChartView.js";
-import { categoryChart } from "./analysisTools/CategoryChart.js";
-import { mapChart } from "./analysisTools/MapChart.js";
-import { ChecklistTree } from "./analysisTools/ChecklistTree.js";
+import { getCurrentTool } from "./analysisTools/index.js";
 
 export let ChecklistView = {
   oninit: function () {
@@ -43,8 +34,6 @@ export let ChecklistView = {
       }
 
       Checklist.filter.setFromQuery(q);
-
-      ChecklistView.totalItemsToShow = ChecklistView.itemsNumberStep;
       ChecklistView.lastQuery = currentQuery;
       window.setTimeout(function () {
         if (
@@ -57,91 +46,50 @@ export let ChecklistView = {
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
-    const visibleFilteredTaxa = filterOutSpecimenTaxa(allFilteredTaxa);
-    const visibleFullChecklistTaxa = filterOutSpecimenTaxa(
-      Checklist.getData().checklist
-    );
+    const filteredTaxa    = filterOutSpecimenTaxa(allFilteredTaxa);
+    const allTaxa         = filterOutSpecimenTaxa(Checklist.getData().checklist);
 
-    let clampedFilteredTaxa = visibleFilteredTaxa;
 
-    let overflowing = 0;
-    if (
-      ChecklistView.displayMode == "" &&
-      clampedFilteredTaxa.length > ChecklistView.totalItemsToShow
-    ) {
-      overflowing = clampedFilteredTaxa.length - ChecklistView.totalItemsToShow;
-      clampedFilteredTaxa = clampedFilteredTaxa.slice(
-        0,
-        ChecklistView.totalItemsToShow
-      );
-    }
-
-    let treeClampedFilteredTaxa = Checklist.treefiedTaxa(clampedFilteredTaxa);
-
-    let specificChecklistView = null;
-
-    switch (Settings.viewType()) {
-      case "view_checklist":
-        specificChecklistView = m(ChecklistTree, {
-          taxa: visibleFilteredTaxa,
-          displayLevel: Settings.checklistDisplayLevel(),
-          queryKey: ChecklistView.lastQuery
-        });
-        break;
-      case "view_circle_pack":
-        const fullTaxa = filterOutSpecimenTaxa(Checklist.getData().checklist);
-        specificChecklistView = circlePackingView(fullTaxa, visibleFilteredTaxa);
-        break;
-      case "view_category_density":
-        specificChecklistView = categoryChartView(visibleFilteredTaxa);
-        break;
-      case "view_map":
-        specificChecklistView = mapChart(
-          visibleFilteredTaxa,
-          visibleFullChecklistTaxa
-        );
-        break;
-      default:
-        console.error("Unknown view type: " + Settings.viewType());
-        break;
-    }
+    const specificView = getCurrentTool()
+      ? getCurrentTool().render({ filteredTaxa, allTaxa, queryKey: ChecklistView.lastQuery })
+      : null;
 
     return m(
       ".checklist[style=background: linear-gradient(45deg, " +
-      Checklist.getThemeHsl("dark") +
-      ", " +
-      Checklist.getThemeHsl("light") +
-      ");]",
+        Checklist.getThemeHsl("dark") +
+        ", " +
+        Checklist.getThemeHsl("light") +
+        ");]",
       m(".checklist-inner-wrapper", [
         allFilteredTaxa.length == 0
           ? m(".nothing-found-wrapper", [
-            m("h2", t("nothing_found_oops")),
-            m("img.search-world[src=img/ui/checklist/search_world.svg]"),
-            m(".nothing-found-message", t("nothing_found_checklist")),
-            m(
-              ".query",
-              m.trust(Settings.pinnedSearches.getHumanNameForSearch())
-            ),
-          ])
+              m("h2", t("nothing_found_oops")),
+              m("img.search-world[src=img/ui/checklist/search_world.svg]"),
+              m(".nothing-found-message", t("nothing_found_checklist")),
+              m(
+                ".query",
+                m.trust(Settings.pinnedSearches.getHumanNameForSearch())
+              ),
+            ])
           : m(".checklist-inner-wrapper", [
-            Checklist._isDraft ? draftNotice() : null,
-            !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
-            specificChecklistView,
-          ]),
+              Checklist._isDraft ? draftNotice() : null,
+              !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
+              specificView,
+            ]),
       ])
     );
   },
 };
 
-function shouldHideSpecimensInView() {
-  return Checklist.hasSpecimens() && !Settings.checklistShowSpecimens();
-}
+// ─── Scope / specimen filter ───────────────────────────────────────────────
+// Kept here because it is a view-layer routing concern that runs before
+// dispatching to any tool. The "getCurrentTool().getTaxaAlongsideSpecimens" carve-out exists because
+// ChecklistTree needs parent taxa to build the tree even in specimen mode.
 
 function filterOutSpecimenTaxa(taxa) {
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  let intent = Settings.analyticalIntent();
-  const viewType = Settings.viewType();
-
+  const intent   = Settings.analyticalIntent();
+  
   let scoped = taxa;
 
   if (intent === "#T") {
@@ -152,9 +100,7 @@ function filterOutSpecimenTaxa(taxa) {
       );
     });
   } else if (intent === "#S") {
-    // The view_checklist tool (ChecklistTree) requires parent taxa to build the tree.
-    // Therefore, do not filter out taxa if view_checklist is active.
-    if (viewType !== "view_checklist") {
+    if (!getCurrentTool().getTaxaAlongsideSpecimens) {
       scoped = scoped.filter(function (taxon) {
         return (
           taxon.t?.[specimenMetaIndex] !== null &&
@@ -163,261 +109,19 @@ function filterOutSpecimenTaxa(taxa) {
       });
     }
   }
-  
+
   return scoped;
 }
 
-function categoryChartView(filteredTaxa) {
-  return categoryChart(filteredTaxa);
-}
-
-function checklistDataForD3(node, level) {
-  if (level === undefined) {
-    level = 0;
-  }
-
-  if (!node.children || Object.keys(node.children).length === 0) {
-    return [];
-  } else {
-    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-    const specimenGroupName =
-      Checklist.getNameOfTaxonLevel(specimenMetaIndex) || "Specimen";
-
-    let children = [];
-    let specimenChildren = [];
-
-    Object.keys(node.children).forEach((key) => {
-      const childNode = {
-        name: key,
-        children: checklistDataForD3(node.children[key], level + 1),
-        data: node.children[key].data,
-        taxon: node.children[key].taxon,
-        taxonMetaIndex: node.children[key].taxonMetaIndex,
-      };
-
-      if (node.children[key].taxonMetaIndex === specimenMetaIndex) {
-        specimenChildren.push(childNode);
-      } else {
-        children.push(childNode);
-      }
-    });
-
-    if (specimenChildren.length > 0) {
-      children.push({
-        name: specimenGroupName,
-        children: specimenChildren,
-        taxon: null,
-        data: {},
-        taxonMetaIndex: specimenMetaIndex,
-        isSyntheticSpecimenGroup: true,
-      });
-    }
-
-    if (level == 0) {
-      return {
-        name: "◯",
-        children: children,
-      };
-    } else {
-      return children;
-    }
-  }
-}
-
-function checklistDataForD3FromTaxa(taxa) {
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-
-  const root = {
-    name: "root",
-    data: {},
-    taxon: null,
-    taxonMetaIndex: -1,
-    childrenByKey: {},
-  };
-
-  taxa.forEach(function (taxonRow) {
-    const nonNullTaxa = (taxonRow.t || [])
-      .map(function (taxon, index) {
-        if (taxon === null || taxon === undefined) {
-          return null;
-        }
-
-        return {
-          taxon: taxon,
-          index: index,
-        };
-      })
-      .filter(Boolean);
-
-    if (nonNullTaxa.length === 0) {
-      return;
-    }
-
-    const specimenEntry =
-      specimenMetaIndex === -1 ? null : taxonRow.t?.[specimenMetaIndex];
-    const isSpecimenRow =
-      specimenEntry !== null &&
-      specimenEntry !== undefined &&
-      specimenEntry.name?.trim() !== "";
-
-    const ancestry = isSpecimenRow
-      ? nonNullTaxa.filter(function (item) {
-        return item.index !== specimenMetaIndex;
-      })
-      : nonNullTaxa;
-
-    let currentNode = root;
-    ancestry.forEach(function (item) {
-      currentNode = ensureCirclePackChild(
-        currentNode,
-        item.taxon.name,
-        item.taxon,
-        item.index
-      );
-    });
-
-    if (isSpecimenRow) {
-      const specimenNode = ensureCirclePackChild(
-        currentNode,
-        "__specimen__" + specimenEntry.name,
-        specimenEntry,
-        specimenMetaIndex,
-        {
-          displayName: specimenEntry.name,
-        }
-      );
-
-      specimenNode.data = taxonRow.d;
-      specimenNode.taxon = specimenEntry;
-      specimenNode.taxonMetaIndex = specimenMetaIndex;
-      return;
-    }
-
-    const lastTaxon = nonNullTaxa[nonNullTaxa.length - 1];
-    currentNode.data = taxonRow.d;
-    currentNode.taxon = lastTaxon.taxon;
-    currentNode.taxonMetaIndex = lastTaxon.index;
-  });
-
-  return finalizeCirclePackNode(root);
-}
-
-function ensureCirclePackChild(
-  parentNode,
-  key,
-  taxon,
-  taxonMetaIndex,
-  extraProps = {}
-) {
-  if (!parentNode.childrenByKey[key]) {
-    parentNode.childrenByKey[key] = {
-      name: extraProps.displayName || key,
-      data: {},
-      taxon: taxon,
-      taxonMetaIndex: taxonMetaIndex,
-      childrenByKey: {},
-      ...extraProps,
-    };
-  }
-
-  return parentNode.childrenByKey[key];
-}
-
-function finalizeCirclePackNode(node) {
-  const children = Object.values(node.childrenByKey || {}).map(
-    finalizeCirclePackNode
-  );
-
-  const finalizedNode = {
-    name: node.name,
-    data: node.data,
-    taxon: node.taxon,
-    taxonMetaIndex: node.taxonMetaIndex,
-  };
-
-  if (children.length > 0) {
-    finalizedNode.children = children;
-  }
-
-  return finalizedNode;
-}
-
-function assignLeavesCount(node, allMatchingData) {
-  if (!node.children || node.children.length === 0) {
-    let isMatch = allMatchingData.find(
-      (taxon) =>
-        taxon.t[taxon.t.length - 1].name == node.taxon.name &&
-        taxon.t[taxon.t.length - 1].authority == node.taxon.authority
-    );
-
-    node.value = 1;
-    node.totalLeafCount = 1;
-    node.matchingLeafCount = isMatch ? 1 : 0;
-    return {
-      totalLeafCount: node.totalLeafCount,
-      matchingLeafCount: node.matchingLeafCount,
-    };
-  }
-
-  let leavesCount = {
-    totalLeafCount: 0,
-    matchingLeafCount: 0,
-  };
-
-  for (const child of node.children) {
-    let assignedCount = assignLeavesCount(child, allMatchingData);
-    leavesCount.totalLeafCount += assignedCount.totalLeafCount;
-    leavesCount.matchingLeafCount += assignedCount.matchingLeafCount;
-  }
-
-  node.totalLeafCount = leavesCount.totalLeafCount;
-  node.matchingLeafCount = leavesCount.matchingLeafCount;
-  return leavesCount;
-}
-
-let cachedData = null;
-let oldQueryKey = "";
-
-function circlePackingView(allTaxa, matchingTaxa) {
-  if (allTaxa.length === 0) {
-    return m(".listed-taxa");
-  }
-
-  return m(D3ChartView, {
-    id: "d3test",
-    chart: circlePacking,
-    options: () => {
-      let shouldUpdate = false;
-      const cacheKey = JSON.stringify({
-        queryKey: Checklist.queryKey(),
-        includeMatchChildren: Settings.checklistIncludeChildren(),
-        includeSpecimensInView: Settings.checklistShowSpecimens(),
-        analyticalIntent: Settings.analyticalIntent(),
-        circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
-      });
-
-      if (cachedData == null || cacheKey != oldQueryKey) {
-        oldQueryKey = cacheKey;
-        cachedData = checklistDataForD3FromTaxa(allTaxa);
-        assignLeavesCount(cachedData, matchingTaxa);
-        shouldUpdate = true;
-      }
-
-      return {
-        shouldUpdate: shouldUpdate,
-        dataSource: cachedData,
-        colorInterpolation: colorFromRatio,
-        fontFamily: "Regular",
-        specimenMetaIndex: Checklist.getSpecimenMetaIndex()
-      };
-    },
-  });
-}
+// ─── Notices ───────────────────────────────────────────────────────────────
 
 let Notice = {
   view: function (vnode) {
     return m(
-      ".temporary-notice" + (vnode.attrs.additionalClasses === undefined ? "" : "." + vnode.attrs.additionalClasses),
+      ".temporary-notice" +
+        (vnode.attrs.additionalClasses === undefined
+          ? ""
+          : "." + vnode.attrs.additionalClasses),
       {
         onclick: vnode.attrs.action,
       },
@@ -426,19 +130,19 @@ let Notice = {
         vnode.attrs.additionalButton === undefined
           ? null
           : m(
-            "button.show-all",
-            {
-              onclick: vnode.attrs.additionalButton.action,
-            },
-            [
-              m(
-                "img.notice-icon[src=img/ui/menu/" +
-                vnode.attrs.additionalButton.icon +
-                ".svg]"
-              ),
-              vnode.attrs.additionalButton.text,
-            ]
-          ),
+              "button.show-all",
+              {
+                onclick: vnode.attrs.additionalButton.action,
+              },
+              [
+                m(
+                  "img.notice-icon[src=img/ui/menu/" +
+                    vnode.attrs.additionalButton.icon +
+                    ".svg]"
+                ),
+                vnode.attrs.additionalButton.text,
+              ]
+            ),
       ]
     );
   },
@@ -448,7 +152,7 @@ function mobileFilterOnNotice() {
   return m(Notice, {
     additionalClasses: ".mobile-filter-on",
     action: function () {
-      ChecklistView.displayMode = "";
+      Settings.checklistDisplayLevel("");
     },
     notice: m.trust(
       tf(
@@ -463,7 +167,7 @@ function mobileFilterOnNotice() {
 function draftNotice() {
   return m(Notice, {
     action: function () {
-      ChecklistView.displayMode = "";
+      Settings.checklistDisplayLevel("");
     },
     notice: t("draft_notice"),
     additionalButton: {

@@ -1,8 +1,8 @@
 import m from "mithril";
 
 import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
-import { Checklist } from "../model/Checklist.js";
-import { copyToClipboard } from "../components/Utils.js";
+import { Checklist } from "../../../model/Checklist.js";
+import { copyToClipboard } from "../../../components/Utils.js";
 
 export let TaxonNameView = {
   view: function (vnode) {

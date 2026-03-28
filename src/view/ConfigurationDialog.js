@@ -12,7 +12,7 @@
 import m from "mithril";
 import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
-import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
+import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,9 +42,9 @@ export const ConfigurationDialog = {
     if (!ConfigurationDialog.isOpen) return null;
 
     const hasSpecimens  = Checklist.hasSpecimens();
-    const currentViewId = Settings.viewType() || VIEW_REGISTRY[0].id;
+    const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
     const selectedScope = Settings.analyticalIntent() || "#T";
-    const activeTool    = VIEW_REGISTRY.find(v => v.id === currentViewId) || VIEW_REGISTRY[0];
+    const activeTool    = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
     const toolParams    = activeTool.parameters?.(selectedScope);
 
     return m(".configuration-dialog-overlay", { onclick: ConfigurationDialog.close }, [
@@ -59,7 +59,7 @@ export const ConfigurationDialog = {
         m(".configuration-section", [
           m(".configuration-section-label", "Analysis Tool"),
           m(".configuration-scope-segmented",
-            VIEW_REGISTRY.map(tool =>
+            TOOL_LIST.map(tool =>
               m("button.configuration-scope-btn" + (currentViewId === tool.id ? ".active" : ""), {
                 onclick: () => Settings.viewType(tool.id)
               }, [

@@ -1,10 +1,10 @@
 import m from "mithril";
 import DOMPurify from "dompurify";
 
-import { Checklist } from "../model/Checklist.js";
-import { filterMatches, routeTo, shouldHide } from "../components/Utils.js";
-import { dataReaders } from "../model/customTypes/index.js";
-import { AppLayoutView } from "./AppLayoutView.js";
+import { Checklist } from "../../../model/Checklist.js";
+import { filterMatches, routeTo, shouldHide } from "../../../components/Utils.js";
+import { dataReaders } from "../../../model/customTypes/index.js";
+import { AppLayoutView } from "../../AppLayoutView.js";
 
 export let TaxonDataItemView = {
   originalData: null,

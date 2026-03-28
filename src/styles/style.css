@@ -8,16 +8,16 @@
 @import "../view/FilterCrumbsView.css";
 @import "../view/FilterDropdownView.css";
 @import "../view/InteractionAreaView.css";
-@import "../view/TaxonDataView.css";
+@import "../view/analysisTools/TaxonomicTree/TaxonDataView.css";
 @import "../view/DetailsView.css";
-@import "../view/TaxonDataItemView.css";
+@import "../view/analysisTools/TaxonomicTree/TaxonDataItemView.css";
 @import "../view/SingleAccessKeyView.css";
-@import "../view/TaxonView.css";
+@import "../view/analysisTools/TaxonomicTree/TaxonView.css";
 @import "../view/AboutView.css";
 @import "../view/ManageView.css";
 @import "../view/LiteratureView.css";
-@import "../view/analysisTools/CategoryChart.css";
-@import "../view/analysisTools/MapChart.css";
+@import "../view/analysisTools/TraitMatrix.css";
+@import "../view/analysisTools/RegionalDistribution.css";
 @import "../view/ConfigurationDialog.css";
 
 html,

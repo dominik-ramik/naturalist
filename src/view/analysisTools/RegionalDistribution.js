@@ -10,6 +10,19 @@ import {
 import { Checklist } from "../../model/Checklist.js";
 // ButtonGroup removed in favor of native selects and segmented controls
 
+export const config = {
+  id: "tool_regional_distribution",
+  label: "Regional Distribution",
+  iconPath: {
+    light: "./img/ui/menu/view_map-light.svg",
+    dark: "./img/ui/menu/view_map.svg",
+  },
+  info: "Visualize the regional distribution of your data, using filters to map exactly where specific records are concentrated",
+  getTaxaAlongsideSpecimens: false,
+
+  render: ({ filteredTaxa, allTaxa }) => mapChart(filteredTaxa, allTaxa),
+};
+
 let currentMap = Settings.mapChartCurrentMap();
 let currentSumMethod = Settings.mapChartCurrentSumMethod();
 
@@ -33,7 +46,7 @@ const sumMethods = [
   { name: t("view_map_sum_by_total"), method: "total" },
 ];
 
-export function mapChart(filteredTaxa, allTaxa) {
+function mapChart(filteredTaxa, allTaxa) {
   const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
   let currentMapStringified = JSON.stringify(currentMap);
   if (
@@ -74,7 +87,7 @@ export function mapChart(filteredTaxa, allTaxa) {
   ]);
 }
 
-export function getAvailableMaps() {
+function getAvailableMaps() {
   const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
 
   if (availableMapsCache[mapChartMode] !== undefined) {
