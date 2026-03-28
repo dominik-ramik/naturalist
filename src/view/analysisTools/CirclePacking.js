@@ -361,7 +361,7 @@ export function circlePacking(options) {
         " of " +
         d.data.totalLeafCount +
         " match"
-        : "(" + String(d.data.totalLeafCount) + " members)";
+        : (d.data.totalLeafCount == 1 ? "" : " (" + String(d.data.totalLeafCount) + " members)");
     }
 
     function getFullTooltipText(d) {

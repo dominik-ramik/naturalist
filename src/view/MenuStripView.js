@@ -5,21 +5,7 @@ import { Checklist } from "../model/Checklist.js";
 import { ChecklistView } from "../view/ChecklistView.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-import { VIEW_REGISTRY } from "./ViewRegistry.js";
-
-// Scope icon lookup (scope id → SVG path)
-const SCOPE_ICON_MAP = {
-  "#T": "./img/ui/checklist/taxonomy.svg",
-  "#S": "./img/ui/checklist/tag.svg",
-  "#M": "./img/ui/checklist/tag.svg", // Mixed — treat as specimens icon
-};
-
-// Scope label lookup
-const SCOPE_LABEL_MAP = {
-  "#T": "Taxa",
-  "#S": "Specimens",
-  "#M": "Full Catalog",
-};
+import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
 
 export let MenuStripView = {
   menuOpen: false,
@@ -241,14 +227,19 @@ let MenuExpandable = function (initialVnode) {
  * menuTopBar
  * Renders the main header bar with the hamburger menu + project name +
  * the configuration indicator button.
- *
- * Tool label and icon are now sourced directly from VIEW_REGISTRY, keeping
- * this function free of hard-coded view-id ↔ label/icon mappings.
  */
 function menuTopBar() {
   const currentViewId = Settings.viewType() || VIEW_REGISTRY[0].id;
   const activeTool    = VIEW_REGISTRY.find(v => v.id === currentViewId) || VIEW_REGISTRY[0];
   const currentScope  = Settings.analyticalIntent() || "#T";
+
+  // Dynamic scope lookup from ViewRegistry.
+  // If the app sets a mixed state like `#M` internally that isn't explicitly 
+  // registered in SCOPE_CHOICES, it falls back cleanly to the `#S` (Specimens) 
+  // visual vocabulary, or defaults to the first available choice.
+  const activeScope   = SCOPE_CHOICES.find(s => s.id === currentScope) 
+                     || SCOPE_CHOICES.find(s => s.id === "#S") 
+                     || SCOPE_CHOICES[0];
 
   return [
     m(
@@ -265,26 +256,27 @@ function menuTopBar() {
 
     m(
       "button.global-indicator-btn",
-      { onclick: () => ConfigurationDialog.open() },
+      { 
+        onclick: () => ConfigurationDialog.open(),
+        title: "Configure View" 
+      },
       [
         // ── Analysis tool icon + label ──────────────────────────────────────
-        m("img.global-indicator-img", { src: activeTool.iconPath, alt: "" }),
+        m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
         m("span.global-indicator-label", activeTool.label),
 
         // ── Scope icon + label (only when specimens data is available) ───────
-        Checklist.hasSpecimens() && [
+        Checklist.hasSpecimens() && activeScope && [
           m("span.global-indicator-sep"),
           m("img.global-indicator-img", {
-            src: SCOPE_ICON_MAP[currentScope] || SCOPE_ICON_MAP["#T"],
+            src: activeScope.iconPath.light,
             alt: ""
           }),
-          m("span.global-indicator-label",
-            SCOPE_LABEL_MAP[currentScope] || "Taxa"
-          ),
+          m("span.global-indicator-label", activeScope.label),
         ],
 
         // ── Expand caret ─────────────────────────────────────────────────────
-        m("img.global-indicator-caret[src=./img/ui/search/expand.svg]", { alt: "" }),
+        m("img.global-indicator-caret[src=./img/ui/search/expand-light.svg]", { alt: "" }),
       ]
     ),
   ];
@@ -389,7 +381,6 @@ function backButton() {
       onclick: function () {
         routeTo("/checklist");
         return;
-        // Use history.back() for better UX on detail pages, then fallback to /checklist
         if (window.history.length > 1) {
           window.history.back();
         } else {

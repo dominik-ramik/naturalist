@@ -8,11 +8,11 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { circlePacking } from "./charts/CirclePacking.js";
+import { circlePacking } from "./analysisTools/CirclePacking.js";
 import { D3ChartView } from "./D3ChartView.js";
-import { categoryChart } from "./charts/CategoryChart.js";
-import { mapChart } from "./charts/MapChart.js";
-import { ChecklistTree } from "./charts/ChecklistTree.js";
+import { categoryChart } from "./analysisTools/CategoryChart.js";
+import { mapChart } from "./analysisTools/MapChart.js";
+import { ChecklistTree } from "./analysisTools/ChecklistTree.js";
 
 export let ChecklistView = {
   oninit: function () {

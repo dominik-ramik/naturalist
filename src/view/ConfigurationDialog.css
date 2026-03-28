@@ -80,6 +80,7 @@
   text-align: left;
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  font-size: 1em;
 }
 
 .configuration-tool-card:hover {
@@ -98,7 +99,7 @@
   height: 1.25em;
   object-fit: contain;
   flex-shrink: 0;
-  margin-top: 0.15em;
+  margin-top: 0.1em;
   opacity: 0.75;
 }
 
@@ -114,7 +115,7 @@
 }
 
 .configuration-tool-label {
-  font-size: 0.88em;
+  font-size: 0.96em;
   font-weight: 600;
   color: #333;
   line-height: 1.2;
@@ -130,30 +131,38 @@
   line-height: 1.35;
 }
 
+.configuration-scope-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 0;
+}
 /* ── Scope — segmented control, mirrors .chart-segmented-control ──────────── */
 .configuration-scope-segmented {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5em;
   background-color: rgba(255, 255, 255, 0.6);
   border-radius: 8px;
-  padding: 3px;
+  padding: 6px;
   border: 1px solid #ccc;
-  gap: 2px;
 }
 
 .configuration-scope-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45em;
-  padding: 0.45em 1.1em;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8em;
+  padding: 0.85em 0.9em;
+  border-radius: 0.6em;
+  border: 1px solid rgba(255,255,255,0.85);
+  background-color: rgba(255,255,255,0.55);
   cursor: pointer;
-  font-size: 0.88em;
+  font-size: 0.95em;
   color: #555;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
-  white-space: nowrap;
+  width: 100%;
+  text-align: left;
 }
 
 .configuration-scope-btn:hover {
@@ -166,20 +175,37 @@
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-.configuration-scope-img {
-  width: 1em;
-  height: 1em;
-  object-fit: contain;
-  opacity: 0.65;
+.configuration-scope-btn:hover {
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.configuration-scope-btn.active {
+  border-color: var(--nlblue, #55769b);
+  background-color: rgba(85,118,155,0.06);
+  color: var(--nlblue, #55769b);
+  box-shadow: 0 0 0 2px rgba(85,118,155,0.08);
 }
 
+.configuration-scope-img {
+  width: 1.25em;
+  height: 1.25em;
+  object-fit: contain;
+  opacity: 0.75;
+  margin-top: 0.1em;
+  flex-shrink: 0;
+}
 .configuration-scope-btn.active .configuration-scope-img {
   opacity: 1;
 }
 
 .configuration-scope-label {
   /* inherits from .configuration-scope-btn */
+}
+
+.configuration-scope-info {
+  font-size: 0.76em;
+  color: #666;
+  line-height: 1.35;
 }
 
 /* ── Parameters card ─────────────────────────────────────────────────────── */
@@ -215,6 +241,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.3em;
+.configuration-scope-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 0;
+}
+
   font-size: 0.85em;
   color: #555;
   font-weight: 500;
@@ -258,7 +291,6 @@
 /* Confirm / Done button — mirrors .manage-btn-primary */
 .configuration-confirm-btn {
   width: 100%;
-  max-width: 680px;
   padding: 0.8em 1em;
   border-radius: 0.75em;
   border: 1px solid var(--nlblue, #55769b);

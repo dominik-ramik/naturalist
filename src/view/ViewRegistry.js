@@ -16,7 +16,7 @@
  * {
  *   id:         string,           // unique key stored in Settings.viewType()
  *   label:      string,           // human-readable name shown in the dialog & indicator
- *   iconPath:   string,           // path to the tool's SVG icon
+ *   iconPath:   object,           // path to the tool's SVG icon with light and dark variant
  *   info:       string,           // one-line description shown in the dialog card
  *   parameters: (scope) => [...], // optional — returns array of Mithril vnodes
  *                                 // called with the current scope id ("#T"|"#S"|"#M")
@@ -86,6 +86,31 @@ export const ToggleParam = {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Data scope choices (kept in the registry so dialog stays thin)
+// These are UI-level metadata only: id, label, iconPath, info
+// ─────────────────────────────────────────────────────────────────────────────
+export const SCOPE_CHOICES = [
+  {
+    id: "#T",
+    label: "Taxa",
+    iconPath: {
+      light: "./img/ui/checklist/taxonomy-light.svg",
+      dark: "./img/ui/checklist/taxonomy.svg",
+    },
+    info: "Taxon-level analyses."
+  },
+  {
+    id: "#S",
+    label: "Specimens",
+    iconPath: {
+      light: "./img/ui/checklist/tag-light.svg",
+      dark: "./img/ui/checklist/tag.svg",
+    },
+    info: "Specimen-focused record detail."
+  },
+];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOOL CONFIGS
@@ -97,7 +122,10 @@ export const ToggleParam = {
 const ChecklistToolConfig = {
   id: "view_details",
   label: "Checklist",
-  iconPath: "./img/ui/menu/view_details.svg",
+  iconPath: {
+    light: "./img/ui/menu/view_details-light.svg",
+    dark: "./img/ui/menu/view_details.svg",
+  },
   info: "Browse the complete catalog and detailed records.",
 
   parameters: (scope) => {
@@ -146,7 +174,10 @@ const ChecklistToolConfig = {
 const CirclePackToolConfig = {
   id: "view_circle_pack",
   label: "Proportional Stacking",
-  iconPath: "./img/ui/menu/view_circle_pack.svg",
+  iconPath: {
+    light: "./img/ui/menu/view_circle_pack-light.svg",
+    dark: "./img/ui/menu/view_circle_pack.svg",
+  },
   info: "Visualise relative abundances and proportions.",
 
   parameters: () => [
@@ -169,7 +200,10 @@ const CirclePackToolConfig = {
 const CrossTabToolConfig = {
   id: "view_category_density",
   label: "Cross-Tab Matrix",
-  iconPath: "./img/ui/menu/view_category_density.svg",
+  iconPath: {
+    light: "./img/ui/menu/view_category_density-light.svg",
+    dark: "./img/ui/menu/view_category_density.svg",
+  },
   info: "Generate cross-tabulation and density statistics.",
   // parameters: undefined — no dialog params yet
 };
@@ -178,7 +212,10 @@ const CrossTabToolConfig = {
 const MapToolConfig = {
   id: "view_map",
   label: "Geospatial Map",
-  iconPath: "./img/ui/menu/view_map.svg",
+  iconPath: {
+    light: "./img/ui/menu/view_map-light.svg",
+    dark: "./img/ui/menu/view_map.svg",
+  },
   info: "Spatial exploration and mapping of localities.",
   // parameters: undefined — no dialog params yet
 };

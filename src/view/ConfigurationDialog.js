@@ -12,7 +12,7 @@
 import m from "mithril";
 import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
-import { VIEW_REGISTRY } from "./ViewRegistry.js";
+import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,20 +20,7 @@ import { VIEW_REGISTRY } from "./ViewRegistry.js";
 // Scope is a dialog-level concern (not per-tool), so it stays here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SCOPE_CHOICES = [
-  {
-    id: "#T",
-    label: "Taxa",
-    iconPath: "./img/ui/checklist/taxonomy.svg",
-    info: "Taxon-level analyses."
-  },
-  {
-    id: "#S",
-    label: "Specimens",
-    iconPath: "./img/ui/checklist/tag.svg",
-    info: "Specimen-focused record detail."
-  },
-];
+// SCOPE_CHOICES moved to ViewRegistry.js to keep this dialog thin
 
 /**
  * Map a user-chosen scope id to the value that should be persisted, given the
@@ -83,18 +70,18 @@ export const ConfigurationDialog = {
           m("h3.configuration-dialog-title", "Configuration"),
         ]),
 
-        // ── Analysis Tool ─────────────────────────────────────────────────────
+        // ── Analysis Tool (rendered like the segmented Data Scope) ─────────────
         m(".configuration-section", [
           m(".configuration-section-label", "Analysis Tool"),
-          m(".configuration-tool-grid",
+          m(".configuration-scope-segmented",
             VIEW_REGISTRY.map(tool =>
-              m("button.configuration-tool-card" + (currentViewId === tool.id ? ".active" : ""), {
+              m("button.configuration-scope-btn" + (currentViewId === tool.id ? ".active" : ""), {
                 onclick: () => Settings.viewType(tool.id)
               }, [
-                m("img.configuration-tool-img", { src: tool.iconPath, alt: "" }),
-                m(".configuration-tool-card-text", [
-                  m("span.configuration-tool-label", tool.label),
-                  m("small.configuration-tool-info",  tool.info),
+                m("img.configuration-scope-img", { src: tool.iconPath.dark, alt: "" }),
+                m(".configuration-scope-card-text", [
+                  m("span.configuration-scope-label", tool.label),
+                  tool.info ? m("small.configuration-scope-info", tool.info) : null,
                 ])
               ])
             )
@@ -113,8 +100,11 @@ export const ConfigurationDialog = {
                     Settings.analyticalIntent(persistScopeForTool(scope.id, currentViewId))
                 },
                 [
-                  m("img.configuration-scope-img", { src: scope.iconPath, alt: "" }),
-                  m("span.configuration-scope-label", scope.label),
+                  m("img.configuration-scope-img", { src: scope.iconPath.dark, alt: "" }),
+                  m(".configuration-scope-card-text", [
+                    m("span.configuration-scope-label", scope.label),
+                    scope.info ? m("small.configuration-scope-info", scope.info) : null,
+                  ])
                 ]
               )
             )

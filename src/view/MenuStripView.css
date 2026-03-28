@@ -254,57 +254,46 @@
 
 /* ==========================================================================
    Global Indicator Button
-   Pill-shaped chip that opens ConfigurationDialog.
-   Matches the .sak-chip / .manage-btn vocabulary: white fill, subtle border,
-   nlblue text on active state.
+   Prominent, highly visible configuration button matching existing visual vocabulary
    ========================================================================== */
 .global-indicator-btn {
-  /* Push to the far right of the menu bar */
   margin-left: auto;
   margin-right: 0.75rem;
-
-  /* Pill shape */
-  border-radius: 2em;
-  padding: 0.3em 0.75em 0.3em 0.6em;
-
-  /* Glass-white fill — legible over any menu background */
-  background-color: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
-
-  /* Content layout */
+  border-radius: var(--pad-large);
+  padding: 0.35em 0.85em 0.35em 0.75em;
+  background-color: var(--nlblue, #1f3044);
+  border: 2px solid var(--nlblue, #1f3044);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: inline-flex;
   align-items: center;
-  gap: 0.35em;
-
-  /* Typography */
-  font-size: 0.82em;
-  font-weight: 500;
-  color: #1f3044;
-
+  gap: 0.45em;
+  font-size: 0.85em;
+  color: #ffffff;
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
-
-  /* Keep within the 3em bar height */
-  max-height: 2.2em;
+  transition: all 0.2s ease-in-out;
+  height: 3em;
 }
 
 .global-indicator-btn:hover {
-  background-color: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.global-indicator-btn:active {
-  transform: translateY(1px);
+  background-color: #ffffff;
+  color: var(--nlblue, #1f3044);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Icons inside the indicator chip */
 .global-indicator-img {
-  width: 1em;
-  height: 1em;
+  width: 1.1em;
+  height: 1.1em;
   object-fit: contain;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.85;
+  transition: filter 0.2s ease-in-out;
+}
+
+/* Invert icons to white on hover */
+.global-indicator-btn:hover .global-indicator-img {
+  filter: brightness(0) invert(1);
+  opacity: 1;
 }
 
 /* Text labels inside the indicator chip */
@@ -312,26 +301,40 @@
   display: inline-flex;
   align-items: center;
   line-height: 1;
+  white-space: nowrap;
 }
 
 /* Thin vertical separator between tool and scope sections */
 .global-indicator-sep {
   display: inline-block;
-  width: 1px;
-  height: 1em;
-  background-color: rgba(0, 0, 0, 0.18);
-  margin: 0 0.1em;
+  width: 1.5px;
+  height: 1.1em;
+  background-color: var(--nlblue, #1f3044);
+  opacity: 0.4;
+  margin: 0 0.2em;
   flex-shrink: 0;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.global-indicator-btn:hover .global-indicator-sep {
+  background-color: #ffffff;
+  opacity: 0.6;
 }
 
 /* Expand caret */
 .global-indicator-caret {
-  width: 0.78em;
-  height: 0.78em;
+  width: 0.85em;
+  height: 0.85em;
   object-fit: contain;
   flex-shrink: 0;
-  opacity: 0.4;
-  margin-left: 0.05em;
+  opacity: 0.6;
+  margin-left: 0.1em;
+  transition: filter 0.2s ease-in-out;
+}
+
+.global-indicator-btn:hover .global-indicator-caret {
+  filter: brightness(0) invert(1);
+  opacity: 1;
 }
 
 /* ==========================================================================
