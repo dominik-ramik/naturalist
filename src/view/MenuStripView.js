@@ -261,6 +261,7 @@ function menuTopBar() {
         title: "Configure View" 
       },
       [
+        m("span.mobile-only-title", t("configure_view")),
         // ── Analysis tool icon + label ──────────────────────────────────────
         m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
         m("span.global-indicator-label", activeTool.label),

@@ -337,6 +337,12 @@
   opacity: 1;
 }
 
+.mobile-only-title {
+  display: inline-block;
+  margin-right: 1em;
+  font-weight: bold;
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
@@ -360,9 +366,13 @@
   }
 
   /* On narrow screens, collapse the scope portion of the indicator */
-  .global-indicator-sep,
-  .global-indicator-btn .global-indicator-label:last-of-type,
-  .global-indicator-btn .global-indicator-img:last-of-type {
+  .global-indicator-btn .global-indicator-label {
     display: none;
+  }
+
+  .mobile-only-title {
+    display: inline;
+    font-weight: normal;
+  margin-right: 0.5em;
   }
 }
