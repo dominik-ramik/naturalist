@@ -51,21 +51,7 @@ export let SearchView = {
                         category == "" ? null : m("h4.search-category-group", category),
                         m("ul.filter-buttons.data-filter", categorizedDataFilters[category].map(item => m("li", m(FilterDropdown, { color: Checklist.filter.data[item.dataPath].color, title: item.title, type: "data", dataPath: item.dataPath }))))
                     ]);
-                }),
-
-                m(".view-options-bar", [
-                    m("label.view-option", [
-                        m("input[type=checkbox]", {
-                            checked: Settings.checklistIncludeChildren(),
-                            onchange: function () {
-                                Settings.checklistIncludeChildren(!Settings.checklistIncludeChildren());
-                                Checklist.filter._queryResultCache = {};
-                                m.redraw();
-                            }
-                        }),
-                        t("include_match_children")
-                    ]),
-                ]),
+                }),               
             ]),
 
             // 2. SearchBox with integrated toggle button (Now at the bottom)

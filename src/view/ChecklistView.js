@@ -139,7 +139,9 @@ function shouldHideSpecimensInView() {
 
 function filterOutSpecimenTaxa(taxa) {
   const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const intent = Settings.analyticalIntent();
+  let intent = Settings.analyticalIntent();
+  const viewType = Settings.viewType();
+
   let scoped = taxa;
 
   if (intent === "#T") {
@@ -150,23 +152,18 @@ function filterOutSpecimenTaxa(taxa) {
       );
     });
   } else if (intent === "#S") {
-    scoped = scoped.filter(function (taxon) {
-      return (
-        taxon.t?.[specimenMetaIndex] !== null &&
-        taxon.t?.[specimenMetaIndex] !== undefined
-      );
-    });
+    // The view_details tool (ChecklistTree) requires parent taxa to build the tree.
+    // Therefore, do not filter out taxa if view_details is active.
+    if (viewType !== "view_details") {
+      scoped = scoped.filter(function (taxon) {
+        return (
+          taxon.t?.[specimenMetaIndex] !== null &&
+          taxon.t?.[specimenMetaIndex] !== undefined
+        );
+      });
+    }
   }
-
-  if (!Settings.checklistShowSpecimens()) {
-    scoped = scoped.filter(function (taxon) {
-      return (
-        taxon.t?.[specimenMetaIndex] === null ||
-        taxon.t?.[specimenMetaIndex] === undefined
-      );
-    });
-  }
-
+  
   return scoped;
 }
 

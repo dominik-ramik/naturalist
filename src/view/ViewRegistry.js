@@ -19,7 +19,7 @@
  *   iconPath:   object,           // path to the tool's SVG icon with light and dark variant
  *   info:       string,           // one-line description shown in the dialog card
  *   parameters: (scope) => [...], // optional — returns array of Mithril vnodes
- *                                 // called with the current scope id ("#T"|"#S"|"#M")
+ *                                 // called with the current scope id ("#T"|"#S")
  * }
  */
 

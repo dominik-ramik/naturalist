@@ -20,18 +20,6 @@ import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
 // Scope is a dialog-level concern (not per-tool), so it stays here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// SCOPE_CHOICES moved to ViewRegistry.js to keep this dialog thin
-
-/**
- * Map a user-chosen scope id to the value that should be persisted, given the
- * currently active tool.  Checklist in Specimen mode stores "#M" (mixed) so
- * the app can render taxa + specimens together.
- */
-const persistScopeForTool = (scopeId, toolId) => {
-  if (toolId === "view_details" && scopeId === "#S") return "#M";
-  return scopeId;
-};
-
 /**
  * Determine which scope chip should appear active in the UI.
  * If persisted value is "#M" and we're on the Checklist tool, highlight the
@@ -94,10 +82,9 @@ export const ConfigurationDialog = {
           m(".configuration-scope-segmented",
             SCOPE_CHOICES.map(scope =>
               m("button.configuration-scope-btn" +
-                  (isScopeActiveForUI(scope.id, selectedScope, currentViewId) ? ".active" : ""),
+                  (selectedScope === scope.id ? ".active" : ""),
                 {
-                  onclick: () =>
-                    Settings.analyticalIntent(persistScopeForTool(scope.id, currentViewId))
+                  onclick: () => Settings.analyticalIntent(scope.id)
                 },
                 [
                   m("img.configuration-scope-img", { src: scope.iconPath.dark, alt: "" }),
