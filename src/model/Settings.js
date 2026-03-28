@@ -47,7 +47,7 @@ export let Settings = {
     if (viewToSet === undefined) {
       const type = window.localStorage.getItem("viewType");
       if (!type || type === undefined) {
-        return "view_details";
+        return "view_checklist";
       } else {
         return type;
       }
@@ -226,7 +226,7 @@ export let Settings = {
   checklistPruneEmpty: function (value) {
     if (value === undefined) {
       const stored = window.localStorage.getItem("checklistPruneEmpty");
-      return stored === null ? false : stored === "true";
+      return stored === null ? true : stored === "true";
     } else {
       window.localStorage.setItem("checklistPruneEmpty", value);
     }

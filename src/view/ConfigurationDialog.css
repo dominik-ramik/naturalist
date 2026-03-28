@@ -137,6 +137,7 @@
   gap: 0.15em;
   min-width: 0;
 }
+
 /* ── Scope — segmented control, mirrors .chart-segmented-control ──────────── */
 .configuration-scope-segmented {
   display: grid;
@@ -154,10 +155,10 @@
   gap: 0.8em;
   padding: 0.85em 0.9em;
   border-radius: 0.6em;
-  border: 1px solid rgba(255,255,255,0.85);
-  background-color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
-  font-size: 0.95em;
+  font-size: 0.9em;
   color: #555;
   font-weight: 600;
   transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
@@ -175,25 +176,28 @@
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 .configuration-scope-btn:hover {
   background-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
+
 .configuration-scope-btn.active {
   border-color: var(--nlblue, #55769b);
-  background-color: rgba(85,118,155,0.06);
+  background-color: rgba(85, 118, 155, 0.06);
   color: var(--nlblue, #55769b);
-  box-shadow: 0 0 0 2px rgba(85,118,155,0.08);
+  box-shadow: 0 0 0 2px rgba(85, 118, 155, 0.08);
 }
 
 .configuration-scope-img {
-  width: 1.25em;
-  height: 1.25em;
+  width: 1.75em;
+  height: 1.75em;
   object-fit: contain;
   opacity: 0.75;
   margin-top: 0.1em;
   flex-shrink: 0;
 }
+
 .configuration-scope-btn.active .configuration-scope-img {
   opacity: 1;
 }
@@ -206,17 +210,25 @@
   font-size: 0.76em;
   color: #666;
   line-height: 1.35;
+  font-weight: normal;
+  margin-top: 0.5em;
 }
 
 /* ── Parameters card ─────────────────────────────────────────────────────── */
 .configuration-params-card {
-  background-color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  border-radius: 0.75em;
-  padding: 0.75em 1em;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45em;
+  display: grid;
+  /* Adjusts from 2 columns to 1 based on available width */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1em 1.5em;
+  padding: 0.75em 0;
+}
+
+/* Ensure individual parameter rows handle their own internal spacing */
+.configuration-select-param, 
+.configuration-toggle-param,
+.configuration-checkbox {
+  margin-top: 0; /* Remove top margins to let grid gap handle spacing */
+  width: 100%;
 }
 
 /* ── Shared param components (SelectParam, ToggleParam) ──────────────────── */
@@ -227,6 +239,46 @@
   font-size: 0.88em;
   color: #333;
   padding: 0.15em 0;
+  cursor: pointer;
+}
+
+.configuration-param-label {
+  font-weight: 500;
+  /* Matches the .configuration-scope-label */
+  color: #333;
+  /* Matches the main dialog text color */
+  font-size: 0.95em;
+  /* Slightly smaller but readable */
+  user-select: none;
+  cursor: pointer;
+}
+
+.configuration-toggle-param {
+  display: flex;
+  align-items: center;
+  gap: 0.65em;
+  cursor: pointer;
+}
+
+.configuration-select-param {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Pushes the select dropdown to the right */
+  gap: 1em;
+  margin-top: 0.5em;
+  /* Separates it slightly from the checkboxes */
+}
+
+/* Optional: Style the native select to match the dialog borders */
+.configuration-select {
+  padding: 0.35em 0.5em;
+  border-radius: 0.4em;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-family: inherit;
+  font-size: 0.9em;
+  color: #333;
   cursor: pointer;
 }
 
@@ -241,6 +293,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.3em;
+  font-size: 0.85em;
+  color: #555;
+  font-weight: 500;
+}
+
 .configuration-scope-card-text {
   display: flex;
   flex-direction: column;
@@ -248,10 +305,6 @@
   min-width: 0;
 }
 
-  font-size: 0.85em;
-  color: #555;
-  font-weight: 500;
-}
 
 .configuration-select {
   padding: 0.45em 0.75em;
@@ -262,6 +315,7 @@
   color: #333;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
+  max-width: 20em;
 }
 
 .configuration-select:hover {

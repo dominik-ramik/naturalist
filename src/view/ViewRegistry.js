@@ -98,7 +98,7 @@ export const SCOPE_CHOICES = [
       light: "./img/ui/checklist/taxonomy-light.svg",
       dark: "./img/ui/checklist/taxonomy.svg",
     },
-    info: "Taxon-level analyses."
+    info: "Analyze data diversity and distribution at the taxonomic level"
   },
   {
     id: "#S",
@@ -107,7 +107,7 @@ export const SCOPE_CHOICES = [
       light: "./img/ui/checklist/tag-light.svg",
       dark: "./img/ui/checklist/tag.svg",
     },
-    info: "Specimen-focused record detail."
+    info: "Analyze the data at the resolution of individual specimens"
   },
 ];
 
@@ -120,13 +120,13 @@ export const SCOPE_CHOICES = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ChecklistToolConfig = {
-  id: "view_details",
-  label: "Checklist",
+  id: "view_checklist",
+  label: "Taxonomic tree",
   iconPath: {
-    light: "./img/ui/menu/view_details-light.svg",
-    dark: "./img/ui/menu/view_details.svg",
+    light: "./img/ui/menu/view_checklist-light.svg",
+    dark: "./img/ui/menu/view_checklist.svg",
   },
-  info: "Browse the complete catalog and detailed records.",
+  info: "Browse your data as a taxonomic tree, applying filters to easily isolate the exact records you need",
 
   parameters: (scope) => {
     // Derive available taxon levels dynamically from the loaded checklist
@@ -145,40 +145,47 @@ const ChecklistToolConfig = {
       values: ["", ...levels]
     });
 
+    const showTaxaWithoutSpecimens = m(ToggleParam, { label: "Show taxa without specimens", accessor: Settings.checklistPruneEmpty })
+
     const showTaxonMeta = m(ToggleParam, {
       label: "Show taxon metadata",
       accessor: Settings.checklistShowTaxonMeta
     });
 
-    if (scope === "#T") {
-      return [
-        taxonLevelSelector,
-        m(ToggleParam, { label: "Hide taxa without specimens", accessor: Settings.checklistPruneEmpty }),
-        showTaxonMeta,
-        m(ToggleParam, { label: "Show terminal taxa only",       accessor: Settings.checklistShowTerminalOnly }),
-        m(ToggleParam, { label: "Include children in search matches", accessor: Settings.checklistIncludeChildren }),
-      ];
+    const showTerminalTaxaOnly = m(ToggleParam, { label: "Show terminal taxa only",       accessor: Settings.checklistShowTerminalOnly });
+
+    const includeChildrenInMatches = m(ToggleParam, { label: "Include children in search matches", accessor: Settings.checklistIncludeChildren });
+
+    let options = [];
+
+    options.push(taxonLevelSelector);
+    if (Checklist.hasSpecimens()) {
+      options.push(showTaxonMeta);
     }
 
-    // Specimen / Full-Catalog scope
-    return [
-      taxonLevelSelector,
-      m(ToggleParam, { label: "Show specimen metadata", accessor: Settings.checklistShowSpecimenMeta }),
-      showTaxonMeta,
-      m(ToggleParam, { label: "Hide taxa without specimens", accessor: Settings.checklistPruneEmpty }),
-    ];
+    if(scope === "#S") {
+      options.push( m(ToggleParam, { label: "Show specimen metadata", accessor: Settings.checklistShowSpecimenMeta }));
+    }
+
+    if (Checklist.hasSpecimens()) {
+      options.push(includeChildrenInMatches);
+      options.push(showTaxaWithoutSpecimens);
+      options.push(showTerminalTaxaOnly);
+    }
+
+    return options;
   }
 };
 
 
 const CirclePackToolConfig = {
   id: "view_circle_pack",
-  label: "Proportional Stacking",
+  label: "Hierarchy bubbles",
   iconPath: {
     light: "./img/ui/menu/view_circle_pack-light.svg",
     dark: "./img/ui/menu/view_circle_pack.svg",
   },
-  info: "Visualise relative abundances and proportions.",
+  info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
 
   parameters: () => [
     m(SelectParam, {
@@ -189,34 +196,30 @@ const CirclePackToolConfig = {
       },
       values: [3, 4, 5, 6, 7]
     }),
-    m(ToggleParam, {
-      label: "Include children in search matches",
-      accessor: Settings.checklistIncludeChildren
-    })
   ]
 };
 
 
 const CrossTabToolConfig = {
   id: "view_category_density",
-  label: "Cross-Tab Matrix",
+  label: "Trait Matrix",
   iconPath: {
     light: "./img/ui/menu/view_category_density-light.svg",
     dark: "./img/ui/menu/view_category_density.svg",
   },
-  info: "Generate cross-tabulation and density statistics.",
+  info: "Evaluate the breakdown of your data by chosen traits and apply filters to focus the comparison on specific records",
   // parameters: undefined — no dialog params yet
 };
 
 
 const MapToolConfig = {
   id: "view_map",
-  label: "Geospatial Map",
+  label: "Regional Distribution",
   iconPath: {
     light: "./img/ui/menu/view_map-light.svg",
     dark: "./img/ui/menu/view_map.svg",
   },
-  info: "Spatial exploration and mapping of localities.",
+  info: "Visualize the regional distribution of your data, using filters to map exactly where specific records are concentrated",
   // parameters: undefined — no dialog params yet
 };
 

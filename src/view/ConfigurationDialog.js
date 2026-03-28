@@ -22,12 +22,9 @@ import { VIEW_REGISTRY, SCOPE_CHOICES } from "./ViewRegistry.js";
 
 /**
  * Determine which scope chip should appear active in the UI.
- * If persisted value is "#M" and we're on the Checklist tool, highlight the
- * Specimens button so the user sees their selection reflected.
  */
 const isScopeActiveForUI = (scopeId, persistedScope, toolId) => {
-  if (persistedScope === scopeId) return true;
-  if (persistedScope === "#M" && scopeId === "#S" && toolId === "view_details") return true;
+  if (persistedScope === scopeId) return true;  
   return false;
 };
 

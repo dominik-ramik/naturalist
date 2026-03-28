@@ -79,7 +79,10 @@ export let TaxonView = {
       });
 
     const showSearchAll = sortedChildKeys.length > 0;
-    const isTerminalNode = sortedChildKeys.length === 0;
+    const nonSpecimenChildKeys = Object.keys(vnode.attrs.taxonTree.children).filter(
+      (key) => vnode.attrs.taxonTree.children[key].taxonMetaIndex !== specimenMetaIndex
+    );
+    const isTerminalNode = nonSpecimenChildKeys.length === 0;
     if (vnode.attrs.terminalOnly && !isTerminalNode) {
       return sortedChildKeys.map(function (currentTaxonKey) {
         const childNode = vnode.attrs.taxonTree.children[currentTaxonKey];

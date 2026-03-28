@@ -81,7 +81,7 @@ export let ChecklistView = {
     let specificChecklistView = null;
 
     switch (Settings.viewType()) {
-      case "view_details":
+      case "view_checklist":
         specificChecklistView = m(ChecklistTree, {
           taxa: visibleFilteredTaxa,
           displayLevel: Settings.checklistDisplayLevel(),
@@ -152,9 +152,9 @@ function filterOutSpecimenTaxa(taxa) {
       );
     });
   } else if (intent === "#S") {
-    // The view_details tool (ChecklistTree) requires parent taxa to build the tree.
-    // Therefore, do not filter out taxa if view_details is active.
-    if (viewType !== "view_details") {
+    // The view_checklist tool (ChecklistTree) requires parent taxa to build the tree.
+    // Therefore, do not filter out taxa if view_checklist is active.
+    if (viewType !== "view_checklist") {
       scoped = scoped.filter(function (taxon) {
         return (
           taxon.t?.[specimenMetaIndex] !== null &&

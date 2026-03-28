@@ -6,20 +6,6 @@ import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
 
-function currentViewLabel() {
-    switch (Settings.viewType()) {
-        case "view_circle_pack":
-            return "Proportional Stacking";
-        case "view_category_density":
-            return "Cross-Tab Matrix";
-        case "view_map":
-            return "Geospatial Map";
-        case "view_details":
-        default:
-            return "Checklist";
-    }
-}
-
 function currentScopeLabel() {
     switch (Settings.analyticalIntent()) {
         case "#S":

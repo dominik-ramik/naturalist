@@ -234,9 +234,6 @@ function menuTopBar() {
   const currentScope  = Settings.analyticalIntent() || "#T";
 
   // Dynamic scope lookup from ViewRegistry.
-  // If the app sets a mixed state like `#M` internally that isn't explicitly 
-  // registered in SCOPE_CHOICES, it falls back cleanly to the `#S` (Specimens) 
-  // visual vocabulary, or defaults to the first available choice.
   const activeScope   = SCOPE_CHOICES.find(s => s.id === currentScope) 
                      || SCOPE_CHOICES.find(s => s.id === "#S") 
                      || SCOPE_CHOICES[0];
