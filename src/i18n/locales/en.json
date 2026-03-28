@@ -262,5 +262,6 @@
   "view_map_verb_total_specimen": "What percentage of all specimens fits {0} in each region",
   "view_map_verb_filter_all_specimen": "What percentage of all the specimens is found in each region",
   "view_map_verb_region_all_specimen": "What regions are covered by specimens",
-  "view_map_verb_region_specimen": "What percentage of each region's specimens fits {0}"
+  "view_map_verb_region_specimen": "What percentage of each region's specimens fits {0}",
+  "taxon_specimens": "Specimens of {0}"
 }

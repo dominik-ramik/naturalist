@@ -7,7 +7,7 @@ const specimenTagIconPath =
   "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
 
 export function circlePacking(options) {
-  let data = options.dataSource;
+let data = options.dataSource;
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || Settings.circlePackingMaxLevels();
   let colorInterpolation = options.colorInterpolation || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
@@ -17,6 +17,58 @@ export function circlePacking(options) {
   let fontFamily = options.fontFamily || "sans-serif";
   let showDownloadButton = options.showDownloadButton === false ? false : true;
   let specimenMetaIndex = options.specimenMetaIndex;
+
+if (Settings.analyticalIntent() === "#S") {
+    // Deep clone to prevent mutating the original dataSource which might be used in other views
+    data = JSON.parse(JSON.stringify(options.dataSource));
+
+    function groupSpecimens(node) {
+      if (!node.children || node.children.length === 0) return;
+
+      let taxaChildren = [];
+      let specimenChildren = [];
+
+      node.children.forEach(child => {
+        // Determine if the child is a specimen based on existing logic
+        const isSpec = specimenMetaIndex !== undefined &&
+                       specimenMetaIndex !== -1 &&
+                       child.taxonMetaIndex === specimenMetaIndex;
+        
+        if (isSpec) {
+          specimenChildren.push(child);
+        } else {
+          taxaChildren.push(child);
+        }
+
+        // Recursively traverse downwards
+        groupSpecimens(child);
+      });
+
+      // Apply the container ONLY if the level is mixed (has both taxa and specimens)
+      if (taxaChildren.length > 0 && specimenChildren.length > 0) {
+        let containerTotal = 0;
+        let containerMatching = 0;
+
+        // Sum up metrics so that coloring and tooltips still function cleanly
+        specimenChildren.forEach(c => {
+          containerTotal += c.totalLeafCount !== undefined ? c.totalLeafCount : 1;
+          containerMatching += c.matchingLeafCount || 0;
+        });
+
+        const containerNode = {
+          name: tf("taxon_specimens", [node.name], true),
+          children: specimenChildren,
+          totalLeafCount: containerTotal,
+          matchingLeafCount: containerMatching
+        };
+
+        // Overwrite children with the taxa + the single newly created container
+        node.children = [...taxaChildren, containerNode];
+      }
+    }
+
+    groupSpecimens(data);
+  }
 
   let isFilterMode = data.matchingLeafCount != data.totalLeafCount;
 
