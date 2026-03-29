@@ -310,6 +310,18 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa, binM
     orderedBinLabels.forEach((bin) => {
       allCategories[bin] = { color: "", sum: 0 };
     });
+  } else if (categoryType === "months") {
+    // Extract numerical month values, sort chronologically, and map to i18n
+    const rawMonths = Checklist.filter.data[dataCategory]?.all || [];
+    const sortedMonths = [...rawMonths]
+      .map((m) => parseInt(m, 10))
+      .filter((m) => !isNaN(m))
+      .sort((a, b) => a - b);
+
+    sortedMonths.forEach((mVal) => {
+      const label = t("months." + Settings.MONTH_KEYS[mVal - 1]);
+      allCategories[label] = { color: "", sum: 0 };
+    });
   } else {
     Checklist.filter.data[dataCategory]?.all.forEach((i) => {
       allCategories[i] = { color: "", sum: 0 };
@@ -360,6 +372,25 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa, binM
             .map((v) => unixTimestampToBin(v, binMethod));
           break;
         }
+        case "months": {
+          const raw = Checklist.getDataFromDataPath(
+            mode === "specimen" 
+                ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa) 
+                : taxon.d,
+            dataCategory
+          );
+          const asArray = Array.isArray(raw) ? raw : [raw];
+          categoryData = asArray
+            .map((mVal) => {
+              const num = parseInt(mVal, 10);
+              if (!isNaN(num) && num >= 1 && num <= 12) {
+                return t("months." + Settings.MONTH_KEYS[num - 1]);
+              }
+              return null;
+            })
+            .filter(Boolean);
+          break;
+        }
         case "map regions": {
           const tempCategoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
           let regionCodes = [];
@@ -403,7 +434,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa, binM
     ? Object.keys(allCategories)
     : null;
 
-  return { individualResults, sumByCategory: allCategories, orderedBins };
+  return { individualResults, sumByCategory: allCategories, orderedBins: (categoryType === "date" || categoryType === "months") ? Object.keys(allCategories) : null };
 }
 
 // ------------------------------------------------------
@@ -440,7 +471,7 @@ function categoryChart(filteredTaxa) {
     (f) =>
     ((Checklist.filter.data[f].type === "text" ||
       Checklist.filter.data[f].type === "date" ||
-      Checklist.filter.data[f].type === "month" ||
+      Checklist.filter.data[f].type === "months" ||
       Checklist.filter.data[f].type === "badge")
     )
   );
