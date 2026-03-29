@@ -404,6 +404,8 @@ export let Settings = {
               Checklist.getMetaForDataPath(dataPath).formatting == "badge" ||
               Checklist.getMetaForDataPath(dataPath).formatting ==
               "map regions" ||
+              Checklist.getMetaForDataPath(dataPath).formatting == "months"
+              ||
               (
                 ["number", "date"].includes(
                   Checklist.getMetaForDataPath(dataPath).formatting
@@ -426,7 +428,14 @@ export let Settings = {
                 displayValues = itemObject[type][dataPath].map((value) =>
                   value?.toLocaleString?.() || value?.toString?.() || ""
                 );
+              } else if (
+                Checklist.getMetaForDataPath(dataPath)?.formatting == "months" // <-- ADD THIS BLOCK
+              ) {
+                displayValues = itemObject[type][dataPath].map((value) =>
+                  Checklist.filter.monthLabelForValue(value)
+                );
               }
+              
 
               names.push(
                 categoryName +

@@ -113,7 +113,7 @@ function parseInlineMonths(cellValue) {
  *   [1,2,3,4,5,6,7,8,9,10,11,12] → [[1,12]]     ("Jan-Dec")
  *   [11,12,1,2]        → [[11,2]]               ("Nov-Feb")
  */
-function groupMonthsIntoRanges(months) {
+export function groupMonthsIntoRanges(months) {
   if (!months || months.length === 0) return [];
 
   const sorted = [...new Set(months)].sort((a, b) => a - b);
@@ -165,7 +165,7 @@ function groupMonthsIntoRanges(months) {
  * Multiple parts joined with ", " and a final " and " conjunction.
  */
 // Render ranges to a plain string (used for searchable text)
-function renderRangesString(ranges) {
+export function renderRangesString(ranges) {
   if (!ranges || ranges.length === 0) return "";
 
   const parts = ranges.map(([start, end]) => {

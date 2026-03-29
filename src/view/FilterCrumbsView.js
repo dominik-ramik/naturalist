@@ -4,6 +4,7 @@ import m from "mithril";
 import { getGradedColor } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
+import { groupMonthsIntoRanges, renderRangesString } from "../model/customTypes/ReaderMonths.js";
 
 const selectableFilterTypes = ["text", "map regions", "badge"];
 const rangeFilterTypes = ["number", "date"];
@@ -32,6 +33,21 @@ export let FilterCrumbsView = {
 
         types.forEach(function(type) {
             Object.keys(Checklist.filter[type]).forEach(function(dataPath) {
+
+if (Checklist.filter[type][dataPath].type === "months" && Checklist.filter[type][dataPath].selected.length > 0) {
+                    let cat = "";
+                    if (type == "taxa") {
+                        cat = Checklist.getTaxaMeta()[dataPath].name;
+                    }
+                    if (type == "data") {
+                        cat = Checklist.getMetaForDataPath(dataPath).searchCategory;
+                    }
+
+                    const title = renderRangesString(groupMonthsIntoRanges(Checklist.filter[type][dataPath].selected));
+
+                    crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: title, color: getGradedColor(type, "crumb") }));
+                }
+
                 if (selectableFilterTypes.includes(Checklist.filter[type][dataPath].type)) {
                     Checklist.filter[type][dataPath].selected.forEach(function(selectedItem) {
                         if (Object.keys(Checklist.filter[type][dataPath].possible).indexOf(selectedItem) < 0) {
@@ -46,7 +62,12 @@ export let FilterCrumbsView = {
                             cat = Checklist.getMetaForDataPath(dataPath).searchCategory;
                         }
 
-                        crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: selectedItem, color: getGradedColor(type, "crumb") }));
+                        let title = selectedItem;
+                        if (Checklist.filter[type][dataPath].type === "months") {
+                            title = Checklist.filter.monthLabelForValue(selectedItem);
+                        }
+
+                        crumbs.push(m(Crumb, { type: type, category: cat, dataPath: dataPath, title: title, color: getGradedColor(type, "crumb") }));
                     });
                 } else if (
                     ["number", "date"].includes(Checklist.filter[type][dataPath].type) &&
@@ -142,7 +163,11 @@ let Crumb = {
                         if (index > -1) { // only splice array when item is found
                             Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected.splice(index, 1);
                             Checklist.filter.commit();
-                        }
+                    }
+                        } else if (Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type === "months") {
+                        // --- ADDED: Clear all months when the grouped crumb is clicked ---
+                        Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected = [];
+                        Checklist.filter.commit();
                     } else if (rangeFilterTypes.includes(Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].type)) {
                         Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].selected = [];
                         Checklist.filter[vnode.attrs.type][vnode.attrs.dataPath].numeric.operation = "";
