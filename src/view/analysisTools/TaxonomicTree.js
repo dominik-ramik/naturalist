@@ -16,16 +16,19 @@ export const config = {
 
     parameters: (scope) => {
         const specimenIndex = Checklist.getSpecimenMetaIndex();
-        const levels = Object.keys(Checklist.getTaxaMeta() || {})
-            .filter((_, i) => i !== specimenIndex);
+        const taxaMeta = Checklist.getTaxaMeta() || {};
+        const levels = Object.keys(taxaMeta)
+            .filter((_, i) => i !== specimenIndex)
+            .map(key => `${key} | ${taxaMeta[key]?.name || key}`);
 
         const taxonLevelSelector = m(SelectParam, {
             label: "Limit checklist to taxon level:",
             accessor: (val) => {
+                if(val == t("display_all_taxa")) val = "";
                 if (val === undefined) return Settings.checklistDisplayLevel() || "";
                 Settings.checklistDisplayLevel(val);
             },
-            values: ["", ...levels]
+            values: [t("display_all_taxa"), ...levels]
         });
 
         const showTaxaWithoutSpecimens = m(ToggleParam, {
@@ -104,6 +107,7 @@ function ChecklistTree() {
 
             // Memoize the expensive treefication process
             const cacheKey = JSON.stringify({
+                queryKey: queryKey,
                 dataLength: clampedTaxa.length,
                 intent: Settings.analyticalIntent(),
                 showSpecimens: Settings.checklistShowSpecimens(),

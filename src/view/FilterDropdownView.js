@@ -9,8 +9,9 @@ import {
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
+import { Settings } from "../model/Settings.js";
 
-const selectableFilterTypes = ["text", "badge", "map regions"];
+const selectableFilterTypes = ["text", "badge", "map regions", "months"];
 const rangeFilterTypes = ["number", "date"];
 const dateInputFormat = "YYYY-MM-DD";
 const numberFilterOperations = [
@@ -267,6 +268,11 @@ export let FilterDropdown = function (initialVnode) {
         Checklist.getDataMeta()[dataPath].formatting == "date"
       ) {
         detectedUiType = "date";
+      }else if (
+        type == "data" &&
+        Checklist.getDataMeta()[dataPath].formatting == "months"
+      ) {
+        detectedUiType = "months";
       }
 
       let isSelectableAndHasSelectedItems =
@@ -420,6 +426,15 @@ let Dropdown = function (initialVnode) {
             openHandler: vnode.attrs.openHandler,
             type: type,
             dataPath: dataPath,
+            dropdownId: dropdownId,
+          });
+          break;
+          case "months":
+          innerDropdown = m(DropdownMonths, {
+            openHandler: vnode.attrs.openHandler,
+            type: type,
+            dataPath: dataPath,
+            color: vnode.attrs.color,
             dropdownId: dropdownId,
           });
           break;
@@ -2123,3 +2138,48 @@ let DropdownDate = function (initialVnode) {
     },
   };
 };
+
+let DropdownMonths = function (initialVnode) {
+  return {
+    view: function (vnode) {
+      let type = vnode.attrs.type;
+      let dataPath = vnode.attrs.dataPath;
+      let filterDef = Checklist.filter[type][dataPath];
+ 
+      // Always render all 12 months in calendar order.
+      // JS coerces numeric object keys to strings, so possible[1] === possible["1"].
+      let items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (monthNum) {
+        let isSelected = filterDef.selected.some(s => Number(s) === monthNum);
+        let count = filterDef.possible[monthNum] || 0;
+        let isPossible = count > 0;
+        // Three states mirroring DropdownText: checked → unchecked → inactive
+        let state = isSelected ? "checked" : isPossible ? "unchecked" : "inactive";
+ 
+        return m(DropdownCheckItemSkeleton, {
+          key: monthNum,
+          item: String(t("months." + Settings.MONTH_KEYS[monthNum - 1])),
+          state: state,
+          count: count || "",
+          action: state === "inactive" ? undefined : function () {
+            if (isSelected) {
+              let idx = filterDef.selected.findIndex(s => Number(s) === monthNum);
+              if (idx > -1) filterDef.selected.splice(idx, 1);
+              Checklist.filter.commit();
+            } else {
+              Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+              filterDef.selected.push(monthNum);
+              Checklist.filter.commit();
+            }
+            Checklist.filter.commit();
+          }
+        });
+      });
+ 
+      return m(".inner-dropdown-area", [
+        m(".options", m(".options-section", items)),
+        m(".apply", { onclick: () => vnode.attrs.openHandler(false) }, t("apply_selection"))
+      ]);
+    }
+  };
+};
+ 

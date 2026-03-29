@@ -6,6 +6,8 @@ export let Settings = {
   // Full-text search OR separator symbol
   SEARCH_OR_SEPARATOR: "/",
 
+  MONTH_KEYS: ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"],
+
   // Storage persistence status (set at runtime)
   _storagePersistent: null,
 
@@ -126,6 +128,34 @@ export let Settings = {
       }
     } else {
       window.localStorage.setItem("categoryChartDisplayMode", data);
+    }
+  },
+
+  categoryChartDateBinning: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartDateBinning");
+      return (!value) ? "month" : value;
+    } else {
+      window.localStorage.setItem("categoryChartDateBinning", data);
+    }
+  },
+
+    categoryChartShowEmptyColumns: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartShowEmptyColumns");
+      // Default true — show all columns out of the box
+      return value === null ? true : value === "true";
+    } else {
+      window.localStorage.setItem("categoryChartShowEmptyColumns", String(data));
+    }
+  },
+
+    categoryChartSumMethod: function (data) {
+    if (data === undefined) {
+      const value = window.localStorage.getItem("categoryChartSumMethod");
+      return (!value) ? "taxon" : value;
+    } else {
+      window.localStorage.setItem("categoryChartSumMethod", data);
     }
   },
 

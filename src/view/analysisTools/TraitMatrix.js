@@ -1,4 +1,5 @@
 import m from "mithril";
+import dayjs from "dayjs";
 
 import { Settings } from "../../model/Settings.js";
 import {
@@ -37,9 +38,24 @@ const displayStyles = [
   },
 ];
 
+const sumMethods = [
+  { method: "taxon",    name: t("view_cat_sum_by_taxon"),    info: t("view_cat_sum_by_taxon_info") },
+  { method: "category", name: t("view_cat_sum_by_category"), info: t("view_cat_sum_by_category_info") },
+];
+
+// Date binning options — "month" groups across all years (Jan–Dec),
+// "year" groups by calendar year.
+const dateBinModes = [
+  { method: "month", name: t("view_cat_date_bin_month") },
+  { method: "year",  name: t("view_cat_date_bin_year")  },
+];
+
 let categoryToView = Settings.categoryChartCategory();
 let categoryRoot = Settings.categoryChartRoot();
 let display = Settings.categoryChartDisplayMode();
+let dateBinning = Settings.categoryChartDateBinning();
+let sumMethod = Settings.categoryChartSumMethod();
+let showEmptyColumns = Settings.categoryChartShowEmptyColumns();
 
 // Cell-verb state:
 //   currentHoverVerb — transient, set on mouseenter, cleared on mouseleave
@@ -116,21 +132,21 @@ function buildBreadcrumbPath(currentRoot, filteredTaxa) {
 /**
  * Generate a descriptive string for the category header.
  */
-const categoryVerb = (catView, chartModeOption) => {
+const categoryVerb = (catView, sumMethodOption) => {
   const meta = Checklist.getMetaForDataPath(catView);
   if (!meta) return "";
   let verb = "";
-  // Use the global chart mode to decide verbal phrasing:
-  // - 'taxa' -> use the "taxon" phrasing (counts/percentages of taxa)
-  // - 'specimen' -> use the "category" phrasing (contribution of taxa to categories)
-  switch (chartModeOption) {
-    case "taxa":
+  // Use the sum method to decide verbal phrasing:
+  // - 'taxon'    → percentages normalised per row ("X% of [taxon] have [trait]")
+  // - 'category' → percentages normalised per column ("X% of [trait] come from [taxon]")
+  switch (sumMethodOption) {
+    case "taxon":
       verb = tf("view_cat_category_verb_taxon", [
         displayStyles.find((ds) => ds.method === display).info,
         meta.searchCategory,
       ]);
       break;
-    case "specimen":
+    case "category":
       verb = tf("view_cat_category_verb_category", [meta.searchCategory]);
       break;
     default:
@@ -142,11 +158,11 @@ const categoryVerb = (catView, chartModeOption) => {
 /**
  * Generate the descriptive sentence shown in the cell-verb bar.
  */
-const cellVerb = (percentage, cKey, taxonKey, matchingCount, chartModeOption) => {
+const cellVerb = (percentage, cKey, taxonKey, matchingCount, sumMethodOption) => {
   let verb = "";
-  // Decide wording based on the global chart mode
-  switch (chartModeOption) {
-    case "taxa":
+  // Decide wording based on the sum method
+  switch (sumMethodOption) {
+    case "taxon":
       verb = tf("view_cat_cell_verb_taxon", [
         percentage,
         matchingCount,
@@ -154,7 +170,7 @@ const cellVerb = (percentage, cKey, taxonKey, matchingCount, chartModeOption) =>
         cKey,
       ]);
       break;
-    case "specimen":
+    case "category":
       verb = tf("view_cat_cell_verb_category", [
         percentage,
         matchingCount,
@@ -223,10 +239,58 @@ function toPctString(ratio) {
   return pct.toFixed(0) + "%";
 }
 
+// ------------------------------------------------------
+// DATE BINNING HELPERS
+// ------------------------------------------------------
+
+/**
+ * Convert a Unix timestamp to a bin label.
+ * - "month": returns the localized month name (Jan–Dec), regardless of year
+ * - "year":  returns the four-digit year as a string
+ */
+function unixTimestampToBin(timestamp, binMethod) {
+  const d = dayjs(timestamp);
+  if (!d.isValid()) return null;
+  return binMethod === "year"
+    ? String(d.year())
+    : t("months." + Settings.MONTH_KEYS[d.month()]);
+}
+
+/**
+ * Derive an ordered, deduplicated array of bin labels from a set of
+ * Unix timestamps. Months are returned Jan→Dec (0–11); years ascending.
+ */
+function buildDateBins(allTimestamps, binMethod) {
+  const seen = new Set();
+  const indexed = [];
+  (allTimestamps ?? []).forEach((timestamp) => {
+    const d = dayjs(timestamp);
+    if (!d.isValid()) return;
+    const sortKey = binMethod === "year" ? d.year() : d.month();
+    if (!seen.has(sortKey)) {
+      seen.add(sortKey);
+      indexed.push({ sortKey, label: unixTimestampToBin(timestamp, binMethod) });
+    }
+  });
+  indexed.sort((a, b) => a.sortKey - b.sortKey);
+  return indexed.map((x) => x.label);
+}
+
+// ------------------------------------------------------
+// DATA COMPUTATION
+// ------------------------------------------------------
+
 /**
  * Build the cross-tabulation data for the chart.
+ *
+ * @param {string} rootTaxon
+ * @param {Array}  taxa
+ * @param {string} dataCategory
+ * @param {string} mode          "taxa" | "specimen"
+ * @param {Array}  allTaxa
+ * @param {string} binMethod     "month" | "year" — only used when categoryType === "date"
  */
-function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
+function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa, binMethod) {
   const individualResults = {};
   const allCategories = {};
 
@@ -236,9 +300,22 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
 
   const categoryType = Checklist.filter.data[dataCategory].type;
 
-  Checklist.filter.data[dataCategory]?.all.forEach((i) => {
-    allCategories[i] = { color: "", sum: 0 };
-  });
+  // Initialise allCategories (determines which columns will appear).
+  // For date fields we derive pre-sorted bin labels instead of using raw values.
+  if (categoryType === "date") {
+    const orderedBinLabels = buildDateBins(
+      Checklist.filter.data[dataCategory]?.all,
+      binMethod
+    );
+    orderedBinLabels.forEach((bin) => {
+      allCategories[bin] = { color: "", sum: 0 };
+    });
+  } else {
+    Checklist.filter.data[dataCategory]?.all.forEach((i) => {
+      allCategories[i] = { color: "", sum: 0 };
+    });
+  }
+
   if (Object.keys(allCategories).length === 0) return null;
 
   taxa.forEach((taxon) => {
@@ -270,7 +347,20 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
           );
           if (!Array.isArray(categoryData)) categoryData = [categoryData];
           break;
-        case "map regions":
+        case "date": {
+          const raw = Checklist.getDataFromDataPath(
+            mode === "specimen"
+              ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
+              : taxon.d,
+            dataCategory
+          );
+          const rawArr = Array.isArray(raw) ? raw : [raw];
+          categoryData = rawArr
+            .filter((v) => typeof v === "number" && !isNaN(v))
+            .map((v) => unixTimestampToBin(v, binMethod));
+          break;
+        }
+        case "map regions": {
           const tempCategoryData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
           let regionCodes = [];
           if (typeof tempCategoryData === "object" && tempCategoryData) {
@@ -278,6 +368,7 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
           }
           categoryData = regionCodes.map((r) => Checklist.nameForMapRegion(r));
           break;
+        }
         default:
           break;
       }
@@ -305,7 +396,14 @@ function dataForCategoryChart(rootTaxon, taxa, dataCategory, mode, allTaxa) {
   });
 
   if (Object.keys(allCategories).length === 0) return null;
-  return { individualResults, sumByCategory: allCategories };
+
+  // For date fields: carry the pre-sorted bin order so the render can use it
+  // directly, bypassing sortByCustomOrder (which would alphabetise months).
+  const orderedBins = categoryType === "date"
+    ? Object.keys(allCategories)
+    : null;
+
+  return { individualResults, sumByCategory: allCategories, orderedBins };
 }
 
 // ------------------------------------------------------
@@ -325,7 +423,7 @@ function categoryChart(filteredTaxa) {
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
 
   let categorizedData = dataForCategoryChart(
-    categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance
+    categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
   );
 
   if (categorizedData == null) {
@@ -334,16 +432,22 @@ function categoryChart(filteredTaxa) {
     categoryToView = "";
     Settings.categoryChartCategory("");
     categorizedData = dataForCategoryChart(
-      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance
+      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
     );
   }
 
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(
     (f) =>
     ((Checklist.filter.data[f].type === "text" ||
-      Checklist.filter.data[f].type === "badge") &&
-      Checklist.filter.data[f].all.length < 40)
+      Checklist.filter.data[f].type === "date" ||
+      Checklist.filter.data[f].type === "month" ||
+      Checklist.filter.data[f].type === "badge")
+    )
   );
+
+  // Convenience: is the currently selected category a date field?
+  const isDateCategory = categoryToView !== "" &&
+    Checklist.filter.data[categoryToView]?.type === "date";
 
   // ------------------------------------------------------
   // RENDER CONTROL PANEL
@@ -371,6 +475,36 @@ function categoryChart(filteredTaxa) {
         ])
       ]),
 
+      // "Group by" control — only shown for date-type categories
+      isDateCategory ? m(".chart-control-group", [
+        m("label", t("view_cat_date_group_by")),
+        m(".chart-segmented-control", dateBinModes.map((bm) =>
+          m("button" + (bm.method === dateBinning ? ".selected" : ""), {
+            onclick: () => {
+              if (bm.method === dateBinning) return false;
+              dateBinning = bm.method;
+              Settings.categoryChartDateBinning(dateBinning);
+              sortColumn = null;
+              sortDirection = "desc";
+            }
+          }, bm.name)
+        ))
+      ]) : null,
+
+      categoryToView === "" ? null : m(".chart-control-group", [
+        m("label", t("view_cat_sum_method")),
+        m(".chart-segmented-control", sumMethods.map((mt) =>
+          m("button" + (mt.method === sumMethod ? ".selected" : ""), {
+            title: mt.info,
+            onclick: () => {
+              if (mt.method === sumMethod) return false;
+              sumMethod = mt.method;
+              Settings.categoryChartSumMethod(sumMethod);
+            }
+          }, mt.name)
+        ))
+      ]),
+
       categoryToView === "" ? null : m(".chart-control-group", [
         m("label", t("view_cat_display")),
         m(".chart-segmented-control", displayStyles.map((ds) =>
@@ -385,6 +519,27 @@ function categoryChart(filteredTaxa) {
         ))
       ]),
 
+      categoryToView === "" ? null : m(".chart-control-group", [
+        m("label", {
+          style: "display:flex;align-items:center;gap:0.5em;cursor:pointer;font-size:0.9em;font-weight:normal;user-select:none;"
+        }, [
+          m("input[type=checkbox]", {
+            style: "width:1.1em;height:1.1em;cursor:pointer;accent-color:var(--nlblue,#55769b);flex-shrink:0;",
+            checked: showEmptyColumns,
+            onchange: (e) => {
+              showEmptyColumns = e.target.checked;
+              Settings.categoryChartShowEmptyColumns(showEmptyColumns);
+              // If the currently sorted column is about to be hidden, clear the sort
+              if (!showEmptyColumns && sortColumn !== null && sortColumn !== SORT_KEY_TAXON) {
+                sortColumn = null;
+                sortDirection = "desc";
+              }
+            }
+          }),
+          t("view_cat_show_empty_columns"),
+        ])
+      ]),
+
     ]),
 
     categoryToView === "" || !categorizedData || Object.keys(categorizedData.individualResults).length === 0
@@ -392,9 +547,9 @@ function categoryChart(filteredTaxa) {
       : m(".chart-info-box", [
         m(".chart-info-item", m.trust(
           Checklist.filter.isEmpty()
-            ? t(chartMode === "taxa" ? "view_cat_counted_all" : "view_cat_counted_all_specimens", [categoryVerb(categoryToView, chartMode)])
+            ? t(chartMode === "taxa" ? "view_cat_counted_all" : "view_cat_counted_all_specimens", [categoryVerb(categoryToView, sumMethod)])
             : tf("view_cat_counted_filter", [
-              categoryVerb(categoryToView, chartMode),
+              categoryVerb(categoryToView, sumMethod),
               Settings.pinnedSearches.getHumanNameForSearch()
             ])
         )),
@@ -412,14 +567,34 @@ function categoryChart(filteredTaxa) {
       return result;
     }
 
-    const orderedCategories = sortByCustomOrder(
-      Object.keys(categorizedData.sumByCategory),
-      "data",
-      categoryToView
-    );
+    // For date fields, respect the pre-sorted bin order from dataForCategoryChart
+    // so that months appear Jan→Dec (not alphabetically) and years appear ascending.
+    // For all other types, delegate to the existing custom-order logic.
+    const orderedCategories = categorizedData.orderedBins
+      ?? sortByCustomOrder(
+        Object.keys(categorizedData.sumByCategory),
+        "data",
+        categoryToView
+      );
 
-    // If a previously-sorted column no longer exists, clear sort
-    if (sortColumn !== null && sortColumn !== SORT_KEY_TAXON && !orderedCategories.includes(sortColumn)) {
+    // Apply the "hide empty columns" filter. A column is empty when no taxa
+    // in the current view carry that trait value (sumByCategory[cKey].sum === 0).
+    const visibleCategories = showEmptyColumns
+      ? orderedCategories
+      : orderedCategories.filter(cKey => categorizedData.sumByCategory[cKey].sum > 0);
+
+    // If every column was filtered out, show a notice instead of an empty table.
+    if (visibleCategories.length === 0) {
+      result.push(
+        m(".chart-info-box", [
+          m(".chart-info-item", t("view_cat_no_visible_columns")),
+        ])
+      );
+      return m(".category-chart-outer-wrapper", result);
+    }
+
+    // If a previously-sorted column is now hidden, clear the sort
+    if (sortColumn !== null && sortColumn !== SORT_KEY_TAXON && !visibleCategories.includes(sortColumn)) {
       sortColumn = null;
       sortDirection = "desc";
     }
@@ -432,9 +607,9 @@ function categoryChart(filteredTaxa) {
     // ── Helper: compute ratio for one taxon / category cell ───────────────
     const getRatio = (taxon, cKey) => {
       if (!Object.keys(taxon.categories).includes(cKey)) return 0;
-      const basis = chartMode === "specimen"
-        ? categorizedData.sumByCategory[cKey].sum
-        : taxon.sum;
+      const basis = sumMethod === "category"
+        ? categorizedData.sumByCategory[cKey].sum   // column-normalised: adds to 100% per trait
+        : taxon.sum;                                // row-normalised:    adds to 100% per taxon
       return taxon.categories[cKey] / basis;
     };
 
@@ -492,7 +667,7 @@ function categoryChart(filteredTaxa) {
       ),
 
       // Data column headers
-      ...orderedCategories.map((cKey) =>
+      ...visibleCategories.map((cKey) =>
         m(
           "th.sticky-row.category-col-header"
           + (sortColumn === cKey
@@ -534,7 +709,7 @@ function categoryChart(filteredTaxa) {
       );
 
       // Data cells
-      const dataCells = orderedCategories.map((cKey) => {
+      const dataCells = visibleCategories.map((cKey) => {
         if (Object.keys(taxon.categories).includes(cKey)) {
           const ratio = getRatio(taxon, cKey);
           const verbContent = cellVerb(
@@ -542,7 +717,7 @@ function categoryChart(filteredTaxa) {
             cKey,
             taxonKey,
             taxon.categories[cKey],
-            chartMode
+            sumMethod
           );
           return m(
             "td.category-cell-filled",

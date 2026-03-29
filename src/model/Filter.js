@@ -4,7 +4,7 @@ import { Checklist } from "./Checklist.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 
-const selectableFilterTypes = ["text", "map regions", "badge"];
+const selectableFilterTypes = ["text", "map regions", "badge", "months"];
 const rangeFilterTypes = ["number", "date"];
 const exactSelectableRangeTypes = ["number", "date"];
 
@@ -110,8 +110,16 @@ export let Filter = {
               exactSelectableRangeTypes.includes(filterDef.type) &&
               Array.isArray(queryValue)
             )
-          ) {
-            filterDef.selected = queryValue;
+          ) 
+          {
+            // Ensure values form an array, then optionally cast to numbers
+            let parsedValues = Array.isArray(queryValue) ? queryValue : [queryValue];
+            
+            if (filterDef.type === "months") {
+              filterDef.selected = parsedValues.map(v => parseInt(v, 10));
+            } else {
+              filterDef.selected = parsedValues;
+            }          
           } else if (
             rangeFilterTypes.includes(filterDef.type) &&
             queryValue &&
@@ -194,6 +202,15 @@ export let Filter = {
       ommitSearchCategory
     );
   },
+  monthsFilterSortedKeys: function () {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+},
+  monthLabelForValue: function (monthNumber) {
+  const keys = Settings.MONTH_KEYS;
+  const n = Number(monthNumber);
+  if (isNaN(n) || n < 1 || n > 12) return String(monthNumber);
+  return t("months." + keys[n - 1]);
+},
   dateFilterToHumanReadable: function (
     dataPath,
     operation,
@@ -562,6 +579,8 @@ export let Filter = {
       Filter.calculatePossibleFilterValues(finalSearchResults);
     }
     Filter.queryCache.cache(finalSearchResults, excludedFilterKey);
+
+    console.log("Filter - active filters:", activeFilters, "final results count:", finalSearchResults);
 
     return finalSearchResults;
   },

@@ -21,13 +21,16 @@ export const SelectParam = {
             : raw;
           accessor(final);
         }
-      }, (values || []).map(v =>
-        m("option", { value: v, selected: accessor() == v },
-          v === "" ? "All taxon levels" : v
-        )
-      ))
+      }, (values || []).map(v =>{
+        const split = typeof v === "string" ? v.split("|").map(x => x.trim()) : [v];
+
+        let value = split[0];
+        let label = split[1] || value;
+
+        return m("option", { value: value, selected: accessor() == value }, label);
+      }))
     ]);
-  }
+  }   
 };
 
 /**

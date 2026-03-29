@@ -25,6 +25,7 @@ import { readerImage } from "./ReaderImage.js";
 import { readerMapRegions } from "./ReaderMapRegions.js";
 import { readerSound } from "./ReaderSound.js";
 import { readerMap } from "./ReaderMap.js";
+import { readerMonths } from "./ReaderMonths.js"; // NEW
 const dataReaders = buildReaders(
   readerText,
   readerMarkdown,
@@ -35,7 +36,8 @@ const dataReaders = buildReaders(
   readerImage,
   readerMapRegions,
   readerSound,
-  readerMap
+  readerMap,
+  readerMonths // NEW
 );
 
 // Export dataReaders for use in UI rendering

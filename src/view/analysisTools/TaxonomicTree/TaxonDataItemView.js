@@ -17,6 +17,23 @@ export let TaxonDataItemView = {
       return null;
     }
 
+    if (meta.formatting) {
+      const reader = dataReaders[meta.formatting];
+      if (reader && reader.render) {
+        const readerResult = TaxonDataItemView.renderWithReader(
+          data,
+          meta,
+          dataPath,
+          taxon,
+          null
+        );
+        // If the reader successfully rendered it, return it immediately
+        if (readerResult !== null) {
+          return readerResult;
+        }
+      }
+    }
+
     // Handle list separators for arrays and objects
     let listDisplayType = "span.bullet-list";
     let listSeparator = "";

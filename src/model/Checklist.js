@@ -573,10 +573,11 @@ export let Checklist = {
           let leafData = Checklist.getAllLeafData(value, false, dataPath);
 
           if (
-            Checklist.filter[dataType][dataPath].type == "text" ||
-            Checklist.filter[dataType][dataPath].type == "map regions" ||
-            Checklist.filter[dataType][dataPath].type == "badge"
-          ) {
+  Checklist.filter[dataType][dataPath].type == "text" ||
+  Checklist.filter[dataType][dataPath].type == "map regions" ||
+  Checklist.filter[dataType][dataPath].type == "badge"  ||
+  Checklist.filter[dataType][dataPath].type == "months"
+) {
             leafData.forEach(function (value) {
               if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {
                 Checklist.filter[dataType][dataPath].all.push(value);
@@ -839,6 +840,18 @@ export let Checklist = {
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
 
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "map regions") {
+        return primitives;
+      }
+
+      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "months") {
+        // months data is a flat number array, NOT a sub-item array.
+        // Iterating it with index-based meta lookups (e.g. dataPath+"1") would
+        // crash because those child paths don't exist. Instead, delegate to the
+        // reader's getSearchableText so i18n month names ("January" etc.) are
+        // properly indexed for full-text search.
+        getSearchableTextByType(currentData, "months", {}).forEach(
+          text => primitives.push(text)
+        );
         return primitives;
       }
 

@@ -225,7 +225,7 @@
   "view_cat_counted_all_specimens": "{0} counted through all specimens.",
   "view_cat_specimen_col_header": "Specimens in {0}",
   "view_cat_cell_verb_category_filtered": "(counting only those where {0})",
-  "view_cat_category_to_analyze": "Category to analyze",
+  "view_cat_category_to_analyze": "Trait to analyze",
   "view_cat_sum_method": "Sum method",
   "view_cat_display": "Display",
   "view_cat_counted_all": "{0} counted through all taxa.",
@@ -254,6 +254,7 @@
   "view_chart_mode_specimen": "Specimens",
   "view_chart_mode_taxa_info": "Each taxon counts once. Specimens are excluded.",
   "view_chart_mode_specimen_info": "Each specimen counts once, inheriting data from its taxon.",
+  "display_all_taxa": "All taxa",
   "view_cat_category_root": "All taxa",
   "view_cat_taxon_col_header": "Taxa in {0}",
   "view_map_count_taxa": "Taxa count",
@@ -264,5 +265,24 @@
   "view_map_verb_region_all_specimen": "What regions are covered by specimens",
   "view_map_verb_region_specimen": "What percentage of each region's specimens fits {0}",
   "taxon_specimens": "Specimens of {0}",
-  "configure_view": "Current view"
+  "configure_view": "Current view",
+  "months": {
+    "jan": "January",
+    "feb": "February",
+    "mar": "March",
+    "apr": "April",
+    "may": "May",
+    "jun": "June",
+    "jul": "July",
+    "aug": "August",
+    "sep": "September",
+    "oct": "October",
+    "nov": "November",
+    "dec": "December",
+    "and": "and"
+  },
+  "view_cat_show_empty_columns": "Show empty columns",
+  "view_cat_date_group_by": "Group by",
+  "view_cat_date_bin_month": "Month",
+  "view_cat_date_bin_year": "Year"
 }
