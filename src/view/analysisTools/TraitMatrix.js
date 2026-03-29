@@ -164,9 +164,9 @@ function categoryVerb(catView, sumMethodOption, verbCtx) {
   const unit         = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
   const displayLabel = displayStyles.find(ds => ds.method === display)?.info || "";
 
-  return sumMethodOption === "taxon"
-    ? tf("view_cat_info_row_pct",  [`${displayLabel} of ${unit}`, colTraitName])
-    : tf("view_cat_info_col_pct",  [colTraitName]);
+  return ( sumMethodOption === "taxon"
+    ? tf("view_cat_info_row_pct",  [`${displayLabel} of ${unit}`, colTraitName, verbCtx.rowTraitName])
+    : tf("view_cat_info_col_pct",  [colTraitName, verbCtx.rowTraitName]));
 }
 
 /**
@@ -551,25 +551,27 @@ function categoryChart(filteredTaxa) {
               sortColumn = null;
             }),
           ]),
-          m("select.chart-select", {
-            value:    secondaryDimCategory,
-            disabled: !isCustomMode,
-            onchange: e => {
-              const v = e.target.value;
-              if (v === categoryToView) {
-                categoryToView = "";
-                Settings.categoryChartCategory("");
-              }
-              secondaryDimCategory = v;
-              localStorage.setItem(LS_SEC_CAT, v);
-              sortColumn = null;
-              sortDirection = "desc";
-            }
-          }, [
-            m("option", { value: "", disabled: true },
-              "— " + t("view_cat_secondary_dim_select") + " —"),
-            ...filtersToDisplay.map(secondaryOptions),
-          ]),
+          (isCustomMode
+            ? m("select.chart-select", {
+                value:    secondaryDimCategory,
+                disabled: !isCustomMode,
+                onchange: e => {
+                  const v = e.target.value;
+                  if (v === categoryToView) {
+                    categoryToView = "";
+                    Settings.categoryChartCategory("");
+                  }
+                  secondaryDimCategory = v;
+                  localStorage.setItem(LS_SEC_CAT, v);
+                  sortColumn = null;
+                  sortDirection = "desc";
+                }
+              }, [
+                m("option", { value: "", disabled: true },
+                  "— " + t("view_cat_secondary_dim_select") + " —"),
+                ...filtersToDisplay.map(secondaryOptions),
+              ])
+            : null),
         ]),
         isCustomMode && isDateSecondaryDim ? groupByControl(secondaryDimDateBinning, v => {
           secondaryDimDateBinning = v;
