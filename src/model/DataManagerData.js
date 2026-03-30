@@ -311,6 +311,10 @@ export function getAllColumnInfos(nlDataStructure, langCode) {
 }
 
 export function getItem(tableData, itemName, langCode, defaultValue, Logger) {
+  if(!tableData || !tableData[langCode]) {
+    return defaultValue;
+  }
+
   // Pure function: does not mutate input, returns value or default
   const item = tableData[langCode].find(function (row) {
     return row.item == itemName;
@@ -354,12 +358,14 @@ export let nlDataStructure = {
   sheets: {
     content: {
       name: "nl_content",
+      required: true,
       description:
         "This sheet allows you to tell <strong>NaturaList</strong> the meaning of each column in the checklist sheet. In the minimalistic <a href=\"blank-naturalist-spreadsheet.xlsx\">blank checklist</a> example, on the 'checklist' data sheet you can see columns with column names 'ORD', 'FAM', 'Habit', 'RedList', etc. It is the <strong>nl_content</strong> sheet which tells the app that the column <b>ORD</b> is in fact a taxon level which should be called Order (you can find it in the table <b>Taxa definition</b> ... note that <strong>NaturaList</strong> doesn't require you to adhere to any particular taxonomic units, you are free to use informal or folk units if that is needed in your project). Then you can see that the <b>RedList</b> column is a 'custom data' column and the table <b>Custom data definition</b> on the <b>nl_content</b> sheet says that the title of that data is 'Red list category' and it should be placed in the middle column on the checklist.\nBrowse the documentation of each of the<b>nl_content</b> sheet tables below for information about their use. Each table represents a different type of data - taxa are defined in the <bTaxa definition</b> table, custom data ssociated with each taxon are defined in the <b>Custom data definition</b> table and so on.\nAll columns from the checklist sheet which you want to be displayed in the checklist must appear in one of the tables on this sheet. Checklist sheet columns not references in any of the tables here may still be kept in the sheet, but won't affect the checklist data (you can use those extra columns for your personal notes or as helper columns).\nThis table can be left completely empty, if you do not wish to display any accompanying data in your checklist and wish to display only a tree of taxa.",
       type: "meta",
       tables: {
         taxa: {
           name: "Taxa definition",
+          required: true,
           description:
             "In this table you define your taxonomic units hierarchy. The first row is the highest taxonomic rank and the last row represents the leaves of your taxonomic tree. You have a complete freedom in what units you chose. You can use formal or informal taxonomic units as long as it suits your project. Note that you need to have at least one taxonomy level defined here for the checklist to show anything at all.",
           columns: {
@@ -1091,6 +1097,7 @@ export let nlDataStructure = {
     },
     checklist: {
       name: "checklist",
+      required: true,
       type: "data",
       data: [],
       templateData: [

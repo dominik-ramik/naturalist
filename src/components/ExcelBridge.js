@@ -24,7 +24,9 @@ function readWorkbook(excelFile) {
  */
 function parseSheetData(workbook, sheetName) {
   if (workbook.SheetNames.indexOf(sheetName) < 0) {
-    Logger.critical(tf("dm_cannot_find_sheet", [sheetName]));
+    // SILENTLY return null. 
+    // The caller (processMetaStructure) now handles logging 
+    // the critical error or warning based on the 'required' flag.
     return null;
   }
 
@@ -70,7 +72,6 @@ function parseSheetData(workbook, sheetName) {
     // In ALL cases where an empty row is found, the data reading must stop
     // to enforce "table ends with first empty row".
     break;
-    // ------------------------------------------------------------------
   }
 
   return rawSheetData;
@@ -103,6 +104,10 @@ function isRowArrayEmpty(rowArray) {
  */
 function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCode, defaultLangCode) {
   if (!sheetData || sheetData.length < 2) {
+    if (tableInfo && !tableInfo.required) {
+      Logger.warning(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
+      return [];
+    }
     Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
     return null;
   }
@@ -111,6 +116,10 @@ function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCod
   const tableStartCol = indexOfCaseInsensitive(headers, tableName);
 
   if (tableStartCol < 0) {
+    if (tableInfo && !tableInfo.required) {
+      Logger.warning(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
+      return [];
+    }
     Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
     return null;
   }
@@ -162,7 +171,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
     });
 
     if (match === undefined) {
-      Logger.critical(`Could not find expected column '${expectedHeader}' in table ${tableInfo.name} ${t("dm_verify_doc")}`);
+      Logger.critical(`Could not find expected column '${expectedHeader}' in table ${tableInfo.name} ${t("dm_verify_doc")}`, "Column missing");
       return;
     }
   }
@@ -180,7 +189,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
         });
 
         if (multilingualCols.length > 0) {
-          Logger.error(tf("dm_cannot_have_language_indicators", [columnMeta.name, tableInfo.name, multilingualCols.join(", ")]));
+          Logger.error(tf("dm_cannot_have_language_indicators", [columnMeta.name, tableInfo.name, multilingualCols.join(", ")]), "Unexpected multilingual columns");
         }
       }
     });
@@ -209,6 +218,12 @@ function getMultilingualColumnIndex(headers, columnName, languageCode, defaultLa
  */
 function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) {
   const loadedData = [];
+
+  // RESILIENCE GUARD: If the table was treated as empty, skip parsing and return an empty array
+  if (!rawSubTable || rawSubTable.length === 0) {
+    return loadedData;
+  }
+
   const headers = rawSubTable[0];
 
   for (let row = 1; row < rawSubTable.length; row++) {
@@ -220,7 +235,7 @@ function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) 
       const colIndex = getMultilingualColumnIndex(headers, colName, langCode, defaultLangCode);
 
       if (colIndex < 0) {
-        Logger.error(tf("dm_column_not_found", [colName, tableInfo.name]));
+        Logger.error(tf("dm_column_not_found", [colName, tableInfo.name]), "Column missing");
         hasError = true;
       } else {
         lineObject[columnKey] = rawSubTable[row][colIndex];
@@ -241,7 +256,11 @@ function processLanguages(workbook, schema) {
   const appearanceSheetName = schema.sheets.appearance.name;
   const generalSheetData = parseSheetData(workbook, appearanceSheetName);
 
-  if (!generalSheetData) return null; // Error already logged in parseSheetData
+  if (!generalSheetData) {
+    schema.common.languages.defaultLanguageCode = "en";
+    pushLanguage("en", "English", "");
+    return;
+  }
 
   const tableName = schema.common.languages.languagesTableName;
   const tableInfo = schema.sheets.appearance.tables.supportedLanguages;
@@ -250,8 +269,10 @@ function processLanguages(workbook, schema) {
   const languageTable = extractSubTableData(generalSheetData, appearanceSheetName, tableName, tableInfo, null, null);
 
   if (!languageTable || languageTable.length < 2) {
-    Logger.critical(`The '${tableName}' table needs at least one row (default language).`);
-    return null;
+    Logger.warning(`The '${tableName}' table is empty, using English as default language.`);
+    schema.common.languages.defaultLanguageCode = "en";
+    pushLanguage("en", "English", "");
+    return;
   }
 
   const nCode = "Code";
@@ -282,6 +303,10 @@ function processLanguages(workbook, schema) {
       schema.common.languages.defaultLanguageCode = langCode;
     }
 
+    pushLanguage(langCode, langName, fallbackLang);
+  }
+
+  function pushLanguage(langCode, langName, fallbackLang) {
     schema.common.languages.supportedLanguages.push({
       code: langCode,
       name: langName,
@@ -296,22 +321,38 @@ function processMetaStructure(workbook, schema) {
     if (sheetDef.type === "meta") {
       // READ SHEET ONCE PER SHEET DEFINITION
       const sheetData = parseSheetData(workbook, sheetDef.name);
-      if (!sheetData) return;
+
+      // Handle Missing Sheets
+      if (!sheetData) {
+        if (sheetDef.required) {
+          Logger.critical(`Cannot find required sheet '${sheetDef.name}'`, "Sheet missing");
+          return; // Skip processing since the required sheet is missing
+        } else {
+          Logger.warning(`Cannot find optional sheet '${sheetDef.name}'. Treating all its tables as empty.`, "Sheet missing");
+        }
+      }
 
       Object.keys(sheetDef.tables).forEach((tableKey) => {
         const tableDef = sheetDef.tables[tableKey];
         tableDef.data = {};
 
         schema.common.languages.supportedLanguages.forEach((lang) => {
-          // Extract raw sub-table for specific language context
-          const rawSubTable = extractSubTableData(
-            sheetData,
-            sheetDef.name,
-            tableDef.name,
-            tableDef,
-            lang.code,
-            schema.common.languages.defaultLanguageCode
-          );
+          let rawSubTable;
+
+          if (sheetData) {
+            // Sheet exists, try to extract table
+            rawSubTable = extractSubTableData(
+              sheetData,
+              sheetDef.name,
+              tableDef.name,
+              tableDef,
+              lang.code,
+              schema.common.languages.defaultLanguageCode
+            );
+          } else {
+            // Sheet is missing but optional. Fallback tables to empty automatically.
+            rawSubTable = [];
+          }
 
           if (rawSubTable) {
             tableDef.data[lang.code] = mapSubTableToObject(
@@ -320,6 +361,9 @@ function processMetaStructure(workbook, schema) {
               lang.code,
               schema.common.languages.defaultLanguageCode
             );
+          } else {
+            // Safe fallback if extraction failed strictly (required table missing)
+            tableDef.data[lang.code] = [];
           }
         });
       });
@@ -353,6 +397,8 @@ export let ExcelBridge = function (excelFile) {
       const sheetName = data.sheets.checklist.name;
       const sheetData = parseSheetData(workbook, sheetName);
 
+      console.log("Raw sheet data for checklist:", sheetName, sheetData);
+
       if (!sheetData) {
         Logger.critical("Could not locate checklist sheet");
         return null;
@@ -362,7 +408,7 @@ export let ExcelBridge = function (excelFile) {
       if (data.common && data.common.checklistHeadersStartRow) {
         headerRowIndex = data.common.checklistHeadersStartRow - 1;
       }
-      else{
+      else {
         headerRowIndex = 0;
       }
 

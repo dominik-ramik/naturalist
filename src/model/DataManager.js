@@ -1734,6 +1734,12 @@ export let DataManager = function () {
       let hueString = hueRow ? hueRow.value : NaN;
 
       let hue = parseInt(hueString);
+
+      if(!hue || hueString.toString().trim() === "") {
+        // Allow empty hue, which means default
+        return;
+      }
+
       if (isNaN(hue) || hue < 0 || hue > 360) {
         Logger.error(
           tf("dm_hue_value", [
