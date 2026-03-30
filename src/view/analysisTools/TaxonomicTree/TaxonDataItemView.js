@@ -1,6 +1,8 @@
 import m from "mithril";
 import DOMPurify from "dompurify";
 
+import "./TaxonDataItemView.css";
+
 import { Checklist } from "../../../model/Checklist.js";
 import { filterMatches, routeTo, shouldHide } from "../../../components/Utils.js";
 import { dataReaders } from "../../../model/customTypes/index.js";

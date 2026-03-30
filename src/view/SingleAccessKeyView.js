@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./SingleAccessKeyView.css";
 import { Checklist } from "../model/Checklist.js";
 import { processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";

@@ -14,6 +14,25 @@ export const config = {
     info: "Browse your data as a taxonomic tree, applying filters to easily isolate the exact records you need",
     getTaxaAlongsideSpecimens: true,
 
+    getAvailability: (availableIntents, checklistData) => {
+        // 1. Filter the passed intents based on data presence
+        const supportedIntents = availableIntents.filter(intent => {
+            console.log("Checklist data:", checklistData);
+
+            if(intent == "#T" || intent == "#S") {
+                return checklistData.taxa && checklistData.taxa.length > 0;
+            }
+        });
+
+        // 2. Return the standard availability object
+        return {
+            supportedIntents,
+            isAvailable: supportedIntents.length > 0,
+            toolDisabledReason: "No custom trait data found in this dataset.",
+            scopeDisabledReason: (intent) => `Trait Matrix is unavailable for this scope because it lacks trait data.`
+        }
+    },
+
     parameters: (scope) => {
         const specimenIndex = Checklist.getSpecimenMetaIndex();
         const taxaMeta = Checklist.getTaxaMeta() || {};

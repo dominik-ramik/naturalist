@@ -580,8 +580,6 @@ export let Filter = {
     }
     Filter.queryCache.cache(finalSearchResults, excludedFilterKey);
 
-    console.log("Filter - active filters:", activeFilters, "final results count:", finalSearchResults);
-
     return finalSearchResults;
   },
 

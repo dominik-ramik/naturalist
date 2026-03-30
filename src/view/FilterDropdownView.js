@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import dayjs from "dayjs";
 import m from "mithril";
+import "./FilterDropdownView.css";
 
 import {
   copyToClipboard,

@@ -1,4 +1,5 @@
 import m from "mithril"
+import "./AppLayoutView.css";
 
 import { MenuStripView } from "./MenuStripView.js";
 import { ChecklistView } from "./ChecklistView.js";

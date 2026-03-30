@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./ManageView.css";
 import { marked } from "marked";
 
 import { checkForChecklistUpdate } from "../app.js";

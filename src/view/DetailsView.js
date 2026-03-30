@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./DetailsView.css";
 import Handlebars from "handlebars";
 
 import {

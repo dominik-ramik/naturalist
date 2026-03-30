@@ -1,5 +1,7 @@
 import m from "mithril";
 
+import "./TabsContainer.css";
+
 export let TabsContainer = {
     selectedTab: null,
 

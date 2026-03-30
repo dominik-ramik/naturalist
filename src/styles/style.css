@@ -1,24 +1,5 @@
 @import "./vars.css";
 @import "./toast.css";
-@import "../components/TabsContainer.css";
-@import "../view/AppLayoutView.css";
-@import "../view/MenuStripView.css";
-@import "../view/ChecklistView.css";
-@import "../view/SearchView.css";
-@import "../view/FilterCrumbsView.css";
-@import "../view/FilterDropdownView.css";
-@import "../view/InteractionAreaView.css";
-@import "../view/analysisTools/TaxonomicTree/TaxonDataView.css";
-@import "../view/DetailsView.css";
-@import "../view/analysisTools/TaxonomicTree/TaxonDataItemView.css";
-@import "../view/SingleAccessKeyView.css";
-@import "../view/analysisTools/TaxonomicTree/TaxonView.css";
-@import "../view/AboutView.css";
-@import "../view/ManageView.css";
-@import "../view/LiteratureView.css";
-@import "../view/analysisTools/TraitMatrix.css";
-@import "../view/analysisTools/RegionalDistribution.css";
-@import "../view/ConfigurationDialog.css";
 
 html,
 body {

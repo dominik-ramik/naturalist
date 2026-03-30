@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./MenuStripView.css";
 
 import { copyToClipboard, routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";

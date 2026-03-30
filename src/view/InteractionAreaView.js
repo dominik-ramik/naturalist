@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./InteractionAreaView.css";
 
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";

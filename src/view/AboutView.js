@@ -1,6 +1,7 @@
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import m from "mithril";
+import "./AboutView.css";
 import { processMarkdownWithBibliography } from "../components/Utils.js";
 
 export let AboutView = {

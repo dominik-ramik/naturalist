@@ -1,6 +1,8 @@
 import m from "mithril";
 import dayjs from "dayjs";
 
+import "./TraitMatrix.css";
+
 import { Settings } from "../../model/Settings.js";
 import {
   sortByCustomOrder,

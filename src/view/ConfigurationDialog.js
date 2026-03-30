@@ -14,6 +14,7 @@ import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
 import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
 
+import "./ConfigurationDialog.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCOPE CONFIGURATION

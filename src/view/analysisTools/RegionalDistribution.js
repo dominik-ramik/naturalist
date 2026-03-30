@@ -1,5 +1,7 @@
 import m from "mithril";
 
+import "./RegionalDistribution.css";
+
 import { Settings } from "../../model/Settings.js";
 import {
   colorFromRatio,

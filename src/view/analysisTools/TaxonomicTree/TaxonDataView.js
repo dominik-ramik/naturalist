@@ -3,6 +3,8 @@ import m from "mithril";
 import { Checklist } from "../../../model/Checklist.js";
 import { TaxonDataCellView } from "./TaxonDataCellView.js";
 
+import "./TaxonDataView.css";
+
 export let TaxonDataView = {
     view: function(vnode) {
         if (Object.keys(vnode.attrs.taxon.data).length == 0) {

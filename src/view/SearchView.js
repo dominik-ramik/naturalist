@@ -1,5 +1,6 @@
 // SearchView.js
 import m from "mithril";
+import "./SearchView.css";
 
 import { FilterDropdown } from "../view/FilterDropdownView.js";
 import { Checklist } from "../model/Checklist.js";

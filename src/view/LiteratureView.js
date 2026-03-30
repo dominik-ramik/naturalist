@@ -1,4 +1,5 @@
 import m from "mithril";
+import "./LiteratureView.css";
 import { marked } from "marked";
 
 

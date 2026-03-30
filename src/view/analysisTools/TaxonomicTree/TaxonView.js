@@ -6,6 +6,8 @@ import { Checklist } from "../../../model/Checklist.js";
 import { TaxonDataView } from "./TaxonDataView.js";
 import { TaxonNameView } from "./TaxonNameView.js";
 
+import "./TaxonView.css";
+
 export let TaxonView = {
   view: function (vnode) {
     const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
