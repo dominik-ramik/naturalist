@@ -48,12 +48,36 @@ export const config = {
  * Pure standalone helper to retrieve available categorical traits.
  * Extracts the existing logic used to build the dropdown options.
  */
-export const getAvailableTraits = (intent, checklistData) => {
+const getAvailableTraits = (intent, checklistData) => {
   if (!Checklist.filter || !Checklist.filter.data) return [];
+  if (!checklistData || !checklistData.checklist) return [];
 
-  return Object.keys(Checklist.filter.data).filter(f =>
-    ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
-  );
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+
+  // Mirror the same scoping logic used in ChecklistView.filterOutSpecimenTaxa
+  const relevantTaxa = checklistData.checklist.filter(taxon => {
+    const specimenEntry = taxon.t?.[specimenMetaIndex];
+    if (intent === "#T") {
+      return specimenEntry === null || specimenEntry === undefined;
+    } else if (intent === "#S") {
+      return specimenEntry !== null && specimenEntry !== undefined;
+    }
+    return true; // unknown intent: include everything
+  });
+
+  // A trait is only available if at least one row in the relevant scope has data for it
+  return Object.keys(Checklist.filter.data).filter(f => {
+    if (!["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)) {
+      return false;
+    }
+    return relevantTaxa.some(taxon => {
+      const value = Checklist.getDataFromDataPath(taxon.d, f);
+      if (value === null || value === undefined) return false;
+      if (typeof value === "string" && value.trim() === "") return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      return true;
+    });
+  });
 };
 
 const displayStyles = [
