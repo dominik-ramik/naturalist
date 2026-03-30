@@ -105,7 +105,7 @@ function isRowArrayEmpty(rowArray) {
 function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCode, defaultLangCode) {
   if (!sheetData || sheetData.length < 2) {
     if (tableInfo && !tableInfo.required) {
-      Logger.warning(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
+      Logger.info(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
       return [];
     }
     Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
@@ -117,7 +117,7 @@ function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCod
 
   if (tableStartCol < 0) {
     if (tableInfo && !tableInfo.required) {
-      Logger.warning(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
+      Logger.info(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
       return [];
     }
     Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
@@ -269,7 +269,7 @@ function processLanguages(workbook, schema) {
   const languageTable = extractSubTableData(generalSheetData, appearanceSheetName, tableName, tableInfo, null, null);
 
   if (!languageTable || languageTable.length < 2) {
-    Logger.warning(`The '${tableName}' table is empty, using English as default language.`);
+    Logger.info(`The '${tableName}' table is empty, using English as default language.`);
     schema.common.languages.defaultLanguageCode = "en";
     pushLanguage("en", "English", "");
     return;
@@ -328,7 +328,7 @@ function processMetaStructure(workbook, schema) {
           Logger.critical(`Cannot find required sheet '${sheetDef.name}'`, "Sheet missing");
           return; // Skip processing since the required sheet is missing
         } else {
-          Logger.warning(`Cannot find optional sheet '${sheetDef.name}'. Treating all its tables as empty.`, "Sheet missing");
+          Logger.info(`Cannot find optional sheet '${sheetDef.name}'. Treating all its tables as empty.`, "Sheet missing");
         }
       }
 

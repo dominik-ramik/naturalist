@@ -168,7 +168,7 @@ const LogsPanel = {
             LogsPanel.toggleGroup(group.title);
             m.redraw();
           },
-          title: isExpanded ? t("log_group_collapse") : t("log_group_expand"),
+          title: group.title,
         }, [
           m("span.manage-log-group-toggle", isExpanded ? "▾" : "▸"),
           m("span.manage-log-group-title", group.title),
