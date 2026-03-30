@@ -348,7 +348,8 @@ export let DataManager = function () {
                   asset,
                   (contentLengthInfo.contentLength / 1024 / 1024).toFixed(2),
                   precacheMaxFileSizeMb,
-                ])
+                ]),
+                t("dm_asset_too_large_title")
               );
             }
           } else {
@@ -726,7 +727,7 @@ export let DataManager = function () {
 
           if (externalTargets.size > 0) {
             for (const target of externalTargets) {
-              Logger.warning("Taxonomic key '" + keyId + "': Taxon '" + target + "' does not exist in the checklist. This is alright if your key is expected to point to taxa outside of this checklist, but it will prevent the automatic display of the taxon details when reaching the taxon via the key.");
+              Logger.warning("Taxonomic key '" + keyId + "': Taxon '" + target + "' does not exist in the checklist. This is alright if your key is expected to point to taxa outside of this checklist, but it will prevent the automatic display of the taxon details when reaching the taxon via the key.", "Taxon not found in checklist");
             }
           }
 

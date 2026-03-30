@@ -187,6 +187,7 @@
   "dm_column_not_found": "Could not find column {0} in table {1}",
   "dm_duplicate_segment": "Reading checklist data, there is a duplicity in {0}",
   "dm_value_not_number": "Value {0} in column {1} of checklist data should be a number",
+  "dm_asset_too_large_title": "Linked file too large",
   "dm_asset_too_large": "The linked file {0} is too large with {1} MB (over the expected {2} MB)",
   "dm_asset_not_found": "The linked file {0} is not found on the server",
   "dm_asset_head_error": "The linked file {0} is not found on the server or has wrong format",

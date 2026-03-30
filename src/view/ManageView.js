@@ -83,6 +83,133 @@ const ActionButton = {
   }
 };
 
+// --- LOGS PANEL COMPONENT ---
+
+/**
+ * Stateful Mithril component that renders Logger messages grouped by groupTitle.
+ *
+ * Messages with a groupTitle are shown as collapsible group rows (collapsed by default).
+ * Messages without a groupTitle are rendered as flat items below the groups.
+ * Groups appear in the order of their most-recently-logged message (newest first),
+ * matching the existing reverse-chronological display order.
+ */
+const LogsPanel = {
+  // Tracks which groups the user has manually expanded. Keys are groupTitle strings.
+  expandedGroups: new Set(),
+
+  toggleGroup: function (title) {
+    if (LogsPanel.expandedGroups.has(title)) {
+      LogsPanel.expandedGroups.delete(title);
+    } else {
+      LogsPanel.expandedGroups.add(title);
+    }
+  },
+
+  view: function () {
+    const messages = Logger.getMessagesForDisplay();
+    if (messages.length === 0) return null;
+
+    const counts = Logger.getCounts();
+
+    // --- Partition into groups and ungrouped flat items ---
+    // groupMap preserves insertion order = first appearance in the reversed list
+    // = most recently active group first.
+    const groupMap = new Map();
+    const ungrouped = [];
+
+    messages.forEach(msg => {
+      if (!msg.groupTitle) {
+        ungrouped.push(msg);
+        return;
+      }
+      if (!groupMap.has(msg.groupTitle)) {
+        groupMap.set(msg.groupTitle, {
+          title: msg.groupTitle,
+          messages: [],
+          counts: { critical: 0, error: 0, warning: 0, info: 0 },
+        });
+      }
+      const group = groupMap.get(msg.groupTitle);
+      group.messages.push(msg);
+      group.counts[msg.level]++;
+    });
+
+    // --- Helpers ---
+
+    function worstLevel(groupCounts) {
+      if (groupCounts.critical > 0) return "critical";
+      if (groupCounts.error > 0) return "error";
+      if (groupCounts.warning > 0) return "warning";
+      return "info";
+    }
+
+    function renderLogItem(logItem) {
+      return m(".manage-log-item." + logItem.level, { key: logItem.message }, [
+        m(".manage-log-content", [
+          m("span.manage-log-level", t("log_" + logItem.level)),
+          m("span.manage-log-message", m.trust(logItem.message)),
+        ]),
+      ]);
+    }
+
+    function renderGroup(group) {
+      const isExpanded = LogsPanel.expandedGroups.has(group.title);
+      const worst = worstLevel(group.counts);
+      const errorCount = group.counts.critical + group.counts.error;
+      const warnCount = group.counts.warning;
+      const totalCount = group.messages.length;
+
+      return m(".manage-log-group." + worst, { key: group.title }, [
+        m(".manage-log-group-header", {
+          onclick: () => {
+            LogsPanel.toggleGroup(group.title);
+            m.redraw();
+          },
+          title: isExpanded ? t("log_group_collapse") : t("log_group_expand"),
+        }, [
+          m("span.manage-log-group-toggle", isExpanded ? "▾" : "▸"),
+          m("span.manage-log-group-title", group.title),
+          m(".manage-log-group-badges", [
+            errorCount > 0
+              ? m("span.manage-logs-count.manage-logs-count--error", errorCount)
+              : null,
+            warnCount > 0
+              ? m("span.manage-logs-count.manage-logs-count--warning", warnCount)
+              : null,
+            errorCount === 0 && warnCount === 0
+              ? m("span.manage-logs-count.manage-logs-count--total", totalCount)
+              : null,
+          ]),
+        ]),
+        isExpanded
+          ? m(".manage-log-group-body", group.messages.map(renderLogItem))
+          : null,
+      ]);
+    }
+
+    // --- Render ---
+    return m(".manage-logs", [
+      m(".manage-logs-header", [
+        m("span", t("log_messages") || "Messages"),
+        m(".manage-logs-counts", [
+          (counts.critical + counts.error) > 0
+            ? m("span.manage-logs-count.manage-logs-count--error",
+              (counts.critical + counts.error) + " " + t("log_error", counts.critical + counts.error))
+            : null,
+          counts.warning > 0
+            ? m("span.manage-logs-count.manage-logs-count--warning",
+              counts.warning + " " + t("log_warning", counts.warning))
+            : null,
+        ]),
+      ]),
+      m(".manage-logs-list", [
+        ...Array.from(groupMap.values()).map(renderGroup),
+        ...ungrouped.map(renderLogItem),
+      ]),
+    ]);
+  },
+};
+
 // --- VIEW HELPERS ---
 const SubViews = {
   // Step: 'upload'
@@ -134,7 +261,7 @@ const SubViews = {
       }),
       // Place log messages after the upload card but before the "Need a template?" help card
       // so messages appear above the template/help card when present.
-      renderLogs(),
+      m(LogsPanel),
 
       // Help card (when data exists)
       isDataReady ? m(ManageCard, {
@@ -319,7 +446,7 @@ export let ManageView = {
       m(".manage-content", content),
       // For the upload step we render logs inside the upload subview so they appear
       // above the "Need a template?" panel. For other steps, keep previous behavior.
-      showLogs && step !== "upload" ? renderLogs() : null,
+      showLogs && step !== "upload" ? m(LogsPanel) : null,
     ]);
   },
 };
@@ -332,39 +459,6 @@ function downloadCompiledData(blob, fileName) {
   link.download = fileName;
   link.click();
   URL.revokeObjectURL(link.href);
-}
-
-function renderLogs() {
-  const messages = Logger.getMessagesForDisplay();
-  if (messages.length === 0) return null;
-
-  const counts = Logger.getCounts();
-
-  return m(".manage-logs", [
-    m(".manage-logs-header", [
-      m("span", t("log_messages") || "Messages"),
-      m(".manage-logs-counts", [
-        (counts.critical + counts.error) > 0
-          ? m("span.manage-logs-count.manage-logs-count--error",
-            (counts.critical + counts.error) + " " + t("log_error", counts.critical + counts.error))
-          : null,
-        counts.warning > 0
-          ? m("span.manage-logs-count.manage-logs-count--warning",
-            counts.warning + " " + t("log_warning", counts.warning))
-          : null,
-      ]),
-    ]),
-    m(".manage-logs-list",
-      messages.map(function (logItem) {
-        return m(".manage-log-item." + logItem.level, [
-          m(".manage-log-content", [
-            m("span.manage-log-level", t("log_" + logItem.level)),
-            m("span.manage-log-message", m.trust(logItem.message)),
-          ]),
-        ]);
-      })
-    ),
-  ]);
 }
 
 function renderDropzone() {

@@ -11,22 +11,25 @@ class LoggerClass {
   /**
    * Add a log message with automatic deduplication
    * @param {string} level - Log level: 'error', 'warning', 'critical', 'info'
+   * @param {string|null} groupTitle - Optional group key; messages sharing the same title are grouped in the UI
    * @param {string} message - The message to log
    */
-  log(level, message) {
+  log(level, groupTitle, message) {
+    const normalizedGroup = groupTitle ?? null;
+
     let hasCritical = this.messages.some(msg => msg.level === 'critical');
 
-    // Check for duplicates using the same logic as the original code
+    // Build a deduplication key
+    const dedupKey = `${level}-${normalizedGroup}-${message.toLowerCase()}`;
+
     let index = this.messages.findIndex(msg =>
-      msg.level + "-" + msg.message.toLowerCase() ===
-      level + "-" + message.toLowerCase()
+      `${msg.level}-${msg.groupTitle}-${msg.message.toLowerCase()}` === dedupKey
     );
 
     // Only log critical errors if there is no other critical error yet, and avoid duplicates
     if (level !== "critical" || (level === "critical" && !hasCritical && index < 0)) {
-      // Only add if not a duplicate
       if (index < 0) {
-        this.messages.push({ level, message });
+        this.messages.push({ level, groupTitle: normalizedGroup, message });
         this.notifyObservers();
       }
     }
@@ -35,33 +38,37 @@ class LoggerClass {
   /**
    * Log an error message
    * @param {string} message - The error message
+   * @param {string|null} [groupTitle] - Optional group title for UI grouping
    */
-  error(message) {
-    this.log('error', message);
+  error(message, groupTitle) {
+    this.log('error', groupTitle ?? null, message);
   }
 
   /**
    * Log a warning message
    * @param {string} message - The warning message
+   * @param {string|null} [groupTitle] - Optional group title for UI grouping
    */
-  warning(message) {
-    this.log('warning', message);
+  warning(message, groupTitle) {
+    this.log('warning', groupTitle ?? null, message);
   }
 
   /**
    * Log a critical error message
    * @param {string} message - The critical error message
+   * @param {string|null} [groupTitle] - Optional group title for UI grouping
    */
-  critical(message) {
-    this.log('critical', message);
+  critical(message, groupTitle) {
+    this.log('critical', groupTitle ?? null, message);
   }
 
   /**
    * Log an info message
    * @param {string} message - The info message
+   * @param {string|null} [groupTitle] - Optional group title for UI grouping
    */
-  info(message) {
-    this.log('info', message);
+  info(message, groupTitle) {
+    this.log('info', groupTitle ?? null, message);
   }
 
   /**
@@ -85,7 +92,6 @@ class LoggerClass {
    * @returns {Array} Array of deduplicated log messages in reverse order
    */
   getMessagesForDisplay() {
-    // Messages are already deduplicated in log(), so just reverse them
     return [...this.messages].reverse();
   }
 

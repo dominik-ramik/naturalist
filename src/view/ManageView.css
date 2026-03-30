@@ -423,6 +423,9 @@
   overflow-y: auto;
 }
 
+/* ==========================================================================
+   Log Item (flat / ungrouped)
+   ========================================================================== */
 .manage-log-item {
   display: flex;
   align-items: flex-start;
@@ -484,6 +487,95 @@
 
 .manage-log-item.info .manage-log-level {
   color: #1976d2;
+}
+
+/* ==========================================================================
+   Log Group (collapsible)
+   ========================================================================== */
+
+/* Outer wrapper — provides the bottom separator between groups */
+.manage-log-group {
+  border-bottom: 1px solid #ddd;
+}
+
+.manage-log-group:last-child {
+  border-bottom: none;
+}
+
+/* Clickable group header row */
+.manage-log-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.7em 1em;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85em;
+  font-weight: 600;
+  transition: filter 0.15s;
+}
+
+.manage-log-group-header:hover {
+  filter: brightness(0.95);
+}
+
+/* Severity-tinted header backgrounds — mirrors the flat item colours */
+.manage-log-group.critical > .manage-log-group-header {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.manage-log-group.error > .manage-log-group-header {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.manage-log-group.warning > .manage-log-group-header {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.manage-log-group.info > .manage-log-group-header {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+/* Collapse / expand arrow */
+.manage-log-group-toggle {
+  font-size: 0.9em;
+  line-height: 1;
+  width: 1em;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+/* Group title text — takes remaining width */
+.manage-log-group-title {
+  flex: 1;
+}
+
+/* Badge row inside the group header */
+.manage-log-group-badges {
+  display: flex;
+  gap: 0.3em;
+  align-items: center;
+}
+
+/* Group body — contains the individual child log items */
+.manage-log-group-body {
+  /* Subtle left border ties the items visually to their parent group */
+  border-left: 3px solid rgba(0, 0, 0, 0.08);
+  margin-left: 1em;
+}
+
+/* Indent child items to visually nest them under the group header */
+.manage-log-group-body .manage-log-item {
+  padding-left: 1.5em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.manage-log-group-body .manage-log-item:last-child {
+  border-bottom: none;
 }
 
 /* ==========================================================================
