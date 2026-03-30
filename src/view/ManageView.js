@@ -97,7 +97,7 @@ const SubViews = {
       // Welcome section for fresh install
       !isDataReady ? m(ManageCard, {
         title: t("fresh_install_welcome"),
-        icon: "img/icon_maskable.svg",
+        icon: "img/icon_transparent_blue.svg",
         children: [
           m("p.manage-welcome-text", t("fresh_install_welcome_message")),
         ]
