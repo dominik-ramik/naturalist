@@ -395,7 +395,7 @@ export let DataManager = function () {
 
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
             console.error("Asset not found or not an image: " + url, contentType);
-            Logger.warning(tf("dm_asset_head_error", [url]));
+            Logger.warning(tf("dm_asset_head_error", [url]), "File not found");
             return null;
           } else {
             const contentLength = xhr.getResponseHeader("Content-Length");
