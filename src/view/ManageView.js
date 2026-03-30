@@ -171,7 +171,7 @@ const LogsPanel = {
           title: group.title,
         }, [
           m("span.manage-log-group-toggle", isExpanded ? "▾" : "▸"),
-          m("span.manage-log-group-title", group.title),
+          m("span.manage-log-group-title", t("log_" + group.messages[0].level) + " - " + group.title),
           m(".manage-log-group-badges", [
             errorCount > 0
               ? m("span.manage-logs-count.manage-logs-count--error", errorCount)
