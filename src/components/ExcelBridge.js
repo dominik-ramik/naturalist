@@ -397,8 +397,6 @@ export let ExcelBridge = function (excelFile) {
       const sheetName = data.sheets.checklist.name;
       const sheetData = parseSheetData(workbook, sheetName);
 
-      console.log("Raw sheet data for checklist:", sheetName, sheetData);
-
       if (!sheetData) {
         Logger.critical("Could not locate checklist sheet");
         return null;

@@ -117,19 +117,22 @@ const LogsPanel = {
     const groupMap = new Map();
     const ungrouped = [];
 
-    messages.forEach(msg => {
+    messages.forEach(msg => {      
       if (!msg.groupTitle) {
         ungrouped.push(msg);
         return;
       }
-      if (!groupMap.has(msg.groupTitle)) {
-        groupMap.set(msg.groupTitle, {
+      
+      const groupKey = `${msg.groupTitle}-${msg.level}`;
+
+      if (!groupMap.has(groupKey)) {
+        groupMap.set(groupKey, {
           title: msg.groupTitle,
           messages: [],
           counts: { critical: 0, error: 0, warning: 0, info: 0 },
         });
       }
-      const group = groupMap.get(msg.groupTitle);
+      const group = groupMap.get(groupKey);
       group.messages.push(msg);
       group.counts[msg.level]++;
     });
