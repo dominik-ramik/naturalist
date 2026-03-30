@@ -43,6 +43,11 @@ export let readerMarkdown = {
       return null;
     }
 
+    if (typeof data !== "string") {
+      console.log("Warning: readerMarkdown received non-string data:", data);
+      return data;
+    }
+
     // Apply template if available
     let displayData = helpers.processTemplate(data, uiContext);
 
