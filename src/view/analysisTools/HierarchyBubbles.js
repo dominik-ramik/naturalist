@@ -7,6 +7,8 @@ import { colorFromRatio } from "../../components/Utils.js";
 import { D3ChartView } from "../shared/D3ChartView.js";
 import { SelectParam } from "../shared/FormControls.js";
 
+import "./HierarchyBubbles.css";
+
 // ─── Tool config export ────────────────────────────────────────────────────
 
 export const config = {
@@ -901,12 +903,64 @@ function assignLeavesCount(node, allMatchingData) {
 let cachedData = null;
 let oldQueryKey = "";
 
+// ─── Info box ─────────────────────────────────────────────────────────────
+
+function renderBubblesInfoBox(isFilterEmpty, mapChartMode, matchingCount, totalCount) {
+  let message;
+  if (isFilterEmpty) {
+    message = t("view_bubbles_no_filter_tip");
+  } else {
+    const key = mapChartMode === "specimen"
+      ? "view_bubbles_filter_info_specimen"
+      : "view_bubbles_filter_info_taxa";
+    message = tf(key, [matchingCount, totalCount]);
+  }
+  return m(".bubbles-info-box", m.trust(message));
+}
+
+// ─── Color scale ──────────────────────────────────────────────────────────
+
+function renderColorScale(isFilterEmpty) {
+  if (isFilterEmpty) return null;
+
+  // Sample colorFromRatio at N steps to build a perfectly accurate CSS gradient.
+  // Step 0 uses the chart's noMatchColor to match the actual circle rendering.
+  const noMatchColor = "#04040420";
+  const steps = 12;
+  const stops = [];
+  for (let i = 0; i <= steps; i++) {
+    const ratio = i / steps;
+    const pct = ((ratio / 1) * 100).toFixed(1);
+    stops.push(`${colorFromRatio(ratio)} ${pct}%`);
+  }
+  const gradient = `linear-gradient(to right, ${stops.join(", ")})`;
+
+  return m(".bubbles-color-scale", [
+    m("span.bubbles-color-scale-label", t("view_bubbles_color_scale_no_match")),
+    m(".bubbles-color-scale-gradient-nomatch", { style: { background: noMatchColor } }),
+    m("span.bubbles-color-scale-label", t("view_bubbles_color_scale_1_match")),
+    m(".bubbles-color-scale-gradient", { style: { background: gradient } }),
+    m("span.bubbles-color-scale-label.right", t("view_bubbles_color_scale_full_match")),
+  ]);
+}
+
 function circlePackingView(allTaxa, matchingTaxa) {
   if (allTaxa.length === 0) {
     return m(".listed-taxa");
   }
 
-  return m(D3ChartView, {
+  const isFilterEmpty = Checklist.filter.isEmpty();
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+
+  // Use the raw array lengths as leaf counts — these correspond 1-to-1 with
+  // terminal nodes in the hierarchy (each taxa/specimen row → one leaf).
+  const totalCount = allTaxa.length;
+  const matchingCount = matchingTaxa.length;
+
+  return m(".hierarchy-bubbles-wrapper", [
+    renderBubblesInfoBox(isFilterEmpty, mapChartMode, matchingCount, totalCount),
+    renderColorScale(isFilterEmpty),
+    m(D3ChartView, {
     id: "d3test",
     chart: circlePacking,
     options: () => {
@@ -934,5 +988,5 @@ function circlePackingView(allTaxa, matchingTaxa) {
         specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
       };
     },
-  });
+  })]);
 }

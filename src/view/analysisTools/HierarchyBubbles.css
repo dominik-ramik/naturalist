@@ -1,0 +1,65 @@
+/* ==========================================================================
+   HierarchyBubbles wrapper & info panel
+   ========================================================================== */
+
+.hierarchy-bubbles-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Info box — mirrors .chart-info-box from RegionalDistribution */
+.bubbles-info-box {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin: 10px 10px 0 10px;
+  border-left: 4px solid var(--nlblue, #55769b);
+  font-size: 0.85em;
+  color: #444;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bubbles-info-box::before {
+  content: "🛈";
+  margin-right: 8px;
+  color: var(--nlblue, #55769b);
+}
+
+/* ==========================================================================
+   Color scale strip
+   ========================================================================== */
+
+.bubbles-color-scale {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 10px 4px 10px;
+  padding: 5px;
+  font-size: 0.8em;
+  color: #555;
+  background-color: white;
+  border-radius: 4px;
+}
+
+.bubbles-color-scale-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bubbles-color-scale-gradient-nomatch {
+  width: 20px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.bubbles-color-scale-gradient {
+  flex-grow: 1;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  /* background set inline via JS sampling colorFromRatio */
+}

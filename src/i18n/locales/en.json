@@ -297,5 +297,11 @@
   "view_cat_cell_verb_row_pct_taxa": "{0} ({1} {2}) in {3} have {4}",
   "view_cat_cell_verb_row_pct_custom": "{0} ({1} {2}) with {3} also have {4}",
   "view_cat_cell_verb_col_pct_taxa": "{0} ({1} {2}) with {4} belong to {3}",
-  "view_cat_cell_verb_col_pct_custom": "{0} ({1} {2}) with {4} also have {3}"
+  "view_cat_cell_verb_col_pct_custom": "{0} ({1} {2}) with {4} also have {3}",
+  "view_bubbles_no_filter_tip": "Tip: Use the filter to highlight how matching results are distributed across the hierarchy — circles will be colored by their proportion of matches",
+  "view_bubbles_filter_info_taxa": "Color shows the proportion of matching taxa in each group — {0} of {1} taxa match the current filter",
+  "view_bubbles_filter_info_specimen": "Color shows the proportion of matching specimens in each group — {0} of {1} specimens match the current filter",
+  "view_bubbles_color_scale_no_match": "no match",
+  "view_bubbles_color_scale_1_match": "1% match",
+  "view_bubbles_color_scale_full_match": "100% match"
 }
