@@ -12,6 +12,8 @@ import { Settings } from "./Settings.js";
 import { Filter } from "./Filter.js";
 import { getSearchableTextByType } from "./customTypes/index.js";
 
+import { validateActiveToolState } from "../view/analysisTools/index.js";
+
 const templateResultSuffix = "$$templateresult";
 
 export let Checklist = {
@@ -638,6 +640,8 @@ export let Checklist = {
     }
 
     this._isDataReady = true;
+
+    validateActiveToolState(this.getData());
 
     // Clear and recompute searchable text cache
     this._searchableTextCache = {};

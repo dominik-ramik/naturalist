@@ -26,7 +26,7 @@
   border-radius: var(--pad-large, 1em);
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   /* Bottom padding makes room for the sticky footer */
-  padding-bottom: 4.5rem;
+  padding-bottom: 0.5rem;
 }
 
 /* ── Header — mirrors .manage-card-header ────────────────────────────────── */
@@ -370,4 +370,19 @@
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+.configuration-scope-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none; /* Prevents hover effects, though Mithril handles the click block */
+    filter: grayscale(100%); 
+}
+
+.configuration-scope-disabled-reason{
+    margin-top: 5px;
+    border-top: 1px solid gray;
+    padding-top: 5px;
+    color: #000000 !important;
+    opacity: 1 !important;
+    font-weight: normal;
 }

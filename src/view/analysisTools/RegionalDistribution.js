@@ -22,6 +22,25 @@ export const config = {
   info: "Visualize the regional distribution of your data, using filters to map exactly where specific records are concentrated",
   getTaxaAlongsideSpecimens: false,
 
+  getAvailability: (availableIntents, checklistData) => {
+    // 1. Filter intents based on whether they yield at least one map
+    const supportedIntents = availableIntents.filter(intent => {
+      const maps = getAvailableMaps(intent);
+      return maps.length > 0;
+    });
+
+    // 2. Return the availability object
+    return {
+      supportedIntents,
+      isAvailable: supportedIntents.length > 0,
+      toolDisabledReason: "No regional map data found in this dataset.",
+      scopeDisabledReason: (intent) => {
+        const scopeName = intent === "#T" ? "Taxa" : "Specimens";
+        return `${config.label} requires map data to be present with ${scopeName}.`;
+      }
+    };
+  },
+
   render: ({ filteredTaxa, allTaxa }) => mapChart(filteredTaxa, allTaxa),
 };
 
@@ -89,8 +108,10 @@ function mapChart(filteredTaxa, allTaxa) {
   ]);
 }
 
-function getAvailableMaps() {
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+function getAvailableMaps(intent) {
+  // Use passed intent for availability checks, fallback to current settings for UI rendering
+  const currentIntent = intent || Settings.analyticalIntent();
+  const mapChartMode = currentIntent === "#S" ? "specimen" : "taxa";
 
   if (availableMapsCache[mapChartMode] !== undefined) {
     return availableMapsCache[mapChartMode];

@@ -14,6 +14,8 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "", ski
   try {
     data = Checklist.transformDatabaseShortcodes(data);
 
+    console.log(data);
+
     data = Checklist.getBibFormatter().transformInTextCitations(
       data,
       (citeKey) => {

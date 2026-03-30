@@ -4,6 +4,7 @@ import { config as traitMatrix } from "./TraitMatrix.js";
 import { config as regionalDistribution      } from "./RegionalDistribution.js";
 
 import { Settings } from "../../model/Settings.js";
+import { Checklist } from "../../model/Checklist.js";
 
 export { SCOPE_CHOICES } from "./scopes.js";
 
@@ -80,4 +81,79 @@ export function validateToolConfig(config) {
   }
 
   return config;
+}
+
+/**
+ * Validates the currently selected analysis tool and analytical intent 
+ * against the provided checklist data. Mutates Settings to safe defaults if invalid.
+ */
+export function validateActiveToolState(checklistData) {
+  const allIntents = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  let currentToolId = Settings.viewType() || DEFAULT_TOOL;
+  let currentIntent = Settings.analyticalIntent() || "#T";
+
+  let activeTool = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
+  let availability = activeTool.getAvailability(allIntents, checklistData);
+
+  // 1. If the tool itself is completely dead for this dataset, fallback to default tool
+  if (!availability.isAvailable) {
+    currentToolId = DEFAULT_TOOL;
+    Settings.viewType(currentToolId);
+    
+    // Re-evaluate availability for the new default tool
+    activeTool = TOOL_REGISTRY[currentToolId];
+    availability = activeTool.getAvailability(allIntents, checklistData);
+  }
+
+  // 2. If the tool is valid, but the current intent (Taxa/Specimens) is not supported by it
+  if (!availability.supportedIntents.includes(currentIntent)) {
+    // Fallback to the first intent this tool *does* support
+    Settings.analyticalIntent(availability.supportedIntents[0]);
+  }
+}
+
+/**
+ * Safely attempts to change the active analysis tool.
+ * If the tool is valid, it sets it. It then checks if the current 
+ * analytical intent is supported by this new tool; if not, it auto-switches 
+ * to the first supported intent.
+ */
+export function requestToolChange(toolId, checklistData) {
+  const allIntents = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  const requestedTool = TOOL_REGISTRY[toolId];
+  
+  if (!requestedTool) return; // Ignore unknown tools
+
+  const availability = requestedTool.getAvailability(allIntents, checklistData);
+
+  if (availability.isAvailable) {
+    Settings.viewType(toolId); // Commit the tool change
+    
+    // Validate the intent against the newly selected tool
+    const currentIntent = Settings.analyticalIntent() || "#T";
+    if (!availability.supportedIntents.includes(currentIntent)) {
+      Settings.analyticalIntent(availability.supportedIntents[0]); // Auto-fallback
+    }
+  } else {
+    console.warn(`Tool ${toolId} is not available for this dataset.`);
+  }
+}
+
+/**
+ * Safely attempts to change the analytical intent (Taxa/Specimens).
+ * It validates if the CURRENTLY ACTIVE tool supports the requested intent 
+ * before committing the change.
+ */
+export function requestIntentChange(intentId, checklistData) {
+  const allIntents = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  let currentToolId = Settings.viewType() || DEFAULT_TOOL;
+  let activeTool = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
+
+  const availability = activeTool.getAvailability(allIntents, checklistData);
+
+  if (availability.supportedIntents.includes(intentId)) {
+    Settings.analyticalIntent(intentId); // Commit the intent change
+  } else {
+    console.warn(`Intent ${intentId} is not supported by the current tool ${currentToolId}.`);
+  }
 }

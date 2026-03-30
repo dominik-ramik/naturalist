@@ -21,6 +21,23 @@ export const config = {
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
   getTaxaAlongsideSpecimens: false,
 
+    getAvailability: (availableIntents, checklistData) => {
+        // 1. Filter the passed intents based on data presence
+        const supportedIntents = availableIntents.filter(intent => {
+            if(intent == "#T" || intent == "#S") {
+                return checklistData.checklist && checklistData.checklist.length > 0;
+            }
+        });
+
+        // 2. Return the standard availability object
+        return {
+            supportedIntents,
+            isAvailable: supportedIntents.length > 0,
+            toolDisabledReason: "No data found in this dataset.",
+            scopeDisabledReason: (intent) => `${config.label} is unavailable ${intent == "#S" ? "for specimens" : "for taxa"} because none were found.`
+        }
+    },
+
   parameters: () => [
     m(SelectParam, {
       label: "Maximum depth of levels displayed:",

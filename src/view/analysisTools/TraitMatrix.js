@@ -15,55 +15,87 @@ export const config = {
   label: "Trait Matrix",
   iconPath: {
     light: "./img/ui/menu/view_category_density-light.svg",
-    dark:  "./img/ui/menu/view_category_density.svg",
+    dark: "./img/ui/menu/view_category_density.svg",
   },
   info: "Evaluate the breakdown of your data by chosen traits and apply filters to focus the comparison on specific records",
   getTaxaAlongsideSpecimens: false,
+
+  getAvailability: (availableIntents, checklistData) => {
+    // 1. Filter intents based on whether they yield at least one categorical trait
+    const supportedIntents = availableIntents.filter(intent => {
+      const traits = getAvailableTraits(intent, checklistData);
+      return traits.length > 0;
+    });
+
+    // 2. Return the availability object
+    return {
+      supportedIntents,
+      isAvailable: supportedIntents.length > 0,
+      toolDisabledReason: "No categorical trait data found in this dataset.",
+      scopeDisabledReason: (intent) => {
+        const scopeName = intent === "#T" ? "Taxa" : "Specimens";
+        return `${config.label} requires categorical trait data to be present with ${scopeName}.`;
+      }
+    };
+  },
+
   render: ({ filteredTaxa }) => categoryChart(filteredTaxa),
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+/**
+ * Pure standalone helper to retrieve available categorical traits.
+ * Extracts the existing logic used to build the dropdown options.
+ */
+export const getAvailableTraits = (intent, checklistData) => {
+  if (!Checklist.filter || !Checklist.filter.data) return [];
+
+  return Object.keys(Checklist.filter.data).filter(f =>
+    ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
+  );
+};
+
 const displayStyles = [
   { name: t("view_cat_percentages_name"), method: "percentages", info: t("view_cat_percentages_info") },
-  { name: t("view_cat_counts_name"),      method: "counts",      info: t("view_cat_counts_info") },
+  { name: t("view_cat_counts_name"), method: "counts", info: t("view_cat_counts_info") },
 ];
 
 const sumMethods = [
-  { method: "taxon",    name: t("view_cat_sum_by_taxon"),    info: t("view_cat_sum_by_taxon_info") },
+  { method: "taxon", name: t("view_cat_sum_by_taxon"), info: t("view_cat_sum_by_taxon_info") },
   { method: "category", name: t("view_cat_sum_by_category"), info: t("view_cat_sum_by_category_info") },
 ];
 
 const dateBinModes = [
   { method: "month", name: t("view_cat_date_bin_month") },
-  { method: "year",  name: t("view_cat_date_bin_year")  },
+  { method: "year", name: t("view_cat_date_bin_year") },
 ];
 
 const SORT_KEY_TAXON = "__taxon__";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-let categoryToView   = Settings.categoryChartCategory();
-let categoryRoot     = Settings.categoryChartRoot();
-let display          = Settings.categoryChartDisplayMode();
-let dateBinning      = Settings.categoryChartDateBinning();
-let sumMethod        = Settings.categoryChartSumMethod();
+let categoryToView = Settings.categoryChartCategory();
+let categoryRoot = Settings.categoryChartRoot();
+let display = Settings.categoryChartDisplayMode();
+let dateBinning = Settings.categoryChartDateBinning();
+let sumMethod = Settings.categoryChartSumMethod();
 let showEmptyColumns = Settings.categoryChartShowEmptyColumns();
 
 const LS_SEC_MODE = "categoryChartSecondaryDimMode";
-const LS_SEC_CAT  = "categoryChartSecondaryDimCategory";
-const LS_SEC_BIN  = "categoryChartSecondaryDimDateBinning";
+const LS_SEC_CAT = "categoryChartSecondaryDimCategory";
+const LS_SEC_BIN = "categoryChartSecondaryDimDateBinning";
 
-let secondaryDimMode        = localStorage.getItem(LS_SEC_MODE) || "taxa";
-let secondaryDimCategory    = localStorage.getItem(LS_SEC_CAT)  || "";
-let secondaryDimDateBinning = localStorage.getItem(LS_SEC_BIN)  || "month";
+let secondaryDimMode = localStorage.getItem(LS_SEC_MODE) || "taxa";
+let secondaryDimCategory = localStorage.getItem(LS_SEC_CAT) || "";
+let secondaryDimDateBinning = localStorage.getItem(LS_SEC_BIN) || "month";
 
 if (!displayStyles.find(ds => ds.method === display)) {
   display = displayStyles[0].method;
   Settings.categoryChartDisplayMode(display);
 }
 
-let sortColumn    = null;
+let sortColumn = null;
 let sortDirection = "desc";
 let currentCellVerb = t("view_cat_click_on_cell");
 
@@ -74,8 +106,8 @@ const segBtn = (label, isSelected, onClick, title) =>
 
 function heatmapStyle(ratio) {
   if (!ratio || ratio <= 0) return "cursor: pointer;";
-  const opacity    = Math.min(0.08 + ratio * 0.74, 0.82);
-  const textColor  = opacity > 0.44 ? "#ffffff" : "#2a3a4a";
+  const opacity = Math.min(0.08 + ratio * 0.74, 0.82);
+  const textColor = opacity > 0.44 ? "#ffffff" : "#2a3a4a";
   const fontWeight = opacity > 0.44 ? "600" : "400";
   return (
     `background-color:rgba(85,118,155,${opacity.toFixed(2)});` +
@@ -163,12 +195,12 @@ function normaliseLabelValue(v) {
 function categoryVerb(catView, sumMethodOption, verbCtx) {
   const { chartMode } = verbCtx;
   const colTraitName = Checklist.getMetaForDataPath(catView)?.searchCategory || catView;
-  const unit         = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
+  const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
   const displayLabel = displayStyles.find(ds => ds.method === display)?.info || "";
 
-  return ( sumMethodOption === "taxon"
-    ? tf("view_cat_info_row_pct",  [`${displayLabel} of ${unit}`, colTraitName, verbCtx.rowTraitName])
-    : tf("view_cat_info_col_pct",  [colTraitName, verbCtx.rowTraitName]));
+  return (sumMethodOption === "taxon"
+    ? tf("view_cat_info_row_pct", [`${displayLabel} of ${unit}`, colTraitName, verbCtx.rowTraitName])
+    : tf("view_cat_info_col_pct", [colTraitName, verbCtx.rowTraitName]));
 }
 
 /**
@@ -185,7 +217,7 @@ function categoryVerb(catView, sumMethodOption, verbCtx) {
  */
 function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verbCtx) {
   const { chartMode, isCustomMode, colTraitName, rowTraitName } = verbCtx;
-  const unit     = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
+  const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
   const colLabel = `<strong>${colTraitName}: ${cKey}</strong>`;
   const rowLabel = isCustomMode
     ? `<strong>${rowTraitName}: ${rowKey}</strong>`
@@ -196,12 +228,12 @@ function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verb
     // Row-normalised: "X% (N unit) in [taxon] / with [rowTrait] have [colTrait: value]"
     verb = isCustomMode
       ? tf("view_cat_cell_verb_row_pct_custom", [percentage, matchingCount, unit, rowLabel, colLabel])
-      : tf("view_cat_cell_verb_row_pct_taxa",   [percentage, matchingCount, unit, rowLabel, colLabel]);
+      : tf("view_cat_cell_verb_row_pct_taxa", [percentage, matchingCount, unit, rowLabel, colLabel]);
   } else {
     // Column-normalised: "X% (N unit) with [colTrait: value] belong to / also have [row]"
     verb = isCustomMode
       ? tf("view_cat_cell_verb_col_pct_custom", [percentage, matchingCount, unit, rowLabel, colLabel])
-      : tf("view_cat_cell_verb_col_pct_taxa",   [percentage, matchingCount, unit, rowLabel, colLabel]);
+      : tf("view_cat_cell_verb_col_pct_taxa", [percentage, matchingCount, unit, rowLabel, colLabel]);
   }
 
   if (!Checklist.filter.isEmpty()) {
@@ -256,8 +288,8 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
     ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
     : taxon.d;
 
-  const get   = path => Checklist.getDataFromDataPath(rawData, path);
-  const toArr = v    => (Array.isArray(v) ? v : [v]);
+  const get = path => Checklist.getDataFromDataPath(rawData, path);
+  const toArr = v => (Array.isArray(v) ? v : [v]);
 
   switch (categoryType) {
     case "text":
@@ -301,7 +333,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
  */
 function buildColCategories(colCategory, binMethod) {
   const type = Checklist.filter.data[colCategory]?.type;
-  const all  = Checklist.filter.data[colCategory]?.all;
+  const all = Checklist.filter.data[colCategory]?.all;
   const cats = {};
 
   if (type === "date") {
@@ -378,8 +410,8 @@ function dataForCategoryChart(rootTaxon, taxa, colCategory, mode, allTaxa, colBi
   const colType = Checklist.filter.data[colCategory].type;
   return {
     individualResults,
-    sumByCategory:  allCategories,
-    orderedBins:    (colType === "date" || colType === "months") ? Object.keys(allCategories) : null,
+    sumByCategory: allCategories,
+    orderedBins: (colType === "date" || colType === "months") ? Object.keys(allCategories) : null,
     orderedRowBins: null,
   };
 }
@@ -423,8 +455,8 @@ function dataForCategoryChartCustomRows(taxa, colCategory, rowCategory, mode, al
   const colType = Checklist.filter.data[colCategory].type;
   return {
     individualResults,
-    sumByCategory:  allCategories,
-    orderedBins:    (colType === "date" || colType === "months") ? Object.keys(allCategories) : null,
+    sumByCategory: allCategories,
+    orderedBins: (colType === "date" || colType === "months") ? Object.keys(allCategories) : null,
     orderedRowBins: buildOrderedRowBins(rowCategory, rowBinMethod, individualResults),
   };
 }
@@ -435,8 +467,8 @@ function categoryChart(filteredTaxa) {
   const result = [];
   const isCustomMode = secondaryDimMode === "custom";
 
-  const chartMode             = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  const specimenMetaIndex     = Checklist.getSpecimenMetaIndex();
+  const chartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
   const allTaxaForInheritance = chartMode === "specimen" ? Checklist.getEntireChecklist() : filteredTaxa;
 
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
@@ -453,7 +485,7 @@ function categoryChart(filteredTaxa) {
       categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
     );
     if (categorizedData == null) {
-      categoryRoot   = "";
+      categoryRoot = "";
       Settings.categoryChartRoot("");
       categoryToView = "";
       Settings.categoryChartCategory("");
@@ -469,14 +501,14 @@ function categoryChart(filteredTaxa) {
     ? (Checklist.getMetaForDataPath(secondaryDimCategory)?.searchCategory || secondaryDimCategory)
     : "";
   const verbCtx = { chartMode, isCustomMode, colTraitName, rowTraitName };
-  const unit    = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
+  const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
 
   // ── Available filter traits ───────────────────────────────────────────────────
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(f =>
     ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
   );
 
-  const isDateCategory     = !!categoryToView      && Checklist.filter.data[categoryToView]?.type      === "date";
+  const isDateCategory = !!categoryToView && Checklist.filter.data[categoryToView]?.type === "date";
   const isDateSecondaryDim = !!secondaryDimCategory && Checklist.filter.data[secondaryDimCategory]?.type === "date";
 
   // ── Dropdown option helpers ───────────────────────────────────────────────────
@@ -555,24 +587,24 @@ function categoryChart(filteredTaxa) {
           ]),
           (isCustomMode
             ? m("select.chart-select", {
-                value:    secondaryDimCategory,
-                disabled: !isCustomMode,
-                onchange: e => {
-                  const v = e.target.value;
-                  if (v === categoryToView) {
-                    categoryToView = "";
-                    Settings.categoryChartCategory("");
-                  }
-                  secondaryDimCategory = v;
-                  localStorage.setItem(LS_SEC_CAT, v);
-                  sortColumn = null;
-                  sortDirection = "desc";
+              value: secondaryDimCategory,
+              disabled: !isCustomMode,
+              onchange: e => {
+                const v = e.target.value;
+                if (v === categoryToView) {
+                  categoryToView = "";
+                  Settings.categoryChartCategory("");
                 }
-              }, [
-                m("option", { value: "", disabled: true },
-                  "— " + t("view_cat_secondary_dim_select") + " —"),
-                ...filtersToDisplay.map(secondaryOptions),
-              ])
+                secondaryDimCategory = v;
+                localStorage.setItem(LS_SEC_CAT, v);
+                sortColumn = null;
+                sortDirection = "desc";
+              }
+            }, [
+              m("option", { value: "", disabled: true },
+                "— " + t("view_cat_secondary_dim_select") + " —"),
+              ...filtersToDisplay.map(secondaryOptions),
+            ])
             : null),
         ]),
         isCustomMode && isDateSecondaryDim ? groupByControl(secondaryDimDateBinning, v => {
@@ -649,14 +681,14 @@ function categoryChart(filteredTaxa) {
         )),
         Checklist.hasSpecimens()
           ? m(".chart-info-item",
-              chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info"))
+            chartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info"))
           : null,
       ])
   );
 
   // ── Early exit ────────────────────────────────────────────────────────────────
   if (categoryToView === "" || categorizedData == null ||
-      Object.keys(categorizedData.individualResults).length === 0) {
+    Object.keys(categorizedData.individualResults).length === 0) {
     return m(".category-chart-outer-wrapper", result);
   }
 
@@ -681,7 +713,7 @@ function categoryChart(filteredTaxa) {
 
   const baseRowKeys = isCustomMode
     ? (categorizedData.orderedRowBins
-        ?? sortByCustomOrder(Object.keys(categorizedData.individualResults), "data", secondaryDimCategory))
+      ?? sortByCustomOrder(Object.keys(categorizedData.individualResults), "data", secondaryDimCategory))
     : Object.keys(categorizedData.individualResults);
 
   const getRatio = (row, cKey) => {
@@ -762,12 +794,12 @@ function categoryChart(filteredTaxa) {
 
     const dataCells = visibleCategories.map(cKey => {
       if (Object.prototype.hasOwnProperty.call(row.categories, cKey)) {
-        const ratio       = getRatio(row, cKey);
+        const ratio = getRatio(row, cKey);
         const verbContent = cellVerb(
           toPctString(ratio), cKey, rowKey, row.categories[cKey], sumMethod, verbCtx
         );
         return m("td.category-cell-filled", {
-          style:   heatmapStyle(ratio),
+          style: heatmapStyle(ratio),
           onclick: () => { currentCellVerb = verbContent; },
         }, m("span", numericDisplay(row.categories[cKey], toPctString(ratio))));
       }
@@ -782,7 +814,7 @@ function categoryChart(filteredTaxa) {
     ? buildBreadcrumbPath(categoryRoot, filteredTaxa) : [];
 
   const isDefaultVerb = currentCellVerb === t("view_cat_click_on_cell");
-  const verbDisplay   = isDefaultVerb ? m("span.cell-verb-prompt", currentCellVerb) : currentCellVerb;
+  const verbDisplay = isDefaultVerb ? m("span.cell-verb-prompt", currentCellVerb) : currentCellVerb;
 
   result.push(
     !isCustomMode && categoryRoot !== ""
