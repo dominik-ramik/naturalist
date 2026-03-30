@@ -468,7 +468,7 @@ export let DataManager = function () {
         lang.code,
         0.5
       );
-      
+
       let version = {
         languageName: lang.name,
         fallbackUiLang: lang.fallbackLanguage,
@@ -482,7 +482,7 @@ export let DataManager = function () {
         dataset: {
           meta: compileMeta(lang),
           checklist: data.sheets.checklist.data[lang.code],
-          singleAccessKeys: compileSingleAccessKeys(lang, data.sheets.checklist.data[lang.code], additionalAssets),
+          singleAccessKeys: data.sheets.checklist.data && data.sheets.checklist.data[lang.code] ? compileSingleAccessKeys(lang, data.sheets.checklist.data[lang.code], additionalAssets) : [],
         },
       };
 
@@ -1212,14 +1212,19 @@ export let DataManager = function () {
         }
       });
 
-      //ensure all specimen names are unique if specimen column is present
-      console.log("Specimen column info:", Checklist.getTaxaMeta());
+      const localTaxaMeta = {};
+      const taxaTableData = data.sheets.content.tables.taxa.data[lang.code] || [];
 
-      const specimenMetaKeys = Object.values(Checklist.getTaxaMeta()).map(m => m.name.toLowerCase().trim());
-      console.log("Specimen column key:", specimenMetaKeys);
-      const specimenMetaIndex = specimenMetaKeys.indexOf("specimen");
-      console.log("Specimen column info:", specimenMetaIndex);
+      let specimenMetaIndex = -1;
 
+      taxaTableData.forEach(function (row) {
+        if (row.columnName) {
+          localTaxaMeta[row.columnName] = { name: row.taxonName };
+          if (row.taxonName.trim().toLowerCase() === "specimen") {
+            specimenMetaIndex = Object.keys(localTaxaMeta).indexOf(row.columnName);
+          }
+        }
+      });
 
       if (specimenMetaIndex !== -1) {
         const seenSpecimenIds = new Map(); // specimen name -> first row number
