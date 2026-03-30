@@ -1079,7 +1079,7 @@ export let Checklist = {
       if (Array.isArray(specimenVal) && Array.isArray(parentVal)) {
         // Merge arrays: concatenate and de-duplicate.
         // No positional sensitivity in our data model.
-        result[key] = [...new Set([...parentVal, ...specimenVal])];
+        result[key] = specimenVal.length > 0 ? specimenVal : parentVal;
       } else if (
         typeof specimenVal === "object" &&
         !Array.isArray(specimenVal) &&
