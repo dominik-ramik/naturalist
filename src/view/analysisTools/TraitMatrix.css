@@ -21,10 +21,6 @@
   flex: 1 1 200px;
 }
 
-.chart-control-group-full {
-  flex: 1 1 100%;
-}
-
 .chart-control-group label {
   font-size: 0.85em;
   font-weight: bold;
@@ -61,7 +57,7 @@
 }
 
 .chart-segmented-control.disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -98,6 +94,7 @@
   font-size: 0.85em;
   color: #444;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .chart-info-item {
@@ -129,6 +126,7 @@
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   flex-wrap: wrap;
   min-height: 2.5em;
+  flex-shrink: 0;
 }
 
 .category-nav-up-btn {
@@ -194,11 +192,16 @@
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   Outer wrapper
+   flex column — panel is flex-shrink:0, table takes all remaining space.
+   ========================================================================== */
 .category-chart-outer-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  position: relative; /* stacking context for .tm-info-overlay */
 }
 
 /* ==========================================================================
@@ -210,19 +213,12 @@
   max-width: 100%;
   padding: 0 10px;
   box-sizing: border-box;
-  flex: 1;
+  flex: 1 1 0;   /* takes all remaining vertical space */
   min-width: 0;
-  min-height: 0;
-  /* Crucial: allows nested scrolling */
+  min-height: 0; /* crucial: prevents flex child from refusing to shrink */
   margin-bottom: 0.5em;
-  /* Optional: gives some bottom breathing room */
 }
 
-/*
-   NOTE: overflow:hidden here would break position:sticky on descendant th/td.
-   We rely on the table's own scroll area for clipping. The box-shadow gives
-   the card appearance; the table cells provide the white fill to the edges.
-*/
 .table-wrapper {
   background-color: white;
   border-radius: 8px;
@@ -232,15 +228,9 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  /* Crucial: allows child to scroll */
 }
 
-/*
-   Scrollable area for the table.
-   overflow-x: auto handles wide tables; vertical scroll is handled by the page.
-   NO top padding — the sticky header row must sit at exactly top:0 with no gap,
-   otherwise scrolled content bleeds above the header.
-*/
+/* NO top padding — sticky header must sit flush at top:0. */
 .table-scroll-area {
   flex: 1;
   min-width: 0;
@@ -251,20 +241,18 @@
 }
 
 /* ==========================================================================
-   Cell Verb — info banner at the TOP of the table wrapper (above the table).
-   Triggered on cell hover; click also pins it (for mobile).
+   Cell Verb
    ========================================================================== */
 .cell-verb {
   font-size: 0.8rem;
-  /* matches table base font */
   color: #555;
   padding: 7px 14px;
   background-color: #f5f7fa;
   border-bottom: 1px solid #e0e4e8;
-  /* Top corners match the wrapper's border-radius */
   border-radius: 8px 8px 0 0;
   min-height: 2.4em;
   line-height: 2;
+  flex-shrink: 0;
 }
 
 .cell-verb-prompt {
@@ -273,20 +261,15 @@
 }
 
 /* ==========================================================================
-   Category View Table — unified base font
-   All text in the table inherits this so everything is visually consistent.
+   Category View Table
    ========================================================================== */
 table.category-view {
   table-layout: fixed;
   border-collapse: collapse;
   width: 100%;
-  /* Single font-size for the whole table — overrides happen only where needed */
   font-size: 0.8rem;
 }
 
-/* ==========================================================================
-   First column — taxon name cells (fixed 17em)
-   ========================================================================== */
 table.category-view td.category-taxon-cell {
   width: 17em;
   min-width: 17em;
@@ -296,14 +279,12 @@ table.category-view td.category-taxon-cell {
   vertical-align: middle;
 }
 
-/* Chip/pill for both drillable and leaf taxa */
 .category-taxon-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 2px 8px 2px 7px;
   border-radius: 20px;
-  /* font-size: inherit — matches table base 0.8rem */
   line-height: 1.3;
   max-width: 100%;
   box-sizing: border-box;
@@ -333,7 +314,6 @@ table.category-view td.category-taxon-cell {
   font-weight: 400;
 }
 
-/* Children-count badge inside drillable chips */
 .category-taxon-count {
   flex-shrink: 0;
   background-color: rgba(85, 118, 155, 0.13);
@@ -344,11 +324,6 @@ table.category-view td.category-taxon-cell {
   font-weight: 600;
 }
 
-/* ==========================================================================
-   Data columns — sizing, borders, heatmap cells
-   ========================================================================== */
-
-/* All data columns: uniform width, center-aligned */
 table.category-view td:not(:first-child),
 table.category-view th:not(:first-child) {
   width: 6.3em;
@@ -356,52 +331,37 @@ table.category-view th:not(:first-child) {
   max-width: 6.3em;
   box-sizing: border-box;
   text-align: center;
-  /* font-size: inherit — unified via table.category-view */
   border-left: 1px solid rgba(0, 0, 0, 0.055);
 }
 
-/* Filled heatmap cells: bg + text color set inline by heatmapStyle() */
 table.category-view td.category-cell-filled {
   padding: 2px 4px;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
 
-/* Empty cells: dash placeholder, faint tint */
 table.category-view td.category-cell-empty {
   background-color: rgba(0, 0, 0, 0.018);
   padding: 2px 4px;
   color: #ccc;
-  /* text-align: center inherited from data column rule above */
 }
 
-/*
-   Row hover: inset box-shadow overlays a uniform tint on every td regardless
-   of what background it already has (white, heatmap colour, etc.).
-   filter: brightness() was wrong here — it affected sticky vs non-sticky cells
-   differently and looked bad over heatmap backgrounds.
-*/
 table.category-view tr:not(:first-child):hover td {
   box-shadow: inset 0 0 0 9999px rgba(85, 118, 155, 0.11);
 }
 
 /* ==========================================================================
-   Column headers — horizontal wrapping text, sortable, aligned label-top / icon-bottom
+   Column Headers
    ========================================================================== */
 .category-col-header {
   cursor: pointer;
   user-select: none;
-  /* Horizontal text wraps in the fixed column width */
   white-space: normal;
   overflow-wrap: break-word;
   word-break: break-word;
-  /* Vertical alignment of the th cell itself: top so that short labels
-     don't float oddly when other headers in the same row are taller */
   vertical-align: top;
   text-align: center;
   padding: 8px 4px 6px;
-  /* Sticky: top:0 so the header sits flush against the container edge —
-     any padding here would create the "content bleeds above header" gap */
   position: sticky;
   top: 0;
   background-color: white;
@@ -410,20 +370,13 @@ table.category-view tr:not(:first-child):hover td {
   border-bottom: 2px solid #e0e4e8;
 }
 
-.category-col-header:hover {
-  background-color: #f4f7fa;
-}
+.category-col-header:hover { background-color: #f4f7fa; }
 
 .category-col-header.col-sorted-asc,
 .category-col-header.col-sorted-desc {
   border-bottom-color: var(--nlblue, #55769b);
 }
 
-/*
-   Inner layout: label at the TOP, sort icon pinned to the BOTTOM.
-   min-height ensures there's always room for both even on short labels.
-   justify-content: space-between pushes them to opposite ends of the flex column.
-*/
 .category-header-inner {
   display: flex;
   flex-direction: column;
@@ -441,13 +394,10 @@ table.category-view tr:not(:first-child):hover td {
 }
 
 .category-header-label {
-  /* font-size: inherit — same 0.8rem as the rest of the table */
   font-weight: 700;
-  /* bold — applied to ALL header labels including first col */
   color: #444;
   line-height: 1.25;
   text-align: center;
-  /* Allow the label to occupy the top portion and wrap if needed */
   flex: 1;
   display: flex;
   align-items: flex-start;
@@ -460,10 +410,6 @@ table.category-view tr:not(:first-child):hover td {
   color: var(--nlblue, #55769b);
 }
 
-/*
-   Sort icon: ~2× larger than the old 0.65em, pinned to the bottom.
-   Uses flex-shrink:0 so it never gets squeezed.
-*/
 .category-sort-icon {
   font-size: 1.1em;
   line-height: 1;
@@ -472,30 +418,19 @@ table.category-view tr:not(:first-child):hover td {
   margin-top: 2px;
 }
 
-.category-sort-icon.inactive {
-  color: #d4d9e0;
-}
+.category-sort-icon.inactive { color: #d4d9e0; }
 
-/* ==========================================================================
-   Corner cell (top-left): sticky on BOTH axes.
-   No longer uses .up-button — replaced by .category-corner-header which
-   shares the full .category-col-header treatment.
-   ========================================================================== */
 .category-corner-header {
-  /* Override data-column width constraints for the first column */
   width: 17em !important;
   min-width: 17em !important;
   max-width: 17em !important;
   text-align: left !important;
-  /* Sticky on both axes */
   position: sticky !important;
   left: 0 !important;
   top: 0 !important;
   z-index: 200 !important;
-  /* above sticky-col (10) and sticky-row (50) */
 }
 
-/* Row-count badge shown in the first column header */
 .category-header-row-count {
   flex-shrink: 0;
   background-color: rgba(85, 118, 155, 0.13);
@@ -507,9 +442,6 @@ table.category-view tr:not(:first-child):hover td {
   margin-top: 2px;
 }
 
-/* ==========================================================================
-   Sticky first column (left) — must have opaque bg to cover scrolled data
-   ========================================================================== */
 table.category-view .sticky-column {
   position: sticky;
   left: 0;
@@ -517,10 +449,6 @@ table.category-view .sticky-column {
   background-color: white;
 }
 
-/* ==========================================================================
-   Sticky header row — MUST have opaque background.
-   'transparent' was the original bug that let row content bleed above the header.
-   ========================================================================== */
 table.category-view .sticky-row {
   position: sticky;
   top: 0;
@@ -528,6 +456,430 @@ table.category-view .sticky-row {
   z-index: 50;
 }
 
-table.category-view .header-row {
+table.category-view .header-row { background-color: white; }
+
+/* ==========================================================================
+   Collapsible Controls Panel
+   Mirrors .sak-card: #eceff2, white border, shadow, large border-radius.
+   flex-shrink:0 ensures it never steals space from the table below.
+   ========================================================================== */
+.tm-panel {
+  flex-shrink: 0;
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+  margin: 10px 10px 6px 10px;
+  overflow: hidden; /* keeps rounded corners on children */
+}
+
+/* Expanded header: title + ? + ▲ */
+.tm-panel-header--expanded {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 2.4em;
+}
+
+/* Collapsed header: summary chips + Edit button. Whole row is clickable. */
+.tm-panel-header--collapsed {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 2.4em;
+  transition: background-color 0.12s;
+}
+
+.tm-panel-header--collapsed:hover {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+.tm-panel-title {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex: 1;
+}
+
+/* ▲ Collapse button */
+.tm-panel-collapse-btn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #666;
+  font-size: 0.82em;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background-color 0.15s;
+}
+
+.tm-panel-collapse-btn:hover {
   background-color: white;
+  color: #333;
+}
+
+/* "▼ Edit settings" button in collapsed header */
+.tm-panel-edit-btn {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--nlblue, #55769b);
+  background-color: rgba(85, 118, 155, 0.08);
+  color: var(--nlblue, #55769b);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.tm-panel-edit-btn:hover {
+  background-color: rgba(85, 118, 155, 0.15);
+}
+
+/* Panel body — contains primary controls + living panel + refine strip */
+.tm-panel-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Inner flex row for the primary controls (trait selector + row grouping) */
+.tm-controls-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px 8px 14px;
+  align-items: flex-start;
+}
+
+/* ==========================================================================
+   Collapsed summary chips
+   ========================================================================== */
+.tm-panel-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3em;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85em;
+}
+
+.tm-summary-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background-color: rgba(85, 118, 155, 0.1);
+  color: var(--nlblue, #55769b);
+  font-weight: 600;
+  font-size: 0.9em;
+  white-space: nowrap;
+  max-width: 18em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tm-summary-chip--muted {
+  background-color: transparent;
+  color: #999;
+  font-weight: normal;
+  font-style: italic;
+}
+
+.tm-summary-sep {
+  color: #ccc;
+  font-size: 0.8em;
+  user-select: none;
+}
+
+/* ==========================================================================
+   Help / recall-info button
+   ========================================================================== */
+.tm-help-btn {
+  flex-shrink: 0;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  border: 1px solid #bbb;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: var(--nlblue, #55769b);
+  font-size: 0.82em;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.tm-help-btn:hover {
+  background-color: white;
+  border-color: var(--nlblue, #55769b);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   Living Panel
+   ========================================================================== */
+.tm-living-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+  padding: 7px 14px;
+  margin: 0 14px 0 14px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(85, 118, 155, 0.18);
+  border-left: 3px solid var(--nlblue, #55769b);
+  border-radius: 8px;
+  font-size: 0.82em;
+  color: #444;
+}
+
+.tm-living-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.tm-living-flip {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--nlblue, #55769b);
+  background-color: rgba(85, 118, 155, 0.06);
+  color: var(--nlblue, #55769b);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.tm-living-flip:hover {
+  background-color: rgba(85, 118, 155, 0.13);
+}
+
+.tm-living-filter {
+  flex-basis: 100%;
+  font-size: 0.9em;
+  color: #888;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Refine Strip
+   ========================================================================== */
+.tm-refine-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1.25em;
+  padding: 7px 14px 10px 14px;
+}
+
+.tm-refine-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-shrink: 0;
+}
+
+.tm-refine-label {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.tm-refine-segmented { font-size: 0.88em; }
+.tm-refine-segmented button { padding: 4px 10px; }
+
+.tm-refine-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.82em;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.tm-refine-checkbox input[type="checkbox"] {
+  width: 0.95em;
+  height: 0.95em;
+  cursor: pointer;
+  accent-color: var(--nlblue, #55769b);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Empty / Welcome State
+   ========================================================================== */
+.tm-empty-state {
+  flex: 1 1 0;
+  overflow-y: auto;
+  background-color: rgba(255, 255, 255, 0.55);
+  border: 1px solid white;
+  border-radius: var(--pad-large, 1em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  padding: 1.5em 1.75em;
+  margin: 0 10px 10px 10px;
+  color: #444;
+}
+
+.tm-welcome-title {
+  margin: 0 0 0.5em 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.tm-welcome-body {
+  font-size: 0.9em;
+  line-height: 1.55;
+  color: #555;
+  margin: 0 0 0.6em 0;
+}
+
+.tm-welcome-examples-intro {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #555;
+  margin: 2em 0 0.3em 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tm-welcome-examples {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.88em;
+  color: #555;
+  line-height: 1.8;
+}
+
+.tm-welcome-reset-btn {
+  display: inline-block;
+  margin-top: 1.25em;
+  padding: 0.45em 1em;
+  border-radius: 20px;
+  border: 1px solid #bbb;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: var(--nlblue, #55769b);
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.tm-welcome-reset-btn:hover {
+  background-color: white;
+  border-color: var(--nlblue, #55769b);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   Info Overlay  (z-index 9999 so it reliably floats above everything)
+   ========================================================================== */
+.tm-info-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.tm-info-overlay-card {
+  position: relative;
+  background-color: #eceff2;
+  border: 1px solid white;
+  border-radius: var(--pad-large, 1em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  padding: 1.5em 1.75em;
+  max-width: 480px;
+  width: 100%;
+  cursor: default;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tm-overlay-close-btn {
+  position: absolute;
+  top: 0.75em;
+  right: 0.85em;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #666;
+  font-size: 0.85em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s;
+  line-height: 1;
+}
+
+.tm-overlay-close-btn:hover {
+  background-color: white;
+  color: #333;
+}
+
+/* ==========================================================================
+   Responsive — narrow screens
+   ========================================================================== */
+@media (max-width: 700px) {
+  .tm-refine-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6em;
+  }
+
+  .tm-refine-row{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4em;
+  }
+
+  .tm-info-overlay {
+    align-items: center;
+  }
+
+   /* 1. Stop clipping: let the column grow beyond the viewport and scroll */
+  .category-chart-outer-wrapper {
+    height: auto;          /* no longer locked to parent height */
+    min-height: 100%;      /* still fills the parent when content is short */
+    overflow-y: auto;      /* outer scroll: panel → table, just like any page */
+    overflow-x: hidden;
+  }
+
+  /* 2. Give the table a concrete viewport-relative height so it:
+        a) is always visible and reachable by scrolling down past the panel
+        b) still scrolls internally (both axes) for its own content       */
+  .table-flex-container {
+    flex: none;            /* stop fighting for remaining flex space (there is none) */
+    height: 65vh;          /* enough to show the table without wasting screen space */
+    min-height: 240px;     /* safety floor for very small phones */
+  }
 }
