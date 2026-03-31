@@ -206,7 +206,8 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  position: relative; /* stacking context for .tm-info-overlay */
+  position: relative;
+  /* stacking context for .tm-info-overlay */
 }
 
 /* ==========================================================================
@@ -218,9 +219,11 @@
   max-width: 100%;
   padding: 0 10px;
   box-sizing: border-box;
-  flex: 1 1 0;   /* takes all remaining vertical space */
+  flex: 1 1 0;
+  /* takes all remaining vertical space */
   min-width: 0;
-  min-height: 0; /* crucial: prevents flex child from refusing to shrink */
+  min-height: 0;
+  /* crucial: prevents flex child from refusing to shrink */
   margin-bottom: 0.5em;
 }
 
@@ -375,7 +378,9 @@ table.category-view tr:not(:first-child):hover td {
   border-bottom: 2px solid #e0e4e8;
 }
 
-.category-col-header:hover { background-color: #f4f7fa; }
+.category-col-header:hover {
+  background-color: #f4f7fa;
+}
 
 .category-col-header.col-sorted-asc,
 .category-col-header.col-sorted-desc {
@@ -423,7 +428,9 @@ table.category-view tr:not(:first-child):hover td {
   margin-top: 2px;
 }
 
-.category-sort-icon.inactive { color: #d4d9e0; }
+.category-sort-icon.inactive {
+  color: #d4d9e0;
+}
 
 .category-corner-header {
   width: 17em !important;
@@ -461,7 +468,9 @@ table.category-view .sticky-row {
   z-index: 50;
 }
 
-table.category-view .header-row { background-color: white; }
+table.category-view .header-row {
+  background-color: white;
+}
 
 /* ==========================================================================
    Collapsible Controls Panel
@@ -475,7 +484,8 @@ table.category-view .header-row { background-color: white; }
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   border-radius: var(--pad-large, 1em);
   margin: 10px 10px 6px 10px;
-  overflow: hidden; /* keeps rounded corners on children */
+  overflow: hidden;
+  /* keeps rounded corners on children */
 }
 
 /* Expanded header: title + ? + ▲ */
@@ -645,18 +655,17 @@ table.category-view .header-row { background-color: white; }
    ========================================================================== */
 .tm-living-panel {
   display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5em 1em;
-    padding: 7px 14px;
-    margin: 0 14px 0 14px;
-    background-color: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(85, 118, 155, 0.18);
-    border-bottom: 3px solid var(--nlblue, #55769b);
-    border-top: 3px solid var(--nlblue, #55769b);
-    border-radius: 8px;
-    font-size: 0.82em;
-    color: #444;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+  padding: 14px 14px;
+  margin: 0 14px 0 14px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(85, 118, 155, 0.18);
+  border-left: 3px solid var(--nlblue, #55769b);
+  border-radius: 8px;
+  font-size: 0.82em;
+  color: #444;
 }
 
 .tm-living-text {
@@ -686,7 +695,6 @@ table.category-view .header-row { background-color: white; }
 .tm-living-filter {
   flex-basis: 100%;
   font-size: 0.9em;
-  color: #888;
   font-style: italic;
 }
 
@@ -717,8 +725,13 @@ table.category-view .header-row { background-color: white; }
   white-space: nowrap;
 }
 
-.tm-refine-segmented { font-size: 0.88em; }
-.tm-refine-segmented button { padding: 4px 10px; }
+.tm-refine-segmented {
+  font-size: 0.88em;
+}
+
+.tm-refine-segmented button {
+  padding: 4px 10px;
+}
 
 .tm-refine-checkbox {
   display: flex;
@@ -868,7 +881,7 @@ table.category-view .header-row { background-color: white; }
     gap: 0.6em;
   }
 
-  .tm-refine-row{
+  .tm-refine-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.4em;
@@ -878,11 +891,14 @@ table.category-view .header-row { background-color: white; }
     align-items: center;
   }
 
-   /* 1. Stop clipping: let the column grow beyond the viewport and scroll */
+  /* 1. Stop clipping: let the column grow beyond the viewport and scroll */
   .category-chart-outer-wrapper {
-    height: auto;          /* no longer locked to parent height */
-    min-height: 100%;      /* still fills the parent when content is short */
-    overflow-y: auto;      /* outer scroll: panel → table, just like any page */
+    height: auto;
+    /* no longer locked to parent height */
+    min-height: 100%;
+    /* still fills the parent when content is short */
+    overflow-y: auto;
+    /* outer scroll: panel → table, just like any page */
     overflow-x: hidden;
   }
 
@@ -890,8 +906,11 @@ table.category-view .header-row { background-color: white; }
         a) is always visible and reachable by scrolling down past the panel
         b) still scrolls internally (both axes) for its own content       */
   .table-flex-container {
-    flex: none;            /* stop fighting for remaining flex space (there is none) */
-    height: 65vh;          /* enough to show the table without wasting screen space */
-    min-height: 240px;     /* safety floor for very small phones */
+    flex: none;
+    /* stop fighting for remaining flex space (there is none) */
+    height: 65vh;
+    /* enough to show the table without wasting screen space */
+    min-height: 240px;
+    /* safety floor for very small phones */
   }
 }

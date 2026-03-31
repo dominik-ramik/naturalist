@@ -575,11 +575,11 @@ export let Checklist = {
           let leafData = Checklist.getAllLeafData(value, false, dataPath);
 
           if (
-  Checklist.filter[dataType][dataPath].type == "text" ||
-  Checklist.filter[dataType][dataPath].type == "map regions" ||
-  Checklist.filter[dataType][dataPath].type == "badge"  ||
-  Checklist.filter[dataType][dataPath].type == "months"
-) {
+            Checklist.filter[dataType][dataPath].type == "text" ||
+            Checklist.filter[dataType][dataPath].type == "map regions" ||
+            Checklist.filter[dataType][dataPath].type == "badge" ||
+            Checklist.filter[dataType][dataPath].type == "months"
+          ) {
             leafData.forEach(function (value) {
               if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {
                 Checklist.filter[dataType][dataPath].all.push(value);
@@ -1052,16 +1052,24 @@ export let Checklist = {
   },
 
   /**
-   * Deep merges two data blobs. specimenData values take precedence over
-   * parentData values when both are non-null and non-empty.
-   *
-   * See getEffectiveDataForNode for merge behaviour notes and TODOs.
-   *
-   * @param {Object} parentData - The parent taxon's .d blob.
-   * @param {Object} specimenData - The specimen's own .d blob.
-   * @returns {Object} Merged data blob.
+     * Helper to check if a value is considered "empty".
+     * Catches null, undefined, "", [], and {}.
+     */
+  _isValueEmpty: function (val) {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string" && val.trim() === "") return true;
+    if (Array.isArray(val) && val.length === 0) return true;
+    if (typeof val === "object" && !Array.isArray(val) && Object.keys(val).length === 0) return true;
+    return false;
+  },
+
+  /**
+   * Deep merges specimen data into parent data based on schema formatting.
+   * @param {Object} parentData - The base data (target)
+   * @param {Object} specimenData - The incoming data to merge
+   * @param {string} currentPath - The dot-notation path for fetching metadata
    */
-  _deepMergeDataBlobs: function (parentData, specimenData) {
+  _deepMergeDataBlobs: function (parentData, specimenData, currentPath = "") {
     if (!parentData) return specimenData || {};
     if (!specimenData) return parentData || {};
 
@@ -1072,32 +1080,54 @@ export let Checklist = {
       const parentVal = parentData[key];
 
       if (specimenVal === null || specimenVal === undefined) {
-        // Specimen has nothing — keep parent value
+        // Specimen has absolutely nothing — keep parent value
         return;
       }
 
-      if (Array.isArray(specimenVal) && Array.isArray(parentVal)) {
-        // Merge arrays: concatenate and de-duplicate.
-        // No positional sensitivity in our data model.
-        result[key] = specimenVal.length > 0 ? specimenVal : parentVal;
-      } else if (
-        typeof specimenVal === "object" &&
-        !Array.isArray(specimenVal) &&
-        typeof parentVal === "object" &&
-        !Array.isArray(parentVal) &&
-        parentVal !== null
-      ) {
-        // Shallow merge objects — specimen keys win.
-        // TODO: This is intentionally naive for now. If deeply nested
-        // object types are added in future (beyond map regions, which
-        // are one level deep), this should be made recursive.
-        result[key] = Object.assign({}, parentVal, specimenVal);
+      // 1. Build the path to fetch metadata
+      const dataPath = currentPath ? `${currentPath}.${key}` : key;
+      const meta = Checklist.getMetaForDataPath(dataPath);
+      const formatting = meta ? (meta.formatting || "text") : "text";
+
+      // 2. Determine if this node should be recursed into
+      const isStructural = formatting === "" || formatting === "text";
+
+      if (isStructural) {
+        // --- RECURSIVE STRUCTURAL MERGE ---
+        if (Array.isArray(specimenVal) && Array.isArray(parentVal)) {
+          // Merge arrays by concatenation.
+          // Using Set seamlessly deduplicates primitive values (e.g. ["tree", "tree"] -> ["tree"])
+          // while safely keeping distinct object references side-by-side.
+          result[key] = Array.from(new Set([...parentVal, ...specimenVal]));
+
+        } else if (
+          typeof specimenVal === "object" &&
+          !Array.isArray(specimenVal) &&
+          typeof parentVal === "object" &&
+          !Array.isArray(parentVal) &&
+          parentVal !== null
+        ) {
+          // Drill down into nested objects (e.g., 'info' -> 'habitsearch')
+          result[key] = this._deepMergeDataBlobs(parentVal, specimenVal, dataPath);
+
+        } else {
+          // Scalar fallback for structural types: Specimen wins if it has data
+          const isEmpty = this._isValueEmpty(specimenVal);
+          result[key] = isEmpty ? parentVal : specimenVal;
+        }
       } else {
-        // Scalar: specimen wins if non-empty string or non-null value
-        const isEmpty =
-          specimenVal === "" ||
-          (typeof specimenVal === "string" && specimenVal.trim() === "");
-        result[key] = isEmpty ? parentVal : specimenVal;
+        // --- ATOMIC LITERAL MERGE (e.g., "map regions", "months") ---
+        // Treat as opaque: Perform merge ONLY if the target (parent) doesn't have it defined at all.
+        const parentEmpty = this._isValueEmpty(parentVal);
+        const specimenEmpty = this._isValueEmpty(specimenVal);
+
+        if (parentEmpty && !specimenEmpty) {
+          // Parent lacks data, specimen provides it -> Specimen wins
+          result[key] = specimenVal;
+        } else {
+          // Parent already has data (or both are empty) -> Parent wins
+          result[key] = parentVal;
+        }
       }
     });
 
