@@ -51,8 +51,8 @@ export const getAvailableTraits = (intent, checklistData) => {
 
 // Counts first — absolute numbers are universally understandable as a starting point.
 const displayStyles = [
-  { name: t("view_cat_counts_name"), method: "counts" },
   { name: t("view_cat_percentages_name"), method: "percentages" },
+  { name: t("view_cat_counts_name"), method: "counts" },
 ];
 
 const dateBinModes = [
@@ -454,7 +454,7 @@ function renderLivingPanel(rowDimLabel, colTraitName, unit) {
 
   return m(".tm-living-panel", [
     m("span.tm-living-text", m.trust(text)),
-    flipLabel ? m("button.tm-living-flip", {
+    false && flipLabel ? m("button.tm-living-flip", {
       onclick: () => {
         sumMethod = sumMethod === "taxon" ? "category" : "taxon";
         Settings.categoryChartSumMethod(sumMethod);
@@ -656,7 +656,7 @@ function categoryChart(filteredTaxa) {
           [
             m("img.tm-panel-collapse-img", { src: "./img/ui/search/collapse.svg" })
             ,
-          t("tm_panel_edit_close")
+            t("tm_panel_edit_close")
           ]
         )
         : null,
@@ -725,7 +725,7 @@ function categoryChart(filteredTaxa) {
         ])
         : null,
 
-      categoryToView !== "" && isCustomMode && isDateSecondaryDim
+      categoryToView !== "" && isCustomMode && (isDateSecondaryDim || 1 == 1)
         ? groupByControl(secondaryDimDateBinning, v => {
           secondaryDimDateBinning = v;
           localStorage.setItem(LS_SEC_BIN, v);
@@ -758,7 +758,7 @@ function categoryChart(filteredTaxa) {
       // because in counts mode sumMethod has no effect on the numbers displayed,
       // but it still affects heatmap intensity so we grey rather than hide.
       m(".tm-refine-row", [
-        m("span.tm-refine-label", t("tm_compare_within")),
+        m("span.tm-refine-label" + (display !== "percentages" ? ".disabled" : ""), t("tm_compare_within")),
         m(".chart-segmented-control.tm-refine-segmented" + (display !== "percentages" ? ".disabled" : ""), [
           segBtn(rowDimLabel, sumMethod === "taxon", () => {
             sumMethod = "taxon"; Settings.categoryChartSumMethod("taxon");

@@ -312,7 +312,7 @@
   "tm_rows_custom": "Another trait",
   "tm_rows_custom_placeholder": "— Choose a grouping trait —",
   "tm_show_as": "Show as",
-  "tm_compare_within": "Compare within each",
+  "tm_compare_within": "of contribution to each",
   "tm_empty_cols_checkbox": "Show {0} empty column(s)",
   "tm_empty_rows_checkbox": "Show {0} {1} row(s) with no data",
   "tm_panel_title": "Analysis settings",
