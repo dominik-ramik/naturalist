@@ -65,32 +65,32 @@ const SORT_KEY_TAXON = "__taxon__";
 // ─── State ────────────────────────────────────────────────────────────────────
 
 let categoryToView = Settings.categoryChartCategory();
-let categoryRoot   = Settings.categoryChartRoot();
-let display        = Settings.categoryChartDisplayMode();
-let dateBinning    = Settings.categoryChartDateBinning();
-let sumMethod      = Settings.categoryChartSumMethod();
+let categoryRoot = Settings.categoryChartRoot();
+let display = Settings.categoryChartDisplayMode();
+let dateBinning = Settings.categoryChartDateBinning();
+let sumMethod = Settings.categoryChartSumMethod();
 let showEmptyColumns = Settings.categoryChartShowEmptyColumns();
 
-const LS_SEC_MODE        = "categoryChartSecondaryDimMode";
-const LS_SEC_CAT         = "categoryChartSecondaryDimCategory";
-const LS_SEC_BIN         = "categoryChartSecondaryDimDateBinning";
+const LS_SEC_MODE = "categoryChartSecondaryDimMode";
+const LS_SEC_CAT = "categoryChartSecondaryDimCategory";
+const LS_SEC_BIN = "categoryChartSecondaryDimDateBinning";
 const LS_SHOW_EMPTY_ROWS = "categoryChartShowEmptyRows";
 const LS_PANEL_COLLAPSED = "tmControlsCollapsed";
 
-let secondaryDimMode        = localStorage.getItem(LS_SEC_MODE) || "taxa";
-let secondaryDimCategory    = localStorage.getItem(LS_SEC_CAT) || "";
+let secondaryDimMode = localStorage.getItem(LS_SEC_MODE) || "taxa";
+let secondaryDimCategory = localStorage.getItem(LS_SEC_CAT) || "";
 let secondaryDimDateBinning = localStorage.getItem(LS_SEC_BIN) || "month";
-let showEmptyRows           = localStorage.getItem(LS_SHOW_EMPTY_ROWS) !== null
+let showEmptyRows = localStorage.getItem(LS_SHOW_EMPTY_ROWS) !== null
   ? localStorage.getItem(LS_SHOW_EMPTY_ROWS) === "true" : true;
-let tmControlsCollapsed     = localStorage.getItem(LS_PANEL_COLLAPSED) === "true";
-let tmInfoOverlayVisible    = false;
+let tmControlsCollapsed = localStorage.getItem(LS_PANEL_COLLAPSED) === "true";
+let tmInfoOverlayVisible = false;
 
 if (!displayStyles.find(ds => ds.method === display)) {
   display = displayStyles[0].method;
   Settings.categoryChartDisplayMode(display);
 }
 
-let sortColumn    = null;
+let sortColumn = null;
 let sortDirection = "desc";
 let currentCellVerb = t("view_cat_click_on_cell");
 
@@ -102,7 +102,7 @@ const segBtn = (label, isSelected, onClick) =>
 function heatmapStyle(ratio) {
   if (!ratio || ratio <= 0) return "cursor: pointer;";
   const opacity = Math.min(0.08 + ratio * 0.74, 0.82);
-  const textColor  = opacity > 0.44 ? "#ffffff" : "#2a3a4a";
+  const textColor = opacity > 0.44 ? "#ffffff" : "#2a3a4a";
   const fontWeight = opacity > 0.44 ? "600" : "400";
   return (
     `background-color:rgba(85,118,155,${opacity.toFixed(2)});` +
@@ -233,7 +233,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
     ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
     : taxon.d;
 
-  const get  = path => Checklist.getDataFromDataPath(rawData, path);
+  const get = path => Checklist.getDataFromDataPath(rawData, path);
   const toArr = v => (Array.isArray(v) ? v : [v]);
 
   switch (categoryType) {
@@ -270,7 +270,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
 
 function buildColCategories(colCategory, binMethod) {
   const type = Checklist.filter.data[colCategory]?.type;
-  const all  = Checklist.filter.data[colCategory]?.all;
+  const all = Checklist.filter.data[colCategory]?.all;
   const cats = {};
 
   if (type === "date") {
@@ -462,7 +462,7 @@ function renderLivingPanel(rowDimLabel, colTraitName, unit) {
     }, m.trust(flipLabel)) : null,
     !Checklist.filter.isEmpty()
       ? m("span.tm-living-filter",
-          m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch()])))
+        m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch()])))
       : null,
   ]);
 }
@@ -485,23 +485,23 @@ function categoryChart(filteredTaxa) {
     ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
   );
 
-  const isDateCategory     = !!categoryToView && Checklist.filter.data[categoryToView]?.type === "date";
+  const isDateCategory = !!categoryToView && Checklist.filter.data[categoryToView]?.type === "date";
   const isDateSecondaryDim = !!secondaryDimCategory && Checklist.filter.data[secondaryDimCategory]?.type === "date";
 
   const colTraitName = Checklist.getMetaForDataPath(categoryToView)?.searchCategory || categoryToView;
-  const rowDimLabel  = isCustomMode && secondaryDimCategory
+  const rowDimLabel = isCustomMode && secondaryDimCategory
     ? (Checklist.getMetaForDataPath(secondaryDimCategory)?.searchCategory || secondaryDimCategory)
     : t("tm_rows_taxonomy");
   const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
 
   // ── Compute cross-tabulation first so refine-strip can show accurate counts ─
 
-  let categorizedData  = null;
-  let emptyColCount    = 0;
+  let categorizedData = null;
+  let emptyColCount = 0;
   let visibleCategories = [];
-  let rowKeys          = [];
-  let emptyRowCount    = 0;
-  let getRatio         = () => 0;
+  let rowKeys = [];
+  let emptyRowCount = 0;
+  let getRatio = () => 0;
   const verbCtx = {
     chartMode, isCustomMode, colTraitName,
     rowTraitName: isCustomMode && secondaryDimCategory
@@ -546,7 +546,7 @@ function categoryChart(filteredTaxa) {
 
       const baseRowKeys = isCustomMode
         ? (categorizedData.orderedRowBins
-            ?? sortByCustomOrder(Object.keys(categorizedData.individualResults), "data", secondaryDimCategory))
+          ?? sortByCustomOrder(Object.keys(categorizedData.individualResults), "data", secondaryDimCategory))
         : Object.keys(categorizedData.individualResults);
 
       getRatio = (row, cKey) => {
@@ -559,11 +559,11 @@ function categoryChart(filteredTaxa) {
 
       const sortedRowKeys = sortColumn !== null
         ? [...baseRowKeys].sort((a, b) => {
-            const ir = categorizedData.individualResults;
-            const rA = sortColumn === SORT_KEY_TAXON ? ir[a].sum : getRatio(ir[a], sortColumn);
-            const rB = sortColumn === SORT_KEY_TAXON ? ir[b].sum : getRatio(ir[b], sortColumn);
-            return sortDirection === "desc" ? rB - rA : rA - rB;
-          })
+          const ir = categorizedData.individualResults;
+          const rA = sortColumn === SORT_KEY_TAXON ? ir[a].sum : getRatio(ir[a], sortColumn);
+          const rB = sortColumn === SORT_KEY_TAXON ? ir[b].sum : getRatio(ir[b], sortColumn);
+          return sortDirection === "desc" ? rB - rA : rA - rB;
+        })
         : baseRowKeys;
 
       emptyRowCount = sortedRowKeys.filter(rowKey =>
@@ -573,8 +573,8 @@ function categoryChart(filteredTaxa) {
       rowKeys = showEmptyRows
         ? sortedRowKeys
         : sortedRowKeys.filter(rowKey =>
-            Object.keys(categorizedData.individualResults[rowKey].categories).length > 0
-          );
+          Object.keys(categorizedData.individualResults[rowKey].categories).length > 0
+        );
     }
   }
 
@@ -638,21 +638,29 @@ function categoryChart(filteredTaxa) {
 
   const panelHeader = isCollapsed
     ? m(".tm-panel-header.tm-panel-header--collapsed", { onclick: togglePanel }, [
-        renderPanelSummary(colTraitName, rowDimLabel),
-        m("button.tm-panel-edit-btn", {
-          onclick: e => { e.stopPropagation(); togglePanel(); }
-        }, t("tm_panel_edit")),
-      ])
+      renderPanelSummary(colTraitName, rowDimLabel),
+      m("button.tm-panel-edit-btn", {
+        onclick: e => { e.stopPropagation(); togglePanel(); }
+      }, [
+        m("img.tm-panel-collapse-img", { src: "./img/ui/search/expand.svg" }),
+        t("tm_panel_edit")]),
+    ])
     : m(".tm-panel-header.tm-panel-header--expanded", [
-        m("span.tm-panel-title", t("tm_panel_title")),
-        m("button.tm-help-btn", {
-          title: t("tm_recall_info"),
-          onclick: e => { e.stopPropagation(); tmInfoOverlayVisible = !tmInfoOverlayVisible; }
-        }, "?"),
-        categoryToView !== ""
-          ? m("button.tm-panel-collapse-btn", { onclick: togglePanel }, "▲")
-          : null,
-      ]);
+      m("span.tm-panel-title", t("tm_panel_title")),
+      m("button.tm-help-btn", {
+        title: t("tm_recall_info"),
+        onclick: e => { e.stopPropagation(); tmInfoOverlayVisible = !tmInfoOverlayVisible; }
+      }, "?"),
+      categoryToView !== ""
+        ? m("button.tm-panel-collapse-btn", { onclick: togglePanel },
+          [
+            m("img.tm-panel-collapse-img", { src: "./img/ui/search/collapse.svg" })
+            ,
+          t("tm_panel_edit_close")
+          ]
+        )
+        : null,
+    ]);
 
   const panelBody = isCollapsed ? null : m(".tm-panel-body", [
 
@@ -686,43 +694,43 @@ function categoryChart(filteredTaxa) {
 
       categoryToView !== "" && filtersToDisplay.length > 1
         ? m(".chart-control-group.tm-rows-group", [
-            m("label", t("tm_rows_label")),
-            m(".chart-segmented-control", [
-              segBtn(t("tm_rows_taxonomy"), secondaryDimMode === "taxa", () => {
-                secondaryDimMode = "taxa";
-                localStorage.setItem(LS_SEC_MODE, "taxa");
-                sortColumn = null;
-              }),
-              segBtn(t("tm_rows_custom"), secondaryDimMode === "custom", () => {
-                secondaryDimMode = "custom";
-                localStorage.setItem(LS_SEC_MODE, "custom");
-                sortColumn = null;
-              }),
-            ]),
-            isCustomMode ? m("select.chart-select", {
-              value: secondaryDimCategory || "",
-              onchange: e => {
-                const v = e.target.value;
-                if (v === categoryToView) {
-                  categoryToView = ""; Settings.categoryChartCategory("");
-                }
-                secondaryDimCategory = v;
-                localStorage.setItem(LS_SEC_CAT, v);
-                sortColumn = null; sortDirection = "desc";
+          m("label", t("tm_rows_label")),
+          m(".chart-segmented-control", [
+            segBtn(t("tm_rows_taxonomy"), secondaryDimMode === "taxa", () => {
+              secondaryDimMode = "taxa";
+              localStorage.setItem(LS_SEC_MODE, "taxa");
+              sortColumn = null;
+            }),
+            segBtn(t("tm_rows_custom"), secondaryDimMode === "custom", () => {
+              secondaryDimMode = "custom";
+              localStorage.setItem(LS_SEC_MODE, "custom");
+              sortColumn = null;
+            }),
+          ]),
+          isCustomMode ? m("select.chart-select", {
+            value: secondaryDimCategory || "",
+            onchange: e => {
+              const v = e.target.value;
+              if (v === categoryToView) {
+                categoryToView = ""; Settings.categoryChartCategory("");
               }
-            }, [
-              m("option[value=''][disabled]", t("tm_rows_custom_placeholder")),
-              ...filtersToDisplay.map(secondaryOptions),
-            ]) : null,
-          ])
+              secondaryDimCategory = v;
+              localStorage.setItem(LS_SEC_CAT, v);
+              sortColumn = null; sortDirection = "desc";
+            }
+          }, [
+            m("option[value=''][disabled]", t("tm_rows_custom_placeholder")),
+            ...filtersToDisplay.map(secondaryOptions),
+          ]) : null,
+        ])
         : null,
 
       categoryToView !== "" && isCustomMode && isDateSecondaryDim
         ? groupByControl(secondaryDimDateBinning, v => {
-            secondaryDimDateBinning = v;
-            localStorage.setItem(LS_SEC_BIN, v);
-            sortColumn = null; sortDirection = "desc";
-          })
+          secondaryDimDateBinning = v;
+          localStorage.setItem(LS_SEC_BIN, v);
+          sortColumn = null; sortDirection = "desc";
+        })
         : null,
     ]),
 
@@ -822,8 +830,8 @@ function categoryChart(filteredTaxa) {
   const headerCells = [
     m(
       "th.sticky-row.sticky-column.category-col-header.category-corner-header" +
-        (sortColumn === SORT_KEY_TAXON
-          ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc") : ""),
+      (sortColumn === SORT_KEY_TAXON
+        ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc") : ""),
       { style: "z-index:200;", onclick: () => toggleSort(SORT_KEY_TAXON) },
       m(".category-header-inner", [
         m(".category-header-inner-content", [
@@ -836,8 +844,8 @@ function categoryChart(filteredTaxa) {
     ...visibleCategories.map(cKey =>
       m(
         "th.sticky-row.category-col-header" +
-          (sortColumn === cKey
-            ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc") : ""),
+        (sortColumn === cKey
+          ? (sortDirection === "desc" ? ".col-sorted-desc" : ".col-sorted-asc") : ""),
         { onclick: () => toggleSort(cKey) },
         m(".category-header-inner", [
           m("span.category-header-label", cKey),
@@ -889,40 +897,40 @@ function categoryChart(filteredTaxa) {
     ? buildBreadcrumbPath(categoryRoot, filteredTaxa) : [];
 
   const isDefaultVerb = currentCellVerb === t("view_cat_click_on_cell");
-  const verbDisplay   = isDefaultVerb ? m("span.cell-verb-prompt", currentCellVerb) : currentCellVerb;
+  const verbDisplay = isDefaultVerb ? m("span.cell-verb-prompt", currentCellVerb) : currentCellVerb;
 
   result.push(
     !isCustomMode && categoryRoot !== ""
       ? m(".category-nav-header", [
-          m("button.category-nav-up-btn", {
+        m("button.category-nav-up-btn", {
+          onclick: () => {
+            const parent = parentOf(categoryRoot, filteredTaxa);
+            categoryRoot = parent;
+            Settings.categoryChartRoot(parent);
+            sortColumn = null;
+          }
+        }, [m("img[src=img/ui/checklist/level_up.svg]"), "Up"]),
+        m(".category-nav-crumb", [
+          m("span.category-nav-crumb-step", {
             onclick: () => {
-              const parent = parentOf(categoryRoot, filteredTaxa);
-              categoryRoot = parent;
-              Settings.categoryChartRoot(parent);
-              sortColumn = null;
+              categoryRoot = ""; Settings.categoryChartRoot(""); sortColumn = null;
             }
-          }, [m("img[src=img/ui/checklist/level_up.svg]"), "Up"]),
-          m(".category-nav-crumb", [
-            m("span.category-nav-crumb-step", {
-              onclick: () => {
-                categoryRoot = ""; Settings.categoryChartRoot(""); sortColumn = null;
-              }
-            }, t("view_cat_category_root")),
-            ...breadcrumbPath.map((step, i) => {
-              const isCurrent = i === breadcrumbPath.length - 1;
-              return [
-                m("span.category-nav-crumb-sep", "▸"),
-                isCurrent
-                  ? m("span.category-nav-crumb-current", step)
-                  : m("span.category-nav-crumb-step", {
-                      onclick: () => {
-                        categoryRoot = step; Settings.categoryChartRoot(step); sortColumn = null;
-                      }
-                    }, step),
-              ];
-            }).flat(),
-          ]),
-        ])
+          }, t("view_cat_category_root")),
+          ...breadcrumbPath.map((step, i) => {
+            const isCurrent = i === breadcrumbPath.length - 1;
+            return [
+              m("span.category-nav-crumb-sep", "▸"),
+              isCurrent
+                ? m("span.category-nav-crumb-current", step)
+                : m("span.category-nav-crumb-step", {
+                  onclick: () => {
+                    categoryRoot = step; Settings.categoryChartRoot(step); sortColumn = null;
+                  }
+                }, step),
+            ];
+          }).flat(),
+        ]),
+      ])
       : null,
 
     m(".table-flex-container", [
