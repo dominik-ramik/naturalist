@@ -984,33 +984,46 @@ export let Checklist = {
   },
 
   /**
- * Returns the effective data blob for a node, merging parent taxon data
- * for specimen-mode charts.
- *
- * In taxa mode (or when no specimen level exists), returns the node's
- * own .d unchanged.
- *
- * In specimen mode, finds the nearest ancestor taxon row in allTaxa and
- * deep-merges its .d with the specimen's own .d, with the specimen's own
- * values taking precedence. This allows specimens to inherit categorical
- * metadata (IUCN status, distribution regions, etc.) from their parent taxon.
- *
- * MERGE BEHAVIOUR NOTES:
- * - Scalar values: specimen wins if non-null/non-empty, otherwise parent.
- * - Arrays: values are concatenated and de-duplicated. There is no
- *   positional sensitivity since we have no ordered array data.
- * - Nested objects (e.g. map regions): shallow merge, specimen keys win.
- *   TODO: For deeply nested objects beyond one level, this merge is naive
- *   and may need refinement if complex nested data types are added in future.
- *
- * @param {Object} node - A taxon row from the flat checklist array.
- * @param {number} specimenMetaIndex - Index of specimen level in t[].
- * @param {Array} allTaxa - The full or filtered checklist array (used to
- *   locate the parent row for inheritance). The filter engine already
- *   includes parent rows in filtered results via parentKeySet, so passing
- *   filteredTaxa is sufficient in most cases.
- * @returns {Object} The effective data blob to use for chart data reads.
- */
+   * Returns the effective data blob for a node, merging parent taxon data
+   * when the node represents a specimen.
+   *
+   * If `specimenMetaIndex` is missing/invalid or the node has no specimen at
+   * that index, the node's own `.d` is returned unchanged.
+   *
+   * When a specimen is present the function searches `allTaxa` for the nearest
+   * ancestor row that (a) has the same taxon name at the ancestor level and
+   * (b) has no lower-level taxon entries after that level (i.e. its `t`
+   *   entries for indices > i are all `null`/`undefined`). If such a parent
+   * row with `.d` is found, the parent's data is merged with the specimen's
+   * `.d` and the merged result is returned. If no parent is found the
+   * specimen's `.d` is returned.
+   *
+   * Merge semantics (see `_deepMergeDataBlobs`):
+   * - `formatting` is determined by `Checklist.getMetaForDataPath(dataPath)`;
+   *   a node is treated as "structural" when `formatting === ""` or
+   *   `formatting === "text"`.
+   * - Structural nodes:
+   *   - Arrays: concatenated then deduplicated using `Set` for primitives.
+   *   - Plain objects: merged recursively (specimen values override parent
+   *     where present).
+   *   - Scalars: specimen value wins if not empty (see `_isValueEmpty`),
+   *     otherwise parent is kept.
+   * - Non-structural (atomic) nodes (e.g., "map regions", "months"):
+   *   treated as opaque: parent value is preserved if present; specimen
+   *   replaces parent only when the parent value is empty and specimen
+   *   provides data.
+   *
+   * Emptiness checks: `_isValueEmpty` treats `null`, `undefined`, empty
+   * string, empty array, and empty object as empty.
+   *
+   * @param {Object} node - A taxon row from the flat checklist array.
+   * @param {number} specimenMetaIndex - Index of specimen level in t[].
+   * @param {Array} allTaxa - The full or filtered checklist array (used to
+   *   locate the parent row for inheritance). The filter engine already
+   *   includes parent rows in filtered results via parentKeySet, so passing
+   *   filteredTaxa is sufficient in most cases.
+   * @returns {Object} The effective data blob to use for chart data reads.
+   */
   getEffectiveDataForNode: function (node, specimenMetaIndex, allTaxa) {
     const isSpecimen =
       specimenMetaIndex !== undefined &&
