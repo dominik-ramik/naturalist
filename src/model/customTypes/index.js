@@ -1,8 +1,4 @@
 import { Logger } from "../../components/Logger.js";
-import { nlDataStructure } from "../DataManagerData.js";
-
-
-const data = nlDataStructure;
 
 // Helper function to build readers object indexed by dataType
 function buildReaders(...readerObjects) {
@@ -25,7 +21,9 @@ import { readerImage } from "./ReaderImage.js";
 import { readerMapRegions } from "./ReaderMapRegions.js";
 import { readerSound } from "./ReaderSound.js";
 import { readerMap } from "./ReaderMap.js";
-import { readerMonths } from "./ReaderMonths.js"; // NEW
+import { readerMonths } from "./ReaderMonths.js"; 
+import { readerGeopoint } from "./ReaderGeopoint.js"; 
+
 const dataReaders = buildReaders(
   readerText,
   readerMarkdown,
@@ -37,7 +35,8 @@ const dataReaders = buildReaders(
   readerMapRegions,
   readerSound,
   readerMap,
-  readerMonths // NEW
+  readerMonths,
+  readerGeopoint
 );
 
 // Export dataReaders for use in UI rendering
@@ -157,6 +156,13 @@ export function loadDataByType(context, computedPath, info) {
     Logger.warning(
       `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
     );
+    
+    if (import.meta.env.DEV) {
+      console.error(
+        `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}. Check the reader definitions in src/model/customTypes/index.js and ensure the formatting type is correct and imported.`
+      );
+    }
+
     return null;
   }
 }

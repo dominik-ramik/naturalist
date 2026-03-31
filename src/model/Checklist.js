@@ -10,7 +10,7 @@ import {
 } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { Filter } from "./Filter.js";
-import { getSearchableTextByType } from "./customTypes/index.js";
+import { dataReaders, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
 
@@ -500,9 +500,23 @@ export let Checklist = {
     Object.keys(Checklist.getDataMeta()).forEach(function (dataPath, index) {
       let meta = Checklist.getMetaForDataPath(dataPath);
 
-      if (meta.template && meta.template.length > 0) {
+      let templateString = meta.template != null ? String(meta.template).trim() : "";
+
+      if (templateString === "" && meta.formatting) {
+        const reader = dataReaders[meta.formatting];
+        if (reader && reader.defaultTemplate) {
+          templateString = reader.defaultTemplate;
+
+          // CRITICAL: Write the string back to the meta object!
+          // This ensures that helpers.processTemplate (which looks at uiContext.meta.template)
+          // sees the injected default as if the user had typed it themselves.
+          meta.template = templateString;
+        }
+      }
+
+      if (templateString) {
         Checklist.handlebarsTemplates[dataPath] = Handlebars.compile(
-          meta.template
+          templateString
         );
       }
 
