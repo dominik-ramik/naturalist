@@ -90,7 +90,7 @@ export const helpers = {
    * @param {Object} uiContext - UI context containing meta, dataPath, originalData, taxon
    * @returns {any} Processed data or original data if no template
    */
-  processTemplate: function(data, uiContext) {
+  processTemplate: function(data, uiContext, additionalParams = {}) {
     if (
       uiContext.meta.template && 
       uiContext.meta.template !== "" &&
@@ -100,7 +100,8 @@ export const helpers = {
         data,
         uiContext.originalData,
         uiContext.taxon.name,
-        uiContext.taxon.authority
+        uiContext.taxon.authority,
+        additionalParams
       );
       return Checklist.handlebarsTemplates[uiContext.dataPath](templateData);
     }

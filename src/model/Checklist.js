@@ -747,13 +747,14 @@ export let Checklist = {
     currentValue,
     taxonData,
     taxonName,
-    taxonAuthority
+    taxonAuthority,
+    additionalParams = {}
   ) {
     if (currentValue === undefined || currentValue === null) {
       return currentValue;
     }
 
-    return {
+    const basePayload = {
       value: currentValue.toString(),
       data: taxonData,
       taxon: {
@@ -762,6 +763,11 @@ export let Checklist = {
         name: taxonName,
         authority: taxonAuthority,
       },
+    };
+
+    return {
+      ...basePayload,
+      ...additionalParams
     };
   },
 
