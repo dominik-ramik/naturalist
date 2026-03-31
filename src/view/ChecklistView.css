@@ -157,6 +157,22 @@
   color: white;
 }
 
+.params-modified-notice {
+  background: #fef3c7;  /* amber-100 */
+  border-left: 3px solid #f59e0b; /* amber-400 */
+  color: #78350f; /* amber-900 */
+}
+.params-modified-notice .notice-reset-btn {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-left: 0.5em;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 @media (max-width: 1200px) {
   .temporary-notice.mobile-filter-on {
     display: block;

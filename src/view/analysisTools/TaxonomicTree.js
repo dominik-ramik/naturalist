@@ -2,7 +2,6 @@ import m from "mithril";
 import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
 import { TaxonView } from "./TaxonomicTree/TaxonView.js";
-import { SelectParam, ToggleParam } from "../shared/FormControls.js";
 
 export const config = {
     id: "tool_taxonomic_tree",
@@ -15,79 +14,98 @@ export const config = {
     getTaxaAlongsideSpecimens: true,
 
     getAvailability: (availableIntents, checklistData) => {
-        // 1. Filter the passed intents based on data presence
         const supportedIntents = availableIntents.filter(intent => {
-            if(intent == "#T" || intent == "#S") {
+            if (intent === "#T" || intent === "#S") {
                 return checklistData.checklist && checklistData.checklist.length > 0;
             }
         });
-
-        // 2. Return the standard availability object
         return {
             supportedIntents,
             isAvailable: supportedIntents.length > 0,
             toolDisabledReason: "No data found in this dataset.",
-            scopeDisabledReason: (intent) => `${config.label} is unavailable ${intent == "#S" ? "for specimens" : "for taxa"} because none were found.`
-        }
+            scopeDisabledReason: (intent) =>
+                `${config.label} is unavailable ${intent === "#S" ? "for specimens" : "for taxa"} because none were found.`,
+        };
     },
 
-    parameters: (scope) => {
-        const specimenIndex = Checklist.getSpecimenMetaIndex();
-        const taxaMeta = Checklist.getTaxaMeta() || {};
-        const levels = Object.keys(taxaMeta)
-            .filter((_, i) => i !== specimenIndex)
-            .map(key => `${key} | ${taxaMeta[key]?.name || key}`);
-
-        const taxonLevelSelector = m(SelectParam, {
-            label: "Limit checklist to taxon level:",
-            accessor: (val) => {
-                if(val == t("display_all_taxa")) val = "";
-                if (val === undefined) return Settings.checklistDisplayLevel() || "";
-                Settings.checklistDisplayLevel(val);
+    // ─── Declarative parameter descriptors ─────────────────────────────────────
+    //
+    // Each entry has: id, label, type, default, accessor, and optionally
+    // values (select), condition (fn), or render (escape hatch).
+    //
+    // • `default` is the authoritative fresh-state value.
+    // • `condition(scope)` controls both rendering AND non-default detection;
+    //   params hidden by their condition are ignored in the notice.
+    // ───────────────────────────────────────────────────────────────────────────
+    parameters: [
+        {
+            id: "displayLevel",
+            label: "Taxon display level",
+            type: "select",
+            default: "",
+            accessor: Settings.checklistDisplayLevel,
+            // Dynamic: option keys come from runtime taxon meta, not a static list.
+            // The leading "|" gives the "show all" option a value of "" while still
+            // rendering a human-readable label — the SelectParam split-on-pipe logic
+            // handles this without any accessor-side normalization.
+            values: () => {
+                const taxaMeta = Checklist.getTaxaMeta() || {};
+                const specimenIndex = Checklist.getSpecimenMetaIndex();
+                const levelOptions = Object.keys(taxaMeta)
+                    .filter((_, i) => i !== specimenIndex)
+                    .map(key => `${key} | ${taxaMeta[key]?.name || key}`);
+                return [`| ${t("display_all_taxa")}`, ...levelOptions];
             },
-            values: [t("display_all_taxa"), ...levels]
-        });
+        },
 
-        const showTaxaWithoutSpecimens = m(ToggleParam, {
-            label: "Show taxa without specimens",
-            accessor: Settings.checklistPruneEmpty
-        });
-
-        const showTaxonMeta = m(ToggleParam, {
+        {
+            id: "showTaxonMeta",
             label: "Show taxon metadata",
-            accessor: Settings.checklistShowTaxonMeta
-        });
+            type: "toggle",
+            default: false,
+            accessor: Settings.checklistShowTaxonMeta,
+            // Only meaningful when there are specimens to compare against
+            condition: () => Checklist.hasSpecimens(),
+        },
 
-        const showTerminalTaxaOnly = m(ToggleParam, {
-            label: "Show terminal taxa only",
-            accessor: Settings.checklistShowTerminalOnly
-        });
+        {
+            id: "showSpecimenMeta",
+            label: "Show specimen metadata",
+            type: "toggle",
+            default: false,
+            accessor: Settings.checklistShowSpecimenMeta,
+            // Only visible (and only flagged as non-default) in specimen scope
+            condition: (scope) => scope === "#S",
+        },
 
-        const includeChildrenInMatches = m(ToggleParam, {
+        {
+            id: "pruneEmpty",
+            label: "Show taxa without specimens",
+            type: "toggle",
+            default: false,
+            accessor: Settings.checklistPruneEmpty,
+            // Pruning only makes sense in specimen scope
+            condition: (scope) => scope === "#S",
+        },
+
+        {
+            id: "includeChildren",
             label: "Include children in search matches",
-            accessor: Settings.checklistIncludeChildren
-        });
+            type: "toggle",
+            default: false,
+            accessor: Settings.checklistIncludeChildren,
+            condition: () => Checklist.hasSpecimens(),
+        },
 
-        let options = [];
-
-        options.push(taxonLevelSelector);
-        if (Checklist.hasSpecimens()) {
-            options.push(showTaxonMeta);
-        }
-        if (scope === "#S") {
-            options.push(m(ToggleParam, {
-                label: "Show specimen metadata",
-                accessor: Settings.checklistShowSpecimenMeta
-            }));
-            options.push(showTaxaWithoutSpecimens);
-        }
-        if (Checklist.hasSpecimens()) {
-            options.push(includeChildrenInMatches);
-            options.push(showTerminalTaxaOnly);
-        }
-
-        return options;
-    },
+        {
+            id: "terminalOnly",
+            label: "Show terminal taxa only",
+            type: "toggle",
+            default: false,
+            accessor: Settings.checklistShowTerminalOnly,
+            condition: () => Checklist.hasSpecimens(),
+        },
+    ],
 
     render: ({ filteredTaxa, queryKey }) =>
         m(ChecklistTree, {
@@ -97,8 +115,9 @@ export const config = {
         }),
 };
 
+// ─── ChecklistTree internal component ────────────────────────────────────────
+
 function ChecklistTree() {
-    // Internal component state
     let totalItemsToShow = 50;
     const itemsNumberStep = 50;
     let cachedTree = null;
@@ -114,7 +133,7 @@ function ChecklistTree() {
                 lastQueryKey = queryKey;
             }
 
-            // Calculate how many items to actually show (clamping)
+            // Clamp the visible set and track overflow
             let clampedTaxa = taxa;
             let overflowing = 0;
             if (displayLevel === "" && clampedTaxa.length > totalItemsToShow) {
@@ -122,14 +141,14 @@ function ChecklistTree() {
                 clampedTaxa = clampedTaxa.slice(0, totalItemsToShow);
             }
 
-            // Memoize the expensive treefication process
+            // Memoize the expensive treefication step
             const cacheKey = JSON.stringify({
                 queryKey: queryKey,
                 dataLength: clampedTaxa.length,
                 intent: Settings.analyticalIntent(),
                 showSpecimens: Settings.checklistShowSpecimens(),
                 pruneEmpty: Settings.checklistPruneEmpty(),
-                displayLevel: displayLevel
+                displayLevel: displayLevel,
             });
 
             if (cacheKey !== lastCacheKey) {
@@ -139,32 +158,23 @@ function ChecklistTree() {
 
             const includeSpecimensInView = Settings.checklistShowSpecimens();
             const showEmptyTaxa = Settings.checklistPruneEmpty();
+            const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
 
-            // Helper for top-level filtering
             const branchHasSpecimens = (node) => {
                 if (node.taxonMetaIndex === specimenMetaIndex) return true;
                 if (!node.children) return false;
                 return Object.values(node.children).some(branchHasSpecimens);
             };
 
+            const visibleTopLevelTaxa = Object.keys(cachedTree.children).filter((taxonKey) => {
+                const node = cachedTree.children[taxonKey];
 
+                const isNotSpecimenLevel = node.taxonMetaIndex !== specimenMetaIndex;
+                const visibilityByLevel = includeSpecimensInView || isNotSpecimenLevel;
+                const visibilityByContent = showEmptyTaxa || branchHasSpecimens(node);
 
-            const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-
-            const visibleTopLevelTaxa = Object.keys(cachedTree.children).filter(
-                (taxonKey) => {
-                    const node = cachedTree.children[taxonKey];
-                    
-                    // Filter by "Show Specimens" setting
-                    const isNotSpecimenLevel = node.taxonMetaIndex !== specimenMetaIndex;
-                    const visibilityByLevel = includeSpecimensInView || isNotSpecimenLevel;
-
-                    // Filter by "Show taxa without specimens" setting
-                    const visibilityByContent = showEmptyTaxa || branchHasSpecimens(node);
-
-                    return visibilityByLevel && visibilityByContent;
-                }
-            );
+                return visibilityByLevel && visibilityByContent;
+            });
 
             return m(".listed-taxa", [
                 visibleTopLevelTaxa.map((taxonLevel) =>
@@ -179,14 +189,13 @@ function ChecklistTree() {
                         terminalOnly: Settings.checklistShowTerminalOnly(),
                     })
                 ),
-                overflowing > 0 ? m(
-                    ".show-more-items",
-                    {
-                        onclick: () => { totalItemsToShow += itemsNumberStep; },
-                    },
-                    t("next_items_checklist", Math.min(overflowing, itemsNumberStep))
-                ) : null,
+                overflowing > 0
+                    ? m(".show-more-items",
+                        { onclick: () => { totalItemsToShow += itemsNumberStep; } },
+                        t("next_items_checklist", Math.min(overflowing, itemsNumberStep))
+                    )
+                    : null,
             ]);
-        }
+        },
     };
 }

@@ -21,32 +21,32 @@ export const config = {
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
   getTaxaAlongsideSpecimens: false,
 
-    getAvailability: (availableIntents, checklistData) => {
-        // 1. Filter the passed intents based on data presence
-        const supportedIntents = availableIntents.filter(intent => {
-            if(intent == "#T" || intent == "#S") {
-                return checklistData.checklist && checklistData.checklist.length > 0;
-            }
-        });
+  getAvailability: (availableIntents, checklistData) => {
+    const supportedIntents = availableIntents.filter(intent => {
+      if (intent === "#T" || intent === "#S") {
+        return checklistData.checklist && checklistData.checklist.length > 0;
+      }
+    });
+    return {
+      supportedIntents,
+      isAvailable: supportedIntents.length > 0,
+      toolDisabledReason: "No data found in this dataset.",
+      scopeDisabledReason: (intent) =>
+        `${config.label} is unavailable ${intent === "#S" ? "for specimens" : "for taxa"} because none were found.`,
+    };
+  },
 
-        // 2. Return the standard availability object
-        return {
-            supportedIntents,
-            isAvailable: supportedIntents.length > 0,
-            toolDisabledReason: "No data found in this dataset.",
-            scopeDisabledReason: (intent) => `${config.label} is unavailable ${intent == "#S" ? "for specimens" : "for taxa"} because none were found.`
-        }
+  // ─── Declarative parameter descriptors ─────────────────────────────────────
+  parameters: [
+    {
+      id: "maxLevels",
+      label: "Maximum depth of levels displayed",
+      type: "select",
+      default: 4,
+      accessor: Settings.circlePackingMaxLevels,
+      values: [3, 4, 5, 6, 7],
+      // No condition — always visible regardless of scope
     },
-
-  parameters: () => [
-    m(SelectParam, {
-      label: "Maximum depth of levels displayed:",
-      accessor: (val) => {
-        if (val === undefined) return Settings.circlePackingMaxLevels();
-        Settings.circlePackingMaxLevels(val);
-      },
-      values: [3, 4, 5, 6, 7]
-    }),
   ],
 
   render: ({ filteredTaxa, allTaxa }) => circlePackingView(allTaxa, filteredTaxa),
@@ -56,7 +56,7 @@ const specimenTagIconPath =
   "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
 
 function circlePacking(options) {
-let data = options.dataSource;
+  let data = options.dataSource;
   let maxDataLevelsDisplayed = options.maxDataLevelsDisplayed || Settings.circlePackingMaxLevels();
   let colorInterpolation = options.colorInterpolation || 212;
   let noMatchColor = options.noMatchColor || "#04040420";
@@ -67,7 +67,7 @@ let data = options.dataSource;
   let showDownloadButton = options.showDownloadButton === false ? false : true;
   let specimenMetaIndex = options.specimenMetaIndex;
 
-if (Settings.analyticalIntent() === "#S") {
+  if (Settings.analyticalIntent() === "#S") {
     // Deep clone to prevent mutating the original dataSource which might be used in other views
     data = JSON.parse(JSON.stringify(options.dataSource));
 
@@ -80,9 +80,9 @@ if (Settings.analyticalIntent() === "#S") {
       node.children.forEach(child => {
         // Determine if the child is a specimen based on existing logic
         const isSpec = specimenMetaIndex !== undefined &&
-                       specimenMetaIndex !== -1 &&
-                       child.taxonMetaIndex === specimenMetaIndex;
-        
+          specimenMetaIndex !== -1 &&
+          child.taxonMetaIndex === specimenMetaIndex;
+
         if (isSpec) {
           specimenChildren.push(child);
         } else {
@@ -808,8 +808,8 @@ function checklistDataForD3FromTaxa(taxa) {
 
     const ancestry = isSpecimenRow
       ? nonNullTaxa.filter(function (item) {
-          return item.index !== specimenMetaIndex;
-        })
+        return item.index !== specimenMetaIndex;
+      })
       : nonNullTaxa;
 
     let currentNode = root;
@@ -978,32 +978,32 @@ function circlePackingView(allTaxa, matchingTaxa) {
     renderBubblesInfoBox(isFilterEmpty, mapChartMode, matchingCount, totalCount),
     renderColorScale(isFilterEmpty),
     m(D3ChartView, {
-    id: "d3test",
-    chart: circlePacking,
-    options: () => {
-      let shouldUpdate = false;
-      const cacheKey = JSON.stringify({
-        queryKey: Checklist.queryKey(),
-        includeMatchChildren: Settings.checklistIncludeChildren(),
-        includeSpecimensInView: Settings.checklistShowSpecimens(),
-        analyticalIntent: Settings.analyticalIntent(),
-        circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
-      });
+      id: "d3test",
+      chart: circlePacking,
+      options: () => {
+        let shouldUpdate = false;
+        const cacheKey = JSON.stringify({
+          queryKey: Checklist.queryKey(),
+          includeMatchChildren: Settings.checklistIncludeChildren(),
+          includeSpecimensInView: Settings.checklistShowSpecimens(),
+          analyticalIntent: Settings.analyticalIntent(),
+          circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
+        });
 
-      if (cachedData == null || cacheKey != oldQueryKey) {
-        oldQueryKey = cacheKey;
-        cachedData = checklistDataForD3FromTaxa(allTaxa);
-        assignLeavesCount(cachedData, matchingTaxa);
-        shouldUpdate = true;
-      }
+        if (cachedData == null || cacheKey != oldQueryKey) {
+          oldQueryKey = cacheKey;
+          cachedData = checklistDataForD3FromTaxa(allTaxa);
+          assignLeavesCount(cachedData, matchingTaxa);
+          shouldUpdate = true;
+        }
 
-      return {
-        shouldUpdate: shouldUpdate,
-        dataSource: cachedData,
-        colorInterpolation: colorFromRatio,
-        fontFamily: "Regular",
-        specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
-      };
-    },
-  })]);
+        return {
+          shouldUpdate: shouldUpdate,
+          dataSource: cachedData,
+          colorInterpolation: colorFromRatio,
+          fontFamily: "Regular",
+          specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
+        };
+      },
+    })]);
 }
