@@ -394,7 +394,6 @@ export let DataManager = function () {
           let contentType = xhr.getResponseHeader("Content-Type");
 
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
-            console.error("Asset not found or not an image: " + url, contentType);
             Logger.warning(tf("dm_asset_head_error", [url]), "File not found");
             return null;
           } else {
@@ -405,14 +404,10 @@ export let DataManager = function () {
           }
         } else {
           result.responseStatus = xhr.status;
-          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status);
-          console.error(
-            "Error fetching HEAD for " + url + " status: " + xhr.status
-          );
+          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status);          
         }
       } catch (error) {
         Logger.error("Error fetching HEAD for " + url + ": " + error.message);
-        console.error("Error:", error.message);
       }
 
       return result;
