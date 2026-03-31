@@ -914,8 +914,6 @@ export let Checklist = {
           );
         }
       } else if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
-        console.log("################### IMG", taxonData);
-
         data = "<img src='" + "?" + "' />";
       } else if (Array.isArray(taxonData)) {
         taxonData.forEach(function (item) {
