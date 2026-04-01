@@ -338,5 +338,13 @@
   "tm_living_flip_to_col": "↔ Switch: compare within each {2} value",
   "tm_living_flip_to_row": "↔ Switch: compare within each {1}",
   "tm_living_filtered": "Counting only {0}",
-  "tm_no_data_for_selection": "No data found for this combination. Try a different trait or adjust the filters."
+  "tm_no_data_for_selection": "No data found for this combination. Try a different trait or adjust the filters.",
+  "upload_file_tab": "Upload file",
+  "load_from_url_tab": "Load from URL",
+  "spreadsheet_url_label": "Spreadsheet URL",
+  "url_public_hint": "Enter the URL of a publicly accessible .xlsx file.",
+  "load_from_url_button": "Load spreadsheet",
+  "url_required": "Please enter a URL.",
+  "url_invalid": "That doesn't look like a valid URL.",
+  "url_fetch_failed": "Could not load the file. Make sure the URL is publicly accessible and points to an .xlsx file."
 }

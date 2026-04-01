@@ -321,6 +321,32 @@ export let Settings = {
     }
   },
 
+    /**
+   * Persist the last-used spreadsheet URL (URL-input tab).
+   */
+  spreadsheetUrl: function (value) {
+    if (value === undefined) {
+      return window.localStorage.getItem("spreadsheetUrl") || "";
+    } else {
+      if (value) {
+        window.localStorage.setItem("spreadsheetUrl", value);
+      } else {
+        window.localStorage.removeItem("spreadsheetUrl");
+      }
+    }
+  },
+ 
+  /**
+   * Persist which upload source tab the user last used ('file' | 'url').
+   */
+  manageUploadMode: function (value) {
+    if (value === undefined) {
+      return window.localStorage.getItem("manageUploadMode") || "file";
+    } else {
+      window.localStorage.setItem("manageUploadMode", value);
+    }
+  },
+
   _currentDetailsTab: "externalsearch",
   currentDetailsTab: function (value) {
     if (value) {
