@@ -5,9 +5,10 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite --port 5500",
+    "docs:dev": "vitepress dev docs",
+    "dev:all": "concurrently \"npm run dev\" \"npm run docs:dev\"",
     "build": "vite build",
     "preview": "vite preview",
-    "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "build:all": "vitepress build docs && vite build --outDir docs/.vitepress/dist/demo --emptyOutDir"
@@ -25,6 +26,7 @@
   "homepage": "https://github.com/dominik-ramik/naturalist#readme",
   "devDependencies": {
     "bibtex-json-toolbox": "^1.2.4",
+    "concurrently": "^9.2.1",
     "vite": "^7.2.2",
     "vite-plugin-pwa": "^1.1.0",
     "vitepress": "^2.0.0-alpha.14",
