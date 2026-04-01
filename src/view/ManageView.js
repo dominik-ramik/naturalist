@@ -307,8 +307,8 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     const res = await fetch(url, { mode: "cors" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     buffer = await res.arrayBuffer();
-  } catch {
-    Logger.error(t("url_fetch_failed"));
+  } catch (ex) {
+    Logger.error(t("url_fetch_failed") + (ex.message ? ` (${ex.message})` : ""));
     ManageStore.isProcessing = false;
     m.route.set("/manage/upload", null, { replace: true });
     m.redraw();

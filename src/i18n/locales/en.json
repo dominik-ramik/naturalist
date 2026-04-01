@@ -300,7 +300,7 @@
   "view_cat_cell_verb_row_pct_custom": "{0} ({1} {2}) with {3} also have {4}",
   "view_cat_cell_verb_col_pct_taxa": "{0} ({1} {2}) with {4} belong to {3}",
   "view_cat_cell_verb_col_pct_custom": "{0} ({1} {2}) with {4} also have {3}",
-  "view_bubbles_no_filter_tip": "Tip: Use the filter to highlight how matching results are distributed across the hierarchy — circles will be colored by their proportion of matches",
+  "view_bubbles_no_filter_tip": "Tip: Use the filter to highlight how matching results are distributed across the hierarchy — circles will be colored by their proportion of matches. Use mouse wheel or pinch to zoom in and out.",
   "view_bubbles_filter_info_taxa": "Color shows the proportion of matching taxa in each group — {0} of {1} taxa match the current filter",
   "view_bubbles_filter_info_specimen": "Color shows the proportion of matching specimens in each group — {0} of {1} specimens match the current filter",
   "view_bubbles_color_scale_no_match": "no match",
@@ -346,5 +346,5 @@
   "load_from_url_button": "Load spreadsheet",
   "url_required": "Please enter a URL.",
   "url_invalid": "That doesn't look like a valid URL.",
-  "url_fetch_failed": "Could not load the file. Make sure the URL is publicly accessible and points to an .xlsx file."
+  "url_fetch_failed": "Could not load the file. Make sure the URL is publicly accessible and points to an .xlsx file. If you are self-hosting the file, check your server's CORS settings."
 }
