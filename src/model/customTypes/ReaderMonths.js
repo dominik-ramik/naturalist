@@ -246,8 +246,6 @@ export let readerMonths = {
       });
       const result = [...activeMonths].sort((a, b) => a - b);
 
-      console.log("ReaderMonths - detected column-based format with columns:", monthColumns, "resulting in months:", result);
-
       return result.length > 0 ? result : [];
     }
 
