@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "build:all": "vitepress build docs && vite build --outDir docs/.vitepress/dist/demo --emptyOutDir"
   },
   "repository": {
     "type": "git",
