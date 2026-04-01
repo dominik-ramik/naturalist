@@ -69,44 +69,126 @@
   text-align: center;
 }
 
+/* ==========================================================================
+   Notices
+   All notices share the same card-strip base: white background with a
+   coloured left border — consistent with .chart-info-box and .tm-living-panel
+   elsewhere in the app. Semantic meaning is carried by the border colour only,
+   not by the whole background, keeping the UI calm and unobtrusive.
+   ========================================================================== */
+
 .temporary-notice {
   font-family: var(--font-light);
-  padding: var(--pad-large);
-  background-color: lightgoldenrodyellow;
+  padding: 0.55em 0.9em;
+  background-color: rgba(255, 255, 255, 0.88);
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  border-bottom: 1px solid rgb(209 209 174);
+  gap: 0.6em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  /* Default accent: nlblue — used for the mobile filter notice */
+  border-left: 3px solid var(--nlblue, #55769b);
+  flex-shrink: 0;
 }
 
 .temporary-notice .notice {
   flex-grow: 1;
   font-size: 85%;
+  color: #2d4a6a;
+  line-height: 1.4;
 }
 
+/* Action button — pill style matching .category-nav-up-btn and .tm-living-flip */
 .temporary-notice button.show-all {
-  background-color: white;
-  border: 0px solid;
-  display: flex;
+  flex-shrink: 0;
+  display: inline-flex;
   flex-direction: row;
-  flex-wrap: nowrap;
   align-items: center;
+  gap: 0.35em;
+  padding: 3px 10px;
+  background-color: transparent;
+  border: 1px solid var(--nlblue, #55769b);
+  border-radius: 20px;
+  color: var(--nlblue, #55769b);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
 }
 
 .temporary-notice button.show-all:hover {
-  background-color: var(--hover-background);
+  background-color: rgba(85, 118, 155, 0.1);
 }
 
 .temporary-notice .notice-icon {
-  height: 1.5em;
-  margin-right: var(--pad-large);
+  height: 1.25em;
+  opacity: 0.75;
 }
 
+/* ── Draft notice: amber — warns about unpublished dataset state ── */
+.temporary-notice.draft-notice {
+  border-left-color: #e09b25;
+  background-color: rgba(254, 243, 199, 0.92);
+}
+
+.temporary-notice.draft-notice .notice {
+  color: #78350f;
+}
+
+.temporary-notice.draft-notice button.show-all {
+  border-color: #d97706;
+  color: #92400e;
+}
+
+.temporary-notice.draft-notice button.show-all:hover {
+  background-color: rgba(217, 119, 6, 0.08);
+}
+
+/* ── Mobile filter notice: hidden until narrow viewport ── */
 .temporary-notice.mobile-filter-on {
   display: none;
 }
 
+/* ── Params modified notice: blue-info ────────────────────────────────────────
+   Communicates "you customised this view" — not a warning, just a reminder.
+   Uses the same nlblue accent as the base .temporary-notice; distinguished
+   from the filter notice by its content and the Reset button.
+   ─────────────────────────────────────────────────────────────────────────── */
+.params-modified-notice {
+  border-left-color: var(--nlblue, #55769b);
+  background-color: rgba(255, 255, 255, 0.88);
+}
+
+.params-modified-notice .notice {
+  color: #2d4a6a;
+}
+
+.notice-reset-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--nlblue, #55769b);
+  border-radius: 20px;
+  color: var(--nlblue, #55769b);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.notice-reset-btn:hover {
+  background-color: rgba(85, 118, 155, 0.1);
+}
+
+/* ==========================================================================
+   Legacy ButtonGroup (used by older tool views, kept as-is)
+   ========================================================================== */
 .button-group {
   margin: 0;
   margin-left: 0.5em;
@@ -157,24 +239,8 @@
   color: white;
 }
 
-.params-modified-notice {
-  background: #fef3c7;  /* amber-100 */
-  border-left: 3px solid #f59e0b; /* amber-400 */
-  color: #78350f; /* amber-900 */
-}
-.params-modified-notice .notice-reset-btn {
-  background: transparent;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8em;
-  margin-left: 0.5em;
-  padding: 2px 8px;
-  white-space: nowrap;
-}
-
 @media (max-width: 1200px) {
   .temporary-notice.mobile-filter-on {
-    display: block;
+    display: flex;
   }
 }

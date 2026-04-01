@@ -189,6 +189,7 @@ function mobileFilterOnNotice() {
 
 function draftNotice() {
   return m(Notice, {
+    additionalClasses: "draft-notice",
     action: function () { Settings.checklistDisplayLevel(""); },
     notice: t("draft_notice"),
     additionalButton: {

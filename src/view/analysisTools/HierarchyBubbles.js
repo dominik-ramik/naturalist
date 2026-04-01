@@ -11,12 +11,17 @@ import "./HierarchyBubbles.css";
 
 // ─── Tool config export ────────────────────────────────────────────────────
 
+//
+// NOTE: Only the `config` export is shown here — the rest of HierarchyBubbles.js
+// (circlePacking, circlePackingView, etc.) is unchanged.  Splice this config
+// block in place of the original `export const config = { ... }` declaration.
+
 export const config = {
   id: "tool_hierarchy_bubbles",
   label: "Hierarchy bubbles",
   iconPath: {
     light: "./img/ui/menu/view_circle_pack-light.svg",
-    dark: "./img/ui/menu/view_circle_pack.svg",
+    dark:  "./img/ui/menu/view_circle_pack.svg",
   },
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
   getTaxaAlongsideSpecimens: false,
@@ -36,16 +41,18 @@ export const config = {
     };
   },
 
-  // ─── Declarative parameter descriptors ─────────────────────────────────────
   parameters: [
     {
-      id: "maxLevels",
-      label: "Maximum depth of levels displayed",
-      type: "select",
-      default: 4,
+      id:      "maxLevels",
+      label:   "Maximum depth of levels displayed",
+      type:    "select",
+      default: 3,
       accessor: Settings.circlePackingMaxLevels,
-      values: [3, 4, 5, 6, 7],
-      // No condition — always visible regardless of scope
+      values:  [3, 4, 5, 6, 7],
+      // notify: false — this is a pure rendering preference (how many bubble
+      // rings are drawn), not a data filter.  Changing it never hides records
+      // from the user, so there's nothing to call attention to.
+      notify:  false,
     },
   ],
 

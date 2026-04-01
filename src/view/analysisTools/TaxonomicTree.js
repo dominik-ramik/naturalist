@@ -62,7 +62,7 @@ export const config = {
             id: "showTaxonMeta",
             label: "Show taxon metadata",
             type: "toggle",
-            default: false,
+            default: true,
             accessor: Settings.checklistShowTaxonMeta,
             // Only meaningful when there are specimens to compare against
             condition: () => Checklist.hasSpecimens(),
@@ -72,7 +72,7 @@ export const config = {
             id: "showSpecimenMeta",
             label: "Show specimen metadata",
             type: "toggle",
-            default: false,
+            default: true,
             accessor: Settings.checklistShowSpecimenMeta,
             // Only visible (and only flagged as non-default) in specimen scope
             condition: (scope) => scope === "#S",
@@ -82,7 +82,7 @@ export const config = {
             id: "pruneEmpty",
             label: "Show taxa without specimens",
             type: "toggle",
-            default: false,
+            default: true,
             accessor: Settings.checklistPruneEmpty,
             // Pruning only makes sense in specimen scope
             condition: (scope) => scope === "#S",
@@ -92,7 +92,7 @@ export const config = {
             id: "includeChildren",
             label: "Include children in search matches",
             type: "toggle",
-            default: false,
+            default: true,
             accessor: Settings.checklistIncludeChildren,
             condition: () => Checklist.hasSpecimens(),
         },
