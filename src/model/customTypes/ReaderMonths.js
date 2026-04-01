@@ -260,8 +260,6 @@ export let readerMonths = {
 
     const months = parseInlineMonths(cellValue);
 
-    console.log("ReaderMonths - detected cell-based format with value:", cellValue, "resulting in months:", months);
-
     return months.length > 0 ? months : [];
   },
 
