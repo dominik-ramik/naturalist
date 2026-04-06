@@ -15,7 +15,7 @@ import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
-import { validateActiveToolState, TOOL_REGISTRY } from "./view/analysisTools/index.js";
+import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 
@@ -302,6 +302,18 @@ function runApp() {
       }
 
       function updateToolAndScope() {
+        // When the route was changed programmatically (e.g. from the
+        // ConfigurationDialog), Settings already hold the correct values.
+        // m.route.param() would still return stale (pre-set) values at
+        // this point, so skip the read-back to avoid reverting the change.
+        if (isProgrammaticRouteChange()) {
+          clearProgrammaticRouteChange();
+          if (Checklist._isDataReady) {
+            validateActiveToolState(Checklist.getData());
+          }
+          return;
+        }
+
         const toolParam = m.route.param("v");
         const scopeParam = m.route.param("s");
 

@@ -9,6 +9,12 @@ import { updateRouteParams } from "../../components/Utils.js";
 
 export { SCOPE_CHOICES } from "./scopes.js";
 
+// Guard flag: set before programmatic m.route.set() so that the onmatch
+// handler does not overwrite Settings with stale m.route.param() values.
+let _programmaticRouteChange = false;
+export function isProgrammaticRouteChange() { return _programmaticRouteChange; }
+export function clearProgrammaticRouteChange() { _programmaticRouteChange = false; }
+
 /**
  * Ordered list of tool configs — controls display order in
  * ConfigurationDialog and MenuStripView.
@@ -183,6 +189,7 @@ export function requestToolChange(toolId, checklistData) {
       Settings.analyticalIntent(availability.supportedIntents[0]);
     }
 
+    _programmaticRouteChange = true;
     updateRouteParams();
   } else {
     console.warn(`Tool ${toolId} is not available for this dataset.`);
@@ -202,6 +209,7 @@ export function requestIntentChange(intentId, checklistData) {
 
   if (availability.supportedIntents.includes(intentId)) {
     Settings.analyticalIntent(intentId);
+    _programmaticRouteChange = true;
     updateRouteParams();
   } else {
     console.warn(
