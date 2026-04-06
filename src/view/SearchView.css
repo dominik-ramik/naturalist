@@ -69,12 +69,37 @@ ul.filter-buttons li {
 }
 
 .search-category-group {
-    font-size: 85%;
+    font-size: 75%;
     margin: 0em;
-    margin-top: 1em;
-    margin-left: 0.25em;
-    font-weight: bold;
     padding: 0;
+    font-weight: bold;
+    display: flex;
+    /* Align items in a row */
+    align-items: center;
+    /* Center lines vertically relative to text */
+    text-align: center;
+    /* Backup for older browsers */
+}
+
+.search-category-group::before,
+.search-category-group::after {
+    content: "";
+    flex: 1;
+    /* Lines grow to fill space */
+    border-bottom: 1px solid #ffffff;
+    /* The actual line */
+    margin: 0 10px 0 0;
+    /* Gap between lines and text */
+}
+
+.search-category-group::after {
+    content: "";
+    flex: 1;
+    /* Lines grow to fill space */
+    border-bottom: 1px solid #ffffff;
+    /* The actual line */
+    margin: 0 0 0 10px;
+    /* Gap between lines and text */
 }
 
 .view-options-bar {
