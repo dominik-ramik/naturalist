@@ -323,8 +323,8 @@
 
 /* Expand caret */
 .global-indicator-caret {
-  width: 0.85em;
-  height: 0.85em;
+  width: 1em;
+  height: 1em;
   object-fit: contain;
   flex-shrink: 0;
   opacity: 0.6;
