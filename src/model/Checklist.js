@@ -63,9 +63,7 @@ export let Checklist = {
     {
       code: "ebird",
       name: "eBird ($author$$id$)",
-      url: "https://ebird.org/checklist/S$id$",
-      idModifier: (id) =>
-        id.toLowerCase().startsWith("s") ? id.substring(1) : id,
+      url: "https://ebird.org/checklist/$id$",
     },
     {
       code: "clml",
@@ -95,11 +93,6 @@ export let Checklist = {
           );
 
           if (engine) {
-            value =
-              engine.idModifier !== undefined
-                ? engine.idModifier(value)
-                : value;
-
             // Prepare note and id for replacement
             let authorText = author ? author + " " : "";
             let link =
