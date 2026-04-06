@@ -5,7 +5,7 @@ export const dataPath = {
       return simpleColumnName.test(value);
     },
     isDataPath(value) {
-      console.log("Validating data path:", value);
+      
       let valueSplit = value.split(".");
       let correct = true;
       valueSplit.forEach(function (columnSegment) {

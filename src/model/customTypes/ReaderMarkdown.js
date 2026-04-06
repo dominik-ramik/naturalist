@@ -44,7 +44,7 @@ export let readerMarkdown = {
     }
 
     if (typeof data !== "string") {
-      console.log("Warning: readerMarkdown received non-string data:", data);
+      //console.log("Warning: readerMarkdown received non-string data:", data);
       return data;
     }
 
