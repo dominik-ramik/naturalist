@@ -346,5 +346,10 @@
   "load_from_url_button": "Load spreadsheet",
   "url_required": "Please enter a URL.",
   "url_invalid": "That doesn't look like a valid URL.",
-  "url_fetch_failed": "Could not load the file. Make sure the URL is publicly accessible and points to an .xlsx file. If you are self-hosting the file, check your server's CORS settings."
+  "url_fetch_failed": "Could not load the file. Make sure the URL is publicly accessible and points to an .xlsx file. If you are self-hosting the file, check your server's CORS settings.",
+  "dm_shortcode_invalid_code": "Database shortcodes row {0}: code \"{1}\" is invalid (only lowercase a-z with one optional dot separator, e.g. mydb or mydb.type)",
+  "dm_shortcode_duplicate": "Database shortcode \"{0}\" is defined more than once; second occurrence skipped",
+  "dm_shortcode_overrides_builtin": "Database shortcode \"{0}\" overrides a built-in shortcode",
+  "dm_shortcode_missing_id_in_url": "Database shortcode \"{0}\": URL template must contain {{id}}; entry skipped",
+  "dm_shortcode_missing_id_in_label": "Database shortcode \"{0}\": label template must contain {{id}}; entry skipped"
 }

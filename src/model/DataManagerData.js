@@ -718,6 +718,51 @@ export let nlDataStructure = {
           },
           data: [],
         },
+        databaseShortcodes: {
+          name: "Database shortcodes",
+          description:
+            "Define custom shortcodes for embedding hyperlinks to external biological databases or any URL-based resource inside Markdown fields. Built-in shortcodes (gbif, gbif.s, inat, ebird, clml, obse) are always available; rows here can add new ones or override built-ins.",
+          columns: {
+            code: {
+              name: "Code",
+              description:
+                "The shortcode keyword typed after @. Lowercase letters a–z only, with one optional dot separator (e.g. mydb or mydb.type). Must not duplicate another custom entry (overriding a built-in is allowed with a warning).",
+              integrity: {
+                description: "Lowercase letters a-z, optional single dot separator.",
+                allowEmpty: false,
+                allowDuplicates: "no",
+                allowedContent: "regex",
+                regex: "^[a-z]+(\\.[a-z]+)?$",
+                regexExplanation: "only lowercase a-z with one optional dot",
+                supportsMultilingual: false,
+              },
+            },
+            labelTemplate: {
+              name: "Label template",
+              description:
+                "Text shown as the link label. Use {{id}} where the record ID should appear and optionally {{author}} for author attribution.",
+              integrity: {
+                description: "Must contain {{id}}.",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false,
+              },
+            },
+            urlTemplate: {
+              name: "URL template",
+              description: "Full URL of the record. Use {{id}} where the ID should be substituted.",
+              integrity: {
+                description: "Must be a valid URL containing {{id}}.",
+                allowEmpty: false,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false,
+              },
+            },
+          },
+          data: [],
+        },
       },
     },
     appearance: {

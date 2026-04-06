@@ -755,6 +755,7 @@ export let DataManager = function () {
         },
         mapRegionsNames: [],
         externalSearchEngines: [],
+        databaseShortcodes: compileDatabaseShortcodes(lang),
       };
 
       data.sheets.content.tables.taxa.data[lang.code].forEach(function (row) {
@@ -1045,6 +1046,54 @@ export let DataManager = function () {
 
       return meta;
     }
+
+    function compileDatabaseShortcodes(lang) {
+  const BUILTIN_SHORTCODES = [
+    { code: "gbif",   name: "GBIF ({{author}}{{id}})",            url: "https://www.gbif.org/occurrence/{{id}}" },
+    { code: "gbif.s", name: "GBIF (Taxon {{author}}{{id}})",      url: "https://www.gbif.org/species/{{id}}" },
+    { code: "inat",   name: "{{author}} (iNat {{id}})",           url: "https://www.inaturalist.org/observations/{{id}}" },
+    { code: "ebird",  name: "eBird ({{author}}{{id}})",           url: "https://ebird.org/checklist/{{id}}" },
+    { code: "clml",   name: "ML ({{author}}{{id}})",              url: "https://macaulaylibrary.org/asset/{{id}}" },
+    { code: "obse",   name: "Observation.org ({{author}}{{id}})", url: "https://observation.org/observation/{{id}}" },
+  ];
+
+  const result = new Map(BUILTIN_SHORTCODES.map(s => [s.code, s]));
+  const builtinCodes = new Set(BUILTIN_SHORTCODES.map(s => s.code));
+  const codeRegex = /^[a-z]+(\.[a-z]+)?$/;
+  const seenCodes = new Set(builtinCodes);
+
+  const rows = data.sheets.content.tables.databaseShortcodes?.data?.[lang.code] ?? [];
+
+  rows.forEach(function (row, idx) {
+    const code = (row.code ?? "").trim();
+    const label = (row.labelTemplate ?? "").trim();
+    const url = (row.urlTemplate ?? "").trim();
+
+    if (!codeRegex.test(code)) {
+      Logger.error(tf("dm_shortcode_invalid_code", [idx + 1, code]));
+      return;
+    }
+    if (!url.includes("{{id}}")) {
+      Logger.error(tf("dm_shortcode_missing_id_in_url", [code]));
+      return;
+    }
+    if (!label.includes("{{id}}")) {
+      Logger.error(tf("dm_shortcode_missing_id_in_label", [code]));
+      return;
+    }
+    if (seenCodes.has(code) && !builtinCodes.has(code)) {
+      Logger.error(tf("dm_shortcode_duplicate", [code]));
+      return;
+    }
+    if (builtinCodes.has(code)) {
+      Logger.info(tf("dm_shortcode_overrides_builtin", [code]));
+    }
+    result.set(code, { code, name: label, url });
+    seenCodes.add(code);
+  });
+
+  return [...result.values()];
+}
   }
 
   function loadData(table) {

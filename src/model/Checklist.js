@@ -44,76 +44,33 @@ export let Checklist = {
 
   filter: Filter,
 
-  databaseShortcodeList: [
-    {
-      code: "gbif",
-      name: "GBIF ($author$$id$)",
-      url: "https://www.gbif.org/occurrence/$id$",
-    },
-    {
-      code: "gbif.s",
-      name: "GBIF (Taxon $author$$id$)",
-      url: "https://www.gbif.org/species/$id$",
-    },
-    {
-      code: "inat",
-      name: "$author$ (iNat $id$)",
-      url: "https://www.inaturalist.org/observations/$id$",
-    },
-    {
-      code: "ebird",
-      name: "eBird ($author$$id$)",
-      url: "https://ebird.org/checklist/$id$",
-    },
-    {
-      code: "clml",
-      name: "ML ($author$$id$)",
-      url: "https://macaulaylibrary.org/asset/$id$",
-    },
-    {
-      code: "obse",
-      name: "Observation.org ($author$$id$)",
-      url: "https://observation.org/observation/$id$",
-    },
-  ],
-
   transformDatabaseShortcodes: function (text) {
-    if (text === undefined || text === null || typeof text !== "string") {
-      return text;
-    }
-
-    if (text.indexOf("@") > -1) {
-      text = text.replace(
-        /@([a-z]+)(\.[a-z]+)?:(?:([^:]+):)?([a-zA-Z0-9-_\/]+)/gm,
-        (match, enginePrefix, engineOption, author, value) => {
-          let engineCode = enginePrefix + (engineOption ? engineOption : "");
-
-          let engine = Checklist.databaseShortcodeList.find(
-            (item) => item.code == engineCode
-          );
-
-          if (engine) {
-            // Prepare note and id for replacement
-            let authorText = author ? author + " " : "";
-            let link =
-              '<a class="citation" href="' +
-              engine.url.replace("$id$", value) +
-              '" target="_blank">' +
-              engine.name
-                .replace("$author$", authorText)
-                .replace("$id$", value) +
-              "</a>";
-            return match.replace(match, link);
-          } else {
-            console.log("Unknown engine: " + engineCode);
-            return match;
-          }
-        }
-      );
-    }
-
+  if (!text || typeof text !== "string" || text.indexOf("@") === -1) {
     return text;
-  },
+  }
+
+  const shortcodes = Checklist.getData()?.meta?.databaseShortcodes;
+  if (!shortcodes?.length) return text;
+
+  return text.replace(
+    /@([a-z]+)(\.[a-z]+)?:(?:([^:@\s]+):)?([a-zA-Z0-9\-_\/]+)/gm,
+    (match, prefix, suffix, author, id) => {
+      const code = prefix + (suffix ?? "");
+      const engine = shortcodes.find(s => s.code === code);
+      if (!engine) {
+        console.log("Unknown shortcode: " + code);
+        return match;
+      }
+      const authorText = author ? author + " " : "";
+      const label = engine.name
+        .replace(/{{\s*author\s*}}/gi, authorText)
+        .replace(/{{\s*id\s*}}/gi, id)
+        .trim();
+      const href = engine.url.replace(/{{\s*id\s*}}/gi, id);
+      return `<a class="citation" href="${href}" target="_blank">${label}</a>`;
+    }
+  );
+},
 
   nameForMapRegionCache: new Map(),
   nameForMapRegion: function (regionCode) {
