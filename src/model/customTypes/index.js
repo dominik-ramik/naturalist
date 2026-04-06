@@ -23,6 +23,7 @@ import { readerSound } from "./ReaderSound.js";
 import { readerMap } from "./ReaderMap.js";
 import { readerMonths } from "./ReaderMonths.js"; 
 import { readerGeopoint } from "./ReaderGeopoint.js"; 
+import { readerInterval } from "./ReaderInterval.js";
 
 const dataReaders = buildReaders(
   readerText,
@@ -36,7 +37,8 @@ const dataReaders = buildReaders(
   readerSound,
   readerMap,
   readerMonths,
-  readerGeopoint
+  readerGeopoint,
+  readerInterval
 );
 
 // Export dataReaders for use in UI rendering

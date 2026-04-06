@@ -550,6 +550,20 @@ export let Checklist = {
               }
             });
           } else if (
+            Checklist.filter[dataType][dataPath].type === "interval"
+          ) {
+            // value is [from, to] — store the pair directly, not the unwrapped numbers
+            if (Array.isArray(value) && value.length === 2) {
+              Checklist.filter[dataType][dataPath].all.push(value);
+            }
+          } else if (
+            Checklist.filter[dataType][dataPath].type === "interval"
+          ) {
+            // value is [from, to] — store the pair directly, not the unwrapped numbers
+            if (Array.isArray(value) && value.length === 2) {
+              Checklist.filter[dataType][dataPath].all.push(value);
+            }
+          } else if (
             ["number", "date"].includes(Checklist.filter.data[dataPath].type)
           ) {
             leafData.forEach(function (value) {
@@ -667,20 +681,28 @@ export let Checklist = {
       const dataPath = currentPath ? `${currentPath}.${key}` : key;
 
       if (Array.isArray(value)) {
-        // Handle arrays
-        value.forEach((item, idx) => {
-          const arrayPath = `${dataPath}${idx + 1}`;
-          const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
-
-          if (meta && meta.formatting) {
-            const searchable = getSearchableTextByType(item, meta.formatting, { langCode });
-            results.push(...searchable);
-          } else if (typeof item === "object") {
-            this._collectSearchableData(item, arrayPath, dataMeta, results, langCode);
-          } else if (item !== null && item !== undefined) {
-            results.push(String(item));
-          }
-        });
+        // If this dataPath itself has a reader, the array IS its native value
+        // (e.g. interval → [from, to], months → [1,3,5]).  Delegate and move on.
+        const ownMeta = dataMeta[dataPath];
+        if (ownMeta && ownMeta.formatting) {
+          const searchable = getSearchableTextByType(value, ownMeta.formatting, { langCode });
+          results.push(...searchable);
+        } else {
+          // Sub-item array: each element has its own child formatting
+          value.forEach((item, idx) => {
+            const arrayPath = `${dataPath}${idx + 1}`;
+            const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
+ 
+            if (meta && meta.formatting) {
+              const searchable = getSearchableTextByType(item, meta.formatting, { langCode });
+              results.push(...searchable);
+            } else if (typeof item === "object") {
+              this._collectSearchableData(item, arrayPath, dataMeta, results, langCode);
+            } else if (item !== null && item !== undefined) {
+              results.push(String(item));
+            }
+          });
+        }
       } else {
         const meta = dataMeta[dataPath];
 
@@ -719,7 +741,7 @@ export let Checklist = {
     }
 
     const basePayload = {
-      value: currentValue.toString(),
+      value: currentValue,
       data: taxonData,
       taxon: {
         fullName:
@@ -824,6 +846,15 @@ export let Checklist = {
         // reader's getSearchableText so i18n month names ("January" etc.) are
         // properly indexed for full-text search.
         getSearchableTextByType(currentData, "months", {}).forEach(
+          text => primitives.push(text)
+        );
+        return primitives;
+      }
+ 
+      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "interval") {
+        // interval data is [from, to] — a pair of numbers, NOT a sub-item array.
+        // Delegate to the reader so "3.5 - 7.2" is indexed for full-text search.
+        getSearchableTextByType(currentData, "interval", {}).forEach(
           text => primitives.push(text)
         );
         return primitives;
