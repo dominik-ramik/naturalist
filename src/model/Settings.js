@@ -362,14 +362,13 @@ export let Settings = {
       if (!storedItem) {
         storedItem = "[]";
       }
-      let currentSearchKey = Checklist.queryKey();
       let pinned = JSON.parse(storedItem);
 
       let current = null;
       let others = [];
 
       pinned.forEach(function (pinnedItem) {
-        if (JSON.stringify(pinnedItem) == currentSearchKey) {
+        if (Settings.pinnedSearches.matchesCurrent(pinnedItem)) {
           current = pinnedItem;
         } else {
           others.push(pinnedItem);
@@ -392,7 +391,10 @@ export let Settings = {
       }
 
       let pinned = this.getAll();
-      pinned.push(JSON.parse(Checklist.queryKey()));
+      let item = JSON.parse(Checklist.queryKey());
+      item.v = Settings.viewType();
+      item.s = Settings.analyticalIntent();
+      pinned.push(item);
 
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
@@ -402,8 +404,13 @@ export let Settings = {
         itemObject = JSON.parse(Checklist.queryKey());
       }
 
+      // Strip tool/scope keys for filter description
+      const { v: _v, s: pinnedScope, ...filterPart } = itemObject;
+      itemObject = filterPart;
+
       if (Object.keys(itemObject).length == 0) {
-        return Settings.analyticalIntent() === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
+        const scope = pinnedScope || Settings.analyticalIntent();
+        return scope === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
       }
 
       let names = [];
@@ -537,16 +544,16 @@ export let Settings = {
       return formatList(names);
     },
     isCurrentSearchPinned: function () {
-      let current = Checklist.queryKey();
-      let isCurrentPinned = false;
-
-      this.getAll().forEach(function (pinnedItem) {
-        if (JSON.stringify(pinnedItem) == current) {
-          isCurrentPinned = true;
-        }
+      return this.getAll().some(function (pinnedItem) {
+        return Settings.pinnedSearches.matchesCurrent(pinnedItem);
       });
-
-      return isCurrentPinned;
+    },
+    matchesCurrent: function (pinnedItem) {
+      const { v, s, ...filterPart } = pinnedItem;
+      if (JSON.stringify(filterPart) !== Checklist.queryKey()) return false;
+      if (v && v !== Settings.viewType()) return false;
+      if (s && s !== Settings.analyticalIntent()) return false;
+      return true;
     },
     remove: function (itemObject) {
       let toRemove = JSON.stringify(itemObject);

@@ -3,6 +3,7 @@ import m from "mithril";
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
+import { validateActiveToolState } from "./analysisTools/index.js";
 
 export let PinnedView = {
   view: function (vnode) {
@@ -29,7 +30,7 @@ export let PinnedView = {
         return {
           type: "button",
           state:
-            Checklist.queryKey() == JSON.stringify(pinnedItem)
+            Settings.pinnedSearches.matchesCurrent(pinnedItem)
               ? "inactive"
               : "",
           title: m(
@@ -39,9 +40,13 @@ export let PinnedView = {
             )
           ),
           action: function () {
+            if (pinnedItem.v) Settings.viewType(pinnedItem.v);
+            if (pinnedItem.s) Settings.analyticalIntent(pinnedItem.s);
+            if (Checklist._isDataReady) {
+              validateActiveToolState(Checklist.getData());
+            }
             Checklist.filter.setFromQuery(pinnedItem);
             routeTo("/checklist");
-
           },
           altActionIcon: "img/ui/menu/remove.svg",
           altAction: function () {

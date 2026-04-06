@@ -4,6 +4,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 
 import { Checklist } from "../model/Checklist.js";
+import { Settings } from "../model/Settings.js";
 import { Toast } from "../view/AppLayoutView.js";
 
 export const checklistURL = "./usercontent/data/checklist.json";
@@ -413,7 +414,7 @@ export function getCurrentLocaleBestGuess() {
   return _localeCache;
 }
 
-export function routeTo(destination, query, language) {
+export function routeTo(destination, query, language, replace = false) {
   //console.log("Routing to: " + destination);
   let lang = language;
   if (lang === undefined || lang === null) {
@@ -432,7 +433,14 @@ export function routeTo(destination, query, language) {
   m.route.set(destination, {
     l: lang,
     q: query ? query : Checklist.queryKey(),
-  });
+    v: Settings.viewType(),
+    s: Settings.analyticalIntent().replace("#", ""),
+  }, replace ? { replace: true } : undefined);
+}
+
+export function updateRouteParams() {
+  const path = m.route.get().split("?")[0];
+  routeTo(path, null, null, true);
 }
 
 export function isArrayOfEmptyStrings(arr) {

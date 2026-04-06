@@ -5,6 +5,7 @@ import { config as regionalDistribution } from "./RegionalDistribution.js";
 
 import { Settings } from "../../model/Settings.js";
 import { Checklist } from "../../model/Checklist.js";
+import { updateRouteParams } from "../../components/Utils.js";
 
 export { SCOPE_CHOICES } from "./scopes.js";
 
@@ -137,7 +138,15 @@ export function validateActiveToolState(checklistData) {
   let currentToolId  = Settings.viewType() || DEFAULT_TOOL;
   let currentIntent  = Settings.analyticalIntent() || "#T";
 
-  let activeTool    = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
+  let activeTool    = TOOL_REGISTRY[currentToolId];
+
+  // Unknown tool ID → fall back to default
+  if (!activeTool) {
+    currentToolId = DEFAULT_TOOL;
+    Settings.viewType(currentToolId);
+    activeTool = TOOL_REGISTRY[currentToolId];
+  }
+
   let availability  = activeTool.getAvailability(allIntents, checklistData);
 
   // 1. Tool itself is dead for this dataset → fall back to default
@@ -173,6 +182,8 @@ export function requestToolChange(toolId, checklistData) {
     if (!availability.supportedIntents.includes(currentIntent)) {
       Settings.analyticalIntent(availability.supportedIntents[0]);
     }
+
+    updateRouteParams();
   } else {
     console.warn(`Tool ${toolId} is not available for this dataset.`);
   }
@@ -191,6 +202,7 @@ export function requestIntentChange(intentId, checklistData) {
 
   if (availability.supportedIntents.includes(intentId)) {
     Settings.analyticalIntent(intentId);
+    updateRouteParams();
   } else {
     console.warn(
       `Intent ${intentId} is not supported by the current tool ${currentToolId}.`

@@ -15,6 +15,7 @@ import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
 import { compressor, checklistURL } from "./components/Utils.js";
+import { validateActiveToolState, TOOL_REGISTRY } from "./view/analysisTools/index.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 
@@ -300,8 +301,25 @@ function runApp() {
         }
       }
 
+      function updateToolAndScope() {
+        const toolParam = m.route.param("v");
+        const scopeParam = m.route.param("s");
+
+        if (toolParam && TOOL_REGISTRY[toolParam]) {
+          Settings.viewType(toolParam);
+        }
+        if (scopeParam && (scopeParam === "T" || scopeParam === "S")) {
+          Settings.analyticalIntent("#" + scopeParam);
+        }
+
+        if (Checklist._isDataReady) {
+          validateActiveToolState(Checklist.getData());
+        }
+      }
+
       function onMatchGuard() {
-        updateLanguage(); // Ensure language is set based on URL
+        updateLanguage();
+        updateToolAndScope();
         if (!isDataReady(checklistData)) m.route.set("/manage");
         if (
           !Settings.alreadyViewedAboutSection() &&
