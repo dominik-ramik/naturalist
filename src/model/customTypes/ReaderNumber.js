@@ -56,8 +56,7 @@ export let readerNumber = {
 
     // Apply template if available
     let displayData = helpers.processTemplate(data, uiContext);
-
-    console.log("readerNumber render:", data, uiContext.meta.template, displayData );
+    
     return m("span", m.trust(displayData));
   },
 };

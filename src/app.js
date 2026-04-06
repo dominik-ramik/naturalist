@@ -261,11 +261,28 @@ Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
 });
 
 Handlebars.registerHelper("unit", function (...args) {
-  // Last arg is always Handlebars options hash — ignore it
-  const isImplicit = args.length === 2; // (unitStr, options)
-  const [value, unitStr] = isImplicit
-    ? [this.value, args[0]]
-    : [args[0],    args[1]];
+  // Last arg is always Handlebars options hash — strip it
+  const params = args.slice(0, -1);
+  let value, unitStr, exact = false;
+  if (params.length === 1) {
+    // Implicit: {{ unit "kg" }}
+    value = this.value;
+    unitStr = params[0];
+  } else if (params.length === 2 && params[1] === "exact") {
+    // Implicit with exact: {{ unit "kg" "exact" }}
+    value = this.value;
+    unitStr = params[0];
+    exact = true;
+  } else if (params.length === 2) {
+    // Explicit: {{ unit value "kg" }}
+    value = params[0];
+    unitStr = params[1];
+  } else if (params.length >= 3) {
+    // Explicit with optional exact: {{ unit value "kg" "exact" }}
+    value = params[0];
+    unitStr = params[1];
+    exact = params[2] === "exact";
+  }
 
   // ── Unit dictionary ────────────────────────────────────────────────────────
   const UNITS = {
@@ -389,9 +406,9 @@ Handlebars.registerHelper("unit", function (...args) {
     return key.replace(/2$/, "<sup>2</sup>").replace(/3$/, "<sup>3</sup>");
   }
 
-  // Single formatted token, e.g. "1.5&nbsp;km"
+  // Single formatted token, e.g. "<span class='unit-value'>1.5</span>&nbsp;<span class='unit-name'>km</span>"
   function formatPair(n, key) {
-    return formatNumber(n) + "&nbsp;" + formatUnitDisplay(key);
+    return '<span class="unit-value">' + formatNumber(n) + '</span>&nbsp;<span class="unit-name">' + formatUnitDisplay(key) + '</span>';
   }
 
   // Volume has two flavours: cubic (cm3) and liquid (ml/l).
@@ -461,38 +478,18 @@ Handlebars.registerHelper("unit", function (...args) {
     return { value: converted, unitKey: bestKey };
   }
 
-  // ── Guard: unknown unit ────────────────────────────────────────────────────
-  if (!UNITS[unitStr]) return value;
+  // ── Guard: unknown unit (exact mode allows any unit string) ────────────────
+  if (!exact && !UNITS[unitStr]) return value;
 
-  // ── Array (range) input ────────────────────────────────────────────────────
-  if (Array.isArray(value)) {
-    if (value.length !== 2) return value;
-
-    const n0 = parseNum(value[0]);
-    const n1 = parseNum(value[1]);
-    if (!isValid(n0) || !isValid(n1)) return value;
-
-    if (n0 === 0 && n1 === 0) {
-      return new Handlebars.SafeString("0&nbsp;" + formatUnitDisplay(unitStr));
-    }
-
-    const r0 = processValue(n0, unitStr);
-    const r1 = processValue(n1, unitStr);
-    if (!r0 || !r1) return value.join(" - ");
-
-    const html = r0.unitKey === r1.unitKey
-      ? formatNumber(r0.value) + " - " + formatPair(r1.value, r1.unitKey)
-      : formatPair(r0.value, r0.unitKey) + " - " + formatPair(r1.value, r1.unitKey);
-
-    return new Handlebars.SafeString(html);
-  }
-
-  // ── Single value input ─────────────────────────────────────────────────────
   const parsed = parseNum(value);
   if (!isValid(parsed)) return value;
 
+  if (exact) {
+    return new Handlebars.SafeString(formatPair(parsed, unitStr));
+  }
+
   if (parsed === 0) {
-    return new Handlebars.SafeString("0&nbsp;" + formatUnitDisplay(unitStr));
+    return new Handlebars.SafeString(formatPair(0, unitStr));
   }
 
   const result = processValue(parsed, unitStr);
