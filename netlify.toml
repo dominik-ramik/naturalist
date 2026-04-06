@@ -1,6 +1,0 @@
-[build]
-  # The command Netlify will run to build your site
-  command = "npm run build:all"
-  
-  # The folder Netlify should serve to the public after the build finishes
-  publish = "docs/.vitepress/dist"

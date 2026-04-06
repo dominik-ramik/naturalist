@@ -5,13 +5,8 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite --port 5500",
-    "docs:dev": "vitepress dev docs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run docs:dev\"",
     "build": "vite build",
-    "preview": "vite preview",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
-    "build:all": "vitepress build docs && vite build --outDir docs/.vitepress/dist/demo --emptyOutDir"
+    "preview": "vite preview"
   },
   "repository": {
     "type": "git",
@@ -24,14 +19,6 @@
     "url": "https://github.com/dominik-ramik/naturalist/issues"
   },
   "homepage": "https://github.com/dominik-ramik/naturalist#readme",
-  "devDependencies": {
-    "bibtex-json-toolbox": "^1.2.4",
-    "concurrently": "^9.2.1",
-    "vite": "^7.2.2",
-    "vite-plugin-pwa": "^1.1.0",
-    "vitepress": "^2.0.0-alpha.14",
-    "workbox-precaching": "^7.4.0"
-  },
   "dependencies": {
     "bibtex-js-parser": "^1.1.6",
     "d3": "^7.9.0",
@@ -44,5 +31,12 @@
     "mithril": "^2.3.8",
     "vue-i18n": "^11.2.2",
     "xlsx-js-style": "^1.2.0"
+  },
+  "devDependencies": {
+    "bibtex-json-toolbox": "^1.2.4",
+    "serve-static": "^2.2.1",
+    "vite": "^7.2.2",
+    "vite-plugin-pwa": "^1.1.0",
+    "workbox-precaching": "^7.4.0"
   }
 }

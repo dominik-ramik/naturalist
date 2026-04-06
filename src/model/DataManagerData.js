@@ -964,13 +964,13 @@ export let nlDataStructure = {
             name: {
               name: "Region name",
               description:
-                "The fill color applied to the matching region and to its legend element.",
+                "The human readable name of the region.",
               integrity: {
                 description: "",
                 allowEmpty: false,
                 allowDuplicates: "yes",
                 allowedContent: "any",
-                supportsMultilingual: false,
+                supportsMultilingual: true,
               },
             },
           },
