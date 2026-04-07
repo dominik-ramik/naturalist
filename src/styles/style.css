@@ -103,7 +103,7 @@ ul.card.specimen-level {
 /* ------------- */
 
 /* 1. Style the entire copiable wrapper as the ID Badge with the SVG background */
-.specimen-level .copiable {
+.specimen-level .taxon-name-stripe .copiable {
   display: inline-flex;
   align-items: center;
   background-color: var(--nlblue); 

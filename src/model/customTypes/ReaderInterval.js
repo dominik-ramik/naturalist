@@ -93,7 +93,7 @@ function buildInterval(fromRaw, toRaw, source) {
 
   if (from > to) {
     Logger.error(
-      `interval: from (${from}) > to (${to}) in "${source}" — entry skipped`
+      `interval: from (${from}) > to (${to}) in "${source}"`
     );
     return null;
   }
@@ -184,11 +184,11 @@ export let readerInterval = {
       if (fromResult !== data[0] || toResult !== data[1]) {
         const fromStr = String(fromResult);
         const toStr   = String(toResult);
-        return m("span", m.trust(fromStr === toStr ? fromStr : fromStr + " – " + toStr));
+        return m("span.simple-value", m.trust(fromStr === toStr ? fromStr : fromStr + '&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;' + toStr));
       }
     }
 
     // Default: "from – to" or a bare number when both ends are equal
-    return m("span", data[0] === data[1] ? `${data[0]}` : `${data[0]} – ${data[1]}`);
+    return m("span.simple-value", data[0] === data[1] ? m.trust(`${data[0]}`) : m.trust(`${data[0]}&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;${data[1]}`));
   },
 };

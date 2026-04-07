@@ -169,9 +169,6 @@ export let DataManager = function () {
         ];
 
       if (!bibliographyData || bibliographyData.length === 0) {
-        Logger.info(
-          "Bibliography table is empty. Add BibTeX entries to use citations."
-        );
         return {};
       }
 
@@ -912,6 +909,38 @@ export let DataManager = function () {
               data.sheets.content.tables.customDataDefinition.columns.placement
                 .integrity.defaultValue,
             ];
+          }
+
+          // --- Integrity check: ensure placement tokens are allowed by DataManagerData ---
+          try {
+            const rawPlacement = (info.fullRow.placement || "").toString();
+            const normalized = rawPlacement.trim().toLowerCase().replace(/\s*\|\s*/g, "|");
+            const allowed = (data.sheets.content.tables.customDataDefinition.columns.placement.integrity.listItems || []).map(x => x.toString().toLowerCase());
+
+            // Accept empty placement
+            if (normalized !== "") {
+              // Direct match for any listed allowed combination
+              const directOk = allowed.indexOf(normalized) >= 0;
+
+              // Also accept pipe-separated tokens if each token is present among allowed single tokens
+              const allowedSingles = allowed.filter(x => x.indexOf("|") < 0 && x !== "");
+              const tokens = normalized.split("|");
+              const tokensOk = tokens.length > 0 && tokens.every(t => allowedSingles.indexOf(t) >= 0);
+
+              if (!directOk && !tokensOk) {
+                Logger.error(
+                  "Invalid placement '" + rawPlacement + "' for column " + info.fullRow.columnName + ". Allowed placements: " + allowed.join(", ")
+                );
+                // Fallback to default placement to avoid later errors
+                placement = [
+                  data.sheets.content.tables.customDataDefinition.columns.placement
+                    .integrity.defaultValue,
+                ];
+              }
+            }
+          } catch (e) {
+            // Defensive: if any lookup fails, log and continue
+            Logger.error("Error validating placement for column " + info.fullRow.columnName + ": " + e.message);
           }
 
           if (dataType == "custom") {
@@ -1901,7 +1930,7 @@ export let DataManager = function () {
           });
         }
 
-        // --- ADD THIS BLOCK: Integrity check for placement=details and allowed formatting ---
+        // --- Integrity check for placement=details and allowed formatting ---
         if (row.placement && row.placement.split("|").map(x => x.trim()).includes("details")) {
           const allowedFormatting = ["", "text", "markdown", "image", "sound", "map", "map regions"];
           if (!allowedFormatting.includes((row.formatting || "").trim().toLowerCase())) {

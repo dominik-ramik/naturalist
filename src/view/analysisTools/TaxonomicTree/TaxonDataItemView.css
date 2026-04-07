@@ -191,3 +191,15 @@ a.citation {
   font-size: var(--font-smaller);
   letter-spacing: 0.025em;
 }
+
+.unit-name{
+  color: grey;
+}
+
+.unit-value{
+  
+}
+
+.unit-dash{
+  color: grey;
+}
