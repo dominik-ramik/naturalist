@@ -104,8 +104,12 @@ export let Filter = {
           const filterDef = Filter[type][dataPath];
           const queryValue = query[type][dataPath];
 
+          if(filterDef === undefined || filterDef == null) {
+            return; // skip unknown filters
+          }
+
           if (
-            selectableFilterTypes.includes(filterDef.type) ||
+            selectableFilterTypes?.includes(filterDef.type) ||
             (
               exactSelectableRangeTypes.includes(filterDef.type) &&
               Array.isArray(queryValue)
