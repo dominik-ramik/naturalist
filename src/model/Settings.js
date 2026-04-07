@@ -434,7 +434,7 @@ export let Settings = {
             if (
               type == "taxa" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
-              Checklist.getMetaForDataPath(dataPath).formatting == "badge" ||
+              Checklist.getMetaForDataPath(dataPath).formatting == "category" ||
               Checklist.getMetaForDataPath(dataPath).formatting ==
               "map regions" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "months"

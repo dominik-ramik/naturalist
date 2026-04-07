@@ -518,7 +518,7 @@ export let nlDataStructure = {
                 allowedContent: "any",
                 supportsMultilingual: false,
               },
-              templateData: ["badge", "badge"],
+              templateData: ["category", "category"],
             },
             template: {
               name: "Template",
@@ -861,7 +861,7 @@ export let nlDataStructure = {
               description: "",
               integrity: {
                 description:
-                  "XXXXX Each of the values need its separate line, so if you have badges for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
+                  "Each of the values need its separate line, so if you have 'category' for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
                 allowEmpty: false,
                 allowDuplicates: "yes",
                 allowedContent: "dataPath",
@@ -896,18 +896,18 @@ export let nlDataStructure = {
           },
           data: [],
         },
-        badges: {
-          name: "Colored badges",
+        categories: {
+          name: "Colored categories",
           description:
-            "If your checklist contains small sets of categorical data (e.g. Red List codes, status like Native, Introduced, Endemic, ...), you can make them visually stand out by transforming them into a colored 'badge'. The columns from the checklist sheet whose data will be presented as badges and the color of the individual values are defined in this table.\nThis table can be left completely empty, if you do not need to display colored badges.",
+            "If your checklist contains small sets of categorical data (e.g. Red List codes, status like Native, Introduced, Endemic, ...), you can make them visually stand out by transforming them into a colored 'category'. The columns from the checklist sheet whose data will be presented as categories and the color of the individual values are defined in this table.\nThis table can be left completely empty, if you do not need to display colored categories. You do not have to style all categorical data. It is perfectly fine to label data in 'Custom data definition' table with 'category' formatting and not style it as a colored category in this table. In that case the data will be displayed as a simple text, but will still be searchable through a category filter if you set 'Search category title' in the 'Custom data definition' table.",
           columns: {
             columnName: {
               name: "Column name",
               description:
-                "One of the columns in your checklist sheet whose values you wish to convert into badges. In the Birds of the US sample checklist, RedList.Code is one of the columns for which the badge is set.",
+                "One of the columns in your checklist sheet whose values you wish to convert into categories. In the Birds of the US sample checklist, RedList.Code is one of the columns for which the category is set.",
               integrity: {
                 description:
-                  "Each of the values need its separate line, so if you have badges for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
+                  "Each of the values need its separate line, so if you have categories for a Status column with 3 possible values (say Native, Endemic and Introduced), you will need three lines, one for each value but all with the same Column name 'Status'.",
                 allowEmpty: false,
                 allowDuplicates: "yes",
                 allowedContent: "dataPath",
@@ -921,7 +921,7 @@ export let nlDataStructure = {
                 "To tell the checklist app which data should be formatted in which way, you can use this column to match different values of your data.",
               integrity: {
                 description:
-                  "A case-insensitive text to be matched for this badge. E.g. if you enter 'Endemic', then 'Endemic', 'near Endemic' and 'Endemic?' values will be transformed into this badge too.",
+                  "A case-insensitive text to be matched for this category. E.g. if you enter 'Endemic', then 'Endemic', 'near Endemic' and 'Endemic?' values will be transformed into this category too.",
                 allowEmpty: false,
                 allowDuplicates: "no",
                 allowedContent: "any",
@@ -932,7 +932,7 @@ export let nlDataStructure = {
             backgroundColor: {
               name: "Background color",
               description:
-                "Background color of the badge for the particular 'Contains text' value",
+                "Background color of the category for the particular 'Contains text' value",
               integrity: {
                 description: "",
                 allowEmpty: true,
@@ -946,7 +946,7 @@ export let nlDataStructure = {
             textColor: {
               name: "Text color",
               description:
-                "Text color of the badge. Make sure it is different enough from the background color in order to make it easily readable.",
+                "Text color of the category. Make sure it is different enough from the background color in order to make it easily readable.",
               integrity: {
                 description: "",
                 allowEmpty: true,
@@ -960,7 +960,7 @@ export let nlDataStructure = {
             borderColor: {
               name: "Border color",
               description:
-                "You can define a separate border color. If you wish to have a simple badge without border, you can use the same color as for the background.",
+                "You can define a separate border color. If you wish to have a simple category without border, you can use the same color as for the background.",
               integrity: {
                 description: "",
                 allowEmpty: true,

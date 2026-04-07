@@ -14,7 +14,7 @@ import {
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 
-const selectableFilterTypes = ["text", "badge", "map regions", "months"];
+const selectableFilterTypes = ["text", "category", "map regions", "months"];
 const rangeFilterTypes = ["number", "date"];
 const dateInputFormat = "YYYY-MM-DD";
 const numberFilterOperations = [

@@ -1032,23 +1032,23 @@ export let DataManager = function () {
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
 
-            if (info.fullRow.formatting.toLowerCase() == "badge") {
-              meta[computedDataPath].badges = [];
-              data.sheets.appearance.tables.badges.data[lang.code].forEach(
-                function (badge) {
+            if (info.fullRow.formatting.toLowerCase() == "category") {
+              meta[computedDataPath].categories = [];
+              data.sheets.appearance.tables.categories.data[lang.code].forEach(
+                function (category) {
                   if (
                     dataPath.modify
-                      .itemNumbersToHash(badge.columnName)
+                      .itemNumbersToHash(category.columnName)
                       .toLowerCase() ==
                     dataPath.modify
                       .itemNumbersToHash(computedDataPath)
                       .toLowerCase()
                   ) {
-                    meta[computedDataPath].badges.push({
-                      contains: badge.containsText.toLowerCase(),
-                      background: badge.backgroundColor,
-                      text: badge.textColor,
-                      border: badge.borderColor,
+                    meta[computedDataPath].categories.push({
+                      contains: category.containsText.toLowerCase(),
+                      background: category.backgroundColor,
+                      text: category.textColor,
+                      border: category.borderColor,
                     });
                   }
                 }
@@ -1869,10 +1869,10 @@ export let DataManager = function () {
           Logger.error(tf("dm_wrong_template", [columnName]));
         }
 
-        // Only leaf column can have badge "formatting"
-        if (row.formatting.toLowerCase() == "badge" && !colPosition.isLeaf) {
+        // Only leaf column can have category "formatting"
+        if (row.formatting.toLowerCase() == "category" && !colPosition.isLeaf) {
           Logger.error(
-            tf("dm_wrong_badge", [
+            tf("dm_wrong_category", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns.formatting
                 .name,

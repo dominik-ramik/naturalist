@@ -187,7 +187,7 @@
   "dm_hue_value": "La teinte dans le tableau {0} sous l'item 'Color theme hue' doit être un nombre entier entre 0 et 360",
   "dm_wrong_placement": "{0} ne peut pas être dans le placement {1} ; seule sa racine ({2}) devrait avoir son placement assigné",
   "dm_wrong_template": "La colonne {0} ne peut pas avoir de modèle (template) défini, ceci ne peut être fait que pour les noms de colonnes représentant une valeur simple, sans élément enfant.",
-  "dm_wrong_badge": "Le format 'badge' ne peut pas être défini pour la colonne nommée {0} dans la colonne {1}, ceci ne peut être fait que pour les noms de colonnes représentant une valeur simple, sans éléments déscendants",
+  "dm_wrong_category": "Le format 'category' ne peut pas être défini pour la colonne nommée {0} dans la colonne {1}, ceci ne peut être fait que pour les noms de colonnes représentant une valeur simple, sans éléments déscendants",
   "dm_wrong_separator": "La colonne nommée {0} ne peut pas avoir de séparateur dans la colonne {1}, ceci ne peut être fait que pour les noms de colonnes représentant une valeur simple, sans éléments déscendants",
   "dm_hidden_column_name": "La colonne {0} est définie comme étant cachée, la valeur de la colonne {1} n'aura aucun effet",
   "dm_hidden_missing_index": "Il vous manque l'index {0} dans votre table {1} dans la colonne {2}",

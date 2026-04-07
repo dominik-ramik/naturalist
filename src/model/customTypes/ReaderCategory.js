@@ -1,8 +1,8 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 
-export let readerBadge = {
-  dataType: "badge",
+export let readerCategory = {
+  dataType: "category",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     let columnIndex = headers.indexOf(computedPath.toLowerCase());
@@ -30,8 +30,8 @@ export let readerBadge = {
   },
 
   /**
-   * Extract searchable text from badge data
-   * @param {any} data - The badge value
+   * Extract searchable text from category data
+   * @param {any} data - The category value
    * @param {Object} uiContext - UI context (optional)
    * @returns {string[]} Array of searchable strings
    */
@@ -64,7 +64,7 @@ export let readerBadge = {
       return css;
     }
 
-    let badgeMeta = uiContext.meta.badges;
+    let badgeMeta = uiContext.meta.categories;
     let badgeFormat = badgeMeta.find(function (possibleFormat) {
       let possibleFormatCured = possibleFormat.contains
         .toLowerCase()
@@ -76,7 +76,7 @@ export let readerBadge = {
 
     if (badgeFormat) {
       return m.trust(
-        "<span class='badge' style='" +
+        "<span class='category' style='" +
           (badgeFormat.background
             ? "background-color: " + purifyCssString(badgeFormat.background) + ";"
             : "") +

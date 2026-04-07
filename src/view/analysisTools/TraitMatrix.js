@@ -45,7 +45,7 @@ export const config = {
 export const getAvailableTraits = (intent, checklistData) => {
   if (!Checklist.filter || !Checklist.filter.data) return [];
   return Object.keys(Checklist.filter.data).filter(f =>
-    ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
+    ["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)
   );
 };
 
@@ -238,7 +238,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
 
   switch (categoryType) {
     case "text":
-    case "badge":
+    case "category":
       return toArr(get(dataCategory))
         .map(normaliseLabelValue)
         .filter(x => x != null && x !== "" && x !== "[object Object]");
@@ -482,7 +482,7 @@ function categoryChart(filteredTaxa) {
   // ── Derived labels & flags ────────────────────────────────────────────────
 
   const filtersToDisplay = Object.keys(Checklist.filter.data).filter(f =>
-    ["text", "date", "months", "badge"].includes(Checklist.filter.data[f].type)
+    ["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)
   );
 
   const isDateCategory = !!categoryToView && Checklist.filter.data[categoryToView]?.type === "date";

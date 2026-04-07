@@ -1,4 +1,5 @@
 {
+  "tab_title_summary": "Summary",
   "tab_title_media": "Media",
   "tab_title_maps": "Maps",
   "tab_title_text": "Text",
@@ -181,7 +182,7 @@
   "dm_hue_value": "The hue in table {0} under item 'Color theme hue' has to be an integer number between 0 and 360",
   "dm_wrong_placement": "{0} cannot be in placement {1}; only its root ({2}) should have its placement asigned",
   "dm_wrong_template": "Column {0} cannot have a template assigned, this can be only done for column names representing a simple value, with no child items",
-  "dm_wrong_badge": "Column {0} cannot have 'badge' format set in {1} column, this can be only done for column names representing a simple value, with no child items",
+  "dm_wrong_category": "Column {0} cannot have 'category' format set in {1} column, this can be only done for column names representing a simple value, with no child items",
   "dm_wrong_separator": "Column {0} cannot have a separator set in {1} column, this can be only done for column names representing a simple value, with no child items",
   "dm_hidden_column_name": "Column {0} is set to be hidden, the value of column {1} won't have any effect",
   "dm_hidden_missing_index": "You are missing index {0} in your {1} table in column {2}",
@@ -363,5 +364,6 @@
   "static_hosting_cors_acknowledge": "Got it — show me the URL field",
   "static_hosting_cors_reminder": "Heads up: loading from a URL may be blocked by your browser on static hosting",
   "url_fetching_via_proxy": "Fetching spreadsheet via server proxy…",
-  "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…"
+  "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…",
+  "summary_cell_count": "{0} taxa"
 }

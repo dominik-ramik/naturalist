@@ -4,7 +4,7 @@ import { Checklist } from "./Checklist.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 
-const selectableFilterTypes = ["text", "map regions", "badge", "months"];
+const selectableFilterTypes = ["text", "map regions", "category", "months"];
 const rangeFilterTypes = ["number", "interval", "date"];
 const exactSelectableRangeTypes = ["number", "date"];
 

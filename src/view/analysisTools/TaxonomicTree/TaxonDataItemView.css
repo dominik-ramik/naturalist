@@ -2,7 +2,7 @@ span.simple-value {
   user-select: text;
 }
 
-span.badge {
+span.category {
   border-radius: var(--pad-large);
   padding-left: var(--pad-small);
   padding-right: var(--pad-small);

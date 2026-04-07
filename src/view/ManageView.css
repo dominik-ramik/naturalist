@@ -554,8 +554,8 @@
   flex: 1;
 }
 
-/* Badge row inside the group header */
-.manage-log-group-badges {
+/* category row inside the group header */
+.manage-log-group-categories {
   display: flex;
   gap: 0.3em;
   align-items: center;

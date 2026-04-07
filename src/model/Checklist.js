@@ -541,7 +541,7 @@ export let Checklist = {
           if (
             Checklist.filter[dataType][dataPath].type == "text" ||
             Checklist.filter[dataType][dataPath].type == "map regions" ||
-            Checklist.filter[dataType][dataPath].type == "badge" ||
+            Checklist.filter[dataType][dataPath].type == "category" ||
             Checklist.filter[dataType][dataPath].type == "months"
           ) {
             leafData.forEach(function (value) {
