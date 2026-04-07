@@ -56,7 +56,11 @@ export let readerNumber = {
 
     // Apply template if available
     let displayData = helpers.processTemplate(data, uiContext);
-    
+
+    if (typeof displayData !== "string") {
+      return m("span", displayData?.toLocaleString?.() || displayData?.toString?.() || "");
+    }
+
     return m("span", m.trust(displayData));
   },
 };
