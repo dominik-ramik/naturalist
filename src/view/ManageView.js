@@ -4,12 +4,13 @@ import { marked } from "marked";
 
 import { checkForChecklistUpdate } from "../app.js";
 import { ExcelBridge } from "../components/ExcelBridge.js";
-import { compressor, routeTo } from "../components/Utils.js";
+import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
 import { Settings } from "../model/Settings.js";
 import { Logger } from "../components/Logger.js";
 import { exportTemplateSpreadsheet } from "../model/DataManagerData.js";
+import { compressor } from "../components/LZString.js";
 
 // --- INTERNAL STATE STORE ---
 const ManageStore = {

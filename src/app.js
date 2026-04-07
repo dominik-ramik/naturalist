@@ -14,8 +14,9 @@ import { LiteratureView } from "./view/LiteratureView.js";
 import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
-import { compressor, checklistURL, unitToHtml } from "./components/Utils.js";
+import { checklistURL, unitToHtml } from "./components/Utils.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
+import { compressor } from "./components/LZString.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 

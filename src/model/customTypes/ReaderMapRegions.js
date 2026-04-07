@@ -24,8 +24,9 @@ import m from "mithril";
 
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
-import { processMarkdownWithBibliography, relativeToUsercontent, colorSVGMap } from "../../components/Utils.js";
+import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
 import { Logger } from "../../components/Logger.js";
+import { colorSVGMap } from "../../components/ColorSVGMap.js";
 
 const nlData = nlDataStructure;
 

@@ -5,11 +5,11 @@ import "./RegionalDistribution.css";
 import { Settings } from "../../model/Settings.js";
 import {
   colorFromRatio,
-  colorSVGMap,
   filterTerminalLeavesForMode,
   relativeToUsercontent,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
+import { colorSVGMap } from "../../components/ColorSVGMap.js";
 // ButtonGroup removed in favor of native selects and segmented controls
 
 export const config = {

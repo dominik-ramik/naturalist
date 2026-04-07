@@ -64,8 +64,6 @@ export const config = {
             type: "toggle",
             default: true,
             accessor: Settings.checklistShowTaxonMeta,
-            // Only meaningful when there are specimens to compare against
-            condition: () => Checklist.hasSpecimens(),
         },
 
         {
@@ -94,7 +92,6 @@ export const config = {
             type: "toggle",
             default: true,
             accessor: Settings.checklistIncludeChildren,
-            condition: () => Checklist.hasSpecimens(),
         },
 
         {
@@ -103,7 +100,6 @@ export const config = {
             type: "toggle",
             default: false,
             accessor: Settings.checklistShowTerminalOnly,
-            condition: () => Checklist.hasSpecimens(),
         },
     ],
 

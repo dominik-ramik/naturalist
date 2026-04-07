@@ -2,7 +2,6 @@ import Handlebars from "handlebars";
 import { TinyBibReader } from 'bibtex-json-toolbox';
 
 import {
-  cssColorNames,
   isValidHttpUrl,
   pad,
   relativeToUsercontent,
@@ -14,6 +13,7 @@ import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
+import { cssColorNames } from "../components/CssColorNames.js";
 
 // Global array to collect assets from F: directives
 
