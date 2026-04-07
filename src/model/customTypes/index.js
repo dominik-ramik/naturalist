@@ -154,8 +154,7 @@ export function loadDataByType(context, computedPath, info) {
   } else {
     // No matching reader found, log error with available types
     const availableFormattings = Object.keys(dataReaders).join(", ");
-    //TODO: change to Logger.error
-    Logger.warning(
+    Logger.error(
       `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
     );
     
