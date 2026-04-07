@@ -520,22 +520,22 @@
 }
 
 /* Severity-tinted header backgrounds — mirrors the flat item colours */
-.manage-log-group.critical > .manage-log-group-header {
+.manage-log-group.critical>.manage-log-group-header {
   background-color: #ffebee;
   color: #c62828;
 }
 
-.manage-log-group.error > .manage-log-group-header {
+.manage-log-group.error>.manage-log-group-header {
   background-color: #fff3e0;
   color: #e65100;
 }
 
-.manage-log-group.warning > .manage-log-group-header {
+.manage-log-group.warning>.manage-log-group-header {
   background-color: #fff8e1;
   color: #f57c00;
 }
 
-.manage-log-group.info > .manage-log-group-header {
+.manage-log-group.info>.manage-log-group-header {
   background-color: #e3f2fd;
   color: #1976d2;
 }
@@ -668,6 +668,15 @@
 .manage-url-input input[type="url"]:focus {
   outline: none;
   border-color: var(--nlblue, #55769b);
+}
+
+.manage-cors-notice-text {
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  margin-bottom: 0.5em;
+  color: #555;
 }
 
 /* ==========================================================================

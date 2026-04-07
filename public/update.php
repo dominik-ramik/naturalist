@@ -12,8 +12,46 @@ if ($require_https && !$isSecure) {
 }
 
 // 2. CHECK PING (Health Check)
-if (isset($_GET["ping"])){
+if (isset($_GET["ping"])) {
     echo jsonState("online", "", "");
+    exit;
+}
+
+// 2b. PROXY FETCH (CORS workaround for same-host clients only)
+if (isset($_GET["proxy"])) {
+    // Derive the requester's origin/host and reject anything not from our own host.
+    // HTTP_ORIGIN is set by browsers on cross-origin requests; HTTP_REFERER is the fallback.
+    $requestHost = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (empty($requestHost)) {
+        $requestHost = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_SCHEME) . '://'
+            . parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_HOST);
+    }
+    if (empty($requestHost) || strpos($requestHost, $_SERVER['HTTP_HOST']) === false) {
+        http_response_code(403);
+        die(jsonState("error", "proxy_forbidden", "Proxy access is restricted to same-host requests"));
+    }
+
+    $url = $_POST['url'] ?? '';
+    if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+        http_response_code(400);
+        die(jsonState("error", "proxy_invalid_url", "A valid HTTP or HTTPS URL is required"));
+    }
+
+    $context = stream_context_create(['http' => [
+        'timeout'         => 15,
+        'follow_location' => true,
+        'max_redirects'   => 3,
+    ]]);
+
+    $data = @file_get_contents($url, false, $context);
+    if ($data === false) {
+        http_response_code(502);
+        die(jsonState("error", "proxy_fetch_failed", "Failed to fetch the remote URL"));
+    }
+
+    header('Content-Type: application/octet-stream');
+    header('Content-Length: ' . strlen($data));
+    echo $data;
     exit;
 }
 
@@ -74,6 +112,14 @@ if (!isset($_POST["username"]) || !isset($_POST["password"])) {
     die(jsonState("error", "no_credentials_received", "No credentials received"));
 }
 
+// Prevent fatal errors if credentials.php is formatted as a flat array instead of an array of arrays
+foreach ($credentials as $cred) {
+    if (!is_array($cred) || !isset($cred["username"]) || !isset($cred["password"])) {
+        http_response_code(500); // 500 Internal Server Error (since it's a server config issue)
+        die(jsonState("error", "config_format_error", "Server misconfiguration: credentials.php is improperly formatted. It must be an array of arrays."));
+    }
+}
+
 // 5. VALIDATE CREDENTIALS (Timing Attack Safe)
 // We check every credential pair to avoid timing leaks that reveal which pairs exist.
 $matchedUser = null;
@@ -120,12 +166,10 @@ if ($matchedUser !== null) {
         file_put_contents($checklistDirectory . "checklist.json", $_POST["checklist_data"]);
         echo jsonState("success", "", "");
         exit;
-
     } catch (Exception $ex) {
         echo jsonState("error", "other_upload_error", $ex->getMessage());
         exit;
     }
-
 } else {
     // --- FAILURE ---
 
@@ -149,4 +193,3 @@ function jsonState($state, $messageCode, $fallbackMessage)
         "details" => $fallbackMessage
     ]);
 }
-?>

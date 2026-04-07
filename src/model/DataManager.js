@@ -351,7 +351,7 @@ export let DataManager = function () {
             }
           } else {
             if (contentLengthInfo && contentLengthInfo.responseStatus == 404) {
-              Logger.error(tf("dm_asset_not_found", [asset]));
+              Logger.error(tf("dm_asset_not_found", [asset]), "Asset not found");
             }
           }
         });
@@ -361,7 +361,8 @@ export let DataManager = function () {
             tf("dm_total_precache_size_too_large", [
               totalPrecacheSize.toFixed(2),
               precacheMaxTotalSizeMb,
-            ])
+            ]),
+            "Total precache size too large"
           );
         }
 
@@ -401,10 +402,10 @@ export let DataManager = function () {
           }
         } else {
           result.responseStatus = xhr.status;
-          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status);          
+          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status, "Error fetching asset");          
         }
       } catch (error) {
-        Logger.error("Error fetching HEAD for " + url + ": " + error.message);
+        Logger.error("Error fetching HEAD for " + url + ": " + error.message, "Error fetching asset");
       }
 
       return result;

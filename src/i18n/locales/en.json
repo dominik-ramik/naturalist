@@ -108,6 +108,7 @@
   "upload_disabled": "Direct upload has been disabled by the administrator (or you are experiencing a temporary issue with connectivity). You may opt for downloading the data and manually upload them to the server e.g. through FTP.",
   "no_credentials_received": "No credentials received",
   "auth_failed": "Authentication failed",
+  "config_format_error": "Server configuration error: credentials.php is improperly formatted. Please contact the administrator.",
   "back_to_upload_after_error": "Back to spreadsheet upload",
   "processing": "Processing",
   "this_may_take_time": "Relax. This may take some time, especially if your spreadsheet has thousands of entries.",
@@ -357,5 +358,10 @@
   "interval_filter_fully_inside": "Fully inside",
   "interval_filter_contains_short": "contains",
   "interval_filter_overlaps_short": "overlaps with",
-  "interval_filter_fully_inside_short": "fully inside"
+  "interval_filter_fully_inside_short": "fully inside",
+  "static_hosting_cors_notice": "This app is running on static hosting, which means it can't fetch external files on your behalf. Browsers block such requests by default to maintain your security (this is called CORS) — whether it works depends entirely on how the spreadsheet's server is configured, not on this app. You're welcome to try, but some URLs simply won't work in this setup.",
+  "static_hosting_cors_acknowledge": "Got it — show me the URL field",
+  "static_hosting_cors_reminder": "Heads up: loading from a URL may be blocked by your browser on static hosting",
+  "url_fetching_via_proxy": "Fetching spreadsheet via server proxy…",
+  "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…"
 }

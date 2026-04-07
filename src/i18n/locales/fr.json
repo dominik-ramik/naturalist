@@ -108,6 +108,7 @@
   "upload_disabled": "Le chargement direct a été désactivé par l'administrateur (ou vous rencontrez un problème temporaire de connectivité). Vous pouvez opter pour le téléchargement des données et les charger manuellement sur le serveur par ex. via FTP.",
   "no_credentials_received": "Aucune information d'identification reçue",
   "auth_failed": "Échec de l'authentification",
+  "config_format_error": "Erreur de configuration du serveur : credentials.php est mal formaté. Veuillez contacter l'administrateur.",
   "back_to_upload_after_error": "Retour au chargement de la feuille de calcul",
   "processing": "Traitement",
   "this_may_take_time": "Détendez-vous. Cela peut prendre un certain temps, surtout si votre feuille de calcul comporte des milliers d'entrées.",

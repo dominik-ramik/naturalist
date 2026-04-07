@@ -18,6 +18,7 @@ const ManageStore = {
   errorDetails: "",
   messageCode: "",
   shouldShowUploadForm: Settings.lastKnownUploadFormAvailability(),
+  corsWarningAcknowledged: false,
 
   // Upload source: 'file' | 'url'
   uploadMode: Settings.manageUploadMode(),
@@ -32,6 +33,7 @@ const ManageStore = {
 
   setUploadMode: function (mode) {
     this.uploadMode = mode;
+    this.corsWarningAcknowledged = false;
     Settings.manageUploadMode(mode);
   },
 
@@ -196,15 +198,15 @@ const LogsPanel = {
         m(".manage-logs-counts", [
           counts.critical + counts.error > 0
             ? m(
-                "span.manage-logs-count.manage-logs-count--error",
-                counts.critical + counts.error + " " + t("log_error", counts.critical + counts.error)
-              )
+              "span.manage-logs-count.manage-logs-count--error",
+              counts.critical + counts.error + " " + t("log_error", counts.critical + counts.error)
+            )
             : null,
           counts.warning > 0
             ? m(
-                "span.manage-logs-count.manage-logs-count--warning",
-                counts.warning + " " + t("log_warning", counts.warning)
-              )
+              "span.manage-logs-count.manage-logs-count--warning",
+              counts.warning + " " + t("log_warning", counts.warning)
+            )
             : null,
         ]),
       ]),
@@ -304,7 +306,18 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
 
   let buffer;
   try {
-    const res = await fetch(url, { mode: "cors" });
+    let res;
+    if (ManageStore.shouldShowUploadForm) {
+      // PHP available: server-side proxy sidesteps CORS entirely
+      Logger.info(t("url_fetching_via_proxy"));
+      const body = new FormData();
+      body.append("url", url);
+      res = await fetch("../update.php?proxy", { method: "POST", body });
+    } else {
+      // Static hosting: direct fetch — CORS restrictions may apply
+      Logger.warning(t("url_fetching_direct"));
+      res = await fetch(url, { mode: "cors" });
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     buffer = await res.arrayBuffer();
   } catch (ex) {
@@ -396,7 +409,28 @@ function renderDropzone() {
 }
 
 function renderUrlInput() {
+  const isStatic = !ManageStore.shouldShowUploadForm;
+
+  if (isStatic && !ManageStore.corsWarningAcknowledged) {
+    return m(".manage-cors-notice", [
+      m(".manage-cors-notice-text", t("static_hosting_cors_notice")),
+      m(ActionButton, {
+        label: t("static_hosting_cors_acknowledge"),
+        onclick: () => {
+          ManageStore.corsWarningAcknowledged = true;
+          m.redraw();
+        },
+      }),
+    ]);
+  }
+
   return m(".manage-url-input", [
+    isStatic
+      ? m(".manage-notice.manage-notice-warning", [
+        m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
+        m("span", t("static_hosting_cors_reminder")),
+      ])
+      : null,
     m(".manage-form-group", [
       m("label[for=spreadsheet-url]", t("spreadsheet_url_label")),
       m("input[type=url][id=spreadsheet-url][autocomplete=url]", {
@@ -465,25 +499,25 @@ const SubViews = {
     return [
       !isDataReady
         ? m(ManageCard, {
-            title: t("fresh_install_welcome"),
-            icon: "img/icon_transparent_blue.svg",
-            children: [m("p.manage-welcome-text", t("fresh_install_welcome_message"))],
-          })
+          title: t("fresh_install_welcome"),
+          icon: "img/icon_transparent_blue.svg",
+          children: [m("p.manage-welcome-text", t("fresh_install_welcome_message"))],
+        })
         : null,
 
       !isDataReady
         ? m(ManageCard, {
-            title: t("start_scratch_title"),
-            icon: "img/ui/manage/docs.svg",
-            description: marked.parse(t("starting_from_scratch_links")),
-            children: [
-              m(ActionButton, {
-                label: t("download_blank_sheet_button"),
-                onclick: () => exportTemplateSpreadsheet(),
-                small: true,
-              }),
-            ],
-          })
+          title: t("start_scratch_title"),
+          icon: "img/ui/manage/docs.svg",
+          description: marked.parse(t("starting_from_scratch_links")),
+          children: [
+            m(ActionButton, {
+              label: t("download_blank_sheet_button"),
+              onclick: () => exportTemplateSpreadsheet(),
+              small: true,
+            }),
+          ],
+        })
         : null,
 
       m(ManageCard, {
@@ -494,9 +528,9 @@ const SubViews = {
           renderUploadSource(),
           Logger.hasErrors()
             ? m(".manage-notice.manage-notice-error", [
-                m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
-                m("span", t("data_upload_import_dirty")),
-              ])
+              m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
+              m("span", t("data_upload_import_dirty")),
+            ])
             : null,
         ],
       }),
@@ -505,17 +539,17 @@ const SubViews = {
 
       isDataReady
         ? m(ManageCard, {
-            title: t("start_scratch_title"),
-            icon: "img/ui/manage/docs.svg",
-            description: marked.parse(t("starting_from_scratch_links")),
-            children: [
-              m(ActionButton, {
-                label: t("download_blank_sheet_button"),
-                onclick: () => exportTemplateSpreadsheet(),
-                small: true,
-              }),
-            ],
-          })
+          title: t("start_scratch_title"),
+          icon: "img/ui/manage/docs.svg",
+          description: marked.parse(t("starting_from_scratch_links")),
+          children: [
+            m(ActionButton, {
+              label: t("download_blank_sheet_button"),
+              onclick: () => exportTemplateSpreadsheet(),
+              small: true,
+            }),
+          ],
+        })
         : null,
     ];
   },
@@ -585,11 +619,11 @@ const SubViews = {
     return [
       ManageStore.shouldShowUploadForm === true
         ? m(ManageCard, {
-            title: t("data_upload_integrate_data"),
-            icon: "img/ui/manage/publish.svg",
-            description: t("enter_creds_to_publish"),
-            children: [renderServerUploadForm()],
-          })
+          title: t("data_upload_integrate_data"),
+          icon: "img/ui/manage/publish.svg",
+          description: t("enter_creds_to_publish"),
+          children: [renderServerUploadForm()],
+        })
         : null,
 
       m(ManageCard, {
@@ -752,6 +786,8 @@ function renderServerUploadForm() {
                   throw "incorrect server response. If you are using static webhosting, you need to upload the checklist.json manually.";
                 }
               } catch (ex) {
+                console.log("Error parsing this original server response:", request.responseText);
+
                 result = {
                   state: "error",
                   details: [
@@ -772,16 +808,16 @@ function renderServerUploadForm() {
                 m.route.set("/manage/error");
               }
             } else {
-              ManageStore.errorDetails =
-                request.statusText.toLowerCase() == "not found"
-                  ? t("upload_disabled")
-                  : t("network_error") + " " + request.statusText;
+              let parsed;
+              try { parsed = JSON.parse(request.responseText); } catch {}
+              ManageStore.errorDetails = parsed?.details ?? (request.statusText.toLowerCase() == "not found" ? t("upload_disabled") : t("network_error") + " " + request.statusText);
+              ManageStore.messageCode = parsed?.messageCode ?? "";
               m.route.set("/manage/error");
             }
             m.redraw();
           }
         };
-        request.open("POST", "../update.php");
+        request.open("POST", "./update.php");
         request.send(formData);
       },
     },
