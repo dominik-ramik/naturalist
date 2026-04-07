@@ -1,0 +1,80 @@
+import m from "mithril";
+
+import { dataReaders } from "../../model/customTypes/index.js";
+
+export function TabMap(tabData, taxon, taxonName) {
+  if (!tabData || tabData.length === 0) {
+    return null;
+  }
+
+  let renderedContent = [];
+
+  tabData.forEach(function (renderingItem) {
+    if (!renderingItem.items || renderingItem.items.length === 0) return;
+
+    if (renderingItem.groupTitle) {
+      renderedContent.push(
+        m(".media-set", [
+          m(".details-group-title", renderingItem.groupTitle),
+          m(
+            ".media-set-list",
+            renderingItem.items.map(function ({ data, meta, dataPath }) {
+              const uiContext = {
+                meta: meta,
+                dataPath: dataPath || meta.columnName || "",
+                originalData: taxon.d,
+                taxon: {
+                  name: taxon.t[taxon.t.length - 1].name,
+                  authority: taxon.t[taxon.t.length - 1].a,
+                },
+                placement: "details",
+              };
+              const reader = dataReaders[meta.formatting];
+              let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
+              if (renderedItem && meta.title) {
+                return m(".media-item", [
+                  m(".details-item-title", meta.title),
+                  renderedItem
+                ]);
+              }
+              return renderedItem;
+            })
+          ),
+        ])
+      );
+    } else {
+      renderingItem.items.forEach(function ({ data, meta, dataPath }) {
+        const uiContext = {
+          meta: meta,
+          dataPath: dataPath || meta.columnName || "",
+          originalData: taxon.d,
+          taxon: {
+            name: taxon.t[taxon.t.length - 1].name,
+            authority: taxon.t[taxon.t.length - 1].a,
+          },
+          placement: "details",
+        };
+        const reader = dataReaders[meta.formatting];
+        let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
+        if (renderedItem) {
+          if (meta.title) {
+            renderedContent.push(
+              m(".media-set", [
+                m(".details-group-title", meta.title),
+                m(".media-set-list", [renderedItem]),
+              ])
+            );
+          } else {
+            renderedContent.push(renderedItem);
+          }
+        }
+      });
+    }
+  });
+
+  if (renderedContent.length === 0) {
+    return null;
+  }
+
+  return m(".media-list", renderedContent);
+}

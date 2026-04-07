@@ -315,3 +315,95 @@ path {
     max-width: 100%;
   }
 }
+/* SUMMARY TAB */
+
+.summary-table-wrap {
+  overflow-x: auto;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.summary-table td {
+  padding: 0.5em 0.6em;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.summary-cell-rank {
+  font-style: italic;
+  color: #999;
+  white-space: nowrap;
+  font-size: 0.85em;
+  padding-right: 0.25em;
+}
+
+.summary-cell-name {
+  color: #333;
+}
+
+.summary-cell-count {
+  color: #555;
+  font-weight: 500;
+}
+
+.summary-cell-context {
+  text-align: right;
+  color: #bbb;
+  font-size: 0.8em;
+  white-space: nowrap;
+  padding-left: 0.75em;
+}
+
+.summary-cell-specimens {
+  text-align: right;
+  white-space: nowrap;
+  font-size: 0.85em;
+  color: #777;
+  padding-left: 0.5em;
+}
+
+.summary-specimen-icon {
+  height: 0.85em;
+  opacity: 0.45;
+  vertical-align: middle;
+  margin-right: 0.2em;
+}
+
+/* Current taxon row */
+.summary-row-current td {
+  background: #f5f8ff;
+}
+
+.summary-row-current .summary-cell-rank {
+  color: var(--nlblue, #55769b);
+  font-weight: 600;
+  font-style: normal;
+}
+
+.summary-row-current .summary-cell-name {
+  color: var(--nlblue, #55769b);
+  font-weight: 600;
+}
+
+.summary-row-current .summary-cell-context {
+  color: #aab8cc;
+}
+
+/* Ancestor rows: slightly muted */
+.summary-row-ancestor .summary-cell-name {
+  color: #555;
+}
+
+/* Descendant rows: the count is the hero */
+.summary-row-descendant .summary-cell-count {
+  color: #444;
+  font-weight: 600;
+}
+
+.summary-row-descendant .summary-cell-rank {
+  padding-left: 1em; /* indent to show hierarchy */
+}

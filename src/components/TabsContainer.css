@@ -14,7 +14,7 @@
     border-radius: 0.75em 0.75em 0 0;
     border: 1px solid #ddd;
     border-bottom: none;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .tabs-container-tab-button {
@@ -25,7 +25,7 @@
     opacity: 0.7;
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     padding: 0.6em 1.25em;
