@@ -916,6 +916,12 @@ export let Checklist = {
         }
       } else if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
         data = "<img src='" + "?" + "' />";
+      } else if (Checklist.getDataMeta()[currentPath]?.formatting == "interval") {
+        // [from, to] is an atomic pair — treat the whole array as one leaf value,
+        // identical to the months/map-regions guards above.
+        if (Array.isArray(taxonData) && taxonData.length === 2) {
+          data.push(taxonData);
+        }
       } else if (Array.isArray(taxonData)) {
         taxonData.forEach(function (item) {
           data = data.concat(

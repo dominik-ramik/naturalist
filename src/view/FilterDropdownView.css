@@ -218,7 +218,7 @@
   border-radius: var(--pad-large);
   box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
   background-color: #ffffff87;
-  border: 1px solid #a3a3a3  !important;
+  border: 1px solid #a3a3a3 !important;
   padding-left: 0em;
   list-style: none;
   display: block;
@@ -228,10 +228,17 @@
 .inner-dropdown-area.numeric .numeric-filter-buttons {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: var(--pad-small);
   width: 100%;
   align-items: center;
   justify-content: space-around;
+  padding-top: 0.25em;
+  padding-bottom: 0.5em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  box-sizing: border-box;
+  background-color: #ebebeb;
 }
 
 .inner-dropdown-area.numeric .numeric-filter-buttons .separator {
@@ -240,10 +247,6 @@
   height: 2em;
   border-left: 0.2em solid #e9e9e9;
 }
-
-.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button {}
-
-.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button.selected {}
 
 .inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button img {
   height: 1.5em;
@@ -263,6 +266,10 @@
   padding: var(--pad-small);
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+.inner-dropdown-area .input-ui .filter-unit {
+  margin-left: 0.5em;
 }
 
 .inner-dropdown-area.numeric .input-ui input {
@@ -337,6 +344,66 @@
 
 ul.stats {
   padding: var(--pad-small);
+}
+
+.filter-dropdown .numeric-filter-button {
+  /* Layout & Alignment */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  /* Forces the button to grow and take up as much space as possible */
+
+  /* Touch target size */
+  padding: var(--pad-small) 0;
+  
+  /* "Buttony" visual depth */
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: var(--pad-small);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Behavior */
+  cursor: pointer;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+/* Ensure the image inside doesn't behave inline or overflow */
+.filter-dropdown .numeric-filter-button img {
+  display: block;
+  /* Add an explicit height if needed, e.g., height: 1.5em; */
+}
+
+/* Mobile-friendly active state: gives immediate visual feedback on tap/click */
+.filter-dropdown .numeric-filter-button:active {
+  background-color: #e9e9e9;
+  /* Light grey from your existing search borders */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  /* Reverses the shadow to look "pressed" */
+  transform: translateY(1px);
+  /* Physically pushes the button down slightly */
+}
+
+/* Selected state: looks permanently pressed and non-clickable */
+.filter-dropdown .numeric-filter-button.selected {
+  background-color: #e9e9e9;
+  /* Light grey background to look "active/down" */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  /* Inset shadow so it looks pushed into the page */
+  transform: translateY(1px);
+  /* Keeps the physical downward shift */
+
+  /* Make it obvious that it is no longer an interactive target */
+  cursor: default;
+  /* Alternatively, you can use `cursor: not-allowed;` if you want to explicitly signal they can't interact with it */
+}
+
+/* Negate any further press effects if the user taps an already selected button */
+.filter-dropdown .numeric-filter-button.selected:active {
+  /* Keep values exactly identical to the .selected state above so nothing happens on tap */
+  background-color: #e9e9e9;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(1px);
 }
 
 @media (max-width: 1200px) {

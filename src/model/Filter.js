@@ -5,7 +5,7 @@ import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 
 const selectableFilterTypes = ["text", "map regions", "badge", "months"];
-const rangeFilterTypes = ["number", "date"];
+const rangeFilterTypes = ["number", "interval", "date"];
 const exactSelectableRangeTypes = ["number", "date"];
 
 function getSortedUniqueNumericValues(values) {
@@ -110,16 +110,15 @@ export let Filter = {
               exactSelectableRangeTypes.includes(filterDef.type) &&
               Array.isArray(queryValue)
             )
-          ) 
-          {
+          ) {
             // Ensure values form an array, then optionally cast to numbers
             let parsedValues = Array.isArray(queryValue) ? queryValue : [queryValue];
-            
+
             if (filterDef.type === "months") {
               filterDef.selected = parsedValues.map(v => parseInt(v, 10));
             } else {
               filterDef.selected = parsedValues;
-            }          
+            }
           } else if (
             rangeFilterTypes.includes(filterDef.type) &&
             queryValue &&
@@ -203,14 +202,14 @@ export let Filter = {
     );
   },
   monthsFilterSortedKeys: function () {
-  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-},
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  },
   monthLabelForValue: function (monthNumber) {
-  const keys = Settings.MONTH_KEYS;
-  const n = Number(monthNumber);
-  if (isNaN(n) || n < 1 || n > 12) return String(monthNumber);
-  return t("months." + keys[n - 1]);
-},
+    const keys = Settings.MONTH_KEYS;
+    const n = Number(monthNumber);
+    if (isNaN(n) || n < 1 || n > 12) return String(monthNumber);
+    return t("months." + keys[n - 1]);
+  },
   dateFilterToHumanReadable: function (
     dataPath,
     operation,
@@ -242,6 +241,51 @@ export let Filter = {
       ommitSearchCategory
     );
   },
+  intervalFilterToHumanReadable: function (
+    dataPath,
+    operation,
+    threshold1,
+    threshold2,
+    formatPre,
+    formatPost,
+    ommitSearchCategory
+  ) {
+    let title = ommitSearchCategory ? "" :
+      (formatPre || "") + Checklist.getMetaForDataPath(dataPath).searchCategory + (formatPost || "") + " ";
+    const fmt = v => (v == null ? "" : v.toLocaleString());
+    const opDef = Filter.intervalFilters[operation];
+    title += t("interval_filter_" + operation + "_short");
+    title += " " + fmt(threshold1);
+    if (opDef?.values > 1) {
+      title += " " + t("numeric_filter_and") + " " + fmt(threshold2);
+    }
+    return title;
+  },
+  intervalFilters: {
+    // Each comparer receives the interval endpoints plus the user thresholds.
+    contains: {
+      operation: "contains",
+      icon: "contains",
+      values: 1,
+      // Does [from, to] contain point t1?
+      comparer: function (from, to, t1) { return from <= t1 && t1 <= to; },
+    },
+    overlaps: {
+      operation: "overlaps",
+      icon: "overlaps",
+      values: 2,
+      // Does [from, to] have any overlap with [t1, t2]?
+      comparer: function (from, to, t1, t2) { return from <= t2 && to >= t1; },
+    },
+    fully_inside: {
+      operation: "fully_inside",
+      icon: "fully_inside",
+      values: 2,
+      // Is [from, to] completely contained within [t1, t2]?
+      comparer: function (from, to, t1, t2) { return from >= t1 && to <= t2; },
+    },
+  },
+
   numericFilters: {
     equal: {
       operation: "equal",
@@ -374,18 +418,21 @@ export let Filter = {
           });
         } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
           leafData.forEach(function (value) {
-            if (typeof value !== "number" || isNaN(value)) {
-              return;
+            if (Filter.data[dataPath].type === "interval") {
+              if (!Array.isArray(value) || value.length !== 2) return;
+              Filter.data[dataPath].possible.push(value);
+              Filter.data[dataPath].min = Filter.data[dataPath].min === null
+                ? value[0] : Math.min(Filter.data[dataPath].min, value[0]);
+              Filter.data[dataPath].max = Filter.data[dataPath].max === null
+                ? value[1] : Math.max(Filter.data[dataPath].max, value[1]);
+            } else {
+              if (typeof value !== "number" || isNaN(value)) return;
+              Filter.data[dataPath].possible.push(value);
+              Filter.data[dataPath].min = Filter.data[dataPath].min === null
+                ? value : Math.min(Filter.data[dataPath].min, value);
+              Filter.data[dataPath].max = Filter.data[dataPath].max === null
+                ? value : Math.max(Filter.data[dataPath].max, value);
             }
-            Filter.data[dataPath].possible.push(value);
-            Filter.data[dataPath].min =
-              Filter.data[dataPath].min === null
-                ? value
-                : Math.min(Filter.data[dataPath].min, value);
-            Filter.data[dataPath].max =
-              Filter.data[dataPath].max === null
-                ? value
-                : Math.max(Filter.data[dataPath].max, value);
           });
         }
       });
@@ -455,11 +502,11 @@ export let Filter = {
               Filter[type][dataPath].numeric.operation;
             key[type][dataPath].a =
               Filter[type][dataPath].numeric.threshold1;
-            if (
-              Filter.numericFilters[
-                Filter[type][dataPath].numeric.operation
-              ].values > 1
-            ) {
+            const opKey = Filter[type][dataPath].numeric.operation;
+            const opDef = Filter[type][dataPath].type === "interval"
+              ? Filter.intervalFilters[opKey]
+              : Filter.numericFilters[opKey];
+            if (opDef?.values > 1) {
               key[type][dataPath].b =
                 Filter[type][dataPath].numeric.threshold2;
             }
@@ -530,14 +577,19 @@ export let Filter = {
       }
 
       let leafData = Checklist.getAllLeafData(value, false, dataPath);
+      const isInterval = Filter.data[dataPath].type === "interval";
       leafData.forEach(function (leafValue) {
-        if (typeof leafValue !== "number" || isNaN(leafValue)) {
-          return;
+        if (isInterval) {
+          if (!Array.isArray(leafValue) || leafValue.length !== 2) return;
+          possible.push(leafValue);
+          min = min === null ? leafValue[0] : Math.min(min, leafValue[0]);
+          max = max === null ? leafValue[1] : Math.max(max, leafValue[1]);
+        } else {
+          if (typeof leafValue !== "number" || isNaN(leafValue)) return;
+          possible.push(leafValue);
+          min = min === null ? leafValue : Math.min(min, leafValue);
+          max = max === null ? leafValue : Math.max(max, leafValue);
         }
-
-        possible.push(leafValue);
-        min = min === null ? leafValue : Math.min(min, leafValue);
-        max = max === null ? leafValue : Math.max(max, leafValue);
       });
     });
 
@@ -833,6 +885,16 @@ export let Filter = {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
         let found = leafData.some(v => filter.selected.includes(v));
         if (!found) return false;
+
+      } else if (filter.type === "interval") {
+        const intervalFilter = Filter.intervalFilters[filter.numeric.operation];
+        if (!intervalFilter) return false;
+        let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
+        let passes = leafData.some(v => {
+          if (!Array.isArray(v) || v.length !== 2) return false;
+          return intervalFilter.comparer(v[0], v[1], filter.numeric.threshold1, filter.numeric.threshold2);
+        });
+        if (!passes) return false;
       } else if (rangeFilterTypes.includes(filter.type)) {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
         let passes = leafData.some(v =>

@@ -488,6 +488,38 @@ export function indexOfCaseInsensitive(haystack, needle) {
   return index;
 }
 
+/**
+ * Extract the unit string from a {{unit ...}} Handlebars template.
+ * Handles all syntax variants:
+ *   {{unit "m"}}                  — implicit
+ *   {{unit myField "m"}}          — explicit
+ *   {{unit "kg" "exact"}}         — implicit, exact mode
+ *   {{unit myField "kg" "exact"}} — explicit, exact mode
+ * Returns null if the template doesn't use the unit helper.
+ */
+export function getUnitFromTemplate(meta) {
+  if (!meta?.template) return null;
+  const blockMatch = meta.template.match(/\{\{\s*unit\b(.*?)\}\}/);
+  if (!blockMatch) return null;
+
+  // Find all quoted strings inside the {{unit ...}} block
+  const quoted = [...blockMatch[1].matchAll(/["']([^"']+)["']/g)];
+
+  // The unit is the first quoted string that isn't "exact"
+  for (const m of quoted) {
+    if (m[1] !== "exact") return m[1];
+  }
+  return null;
+}
+
+/**
+ * Convert a unit string to HTML, turning superscript notation into <sup> tags.
+ * Handles both Unicode superscript chars (², ³ …) and caret notation (^2, ^3 …).
+ */
+export function unitToHtml(unit) {
+   return unit.replace(/2$/, "<sup>2</sup>").replace(/3$/, "<sup>3</sup>");
+}
+
 export function isValidHttpUrl(string) {
   let url;
   try {

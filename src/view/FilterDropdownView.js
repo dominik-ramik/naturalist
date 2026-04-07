@@ -5,6 +5,8 @@ import "./FilterDropdownView.css";
 
 import {
   copyToClipboard,
+  getUnitFromTemplate,
+  unitToHtml,
   roundWithPrecision,
   sortByCustomOrder,
   textLowerCaseAccentless,
@@ -17,11 +19,11 @@ const rangeFilterTypes = ["number", "date"];
 const dateInputFormat = "YYYY-MM-DD";
 const numberFilterOperations = [
   "list",
-  "equal",
   "lesser",
   "lesserequal",
-  "greater",
+  "equal",
   "greaterequal",
+  "greater",
   "between",
   "around",
 ];
@@ -32,6 +34,11 @@ const dateFilterOperations = [
   "greaterequal",
   "between",
 ];
+const intervalFilterOperations = ["contains", "overlaps", "fully_inside"];
+
+function getIntervalOperationIcon(operation) {
+  return Checklist.filter.intervalFilters[operation]?.icon || "equal";
+}
 
 function normalizeDateOperation(operation) {
   if (operation == "lesser") {
@@ -269,24 +276,38 @@ export let FilterDropdown = function (initialVnode) {
         Checklist.getDataMeta()[dataPath].formatting == "date"
       ) {
         detectedUiType = "date";
-      }else if (
+      } else if (
         type == "data" &&
         Checklist.getDataMeta()[dataPath].formatting == "months"
       ) {
         detectedUiType = "months";
+      } else if (
+        type == "data" &&
+        Checklist.getDataMeta()[dataPath].formatting == "interval"
+      ) {
+        detectedUiType = "interval";
       }
+
 
       let isSelectableAndHasSelectedItems =
         selectableFilterTypes.includes(filterDef.type) &&
         filterDef.selected.length > 0;
       let hasSelectedDates =
         ["number", "date"].includes(filterDef.type) && filterDef.selected.length > 0;
+
+      // Unit derived from the column's Handlebars template (e.g. {{unit value "cm²"}})
+      const unit = type === "data" && ["number", "interval"].includes(filterDef.type)
+        ? getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath))
+        : null;
+
       let count =
         filterDef.type == "date"
           ? getSortedUniqueDateValues(filterDef.possible).length
           : filterDef.type == "number"
             ? getSortedUniqueNumericValues(filterDef.possible).length
-          : Object.keys(filterDef.possible).length;
+            : filterDef.type == "interval"
+              ? (filterDef.possible || []).length
+              : Object.keys(filterDef.possible).length;
 
       let showOrb = false;
       if (isSelectableAndHasSelectedItems) {
@@ -297,6 +318,12 @@ export let FilterDropdown = function (initialVnode) {
       }
       else if (
         rangeFilterTypes.includes(filterDef.type) &&
+        filterDef.numeric.operation != ""
+      ) {
+        showOrb = true;
+      }
+      else if (
+        filterDef.type === "interval" &&
         filterDef.numeric.operation != ""
       ) {
         showOrb = true;
@@ -326,7 +353,10 @@ export let FilterDropdown = function (initialVnode) {
             },
             [
               m(".arrow", m("img[src=./img/ui/search/expand.svg]")),
-              m(".title", title),
+              m(".title", [
+                title,
+                unit ? m("span.filter-unit-title", m.trust(" (" + unitToHtml(unit) + ")")) : null,
+              ]),
               m(
                 ".count",
                 count
@@ -430,12 +460,20 @@ let Dropdown = function (initialVnode) {
             dropdownId: dropdownId,
           });
           break;
-          case "months":
+        case "months":
           innerDropdown = m(DropdownMonths, {
             openHandler: vnode.attrs.openHandler,
             type: type,
             dataPath: dataPath,
             color: vnode.attrs.color,
+            dropdownId: dropdownId,
+          });
+          break;
+        case "interval":
+          innerDropdown = m(DropdownInterval, {
+            openHandler: vnode.attrs.openHandler,
+            type: type,
+            dataPath: dataPath,
             dropdownId: dropdownId,
           });
           break;
@@ -703,7 +741,7 @@ let DropdownText = function (initialVnode) {
 let DropdownCheckItemSkeleton = function (initialVnode) {
   return {
     view: function (vnode) {
-      if (vnode.attrs.item.trim() == "") {
+      if (String(vnode.attrs.item).trim() == "") {
         return null;
       }
 
@@ -731,7 +769,7 @@ let DropdownCheckItemSkeleton = function (initialVnode) {
 let DropdownCheckItem = function (initialVnode) {
   return {
     view: function (vnode) {
-      if (vnode.attrs.item.trim() == "") {
+      if (String(vnode.attrs.item).trim() == "") {
         return null;
       }
 
@@ -984,6 +1022,7 @@ let DropdownNumber = function (initialVnode) {
 
   function commitSelectedNumbers(mutator) {
     actualOperation = "list";
+    showDistribution = false;
     initialThresholds = [null, null, null];
     actualThresholds = [null, null, null];
     Checklist.filter.delayCommitDataPath = "data." + dataPath;
@@ -1018,126 +1057,20 @@ let DropdownNumber = function (initialVnode) {
           state == "inactive"
             ? undefined
             : function () {
-                commitSelectedNumbers((selectedValues) => {
-                  if (state == "checked") {
-                    return selectedValues.filter((value) => value !== item);
-                  }
+              commitSelectedNumbers((selectedValues) => {
+                if (state == "checked") {
+                  return selectedValues.filter((value) => value !== item);
+                }
 
-                  if (state == "unchecked") {
-                    return [...selectedValues, item];
-                  }
+                if (state == "unchecked") {
+                  return [...selectedValues, item];
+                }
 
-                  return selectedValues;
-                });
-              },
+                return selectedValues;
+              });
+            },
       })
     );
-  }
-
-  function drawHistogram(dataAll, dataPossible) {
-    const NUMBER_OF_BINS = 20;
-
-    // 1. Clean Data
-    const cleanDataAll = dataAll.filter(d => d !== null && d !== undefined && !isNaN(d));
-    const cleanDataPossible = dataPossible.filter(d => d !== null && d !== undefined && !isNaN(d));
-
-    let wrapper = document.getElementById("histogram_" + dropdownId);
-    if (!wrapper) return;
-
-    // Clear previous SVG
-    d3.select(wrapper).selectAll("svg").remove();
-
-    // 2. Setup Dimensions
-    const margin = { top: 10, right: 10, bottom: 30, left: 45 };
-    const width = wrapper.getBoundingClientRect().width - margin.left - margin.right;
-    const height = wrapper.getBoundingClientRect().height - margin.top - margin.bottom;
-
-    // 3. Create Scale with "Nice" Domain
-    // We use d3.extent to find min/max, then .nice() to round them out.
-    // This prevents "runt" bins at the edges.
-    let [minVal, maxVal] = d3.extent(cleanDataAll);
-
-    // Handle edge case: no data or singular data point
-    if (minVal === undefined) { minVal = 0; maxVal = 0; }
-    if (minVal === maxVal) {
-      minVal -= 0.5;
-      maxVal += 0.5;
-    }
-
-    const x = d3.scaleLinear()
-      .domain([minVal, maxVal])
-      .nice() // key fix: extends domain to nearest round numbers (e.g., 0 to 220)
-      .range([0, width]);
-
-    // 4. Generate Bins
-    // Use the ticks from the "nice" scale as thresholds. 
-    // This ensures bins align perfectly with the axis ticks.
-    const thresholds = x.ticks(NUMBER_OF_BINS);
-
-    const histogram = d3.histogram()
-      .value(d => d)
-      .domain(x.domain()) // Use the nice domain for binning
-      .thresholds(thresholds);
-
-    const binsAll = histogram(cleanDataAll);
-    const binsPossible = histogram(cleanDataPossible);
-
-    // 5. Y Scale
-    const y = d3.scaleLinear()
-      .range([height, 0])
-      .domain([0, d3.max(binsAll, d => d.length) || 1]);
-
-    // 6. Render SVG
-    const svg = d3.select(wrapper)
-      .append("svg")
-      .attr("viewBox", `0 0 ${wrapper.getBoundingClientRect().width} ${wrapper.getBoundingClientRect().height}`)
-      .attr("style", "background-color: white;")
-      .attr("class", "clickable")
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // X Axis
-    svg.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x)
-        .ticks(5) // Limit the number of labels to prevent overcrowding
-        .tickFormat(d3.format("~f")) // "2000" instead of "2,000" or "2k"
-      );
-
-    // Y Axis
-    svg.append("g")
-      .call(d3.axisLeft(y).ticks(5));
-
-    // 7. Draw Bars
-    // Helper functions to add 1px visual gap between bars
-    // Since bins are now equal width and "nice", the widths will be large enough to see.
-    const getBarX = (d) => x(d.x0) + 1;
-    const getBarWidth = (d) => Math.max(0, x(d.x1) - x(d.x0) - 1);
-
-    // Background Bars (All Data)
-    svg.selectAll(".bar-all")
-      .data(binsAll)
-      .enter()
-      .append("rect")
-      .attr("class", "bar-all")
-      .attr("x", getBarX)
-      .attr("y", d => y(d.length))
-      .attr("width", getBarWidth)
-      .attr("height", d => height - y(d.length))
-      .style("fill", "#d3d3d3");
-
-    // Foreground Bars (Filtered Data)
-    svg.selectAll(".bar-filtered")
-      .data(binsPossible)
-      .enter()
-      .append("rect")
-      .attr("class", "bar-filtered")
-      .attr("x", getBarX)
-      .attr("y", d => y(d.length))
-      .attr("width", getBarWidth)
-      .attr("height", d => height - y(d.length))
-      .style("fill", Checklist.getThemeHsl("light"))
-      .style("opacity", 0.6);
   }
 
   function redrawHistogramIfVisible() {
@@ -1147,6 +1080,7 @@ let DropdownNumber = function (initialVnode) {
 
     window.setTimeout(function () {
       drawHistogram(
+        dropdownId,
         Checklist.filter.data[dataPath].all,
         getHistogramValues()
       );
@@ -1180,6 +1114,8 @@ let DropdownNumber = function (initialVnode) {
 
       dataPath = vnode.attrs.dataPath;
       color = vnode.attrs.color;
+
+      const unit = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
 
       let inputUi = null;
       let totalItems = 0;
@@ -1259,6 +1195,10 @@ let DropdownNumber = function (initialVnode) {
           break;
       }
 
+      if (unit && inputUi) {
+        inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];
+      }
+
       let showSelected = false;
       let selected = createNumericDropdownItems(
         selectedValues,
@@ -1303,6 +1243,8 @@ let DropdownNumber = function (initialVnode) {
 
       itemsOverflowing = totalItems > itemsOverflowLimit;
 
+      const unitTag = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
+
       return m(".inner-dropdown-area.numeric", [
         m(".numeric-filter-buttons", [
           numberFilterOperations.map(function (
@@ -1316,6 +1258,8 @@ let DropdownNumber = function (initialVnode) {
                   onclick: function () {
                     actualOperation = filterKey;
                     if (isListMode()) {
+                      // hide distribution automatically when switching to list
+                      showDistribution = false;
                       return;
                     }
 
@@ -1338,210 +1282,485 @@ let DropdownNumber = function (initialVnode) {
                   getNumberOperationIcon(filterKey) +
                   ".svg]"
                 )
-              ),
-              filterKey == "list" ||
-              filterKey == "equal" ||
-              filterKey == "greaterequal"
-                ? m(".separator")
-                : null,
+              )
             ];
           }),
         ]),
         !isListMode()
           ? m(".input-ui", [
-              inputUi,
-              m(
-                ".clear-button.clickable",
-                {
-                  onclick: function () {
-                    actualOperation = "list";
-                    Checklist.filter.data[dataPath].selected = [];
-                    Checklist.filter.data[dataPath].numeric.operation = "";
-                    initialThresholds = [null, null, null];
-                    actualThresholds = [null, null, null];
-                    Checklist.filter.data[dataPath].numeric.threshold1 = null;
-                    Checklist.filter.data[dataPath].numeric.threshold2 = null;
-                    Checklist.filter.commit();
-                  },
+            inputUi,
+            m(
+              ".clear-button.clickable",
+              {
+                onclick: function () {
+                  actualOperation = "list";
+                  showDistribution = false;
+                  Checklist.filter.data[dataPath].selected = [];
+                  Checklist.filter.data[dataPath].numeric.operation = "";
+                  initialThresholds = [null, null, null];
+                  actualThresholds = [null, null, null];
+                  Checklist.filter.data[dataPath].numeric.threshold1 = null;
+                  Checklist.filter.data[dataPath].numeric.threshold2 = null;
+                  Checklist.filter.commit();
                 },
-                m("img[src=img/ui/search/clear_filter_dark.svg]")
-              ),
-            ])
+              },
+              m("img[src=img/ui/search/clear_filter_dark.svg]")
+            ),
+          ])
           : null,
         isListMode()
           ? null
           : m(
-              ".apply.clickable" +
-              (isListMode() || !canApply() ? ".inactive" : ""),
-              {
-                onclick: function () {
-                  if (!isListMode() && canApply()) {
-                    let comparer =
-                      Checklist.filter.numericFilters[actualOperation].comparer;
-                    Checklist.filter.data[dataPath].selected =
-                      getSortedUniqueNumericValues(
-                        getOperatorPreviewValues().filter(
-                          (value) =>
-                            comparer(value, actualThresholds[1], actualThresholds[2])
-                        )
-                      );
-                    Checklist.filter.data[dataPath].numeric.operation =
-                      actualOperation;
-                    Checklist.filter.data[dataPath].numeric.threshold1 =
-                      actualThresholds[1];
-                    Checklist.filter.data[dataPath].numeric.threshold2 =
-                      actualThresholds[2];
-                    vnode.attrs.openHandler(false);
-                    Checklist.filter.commit();
-                  }
-                },
+            ".apply.clickable" +
+            (isListMode() || !canApply() ? ".inactive" : ""),
+            {
+              onclick: function () {
+                if (!isListMode() && canApply()) {
+                  let comparer =
+                    Checklist.filter.numericFilters[actualOperation].comparer;
+                  Checklist.filter.data[dataPath].selected =
+                    getSortedUniqueNumericValues(
+                      getOperatorPreviewValues().filter(
+                        (value) =>
+                          comparer(value, actualThresholds[1], actualThresholds[2])
+                      )
+                    );
+                  Checklist.filter.data[dataPath].numeric.operation =
+                    actualOperation;
+                  Checklist.filter.data[dataPath].numeric.threshold1 =
+                    actualThresholds[1];
+                  Checklist.filter.data[dataPath].numeric.threshold2 =
+                    actualThresholds[2];
+                  vnode.attrs.openHandler(false);
+                  Checklist.filter.commit();
+                }
               },
-              countResults() == 0
-                ? t("numeric_apply_show_results_no_results")
-                : t("numeric_apply_show_results", [countResults()])
-            ),
+            },
+            countResults() == 0
+              ? t("numeric_apply_show_results_no_results")
+              : t("numeric_apply_show_results", [countResults()])
+          ),
         isListMode()
           ? m(
-              ".search-filter",
-              m(
-                "input.options-search[type=search][placeholder=" +
-                t("search") +
-                "][id=" +
-                vnode.attrs.dropdownId +
-                "_text]",
-                {
-                  oninput: function () {
-                    filter = this.value
-                      .toLowerCase()
-                      .normalize("NFD")
-                      .replace(/[\u0300-\u036f]/g, "");
-                  },
-                }
-              )
+            ".search-filter",
+            m(
+              "input.options-search[type=search][placeholder=" +
+              t("search") +
+              "][id=" +
+              vnode.attrs.dropdownId +
+              "_text]",
+              {
+                oninput: function () {
+                  filter = this.value
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+                },
+              }
             )
+          )
           : null,
         isListMode()
           ? m(".options", [
-              showSelected ? m(".options-section", selected) : null,
-              showPossible ? m(".options-section", possible) : null,
-              showImpossible ? m(".options-section", impossible) : null,
-              itemsOverflowing
-                ? m(
-                    ".show-next-items",
-                    {
-                      onclick: function () {
-                        itemsOverflowLimit =
-                          itemsOverflowLimit + initialOverflowLimit;
-                      },
-                    },
-                    t("next_items_dropdown", [initialOverflowLimit])
-                  )
-                : null,
-              showSelected + showPossible + showImpossible == 0
-                ? m(".no-items-filter", t("no_items_filter"))
-                : null,
-            ])
+            showSelected ? m(".options-section", selected) : null,
+            showPossible ? m(".options-section", possible) : null,
+            showImpossible ? m(".options-section", impossible) : null,
+            itemsOverflowing
+              ? m(
+                ".show-next-items",
+                {
+                  onclick: function () {
+                    itemsOverflowLimit =
+                      itemsOverflowLimit + initialOverflowLimit;
+                  },
+                },
+                t("next_items_dropdown", [initialOverflowLimit])
+              )
+              : null,
+            showSelected + showPossible + showImpossible == 0
+              ? m(".no-items-filter", t("no_items_filter"))
+              : null,
+          ])
           : null,
         isListMode() && filter.length > 0 && totalPossibleUnchecked > 1
           ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  commitSelectedNumbers((selectedValues) => {
-                    return [...selectedValues, ...filteredPossible];
-                  });
-                  vnode.attrs.openHandler(false);
-                },
+            ".apply",
+            {
+              onclick: function () {
+                commitSelectedNumbers((selectedValues) => {
+                  return [...selectedValues, ...filteredPossible];
+                });
+                vnode.attrs.openHandler(false);
               },
-              t("check_all_shown")
-            )
+            },
+            t("check_all_shown")
+          )
           : null,
         isListMode()
           ? m(
-              ".distribution-toggle.clickable" +
-                (showDistribution ? ".expanded" : ""),
-              {
-                onclick: function () {
-                  showDistribution = !showDistribution;
-                },
+            ".distribution-toggle.clickable" +
+            (showDistribution ? ".expanded" : ""),
+            {
+              onclick: function () {
+                showDistribution = !showDistribution;
               },
-              [
-                m(
-                  "img.distribution-toggle-icon[src=img/ui/search/expand.svg]"
-                ),
-                m(
-                  ".distribution-toggle-label",
-                  showDistribution
-                    ? t("histogram_toggle_hide")
-                    : t("histogram_toggle_show")
-                ),
-              ]
-            )
+            },
+            [
+              m(
+                "img.distribution-toggle-icon[src=img/ui/search/expand.svg]"
+              ),
+              m(
+                ".distribution-toggle-label",
+                showDistribution
+                  ? t("histogram_toggle_hide")
+                  : t("histogram_toggle_show")
+              ),
+            ]
+          )
           : null,
         !isListMode() || showDistribution
           ? m(".histogram-wrap", [
-              m(
-                ".histogram#histogram_" +
-                dropdownId,
-                {
-                  onclick: function (e) {
-                    let svg = this.getElementsByTagName("svg")[0];
-                    this.classList.toggle("fullscreen");
-                    if (svg) {
-                      svg.classList.toggle("clickable");
-                    }
-                    e.preventDefault();
-                    e.stopPropagation();
-                  },
-                }
-              ),
-              m(".legend", [
-                m(".legend-item", [
-                  m(".map-fill[style=background-color: #d3d3d3]"),
-                  m(".map-legend-title", t("histogram_all_data")),
-                ]),
-                m(".legend-item", [
-                  m(
-                    ".map-fill[style=background-color: " +
-                    Checklist.getThemeHsl("light") +
-                    "]"
-                  ),
-                  m(".map-legend-title", t("histogram_displayed_data")),
-                ]),
+            m(
+              ".histogram#histogram_" +
+              dropdownId,
+              {
+                onclick: function (e) {
+                  let svg = this.getElementsByTagName("svg")[0];
+                  this.classList.toggle("fullscreen");
+                  if (svg) {
+                    svg.classList.toggle("clickable");
+                  }
+                  e.preventDefault();
+                  e.stopPropagation();
+                },
+              }
+            ),
+            m(".legend", [
+              m(".legend-item", [
+                m(".map-fill[style=background-color: #d3d3d3]"),
+                m(".map-legend-title", t("histogram_all_data")),
               ]),
-            ])
+              m(".legend-item", [
+                m(
+                  ".map-fill[style=background-color: " +
+                  Checklist.getThemeHsl("light") +
+                  "]"
+                ),
+                m(".map-legend-title", t("histogram_displayed_data")),
+              ]),
+            ]),
+          ])
           : null,
         !isListMode() || showDistribution
           ? m("ul.stats", [
-              min === null
-                ? null
-                : m("li", t("stats_min") + ": " + min.toLocaleString()),
-              max === null
-                ? null
-                : m("li", t("stats_max") + ": " + max.toLocaleString()),
-              m("li", t("stats_avg") + ": " + avg.toLocaleString()),
-              m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
-            ])
+            min === null ? null : m("li", [t("stats_min") + ": " + min.toLocaleString(), unitTag]),
+            max === null ? null : m("li", [t("stats_max") + ": " + max.toLocaleString(), unitTag]),
+            m("li", [t("stats_avg") + ": " + avg.toLocaleString(), unitTag]),
+            m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
+          ])
           : null,
         isListMode()
           ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  if (
-                    Checklist.filter.data[dataPath].numeric.operation != ""
-                  ) {
-                    commitSelectedNumbers((selectedValues) => selectedValues);
-                    vnode.attrs.openHandler(false);
-                    return;
-                  }
-
+            ".apply",
+            {
+              onclick: function () {
+                if (
+                  Checklist.filter.data[dataPath].numeric.operation != ""
+                ) {
+                  commitSelectedNumbers((selectedValues) => selectedValues);
                   vnode.attrs.openHandler(false);
-                },
+                  return;
+                }
+
+                vnode.attrs.openHandler(false);
               },
-              t("apply_selection")
-            )
+            },
+            t("apply_selection")
+          )
           : null,
+      ]);
+    },
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Shared histogram rendering — used by DropdownNumber and DropdownInterval
+// ---------------------------------------------------------------------------
+
+/**
+ * Render two sets of d3-style bins ({x0, x1, length}) as a layered bar chart.
+ * binsAll = gray background; binsPossible = theme-coloured foreground.
+ */
+function _renderHistogramSvg(wrapper, binsAll, binsPossible, x, margin, width, height) {
+  const y = d3.scaleLinear()
+    .range([height, 0])
+    .domain([0, d3.max(binsAll, d => d.length) || 1]);
+
+  const svg = d3.select(wrapper)
+    .append("svg")
+    .attr("viewBox", `0 0 ${wrapper.getBoundingClientRect().width} ${wrapper.getBoundingClientRect().height}`)
+    .attr("style", "background-color: white;")
+    .attr("class", "clickable")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format("~f")));
+  svg.append("g").call(d3.axisLeft(y).ticks(5));
+
+  const getBarX = d => x(d.x0) + 1;
+  const getBarWidth = d => Math.max(0, x(d.x1) - x(d.x0) - 1);
+
+  svg.selectAll(".bar-all").data(binsAll).enter().append("rect")
+    .attr("class", "bar-all")
+    .attr("x", getBarX).attr("y", d => y(d.length))
+    .attr("width", getBarWidth).attr("height", d => height - y(d.length))
+    .style("fill", "#d3d3d3");
+
+  svg.selectAll(".bar-filtered").data(binsPossible).enter().append("rect")
+    .attr("class", "bar-filtered")
+    .attr("x", getBarX).attr("y", d => y(d.length))
+    .attr("width", getBarWidth).attr("height", d => height - y(d.length))
+    .style("fill", Checklist.getThemeHsl("light")).style("opacity", 0.6);
+}
+
+/**
+ * Scalar histogram — bins individual number values, reused by DropdownNumber.
+ */
+function drawHistogram(dropdownId, dataAll, dataPossible) {
+  const NUMBER_OF_BINS = 20;
+  const cleanAll = dataAll.filter(d => d != null && !isNaN(d));
+  const cleanPossible = dataPossible.filter(d => d != null && !isNaN(d));
+
+  const wrapper = document.getElementById("histogram_" + dropdownId);
+  if (!wrapper) return;
+  d3.select(wrapper).selectAll("svg").remove();
+
+  const margin = { top: 10, right: 10, bottom: 30, left: 45 };
+  const width = wrapper.getBoundingClientRect().width - margin.left - margin.right;
+  const height = wrapper.getBoundingClientRect().height - margin.top - margin.bottom;
+
+  let [minVal, maxVal] = d3.extent(cleanAll);
+  if (minVal === undefined) { minVal = 0; maxVal = 0; }
+  if (minVal === maxVal) { minVal -= 0.5; maxVal += 0.5; }
+
+  const x = d3.scaleLinear().domain([minVal, maxVal]).nice().range([0, width]);
+  const histogram = d3.histogram().value(d => d).domain(x.domain()).thresholds(x.ticks(NUMBER_OF_BINS));
+  _renderHistogramSvg(wrapper, histogram(cleanAll), histogram(cleanPossible), x, margin, width, height);
+}
+
+/**
+ * Coverage histogram for interval data.
+ * Each bin's height = number of intervals that overlap [bin.x0, bin.x1) — so a
+ * single interval spanning the whole axis lights up every bin, giving a true
+ * picture of the data density across the value range.
+ */
+function drawIntervalHistogram(dropdownId, allPairs, filteredPairs) {
+  const NUMBER_OF_BINS = 20;
+  const wrapper = document.getElementById("histogram_" + dropdownId);
+  if (!wrapper) return;
+  d3.select(wrapper).selectAll("svg").remove();
+  if (!allPairs.length) return;
+
+  const margin = { top: 10, right: 10, bottom: 30, left: 45 };
+  const width = wrapper.getBoundingClientRect().width - margin.left - margin.right;
+  const height = wrapper.getBoundingClientRect().height - margin.top - margin.bottom;
+
+  const allEndpoints = allPairs.flatMap(([a, b]) => [a, b]);
+  let [minVal, maxVal] = d3.extent(allEndpoints);
+  if (minVal === maxVal) { minVal -= 0.5; maxVal += 0.5; }
+
+  const x = d3.scaleLinear().domain([minVal, maxVal]).nice().range([0, width]);
+  const [lo, hi] = x.domain();
+  const step = (hi - lo) / NUMBER_OF_BINS;
+
+  function coverageBins(pairs) {
+    return Array.from({ length: NUMBER_OF_BINS }, (_, i) => {
+      const x0 = lo + i * step;
+      const x1 = x0 + step;
+      // +1 for every interval that overlaps this bin (partial overlap counts)
+      return { x0, x1, length: pairs.filter(([from, to]) => from < x1 && to >= x0).length };
+    });
+  }
+
+  _renderHistogramSvg(wrapper, coverageBins(allPairs), coverageBins(filteredPairs), x, margin, width, height);
+}
+
+let DropdownInterval = function (initialVnode) {
+  let dataPath = "";
+  let actualOperation = "contains";
+  let actualThresholds = [null, null, null];
+  let initialThresholds = [null, null, null];
+  let thresholdsShown = 0;
+  let dropdownId = initialVnode.attrs.dropdownId;
+
+  function inputsOk() {
+    const opDef = Checklist.filter.intervalFilters[actualOperation];
+    if (!opDef) return false;
+    for (let i = 1; i <= opDef.values; i++) {
+      if (typeof actualThresholds[i] !== "number" || isNaN(actualThresholds[i])) return false;
+    }
+    return !(opDef.values === 2 && actualThresholds[2] < actualThresholds[1]);
+  }
+
+  function getFilteredPairs() {
+    const opDef = Checklist.filter.intervalFilters[actualOperation];
+    const all = Checklist.filter.data[dataPath].possible || [];
+    if (!inputsOk() || !opDef) return all;
+    return all.filter(([from, to]) =>
+      opDef.comparer(from, to, actualThresholds[1], actualThresholds[2])
+    );
+  }
+
+  function countResults() {
+    if (!inputsOk()) return 0;
+    return getFilteredPairs().length;
+  }
+
+  function canApply() { return inputsOk() && countResults() > 0; }
+
+  function numericInput(thresholdNumber, min, max) {
+    thresholdsShown++;
+    const current = initialThresholds[thresholdNumber] !== null
+      ? initialThresholds[thresholdNumber]
+      : actualThresholds[thresholdNumber];
+    const isErr = typeof actualThresholds[thresholdNumber] !== "number"
+      || isNaN(actualThresholds[thresholdNumber]);
+
+    return m("input" +
+      (actualThresholds[thresholdNumber] !== null && isErr ? ".error" : "") +
+      "[id=threshold" + thresholdNumber + "_" + dropdownId + "]" +
+      "[type=text][name=threshold" + thresholdNumber + "]" +
+      "[min=" + min + "][max=" + max + "]" +
+      (current !== null ? "[value=" + current + "]" : ""),
+      {
+        oninput: function () {
+          initialThresholds[thresholdNumber] = null;
+          let v = this.value;
+          if (!v.endsWith(".") && !v.endsWith(",") &&
+            isFinite(v.replace(",", ".")) && v.trim() !== "") {
+            v = parseFloat(v.replace(",", "."));
+          }
+          actualThresholds[thresholdNumber] = v;
+        }
+      }
+    );
+  }
+
+  function redrawHistogram() {
+    window.setTimeout(function () {
+      const allPairs = Checklist.filter.data[dataPath].possible || [];
+      drawIntervalHistogram(dropdownId, allPairs, getFilteredPairs());
+    }, 0);
+  }
+
+  return {
+    oninit: function (vnode) {
+      dataPath = vnode.attrs.dataPath;
+      initialThresholds = [
+        null,
+        Checklist.filter.data[dataPath].numeric.threshold1,
+        Checklist.filter.data[dataPath].numeric.threshold2,
+      ];
+      actualThresholds = [null, initialThresholds[1], initialThresholds[2]];
+      const saved = Checklist.filter.data[dataPath].numeric.operation;
+      actualOperation = intervalFilterOperations.includes(saved) ? saved : "contains";
+    },
+    oncreate: redrawHistogram,
+    onupdate: redrawHistogram,
+
+    view: function (vnode) {
+      dataPath = vnode.attrs.dataPath;
+      thresholdsShown = 0;
+
+      const filterDef = Checklist.filter.data[dataPath];
+      const allPairs = filterDef.possible || [];
+      const bounds = {
+        min: filterDef.min ?? filterDef.globalMin ?? 0,
+        max: filterDef.max ?? filterDef.globalMax ?? 100,
+      };
+      const unit = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
+      const unitTag = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
+
+      let inputUi;
+      switch (actualOperation) {
+        case "contains":
+          inputUi = [m(".label1", t("interval_filter_contains")), numericInput(1, bounds.min, bounds.max)];
+          break;
+        case "overlaps":
+        case "fully_inside":
+          inputUi = [
+            m(".label1", t("interval_filter_" + actualOperation)),
+            numericInput(1, bounds.min, bounds.max),
+            m(".label2", t("numeric_filter_and")),
+            numericInput(2, bounds.min, bounds.max),
+          ];
+          break;
+      }
+      if (unit && inputUi) {
+        inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];
+      }
+
+      return m(".inner-dropdown-area.numeric", [
+        m(".numeric-filter-buttons",
+          intervalFilterOperations.map(opKey =>
+            m(".numeric-filter-button.clickable" + (actualOperation === opKey ? ".selected" : ""), {
+              onclick: function () {
+                actualOperation = opKey;
+                window.setTimeout(function () {
+                  const input = document.getElementById("threshold1_" + dropdownId);
+                  if (input) { input.focus(); input.select?.(); }
+                }, 200);
+              },
+            }, m("img[src=img/ui/search/interval_" + getIntervalOperationIcon(opKey) + ".svg]"))
+          )
+        ),
+        m(".input-ui", [
+          inputUi,
+          m(".clear-button.clickable", {
+            onclick: function () {
+              initialThresholds = [null, null, null];
+              actualThresholds = [null, null, null];
+              actualOperation = "contains";
+              filterDef.numeric.operation = "";
+              filterDef.numeric.threshold1 = null;
+              filterDef.numeric.threshold2 = null;
+              Checklist.filter.commit();
+            },
+          }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
+        ]),
+        m(".apply.clickable" + (canApply() ? "" : ".inactive"), {
+          onclick: function () {
+            if (!canApply()) return;
+            filterDef.numeric.operation = actualOperation;
+            filterDef.numeric.threshold1 = actualThresholds[1];
+            filterDef.numeric.threshold2 = actualThresholds[2];
+            vnode.attrs.openHandler(false);
+            Checklist.filter.commit();
+          },
+        }, countResults() === 0
+          ? t("numeric_apply_show_results_no_results")
+          : t("numeric_apply_show_results", [countResults()])
+        ),
+        m(".histogram-wrap", [
+          m(".histogram#histogram_" + dropdownId, {
+            onclick: function (e) {
+              this.classList.toggle("fullscreen");
+              this.getElementsByTagName("svg")[0]?.classList.toggle("clickable");
+              e.preventDefault(); e.stopPropagation();
+            },
+          }),
+          m(".legend", [
+            m(".legend-item", [m(".map-fill[style=background-color: #d3d3d3]"), m(".map-legend-title", t("histogram_all_data"))]),
+            m(".legend-item", [m(".map-fill[style=background-color: " + Checklist.getThemeHsl("light") + "]"), m(".map-legend-title", t("histogram_displayed_data"))]),
+          ]),
+        ]),
+        m("ul.stats", [
+          bounds.min !== null ? m("li", [t("stats_min") + ": " + bounds.min.toLocaleString(), unitTag]) : null,
+          bounds.max !== null ? m("li", [t("stats_max") + ": " + bounds.max.toLocaleString(), unitTag]) : null,
+          m("li", t("stats_distinct") + ": " + allPairs.length.toLocaleString()),
+        ]),
       ]);
     },
   };
@@ -1769,28 +1988,28 @@ let DropdownDate = function (initialVnode) {
           itemsConcerned.length == 0
             ? null
             : m(DropdownCheckItemSkeleton, {
-                state: state,
-                item: thisGroup,
-                count: "",
-                action:
-                  state == "inactive"
-                    ? undefined
-                    : function () {
-                        commitSelectedDates((selectedValues) => {
-                          if (state == "checked") {
-                            return selectedValues.filter(
-                              (value) => itemsConcerned.indexOf(value) < 0
-                            );
-                          }
+              state: state,
+              item: thisGroup,
+              count: "",
+              action:
+                state == "inactive"
+                  ? undefined
+                  : function () {
+                    commitSelectedDates((selectedValues) => {
+                      if (state == "checked") {
+                        return selectedValues.filter(
+                          (value) => itemsConcerned.indexOf(value) < 0
+                        );
+                      }
 
-                          if (state == "unchecked") {
-                            return [...selectedValues, ...itemsConcerned];
-                          }
+                      if (state == "unchecked") {
+                        return [...selectedValues, ...itemsConcerned];
+                      }
 
-                          return selectedValues;
-                        });
-                      },
-              });
+                      return selectedValues;
+                    });
+                  },
+            });
 
         if (groupCheckItem !== null) {
           checkItems.push(groupCheckItem);
@@ -1809,18 +2028,18 @@ let DropdownDate = function (initialVnode) {
             state == "inactive"
               ? undefined
               : function () {
-                  commitSelectedDates((selectedValues) => {
-                    if (state == "checked") {
-                      return selectedValues.filter((value) => value !== item);
-                    }
+                commitSelectedDates((selectedValues) => {
+                  if (state == "checked") {
+                    return selectedValues.filter((value) => value !== item);
+                  }
 
-                    if (state == "unchecked") {
-                      return [...selectedValues, item];
-                    }
+                  if (state == "unchecked") {
+                    return [...selectedValues, item];
+                  }
 
-                    return selectedValues;
-                  });
-                },
+                  return selectedValues;
+                });
+              },
         })
       );
     });
@@ -1999,114 +2218,114 @@ let DropdownDate = function (initialVnode) {
         ]),
         !isListMode()
           ? m(".input-ui", [
-              inputUi,
-              isListMode()
-                ? null
-                : m(
-                    ".clear-button.clickable",
-                    {
-                      onclick: function () {
-                        actualOperation = "list";
-                        Checklist.filter.data[dataPath].selected = [];
-                        Checklist.filter.data[dataPath].numeric.operation = "";
-                        initialThresholds = [null, null, null];
-                        actualThresholds = [null, null, null];
-                        Checklist.filter.data[dataPath].numeric.threshold1 = null;
-                        Checklist.filter.data[dataPath].numeric.threshold2 = null;
-                        Checklist.filter.commit();
-                      },
-                    },
-                    m("img[src=img/ui/search/clear_filter_dark.svg]")
-                  ),
-            ])
+            inputUi,
+            isListMode()
+              ? null
+              : m(
+                ".clear-button.clickable",
+                {
+                  onclick: function () {
+                    actualOperation = "list";
+                    Checklist.filter.data[dataPath].selected = [];
+                    Checklist.filter.data[dataPath].numeric.operation = "";
+                    initialThresholds = [null, null, null];
+                    actualThresholds = [null, null, null];
+                    Checklist.filter.data[dataPath].numeric.threshold1 = null;
+                    Checklist.filter.data[dataPath].numeric.threshold2 = null;
+                    Checklist.filter.commit();
+                  },
+                },
+                m("img[src=img/ui/search/clear_filter_dark.svg]")
+              ),
+          ])
           : null,
         isListMode()
           ? null
           : m(
-              ".apply.clickable" +
-              (isListMode() || !canApply() ? ".inactive" : ""),
-              {
-                onclick: function () {
-                  if (!isListMode() && canApply()) {
-                    let comparer =
-                      Checklist.filter.numericFilters[actualOperation].comparer;
-                    Checklist.filter.data[dataPath].selected =
-                      getSortedUniqueDateValues(
-                        getOperatorPreviewValues().filter(
-                          (value) =>
-                            comparer(value, actualThresholds[1], actualThresholds[2])
-                        )
-                      );
-                    Checklist.filter.data[dataPath].numeric.operation =
-                      actualOperation;
-                    Checklist.filter.data[dataPath].numeric.threshold1 =
-                      actualThresholds[1];
-                    Checklist.filter.data[dataPath].numeric.threshold2 =
-                      actualThresholds[2];
-                    vnode.attrs.openHandler(false);
-                    Checklist.filter.commit();
-                  }
-                },
+            ".apply.clickable" +
+            (isListMode() || !canApply() ? ".inactive" : ""),
+            {
+              onclick: function () {
+                if (!isListMode() && canApply()) {
+                  let comparer =
+                    Checklist.filter.numericFilters[actualOperation].comparer;
+                  Checklist.filter.data[dataPath].selected =
+                    getSortedUniqueDateValues(
+                      getOperatorPreviewValues().filter(
+                        (value) =>
+                          comparer(value, actualThresholds[1], actualThresholds[2])
+                      )
+                    );
+                  Checklist.filter.data[dataPath].numeric.operation =
+                    actualOperation;
+                  Checklist.filter.data[dataPath].numeric.threshold1 =
+                    actualThresholds[1];
+                  Checklist.filter.data[dataPath].numeric.threshold2 =
+                    actualThresholds[2];
+                  vnode.attrs.openHandler(false);
+                  Checklist.filter.commit();
+                }
               },
-              countResults() == 0
-                ? t("numeric_apply_show_results_no_results")
-                : t("numeric_apply_show_results", [countResults()])
-            ),
+            },
+            countResults() == 0
+              ? t("numeric_apply_show_results_no_results")
+              : t("numeric_apply_show_results", [countResults()])
+          ),
         isListMode()
           ? m(
-              ".search-filter",
-              m(
-                "input.options-search[type=search][placeholder=" +
-                t("search") +
-                "][id=" +
-                vnode.attrs.dropdownId +
-                "_text]",
-                {
-                  oninput: function () {
-                    filter = this.value
-                      .toLowerCase()
-                      .normalize("NFD")
-                      .replace(/[\u0300-\u036f]/g, "");
-                  },
-                }
-              )
+            ".search-filter",
+            m(
+              "input.options-search[type=search][placeholder=" +
+              t("search") +
+              "][id=" +
+              vnode.attrs.dropdownId +
+              "_text]",
+              {
+                oninput: function () {
+                  filter = this.value
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+                },
+              }
             )
+          )
           : null,
         isListMode()
           ? m(".options", [
-              showSelected ? m(".options-section", selected) : null,
-              showPossible ? m(".options-section", possible) : null,
-              showImpossible ? m(".options-section", impossible) : null,
-              itemsOverflowing
-                ? m(
-                    ".show-next-items",
-                    {
-                      onclick: function () {
-                        itemsOverflowLimit =
-                          itemsOverflowLimit + initialOverflowLimit;
-                      },
-                    },
-                    t("next_items_dropdown", [initialOverflowLimit])
-                  )
-                : null,
-              showSelected + showPossible + showImpossible == 0
-                ? m(".no-items-filter", t("no_items_filter"))
-                : null,
-            ])
+            showSelected ? m(".options-section", selected) : null,
+            showPossible ? m(".options-section", possible) : null,
+            showImpossible ? m(".options-section", impossible) : null,
+            itemsOverflowing
+              ? m(
+                ".show-next-items",
+                {
+                  onclick: function () {
+                    itemsOverflowLimit =
+                      itemsOverflowLimit + initialOverflowLimit;
+                  },
+                },
+                t("next_items_dropdown", [initialOverflowLimit])
+              )
+              : null,
+            showSelected + showPossible + showImpossible == 0
+              ? m(".no-items-filter", t("no_items_filter"))
+              : null,
+          ])
           : null,
         isListMode() && filter.length > 0 && totalPossibleUnchecked > 1
           ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  commitSelectedDates((selectedValues) => {
-                    return [...selectedValues, ...filteredPossible];
-                  });
-                  vnode.attrs.openHandler(false);
-                },
+            ".apply",
+            {
+              onclick: function () {
+                commitSelectedDates((selectedValues) => {
+                  return [...selectedValues, ...filteredPossible];
+                });
+                vnode.attrs.openHandler(false);
               },
-              t("check_all_shown")
-            )
+            },
+            t("check_all_shown")
+          )
           : null,
         m("ul.stats", [
           statsBounds.min === null
@@ -2118,22 +2337,22 @@ let DropdownDate = function (initialVnode) {
         ]),
         isListMode()
           ? m(
-              ".apply",
-              {
-                onclick: function () {
-                  if (
-                    Checklist.filter.data[dataPath].numeric.operation != ""
-                  ) {
-                    commitSelectedDates((selectedValues) => selectedValues);
-                    vnode.attrs.openHandler(false);
-                    return;
-                  }
-
+            ".apply",
+            {
+              onclick: function () {
+                if (
+                  Checklist.filter.data[dataPath].numeric.operation != ""
+                ) {
+                  commitSelectedDates((selectedValues) => selectedValues);
                   vnode.attrs.openHandler(false);
-                },
+                  return;
+                }
+
+                vnode.attrs.openHandler(false);
               },
-              t("apply_selection")
-            )
+            },
+            t("apply_selection")
+          )
           : null,
       ]);
     },
@@ -2146,7 +2365,7 @@ let DropdownMonths = function (initialVnode) {
       let type = vnode.attrs.type;
       let dataPath = vnode.attrs.dataPath;
       let filterDef = Checklist.filter[type][dataPath];
- 
+
       // Always render all 12 months in calendar order.
       // JS coerces numeric object keys to strings, so possible[1] === possible["1"].
       let items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (monthNum) {
@@ -2155,7 +2374,7 @@ let DropdownMonths = function (initialVnode) {
         let isPossible = count > 0;
         // Three states mirroring DropdownText: checked → unchecked → inactive
         let state = isSelected ? "checked" : isPossible ? "unchecked" : "inactive";
- 
+
         return m(DropdownCheckItemSkeleton, {
           key: monthNum,
           item: String(t("months." + Settings.MONTH_KEYS[monthNum - 1])),
@@ -2175,7 +2394,7 @@ let DropdownMonths = function (initialVnode) {
           }
         });
       });
- 
+
       return m(".inner-dropdown-area", [
         m(".options", m(".options-section", items)),
         m(".apply", { onclick: () => vnode.attrs.openHandler(false) }, t("apply_selection"))
@@ -2183,4 +2402,4 @@ let DropdownMonths = function (initialVnode) {
     }
   };
 };
- 
+

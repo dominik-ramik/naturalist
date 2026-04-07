@@ -351,5 +351,11 @@
   "dm_shortcode_duplicate": "Database shortcode \"{0}\" is defined more than once; second occurrence skipped",
   "dm_shortcode_overrides_builtin": "Database shortcode \"{0}\" overrides a built-in shortcode",
   "dm_shortcode_missing_id_in_url": "Database shortcode \"{0}\": URL template must contain {{id}}; entry skipped",
-  "dm_shortcode_missing_id_in_label": "Database shortcode \"{0}\": label template must contain {{id}}; entry skipped"
+  "dm_shortcode_missing_id_in_label": "Database shortcode \"{0}\": label template must contain {{id}}; entry skipped",
+  "interval_filter_contains": "Contains",
+  "interval_filter_overlaps": "Overlaps with",
+  "interval_filter_fully_inside": "Fully inside",
+  "interval_filter_contains_short": "contains",
+  "interval_filter_overlaps_short": "overlaps with",
+  "interval_filter_fully_inside_short": "fully inside"
 }

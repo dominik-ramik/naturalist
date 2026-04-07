@@ -14,7 +14,7 @@ import { LiteratureView } from "./view/LiteratureView.js";
 import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
-import { compressor, checklistURL } from "./components/Utils.js";
+import { compressor, checklistURL, unitToHtml } from "./components/Utils.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
@@ -401,14 +401,9 @@ Handlebars.registerHelper("unit", function (...args) {
     return fixed;
   }
 
-  // Replace trailing digit 2/3 with HTML superscript entities
-  function formatUnitDisplay(key) {
-    return key.replace(/2$/, "<sup>2</sup>").replace(/3$/, "<sup>3</sup>");
-  }
-
   // Single formatted token, e.g. "<span class='unit-value'>1.5</span>&nbsp;<span class='unit-name'>km</span>"
   function formatPair(n, key) {
-    return '<span class="unit-value">' + formatNumber(n) + '</span>&nbsp;<span class="unit-name">' + formatUnitDisplay(key) + '</span>';
+    return '<span class="unit-value">' + formatNumber(n) + '</span>&nbsp;<span class="unit-name">' + unitToHtml(key) + '</span>';
   }
 
   // Volume has two flavours: cubic (cm3) and liquid (ml/l).
