@@ -76,6 +76,10 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
+.sp-level.sp-level--current {
+    background: rgba(85, 118, 155, 0.09);
+}
+
 .sp-level:last-child {
   border-bottom: none;
 }
@@ -101,7 +105,7 @@
 .sp-level-rank {
   font-size: 0.78em;
   font-style: italic;
-  color: #aaa;
+  color: #7e7e7e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -132,7 +136,7 @@
 
 /* Descendant count (large, prominent — it is the key datum in taxonomy view) */
 .sp-level-name--count {
-  font-size: 1em;
+  font-size: 0.85em;
   font-weight: 700;
   color: #444;
 }
@@ -335,5 +339,5 @@
 /* ─── Descendant indent ───────────────────────────────────────────────────── */
 
 .sp-level--descendant .sp-level-rank {
-  color: #bbb;
+  color: #7e7e7e;
 }

@@ -571,7 +571,7 @@ function renderLevelBlock(row, p) {
 
 function renderLevelHeader(row, p) {
   const nameNode = row.kind === "descendant"
-    ? m("span.sp-level-name.sp-level-name--count", String(row.count ?? ""))
+    ? m("span.sp-level-name.sp-level-name--count", (row.count > 0 ? tf("sp_children_taxa", [row.count], true) : ""))
     : m("span.sp-level-name", row.name);
 
   // Sibling count only shown in taxonomy perspective
@@ -579,7 +579,7 @@ function renderLevelHeader(row, p) {
     && row.kind !== "descendant"
     && row.siblingCount > 1)
     ? m("span.sp-level-aside",
-        "+" + (row.siblingCount - 1) + "\u00a0" + t("sp_others"))
+        "+" + (row.siblingCount - 1) + "\u00a0" + t("sp_in_group"))
     : null;
 
   return m(".sp-level-header", [
