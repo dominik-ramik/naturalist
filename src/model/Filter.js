@@ -3,6 +3,7 @@ import { routeTo } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
+import { getMonthNumbers } from "./MonthNames.js";
 
 const selectableFilterTypes = ["text", "map regions", "category", "months"];
 const rangeFilterTypes = ["number", "interval", "date"];
@@ -206,13 +207,10 @@ export let Filter = {
     );
   },
   monthsFilterSortedKeys: function () {
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    return getMonthNumbers();
   },
   monthLabelForValue: function (monthNumber) {
-    const keys = Settings.MONTH_KEYS;
-    const n = Number(monthNumber);
-    if (isNaN(n) || n < 1 || n > 12) return String(monthNumber);
-    return t("months." + keys[n - 1]);
+    return Checklist.getMonthLabel(monthNumber);
   },
   dateFilterToHumanReadable: function (
     dataPath,

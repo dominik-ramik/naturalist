@@ -146,6 +146,10 @@ export function filterTerminalLeavesForMode(nodes, mode, specimenMetaIndex) {
 }
 
 let sortByCustomOrderCache = new Map();
+export function clearSortByCustomOrderCache() {
+  sortByCustomOrderCache = new Map();
+}
+
 export function sortByCustomOrder(array, type, dataPath) {
   if (array.length == 0) {
     return array;

@@ -6,8 +6,6 @@ export let Settings = {
   // Full-text search OR separator symbol
   SEARCH_OR_SEPARATOR: "/",
 
-  MONTH_KEYS: ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"],
-
   // Storage persistence status (set at runtime)
   _storagePersistent: null,
 
@@ -347,12 +345,11 @@ export let Settings = {
     }
   },
 
-  _currentDetailsTab: "externalsearch",
   currentDetailsTab: function (value) {
     if (value) {
-      this._currentDetailsTab = value;
+      window.localStorage.setItem("currentDetailsTab", value);
     } else {
-      return this._currentDetailsTab;
+      return window.localStorage.getItem("currentDetailsTab") || "summary";
     }
   },
 

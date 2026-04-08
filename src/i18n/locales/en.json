@@ -282,9 +282,9 @@
     "sep": "September",
     "oct": "October",
     "nov": "November",
-    "dec": "December",
-    "and": "and"
+    "dec": "December"
   },
+  "months_and": "and",
   "view_cat_show_empty_columns": "Show empty columns",
   "view_cat_date_group_by": "Group by",
   "view_cat_date_bin_month": "Month",
@@ -365,5 +365,13 @@
   "static_hosting_cors_reminder": "Heads up: loading from a URL may be blocked by your browser on static hosting",
   "url_fetching_via_proxy": "Fetching spreadsheet via server proxy…",
   "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…",
-  "summary_cell_count": "{0} taxa"
+  "summary_cell_count": "{0} taxa",
+  "sp_specimens": "Specimens",
+  "sp_in_group": "sibbling taxa",
+  "sp_no_in_group": "no sibbling taxa",
+  "sp_children_taxa": "{0} child taxa",
+  "sp_direct": "Directly attached to this level",
+  "sp_cumulative": "Cumulative — includes all levels below",
+  "sp_title_for_specimens": "{0} (specimens)",
+  "sp_taxonomic_hierarchy": "Taxonomic hierarchy"
 }

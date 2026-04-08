@@ -3,6 +3,7 @@ import Handlebars from "handlebars";
 import { TinyBibFormatter } from 'bibtex-json-toolbox';
 
 import {
+  clearSortByCustomOrderCache,
   getCurrentLocaleBestGuess,
   getGradedColor,
   routeTo,
@@ -10,6 +11,12 @@ import {
 } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { Filter } from "./Filter.js";
+import {
+  deriveShortMonthNames,
+  getMonthLabel,
+  getShortMonthLabel,
+  resolveMonthNames,
+} from "./MonthNames.js";
 import { dataReaders, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
@@ -26,7 +33,12 @@ export let Checklist = {
       .checklist;
   },
 
+  getDataRevision: function () {
+    return Checklist._dataRevision;
+  },
+
   _data: null,
+  _dataRevision: 0,
   _dataFulltextIndex: {},
   _isDraft: false,
   _isDataReady: false,
@@ -372,6 +384,23 @@ export let Checklist = {
     return Checklist._data?.versions?.[resolvedLang]?.dateFormat || "YYYY-MM-DD";
   },
 
+  getMonthNames: function (langCode) {
+    const resolvedLang = langCode || Checklist.getCurrentLanguage();
+    return resolveMonthNames(Checklist._data?.versions?.[resolvedLang]?.monthNames);
+  },
+
+  getShortMonthNames: function (langCode) {
+    return deriveShortMonthNames(Checklist.getMonthNames(langCode));
+  },
+
+  getMonthLabel: function (monthNumber, langCode) {
+    return getMonthLabel(monthNumber, Checklist.getMonthNames(langCode));
+  },
+
+  getShortMonthLabel: function (monthNumber, langCode) {
+    return getShortMonthLabel(monthNumber, Checklist.getMonthNames(langCode));
+  },
+
   getReferences: function () {
     return Checklist.getData().references;
   },
@@ -411,6 +440,7 @@ export let Checklist = {
     }
 
     this._data = jsonData;
+    this._dataRevision += 1;
 
     this._isDraft = isDraft;
     this._bibFormatter = null;
@@ -433,6 +463,11 @@ export let Checklist = {
     Checklist.treefiedTaxaCache = null;
     Checklist._specimenDataPathCache = undefined;
     Checklist._hasSpecimensCache = null;
+    Checklist._bibFormatterCache = {};
+    Checklist.nameForMapRegionCache = new Map();
+    Checklist.getCustomOrderGroupItemsCache = new Map();
+    Checklist.getCustomOrderGroupCache = new Map();
+    clearSortByCustomOrderCache();
 
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
@@ -580,19 +615,20 @@ export let Checklist = {
     Checklist.getAllLanguages().forEach(function (lang) {
       Checklist._dataFulltextIndex[lang.code] = [];
 
-      Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
-        taxon,
-        index
-      ) {
-        Checklist._dataFulltextIndex[lang.code][index] =
-          textLowerCaseAccentless(
-            Checklist.primitiveKeysOfObject(
-              taxon,
-              customDatatypeDataPaths
-            ).join("\n")
-          );
+        Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
+          taxon,
+          index
+        ) {
+          Checklist._dataFulltextIndex[lang.code][index] =
+            textLowerCaseAccentless(
+              Checklist.primitiveKeysOfObject(
+                taxon,
+                customDatatypeDataPaths,
+                lang.code
+              ).join("\n")
+            );
+        });
       });
-    });
 
     //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
     Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
@@ -805,7 +841,7 @@ export let Checklist = {
     );
   },
 
-  primitiveKeysOfObject: function (taxon, dataPathsToKeep) {
+  primitiveKeysOfObject: function (taxon, dataPathsToKeep, langCode) {
     let primitives = [];
 
     taxon.t.forEach(function (scientificName) {
@@ -845,7 +881,7 @@ export let Checklist = {
         // crash because those child paths don't exist. Instead, delegate to the
         // reader's getSearchableText so i18n month names ("January" etc.) are
         // properly indexed for full-text search.
-        getSearchableTextByType(currentData, "months", {}).forEach(
+        getSearchableTextByType(currentData, "months", { langCode }).forEach(
           text => primitives.push(text)
         );
         return primitives;
@@ -1404,6 +1440,7 @@ export let Checklist = {
     currentDataPath = Object.keys(Checklist.getTaxaMeta())[currentDataPath];
 
     let currentTaxonMeta = Checklist.getTaxaMeta()[currentDataPath];
+
     let targetDataPath = currentTaxonMeta.parentTaxonIndication;
 
     if (targetDataPath === "none") {

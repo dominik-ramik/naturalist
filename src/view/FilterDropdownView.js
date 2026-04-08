@@ -12,7 +12,6 @@ import {
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
-import { Settings } from "../model/Settings.js";
 
 const selectableFilterTypes = ["text", "category", "map regions", "months"];
 const rangeFilterTypes = ["number", "date"];
@@ -2377,7 +2376,7 @@ let DropdownMonths = function (initialVnode) {
 
         return m(DropdownCheckItemSkeleton, {
           key: monthNum,
-          item: String(t("months." + Settings.MONTH_KEYS[monthNum - 1])),
+          item: Checklist.getMonthLabel(monthNum),
           state: state,
           count: count || "",
           action: state === "inactive" ? undefined : function () {
@@ -2402,4 +2401,3 @@ let DropdownMonths = function (initialVnode) {
     }
   };
 };
-

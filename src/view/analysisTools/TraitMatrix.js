@@ -204,7 +204,7 @@ function unixTimestampToBin(timestamp, binMethod) {
   if (!d.isValid()) return null;
   return binMethod === "year"
     ? String(d.year())
-    : t("months." + Settings.MONTH_KEYS[d.month()]);
+    : Checklist.getMonthLabel(d.month() + 1);
 }
 
 function buildDateBins(allTimestamps, binMethod) {
@@ -251,7 +251,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
       return toArr(get(dataCategory))
         .map(mVal => {
           const num = parseInt(mVal, 10);
-          return (num >= 1 && num <= 12) ? t("months." + Settings.MONTH_KEYS[num - 1]) : null;
+          return (num >= 1 && num <= 12) ? Checklist.getMonthLabel(num) : null;
         })
         .filter(Boolean);
     case "map regions": {
@@ -278,7 +278,7 @@ function buildColCategories(colCategory, binMethod) {
   } else if (type === "months") {
     [...(all || [])]
       .map(m => parseInt(m, 10)).filter(m => !isNaN(m)).sort((a, b) => a - b)
-      .forEach(mVal => { cats[t("months." + Settings.MONTH_KEYS[mVal - 1])] = { color: "", sum: 0 }; });
+      .forEach(mVal => { cats[Checklist.getMonthLabel(mVal)] = { color: "", sum: 0 }; });
   } else {
     (all || []).forEach(rawVal => {
       const key = normaliseLabelValue(rawVal);
@@ -299,7 +299,7 @@ function buildOrderedRowBins(rowCategory, rowBinMethod, individualResults) {
   if (type === "months") {
     return [...(Checklist.filter.data[rowCategory]?.all || [])]
       .map(m => parseInt(m, 10)).filter(m => !isNaN(m)).sort((a, b) => a - b)
-      .map(mVal => t("months." + Settings.MONTH_KEYS[mVal - 1]))
+      .map(mVal => Checklist.getMonthLabel(mVal))
       .filter(label => individualResults[label]);
   }
   return null;

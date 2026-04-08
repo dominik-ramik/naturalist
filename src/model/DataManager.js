@@ -14,6 +14,7 @@ import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
+import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
 
 // Global array to collect assets from F: directives
 
@@ -449,6 +450,14 @@ export let DataManager = function () {
         lang.code,
         "YYYY-MM-DD"
       );
+      let monthNames = resolveMonthNames(
+        getItem(
+          data.sheets.appearance.tables.customization.data,
+          "Month names",
+          lang.code,
+          ""
+        )
+      );
       let useCitations = getItem(
         data.sheets.appearance.tables.customization.data,
         "Use citations",
@@ -471,6 +480,7 @@ export let DataManager = function () {
         about: about,
         howToCite: howToCite,
         dateFormat: dateFormat,
+        monthNames: monthNames,
         useCitations: useCitations.toLowerCase(),
         precachedImageMaxSize: parseFloat(precachedImageMaxSize),
         dataset: {
@@ -1798,6 +1808,34 @@ export let DataManager = function () {
 
     // Hue has to be 0-360
     data.common.languages.supportedLanguages.forEach(function (lang) {
+      const monthNamesValidation = validateConfiguredMonthNames(
+        getItem(
+          data.sheets.appearance.tables.customization.data,
+          "Month names",
+          lang.code,
+          ""
+        )
+      );
+
+      if (monthNamesValidation.hasValue) {
+        if (monthNamesValidation.wrongCount) {
+          Logger.error(
+            "Customization item 'Month names' for language '" +
+            lang.code +
+            "' must contain exactly 12 non-empty comma-separated month names."
+          );
+        }
+
+        if (monthNamesValidation.duplicates.length > 0) {
+          Logger.error(
+            "Customization item 'Month names' for language '" +
+            lang.code +
+            "' contains duplicate month names: " +
+            monthNamesValidation.duplicates.join(", ")
+          );
+        }
+      }
+
       let hueRow = data.sheets.appearance.tables.customization.data[
         lang.code
       ].find(function (row) {

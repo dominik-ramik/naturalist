@@ -22,10 +22,8 @@
  */
 
 import m from "mithril";
-import { Settings } from "../Settings.js";
-
-// ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]
-const MONTH_KEYS = Settings.MONTH_KEYS;
+import { Checklist } from "../Checklist.js";
+import { MONTH_KEYS } from "../MonthNames.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -158,40 +156,40 @@ export function groupMonthsIntoRanges(months) {
 // ---------------------------------------------------------------------------
 
 /**
- * Convert an array of [start, end] pairs to an i18n text string.
+ * Convert an array of [start, end] pairs to a localized text string.
  *
- * Single months:  t("months.may")
- * Ranges:         t("months.dec") + "-" + t("months.feb")
+ * Single months:  "May"
+ * Ranges:         "Dec-Feb"
  * Multiple parts joined with ", " and a final " and " conjunction.
  */
 // Render ranges to a plain string (used for searchable text)
-export function renderRangesString(ranges) {
+export function renderRangesString(ranges, uiContext = {}) {
   if (!ranges || ranges.length === 0) return "";
 
   const parts = ranges.map(([start, end]) => {
-    const startLabel = t("months." + MONTH_KEYS[start - 1]);
+    const startLabel = Checklist.getMonthLabel(start, uiContext.langCode);
     if (start === end) return startLabel;
-    return startLabel + "-" + t("months." + MONTH_KEYS[end - 1]);
+    return startLabel + "-" + Checklist.getMonthLabel(end, uiContext.langCode);
   });
 
   if (parts.length === 1) return parts[0];
 
   return (
     parts.slice(0, -1).join(", ") +
-    " " + t("months.and") + " " +
+    " " + t("months_and") + " " +
     parts[parts.length - 1]
   );
 }
 
 // VNode-only render: always return mithril VNodes where month names are wrapped in <strong>
-function renderRanges(ranges) {
+function renderRanges(ranges, uiContext = {}) {
   if (!ranges || ranges.length === 0) return null;
 
   const parts = ranges.map(([start, end]) => {
-    const startLabel = t("months." + MONTH_KEYS[start - 1]);
+    const startLabel = Checklist.getMonthLabel(start, uiContext.langCode);
     const startNode = m("strong", startLabel);
     if (start === end) return startNode;
-    const endLabel = t("months." + MONTH_KEYS[end - 1]);
+    const endLabel = Checklist.getMonthLabel(end, uiContext.langCode);
     const endNode = m("strong", endLabel);
     return m("span", [startNode, "-", endNode]);
   });
@@ -204,7 +202,7 @@ function renderRanges(ranges) {
       nodes.push(", ");
     }
     if (i === parts.length - 1 && parts.length > 1) {
-      nodes.push(" " + t("months.and") + " ");
+      nodes.push(" " + t("months_and") + " ");
     }
     nodes.push(parts[i]);
   }
@@ -271,13 +269,13 @@ export let readerMonths = {
    */
   getSearchableText: function (data, uiContext) {
     if (!data || !Array.isArray(data) || data.length === 0) return [];
-    const text = renderRangesString(groupMonthsIntoRanges(data));
+    const text = renderRangesString(groupMonthsIntoRanges(data), uiContext);
     return text ? [text] : [];
   },
 
   render: function (data, uiContext) {
     if (!data || !Array.isArray(data) || data.length === 0) return null;
-    const vnode = renderRanges(groupMonthsIntoRanges(data));
+    const vnode = renderRanges(groupMonthsIntoRanges(data), uiContext);
     if (!vnode) return null;
     return m("span.months-data", vnode);
   },
