@@ -14,7 +14,13 @@ Paper: [Ramík, D.M., Plunkett, G.M. <b>NaturaList, a flexible app for creating 
 
 ## About
 
-NaturaList is an open source flexible taxonomic checklist web app capable of visualizing a wide variety of data for both formal and indigenous / folk taxonomies. It doesn’t come with a pre-defined set of taxonomic data you would have to fit your project in. You have the freedom to define what kind of data gets displayed and how. Your taxonomy data is pulled from a spreadsheet, making updates, change of appearance or even adding new kinds of information easy, without the need for extensive IT expertise and complex software packages.
+**NaturaList** is a flexible taxonomic checklist app for publishing, exploring, and analysing biodiversity data. It supports both formal scientific and indigenous/folk taxonomies, handles everything from simple species lists to fully annotated specimen catalogues, and comes with powerful filtering, search, and data visualisation tools.
+
+**NaturaList** doesn't come with a pre-defined structure you would have to fit your project into. Your taxonomy, your data fields, and the way they are displayed are all defined in a single spreadsheet — making it easy to set up, update, or extend your checklist without any IT expertise or complex software. Individual specimen records can be attached to taxa, turning the app into a lightweight collection management tool where species-level and specimen-level data coexist and can be explored independently.
+
+Beyond browsing the taxonomic tree, NaturaList lets you and your users explore the data through several analytical lenses: a bubble chart of taxonomic composition, a trait matrix for comparing attributes across taxa, a regional distribution map, and built-in identification keys that narrow the checklist in real time as choices are made.
+
+NaturaList is a progressive web app — it works in any browser and can be installed on any device (phone, tablet, laptop) to work fully offline, making it as useful in a remote field site as at a desk.
 
 ## Quick start
 
