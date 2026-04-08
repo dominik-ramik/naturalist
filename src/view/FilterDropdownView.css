@@ -239,6 +239,9 @@
   padding-right: 0.25em;
   box-sizing: border-box;
   background-color: #ebebeb;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 4em;
 }
 
 .inner-dropdown-area.numeric .numeric-filter-buttons .separator {
