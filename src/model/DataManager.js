@@ -145,7 +145,7 @@ export let DataManager = function () {
         .toLowerCase();
 
       if (useCitations.trim() == "") {
-        return {};
+        useCitations = "apa"; // default to APA if not specified
       }
 
       let supportedCitationStyles = ["apa", "harvard"];
@@ -422,7 +422,7 @@ export let DataManager = function () {
         data.sheets.appearance.tables.customization.data,
         "Checklist name",
         lang.code,
-        "Checklist"
+        "My checklist"
       );
       let about = getItem(
         data.sheets.appearance.tables.customization.data,
