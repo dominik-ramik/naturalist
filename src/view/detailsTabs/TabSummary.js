@@ -305,12 +305,16 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
   const { taxaKeys, taxaMeta, specimenDataPath, specimenMetaIndex,
           currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
-  const getVal = row => {
+  // Use getAllLeafData so that multi-valued lists (e.g. "list comma"
+  // with category subitems) are expanded into individual values.
+  const getVals = row => {
     const v = Checklist.getDataFromDataPath(row.d, catPath);
-    return (v != null && v.toString().trim() !== "") ? v.toString() : null;
+    if (v == null) return [];
+    return Checklist.getAllLeafData(v, false, catPath)
+      .filter(x => x != null && String(x).trim() !== "");
   };
   const eligible = rows =>
-    rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && getVal(r) != null);
+    rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && getVals(r).length > 0);
 
   const rows = [];
 
@@ -326,7 +330,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
       rows.push({
         kind: li === currentLevelIndex ? "current" : "ancestor",
         levelName, name,
-        breakdown: toBreakdown(tally(e.map(getVal)), e.length),
+        breakdown: toBreakdown(tally(e.flatMap(getVals)), e.length),
         total: e.length,
       });
     } else {
@@ -337,7 +341,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
       rows.push({
         kind: "descendant", levelName,
         count: countTaxaAtLevel(subtreeRows, li),
-        breakdown: toBreakdown(tally(e.map(getVal)), e.length),
+        breakdown: toBreakdown(tally(e.flatMap(getVals)), e.length),
         total: e.length,
       });
     }

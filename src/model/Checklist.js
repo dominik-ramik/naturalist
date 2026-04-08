@@ -512,12 +512,42 @@ export let Checklist = {
 
       let searchCategory = meta.searchCategory;
       if (searchCategory && searchCategory.length > 0) {
-        Checklist.filter.data[dataPath] = {
+        let filterPath = dataPath;
+        let filterType = meta.formatting;
+
+        if (filterType === "list") {
+          // A "list" parent with a search category: the filter should
+          // operate on the individual array members (the # sub-path),
+          // not on the list container itself.
+          filterPath = dataPath + "#";
+
+          // Derive the sub-item formatting from any numbered child
+          // (e.g. info.habitSearch1 → "category").
+          const allMeta = Checklist.getDataMeta();
+          const numberedKey = Object.keys(allMeta).find(k =>
+            k.length > dataPath.length &&
+            k.startsWith(dataPath) &&
+            /^\d+$/.test(k.slice(dataPath.length))
+          );
+          const subMeta = numberedKey ? allMeta[numberedKey] : null;
+          filterType = subMeta ? subMeta.formatting : "text";
+
+          // Create a synthetic metadata entry for the # path so that
+          // SearchView, FilterDropdownView, FilterCrumbsView and
+          // TabSummary can resolve title, formatting and categories.
+          allMeta[filterPath] = {
+            ...(subMeta || {}),
+            searchCategory: searchCategory,
+            searchCategoryOrder: meta.searchCategoryOrder || [],
+          };
+        }
+
+        Checklist.filter.data[filterPath] = {
           all: [],
           possible: {},
           selected: [],
           color: "",
-          type: Checklist.getMetaForDataPath(dataPath).formatting,
+          type: filterType,
           numeric: {
             threshold1: null,
             threshold2: null,
