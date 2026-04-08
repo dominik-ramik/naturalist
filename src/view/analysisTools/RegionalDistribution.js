@@ -150,7 +150,7 @@ function getAvailableMaps(intent, datasetRevision = Checklist.getDataRevision())
     const meta = dataMeta[dataPath];
 
     if (
-      meta.formatting === "map regions" &&
+      meta.formatting === "mapregions" &&
       meta.template &&
       meta.template.trim() !== ""
     ) {

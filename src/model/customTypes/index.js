@@ -127,6 +127,7 @@ export function clearDataCodesCache() {
  */
 export function getSearchableTextByType(data, formatting, uiContext) {
   const reader = dataReaders[formatting];
+  if (!reader || !reader.getSearchableText) return [];
   return reader.getSearchableText(data, uiContext);
 }
 

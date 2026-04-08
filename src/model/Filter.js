@@ -5,7 +5,7 @@ import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { getMonthNumbers } from "./MonthNames.js";
 
-const selectableFilterTypes = ["text", "map regions", "category", "months"];
+const selectableFilterTypes = ["text", "mapregions", "category", "months"];
 const rangeFilterTypes = ["number", "interval", "date"];
 const exactSelectableRangeTypes = ["number", "date"];
 
@@ -383,7 +383,7 @@ export let Filter = {
         let value = taxon.t[index].name;
         if (
           Filter.taxa[dataPath].type == "text" ||
-          Filter.data[dataPath].type == "map regions"
+          Filter.data[dataPath].type == "mapregions"
         ) {
           if (!Filter.taxa[dataPath].possible.hasOwnProperty(value)) {
             Filter.taxa[dataPath].possible[value] = 0;

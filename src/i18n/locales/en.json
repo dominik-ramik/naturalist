@@ -208,7 +208,7 @@
   "dm_fdirective_directory_traversals": "Invalid F: path: directory traversal (..) is not allowed: {0}. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
   "dm_fdirective_invalid_path": "Invalid F: path: the path contains invalid characters or structure: {0}. The path must be relative to the *usercontent* folder. Example of valid path: *about* (the .md extension is inferred) or *docs/about.md*",
   "dm_fdirective_invalid_url": "Invalid F: URL or not same origin: {0} ({1})",
-  "dm_details_formatting_invalid": "Column {0} has placement 'details' but formatting '{1}'. Only '', 'text', 'markdown', 'image', 'sound', 'map', or 'map regions' are allowed for placement 'details'. (Current placement: '{2}')",
+  "dm_details_formatting_invalid": "Column {0} has placement 'details' but formatting '{1}'. Only '', 'text', 'markdown', 'image', 'sound', 'map', or 'mapregions' are allowed for placement 'details'. (Current placement: '{2}')",
   "dm_details_with_children_invalid": "Column {0} has placement 'details' but also has dependent columns: {1}. For placement 'details', the column must be a simple value and not have any child columns.",
   "filter_or": "or",
   "filter_cat_text": "Contains text",

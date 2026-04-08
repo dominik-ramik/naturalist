@@ -353,7 +353,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
 
 function buildMapRegionsPerspectives(ctx) {
   const { dataMeta, showSpecimens, subtreeRows, specimenMetaIndex } = ctx;
-  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "map regions");
+  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "mapregions");
 
   return mapPaths.flatMap(mapPath => {
     const meta = dataMeta[mapPath];

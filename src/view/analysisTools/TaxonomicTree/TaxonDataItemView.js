@@ -42,17 +42,17 @@ export let TaxonDataItemView = {
     let isRealList = true;
     switch (meta.separator) {
       case "":
-      case "bullet list":
+      case "bullets":
         listDisplayType = "span.bullet-list";
         listSeparator = "";
         isRealList = true;
         break;
-      case "numbered list":
+      case "numbered":
         listDisplayType = "ol.numbered-list[start=1]";
         listSeparator = "";
         isRealList = true;
         break;
-      case "unmarked list":
+      case "unmarked":
         listDisplayType = "ul.unmarked-list";
         listSeparator = "";
         isRealList = true;

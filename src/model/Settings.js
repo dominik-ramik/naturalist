@@ -433,7 +433,7 @@ export let Settings = {
               Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "category" ||
               Checklist.getMetaForDataPath(dataPath).formatting ==
-              "map regions" ||
+              "mapregions" ||
               Checklist.getMetaForDataPath(dataPath).formatting == "months"
               ||
               (

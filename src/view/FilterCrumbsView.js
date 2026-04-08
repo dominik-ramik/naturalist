@@ -7,7 +7,7 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../model/customTypes/ReaderMonths.js";
 
-const selectableFilterTypes = ["text", "map regions", "category"];
+const selectableFilterTypes = ["text", "mapregions", "category"];
 const rangeFilterTypes = ["number", "interval", "date"];
 
 function formatDateValue(timestamp) {

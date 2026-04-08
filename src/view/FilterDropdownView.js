@@ -13,7 +13,7 @@ import {
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 
-const selectableFilterTypes = ["text", "category", "map regions", "months"];
+const selectableFilterTypes = ["text", "category", "mapregions", "months"];
 const rangeFilterTypes = ["number", "date"];
 const dateInputFormat = "YYYY-MM-DD";
 const numberFilterOperations = [

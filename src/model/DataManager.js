@@ -221,7 +221,7 @@ export let DataManager = function () {
             }
 
             // Skip if formatting is not media-related
-            if (!["image", "sound", "map regions"].includes(row.formatting)) {
+            if (!["image", "sound", "mapregions"].includes(row.formatting)) {
               return;
             }
 
@@ -255,8 +255,8 @@ export let DataManager = function () {
                 let source = "";
 
                 // Different media types have different source properties
-                if (row.formatting === "map regions") {
-                  // For map regions, the source comes from the template
+                if (row.formatting === "mapregions") {
+                  // For mapregions, the source comes from the template
                   let templateData = Checklist.getDataObjectForHandlebars(
                     "",
                     entry.d,
@@ -1036,13 +1036,22 @@ export let DataManager = function () {
               }
             }
 
-            meta[computedDataPath].separator = info.fullRow.subitemsSeparator;
-            meta[computedDataPath].formatting = info.fullRow.formatting;
+            // Parse "list <separator>" syntax: e.g. "list comma" → formatting="list", separator="comma"
+            let parsedFormatting = info.fullRow.formatting;
+            let parsedSeparator = "";
+            if (parsedFormatting.toLowerCase().startsWith("list")) {
+              const parts = parsedFormatting.trim().split(/\s+/);
+              parsedFormatting = "list";
+              parsedSeparator = parts.length > 1 ? parts.slice(1).join(" ") : "";
+            }
+
+            meta[computedDataPath].separator = parsedSeparator;
+            meta[computedDataPath].formatting = parsedFormatting;
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
 
-            if (info.fullRow.formatting.toLowerCase() == "category") {
+            if (parsedFormatting.toLowerCase() == "category") {
               meta[computedDataPath].categories = [];
               data.sheets.appearance.tables.categories.data[lang.code].forEach(
                 function (category) {
@@ -1918,13 +1927,13 @@ export let DataManager = function () {
           );
         }
 
-        // Only columns with children or # can have subitems separator
-        if (row.subitemsSeparator != "" && !colPosition.hasChildren) {
+        // "list" formatting should only be on columns with children
+        if (row.formatting.toLowerCase().startsWith("list") && !colPosition.hasChildren) {
           Logger.error(
             tf("dm_wrong_separator", [
               columnName,
               data.sheets.content.tables.customDataDefinition.columns
-                .subitemsSeparator.name,
+                .formatting.name,
             ])
           );
         }
@@ -1971,8 +1980,9 @@ export let DataManager = function () {
 
         // --- Integrity check for placement=details and allowed formatting ---
         if (row.placement && row.placement.split("|").map(x => x.trim()).includes("details")) {
-          const allowedFormatting = ["", "text", "markdown", "image", "sound", "map", "map regions"];
-          if (!allowedFormatting.includes((row.formatting || "").trim().toLowerCase())) {
+          const allowedFormatting = ["", "text", "list", "markdown", "image", "sound", "map", "mapregions"];
+          const baseFormatting = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
+          if (!allowedFormatting.includes(baseFormatting)) {
             Logger.error(
               tf("dm_details_formatting_invalid", [
                 row.columnName,

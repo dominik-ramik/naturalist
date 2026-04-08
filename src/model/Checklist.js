@@ -575,7 +575,7 @@ export let Checklist = {
 
           if (
             Checklist.filter[dataType][dataPath].type == "text" ||
-            Checklist.filter[dataType][dataPath].type == "map regions" ||
+            Checklist.filter[dataType][dataPath].type == "mapregions" ||
             Checklist.filter[dataType][dataPath].type == "category" ||
             Checklist.filter[dataType][dataPath].type == "months"
           ) {
@@ -719,8 +719,9 @@ export let Checklist = {
       if (Array.isArray(value)) {
         // If this dataPath itself has a reader, the array IS its native value
         // (e.g. interval → [from, to], months → [1,3,5]).  Delegate and move on.
+        // "list" is structural (container of sub-items), so iterate children instead.
         const ownMeta = dataMeta[dataPath];
-        if (ownMeta && ownMeta.formatting) {
+        if (ownMeta && ownMeta.formatting && ownMeta.formatting !== "list") {
           const searchable = getSearchableTextByType(value, ownMeta.formatting, { langCode });
           results.push(...searchable);
         } else {
@@ -742,7 +743,7 @@ export let Checklist = {
       } else {
         const meta = dataMeta[dataPath];
 
-        if (meta && meta.formatting) {
+        if (meta && meta.formatting && meta.formatting !== "list") {
           const searchable = getSearchableTextByType(value, meta.formatting, { langCode });
           results.push(...searchable);
         } else if (typeof value === "object") {
@@ -871,7 +872,7 @@ export let Checklist = {
 
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
 
-      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "map regions") {
+      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "mapregions") {
         return primitives;
       }
 
@@ -943,7 +944,7 @@ export let Checklist = {
     if (!this.getAllLeafDataCache.has(cacheKey)) {
       let data = [];
 
-      if (Checklist.getDataMeta()[currentPath]?.formatting == "map regions") {
+      if (Checklist.getDataMeta()[currentPath]?.formatting == "mapregions") {
         // Work directly with object format
         if (typeof taxonData === "object" && taxonData) {
           data = Object.keys(taxonData).map((regionCode) =>
@@ -1051,7 +1052,7 @@ export let Checklist = {
    *     where present).
    *   - Scalars: specimen value wins if not empty (see `_isValueEmpty`),
    *     otherwise parent is kept.
-   * - Non-structural (atomic) nodes (e.g., "map regions", "months"):
+   * - Non-structural (atomic) nodes (e.g., "mapregions", "months"):
    *   treated as opaque: parent value is preserved if present; specimen
    *   replaces parent only when the parent value is empty and specimen
    *   provides data.
@@ -1144,7 +1145,7 @@ export let Checklist = {
       const formatting = meta ? (meta.formatting || "text") : "text";
 
       // 2. Determine if this node should be recursed into
-      const isStructural = formatting === "" || formatting === "text";
+      const isStructural = formatting === "" || formatting === "text" || formatting === "list";
 
       if (isStructural) {
         // --- RECURSIVE STRUCTURAL MERGE ---
@@ -1170,7 +1171,7 @@ export let Checklist = {
           result[key] = isEmpty ? parentVal : specimenVal;
         }
       } else {
-        // --- ATOMIC LITERAL MERGE (e.g., "map regions", "months") ---
+        // --- ATOMIC LITERAL MERGE (e.g., "mapregions", "months") ---
         // Treat as opaque: Perform merge ONLY if the target (parent) doesn't have it defined at all.
         const parentEmpty = this._isValueEmpty(parentVal);
         const specimenEmpty = this._isValueEmpty(specimenVal);
@@ -1553,7 +1554,7 @@ export let Checklist = {
 
     // Allowed formatting types for each tab
     const allowedMedia = ["image", "sound"];
-    const allowedMap = ["map", "map regions"];
+    const allowedMap = ["map", "mapregions"];
     const allowedText = ["text", "markdown"];
 
     // Helper: add to correct tab if formatting and value are valid

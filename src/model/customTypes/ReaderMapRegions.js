@@ -31,7 +31,7 @@ import { colorSVGMap } from "../../components/ColorSVGMap.js";
 const nlData = nlDataStructure;
 
 export let readerMapRegions = {
-  dataType: "map regions",
+  dataType: "mapregions",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     const lowerPath = computedPath.toLowerCase();
@@ -75,7 +75,7 @@ export let readerMapRegions = {
     Object.keys(resultObject).forEach((regionCode) => {
       if (!knownRegionCodes.includes(regionCode)) {
         Logger.error(
-          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z. The data is ${JSON.stringify(resultObject)}`
+          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'mapregions information'. Region codes can be only composed of lowercase letters a-z. The data is ${JSON.stringify(resultObject)}`
         );
       }
     });
@@ -84,8 +84,8 @@ export let readerMapRegions = {
   },
   
   /**
-   * Extract searchable text from map regions data
-   * @param {any} data - The map regions object
+   * Extract searchable text from mapregions data
+   * @param {any} data - The mapregions object
    * @param {Object} uiContext - UI context with langCode
    * @returns {string[]} Array of searchable strings (region names)
    */

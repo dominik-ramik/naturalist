@@ -229,7 +229,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
   const categoryType = Checklist.filter.data[dataCategory]?.type;
   if (!categoryType) return [];
 
-  const rawData = (mode === "specimen" && categoryType !== "map regions")
+  const rawData = (mode === "specimen" && categoryType !== "mapregions")
     ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
     : taxon.d;
 
@@ -254,7 +254,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
           return (num >= 1 && num <= 12) ? Checklist.getMonthLabel(num) : null;
         })
         .filter(Boolean);
-    case "map regions": {
+    case "mapregions": {
       const regionData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
       if (typeof regionData === "object" && regionData) {
         return Object.keys(regionData).map(r => Checklist.nameForMapRegion(r));
