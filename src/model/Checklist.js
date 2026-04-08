@@ -57,32 +57,32 @@ export let Checklist = {
   filter: Filter,
 
   transformDatabaseShortcodes: function (text) {
-  if (!text || typeof text !== "string" || text.indexOf("@") === -1) {
-    return text;
-  }
-
-  const shortcodes = Checklist.getData()?.meta?.databaseShortcodes;
-  if (!shortcodes?.length) return text;
-
-  return text.replace(
-    /@([a-z]+)(\.[a-z]+)?:(?:([^:@\s]+):)?([a-zA-Z0-9\-_\/]+)/gm,
-    (match, prefix, suffix, author, id) => {
-      const code = prefix + (suffix ?? "");
-      const engine = shortcodes.find(s => s.code === code);
-      if (!engine) {
-        console.log("Unknown shortcode: " + code);
-        return match;
-      }
-      const authorText = author ? author + " " : "";
-      const label = engine.name
-        .replace(/{{\s*author\s*}}/gi, authorText)
-        .replace(/{{\s*id\s*}}/gi, id)
-        .trim();
-      const href = engine.url.replace(/{{\s*id\s*}}/gi, id);
-      return `<a class="citation" href="${href}" target="_blank">${label}</a>`;
+    if (!text || typeof text !== "string" || text.indexOf("@") === -1) {
+      return text;
     }
-  );
-},
+
+    const shortcodes = Checklist.getData()?.meta?.databaseShortcodes;
+    if (!shortcodes?.length) return text;
+
+    return text.replace(
+      /@([a-z]+)(\.[a-z]+)?:(?:([^:@\s]+):)?([a-zA-Z0-9\-_\/]+)/gm,
+      (match, prefix, suffix, author, id) => {
+        const code = prefix + (suffix ?? "");
+        const engine = shortcodes.find(s => s.code === code);
+        if (!engine) {
+          console.log("Unknown shortcode: " + code);
+          return match;
+        }
+        const authorText = author ? author + " " : "";
+        const label = engine.name
+          .replace(/{{\s*author\s*}}/gi, authorText)
+          .replace(/{{\s*id\s*}}/gi, id)
+          .trim();
+        const href = engine.url.replace(/{{\s*id\s*}}/gi, id);
+        return `<a class="citation" href="${href}" target="_blank">${label}</a>`;
+      }
+    );
+  },
 
   nameForMapRegionCache: new Map(),
   nameForMapRegion: function (regionCode) {
@@ -645,20 +645,20 @@ export let Checklist = {
     Checklist.getAllLanguages().forEach(function (lang) {
       Checklist._dataFulltextIndex[lang.code] = [];
 
-        Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
-          taxon,
-          index
-        ) {
-          Checklist._dataFulltextIndex[lang.code][index] =
-            textLowerCaseAccentless(
-              Checklist.primitiveKeysOfObject(
-                taxon,
-                customDatatypeDataPaths,
-                lang.code
-              ).join("\n")
-            );
-        });
+      Checklist._data.versions[lang.code].dataset.checklist.forEach(function (
+        taxon,
+        index
+      ) {
+        Checklist._dataFulltextIndex[lang.code][index] =
+          textLowerCaseAccentless(
+            Checklist.primitiveKeysOfObject(
+              taxon,
+              customDatatypeDataPaths,
+              lang.code
+            ).join("\n")
+          );
       });
+    });
 
     //as we just browsed all data, we can copy keys of "possible" to "all" and add colors too
     Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
@@ -759,7 +759,7 @@ export let Checklist = {
           value.forEach((item, idx) => {
             const arrayPath = `${dataPath}${idx + 1}`;
             const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
- 
+
             if (meta && meta.formatting) {
               const searchable = getSearchableTextByType(item, meta.formatting, { langCode });
               results.push(...searchable);
@@ -917,7 +917,7 @@ export let Checklist = {
         );
         return primitives;
       }
- 
+
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "interval") {
         // interval data is [from, to] — a pair of numbers, NOT a sub-item array.
         // Delegate to the reader so "3.5 - 7.2" is indexed for full-text search.
@@ -933,7 +933,7 @@ export let Checklist = {
             primitives.push(arrayMember.source);
             primitives.push(arrayMember.title);
           } else if (
-            Checklist.getMetaForDataPath(dataPath + (index + 1)).formatting ==
+            Checklist.getMetaForDataPath(dataPath + (index + 1)) && Checklist.getMetaForDataPath(dataPath + (index + 1)).formatting ==
             "taxon"
           ) {
             primitives.push(arrayMember.name + " " + arrayMember.authority);
