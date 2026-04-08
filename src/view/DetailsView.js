@@ -30,11 +30,16 @@ export let DetailsView = {
       : "";
 
     let path = location.hash;
-    if (path.indexOf("?") > 0 && path.indexOf("/details/") >= 0) {
-      path = path.substring(0, path.indexOf("?"));
+    let tab;
+
+    if (path.indexOf("/details/") >= 0) {
+      if (path.indexOf("?") > 0) {
+        path = path.substring(0, path.indexOf("?"));
+      }
+      tab = path.substring(path.lastIndexOf("/") + 1);
+    } else {
+      tab = Settings.currentDetailsTab();
     }
-    path = path.substring(path.lastIndexOf("/") + 1);
-    let tab = path;
 
     let taxon = Checklist.getTaxonByName(DetailsView.taxonName);
 
@@ -43,15 +48,24 @@ export let DetailsView = {
       DetailsView.taxonData = taxon.d;
     }
 
+    const tabs = TabsForDetails(
+      Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
+      taxon,
+      DetailsView.taxonName
+    );
+
+    if (!Object.keys(tabs).includes(tab)) {
+      console.log("fallback to default tab, because requested tab '" + tab + "' is not available for this taxon");
+      tab = "externalsearch" in tabs ? "externalsearch" : "summary";
+    }
+
+    Settings.currentDetailsTab(tab);
+
     return m(".details", [
       m(".details-taxon-crumbs-zone", taxonomyCrumbs(DetailsView.taxonName)),
       m(".details-taxon-zone", DetailsView.taxonName),
       m(TabsContainer, {
-        tabs: TabsForDetails(
-          Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
-          taxon,
-          DetailsView.taxonName
-        ),
+        tabs: tabs,
         activeTab: tab,
       }),
     ]);

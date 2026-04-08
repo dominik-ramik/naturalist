@@ -1,0 +1,339 @@
+/*
+ * TabSummary.css — Summary tab perspectives
+ * ~480 px wide panel, vertically scrollable.
+ * Follows the app card aesthetic (ManageView / SingleAccessKeyView).
+ *
+ * Design tokens used:
+ *   --nlblue, --pad-large, --pad-small, --font-normal, --font-smaller
+ */
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.sp-empty {
+  color: #bbb;
+  text-align: center;
+  padding: 2.5em 0;
+  font-size: var(--font-smaller, 0.85em);
+}
+
+/* ─── Outer wrapper ───────────────────────────────────────────────────────── */
+
+.sp-wrapper {
+  padding: 0.5em 0 1.5em;
+}
+
+/* ─── Navigation dropdown ────────────────────────────────────────────────── */
+
+.sp-nav-select {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.75em;
+  padding: 0.5em 2.2em 0.5em 1em;
+  border-radius: 1em;
+  border: 1px solid var(--nlblue, #55769b);
+  background: var(--nlblue, #55769b)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffffff'/%3E%3C/svg%3E")
+    no-repeat right 0.85em center / 0.6em auto;
+  color: #fff;
+  font-family: var(--font-normal, inherit);
+  font-size: var(--font-smaller, 0.82em);
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: background-color 0.12s, box-shadow 0.12s;
+}
+
+.sp-nav-select:hover {
+  background-color: #466a8a;
+  border-color: #466a8a;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+
+.sp-nav-select:focus {
+  background-color: #466a8a;
+  border-color: #466a8a;
+  box-shadow: 0 0 0 2px rgba(85, 118, 155, 0.35);
+  outline: none;
+}
+
+/* ─── Perspective card ────────────────────────────────────────────────────── */
+/* Matches .sak-card / .manage-card aesthetic */
+
+.sp-card {
+  border-radius: var(--pad-large, 0.8em);
+  box-shadow: 0.05em 0.05em 0.25em 0.1em rgba(12, 12, 12, 0.2);
+  background-color: #eceff2;
+  border: 1px solid #fff;
+  overflow: hidden;
+}
+
+/* ─── Level block (one per taxon level) ───────────────────────────────────── */
+
+.sp-level {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.sp-level:last-child {
+  border-bottom: none;
+}
+
+/* ─── Level header row: rank + name (+ optional aside) ───────────────────── */
+/*
+ * Grid layout keeps rank width fixed across all perspectives, so a taxon
+ * name always starts at the same horizontal position regardless of rank label length.
+ */
+
+.sp-level-header {
+  display: grid;
+  grid-template-columns: 5.5em 1fr auto;
+  align-items: baseline;
+  gap: 0.4em;
+  padding: 0.55em 0.9em 0.35em;
+}
+
+.sp-level--current .sp-level-header {
+  background: rgba(85, 118, 155, 0.09);
+}
+
+.sp-level-rank {
+  font-size: 0.78em;
+  font-style: italic;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-level--current .sp-level-rank {
+  color: var(--nlblue, #55769b);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.sp-level-name {
+  font-size: 0.9em;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp-level--current .sp-level-name {
+  color: var(--nlblue, #55769b);
+  font-weight: 600;
+}
+
+.sp-level--ancestor .sp-level-name {
+  color: #555;
+}
+
+/* Descendant count (large, prominent — it is the key datum in taxonomy view) */
+.sp-level-name--count {
+  font-size: 1em;
+  font-weight: 700;
+  color: #444;
+}
+
+/* Sibling aside: "+5 others" */
+.sp-level-aside {
+  font-size: 0.75em;
+  color: #aaa;
+  white-space: nowrap;
+  align-self: center;
+}
+
+/* ─── Level data row (content aligned with name column) ──────────────────── */
+/*
+ * Left padding = card padding + rank column + gap, so data starts
+ * directly below the taxon name in the header above.
+ */
+
+.sp-level-data {
+  padding: 0.2em 0.9em 0.55em calc(0.9em + 5.5em + 0.4em);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+/* ─── Specimens ───────────────────────────────────────────────────────────── */
+
+.sp-spec-cols {
+  display: flex;
+  flex-direction: row;
+  gap: 2em;
+}
+
+.sp-spec-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sp-spec-label {
+  font-size: 0.68em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+  line-height: 1.2;
+}
+
+.sp-spec-value {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: var(--nlblue, #55769b);
+  line-height: 1.1;
+}
+
+/* ─── Shared stat tokens (count + pct) ───────────────────────────────────── */
+/* Used by category, map-regions, and future perspectives */
+
+.sp-stat-count {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.88em;
+}
+
+.sp-stat-sep {
+  color: #ccc;
+  font-size: 0.8em;
+  margin: 0 0.1em;
+}
+
+.sp-stat-pct {
+  font-size: 0.8em;
+  color: #888;
+}
+
+/* ─── Category ────────────────────────────────────────────────────────────── */
+
+.sp-cat-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+}
+
+/* The badge is produced by readerCategory.render() as
+   <span class="category" style="background:…; color:…">label</span>
+   We just ensure consistent sizing here. */
+.sp-cat-badge .category {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: 1em;
+  border: 1px solid transparent;
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+
+.sp-cat-plain {
+  font-size: 0.85em;
+  color: #555;
+}
+
+.sp-cat-stats {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  white-space: nowrap;
+}
+
+/* ─── Map regions ─────────────────────────────────────────────────────────── */
+
+.sp-region-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45em;
+  width: 100%;
+}
+
+.sp-region-dot {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.28em; /* optical alignment with first line of text */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.sp-region-name {
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #333;
+  min-width: 5em;
+  flex-shrink: 0;
+}
+
+.sp-region-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  flex: 1;
+}
+
+/* Each status line inside a region */
+.sp-region-status {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.3em;
+  font-size: 0.82em;
+}
+
+/* Small swatch for multi-status lines */
+.sp-region-swatch {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  align-self: center;
+}
+
+.sp-region-status-label {
+  color: #666;
+  flex: 1;
+}
+
+/* ─── Months grid ─────────────────────────────────────────────────────────── */
+
+.sp-months-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 0.18em;
+  width: 100%;
+}
+
+.sp-month-cell {
+  flex: 1;
+  text-align: center;
+  padding: 0.22em 0;
+  font-size: 0.72em;
+  font-weight: 700;
+  border-radius: 0.25em;
+  user-select: none;
+  line-height: 1.3;
+}
+
+.sp-month-cell--on {
+  background: var(--nlblue, #55769b);
+  color: #fff;
+}
+
+.sp-month-cell--off {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.2);
+}
+
+/* ─── Descendant indent ───────────────────────────────────────────────────── */
+
+.sp-level--descendant .sp-level-rank {
+  color: #bbb;
+}

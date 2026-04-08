@@ -367,11 +367,16 @@
   "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…",
   "summary_cell_count": "{0} taxa",
   "sp_specimens": "Specimens",
+  "sp_general": "General",
   "sp_in_group": "sibbling taxa",
   "sp_no_in_group": "no sibbling taxa",
   "sp_children_taxa": "{0} child taxa",
   "sp_direct": "Directly attached to this level",
   "sp_cumulative": "Cumulative — includes all levels below",
   "sp_title_for_specimens": "{0} (specimens)",
-  "sp_taxonomic_hierarchy": "Taxonomic hierarchy"
+  "sp_taxonomic_hierarchy": "Taxonomic hierarchy",
+  "sp_taxonomy": "Taxonomy",
+  "sp_spec_own": "Own",
+  "sp_spec_total": "Total",
+  "sp_others": "others"
 }
