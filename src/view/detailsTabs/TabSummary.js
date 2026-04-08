@@ -687,10 +687,18 @@ function renderRegionsData(breakdown) {
 
 function renderMonthsGrid(months) {
   // months: Set<number>, values are 1-based (1 = Jan, 12 = Dec)
+  
+  let currentMonths = Checklist.getMonthNames(Checklist.getCurrentLanguage());
+
   return m(".sp-months-grid",
     MONTH_KEYS.map((key, i) => {
       const active = months.has(i + 1);
-      const letter = t("months." + key).charAt(0).toUpperCase();
+      // Prefer the localized month name from Checklist; fall back to the
+      // MONTH_KEYS entry if unavailable, then take its first letter.
+      const source = Array.isArray(currentMonths) && currentMonths[i]
+        ? currentMonths[i]
+        : MONTH_KEYS[i];
+      const letter = String(source).charAt(0).toUpperCase();
       return m("span.sp-month-cell",
         { class: active ? "sp-month-cell--on" : "sp-month-cell--off" },
         letter
