@@ -41,7 +41,8 @@ export const config = {
     };
   },
 
-  render: ({ filteredTaxa, allTaxa }) => mapChart(filteredTaxa, allTaxa),
+  render: ({ filteredTaxa, allTaxa, datasetRevision }) =>
+    mapChart(filteredTaxa, allTaxa, datasetRevision),
 };
 
 let currentMap = Settings.mapChartCurrentMap();
@@ -55,6 +56,25 @@ let availableMapsCache = {}; // keyed by chartMode: "taxa" | "specimen"
 
 let oldColoredRegionsJSON = "";
 let colors = null;
+let regionalDistributionDatasetRevision = -1;
+
+function resetRegionalDistributionState() {
+  currentMap = Settings.mapChartCurrentMap();
+  currentSumMethod = Settings.mapChartCurrentSumMethod();
+  currentFilterResultsLength = 0;
+  sessionCache = {};
+  currentRegions = {};
+  availableMapsCache = {};
+  oldColoredRegionsJSON = "";
+  colors = null;
+}
+
+function ensureRegionalDistributionStateFresh(datasetRevision) {
+  if (datasetRevision !== regionalDistributionDatasetRevision) {
+    resetRegionalDistributionState();
+    regionalDistributionDatasetRevision = datasetRevision;
+  }
+}
 
 function globalCountsCacheKey(dataPath) {
   const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
@@ -67,7 +87,9 @@ const sumMethods = [
   { name: t("view_map_sum_by_total"), method: "total" },
 ];
 
-function mapChart(filteredTaxa, allTaxa) {
+function mapChart(filteredTaxa, allTaxa, datasetRevision) {
+  ensureRegionalDistributionStateFresh(datasetRevision);
+
   const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
   let currentMapStringified = JSON.stringify(currentMap);
   if (
@@ -108,7 +130,9 @@ function mapChart(filteredTaxa, allTaxa) {
   ]);
 }
 
-function getAvailableMaps(intent) {
+function getAvailableMaps(intent, datasetRevision = Checklist.getDataRevision()) {
+  ensureRegionalDistributionStateFresh(datasetRevision);
+
   // Use passed intent for availability checks, fallback to current settings for UI rendering
   const currentIntent = intent || Settings.analyticalIntent();
   const mapChartMode = currentIntent === "#S" ? "specimen" : "taxa";

@@ -103,11 +103,12 @@ export const config = {
         },
     ],
 
-    render: ({ filteredTaxa, queryKey }) =>
+    render: ({ filteredTaxa, queryKey, datasetRevision }) =>
         m(ChecklistTree, {
             taxa: filteredTaxa,
             displayLevel: Settings.checklistDisplayLevel(),
             queryKey,
+            datasetRevision,
         }),
 };
 
@@ -119,10 +120,20 @@ function ChecklistTree() {
     let cachedTree = null;
     let lastCacheKey = "";
     let lastQueryKey = "";
+    let lastDatasetRevision = -1;
 
     return {
         view: function (vnode) {
-            const { taxa, displayLevel, queryKey } = vnode.attrs;
+            const { taxa, displayLevel, queryKey, datasetRevision } = vnode.attrs;
+
+            if (datasetRevision !== lastDatasetRevision) {
+                // Reset memoized output when Checklist.loadData(...) swaps in a new dataset.
+                cachedTree = null;
+                lastCacheKey = "";
+                lastQueryKey = "";
+                totalItemsToShow = 50;
+                lastDatasetRevision = datasetRevision;
+            }
 
             if (queryKey !== lastQueryKey) {
                 totalItemsToShow = 50;
@@ -147,7 +158,7 @@ function ChecklistTree() {
                 displayLevel: displayLevel,
             });
 
-            if (cacheKey !== lastCacheKey) {
+            if (cachedTree === null || cacheKey !== lastCacheKey) {
                 cachedTree = Checklist.treefiedTaxa(clampedTaxa);
                 lastCacheKey = cacheKey;
             }

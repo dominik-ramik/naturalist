@@ -20,6 +20,7 @@ const ManageStore = {
   messageCode: "",
   shouldShowUploadForm: Settings.lastKnownUploadFormAvailability(),
   corsWarningAcknowledged: false,
+  loggerObserver: null,
 
   // Upload source: 'file' | 'url'
   uploadMode: Settings.manageUploadMode(),
@@ -234,13 +235,22 @@ function _runPipeline(buffer, checkAssetsSize, onSuccess) {
   const compiled = ManageStore.dataman.getCompiledChecklist();
 
   if (Logger.hasErrors()) {
-    m.route.set("/manage/upload", null, { replace: true });
+    scheduleManageNavigation(() =>
+      m.route.set("/manage/upload", null, { replace: true })
+    );
   } else {
     Checklist.loadData(compiled, true);
     Checklist.getTaxaForCurrentQuery();
-    (onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true })))();
+    scheduleManageNavigation(
+      onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true }))
+    );
   }
-  m.redraw();
+}
+
+function scheduleManageNavigation(navigate) {
+  window.setTimeout(() => {
+    navigate();
+  }, 0);
 }
 
 // --- PRIVATE HELPER FUNCTIONS ---
@@ -303,7 +313,6 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   ManageStore.reset();
   ManageStore.isProcessing = true;
   m.route.set("/manage/processing");
-  m.redraw();
 
   let buffer;
   try {
@@ -324,8 +333,9 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   } catch (ex) {
     Logger.error(t("url_fetch_failed") + (ex.message ? ` (${ex.message})` : ""));
     ManageStore.isProcessing = false;
-    m.route.set("/manage/upload", null, { replace: true });
-    m.redraw();
+    scheduleManageNavigation(() =>
+      m.route.set("/manage/upload", null, { replace: true })
+    );
     return;
   }
 
@@ -334,8 +344,9 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   if (sig[0] !== 0x50 || sig[1] !== 0x4B) {
     Logger.error(t("wrong_filetype"));
     ManageStore.isProcessing = false;
-    m.route.set("/manage/upload", null, { replace: true });
-    m.redraw();
+    scheduleManageNavigation(() =>
+      m.route.set("/manage/upload", null, { replace: true })
+    );
     return;
   }
 
@@ -734,11 +745,16 @@ export let ManageView = {
 
   oncreate: function () {
     ManageStore.checkPHPPresent();
-    Logger.addObserver(() => m.redraw());
+    if (!ManageStore.loggerObserver) {
+      ManageStore.loggerObserver = () => m.redraw();
+    }
+    Logger.addObserver(ManageStore.loggerObserver);
   },
 
   onremove: function () {
-    Logger.removeObserver(() => m.redraw());
+    if (ManageStore.loggerObserver) {
+      Logger.removeObserver(ManageStore.loggerObserver);
+    }
   },
 
   view: function (vnode) {
@@ -815,7 +831,6 @@ function renderServerUploadForm() {
               ManageStore.messageCode = parsed?.messageCode ?? "";
               m.route.set("/manage/error");
             }
-            m.redraw();
           }
         };
         request.open("POST", "./update.php");

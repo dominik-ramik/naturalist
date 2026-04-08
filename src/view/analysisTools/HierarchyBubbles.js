@@ -56,7 +56,8 @@ export const config = {
     },
   ],
 
-  render: ({ filteredTaxa, allTaxa }) => circlePackingView(allTaxa, filteredTaxa),
+  render: ({ filteredTaxa, allTaxa, datasetRevision }) =>
+    circlePackingView(allTaxa, filteredTaxa, datasetRevision),
 };
 
 const specimenTagIconPath =
@@ -926,6 +927,15 @@ function assignLeavesCount(node, allMatchingData) {
 
 let cachedData = null;
 let oldQueryKey = "";
+let cachedDataDatasetRevision = -1;
+
+function ensureCirclePackingCacheFresh(datasetRevision) {
+  if (datasetRevision !== cachedDataDatasetRevision) {
+    cachedData = null;
+    oldQueryKey = "";
+    cachedDataDatasetRevision = datasetRevision;
+  }
+}
 
 // ─── Info box ─────────────────────────────────────────────────────────────
 
@@ -968,10 +978,12 @@ function renderColorScale(isFilterEmpty) {
   ]);
 }
 
-function circlePackingView(allTaxa, matchingTaxa) {
+function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
   if (allTaxa.length === 0) {
     return m(".listed-taxa");
   }
+
+  ensureCirclePackingCacheFresh(datasetRevision);
 
   const isFilterEmpty = Checklist.filter.isEmpty();
   const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";

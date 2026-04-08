@@ -45,10 +45,16 @@ export let ChecklistView = {
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
     const filteredTaxa    = filterOutSpecimenTaxa(allFilteredTaxa);
     const allTaxa         = filterOutSpecimenTaxa(Checklist.getData().checklist);
+    const datasetRevision = Checklist.getDataRevision();
 
     const tool = getCurrentTool();
     const specificView = tool
-      ? tool.render({ filteredTaxa, allTaxa, queryKey: ChecklistView.lastQuery })
+      ? tool.render({
+          filteredTaxa,
+          allTaxa,
+          queryKey: ChecklistView.lastQuery,
+          datasetRevision,
+        })
       : null;
 
     return m(
