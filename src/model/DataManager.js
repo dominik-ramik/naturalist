@@ -174,8 +174,13 @@ export let DataManager = function () {
       }
 
       // Combine all BibTeX entries from individual cells
+      const bibCache = {};
       let combinedBibtex = bibliographyData
-        .map((row) => row.bibtex?.trim())
+        .map((row) => {
+          const raw = row.bibtex?.trim();
+          if (!raw) return null;
+          return raw.startsWith("F:") ? fetchFDirectiveContent(raw, ["txt", "bib"], bibCache) : raw;
+        })
         .filter((bibtex) => bibtex && bibtex.length > 0)
         .join("\n\n");
 
@@ -403,7 +408,7 @@ export let DataManager = function () {
           }
         } else {
           result.responseStatus = xhr.status;
-          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status, "Error fetching asset");          
+          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status, "Error fetching asset");
         }
       } catch (error) {
         Logger.error("Error fetching HEAD for " + url + ": " + error.message, "Error fetching asset");
@@ -1097,52 +1102,52 @@ export let DataManager = function () {
     }
 
     function compileDatabaseShortcodes(lang) {
-  const BUILTIN_SHORTCODES = [
-    { code: "gbif",   name: "GBIF ({{author}}{{id}})",            url: "https://www.gbif.org/occurrence/{{id}}" },
-    { code: "gbif.s", name: "GBIF (Taxon {{author}}{{id}})",      url: "https://www.gbif.org/species/{{id}}" },
-    { code: "inat",   name: "{{author}} (iNat {{id}})",           url: "https://www.inaturalist.org/observations/{{id}}" },
-    { code: "ebird",  name: "eBird ({{author}}{{id}})",           url: "https://ebird.org/checklist/{{id}}" },
-    { code: "clml",   name: "ML ({{author}}{{id}})",              url: "https://macaulaylibrary.org/asset/{{id}}" },
-    { code: "obse",   name: "Observation.org ({{author}}{{id}})", url: "https://observation.org/observation/{{id}}" },
-  ];
+      const BUILTIN_SHORTCODES = [
+        { code: "gbif", name: "GBIF ({{author}}{{id}})", url: "https://www.gbif.org/occurrence/{{id}}" },
+        { code: "gbif.s", name: "GBIF (Taxon {{author}}{{id}})", url: "https://www.gbif.org/species/{{id}}" },
+        { code: "inat", name: "{{author}} (iNat {{id}})", url: "https://www.inaturalist.org/observations/{{id}}" },
+        { code: "ebird", name: "eBird ({{author}}{{id}})", url: "https://ebird.org/checklist/{{id}}" },
+        { code: "clml", name: "ML ({{author}}{{id}})", url: "https://macaulaylibrary.org/asset/{{id}}" },
+        { code: "obse", name: "Observation.org ({{author}}{{id}})", url: "https://observation.org/observation/{{id}}" },
+      ];
 
-  const result = new Map(BUILTIN_SHORTCODES.map(s => [s.code, s]));
-  const builtinCodes = new Set(BUILTIN_SHORTCODES.map(s => s.code));
-  const codeRegex = /^[a-z]+(\.[a-z]+)?$/;
-  const seenCodes = new Set(builtinCodes);
+      const result = new Map(BUILTIN_SHORTCODES.map(s => [s.code, s]));
+      const builtinCodes = new Set(BUILTIN_SHORTCODES.map(s => s.code));
+      const codeRegex = /^[a-z]+(\.[a-z]+)?$/;
+      const seenCodes = new Set(builtinCodes);
 
-  const rows = data.sheets.content.tables.databaseShortcodes?.data?.[lang.code] ?? [];
+      const rows = data.sheets.content.tables.databaseShortcodes?.data?.[lang.code] ?? [];
 
-  rows.forEach(function (row, idx) {
-    const code = (row.code ?? "").trim();
-    const label = (row.labelTemplate ?? "").trim();
-    const url = (row.urlTemplate ?? "").trim();
+      rows.forEach(function (row, idx) {
+        const code = (row.code ?? "").trim();
+        const label = (row.labelTemplate ?? "").trim();
+        const url = (row.urlTemplate ?? "").trim();
 
-    if (!codeRegex.test(code)) {
-      Logger.error(tf("dm_shortcode_invalid_code", [idx + 1, code]));
-      return;
-    }
-    if (!url.includes("{{id}}")) {
-      Logger.error(tf("dm_shortcode_missing_id_in_url", [code]));
-      return;
-    }
-    if (!label.includes("{{id}}")) {
-      Logger.error(tf("dm_shortcode_missing_id_in_label", [code]));
-      return;
-    }
-    if (seenCodes.has(code) && !builtinCodes.has(code)) {
-      Logger.error(tf("dm_shortcode_duplicate", [code]));
-      return;
-    }
-    if (builtinCodes.has(code)) {
-      Logger.info(tf("dm_shortcode_overrides_builtin", [code]));
-    }
-    result.set(code, { code, name: label, url });
-    seenCodes.add(code);
-  });
+        if (!codeRegex.test(code)) {
+          Logger.error(tf("dm_shortcode_invalid_code", [idx + 1, code]));
+          return;
+        }
+        if (!url.includes("{{id}}")) {
+          Logger.error(tf("dm_shortcode_missing_id_in_url", [code]));
+          return;
+        }
+        if (!label.includes("{{id}}")) {
+          Logger.error(tf("dm_shortcode_missing_id_in_label", [code]));
+          return;
+        }
+        if (seenCodes.has(code) && !builtinCodes.has(code)) {
+          Logger.error(tf("dm_shortcode_duplicate", [code]));
+          return;
+        }
+        if (builtinCodes.has(code)) {
+          Logger.info(tf("dm_shortcode_overrides_builtin", [code]));
+        }
+        result.set(code, { code, name: label, url });
+        seenCodes.add(code);
+      });
 
-  return [...result.values()];
-}
+      return [...result.values()];
+    }
   }
 
   function loadData(table) {
@@ -1856,7 +1861,7 @@ export let DataManager = function () {
 
       let hue = parseInt(hueString);
 
-      if(!hue || hueString.toString().trim() === "") {
+      if (!hue || hueString.toString().trim() === "") {
         // Allow empty hue, which means default
         return;
       }
@@ -2283,123 +2288,71 @@ function getMarkdownContent(url, runSpecificCache) {
   return result;
 }
 
-function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsCollector) {
-  // Allow only forward slashes, no backward slashes, no .., no absolute or ./, must end with .md (or will be appended)
-  // Example allowed: F:about.md, F:docs/intro.md, F:folder/subfolder/file.md
-  // Disallowed: F:../secret.md, F:/etc/passwd, F:C:\file.md, F:folder\file.md, F:./file.md
+function fetchFDirectiveContent(directive, allowedExtensions, runSpecificCache, dataPathCtx, rowCtx) {
+  let filePath = directive.substring(2).trim();
 
-  if (
-    typeof data === "string" &&
-    data.startsWith("F:")
-  ) {
-    let filePath = data.substring(2).trim();
-
-    // Disallow backward slashes
-    if (filePath.includes("\\")) {
-      Logger.error(t("dm_fdirective_backslash", [filePath]));
-      return null;
-    }
-
-    // Disallow absolute or relative paths starting with / or ./
-    if (filePath.startsWith("/") || filePath.startsWith("./")) {
-      Logger.error(t("dm_fdirective_absolute_or_dot_slash", [filePath]));
-      return null;
-    }
-
-    // Disallow directory traversal
-    if (filePath.includes("..")) {
-      Logger.error(t("dm_fdirective_directory_traversals", [filePath]));
-      return null;
-    }
-
-    // Only allow valid relative paths with forward slashes and .md extension
-    // Each segment: [a-zA-Z0-9_\-~.]+, separated by /
-    // Must end with .md (or will be appended)
-    const validPathRegex = /^([a-zA-Z0-9_\-~.]+\/)*[a-zA-Z0-9_\-~]+(\.md)?$/;
-    if (!validPathRegex.test(filePath)) {
-      Logger.error(t("dm_fdirective_invalid_path", [filePath]));
-      return null;
-    }
-
-    //console.log("F: loading markdown file", filePath);
-    let fileUrl = relativeToUsercontent(filePath);
-    //console.log("F: resolved file URL", fileUrl);
-
-    // Ensure fileUrl is absolute
-    if (!/^https:\/\//i.test(fileUrl)) {
-      fileUrl = new URL(fileUrl, window.location.origin).href;
-    }
-
-    if (!fileUrl.toLowerCase().endsWith(".md")) {
-      fileUrl = fileUrl + ".md";
-    }
-
-    if (isValidHttpUrl(fileUrl) && isSameOriginAsCurrent(fileUrl)) {
-      let markdownContent = getMarkdownContent(fileUrl, runSpecificCache);
-      if (markdownContent.responseStatus == 200) {
-        // Extract directory path from the markdown file path
-        const lastSlashIndex = filePath.lastIndexOf('/');
-        const mdFileDirectory = lastSlashIndex >= 0 ? filePath.substring(0, lastSlashIndex + 1) : '';
-
-        // Array to track rewritten image paths
-        const rewrittenImagePaths = [];
-
-        // Process markdown content to rewrite relative image paths
-        let processedContent = markdownContent.content;
-
-        // Regex to match markdown images: ![alt text](url)
-        // Captures: ![any text](captured_url)
-        const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-
-        processedContent = processedContent.replace(markdownImageRegex, (match, altText, imageUrl) => {
-          // Skip if the image URL is absolute (http:// or https://)
-          if (/^https?:\/\//i.test(imageUrl)) {
-            return match; // Keep as-is
-          }
-
-          // Skip if the image URL starts with / (already root-relative)
-          if (imageUrl.startsWith('/')) {
-            return match; // Keep as-is
-          }
-
-          // This is a relative path - rewrite it to be relative to root
-          const rewrittenPath = mdFileDirectory + imageUrl;
-          rewrittenImagePaths.push(rewrittenPath);
-
-          // Return the rewritten markdown image syntax
-          return `![${altText}](${rewrittenPath})`;
-        });
-
-        // Store rewritten paths for further processing if needed
-        if (rewrittenImagePaths.length > 0) {
-          // Add assets to global array, avoiding duplicates
-          rewrittenImagePaths.forEach(function (asset) {
-            // Use relativeToUsercontent to resolve asset path
-            const resolvedAsset = relativeToUsercontent(asset);
-
-            // Use the passed collector, falling back to the global if undefined (for robustness)
-            const targetAssets = assetsCollector || assetsFromFDirectives;
-
-            if (!targetAssets.includes(resolvedAsset)) {
-              targetAssets.push(resolvedAsset);
-            }
-          });
-        }
-        return processedContent;
-      } else {
-        Logger.error(
-          tf("dm_markdown_file_not_found", [fileUrl, dataPath, rowNumber])
-        );
-        return null;
-      }
-    } else {
-      Logger.error(t("dm_fdirective_invalid_url", [data, fileUrl]));
-      console.log("F: is not valid URL", data, fileUrl);
-      return null;
-    }
-  } else {
-    return data;
+  if (filePath.includes("\\")) {
+    Logger.error(t("dm_fdirective_backslash", [filePath]));
+    return null;
   }
+  if (filePath.startsWith("/") || filePath.startsWith("./")) {
+    Logger.error(t("dm_fdirective_absolute_or_dot_slash", [filePath]));
+    return null;
+  }
+  if (filePath.includes("..")) {
+    Logger.error(t("dm_fdirective_directory_traversals", [filePath]));
+    return null;
+  }
+
+  const extPattern = allowedExtensions.map(e => `\\.${e}`).join("|");
+  if (!new RegExp(`^([a-zA-Z0-9_\\-~.]+\\/)*[a-zA-Z0-9_\\-~]+(${extPattern})?$`).test(filePath)) {
+    Logger.error(t("dm_fdirective_invalid_path", [filePath]));
+    return null;
+  }
+
+  let fileUrl = relativeToUsercontent(filePath);
+  if (!/^https:\/\//i.test(fileUrl)) fileUrl = new URL(fileUrl, window.location.origin).href;
+  if (!allowedExtensions.some(e => fileUrl.toLowerCase().endsWith(`.${e}`))) fileUrl += "." + allowedExtensions[0];
+
+  if (!isValidHttpUrl(fileUrl) || !isSameOriginAsCurrent(fileUrl)) {
+    Logger.error(t("dm_fdirective_invalid_url", [directive, fileUrl]));
+    return null;
+  }
+
+  const fetched = getMarkdownContent(fileUrl, runSpecificCache);
+  if (fetched.responseStatus !== 200) {
+    Logger.error(tf("dm_markdown_file_not_found", [fileUrl, dataPathCtx ?? "-", rowCtx ?? "-"]));
+    return null;
+  }
+  return fetched.content;
+}
+
+function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsCollector) {
+  if (typeof data !== "string" || !data.startsWith("F:")) return data;
+
+  const content = fetchFDirectiveContent(data, ["md"], runSpecificCache, dataPath, rowNumber);
+  if (content === null) return null;
+
+  const filePath = data.substring(2).trim();
+  const lastSlashIndex = filePath.lastIndexOf('/');
+  const mdFileDirectory = lastSlashIndex >= 0 ? filePath.substring(0, lastSlashIndex + 1) : '';
+
+  const rewrittenImagePaths = [];
+  const processedContent = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, altText, imageUrl) => {
+    if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/')) return match;
+    const rewrittenPath = mdFileDirectory + imageUrl;
+    rewrittenImagePaths.push(rewrittenPath);
+    return `![${altText}](${rewrittenPath})`;
+  });
+
+  if (rewrittenImagePaths.length > 0) {
+    const targetAssets = assetsCollector || assetsFromFDirectives;
+    rewrittenImagePaths.forEach(function (asset) {
+      const resolvedAsset = relativeToUsercontent(asset);
+      if (!targetAssets.includes(resolvedAsset)) targetAssets.push(resolvedAsset);
+    });
+  }
+  return processedContent;
 }
 
 /**
