@@ -8,10 +8,10 @@
  *    Up to 12 optional columns; a non-empty cell activates that month.
  *
  * 2. CELL-BASED FORMAT (single cell, two sub-variants)
- *    a) Lettered  – 3-letter MONTH_KEYS, case-insensitive, pipe-separated or dash-ranged
- *       e.g. "jan", "feb-apr", "jan|mar-oct|dec"
+ *    a) Lettered  – 3-letter MONTH_KEYS, case-insensitive, pipe- or comma-separated or dash-ranged
+ *       e.g. "jan", "feb-apr", "jan|mar-oct|dec", "jan, mar-oct, dec"
  *    b) Numeric   – 1-based month numbers, same separators
- *       e.g. "1", "2-4", "1|3-10|12"
+ *       e.g. "1", "2-4", "1|3-10|12", "1, 3-10, 12"
  *
  * readData returns: number[] — sorted, unique, 1-based month numbers (jan=1 … dec=12)
  *                   or null when no months found.
@@ -24,6 +24,7 @@
 import m from "mithril";
 import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
+import { Logger } from "../../components/Logger.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -33,20 +34,35 @@ import { MONTH_KEYS } from "../MonthNames.js";
  * Parse a single month token (3-letter key or 1-based integer string)
  * into a 1-based month number. Returns null if unrecognised.
  */
-function parseMonthToken(token) {
-  const trimmed = token.trim().toLowerCase();
+function parseMonthToken(token, uiContext = {}) {
+  const trimmed = (token || "").toString().trim().toLowerCase();
   if (!trimmed) return null;
 
   // Try numeric first (must be a clean integer string, no extra chars)
   const num = parseInt(trimmed, 10);
-  if (!isNaN(num) && String(num) === trimmed && num >= 1 && num <= 12) {
-    return num;
+  if (!isNaN(num)) {
+    if (String(num) !== trimmed) {
+      Logger.error(
+        `Month token "${token}" is not a clean integer string`,
+        "Invalid months syntax"
+      );
+      return null;
+    }
+    if (num >= 1 && num <= 12) {
+      return num;
+    }
+    Logger.error(
+      `Invalid month number "${token}" — expected 1..12`,
+      "Invalid months syntax"
+    );
+    return null;
   }
 
   // Try 3-letter key
   const idx = MONTH_KEYS.indexOf(trimmed);
   if (idx >= 0) return idx + 1; // convert to 1-based
 
+  Logger.error(`Unrecognised month token "${token}". Use one of: ${MONTH_KEYS.join(", ")} or 1-12 to denote months`, "Invalid months syntax");
   return null;
 }
 
@@ -54,22 +70,28 @@ function parseMonthToken(token) {
  * Expand a single segment (e.g. "feb-apr", "2-4", "jan", "11") into an
  * array of 1-based month numbers, supporting wraparound (e.g. "nov-feb").
  */
-function expandSegment(token) {
-  const trimmed = token.trim();
+function expandSegment(token, uiContext = {}) {
+  const trimmed = (token || "").toString().trim();
   if (!trimmed) return [];
 
-  // A leading dash would be malformed; require dashIdx > 0.
   const dashIdx = trimmed.indexOf("-");
 
-  if (dashIdx <= 0) {
-    const m = parseMonthToken(trimmed);
+  if (dashIdx < 0) {
+    const m = parseMonthToken(trimmed, uiContext);
     return m !== null ? [m] : [];
   }
 
-  const start = parseMonthToken(trimmed.substring(0, dashIdx));
-  const end   = parseMonthToken(trimmed.substring(dashIdx + 1));
+  if (dashIdx === 0) {
+    Logger.error(`Malformed month segment "${trimmed}" — missing start`, "Invalid months syntax");
+    return [];
+  }
 
-  if (start === null || end === null) return [];
+  const start = parseMonthToken(trimmed.substring(0, dashIdx), uiContext);
+  const end = parseMonthToken(trimmed.substring(dashIdx + 1), uiContext);
+
+  if (start === null || end === null) {
+    return [];
+  }
 
   const result = [];
   if (start <= end) {
@@ -86,11 +108,11 @@ function expandSegment(token) {
  * Parse a full inline cell value such as "jan|feb-apr|dec" or "1|2-4|12".
  * Returns a sorted array of unique 1-based month numbers.
  */
-function parseInlineMonths(cellValue) {
+function parseInlineMonths(cellValue, uiContext = {}) {
   if (!cellValue || typeof cellValue !== "string") return [];
   const months = new Set();
-  cellValue.split("|").forEach(segment => {
-    expandSegment(segment.trim()).forEach(m => months.add(m));
+  cellValue.split(/[|,]/).forEach(segment => {
+    expandSegment(segment.trim(), uiContext).forEach(m => months.add(m));
   });
   return [...months].sort((a, b) => a - b);
 }

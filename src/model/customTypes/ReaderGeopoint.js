@@ -99,14 +99,62 @@ function parseISO6709Part(s, intDeg) {
 
   if (dotIdx >= 0) {
     // Decimal variants
-    if (intLen <= intDeg) return sign * parseFloat(abs);                                                                                                     // ±DD.D
-    if (intLen === intDeg + 2) return sign * (parseInt(abs.slice(0, intDeg)) + parseFloat(abs.slice(intDeg)) / 60);                  // ±DDMM.M
-    if (intLen === intDeg + 4) return sign * (parseInt(abs.slice(0, intDeg)) + parseInt(abs.slice(intDeg, intDeg + 2)) / 60 + parseFloat(abs.slice(intDeg + 2)) / 3600); // ±DDMMSS.S
+    if (intLen <= intDeg) {
+      const v = parseFloat(abs);
+      if (isNaN(v)) {
+        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * v;                                                                                                     // ±DD.D
+    }
+    if (intLen === intDeg + 2) {
+      const deg = parseInt(abs.slice(0, intDeg));
+      const minute = parseFloat(abs.slice(intDeg));
+      if (isNaN(deg) || isNaN(minute)) {
+        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * (deg + minute / 60);                  // ±DDMM.M
+    }
+    if (intLen === intDeg + 4) {
+      const deg = parseInt(abs.slice(0, intDeg));
+      const min = parseInt(abs.slice(intDeg, intDeg + 2));
+      const sec = parseFloat(abs.slice(intDeg + 2));
+      if (isNaN(deg) || isNaN(min) || isNaN(sec)) {
+        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * (deg + min / 60 + sec / 3600); // ±DDMMSS.S
+    }
   } else {
     // Integer variants
-    if (intLen <= intDeg) return sign * parseInt(abs);                                                                                                       // ±DD
-    if (intLen === intDeg + 2) return sign * (parseInt(abs.slice(0, intDeg)) + parseInt(abs.slice(intDeg)) / 60);                  // ±DDMM
-    if (intLen === intDeg + 4) return sign * (parseInt(abs.slice(0, intDeg)) + parseInt(abs.slice(intDeg, intDeg + 2)) / 60 + parseInt(abs.slice(intDeg + 2)) / 3600); // ±DDMMSS
+    if (intLen <= intDeg) {
+      const v = parseInt(abs);
+      if (isNaN(v)) {
+        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * v;                                                                                                       // ±DD
+    }
+    if (intLen === intDeg + 2) {
+      const deg = parseInt(abs.slice(0, intDeg));
+      const min = parseInt(abs.slice(intDeg));
+      if (isNaN(deg) || isNaN(min)) {
+        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * (deg + min / 60);                  // ±DDMM
+    }
+    if (intLen === intDeg + 4) {
+      const deg = parseInt(abs.slice(0, intDeg));
+      const min = parseInt(abs.slice(intDeg, intDeg + 2));
+      const sec = parseInt(abs.slice(intDeg + 2));
+      if (isNaN(deg) || isNaN(min) || isNaN(sec)) {
+        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        return null;
+      }
+      return sign * (deg + min / 60 + sec / 3600); // ±DDMMSS
+    }
   }
   return null;
 }
