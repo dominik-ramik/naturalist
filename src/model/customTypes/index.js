@@ -10,35 +10,35 @@ function buildReaders(...readerObjects) {
 }
 
 // Import and build all readers that are to be supported
-import { readerText } from "./ReaderText.js";
-import { readerMarkdown } from "./ReaderMarkdown.js";
-import { readerTaxon } from "./ReaderTaxon.js";
-import { readerNumber } from "./ReaderNumber.js";
-import { readerDate } from "./ReaderDate.js";
-import { readerCategory } from "./ReaderCategory.js";
 import { helpers } from "./helpers.js";
-import { readerImage } from "./ReaderImage.js";
-import { readerMapRegions } from "./ReaderMapRegions.js";
-import { readerSound } from "./ReaderSound.js";
-import { readerMap } from "./ReaderMap.js";
-import { readerMonths } from "./ReaderMonths.js"; 
-import { readerGeopoint } from "./ReaderGeopoint.js"; 
-import { readerInterval } from "./ReaderInterval.js";
+import { customTypeText } from "./CustomTypeText.js";
+import { customTypeMarkdown } from "./CustomTypeMarkdown.js";
+import { customTypeTaxon } from "./CustomTypeTaxon.js";
+import { customTypeNumber } from "./CustomTypeNumber.js";
+import { customTypeDate } from "./CustomTypeDate.js";
+import { customTypeCategory } from "./CustomTypeCategory.js";
+import { customTypeImage } from "./CustomTypeImage.js";
+import { customTypeMapRegions } from "./CustomTypeRegions.js";
+import { customTypeSound } from "./CustomTypeSound.js";
+import { customTypeMap } from "./CustomTypeMap.js";
+import { customTypeMonths } from "./CustomTypeMonths.js"; 
+import { customTypeGeopoint } from "./CustomTypeGeopoint.js"; 
+import { customTypeInterval } from "./CustomTypeInterval.js";
 
 const dataReaders = buildReaders(
-  readerText,
-  readerMarkdown,
-  readerTaxon,
-  readerNumber,
-  readerDate,
-  readerCategory,
-  readerImage,
-  readerMapRegions,
-  readerSound,
-  readerMap,
-  readerMonths,
-  readerGeopoint,
-  readerInterval
+  customTypeText,
+  customTypeMarkdown,
+  customTypeTaxon,
+  customTypeNumber,
+  customTypeDate,
+  customTypeCategory,
+  customTypeImage,
+  customTypeMapRegions,
+  customTypeSound,
+  customTypeMap,
+  customTypeMonths,
+  customTypeGeopoint,
+  customTypeInterval
 );
 
 // Export dataReaders for use in UI rendering

@@ -133,7 +133,7 @@ function splitCell(cell) {
 // Reader export
 // ---------------------------------------------------------------------------
 
-export let readerInterval = {
+export let customTypeInterval = {
   dataType: "interval",
 
   readData(context, computedPath) {

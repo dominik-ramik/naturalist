@@ -256,7 +256,7 @@ function buildMapUrl(template, lat, long) {
 // Reader export
 // ---------------------------------------------------------------------------
 
-export let readerGeopoint = {
+export let customTypeGeopoint = {
   dataType: "geopoint",
 
   defaultTemplate: "https://www.google.com/maps?q={{lat}},{{long}}",

@@ -1,7 +1,7 @@
 import m from "mithril";
 import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
 
-export let readerTaxon = {
+export let customTypeTaxon = {
   dataType: "taxon",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

@@ -1,7 +1,7 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 
-export let readerText = {
+export let customTypeText = {
   dataType: "text",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

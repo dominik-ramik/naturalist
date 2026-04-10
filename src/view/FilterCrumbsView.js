@@ -5,7 +5,7 @@ import "./FilterCrumbsView.css";
 import { getGradedColor, getUnitFromTemplate, unitToHtml } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { groupMonthsIntoRanges, renderRangesString } from "../model/customTypes/ReaderMonths.js";
+import { groupMonthsIntoRanges, renderRangesString } from "../model/customTypes/CustomTypeMonths.js";
 
 const selectableFilterTypes = ["text", "mapregions", "category"];
 const rangeFilterTypes = ["number", "interval", "date"];

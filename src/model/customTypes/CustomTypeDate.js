@@ -8,7 +8,7 @@ function getDateFormat(langCode) {
   return Checklist.getCurrentDateFormat(langCode);
 }
 
-export let readerDate = {
+export let customTypeDate = {
   dataType: "date",
 
   readData: function (context, computedPath) {

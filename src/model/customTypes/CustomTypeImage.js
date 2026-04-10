@@ -2,18 +2,18 @@ import m from "mithril";
 
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
-import { relativeToUsercontent } from "../../components/Utils.js";
+import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
 
-export let readerMap = {
-  dataType: "map",
+export let customTypeImage = {
+  dataType: "image",
   readData: function (context, computedPath) {
-    let mapData = readDataFromPath(
+    let imageData = readDataFromPath(
       context,
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
           tf("dm_generic_column_names", [
-            "map",
+            "image",
             computedPath,
             String.join(", ", columnNames),
           ]),
@@ -22,19 +22,18 @@ export let readerMap = {
     );
 
     if (
-      (typeof mapData === "string" && mapData.length == 0) ||
-      mapData == null
+      (typeof imageData === "string" && imageData.length == 0) ||
+      imageData == null
     ) {
       // If the text is an empty string, return null
       return null;
     }
 
-    return mapData;
+    return imageData;
   },
-  
   /**
-   * Extract searchable text from map data
-   * @param {any} data - The map object with source and title
+   * Extract searchable text from image data
+   * @param {any} data - The image object with source and title
    * @param {Object} uiContext - UI context (optional)
    * @returns {string[]} Array of searchable strings
    */
@@ -42,26 +41,31 @@ export let readerMap = {
     if (!data || typeof data !== "object") return [];
     const result = [];
     if (data.title) result.push(data.title);
+    if (data.source) result.push(data.source);
     return result;
   },
-  
   render: function (data, uiContext) {
+    //console.log("Rendering ReaderImage with data:", data, "and uiContext:", uiContext);
     if (!data || data.source.toString().trim() === "") {
       return null;
     }
 
     let source = data.source;
     let title = data.title;
-    
-    source = helpers.processTemplate(source, uiContext);
 
-    // Default image rendering
+    source = helpers.processTemplate(source, uiContext);
     source = relativeToUsercontent(source);
+
+    // Interpret the title as Markdown
+    if (title && title.trim() !== "") {
+      let processedTitle = processMarkdownWithBibliography(title).replace(/<[^>]+>/g, "").trim();
+      title = processedTitle;
+    }
 
     const imageElement = m(
       "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
-        title +
-        "]",
+      title +
+      "]",
       {
         onclick: function (e) {
           this.classList.toggle("fullscreen");

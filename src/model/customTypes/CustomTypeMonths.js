@@ -235,7 +235,7 @@ function renderRanges(ranges, uiContext = {}) {
 // Reader export
 // ---------------------------------------------------------------------------
 
-export let readerMonths = {
+export let customTypeMonths = {
   dataType: "months",
 
   readData: function (context, computedPath) {

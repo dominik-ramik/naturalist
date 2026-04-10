@@ -30,7 +30,7 @@ import { colorSVGMap } from "../../components/ColorSVGMap.js";
 
 const nlData = nlDataStructure;
 
-export let readerMapRegions = {
+export let customTypeMapRegions = {
   dataType: "mapregions",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
@@ -68,32 +68,36 @@ export let readerMapRegions = {
     }
 
     // Validate region codes
-    const knownRegionCodes = nlData.sheets.appearance.tables.mapRegionsNames.data[
-      langCode
-    ].map((x) => x.code);
-
-    Object.keys(resultObject).forEach((regionCode) => {
-      if (!knownRegionCodes.includes(regionCode)) {
-        Logger.error(
-          `Region code '${regionCode}' in column '${computedPath}' doesn't have any Region name set in the table 'mapregions information'. Region codes can be only composed of lowercase letters a-z. The data is ${JSON.stringify(resultObject)}`
-        );
-      }
-    });
+    const regionNamesData = nlData.sheets.appearance.tables.mapRegionsNames.data[langCode];
+    if (!regionNamesData) {
+      Logger.error(
+        tf("dm_mapregions_names_table_not_loaded", [computedPath, langCode])
+      );
+    } else {
+      const knownRegionCodes = regionNamesData.map((x) => x.code);
+      Object.keys(resultObject).forEach((regionCode) => {
+        if (!knownRegionCodes.includes(regionCode)) {
+          Logger.error(
+            tf("dm_mapregions_unknown_region_code", [regionCode, computedPath, JSON.stringify(resultObject)])
+          );
+        }
+      });
+    }
 
     return resultObject;
   },
-  
+
   /**
    * Extract searchable text from mapregions data
    * @param {any} data - The mapregions object
    * @param {Object} uiContext - UI context with langCode
    * @returns {string[]} Array of searchable strings (region names)
    */
-  getSearchableText: function(data, uiContext) {
+  getSearchableText: function (data, uiContext) {
     if (!data || typeof data !== "object") return [];
-    
+
     const result = [];
-    
+
     // Use Checklist API to get region names (handles language internally)
     // This is safer than accessing nlDataStructure directly
     Object.keys(data).forEach(regionCode => {
@@ -103,10 +107,10 @@ export let readerMapRegions = {
         result.push(regionName);
       }
     });
-    
+
     return result;
   },
-  
+
   render: function (data, uiContext) {
     if (uiContext.placement === "details") {
       return renderDetailsMap(data, uiContext);
@@ -286,6 +290,9 @@ function parseColumnMapRegions(concernedColumns, context, computedPath) {
 
 // --- UI Rendering ---
 
+// Tracks which map data tables are expanded, keyed by mapId
+const _tableExpanded = {};
+
 // Render SVG map for details view
 function renderDetailsMap(data, uiContext) {
   if (typeof data === "object" && data !== null) {
@@ -299,7 +306,6 @@ function renderDetailsMap(data, uiContext) {
     let presentRegionsMeta = [];
     let presentRegionsMetaStatuses = [];
 
-    // Optimization: Combined meta retrieval
     const allMeta = [].concat(
       Checklist.getMapRegionsMeta(true),
       Checklist.getMapRegionsMeta()
@@ -320,10 +326,6 @@ function renderDetailsMap(data, uiContext) {
       });
     });
 
-    // Create string for Utils.colorSVGMap: "code:status code:status"
-    // We strictly ignore notes here as they don't affect coloring
-
-    // Get source from meta template
     let source = "";
     if (uiContext.meta.template && uiContext.meta.template !== "") {
       source = uiContext.meta.template;
@@ -346,69 +348,143 @@ function renderDetailsMap(data, uiContext) {
       source = source.substring(1);
     }
 
-    const mapId = "map_" + uiContext.dataPath.replace(/\./g, '_');
+    const mapId = "map_" + uiContext.dataPath.replace(/\./g, "_");
 
-    // Async coloring call
     window.setTimeout(function () {
       let map = document.getElementById(mapId);
       if (map) {
         colorSVGMap(
           map,
-          getRegionColors(
-            data,
-            source.toLowerCase().endsWith("world.svg")
-          )
+          getRegionColors(data, source.toLowerCase().endsWith("world.svg"))
         );
       }
     }, 50);
 
     return m(".media-map", [
-      m(
-        ".image-wrap.clickable.fullscreenable-image",
-        {
-          onclick: function (e) {
-            this.classList.toggle("fullscreen");
-            this.classList.toggle("clickable");
-            e.preventDefault();
-            e.stopPropagation();
-          },
-        },
+      // ── Single unified card ─────────────────────────────────────────────
+      m(".media-map-card", [
         m(
-          "object#" +
-          mapId +
-          "[style=pointer-events: none; width: 100%; height: auto;][type=image/svg+xml][data=usercontent/" +
-          source +
-          "]",
+          ".image-wrap.clickable.fullscreenable-image",
           {
-            onload: function () {
-              colorSVGMap(
-                this,
-                getRegionColors(
-                  data,
-                  source.toLowerCase().endsWith("world.svg")
-                )
-              );
+            onclick: function (e) {
+              this.classList.toggle("fullscreen");
+              this.classList.toggle("clickable");
+              e.preventDefault();
+              e.stopPropagation();
             },
-          }
-        )
-      ),
-      m(
-        ".legend",
+          },
+          m(
+            "object#" +
+            mapId +
+            "[style=pointer-events: none; width: 100%; height: auto;][type=image/svg+xml][data=usercontent/" +
+            source +
+            "]",
+            {
+              onload: function () {
+                colorSVGMap(
+                  this,
+                  getRegionColors(
+                    data,
+                    source.toLowerCase().endsWith("world.svg")
+                  )
+                );
+              },
+            }
+          )
+        ),
+        // Legend row — only when there are statuses to show
         Object.keys(presentRegionsMeta).length === 0
           ? null
-          : Object.values(presentRegionsMeta).map(function (regionMeta) {
-            return m(".legend-item", [
-              m(
-                ".map-fill[style=background-color: " +
-                regionMeta.fill +
-                "]"
-              ),
-              m(".map-legend-title", regionMeta.legend),
-            ]);
-          })
-      ),
+          : m(
+            ".legend.media-map-legend",
+            Object.values(presentRegionsMeta).map(function (regionMeta) {
+              return m(".legend-item", [
+                m(".map-fill[style=background-color: " + regionMeta.fill + "]"),
+                m(".map-legend-title", regionMeta.legend),
+              ]);
+            })
+          ),
+        // Data table toggle — flush footer of the same card
+        renderMapDataTable(data, mapId),
+      ]),
     ]);
   }
+}
+
+/**
+ * Renders a collapsible data table as a flush footer section of the map card.
+ */
+function renderMapDataTable(data, mapId) {
+  const isExpanded = !!_tableExpanded[mapId];
+  const regionCodes = Object.keys(data);
+  const hasNotes = regionCodes.some(
+    (rc) => data[rc].notes && data[rc].notes.length > 0
+  );
+
+  const toggleTable = function (e) {
+    _tableExpanded[mapId] = !_tableExpanded[mapId];
+    e.stopPropagation();
+    m.redraw();
+  };
+
+  return m(".map-data-table-wrap", [
+    m(".map-data-table-header", { onclick: toggleTable }, [
+      m("span.map-data-table-toggle", isExpanded ? "▲" : "▼"),
+      m("span.map-data-table-header-label", t("map_data_table")),
+      m(
+        "span.map-data-table-count",
+        tf("map_data_table_count{0}", [regionCodes.length], true)
+      ),
+    ]),
+
+    isExpanded
+      ? m(".map-data-table-body", [
+        m("table.map-data-table", [
+          m(
+            "thead",
+            m("tr", [
+              m("th.map-data-table-th", t("map_data_table_region")),
+              m("th.map-data-table-th", t("map_data_table_status")),
+              hasNotes
+                ? m("th.map-data-table-th", t("map_data_table_notes"))
+                : null,
+            ])
+          ),
+          m(
+            "tbody",
+            regionCodes.map(function (regionCode, index) {
+              const regionData = data[regionCode];
+              const regionMeta = getRegionMeta(regionData);
+              const regionName = Checklist.nameForMapRegion(regionCode);
+              const notesText = (regionData.notes || []).join("; ");
+
+              return m(
+                "tr.map-data-table-row" +
+                (index % 2 === 0 ? ".map-data-table-row-even" : ""),
+                [
+                  m("td.map-data-table-td", regionName),
+                  m("td.map-data-table-td", [
+                    m(
+                      "span.map-data-table-dot[style=background-color: " +
+                      regionMeta.fill +
+                      "]"
+                    ),
+                    m("span", regionMeta.legend),
+                  ]),
+                  hasNotes
+                    ? m(
+                      "td.map-data-table-td.map-data-table-td-notes",
+                      notesText
+                    )
+                    : null,
+                ]
+              );
+            })
+          ),
+        ]),
+      ])
+      : null,
+  ]);
 }
 
 // Render regions list for default view

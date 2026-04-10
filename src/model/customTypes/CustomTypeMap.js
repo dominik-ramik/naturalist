@@ -3,18 +3,17 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
-import { MinimalAudioPlayer } from "../../components/MinimalAudioPlayer.js";
 
-export let readerSound = {
-  dataType: "sound",
+export let customTypeMap = {
+  dataType: "map",
   readData: function (context, computedPath) {
-    let soundData = readDataFromPath(
+    let mapData = readDataFromPath(
       context,
       computedPath,
       {
         errorMessageTemplate: (columnNames) =>
           tf("dm_generic_column_names", [
-            "sound",
+            "map",
             computedPath,
             String.join(", ", columnNames),
           ]),
@@ -23,28 +22,29 @@ export let readerSound = {
     );
 
     if (
-      (typeof soundData === "string" && soundData.length == 0) ||
-      soundData == null
+      (typeof mapData === "string" && mapData.length == 0) ||
+      mapData == null
     ) {
       // If the text is an empty string, return null
       return null;
     }
 
-    return soundData;
+    return mapData;
   },
+  
   /**
-   * Extract searchable text from sound data
-   * @param {any} data - The sound object with source and title
+   * Extract searchable text from map data
+   * @param {any} data - The map object with source and title
    * @param {Object} uiContext - UI context (optional)
    * @returns {string[]} Array of searchable strings
    */
-  getSearchableText: function (data, uiContext) {
+  getSearchableText: function(data, uiContext) {
     if (!data || typeof data !== "object") return [];
     const result = [];
     if (data.title) result.push(data.title);
-    if (data.source) result.push(data.source);
     return result;
   },
+  
   render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
       return null;
@@ -52,22 +52,34 @@ export let readerSound = {
 
     let source = data.source;
     let title = data.title;
-
-    // Process template if available
+    
     source = helpers.processTemplate(source, uiContext);
 
+    // Default image rendering
     source = relativeToUsercontent(source);
 
-    return m(
-      ".media-sound",
+    const imageElement = m(
+      "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
+        title +
+        "]",
       {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
+        onclick: function (e) {
+          this.classList.toggle("fullscreen");
+          this.classList.toggle("clickable");
+          e.preventDefault();
+          e.stopPropagation();
         },
       },
-      [m(MinimalAudioPlayer, { src: source }), title ? m(".title", title) : null]
+      m("img.image-in-view[src=" + source + "][alt=" + title + "]")
     );
+
+    if (uiContext.placement === "details") {
+      return m("div", [
+        imageElement,
+        title ? m(".title", title) : null,
+      ]);
+    } else {
+      return imageElement;
+    }
   },
 };

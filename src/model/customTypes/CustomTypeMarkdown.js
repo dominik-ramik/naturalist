@@ -2,7 +2,7 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { processMarkdownWithBibliography } from "../../components/Utils.js";
 
-export let readerMarkdown = {
+export let customTypeMarkdown = {
   dataType: "markdown",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

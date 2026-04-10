@@ -1,7 +1,7 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 
-export let readerCategory = {
+export let customTypeCategory = {
   dataType: "category",
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
