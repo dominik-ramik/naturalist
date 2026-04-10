@@ -1,5 +1,7 @@
 import m from "mithril";
 
+import "./TabMap.css";
+
 import { dataReaders } from "../../model/customTypes/index.js";
 
 export function TabMap(tabData, taxon, taxonName) {

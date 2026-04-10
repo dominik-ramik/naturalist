@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Unified Map Card
+   Wraps the SVG image, legend row, and collapsible data table as one unit.
+   ========================================================================== */
+
+.media-map-card {
+    border-radius: var(--pad-large, 1em);
+    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+    background-color: #eceff2;
+    border: 1px solid white;
+    overflow: hidden;
+    /* clips image to card corners */
+}
+
+/* The image-wrap sits flush at the top — no padding, no gap */
+.media-map-card .image-wrap {
+    display: block;
+    border-radius: 0;
+    /* card handles the corners */
+}
+
+/* ==========================================================================
+   Legend Row
+   ========================================================================== */
+
+.legend.media-map-legend {
+    padding: 0.55em 0.85em;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    gap: 0.4em 0.85em;
+}
+
+.legend.media-map-legend .legend-item {
+    font-size: 1em;
+    align-items: center;
+}
+
+/* ==========================================================================
+   Data Table — flush footer section of the card (no standalone chrome)
+   ========================================================================== */
+
+.map-data-table-wrap {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Toggle header */
+.map-data-table-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    padding: 0.45em 0.85em;
+    background-color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #555;
+    transition: background-color 0.15s;
+}
+
+.map-data-table-header:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.map-data-table-toggle {
+    font-size: 0.7em;
+    opacity: 0.5;
+    width: 1em;
+    flex-shrink: 0;
+}
+
+.map-data-table-header-label {
+    flex: 1;
+}
+
+.map-data-table-count {
+    padding: 0.1em 0.5em;
+    border-radius: 1em;
+    background-color: rgba(0, 0, 0, 0.15);
+    color: #333;
+    font-size: 0.82em;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Table Body
+   ========================================================================== */
+
+.map-data-table-body {
+    overflow-x: auto;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.map-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+}
+
+.map-data-table-th {
+    padding: 0.4em 0.85em;
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.09);
+    white-space: nowrap;
+}
+
+.map-data-table-row td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.map-data-table-row:last-child td {
+    border-bottom: none;
+}
+
+.map-data-table-row-even {
+    background-color: rgba(255, 255, 255, 0.45);
+}
+
+.map-data-table-td {
+    padding: 0.38em 0.85em;
+    vertical-align: middle;
+    color: #222;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.map-data-table-td-notes {
+    color: #666;
+}
+
+/* Status colour dot */
+.map-data-table-dot {
+    display: inline-block;
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 50%;
+    margin-right: 0.4em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================================================
+   Gradient Legend Widget
+   A full-width ramp bar with proportionally-placed tick marks and labels.
+   ========================================================================== */
+
+/* The legend-item--gradient spans the full legend row width */
+.legend-item.legend-item--gradient {
+    width: 100%;
+    display: block;
+    padding: 0;
+}
+
+/* Outer widget: ramp + labels stacked, full width */
+.map-gradient-widget {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    /* extra bottom padding makes room for the labels that hang below */
+    padding-bottom: 1.4em;
+}
+
+/* ── Ramp bar ── */
+.map-gradient-ramp {
+    position: relative;   /* tick lines use absolute positioning inside */
+    width: 100%;
+    height: 0.65em;
+    border-radius: 0.35em;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+    overflow: visible;    /* ticks extend below the bar */
+}
+
+/* ── Tick marks ── */
+.map-gradient-tick {
+    position: absolute;
+    top: 100%;               /* sits flush below the ramp bottom edge */
+    width: 1px;
+    height: 0.45em;
+    background: rgba(0, 0, 0, 0.35);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+/* ── Labels row ── */
+.map-gradient-labels {
+    position: relative;
+    width: 100%;
+    height: 1.1em;          /* fixed height; labels are absolutely positioned */
+    margin-top: 0.45em;     /* gap between tick bottom and label top */
+}
+
+.map-gradient-label {
+    position: absolute;
+    top: 0;
+    font-size: 0.85em;
+    color: #444;
+    white-space: nowrap;
+    line-height: 1.2;
+    /* horizontal alignment is set inline (left/right/center variants) */
+}
+
+/* Edge labels (first and last) are always visible */
+.map-gradient-label--edge {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Middle labels: shown by default, but hidden on narrow containers.
+   The parent .media-map-card constrains width.  At very small sizes we
+   hide mid-point labels to avoid overlap.  Edge labels are always kept. */
+@media (max-width: 380px) {
+    .map-gradient-label--mid {
+        display: none;
+    }
+}
+
+/* If there are many ticks (≥5), always hide mid labels unless hovered */
+.map-gradient-widget:not(:hover) .map-gradient-label--mid:not(:first-child):not(:last-child) {
+    /* Use a CSS counter trick: if there are more than 4 labels, hide middle ones.
+       Since we can't count children in pure CSS without :nth-child tricks,
+       we rely on the JS class assignment and a data-count attribute set by JS.
+       As a safe fallback: hide mid labels when the widget is narrower than 220px.
+       That covers the common card-in-sidebar case. */
+}
+
+/* Compact: on very narrow cards hide all mid labels unconditionally */
+.media-map-card .map-gradient-label--mid {
+    /* visible by default; media query above handles overflow */
+}

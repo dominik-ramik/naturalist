@@ -6,6 +6,12 @@ import { dataReaders } from "../../model/customTypes/index.js";
 
 import "./TabSummary.css";
 
+import { getLegendConfig, getCachedRegionColor, getCachedAggregateStats } from "../../model/customTypes/CustomTypeMapregions.js";
+import {
+  collectNumericValues,
+  parseNumericStatus,
+} from "../../components/MapregionsColorEngine.js";
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun",
@@ -113,12 +119,20 @@ function buildContext(taxon) {
     Object.entries(ancestry).every(([i, name]) => row.t[+i]?.name === name)
   );
 
-  return {
+  const _scopeCache = {};
+  const ctx = {
     taxon, checklist, subtreeRows, taxaMeta, taxaKeys,
     specimenDataPath, specimenMetaIndex, currentLevelIndex,
     ancestry, showSpecimens,
     dataMeta: Checklist.getDataMeta(),
   };
+  ctx.getScopeForLevel = (li) => {
+    if (!_scopeCache[li]) {
+      _scopeCache[li] = getScopeForLevel(checklist, ancestry, li);
+    }
+    return _scopeCache[li];
+  };
+  return ctx;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -172,12 +186,6 @@ function toBreakdown(counts, total) {
       pct: total > 0 ? Math.round(count / total * 100) : 0,
     }))
     .sort((a, b) => b.count - a.count);
-}
-
-/** Map-region status meta, falling back to the configured default. */
-function statusMetaFor(status) {
-  const found = Checklist.getMapRegionsMeta().find(s => s.status === status);
-  return found ?? Checklist.getMapRegionsMeta(true);
 }
 
 /** Count distinct taxon names at level li within a row set. */
@@ -246,7 +254,7 @@ function buildSpecimensPerspective(ctx) {
       const name = ancestry[li];
       if (name == null) return;
 
-      const scope = getScopeForLevel(checklist, ancestry, li);
+      const scope = ctx.getScopeForLevel(li);
       let direct = 0, cumulative = 0;
       scope.forEach(row => {
         if (!isSpecimenRow(row, specimenMetaIndex)) return;
@@ -325,7 +333,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(getScopeForLevel(checklist, ancestry, li));
+      const e = eligible(ctx.getScopeForLevel(li));
       if (e.length === 0) return;
       rows.push({
         kind: li === currentLevelIndex ? "current" : "ancestor",
@@ -390,6 +398,14 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
   const eligible = rows =>
     rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && hasData(r));
 
+  const lc = getLegendConfig(mapPath);
+  const allNumericValues = [];
+  eligible(subtreeRows).forEach(row => {
+    const data = Checklist.getDataFromDataPath(row.d, mapPath);
+    if (data) collectNumericValues(data, lc).forEach(n => allNumericValues.push(n));
+  });
+  const aggregateStats = getCachedAggregateStats(allNumericValues, mapPath);
+
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
@@ -399,9 +415,9 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(getScopeForLevel(checklist, ancestry, li));
+      const e = eligible(ctx.getScopeForLevel(li));
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats);
       if (!breakdown.length) return;
       rows.push({
         kind: li === currentLevelIndex ? "current" : "ancestor",
@@ -411,7 +427,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
       const e = eligible(subtreeRows)
         .filter(r => deepestTaxonLevelOf(r, specimenMetaIndex) === li);
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats);
       if (!breakdown.length) return;
       rows.push({
         kind: "descendant", levelName,
@@ -427,38 +443,109 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
   return { type: "mapregions", title, mapPath, meta, rows, forSpecimen };
 }
 
-function buildRegionBreakdown(rows, mapPath, totalRows) {
+/**
+ * Build the per-region status breakdown for a set of checklist rows.
+ *
+ * Gradient columns: numeric values per region are collapsed into a single
+ * range entry (min–max) with a colour sampled at the midpoint, rather than
+ * emitting one row per distinct decimal value.  Categorical overrides within
+ * a gradient column are still grouped as discrete entries.
+ *
+ * Stepped / category columns: values are grouped by their resolved bin legend
+ * so that multiple raw numeric values that fall in the same bin are counted
+ * together.  The colour and label are captured at accumulation time, avoiding
+ * the mistake of later trying to resolve a legend string as a status code.
+ */
+function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
+  const lc = getLegendConfig(mapPath);
+
+  // byRegion: regionCode → {
+  //   _grad?: { min, max, count }   — gradient numeric accumulator
+  //   [binLabel]: { fill, count, resolvedAs }  — stepped / category bins
+  // }
   const byRegion = {};
+
   rows.forEach(row => {
     const data = Checklist.getDataFromDataPath(row.d, mapPath);
     if (!data) return;
+
     Object.entries(data).forEach(([code, info]) => {
       if (!code || !info) return;
-      const status = info.status ?? "";
+      const status   = info.status ?? "";
+      const resolved = getCachedRegionColor(status, lc, aggregateStats, mapPath)
+        ?? { fill: "#ccc", legend: status, appendedLegend: "", resolvedAs: "fallback" };
+
       if (!byRegion[code]) byRegion[code] = {};
-      byRegion[code][status] = (byRegion[code][status] || 0) + 1;
+
+      if (resolved.resolvedAs === "gradient" && parseNumericStatus(status) !== null) {
+        // Accumulate numeric gradient values as a range per region.
+        const n = parseNumericStatus(status);
+        if (!byRegion[code]._grad) {
+          byRegion[code]._grad = { min: n, max: n, count: 0 };
+        } else {
+          byRegion[code]._grad.min = Math.min(byRegion[code]._grad.min, n);
+          byRegion[code]._grad.max = Math.max(byRegion[code]._grad.max, n);
+        }
+        byRegion[code]._grad.count++;
+      } else {
+        // Categorical, stepped, and fallback: group by the resolved legend label.
+        // Colour is captured now from the actual resolved status — not re-derived
+        // from the label string later, which would fail to find a match.
+        const binLabel = resolved.legend || status;
+        if (!byRegion[code][binLabel]) {
+          byRegion[code][binLabel] = { fill: resolved.fill, count: 0, resolvedAs: resolved.resolvedAs };
+        }
+        byRegion[code][binLabel].count++;
+      }
     });
   });
 
   return Object.entries(byRegion)
-    .map(([code, statusMap]) => {
-      const totalCount = Object.values(statusMap).reduce((a, b) => a + b, 0);
-      const statuses = Object.entries(statusMap)
-        .map(([status, count]) => {
-          const sm = statusMetaFor(status);
-          return {
-            status, count,
-            pct: Math.round(count / totalRows * 100),
-            fill: sm.fill,
-            legend: sm.legend || "",
-          };
-        })
-        .sort((a, b) => b.count - a.count);
+    .map(([code, bins]) => {
+      const statuses = [];
+      let totalCount = 0;
+
+      // ── Gradient range entry ─────────────────────────────────────────────
+      if (bins._grad) {
+        const g   = bins._grad;
+        // Sample the colour at the midpoint of the observed range.
+        const mid = (g.min + g.max) / 2;
+        const midResolved = getCachedRegionColor(String(mid), lc, aggregateStats, mapPath);
+        const rangeLabel  = g.min === g.max
+          ? g.min.toLocaleString()
+          : `${g.min.toLocaleString()} – ${g.max.toLocaleString()}`;
+        statuses.push({
+          status:     rangeLabel,
+          count:      g.count,
+          pct:        Math.round(g.count / totalRows * 100),
+          fill:       midResolved?.fill ?? "#ccc",
+          legend:     rangeLabel,
+          resolvedAs: "gradient",
+        });
+        totalCount += g.count;
+      }
+
+      // ── Stepped / category / fallback bins ───────────────────────────────
+      Object.entries(bins).forEach(([binLabel, bin]) => {
+        if (binLabel === "_grad") return;
+        statuses.push({
+          status:     binLabel,
+          count:      bin.count,
+          pct:        Math.round(bin.count / totalRows * 100),
+          fill:       bin.fill,
+          legend:     binLabel,
+          resolvedAs: bin.resolvedAs,
+        });
+        totalCount += bin.count;
+      });
+
+      statuses.sort((a, b) => b.count - a.count);
+
       return {
         regionCode: code,
         regionName: Checklist.nameForMapRegion(code),
         totalCount,
-        totalPct: Math.round(totalCount / totalRows * 100),
+        totalPct:   Math.round(totalCount / totalRows * 100),
         statuses,
       };
     })
@@ -515,7 +602,7 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forSpecimen) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(getScopeForLevel(checklist, ancestry, li));
+      const e = eligible(ctx.getScopeForLevel(li));
       if (e.length === 0) return;
       // Union of months across all eligible rows in scope (cumulative upward)
       const monthsUnion = new Set();

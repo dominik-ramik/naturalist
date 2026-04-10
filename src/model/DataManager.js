@@ -760,9 +760,12 @@ export let DataManager = function () {
         ]),
         mapRegionsLegend: {
           default: {
+            columnName: "",
             status: "",
             fill: "#55769b",
             legend: t("default_legend"),
+            appendedLegend: "",
+            legendType: "category",
           },
           statuses: [],
         },
@@ -824,17 +827,26 @@ export let DataManager = function () {
 
       data.sheets.appearance.tables.mapRegionsLegend.data[lang.code].forEach(
         function (row) {
-          if (row.status.toString().trim() == "") {
-            meta.mapRegionsLegend.default.status = row.status.toString();
-            meta.mapRegionsLegend.default.fill = row.fillColor;
-            meta.mapRegionsLegend.default.legend = row.legend.toString();
+          const colName = (row.columnName || "").toString().trim();
+          const status = (row.status || "").toString().trim();
+          const legendType = (row.legendType || "category").toString().trim().toLowerCase();
+
+          const entry = {
+            columnName: colName,
+            status: status,
+            fill: row.fillColor,
+            legend: (row.legend || "").toString(),
+            appendedLegend: (row.appendedLegend || "").toString(),
+            legendType: legendType,
+          };
+
+          // The global fallback: empty columnName AND empty status AND category type
+          if (colName === "" && status === "" && (legendType === "" || legendType === "category")) {
+            meta.mapRegionsLegend.default.fill = entry.fill;
+            meta.mapRegionsLegend.default.legend = entry.legend;
+            meta.mapRegionsLegend.default.appendedLegend = entry.appendedLegend;
           } else {
-            meta.mapRegionsLegend.statuses.push({
-              status: row.status.toString(),
-              fill: row.fillColor,
-              legend: row.legend.toString(),
-              appendedLegend: row.appendedLegend.toString(),
-            });
+            meta.mapRegionsLegend.statuses.push(entry);
           }
         }
       );
@@ -1771,6 +1783,136 @@ export let DataManager = function () {
     // Manual checks of logic
     //
 
+    // ── mapRegionsLegend cross-row validation ───────────────────────────────────
+    data.common.languages.supportedLanguages.forEach(function (lang) {
+      const rows = data.sheets.appearance.tables.mapRegionsLegend.data[lang.code];
+
+      if (!rows || rows.length === 0) return;
+
+      const tableName = data.sheets.appearance.tables.mapRegionsLegend.name;
+
+      // Collect all mapregions column paths for reference validation
+      const mapregionsPaths = new Set(
+        (data.sheets.content.tables.customDataDefinition.data[lang.code] || [])
+          .filter(r => (r.formatting || "").trim().toLowerCase() === "mapregions")
+          .map(r => (r.columnName || "").trim().toLowerCase())
+      );
+
+      // 1. Compound-key uniqueness: (columnName + status) must be unique
+      const seenPairs = new Map(); // "columnName|status" -> row index (1-based)
+      rows.forEach(function (row, idx) {
+        const colName = (row.columnName || "").toString().trim().toLowerCase();
+        const status = (row.status || "").toString().trim();
+        const pairKey = colName + "|" + status;
+        if (seenPairs.has(pairKey)) {
+          Logger.error(
+            tf("dm_mapregions_duplicate_pair", [tableName, colName || "(empty)", status || "(empty)", seenPairs.get(pairKey), idx + 1])
+          );
+        } else {
+          seenPairs.set(pairKey, idx + 1);
+        }
+      });
+
+      // 2. columnName (when non-empty) must refer to an existing mapregions column
+      rows.forEach(function (row, idx) {
+        const colName = (row.columnName || "").toString().trim().toLowerCase();
+        if (colName === "") return; // global row — OK
+        if (!mapregionsPaths.has(colName)) {
+          Logger.error(
+            tf("dm_mapregions_unknown_column", [tableName, idx + 1, colName])
+          );
+        }
+      });
+
+      // 3. For gradient/stepped rows: status must be a valid anchor notation (A1-A5)
+      //    A1: plain number (int or decimal, optional leading minus)
+      //    A2: number%
+      //    A3: numberp
+      //    A4: numbers
+      //    A5: [±number][%|s]c[number]
+      const anchorRegex = /^-?(\d+(\.\d+)?)(%)?(p)?(s)?$|^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
+
+      rows.forEach(function (row, idx) {
+        const legendType = (row.legendType || "").toString().trim().toLowerCase();
+        if (legendType !== "gradient" && legendType !== "stepped") return;
+        const status = (row.status ?? "").toString().trim();
+
+        if (status === "") {
+          Logger.error(
+            tf("dm_mapregions_empty_anchor", [tableName, idx + 1, legendType]), "Empty status code"
+          );
+          return;
+        }
+        if (!anchorRegex.test(status)) {
+          Logger.error(
+            tf("dm_mapregions_invalid_anchor", [tableName, idx + 1, status, legendType]), "Invalid status code"
+          );
+        }
+      });
+
+      // 4. Gradient/stepped columns: at least 2 anchor rows per (columnName, legendType) group
+      //    Group key: columnName + legendType
+      const anchorGroupCounts = new Map();
+      rows.forEach(function (row) {
+        const legendType = (row.legendType || "").toString().trim().toLowerCase();
+        if (legendType !== "gradient" && legendType !== "stepped") return;
+        const colName = (row.columnName || "").toString().trim().toLowerCase();
+        const groupKey = colName + "|" + legendType;
+        anchorGroupCounts.set(groupKey, (anchorGroupCounts.get(groupKey) || 0) + 1);
+      });
+      anchorGroupCounts.forEach(function (count, groupKey) {
+        if (count < 2) {
+          const [colName, legendType] = groupKey.split("|");
+          Logger.warning(
+            colName
+              ? tf("dm_mapregions_single_anchor", [tableName, legendType, colName])
+              : tf("dm_mapregions_single_anchor_global", [tableName, legendType])
+          );
+        }
+      });
+
+      // 5. A5 consistency: all rows for the same (columnName, legendType=gradient/stepped)
+      //    that use the cNNN suffix must declare the same center value
+      //    Group by columnName; within each group collect all c-center values
+      const a5CenterByColumn = new Map(); // columnName -> Set of centerValues
+      const A5_REGEX = /^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
+      rows.forEach(function (row, idx) {
+        const legendType = (row.legendType || "").toString().trim().toLowerCase();
+        if (legendType !== "gradient" && legendType !== "stepped") return;
+        const colName = (row.columnName || "").toString().trim().toLowerCase();
+        const status = (row.status || "").toString().trim();
+        const m5 = A5_REGEX.exec(status);
+        if (!m5) return;
+        const center = m5[4]; // the part after 'c'
+        const key = colName + "|" + legendType;
+        if (!a5CenterByColumn.has(key)) a5CenterByColumn.set(key, new Set());
+        a5CenterByColumn.get(key).add(center);
+      });
+      a5CenterByColumn.forEach(function (centerSet, groupKey) {
+        if (centerSet.size > 1) {
+          const [colName, legendType] = groupKey.split("|");
+          Logger.error(
+            colName
+              ? tf("dm_mapregions_a5_center_mismatch", [tableName, legendType, colName, [...centerSet].join(", ")])
+              : tf("dm_mapregions_a5_center_mismatch_global", [tableName, legendType, [...centerSet].join(", ")])
+          );
+        }
+      });
+
+      // 6. appendedLegend on gradient/stepped rows: warn (not block) — it is silently ignored at runtime
+      rows.forEach(function (row, idx) {
+        const legendType = (row.legendType || "").toString().trim().toLowerCase();
+        if (legendType !== "gradient") return;
+        const appended = (row.appendedLegend || "").toString().trim();
+        if (appended !== "") {
+          Logger.warning(
+            tf("dm_mapregions_appended_legend_ignored", [tableName, idx + 1, appended, legendType]), "Appended legend for gradient legend types"
+          );
+        }
+      });
+    });
+    // ── end mapRegionsLegend validation ────────────────────────────────────────
+
     // Ensure all languages are displayable and proper fallback language is provided if translation is missing
     data.common.languages.supportedLanguages.forEach(function (lang) {
       if (
@@ -1879,7 +2021,7 @@ export let DataManager = function () {
       let table =
         data.sheets.content.tables.customDataDefinition.data[lang.code];
       if (table === null) {
-        Logger.critical("Cannot find custom data def");
+        // do not logger this, the table is not requiredLogger.critical("Cannot find custom data def");
         return;
       }
 

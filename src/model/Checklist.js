@@ -20,6 +20,7 @@ import {
 import { dataReaders, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
+import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -444,9 +445,10 @@ export let Checklist = {
 
     this._isDraft = isDraft;
     this._bibFormatter = null;
-
+    
     Checklist._dataFulltextIndex = {};
     Checklist._metaForDataPathCache = {};
+
 
     Checklist.handlebarsTemplates = {};
 
@@ -468,6 +470,7 @@ export let Checklist = {
     Checklist.getCustomOrderGroupItemsCache = new Map();
     Checklist.getCustomOrderGroupCache = new Map();
     clearSortByCustomOrderCache();
+    clearLegendConfigCache();
 
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
@@ -1233,6 +1236,22 @@ export let Checklist = {
 
   getTaxaMeta: function () {
     return this.getData().meta.taxa;
+  },
+
+  getMapRegionsLegendRows: function () {
+    const legend = this.getData().meta.mapRegionsLegend;
+    if (!legend) return [];
+    const rows = [];
+    if (legend.default) rows.push(legend.default);
+    if (Array.isArray(legend.statuses)) rows.push(...legend.statuses);
+    return rows.map(r => ({
+      columnName:     r.columnName || "",
+      statusCode:     r.status || "",
+      fillColor:      r.fill || "",
+      legend:         r.legend || "",
+      appendedLegend: r.appendedLegend || "",
+      legendType:     r.legendType || "",
+    }));
   },
 
   getSpecimenDataPath: function () {

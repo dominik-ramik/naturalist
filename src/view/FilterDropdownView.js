@@ -12,6 +12,10 @@ import {
   textLowerCaseAccentless,
 } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
+import {
+  parseLegendConfig,
+  parseNumericStatus,
+} from "../components/MapregionsColorEngine.js";
 
 const selectableFilterTypes = ["text", "category", "mapregions", "months"];
 const rangeFilterTypes = ["number", "date"];
@@ -188,6 +192,11 @@ function getRangeValueBounds(values) {
   return { min, max };
 }
 
+function _isStatusFilterActive(sf) {
+  if (!sf) return false;
+  return sf.selectedStatuses?.length > 0 || sf.rangeMin != null || sf.rangeMax != null;
+}
+
 export let FilterDropdown = function (initialVnode) {
   let _open = false;
   let filterDropdownId = "";
@@ -285,6 +294,11 @@ export let FilterDropdown = function (initialVnode) {
         Checklist.getDataMeta()[dataPath].formatting == "interval"
       ) {
         detectedUiType = "interval";
+      } else if (
+        type == "data" &&
+        Checklist.getDataMeta()[dataPath].formatting == "mapregions"
+      ) {
+        detectedUiType = "mapregions";
       }
 
 
@@ -324,6 +338,12 @@ export let FilterDropdown = function (initialVnode) {
       else if (
         filterDef.type === "interval" &&
         filterDef.numeric.operation != ""
+      ) {
+        showOrb = true;
+      }
+      else if (
+        filterDef.type === "mapregions" &&
+        _isStatusFilterActive(filterDef.statusFilter)
       ) {
         showOrb = true;
       }
@@ -473,6 +493,15 @@ let Dropdown = function (initialVnode) {
             openHandler: vnode.attrs.openHandler,
             type: type,
             dataPath: dataPath,
+            dropdownId: dropdownId,
+          });
+          break;
+        case "mapregions":
+          innerDropdown = m(DropdownMapregions, {
+            openHandler: vnode.attrs.openHandler,
+            type: type,
+            dataPath: dataPath,
+            color: vnode.attrs.color,
             dropdownId: dropdownId,
           });
           break;
@@ -2357,6 +2386,225 @@ let DropdownDate = function (initialVnode) {
     },
   };
 };
+
+let DropdownMapregions = function (initialVnode) {
+  let filter = "";
+  let initialOverflowLimit = 100;
+  let itemsOverflowLimit   = initialOverflowLimit;
+
+  return {
+    oninit() {
+      filter            = "";
+      itemsOverflowLimit = initialOverflowLimit;
+    },
+
+    view(vnode) {
+      const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
+      const filterDef   = Checklist.filter[type][dataPath];
+      const sf          = filterDef.statusFilter || { selectedStatuses: [], rangeMin: null, rangeMax: null };
+      const possible    = filterDef.possible    || {};
+      const allRegions  = filterDef.all         || [];
+
+      // Legend config for this column (determines which status UI to show)
+      const lc          = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
+      const possibleSt  = filterDef.possibleStatuses || {};
+
+      // ── Search helper ──────────────────────────────────────────────────────
+      function matchesSearch(text) {
+        if (!filter) return true;
+        const t = textLowerCaseAccentless(text);
+        return t.startsWith(filter) || t.indexOf(" " + filter) > 0;
+      }
+
+      // ── Region name lists ──────────────────────────────────────────────────
+      let totalItems          = 0;
+      let filteredPossible    = [];
+      let totalPossibleUnchecked = 0;
+      let itemsOverflowing    = false;
+
+      let showSelected    = false;
+      let selectedItems   = filterDef.selected
+        .filter(item => Object.prototype.hasOwnProperty.call(possible, item) && matchesSearch(item))
+        .map(item => {
+          showSelected = true;
+          return m(DropdownCheckItem, { state: "checked", type, dataPath, item, count: possible[item] || 0 });
+        });
+
+      let showPossible  = false;
+      let possibleItems = Object.keys(possible)
+        .filter(item =>
+          !filterDef.selected.includes(item) &&
+          matchesSearch(item) &&
+          totalItems++ <= itemsOverflowLimit
+        )
+        .map(item => {
+          showPossible = true;
+          totalPossibleUnchecked++;
+          filteredPossible.push(item);
+          return m(DropdownCheckItem, { state: "unchecked", type, dataPath, item, count: possible[item] || 0 });
+        });
+
+      let showImpossible  = false;
+      let impossibleItems = allRegions
+        .filter(item =>
+          !Object.prototype.hasOwnProperty.call(possible, item) &&
+          !filterDef.selected.includes(item) &&
+          matchesSearch(item) &&
+          totalItems++ <= itemsOverflowLimit
+        )
+        .map(item => {
+          showImpossible = true;
+          return m(DropdownCheckItemSkeleton, { state: "inactive", item, count: "" });
+        });
+
+      itemsOverflowing = totalItems > itemsOverflowLimit;
+
+      // ── Status filter section ──────────────────────────────────────────────
+      const hasNumericMode = lc.numericMode !== null;  // gradient or stepped
+      const presentCatRows = lc.categoryRows.filter(r => Object.prototype.hasOwnProperty.call(possibleSt, r.status));
+      const showStatusFilter = hasNumericMode || presentCatRows.length > 0;
+
+      return m(".inner-dropdown-area", [
+        // Region search — always visible at top
+        m(".search-filter",
+          m("input.options-search[type=search][placeholder=" + t("search") + "][id=" + dropdownId + "_text]", {
+            oninput(e) {
+              filter = e.target.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            },
+          })
+        ),
+
+        // Single scrollable zone: regions checklist + status filter
+        m(".options", [
+          // 1. Region items
+          showSelected   ? m(".options-section", selectedItems)   : null,
+          showPossible   ? m(".options-section", possibleItems)   : null,
+          showImpossible ? m(".options-section", impossibleItems) : null,
+          itemsOverflowing
+            ? m(".show-next-items", { onclick() { itemsOverflowLimit += initialOverflowLimit; } },
+                t("next_items_dropdown", [initialOverflowLimit]))
+            : null,
+          showSelected + showPossible + showImpossible == 0
+            ? m(".no-items-filter", t("no_items_filter"))
+            : null,
+
+          // 2. Status filter — scrolls together with the region list
+          showStatusFilter
+            ? m(".mapregions-status-filter", [
+                m(".mapregions-status-filter-title", t("mapregions_status_filter")),
+
+                // Numeric range FIRST (gradient or stepped)
+                hasNumericMode
+                  ? _renderStatusRangeSection(sf, possibleSt, filterDef, type, dataPath)
+                  : null,
+
+                // Category rows SECOND
+                presentCatRows.length > 0
+                  ? _renderStatusCategorySection(presentCatRows, sf, possibleSt, filterDef, type, dataPath)
+                  : null,
+
+                // Clear status filter button
+                _isStatusFilterActive(sf)
+                  ? m(".sf-clear-all.clickable", {
+                      onclick() {
+                        sf.selectedStatuses = [];
+                        sf.rangeMin         = null;
+                        sf.rangeMax         = null;
+                        Checklist.filter.commit();
+                      },
+                    }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+                  : null,
+              ])
+            : null,
+        ]),
+
+        // Fixed bottom: "check all shown" shortcut (when searching) + apply
+        filter.length > 0 && totalPossibleUnchecked > 1
+          ? m(".apply", {
+              onclick() {
+                filterDef.selected = [...new Set([...filterDef.selected, ...filteredPossible])];
+                Checklist.filter.commit();
+                openHandler(false);
+              },
+            }, t("check_all_shown"))
+          : null,
+
+        m(".apply", { onclick() { openHandler(false); } }, t("apply_selection")),
+      ]);
+    },
+  };
+};
+
+// ── Status-filter section helpers (module-level, private) ─────────────────────
+
+function _renderStatusCategorySection(presentCatRows, sf, possibleSt, filterDef, type, dataPath) {
+  const noneSelected = sf.selectedStatuses.length === 0;
+
+  function toggleStatus(status) {
+    if (noneSelected) {
+      // First deselection: exclude only this status → keep all others
+      sf.selectedStatuses = presentCatRows
+        .filter(r => r.status !== status)
+        .map(r => r.status);
+    } else {
+      const idx = sf.selectedStatuses.indexOf(status);
+      if (idx > -1) {
+        sf.selectedStatuses.splice(idx, 1);
+        // All items selected again → clear the filter (equivalent to "no filter")
+        if (sf.selectedStatuses.length === presentCatRows.length) sf.selectedStatuses = [];
+      } else {
+        sf.selectedStatuses.push(status);
+      }
+    }
+    Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+    Checklist.filter.commit();
+  }
+
+  return m(".sf-categories",
+    presentCatRows.map(row => {
+      const isChecked = noneSelected || sf.selectedStatuses.includes(row.status);
+      return m(".option-item", { onclick: () => toggleStatus(row.status) }, [
+        m("img.item-checkbox[src=img/ui/search/checkbox_" + (isChecked ? "checked" : "unchecked") + ".svg]"),
+        m("span.sf-swatch", { style: { backgroundColor: row.fill } }),
+        m(".item-label", row.legend || row.status),
+        m(".item-count", possibleSt[row.status] || ""),
+      ]);
+    })
+  );
+}
+
+function _renderStatusRangeSection(sf, possibleSt, filterDef, type, dataPath) {
+  // Derive min/max from possibleStatuses for placeholder hints
+  const numericVals = Object.keys(possibleSt)
+    .map(s => parseNumericStatus(s))
+    .filter(n => n !== null);
+  const dataMin = numericVals.length ? Math.min(...numericVals) : null;
+  const dataMax = numericVals.length ? Math.max(...numericVals) : null;
+
+  function setRange(field, rawValue) {
+    const n = rawValue === "" ? null : parseFloat(rawValue);
+    sf[field] = (n == null || isNaN(n)) ? null : n;
+    Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+    Checklist.filter.commit();
+  }
+
+  return m(".sf-range", [
+    m(".sf-range-row", [
+      m("span.sf-range-label", t("sf_range_from")),
+      m("input.sf-range-input[type=number]", {
+        value:       sf.rangeMin ?? "",
+        placeholder: dataMin != null ? String(dataMin) : "",
+        oninput(e) { setRange("rangeMin", e.target.value); },
+      }),
+      m("span.sf-range-label", t("sf_range_to")),
+      m("input.sf-range-input[type=number]", {
+        value:       sf.rangeMax ?? "",
+        placeholder: dataMax != null ? String(dataMax) : "",
+        oninput(e) { setRange("rangeMax", e.target.value); },
+      }),
+    ]),
+  ]);
+}
 
 let DropdownMonths = function (initialVnode) {
   return {

@@ -311,7 +311,7 @@ export function getAllColumnInfos(nlDataStructure, langCode) {
 }
 
 export function getItem(tableData, itemName, langCode, defaultValue, Logger) {
-  if(!tableData || !tableData[langCode]) {
+  if (!tableData || !tableData[langCode]) {
     return defaultValue;
   }
 
@@ -712,7 +712,7 @@ export let nlDataStructure = {
             code: {
               name: "Code",
               description:
-                "The shortcode keyword typed after @. Lowercase letters a–z only, with one optional dot separator (e.g. mydb or mydb.type). Must not duplicate another custom entry (overriding a built-in is allowed with a warning).",
+                "The shortcode keyword typed after @. Lowercase letters a-z only, with one optional dot separator (e.g. mydb or mydb.type). Must not duplicate another custom entry (overriding a built-in is allowed with a warning).",
               integrity: {
                 description: "Lowercase letters a-z, optional single dot separator.",
                 allowEmpty: false,
@@ -997,30 +997,65 @@ export let nlDataStructure = {
         mapRegionsLegend: {
           name: "Map regions legend",
           description:
-            "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
+            "Configures the color, legend label, and scale behaviour for every status value or numeric anchor used in <b>mapregions</b> data columns. Four modes are supported and can be combined freely:\n<ul>" +
+            "<li><b>Simple presence/absence:</b> leave Status code empty (or use a single arbitrary code). One row is sufficient.</li>" +
+            "<li><b>Categorical statuses:</b> one row per distinct status string (e.g. <code>native</code>, <code>introduced</code>, <code>vagrant</code>). Each maps to a fixed color.</li>" +
+            "<li><b>Continuous gradient heatmap:</b> two or more anchor rows with Legend type <code>gradient</code>. Status codes use anchor notation (A1-A5, see below). colors are smoothly interpolated between anchors based on each taxon's own data values.</li>" +
+            "<li><b>Stepped (binned) heatmap:</b> like gradient but Legend type is <code>stepped</code>. Each value snaps to the color of the highest anchor it equals or exceeds, with no blending. The actual numeric data value drives the math; bins are purely cosmetic.</li>" +
+            "</ul>" +
+            "Modes can coexist within the same column: add categorical override rows (plain string Status codes, Legend type empty or <code>category</code>) alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\n" +
+            "<b>Column name scoping:</b> By default, rows without a Column name apply to every mapregions column in the project. Fill Column name to restrict a row to one specific map column (e.g. <code>map.europe</code>). This lets different map columns carry entirely different color schemes. The compound pair (Column name + Status code) must be unique across the table.\n\n" +
+            "<b>Dataset context:</b> For dynamic anchor notations (A2-A5), the 'dataset' is the set of all numeric status values present in the <em>current taxon's</em> mapregions object for the given column. Min, max, percentiles, and standard deviation are computed from that taxon's own data, so each taxon has its own color scale. The RegionalDistribution analysis tool uses a separate aggregate scale and is unaffected by these anchor definitions.\n\n" +
+            "This table can be left completely empty if you do not use region maps.",
           columns: {
+            columnName: {
+              name: "Column name",
+              description:
+                "Restricts this legend row to a specific mapregions data column. Enter the exact data path of the column as declared in the <b>Custom data definition</b> table on <b>nl_content</b> (e.g. <code>map</code>, <code>map.europe</code>, <code>distribution</code>). Leave empty to apply the row globally to every mapregions column. Use column-scoped rows whenever different maps in the same project require different color schemes or gradient definitions. The compound pair of this column and Status code must be unique: the same Status code may appear on multiple rows provided each row names a different column.",
+              integrity: {
+                description:
+                  "An existing data path from the Custom data definition table with formatting set to 'mapregions', or empty to apply globally.",
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                defaultValue: "",
+                allowedContent: "dataPath",
+                supportsMultilingual: false,
+              },
+            },
             status: {
               name: "Status code",
               description:
-                "On each line a status code (can be empty, indicates different types of presence in a region) of mapregions to be matched against.",
+                "The status value or anchor position for this row. Interpretation depends on the Legend type.\n\n" +
+                "<b>For <code>category</code> rows</b> (Legend type empty or <code>category</code>): a plain text string matched exactly against the data cell content (e.g. <code>native</code>, <code>introduced</code>, <code>ND</code>, <code>x</code>). Leave empty to define the global fallback entry used when no other status matches a region's value.\n\n" +
+                "<b>For <code>gradient</code> and <code>stepped</code> rows:</b> an anchor position in one of the following notations. All data cells for the column must contain parseable numbers (integers or decimals, may be negative) so the engine can place each region on the scale.\n" +
+                "<ul>" +
+                "<li><b>A1 - Raw value:</b> a plain number. The anchor sits at that exact absolute value in the data. Examples: <code>7.6</code>, <code>0</code>, <code>-5</code>, <code>14</code>. Use when data represents a measured quantity with meaningful absolute thresholds (pH, temperature in °C, concentration).</li>" +
+                "<li><b>A2 - Percentage of range:</b> a number followed by <code>%</code>. <code>0%</code> resolves to the dataset minimum; <code>100%</code> to the maximum; intermediate values are linearly interpolated. Examples: <code>0%</code>, <code>33%</code>, <code>100%</code>. Use when relative position within the data range matters more than absolute value, and when the data author and config author may be different people who cannot coordinate on absolute thresholds.</li>" +
+                "<li><b>A3 - Percentile:</b> a number followed by <code>p</code>. Sets the anchor at that percentile of the data distribution (linear interpolation method). Examples: <code>0p</code>, <code>25p</code>, <code>50p</code>, <code>75p</code>, <code>100p</code>. Supports decimals (e.g. <code>2.5p</code>). Use to highlight distributional extremes or median splits regardless of absolute scale.</li>" +
+                "<li><b>A4 - Standard deviation (Z-score):</b> a number (may be negative or decimal) followed by <code>s</code>. Sets the anchor at that many standard deviations from the dataset mean. Examples: <code>-2s</code>, <code>0s</code>, <code>1s</code>, <code>1.5s</code>. Use to visualise statistical outliers in biometric or population data.</li>" +
+                "<li><b>A5 - Centered / diverging:</b> syntax <code>[±magnitude][modifier]c[centerValue]</code>. Creates a scale that diverges from a declared absolute center point. The modifier is <code>%</code> (percentage of the maximum distance from the center to any data point), <code>s</code> (σ units from the dataset, applied relative to the center), or absent (raw units). The value after <code>c</code> is always a plain raw number. All A5 rows for the same column must declare the same center. Examples: <code>-100%c0</code> (100% of max distance below center 0), <code>50%c14</code> (halfway between center 14 and the furthest positive data point), <code>-2sc28</code> (2σ below a target baseline of 28), <code>-5c10</code> (5 raw units below center 10, identical to A1 value 5 but self-documenting).</li>" +
+                "</ul>" +
+                "A1 through A5 may be mixed freely within the same column. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's color. Edge cases: if dataset min equals max (A2), all values are placed at 50%; if σ equals 0 (A3/A4/A5 with <code>s</code>), all values are treated as at the mean.\n\n" +
+                "<b>Uniqueness:</b> the compound pair (Column name, Status code) must be unique across the table.",
               integrity: {
                 description:
-                  "Single or several characters representing a region status code. E.g. on the map of the world, 'ca:x' (arbitrary status 'x' we may chose to mark present taxa) could represent the taxon is native to Canada, while 'ca:i' could represent 'Introduced'. In this case, two rows would be used: 'x' and 'i'.",
+                  "For category rows: any text string, or empty for the default fallback. For gradient/stepped rows: an anchor notation (A1 plain number; A2 number%; A3 numberp; A4 numbers; A5 number[%|s]cCenter). The compound pair (Column name, Status code) must be unique.",
                 allowEmpty: true,
-                allowDuplicates: "no",
+                allowDuplicates: "yes",
                 defaultValue: "",
                 allowedContent: "any",
                 supportsMultilingual: false,
+                readPercentageNumbersAsPercentageString: true
               },
             },
             fillColor: {
               name: "Fill color",
               description:
-                "The fill color applied to the matching region and to its legend element.",
+                "The fill color applied to the matching region on the SVG map and to its legend swatch. For <code>category</code> rows this is a fixed color. For <code>gradient</code> rows it is the color at this anchor point; colors between anchors are smoothly interpolated. For <code>stepped</code> rows it is the color of the bin whose threshold begins at this anchor.",
               integrity: {
-                description: "",
+                description: "Any valid CSS color value: named color (e.g. green), hex (#2ecc71), rgb(), hsl(), etc.",
                 allowEmpty: false,
-                allowDuplicates: "no",
+                allowDuplicates: "yes",
                 allowedContent: "cssColor",
                 supportsMultilingual: false,
               },
@@ -1028,12 +1063,12 @@ export let nlDataStructure = {
             legend: {
               name: "Legend",
               description:
-                "The content of this column will serve as the text for the legend for the matching status. As this column is multilingual, you can create several columns e.g. Legend:en and Legend:fr.",
+                "Label shown for this row in the map legend. For <code>category</code> rows this label is always displayed. For <code>gradient</code> and <code>stepped</code> rows only rows with a non-empty Legend value contribute an entry to the legend, so you can define many intermediate anchor rows without cluttering the legend — typically you would label only the outermost anchors and any semantically important midpoints (e.g. 'Low', 'Median', 'High'). This column is multilingual: you may create additional columns <code>Legend:en</code>, <code>Legend:fr</code>, etc.",
               integrity: {
                 description:
-                  "A single word or a short text to appear in the legend.",
-                allowEmpty: false,
-                allowDuplicates: "no",
+                  "A single word or short phrase. For gradient/stepped rows, leave empty for intermediate anchors you do not want to appear in the legend.",
+                allowEmpty: true,
+                allowDuplicates: "yes",
                 allowedContent: "any",
                 supportsMultilingual: true,
               },
@@ -1041,13 +1076,33 @@ export let nlDataStructure = {
             appendedLegend: {
               name: "Appended legend",
               description:
-                "The content of this column will appended directly after the 'Title' field of subitems if you chose the 'mapregions' content type in 'Custom data definition'. Field supports markdown.",
+                "Text appended directly after the region name in the inline text list (visible in the taxon card when placement is not <code>details</code>). For example, a status <code>introduced</code> with Appended legend <code>introduced</code> produces 'Germany <em>(introduced)</em>'. Supports Markdown. Only meaningful for <code>category</code> rows; ignored for <code>gradient</code> and <code>stepped</code> rows where the inline text cannot reflect a dynamically computed numeric value. This column is multilingual.",
               integrity: {
-                description: "Any text",
+                description: "Any text or Markdown. Leave empty if no appended annotation is needed, or for gradient/stepped anchor rows.",
                 allowEmpty: true,
                 allowDuplicates: "yes",
                 allowedContent: "any",
                 supportsMultilingual: true,
+              },
+            },
+            legendType: {
+              name: "Legend type",
+              description:
+                "Controls how this row is interpreted by the rendering engine.\n" +
+                "<ul>" +
+                "<li><b>Empty or <code>category</code>:</b> the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This is the default mode and covers simple presence/absence, named statuses (native, introduced, etc.), and categorical override rows mixed into a gradient/stepped column.</li>" +
+                "<li><b><code>gradient</code>:</b> the Status code is an anchor position (A1-A5 notation). colors are smoothly interpolated between adjacent anchors. Requires at least two gradient rows for the same column. Use for continuous data where intermediate values should produce transitional colors (population density, temperature, index values).</li>" +
+                "<li><b><code>stepped</code>:</b> the Status code is an anchor position (A1-A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value — identical logic to histogram binning. No color blending. Use when you want crisp color bands at defined thresholds (abundance classes, binned richness scores).</li>" +
+                "</ul>" +
+                "For a <b>mixed</b> column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with <code>gradient</code> and define the exception row with empty/category. The engine checks for an exact categorical string match first; if the cell content is not a match, it attempts numeric interpolation.",
+              integrity: {
+                description: "Leave empty or enter 'category' for fixed categorical colors. Enter 'gradient' for smooth interpolation between numeric anchors. Enter 'stepped' for hard-edge bins between numeric anchors.",
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                defaultValue: "category",
+                allowedContent: "list",
+                listItems: ["", "category", "gradient", "stepped"],
+                supportsMultilingual: false,
               },
             },
           },

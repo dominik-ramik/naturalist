@@ -444,6 +444,9 @@ export let Settings = {
               )
             ) {
               let displayValues = itemObject[type][dataPath];
+              if (!Array.isArray(displayValues)) {
+                displayValues = [displayValues];
+              }
 
               if (Checklist.getMetaForDataPath(dataPath)?.formatting == "date") {
                 displayValues = itemObject[type][dataPath].map((value) => {

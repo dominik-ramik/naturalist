@@ -18,11 +18,11 @@ import { customTypeNumber } from "./CustomTypeNumber.js";
 import { customTypeDate } from "./CustomTypeDate.js";
 import { customTypeCategory } from "./CustomTypeCategory.js";
 import { customTypeImage } from "./CustomTypeImage.js";
-import { customTypeMapRegions } from "./CustomTypeRegions.js";
+import { customTypeMapregions } from "./CustomTypeMapregions.js";
 import { customTypeSound } from "./CustomTypeSound.js";
 import { customTypeMap } from "./CustomTypeMap.js";
-import { customTypeMonths } from "./CustomTypeMonths.js"; 
-import { customTypeGeopoint } from "./CustomTypeGeopoint.js"; 
+import { customTypeMonths } from "./CustomTypeMonths.js";
+import { customTypeGeopoint } from "./CustomTypeGeopoint.js";
 import { customTypeInterval } from "./CustomTypeInterval.js";
 
 const dataReaders = buildReaders(
@@ -33,7 +33,7 @@ const dataReaders = buildReaders(
   customTypeDate,
   customTypeCategory,
   customTypeImage,
-  customTypeMapRegions,
+  customTypeMapregions,
   customTypeSound,
   customTypeMap,
   customTypeMonths,
@@ -158,7 +158,7 @@ export function loadDataByType(context, computedPath, info) {
     Logger.error(
       `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
     );
-    
+
     if (import.meta.env.DEV) {
       console.error(
         `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}. Check the reader definitions in src/model/customTypes/index.js and ensure the formatting type is correct and imported.`

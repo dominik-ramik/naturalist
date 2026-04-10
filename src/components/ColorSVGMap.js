@@ -3,53 +3,50 @@ export function colorSVGMap(svgObjectElement, regionColors) {
     return;
   }
 
+  const doc = svgObjectElement.contentDocument;
+  if (!doc) return;
+
   //cleanup
   if (svgObjectElement.hasAttribute("data-usedregions")) {
-    svgObjectElement
-      .getAttribute("data-usedregions")
-      .split(" ")
-      .forEach(function (suffixlessRegionCode) {
-        let regionElements =
-          svgObjectElement.contentDocument.getElementsByClassName(
-            suffixlessRegionCode
-          );
+    const prev = svgObjectElement.getAttribute("data-usedregions");
+    if (prev) {
+      prev.split(" ").forEach(function (suffixlessRegionCode) {
+        if (!suffixlessRegionCode) return;
+        let regionElements = doc.getElementsByClassName(suffixlessRegionCode);
 
-        if (regionElements.length > 0) {
-          for (let elIndex = 0; elIndex < regionElements.length; elIndex++) {
-            const el = regionElements[elIndex];
+        for (let elIndex = 0; elIndex < regionElements.length; elIndex++) {
+          const el = regionElements[elIndex];
 
-            el.removeAttribute("fill");
-            el.removeAttribute("style");
-          }
+          el.removeAttribute("fill");
+          el.removeAttribute("style");
         }
       });
+    }
     svgObjectElement.setAttribute("data-usedregions", "");
   }
 
   let regions = Object.keys(regionColors);
 
   if (regions.length > 0) {
-    let usedRegions = "";
+    const usedRegionsList = [];
 
     regions.forEach(function (region) {
-      let regionElements =
-        svgObjectElement.contentDocument.getElementsByClassName(region);
+      let regionElements = doc.getElementsByClassName(region);
 
       if (regionElements.length > 0) {
+        const fill = regionColors[region];
+        const style = "fill: " + fill + "; opacity:1;";
         for (let elIndex = 0; elIndex < regionElements.length; elIndex++) {
           const el = regionElements[elIndex];
 
-          el.setAttribute("fill", regionColors[region]);
-          el.setAttribute(
-            "style",
-            "fill: " + regionColors[region] + "; opacity:1;"
-          );
-
-          usedRegions += region + " ";
+          el.setAttribute("fill", fill);
+          el.setAttribute("style", style);
         }
+
+        usedRegionsList.push(region);
       }
     });
 
-    svgObjectElement.setAttribute("data-usedregions", usedRegions);
+    svgObjectElement.setAttribute("data-usedregions", usedRegionsList.join(" "));
   }
 }

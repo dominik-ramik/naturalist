@@ -16,6 +16,8 @@ import { compressor } from "../components/LZString.js";
 const ManageStore = {
   dataman: null,
   isProcessing: false,
+  isCompilingDownload: false,
+  isPublishing: false,
   errorDetails: "",
   messageCode: "",
   shouldShowUploadForm: Settings.lastKnownUploadFormAvailability(),
@@ -81,7 +83,7 @@ const ManageCard = {
 
 const ActionButton = {
   view: function (vnode) {
-    const { label, onclick, primary, small, icon, background, tall } = vnode.attrs;
+    const { label, onclick, primary, small, icon, background, tall, loading } = vnode.attrs;
     const classes = [
       "manage-btn",
       primary ? "manage-btn-primary" : "",
@@ -93,8 +95,8 @@ const ActionButton = {
 
     return m(
       "button." + classes + "[style=" + (background ? `background-color: ${background};` : "") + "]",
-      { onclick },
-      [icon ? m("img.manage-btn-icon", { src: icon }) : null, label]
+      { onclick, disabled: !!loading },
+      [loading ? m("span.manage-btn-spinner") : (icon ? m("img.manage-btn-icon", { src: icon }) : null), label]
     );
   },
 };
@@ -646,12 +648,18 @@ const SubViews = {
           m(ActionButton, {
             label: t("download_checklist"),
             primary: true,
+            loading: ManageStore.isCompilingDownload,
             onclick: function () {
-              let json = ManageStore.dataman.getCompiledChecklist();
-              var blob = new Blob([compressor.compress(JSON.stringify(json))], {
-                type: "application/json;charset=utf-8",
-              });
-              downloadCompiledData(blob, "checklist.json");
+              ManageStore.isCompilingDownload = true;
+              setTimeout(() => {
+                let json = ManageStore.dataman.getCompiledChecklist();
+                var blob = new Blob([compressor.compress(JSON.stringify(json))], {
+                  type: "application/json;charset=utf-8",
+                });
+                downloadCompiledData(blob, "checklist.json");
+                ManageStore.isCompilingDownload = false;
+                m.redraw();
+              }, 50);
             },
           }),
           m(
@@ -778,6 +786,7 @@ function renderServerUploadForm() {
       onsubmit: function (e) {
         e.preventDefault();
         e.stopPropagation();
+        ManageStore.isPublishing = true;
 
         const formData = new FormData(this);
         let compressed = compressor.compress(
@@ -788,6 +797,7 @@ function renderServerUploadForm() {
 
         request.onreadystatechange = function (event) {
           if (request.readyState === 4) {
+            ManageStore.isPublishing = false;
             if (request.status === 200) {
               let result = "";
               try {
@@ -829,6 +839,7 @@ function renderServerUploadForm() {
               try { parsed = JSON.parse(request.responseText); } catch {}
               ManageStore.errorDetails = parsed?.details ?? (request.statusText.toLowerCase() == "not found" ? t("upload_disabled") : t("network_error") + " " + request.statusText);
               ManageStore.messageCode = parsed?.messageCode ?? "";
+              m.redraw();
               m.route.set("/manage/error");
             }
           }
@@ -849,6 +860,7 @@ function renderServerUploadForm() {
       m(ActionButton, {
         label: t("publish_checklist"),
         primary: true,
+        loading: ManageStore.isPublishing,
         onclick: function (e) {
           e.preventDefault();
           document.getElementById("updateform").requestSubmit();

@@ -4,6 +4,7 @@ import { Checklist } from "./Checklist.js";
 import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { getMonthNumbers } from "./MonthNames.js";
+import { parseNumericStatus } from "../components/MapregionsColorEngine.js";
 
 const selectableFilterTypes = ["text", "mapregions", "category", "months"];
 const rangeFilterTypes = ["number", "interval", "date"];
@@ -55,7 +56,6 @@ function buildHumanReadableRangeFilter(
   return title;
 }
 
-// The filter object and all its methods, as previously in Checklist.js
 export let Filter = {
   taxa: {},
   data: {},
@@ -73,367 +73,227 @@ export let Filter = {
 
   numberOfActive: function () {
     let count = 0;
-
-    if (this.text != "") {
-      count++;
-    }
+    if (this.text !== "") count++;
 
     ["taxa", "data"].forEach(type => {
       Object.keys(Filter[type]).forEach(filterKey => {
-        if (
-          Filter[type][filterKey].selected.length > 0 ||
-          (
-            rangeFilterTypes.includes(Filter[type][filterKey].type) &&
-            Filter[type][filterKey].numeric.operation != ""
-          )
-        ) {
+        const f = Filter[type][filterKey];
+        if (f.selected.length > 0 || (rangeFilterTypes.includes(f.type) && f.numeric.operation !== "")) {
           count++;
         }
-      })
-    })
-
-    //console.log(Filter.taxa, Filter.data, Filter.text, count);
+        if (f.type === "mapregions" && _statusFilterIsActive(f.statusFilter)) {
+          count++;
+        }
+      });
+    });
 
     return count;
   },
 
   setFromQuery: function (query) {
     Filter.clear();
-    ["taxa", "data"].forEach(function (type) {
-      if (query[type]) {
-        Object.keys(query[type]).forEach(function (dataPath) {
-          const filterDef = Filter[type][dataPath];
-          const queryValue = query[type][dataPath];
+    ["taxa", "data"].forEach(type => {
+      if (!query[type]) return;
+      Object.keys(query[type]).forEach(dataPath => {
+        const filterDef  = Filter[type][dataPath];
+        const queryValue = query[type][dataPath];
+        if (filterDef == null) return;
 
-          if(filterDef === undefined || filterDef == null) {
-            return; // skip unknown filters
+        if (filterDef.type === "mapregions") {
+          // Support legacy plain-array format and new { regions, sf } object format
+          const regionsArr = Array.isArray(queryValue)            ? queryValue
+                           : Array.isArray(queryValue?.regions)   ? queryValue.regions
+                           : [];
+          filterDef.selected = regionsArr;
+
+          if (queryValue?.sf) {
+            const sf = queryValue.sf;
+            filterDef.statusFilter.selectedStatuses = Array.isArray(sf.s) ? sf.s : [];
+            filterDef.statusFilter.rangeMin = sf.min ?? null;
+            filterDef.statusFilter.rangeMax = sf.max ?? null;
           }
+          return;
+        }
 
-          if (
-            selectableFilterTypes?.includes(filterDef.type) ||
-            (
-              exactSelectableRangeTypes.includes(filterDef.type) &&
-              Array.isArray(queryValue)
-            )
-          ) {
-            // Ensure values form an array, then optionally cast to numbers
-            let parsedValues = Array.isArray(queryValue) ? queryValue : [queryValue];
-
-            if (filterDef.type === "months") {
-              filterDef.selected = parsedValues.map(v => parseInt(v, 10));
-            } else {
-              filterDef.selected = parsedValues;
-            }
-          } else if (
-            rangeFilterTypes.includes(filterDef.type) &&
-            queryValue &&
-            typeof queryValue === "object"
-          ) {
-            filterDef.numeric.operation =
-              queryValue.o;
-            filterDef.numeric.threshold1 =
-              queryValue.a;
-            if (queryValue.hasOwnProperty("b")) {
-              filterDef.numeric.threshold2 =
-                queryValue.b;
-            }
-          }
-        });
-      }
+        if (
+          selectableFilterTypes?.includes(filterDef.type) ||
+          (exactSelectableRangeTypes.includes(filterDef.type) && Array.isArray(queryValue))
+        ) {
+          let parsedValues = Array.isArray(queryValue) ? queryValue : [queryValue];
+          filterDef.selected = filterDef.type === "months"
+            ? parsedValues.map(v => parseInt(v, 10))
+            : parsedValues;
+        } else if (rangeFilterTypes.includes(filterDef.type) && queryValue && typeof queryValue === "object") {
+          filterDef.numeric.operation  = queryValue.o;
+          filterDef.numeric.threshold1 = queryValue.a;
+          if (queryValue.hasOwnProperty("b")) filterDef.numeric.threshold2 = queryValue.b;
+        }
+      });
     });
-    if (query.text && query.text.length > 0)
-      Filter.text = query.text;
+    if (query.text?.length > 0) Filter.text = query.text;
   },
+
   clear: function () {
-    Object.keys(Filter.taxa).forEach(function (dataPath) {
+    Object.keys(Filter.taxa).forEach(dataPath => {
       Filter.taxa[dataPath].selected = [];
     });
-    Object.keys(Filter.data).forEach(function (dataPath) {
+    Object.keys(Filter.data).forEach(dataPath => {
       Filter.data[dataPath].selected = [];
-      Filter.data[dataPath].numeric = {
-        threshold1: null,
-        threshold2: null,
-        operation: "",
-      };
+      Filter.data[dataPath].numeric = { threshold1: null, threshold2: null, operation: "" };
+      if (Filter.data[dataPath].type === "mapregions") {
+        Filter.data[dataPath].statusFilter    = { selectedStatuses: [], rangeMin: null, rangeMax: null };
+        Filter.data[dataPath].possibleStatuses = {};
+      }
     });
     Filter.text = "";
   },
+
   isEmpty: function () {
     let countFilters = 0;
-    ["taxa", "data"].forEach(function (type) {
-      Object.keys(Filter[type]).forEach(function (dataPath) {
-        if (
-          selectableFilterTypes.includes(Filter[type][dataPath].type)
-        ) {
-          countFilters += Filter[type][dataPath].selected.length;
-        } else if (
-          exactSelectableRangeTypes.includes(Filter[type][dataPath].type) &&
-          Filter[type][dataPath].selected.length > 0 &&
-          !Filter[type][dataPath].numeric.operation
-        ) {
+    ["taxa", "data"].forEach(type => {
+      Object.keys(Filter[type]).forEach(dataPath => {
+        const f = Filter[type][dataPath];
+        if (selectableFilterTypes.includes(f.type)) {
+          countFilters += f.selected.length;
+        } else if (exactSelectableRangeTypes.includes(f.type) && f.selected.length > 0 && !f.numeric.operation) {
           countFilters++;
-        } else if (rangeFilterTypes.includes(Filter[type][dataPath].type)) {
-          if (Filter[type][dataPath].numeric.operation != "") {
-            countFilters++;
-          }
+        } else if (rangeFilterTypes.includes(f.type) && f.numeric.operation !== "") {
+          countFilters++;
+        }
+        if (f.type === "mapregions" && _statusFilterIsActive(f.statusFilter)) {
+          countFilters++;
         }
       });
     });
     if (Filter.text.length > 0) countFilters++;
-
-    return countFilters == 0;
+    return countFilters === 0;
   },
-  numericFilterToHumanReadable: function (
-    dataPath,
-    operation,
-    threshold1,
-    threshold2,
-    formatPre,
-    formatPost,
-    ommitSearchCategory
-  ) {
+
+  numericFilterToHumanReadable: function (dataPath, operation, threshold1, threshold2, formatPre, formatPost, ommitSearchCategory) {
     return buildHumanReadableRangeFilter(
-      dataPath,
-      operation,
-      threshold1,
-      threshold2,
-      (threshold) =>
-        threshold === null || threshold === undefined
-          ? ""
-          : threshold.toLocaleString(),
-      formatPre,
-      formatPost,
-      ommitSearchCategory
+      dataPath, operation, threshold1, threshold2,
+      (threshold) => threshold === null || threshold === undefined ? "" : threshold.toLocaleString(),
+      formatPre, formatPost, ommitSearchCategory
     );
   },
+
   monthsFilterSortedKeys: function () {
     return getMonthNumbers();
   },
+
   monthLabelForValue: function (monthNumber) {
     return Checklist.getMonthLabel(monthNumber);
   },
-  dateFilterToHumanReadable: function (
-    dataPath,
-    operation,
-    threshold1,
-    threshold2,
-    formatPre,
-    formatPost,
-    ommitSearchCategory
-  ) {
+
+  dateFilterToHumanReadable: function (dataPath, operation, threshold1, threshold2, formatPre, formatPost, ommitSearchCategory) {
     const dateFormat = Checklist.getCurrentDateFormat();
-
     return buildHumanReadableRangeFilter(
-      dataPath,
-      operation,
-      threshold1,
-      threshold2,
+      dataPath, operation, threshold1, threshold2,
       (threshold) => {
-        if (threshold === null || threshold === undefined) {
-          return "";
-        }
-
+        if (threshold === null || threshold === undefined) return "";
         const dateObj = dayjs(threshold);
-        return dateObj.isValid()
-          ? dateObj.format(dateFormat)
-          : threshold.toString();
+        return dateObj.isValid() ? dateObj.format(dateFormat) : threshold.toString();
       },
-      formatPre,
-      formatPost,
-      ommitSearchCategory
+      formatPre, formatPost, ommitSearchCategory
     );
   },
-  intervalFilterToHumanReadable: function (
-    dataPath,
-    operation,
-    threshold1,
-    threshold2,
-    formatPre,
-    formatPost,
-    ommitSearchCategory
-  ) {
+
+  intervalFilterToHumanReadable: function (dataPath, operation, threshold1, threshold2, formatPre, formatPost, ommitSearchCategory) {
     let title = ommitSearchCategory ? "" :
       (formatPre || "") + Checklist.getMetaForDataPath(dataPath).searchCategory + (formatPost || "") + " ";
-    const fmt = v => (v == null ? "" : v.toLocaleString());
+    const fmt   = v => (v == null ? "" : v.toLocaleString());
     const opDef = Filter.intervalFilters[operation];
     title += t("interval_filter_" + operation + "_short");
     title += " " + fmt(threshold1);
-    if (opDef?.values > 1) {
-      title += " " + t("numeric_filter_and") + " " + fmt(threshold2);
-    }
+    if (opDef?.values > 1) title += " " + t("numeric_filter_and") + " " + fmt(threshold2);
     return title;
   },
+
   intervalFilters: {
-    // Each comparer receives the interval endpoints plus the user thresholds.
-    contains: {
-      operation: "contains",
-      icon: "contains",
-      values: 1,
-      // Does [from, to] contain point t1?
-      comparer: function (from, to, t1) { return from <= t1 && t1 <= to; },
-    },
-    overlaps: {
-      operation: "overlaps",
-      icon: "overlaps",
-      values: 2,
-      // Does [from, to] have any overlap with [t1, t2]?
-      comparer: function (from, to, t1, t2) { return from <= t2 && to >= t1; },
-    },
-    fully_inside: {
-      operation: "fully_inside",
-      icon: "fully_inside",
-      values: 2,
-      // Is [from, to] completely contained within [t1, t2]?
-      comparer: function (from, to, t1, t2) { return from >= t1 && to <= t2; },
-    },
+    contains:     { operation: "contains",     icon: "contains",     values: 1, comparer: (from, to, t1)     => from <= t1 && t1 <= to },
+    overlaps:     { operation: "overlaps",     icon: "overlaps",     values: 2, comparer: (from, to, t1, t2) => from <= t2 && to >= t1 },
+    fully_inside: { operation: "fully_inside", icon: "fully_inside", values: 2, comparer: (from, to, t1, t2) => from >= t1 && to <= t2 },
   },
 
   numericFilters: {
-    equal: {
-      operation: "equal",
-      icon: "equal",
-      values: 1,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest == threshold1;
-      },
-    },
-    lesser: {
-      operation: "lesser",
-      icon: "lesser",
-      values: 1,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest < threshold1;
-      },
-    },
-    lesserequal: {
-      operation: "lesserequal",
-      icon: "lesserequal",
-      values: 1,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest <= threshold1;
-      },
-    },
-    greater: {
-      operation: "greater",
-      icon: "greater",
-      values: 1,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest > threshold1;
-      },
-    },
-    greaterequal: {
-      operation: "greaterequal",
-      icon: "greaterequal",
-      values: 1,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest >= threshold1;
-      },
-    },
-    between: {
-      operation: "between",
-      icon: "between",
-      values: 2,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return valueToTest >= threshold1 && valueToTest <= threshold2;
-      },
-    },
-    around: {
-      operation: "around",
-      icon: "around",
-      values: 2,
-      comparer: function (valueToTest, threshold1, threshold2) {
-        return (
-          valueToTest >= threshold1 - threshold2 &&
-          valueToTest <= threshold1 + threshold2
-        );
-      },
-    },
+    equal:        { operation: "equal",        icon: "equal",        values: 1, comparer: (v, t1)     => v == t1 },
+    lesser:       { operation: "lesser",       icon: "lesser",       values: 1, comparer: (v, t1)     => v < t1 },
+    lesserequal:  { operation: "lesserequal",  icon: "lesserequal",  values: 1, comparer: (v, t1)     => v <= t1 },
+    greater:      { operation: "greater",      icon: "greater",      values: 1, comparer: (v, t1)     => v > t1 },
+    greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1)     => v >= t1 },
+    between:      { operation: "between",      icon: "between",      values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
+    around:       { operation: "around",       icon: "around",       values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
   },
 
   calculatePossibleFilterValues: function (taxa) {
-    //clear filter possible data
+    // ── Clear ────────────────────────────────────────────────────────────────
     ["taxa", "data"].forEach(function (dataType) {
       Object.keys(Filter[dataType]).forEach(function (dataPath) {
-        if (Filter.delayCommitDataPath == dataType + "." + dataPath) {
-          return; //delay this dataPath
-        } else {
-          if (
-            selectableFilterTypes.includes(Filter[dataType][dataPath].type)
-          ) {
-            Filter[dataType][dataPath].possible = {};
+        if (Filter.delayCommitDataPath == dataType + "." + dataPath) return;
+
+        if (selectableFilterTypes.includes(Filter[dataType][dataPath].type)) {
+          Filter[dataType][dataPath].possible = {};
+          // FIX 2: also reset possibleStatuses for mapregions
+          if (Filter[dataType][dataPath].type === "mapregions") {
+            Filter[dataType][dataPath].possibleStatuses = {};
           }
-          if (rangeFilterTypes.includes(Filter[dataType][dataPath].type)) {
-            Filter[dataType][dataPath].possible = [];
-            Filter[dataType][dataPath].min = null;
-            Filter[dataType][dataPath].max = null;
-          }
+        }
+        if (rangeFilterTypes.includes(Filter[dataType][dataPath].type)) {
+          Filter[dataType][dataPath].possible = [];
+          Filter[dataType][dataPath].min = null;
+          Filter[dataType][dataPath].max = null;
         }
       });
     });
 
-    taxa.forEach(function (taxon, index) {
-      //add number of occurrences of possible taxa items
+    // ── Accumulate ───────────────────────────────────────────────────────────
+    taxa.forEach(function (taxon) {
       Object.keys(Filter.taxa).forEach(function (dataPath, index) {
-        if (Filter.delayCommitDataPath == "taxa." + dataPath) {
-          return; //delay this dataPath
-        }
-        if (index >= taxon.t.length || taxon.t[index] === null) {
-          return; //happens when we have data items on a higher than lowest ranking taxon (eg. genus)
-        }
+        if (Filter.delayCommitDataPath == "taxa." + dataPath) return;
+        if (index >= taxon.t.length || taxon.t[index] === null) return;
         let value = taxon.t[index].name;
-        if (
-          Filter.taxa[dataPath].type == "text" ||
-          Filter.data[dataPath].type == "mapregions"
-        ) {
+        if (Filter.taxa[dataPath].type == "text" || Filter.data[dataPath]?.type == "mapregions") {
           if (!Filter.taxa[dataPath].possible.hasOwnProperty(value)) {
             Filter.taxa[dataPath].possible[value] = 0;
           }
           Filter.taxa[dataPath].possible[value]++;
         }
       });
-      //add number of occurrences of possible data items
+
       Object.keys(Filter.data).forEach(function (dataPath) {
-        if (Filter.delayCommitDataPath == "data." + dataPath) {
-          return; //delay this dataPath
+        if (Filter.delayCommitDataPath == "data." + dataPath) return;
+
+        let rawValue = Checklist.getDataFromDataPath(taxon.d, dataPath);
+        if (rawValue === null) return;
+
+        // FIX 1: collect status values from the raw mapData object BEFORE getAllLeafData
+        // (inside the leafData loop `value` is shadowed with a region-name string)
+        if (Filter.data[dataPath].type === "mapregions") {
+          _collectPossibleStatuses(rawValue, dataPath);
         }
-        let value = Checklist.getDataFromDataPath(taxon.d, dataPath);
 
-        if (value === null) {
-          return;
-        }
+        let leafData = Checklist.getAllLeafData(rawValue, false, dataPath);
 
-        let leafData = Checklist.getAllLeafData(value, false, dataPath);
-        if (
-          selectableFilterTypes.includes(Filter.data[dataPath].type)
-        ) {
-          leafData.forEach(function (value) {
-            if (typeof value === "string" && value.trim() == "") {
-              return;
+        if (selectableFilterTypes.includes(Filter.data[dataPath].type)) {
+          leafData.forEach(function (leafValue) {
+            if (typeof leafValue === "string" && leafValue.trim() == "") return;
+            if (!Filter.data[dataPath].possible.hasOwnProperty(leafValue)) {
+              Filter.data[dataPath].possible[leafValue] = 0;
             }
-
-            if (
-              !Filter.data[dataPath].possible.hasOwnProperty(value)
-            ) {
-              Filter.data[dataPath].possible[value] = 0;
-            }
-            Filter.data[dataPath].possible[value]++;
+            Filter.data[dataPath].possible[leafValue]++;
           });
         } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
           leafData.forEach(function (value) {
             if (Filter.data[dataPath].type === "interval") {
               if (!Array.isArray(value) || value.length !== 2) return;
               Filter.data[dataPath].possible.push(value);
-              Filter.data[dataPath].min = Filter.data[dataPath].min === null
-                ? value[0] : Math.min(Filter.data[dataPath].min, value[0]);
-              Filter.data[dataPath].max = Filter.data[dataPath].max === null
-                ? value[1] : Math.max(Filter.data[dataPath].max, value[1]);
+              Filter.data[dataPath].min = Filter.data[dataPath].min === null ? value[0] : Math.min(Filter.data[dataPath].min, value[0]);
+              Filter.data[dataPath].max = Filter.data[dataPath].max === null ? value[1] : Math.max(Filter.data[dataPath].max, value[1]);
             } else {
               if (typeof value !== "number" || isNaN(value)) return;
               Filter.data[dataPath].possible.push(value);
-              Filter.data[dataPath].min = Filter.data[dataPath].min === null
-                ? value : Math.min(Filter.data[dataPath].min, value);
-              Filter.data[dataPath].max = Filter.data[dataPath].max === null
-                ? value : Math.max(Filter.data[dataPath].max, value);
+              Filter.data[dataPath].min = Filter.data[dataPath].min === null ? value : Math.min(Filter.data[dataPath].min, value);
+              Filter.data[dataPath].max = Filter.data[dataPath].max === null ? value : Math.max(Filter.data[dataPath].max, value);
             }
           });
         }
@@ -442,95 +302,78 @@ export let Filter = {
 
     Object.keys(Filter.data).forEach(function (dataPath) {
       if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
-        if (
-          Filter.data[dataPath].globalMin === undefined ||
-          Filter.data[dataPath].globalMin === null
-        ) {
-          Filter.data[dataPath].globalMin =
-            Filter.data[dataPath].min;
+        if (Filter.data[dataPath].globalMin === undefined || Filter.data[dataPath].globalMin === null) {
+          Filter.data[dataPath].globalMin = Filter.data[dataPath].min;
         }
-        if (
-          Filter.data[dataPath].globalMax === undefined ||
-          Filter.data[dataPath].globalMax === null
-        ) {
-          Filter.data[dataPath].globalMax =
-            Filter.data[dataPath].max;
+        if (Filter.data[dataPath].globalMax === undefined || Filter.data[dataPath].globalMax === null) {
+          Filter.data[dataPath].globalMax = Filter.data[dataPath].max;
         }
-
-        if (
-          exactSelectableRangeTypes.includes(Filter.data[dataPath].type) &&
-          Filter.data[dataPath].numeric.operation != ""
-        ) {
-          Filter.data[dataPath].selected = getSortedUniqueNumericValues(
-            Filter.data[dataPath].possible
-          );
+        if (exactSelectableRangeTypes.includes(Filter.data[dataPath].type) && Filter.data[dataPath].numeric.operation != "") {
+          Filter.data[dataPath].selected = getSortedUniqueNumericValues(Filter.data[dataPath].possible);
         }
       }
     });
   },
 
+  // FIX 3: queryKey — mapregions must be handled BEFORE the generic selectableFilterTypes branch
+  // because mapregions IS in selectableFilterTypes (making the old else-if dead code).
   queryKey: function (excludedFilterKey = "") {
     let key = { taxa: {}, data: {} };
+
     Object.keys(key).forEach(function (type) {
       Object.keys(Filter[type]).forEach(function (dataPath) {
-        if (excludedFilterKey == type + "." + dataPath) {
+        if (excludedFilterKey == type + "." + dataPath) return;
+
+        const fd    = Filter[type][dataPath];
+        const ftype = fd.type;
+
+        // ── mapregions: serialize region list + statusFilter ──────────────────
+        if (ftype === "mapregions") {
+          const sfActive = _statusFilterIsActive(fd.statusFilter);
+          if (fd.selected.length > 0 || sfActive) {
+            const obj = { regions: fd.selected };
+            if (sfActive) {
+              obj.sf = {};
+              if (fd.statusFilter.selectedStatuses.length > 0) obj.sf.s   = fd.statusFilter.selectedStatuses;
+              if (fd.statusFilter.rangeMin !== null)           obj.sf.min = fd.statusFilter.rangeMin;
+              if (fd.statusFilter.rangeMax !== null)           obj.sf.max = fd.statusFilter.rangeMax;
+            }
+            key[type][dataPath] = obj;
+          }
           return;
         }
 
-        if (
-          selectableFilterTypes.includes(Filter[type][dataPath].type)
-        ) {
-          if (Filter[type][dataPath].selected.length > 0) {
+        // ── other selectable types ─────────────────────────────────────────────
+        if (selectableFilterTypes.includes(ftype)) {
+          if (fd.selected.length > 0) {
             key[type][dataPath] = [];
           }
-          Filter[type][dataPath].selected.forEach(function (
-            selected
-          ) {
-            key[type][dataPath].push(selected);
-          });
-        } else if (
-          exactSelectableRangeTypes.includes(Filter[type][dataPath].type) &&
-          Filter[type][dataPath].selected.length > 0 &&
-          !Filter[type][dataPath].numeric.operation
-        ) {
+          fd.selected.forEach(selected => key[type][dataPath].push(selected));
+          return;
+        }
+
+        // ── exact-select range (list mode) ─────────────────────────────────────
+        if (exactSelectableRangeTypes.includes(ftype) && fd.selected.length > 0 && !fd.numeric.operation) {
           key[type][dataPath] = [];
-          Filter[type][dataPath].selected.forEach(function (selected) {
-            key[type][dataPath].push(selected);
-          });
-        } else if (rangeFilterTypes.includes(Filter[type][dataPath].type)) {
-          if (Filter[type][dataPath].numeric.operation != "") {
-            key[type][dataPath] = {};
-            key[type][dataPath].o =
-              Filter[type][dataPath].numeric.operation;
-            key[type][dataPath].a =
-              Filter[type][dataPath].numeric.threshold1;
-            const opKey = Filter[type][dataPath].numeric.operation;
-            const opDef = Filter[type][dataPath].type === "interval"
-              ? Filter.intervalFilters[opKey]
-              : Filter.numericFilters[opKey];
-            if (opDef?.values > 1) {
-              key[type][dataPath].b =
-                Filter[type][dataPath].numeric.threshold2;
-            }
-          }
+          fd.selected.forEach(selected => key[type][dataPath].push(selected));
+          return;
+        }
+
+        // ── range with numeric operation ───────────────────────────────────────
+        if (rangeFilterTypes.includes(ftype) && fd.numeric.operation !== "") {
+          key[type][dataPath] = { o: fd.numeric.operation, a: fd.numeric.threshold1 };
+          const opKey = fd.numeric.operation;
+          const opDef = ftype === "interval" ? Filter.intervalFilters[opKey] : Filter.numericFilters[opKey];
+          if (opDef?.values > 1) key[type][dataPath].b = fd.numeric.threshold2;
         }
       });
     });
 
-    if (Object.keys(key.taxa).length == 0) {
-      delete key.taxa;
-    }
-    if (Object.keys(key.data).length == 0) {
-      delete key.data;
-    }
+    if (Object.keys(key.taxa).length == 0) delete key.taxa;
+    if (Object.keys(key.data).length == 0) delete key.data;
+    if (Filter.text.length > 0) key.text = Filter.text;
 
-    if (Filter.text.length > 0) {
-      key.text = Filter.text;
-    }
-
-    let stringKey = JSON.stringify(key);
-
-    return stringKey;
+    return JSON.stringify(key);
   },
 
   queryCache: {
@@ -538,7 +381,6 @@ export let Filter = {
       let queryKey = Filter.queryKey(excludedFilterKey);
       Filter._queryResultCache[queryKey] = {
         taxa: searchResults,
-        // Store only a lightweight snapshot of filter state instead of deep cloning
         filterSnapshot: {
           text: Filter.text,
           taxa: Filter._createFilterSnapshot(Filter.taxa),
@@ -548,12 +390,9 @@ export let Filter = {
     },
     retrieve: function (excludedFilterKey = "") {
       let queryKey = Filter.queryKey(excludedFilterKey);
-
-      if (Filter._queryResultCache.hasOwnProperty(queryKey)) {
-        return Filter._queryResultCache[queryKey];
-      }
-
-      return false;
+      return Filter._queryResultCache.hasOwnProperty(queryKey)
+        ? Filter._queryResultCache[queryKey]
+        : false;
     },
   },
 
@@ -567,16 +406,11 @@ export let Filter = {
 
   getRangeFilterPreviewData: function (dataPath) {
     let previewTaxa = Filter.getTaxaForCurrentQueryExcluding("data", dataPath);
-    let possible = [];
-    let min = null;
-    let max = null;
+    let possible = [], min = null, max = null;
 
     previewTaxa.forEach(function (taxon) {
       let value = Checklist.getDataFromDataPath(taxon.d, dataPath);
-
-      if (value === null) {
-        return;
-      }
+      if (value === null) return;
 
       let leafData = Checklist.getAllLeafData(value, false, dataPath);
       const isInterval = Filter.data[dataPath].type === "interval";
@@ -595,11 +429,7 @@ export let Filter = {
       });
     });
 
-    return {
-      possible,
-      min,
-      max,
-    };
+    return { possible, min, max };
   },
 
   _getTaxaForQuery: function (excludedFilterKey = "") {
@@ -607,152 +437,93 @@ export let Filter = {
 
     Filter._sanitizeFilters();
 
-    let activeFilters = Filter._getActiveFilters(excludedFilterKey);
-    let hasActiveFilters =
-      activeFilters.taxa.length > 0 || activeFilters.data.length > 0;
+    let activeFilters   = Filter._getActiveFilters(excludedFilterKey);
+    let hasActiveFilters = activeFilters.taxa.length > 0 || activeFilters.data.length > 0;
 
     if (!hasActiveFilters && Filter.text.length == 0) {
       let allData = Checklist.getData().checklist;
-      if (!excludedFilterKey) {
-        Filter.calculatePossibleFilterValues(allData);
-      }
+      if (!excludedFilterKey) Filter.calculatePossibleFilterValues(allData);
       return allData;
     }
 
     let cacheResult = Filter.queryCache.retrieve(excludedFilterKey);
     if (cacheResult) {
-      if (!excludedFilterKey) {
-        Filter.calculatePossibleFilterValues(cacheResult.taxa);
-      }
+      if (!excludedFilterKey) Filter.calculatePossibleFilterValues(cacheResult.taxa);
       return cacheResult.taxa;
     }
 
     let finalSearchResults = Filter._runActiveFilterQuery(activeFilters);
-
-    if (!excludedFilterKey) {
-      Filter.calculatePossibleFilterValues(finalSearchResults);
-    }
+    if (!excludedFilterKey) Filter.calculatePossibleFilterValues(finalSearchResults);
     Filter.queryCache.cache(finalSearchResults, excludedFilterKey);
 
     return finalSearchResults;
   },
 
   _runActiveFilterQuery: function (activeFilters) {
-    let includeChildren = Settings.includeMatchChildren();
-    let checklistData = Checklist.getData().checklist;
-
-    let currentLang = Checklist.getCurrentLanguage();
+    let includeChildren   = Settings.includeMatchChildren();
+    let checklistData     = Checklist.getData().checklist;
+    let currentLang       = Checklist.getCurrentLanguage();
     let fullTextIndexArray = Checklist._dataFulltextIndex
       ? Checklist._dataFulltextIndex[currentLang]
       : null;
 
-    // --- PREPARE REQUIREMENTS ---
     let requirements = [];
-    activeFilters.taxa.forEach((f) => {
-      requirements.push({ type: "taxa", filter: f, bit: 1 << requirements.length });
-    });
-
-    activeFilters.data.forEach((f) => {
-      requirements.push({ type: "data", filter: f, bit: 1 << requirements.length });
-    });
+    activeFilters.taxa.forEach(f  => requirements.push({ type: "taxa", filter: f, bit: 1 << requirements.length }));
+    activeFilters.data.forEach(f  => requirements.push({ type: "data", filter: f, bit: 1 << requirements.length }));
 
     if (Filter.text.length > 0) {
-      // 1. Split by the OR separator to identify potential terms
-      let rawTerms = Filter.text.split(Settings.SEARCH_OR_SEPARATOR);
-
-      // 2. Process terms: Normalize, Trim, Escape, and Filter invalid ones
-      let validTerms = rawTerms.map(function (term) {
-        // Normalize (lowercase/accents) and remove surrounding whitespace
-        let clean = textLowerCaseAccentless(term).trim();
-
-        // Escape Regex characters to ensure text is treated literally
-        return clean.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-      }).filter(function (term) {
-        // Remove empty strings
-        return term.length > 0;
-      });
-
-      // 3. Construct Regex only if we have valid terms
+      let rawTerms   = Filter.text.split(Settings.SEARCH_OR_SEPARATOR);
+      let validTerms = rawTerms
+        .map(term => textLowerCaseAccentless(term).trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"))
+        .filter(term => term.length > 0);
       if (validTerms.length > 0) {
-        // Join terms with OR operator, prepending word boundary (\b) to each
-        // Example: "term1" and "term2" becomes "\bterm1|\bterm2"
-        // Note: We use "|" here as it is the standard Regex OR operator, regardless of the UI separator
-        let pattern = validTerms.map(t => "\\b" + t).join("|");
-
-        // Wrap in non-capturing group for safety: (?:\bterm1|\bterm2)
-        let regex = new RegExp("(?:" + pattern + ")", "i");
-
-        requirements.push({ type: "text", regex: regex, bit: 1 << requirements.length });
+        let regex = new RegExp("(?:" + validTerms.map(t => "\\b" + t).join("|") + ")", "i");
+        requirements.push({ type: "text", regex, bit: 1 << requirements.length });
       }
     }
 
     const TARGET_MASK = (1 << requirements.length) - 1;
-    const dataLength = checklistData.length;
+    const dataLength  = checklistData.length;
+    let localMasks    = new Int32Array(dataLength);
+    let pathMap       = new Map();
+    let pathKeys      = new Array(dataLength);
 
-    // --- DATA STRUCTURES ---
-    // Stores the local match mask for every item (Order Independent)
-    let localMasks = new Int32Array(dataLength);
-    // Maps unique path string -> index in checklistData
-    let pathMap = new Map();
-    // Cache path keys to avoid regenerating strings in Pass 2
-    let pathKeys = new Array(dataLength);
-
-    // --- PASS 1: CALCULATE LOCAL COMPLIANCE ---
     for (let i = 0; i < dataLength; i++) {
-      let item = checklistData[i];
-      // Generate and cache the unique path key
+      let item    = checklistData[i];
       let pathKey = item.t.filter(t => t !== null).map(t => t.name).join("|");
       pathKeys[i] = pathKey;
       pathMap.set(pathKey, i);
 
       let localMask = 0;
       for (let r = 0; r < requirements.length; r++) {
-        let req = requirements[r];
+        let req    = requirements[r];
         let passed = false;
-
         if (req.type === "taxa") {
-          if (req.filter.index < item.t.length && item.t[req.filter.index] !== null && req.filter.selected.includes(item.t[req.filter.index].name)) {
-            passed = true;
-          }
+          if (req.filter.index < item.t.length && item.t[req.filter.index] !== null && req.filter.selected.includes(item.t[req.filter.index].name)) passed = true;
         } else if (req.type === "data") {
           passed = Filter._checkDataFilters(item, [req.filter]);
         } else if (req.type === "text") {
-          let searchableText = fullTextIndexArray
-            ? fullTextIndexArray[i]
-            : Checklist.getSearchableTextForTaxon(i);
-
+          let searchableText = fullTextIndexArray ? fullTextIndexArray[i] : Checklist.getSearchableTextForTaxon(i);
           passed = req.regex.test(searchableText);
         }
-
         if (passed) localMask |= req.bit;
       }
       localMasks[i] = localMask;
     }
 
-    let matchedItems = [];
+    let matchedItems  = [];
     let matchedKeySet = new Set();
-    let parentKeySet = new Set();
+    let parentKeySet  = new Set();
 
-    // --- PASS 2: RESOLVE INHERITANCE ---
     for (let i = 0; i < dataLength; i++) {
-      let item = checklistData[i];
+      let item        = checklistData[i];
       let currentMask = localMasks[i];
 
-      // If local match isn't perfect and we are allowed to inherit...
       if (currentMask !== TARGET_MASK && includeChildren) {
         let tempPath = pathKeys[i];
-
-        // Walk up the tree to find ancestors
         while (tempPath.indexOf("|") > -1) {
           tempPath = tempPath.substring(0, tempPath.lastIndexOf("|"));
-
-          if (pathMap.has(tempPath)) {
-            let parentIndex = pathMap.get(tempPath);
-            // INHERITANCE LOGIC: Child inherits the requirements met by the parent
-            currentMask |= localMasks[parentIndex];
-          }
-
-          // Optimization: If we already match everything, stop looking up
+          if (pathMap.has(tempPath)) currentMask |= localMasks[pathMap.get(tempPath)];
           if (currentMask === TARGET_MASK) break;
         }
       }
@@ -762,32 +533,23 @@ export let Filter = {
         let itemKey = item._key || pathKeys[i];
         matchedKeySet.add(itemKey);
 
-        // Ensure tree structure (parents) are added to results later
         let tempPath = "";
         for (let k = 0; k < item.t.length - 1; k++) {
           if (item.t[k] === null) continue;
           tempPath += (tempPath.length > 0 ? "|" : "") + item.t[k].name;
-          if (!matchedKeySet.has(tempPath)) {
-            parentKeySet.add(tempPath);
-          }
+          if (!matchedKeySet.has(tempPath)) parentKeySet.add(tempPath);
         }
       }
     }
 
-    let finalSearchResults = Filter._assembleResults(matchedItems, parentKeySet, checklistData);
-
-    return finalSearchResults;
+    return Filter._assembleResults(matchedItems, parentKeySet, checklistData);
   },
 
-  // Helper methods
   _sanitizeFilters: function () {
-    // Remove invalid filter values
-    ["taxa", "data"].forEach(function (type) {
-      Object.keys(Filter[type]).forEach(function (dataPath) {
+    ["taxa", "data"].forEach(type => {
+      Object.keys(Filter[type]).forEach(dataPath => {
         if (Filter[type][dataPath].selected) {
-          Filter[type][dataPath].selected = Filter[type][dataPath].selected.filter(
-            v => v != null && v !== ""
-          );
+          Filter[type][dataPath].selected = Filter[type][dataPath].selected.filter(v => v != null && v !== "");
         }
       });
     });
@@ -798,61 +560,45 @@ export let Filter = {
     Object.keys(filterObj).forEach(key => {
       snapshot[key] = {
         selected: [...(filterObj[key].selected || [])],
-        numeric: filterObj[key].numeric ? { ...filterObj[key].numeric } : null
+        numeric:  filterObj[key].numeric ? { ...filterObj[key].numeric } : null
       };
     });
     return snapshot;
   },
 
+  // FIX 4: _getActiveFilters — handle mapregions explicitly so that:
+  //   a) statusFilter is included in the pushed object
+  //   b) a statusFilter-only active state (selected.length === 0) is still pushed
   _getActiveFilters: function (excludedFilterKey = "") {
-    let active = { taxa: [], data: [] };
-
-    // Get the keys once to establish the index order
-    let taxaKeys = Object.keys(Filter.taxa);
+    let active    = { taxa: [], data: [] };
+    let taxaKeys  = Object.keys(Filter.taxa);
 
     taxaKeys.forEach((dataPath, index) => {
-      if (excludedFilterKey == "taxa." + dataPath) {
-        return;
-      }
-
+      if (excludedFilterKey == "taxa." + dataPath) return;
       if (Filter.taxa[dataPath].selected.length > 0) {
-        active.taxa.push({
-          dataPath,
-          index: index, // Store the pre-calculated index
-          selected: Filter.taxa[dataPath].selected
-        });
+        active.taxa.push({ dataPath, index, selected: Filter.taxa[dataPath].selected });
       }
     });
 
     Object.keys(Filter.data).forEach(dataPath => {
-      if (excludedFilterKey == "data." + dataPath) {
-        return;
-      }
+      if (excludedFilterKey == "data." + dataPath) return;
 
-      if (
-        exactSelectableRangeTypes.includes(Filter.data[dataPath].type) &&
-        Filter.data[dataPath].selected.length > 0 &&
-        !Filter.data[dataPath].numeric.operation
-      ) {
-        active.data.push({
-          dataPath,
-          type: Filter.data[dataPath].type,
-          selected: Filter.data[dataPath].selected
-        });
-      } else if (rangeFilterTypes.includes(Filter.data[dataPath].type)) {
-        if (Filter.data[dataPath].numeric.operation) {
-          active.data.push({
-            dataPath,
-            type: Filter.data[dataPath].type,
-            numeric: Filter.data[dataPath].numeric
-          });
+      const fd    = Filter.data[dataPath];
+      const ftype = fd.type;
+
+      if (exactSelectableRangeTypes.includes(ftype) && fd.selected.length > 0 && !fd.numeric.operation) {
+        active.data.push({ dataPath, type: ftype, selected: fd.selected });
+      } else if (rangeFilterTypes.includes(ftype)) {
+        if (fd.numeric.operation) active.data.push({ dataPath, type: ftype, numeric: fd.numeric });
+      } else if (ftype === "mapregions") {
+        // Must handle mapregions BEFORE the generic selected.length check so we can
+        // (a) include statusFilter in the pushed object and
+        // (b) push even when selected is empty but statusFilter is active
+        if (fd.selected.length > 0 || _statusFilterIsActive(fd.statusFilter)) {
+          active.data.push({ dataPath, type: ftype, selected: fd.selected, statusFilter: fd.statusFilter });
         }
-      } else if (Filter.data[dataPath].selected.length > 0) {
-        active.data.push({
-          dataPath,
-          type: Filter.data[dataPath].type,
-          selected: Filter.data[dataPath].selected
-        });
+      } else if (fd.selected.length > 0) {
+        active.data.push({ dataPath, type: ftype, selected: fd.selected });
       }
     });
 
@@ -861,15 +607,9 @@ export let Filter = {
 
   _checkTaxaFilters: function (item, taxaFilters) {
     for (let filter of taxaFilters) {
-      // Use the pre-calculated index from _getActiveFilters
       let taxonIndex = filter.index;
-
       if (taxonIndex >= item.t.length || item.t[taxonIndex] === null) return false;
-      let value = item.t[taxonIndex].name;
-
-      if (!filter.selected.includes(value)) {
-        return false;
-      }
+      if (!filter.selected.includes(item.t[taxonIndex].name)) return false;
     }
     return true;
   },
@@ -878,39 +618,28 @@ export let Filter = {
     for (let filter of dataFilters) {
       let value = Checklist.getDataFromDataPath(item.d, filter.dataPath);
 
+      if (filter.type === "mapregions") {
+        if (!value || typeof value !== "object") return false;
+        if (!_checkMapregionsFilter(value, filter)) return false;
+        continue;
+      }
+
       if (value === null) return false;
 
-      if (
-        exactSelectableRangeTypes.includes(filter.type) &&
-        (!filter.numeric || !filter.numeric.operation)
-      ) {
+      if (exactSelectableRangeTypes.includes(filter.type) && (!filter.numeric || !filter.numeric.operation)) {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
-        let found = leafData.some(v => filter.selected.includes(v));
-        if (!found) return false;
-
+        if (!leafData.some(v => filter.selected.includes(v))) return false;
       } else if (filter.type === "interval") {
         const intervalFilter = Filter.intervalFilters[filter.numeric.operation];
         if (!intervalFilter) return false;
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
-        let passes = leafData.some(v => {
-          if (!Array.isArray(v) || v.length !== 2) return false;
-          return intervalFilter.comparer(v[0], v[1], filter.numeric.threshold1, filter.numeric.threshold2);
-        });
-        if (!passes) return false;
+        if (!leafData.some(v => Array.isArray(v) && v.length === 2 && intervalFilter.comparer(v[0], v[1], filter.numeric.threshold1, filter.numeric.threshold2))) return false;
       } else if (rangeFilterTypes.includes(filter.type)) {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
-        let passes = leafData.some(v =>
-          Filter.numericFilters[filter.numeric.operation].comparer(
-            v,
-            filter.numeric.threshold1,
-            filter.numeric.threshold2
-          )
-        );
-        if (!passes) return false;
+        if (!leafData.some(v => Filter.numericFilters[filter.numeric.operation].comparer(v, filter.numeric.threshold1, filter.numeric.threshold2))) return false;
       } else {
         let leafData = Checklist.getAllLeafData(value, false, filter.dataPath);
-        let found = leafData.some(v => filter.selected.includes(v));
-        if (!found) return false;
+        if (!leafData.some(v => filter.selected.includes(v))) return false;
       }
     }
     return true;
@@ -918,17 +647,74 @@ export let Filter = {
 
   _assembleResults: function (matchedItems, parentKeySet, checklistData) {
     let finalResults = [...matchedItems];
-
-    // Add parent taxa
     if (parentKeySet.size > 0) {
       checklistData.forEach(item => {
         let itemKey = item._key || item.t.filter(t => t !== null).map(t => t.name).join("|");
-        if (parentKeySet.has(itemKey)) {
-          finalResults.push(item);
-        }
+        if (parentKeySet.has(itemKey)) finalResults.push(item);
       });
     }
-
     return finalResults;
   }
 };
+
+// ─── Module-level helpers ─────────────────────────────────────────────────────
+
+function _collectPossibleStatuses(mapData, dataPath) {
+  if (!mapData || typeof mapData !== "object") return;
+  if (!Filter.data[dataPath].possibleStatuses) Filter.data[dataPath].possibleStatuses = {};
+  Object.values(mapData).forEach(regionData => {
+    const status = regionData?.status ?? "";
+    if (status === "") return;
+    Filter.data[dataPath].possibleStatuses[status] =
+      (Filter.data[dataPath].possibleStatuses[status] || 0) + 1;
+  });
+}
+
+function _checkMapregionsFilter(mapData, filter) {
+  const regionCodes = Object.keys(mapData);
+
+  // Region-name gate
+  const regionPasses = filter.selected.length === 0 || regionCodes.some(code => {
+    const name = Checklist.nameForMapRegion(code);
+    return filter.selected.includes(name) || filter.selected.includes(code);
+  });
+  if (!regionPasses) return false;
+
+  if (!_statusFilterIsActive(filter.statusFilter)) return true;
+
+  const codesInScope = filter.selected.length > 0
+    ? regionCodes.filter(code => {
+        const name = Checklist.nameForMapRegion(code);
+        return filter.selected.includes(name) || filter.selected.includes(code);
+      })
+    : regionCodes;
+
+  return codesInScope.some(code => _statusMatchesSF(mapData[code]?.status ?? "", filter.statusFilter));
+}
+
+function _statusMatchesSF(status, sf) {
+  const hasStatusSel  = sf.selectedStatuses.length > 0;
+  const hasRangeLimit = sf.rangeMin !== null || sf.rangeMax !== null;
+
+  if (!hasStatusSel && !hasRangeLimit) return true;
+
+  // Numeric range check (for gradient / stepped)
+  if (hasRangeLimit) {
+    const n = parseNumericStatus(status);
+    if (n !== null) {
+      const passesRange = (sf.rangeMin === null || n >= sf.rangeMin) &&
+                         (sf.rangeMax === null || n <= sf.rangeMax);
+      if (passesRange) return true;
+    }
+  }
+
+  // Exact status string match (for category overrides)
+  if (hasStatusSel && sf.selectedStatuses.includes(status)) return true;
+
+  return false;
+}
+
+function _statusFilterIsActive(sf) {
+  if (!sf) return false;
+  return sf.selectedStatuses.length > 0 || sf.rangeMin !== null || sf.rangeMax !== null;
+}

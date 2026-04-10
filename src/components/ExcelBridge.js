@@ -14,6 +14,7 @@ function readWorkbook(excelFile) {
     type: "binary",
     cellText: false,
     cellDates: true,
+    cellNF: true,
   });
 }
 
@@ -84,9 +85,19 @@ function buildRowArray(worksheet, rowIndex, range) {
   const rowArray = [];
   for (let col = range.s.c; col <= range.e.c; col++) {
     const cell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: col })];
+
     let cellValue = "";
     if (cell && cell.v !== undefined && cell.v !== null) {
-      cellValue = typeof cell.v === "string" ? cell.v.trim() : cell.v;
+      if (typeof cell.v === "string") {
+        cellValue = cell.v.trim();
+      } else if (cell.t === "n" && typeof cell.z === "string" && cell.z.includes("%")) {
+        // Percentage-formatted numeric cell. Wrap in a sentinel so schema-aware
+        // consumers downstream can reconstruct "X%" if they need to, while all
+        // other consumers receive the raw decimal as before.
+        cellValue = { __percentageValue: cell.v };
+      } else {
+        cellValue = cell.v;
+      }
     }
     rowArray.push(cellValue);
   }
@@ -219,7 +230,6 @@ function getMultilingualColumnIndex(headers, columnName, languageCode, defaultLa
 function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) {
   const loadedData = [];
 
-  // RESILIENCE GUARD: If the table was treated as empty, skip parsing and return an empty array
   if (!rawSubTable || rawSubTable.length === 0) {
     return loadedData;
   }
@@ -238,7 +248,21 @@ function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) 
         Logger.error(tf("dm_column_not_found", [colName, tableInfo.name]), "Column missing");
         hasError = true;
       } else {
-        lineObject[columnKey] = rawSubTable[row][colIndex];
+        let value = rawSubTable[row][colIndex];
+
+        // Unwrap percentage sentinel for columns that explicitly require it.
+        // For all other columns the sentinel object passes through and would
+        // never normally appear (no other column is formatted as % in Excel).
+        if (
+          tableInfo.columns[columnKey].integrity?.readPercentageNumbersAsPercentageString &&
+          value !== null &&
+          typeof value === "object" &&
+          "__percentageValue" in value
+        ) {
+          value = Math.round(value.__percentageValue * 100) + "%";
+        }
+
+        lineObject[columnKey] = value;
       }
     });
 
