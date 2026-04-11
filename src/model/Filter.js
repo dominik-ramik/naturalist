@@ -115,6 +115,14 @@ export let Filter = {
       const plugin = getFilterPlugin(fd);
       if (plugin?.finalizeAccumulation) plugin.finalizeAccumulation(fd);
     });
+
+    // ── Release the delay lock after each accumulation pass ───────────────────
+    // delayCommitDataPath is a one-shot hint set by "add item" interactions so
+    // that the just-selected item stays visible during the immediate redraw.
+    // It must be cleared here — not by the caller — so it never leaks across
+    // accumulation passes and permanently blocks clearPossible/accumulatePossible
+    // for the locked path.
+    Filter.delayCommitDataPath = "";
   },
 
   // NOTE: one deliberate type-check remains — interval preview needs pair-aware

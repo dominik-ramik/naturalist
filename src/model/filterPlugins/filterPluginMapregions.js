@@ -4,6 +4,26 @@
  * Combines a region checklist (same pattern as filterPluginText) with an
  * optional "status filter" section that filters by the numeric/categorical
  * value assigned to each region on the map.
+ *
+ * ── Multi-dimension accumulation pattern ─────────────────────────────────────
+ * This plugin maintains two parallel "possible" sets that must influence each
+ * other:
+ *
+ *   fd.possible         – region names visible in the region checklist
+ *   fd.possibleStatuses – status values visible in the status-filter section
+ *
+ * Because `leafValues` is a flat projection (region names only) it carries no
+ * status information. `accumulatePossible` therefore ignores `leafValues` and
+ * iterates `rawValue` directly — the same approach any future plugin should use
+ * whenever it needs cross-filtering across multiple sub-dimensions of a single
+ * structured field.
+ *
+ * The two dimensions constrain each other as follows:
+ *   • fd.possible       only counts a region if its status passes the active
+ *                       statusFilter (so the region list reacts to status changes).
+ *   • fd.possibleStatuses only counts a status for regions that are currently
+ *                       selected (so the status list reacts to region changes).
+ *                       When no regions are selected all statuses are counted.
  */
 
 import m from "mithril";
@@ -13,7 +33,33 @@ import { parseLegendConfig, parseNumericStatus } from "../../components/Mapregio
 import { DropdownCheckItem, DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/rangeFilterUtils.js";
 
-// ── Status-filter helpers ─────────────────────────────────────────────────────
+// ── Pure helpers ──────────────────────────────────────────────────────────────
+
+/**
+ * Returns true when the given status value passes the supplied status-filter
+ * descriptor.  Pure function — no side-effects, safe to call from anywhere.
+ *
+ * Precedence when both range and category selections are present:
+ *   A status passes if it satisfies the range OR is in the selected list.
+ *   (Mixing both modes is an edge-case; the UI never produces it simultaneously.)
+ *
+ * When only a range is set, non-numeric statuses do not pass — they cannot be
+ * compared to numeric bounds by definition.
+ */
+function statusMatchesSF(status, sf) {
+  const hasStatusSel  = sf.selectedStatuses.length > 0;
+  const hasRangeLimit = sf.rangeMin !== null || sf.rangeMax !== null;
+  if (!hasStatusSel && !hasRangeLimit) return true;
+  if (hasRangeLimit) {
+    const n = parseNumericStatus(status);
+    if (n !== null) {
+      const passesRange = (sf.rangeMin === null || n >= sf.rangeMin) &&
+                          (sf.rangeMax === null || n <= sf.rangeMax);
+      if (passesRange) return true;
+    }
+  }
+  return hasStatusSel && sf.selectedStatuses.includes(status);
+}
 
 function isStatusFilterActive(sf) {
   return !!sf && (sf.selectedStatuses?.length > 0 || sf.rangeMin != null || sf.rangeMax != null);
@@ -30,22 +76,27 @@ function statusFilterTitle(sf) {
 
 // ── Status filter section renderers (module-private) ─────────────────────────
 
-function _renderStatusCategorySection(presentCatRows, sf, possibleSt, filterDef, type, dataPath) {
+function _renderStatusCategorySection(presentCatRows, sf, possibleSt, type, dataPath) {
   const noneSelected = sf.selectedStatuses.length === 0;
 
   function toggleStatus(status) {
     if (noneSelected) {
+      // Clicking any item when "all" are on means: exclude that one item.
+      // Store all others as explicitly selected so unchecking works correctly.
       sf.selectedStatuses = presentCatRows.filter(r => r.status !== status).map(r => r.status);
     } else {
       const idx = sf.selectedStatuses.indexOf(status);
       if (idx > -1) {
         sf.selectedStatuses.splice(idx, 1);
+        // If everything is selected again, collapse back to "all selected" (empty array)
         if (sf.selectedStatuses.length === presentCatRows.length) sf.selectedStatuses = [];
       } else {
         sf.selectedStatuses.push(status);
       }
     }
-    Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+    // Status toggles are NOT region-list selections — do NOT set delayCommitDataPath.
+    // The region list must be allowed to recalculate immediately so it reflects the
+    // new status constraint.
     Checklist.filter.commit();
   }
 
@@ -70,7 +121,9 @@ function _renderStatusRangeSection(sf, possibleSt, type, dataPath) {
   function setRange(field, rawValue) {
     const n = rawValue === "" ? null : parseFloat(rawValue);
     sf[field] = (n == null || isNaN(n)) ? null : n;
-    Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+    // Range inputs are NOT region-list selections — do NOT set delayCommitDataPath.
+    // The region list must be allowed to recalculate immediately so it reflects the
+    // new numeric bounds.
     Checklist.filter.commit();
   }
 
@@ -185,7 +238,7 @@ let DropdownMapregions = function (initialVnode) {
                   ? _renderStatusRangeSection(sf, possibleSt, type, dataPath)
                   : null,
                 presentCatRows.length > 0
-                  ? _renderStatusCategorySection(presentCatRows, sf, possibleSt, filterDef, type, dataPath)
+                  ? _renderStatusCategorySection(presentCatRows, sf, possibleSt, type, dataPath)
                   : null,
                 isStatusFilterActive(sf)
                   ? m(".sf-clear-all.clickable", {
@@ -298,6 +351,7 @@ export const filterPluginMapregions = {
   },
 
   // ── Lifecycle ─────────────────────────────────────────────────────
+
   createFilterDef() {
     return {
       type: "mapregions",
@@ -321,25 +375,50 @@ export const filterPluginMapregions = {
     fd.possibleStatuses = {};
   },
 
-accumulatePossible(fd, rawValue, leafValues) {
-    if (rawValue && typeof rawValue === "object") {
-      Object.entries(rawValue).forEach(([code, regionData]) => {
-        // Only count statuses for the selected regions (all regions if none selected).
-        // This keeps the status filter panel in sync with the region checklist and
-        // provides accurate min/max placeholders in the numeric range inputs.
-        if (fd.selected.length > 0) {
-          const name = Checklist.nameForMapRegion(code);
-          if (!fd.selected.includes(name) && !fd.selected.includes(code)) return;
+  /**
+   * Accumulates both possible dimensions from the raw structured value.
+   *
+   * `leafValues` (flat region-name array) is intentionally ignored here.
+   * The two dimensions must cross-constrain each other, which requires
+   * iterating the full `rawValue` map so we can access both region identity
+   * and status in the same loop — information that `leafValues` does not carry.
+   *
+   * fd.possible:
+   *   A region is counted only when its status passes the active statusFilter.
+   *   This makes the region list react to status filter changes.
+   *
+   * fd.possibleStatuses:
+   *   A status is counted only for currently-selected regions (or all regions
+   *   when none are selected). This makes the status panel react to region
+   *   selections.
+   */
+  accumulatePossible(fd, rawValue, _leafValues) {
+    if (!rawValue || typeof rawValue !== "object") return;
+
+    const sf       = fd.statusFilter;
+    const sfActive = isStatusFilterActive(sf);
+
+    Object.entries(rawValue).forEach(([code, regionData]) => {
+      const name   = Checklist.nameForMapRegion(code);
+      const status = regionData?.status ?? "";
+
+      // ── fd.possible (region checklist) ──────────────────────────
+      // Count this region only when its status satisfies the current
+      // status filter. When no status filter is active every region counts.
+      if (!sfActive || statusMatchesSF(status, sf)) {
+        if (name && name.trim() !== "") {
+          fd.possible[name] = (fd.possible[name] || 0) + 1;
         }
-        const status = regionData?.status ?? "";
-        if (status !== "") {
-          fd.possibleStatuses[status] = (fd.possibleStatuses[status] || 0) + 1;
-        }
-      });
-    }
-    leafValues.forEach(v => {
-      if (typeof v === "string" && v.trim() !== "") {
-        fd.possible[v] = (fd.possible[v] || 0) + 1;
+      }
+
+      // ── fd.possibleStatuses (status panel) ──────────────────────
+      // Scope to selected regions so the status panel reflects only
+      // statuses that are relevant to the user's current region selection.
+      if (fd.selected.length > 0) {
+        if (!fd.selected.includes(name) && !fd.selected.includes(code)) return;
+      }
+      if (status !== "") {
+        fd.possibleStatuses[status] = (fd.possibleStatuses[status] || 0) + 1;
       }
     });
   },
@@ -347,19 +426,25 @@ accumulatePossible(fd, rawValue, leafValues) {
   matches(fd, rawValue, _leafValues) {
     if (!rawValue || typeof rawValue !== "object") return false;
     const regionCodes = Object.keys(rawValue);
+
     const regionPasses = fd.selected.length === 0 || regionCodes.some(code => {
       const name = Checklist.nameForMapRegion(code);
       return fd.selected.includes(name) || fd.selected.includes(code);
     });
     if (!regionPasses) return false;
+
     if (!isStatusFilterActive(fd.statusFilter)) return true;
+
+    // When regions are selected, only those regions' statuses need to pass.
+    // When none are selected, any region's status passing is sufficient.
     const codesInScope = fd.selected.length > 0
       ? regionCodes.filter(code => {
           const name = Checklist.nameForMapRegion(code);
           return fd.selected.includes(name) || fd.selected.includes(code);
         })
       : regionCodes;
-    return codesInScope.some(code => _statusMatchesSF(rawValue[code]?.status ?? "", fd.statusFilter));
+
+    return codesInScope.some(code => statusMatchesSF(rawValue[code]?.status ?? "", fd.statusFilter));
   },
 
   serializeToQuery(fd) {
@@ -384,20 +469,3 @@ accumulatePossible(fd, rawValue, leafValues) {
     }
   },
 };
-
-// ─── Module-level helpers (moved from Filter.js) ──────────────────────────────
-
-function _statusMatchesSF(status, sf) {
-  const hasStatusSel  = sf.selectedStatuses.length > 0;
-  const hasRangeLimit = sf.rangeMin !== null || sf.rangeMax !== null;
-  if (!hasStatusSel && !hasRangeLimit) return true;
-  if (hasRangeLimit) {
-    const n = parseNumericStatus(status);
-    if (n !== null) {
-      const passesRange = (sf.rangeMin === null || n >= sf.rangeMin) &&
-        (sf.rangeMax === null || n <= sf.rangeMax);
-      if (passesRange) return true;
-    }
-  }
-  return hasStatusSel && sf.selectedStatuses.includes(status);
-}
