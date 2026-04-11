@@ -113,35 +113,38 @@ function isRowArrayEmpty(rowArray) {
  * Locates a sub-table within a 2D sheet array based on the table name.
  * Returns the sliced 2D array containing just that table.
  */
+/**
+ * Locates a sub-table within a 2D sheet array based on the table name.
+ * Returns:
+ *   []    – table not found but is optional (treated as empty)
+ *   rows  – table found (may be length 1 if only header row exists)
+ *   null  – table not found and is required (critical error already logged)
+ */
 function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCode, defaultLangCode) {
-  if (!sheetData || sheetData.length < 2) {
-    if (tableInfo && !tableInfo.required) {
-      Logger.info(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
-      return [];
-    }
-    Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
-    return null;
-  }
+  const tableRequired = tableInfo && tableInfo.required !== false;
 
-  const headers = sheetData[0];
-  const tableStartCol = indexOfCaseInsensitive(headers, tableName);
+  const tableStartCol = (sheetData && sheetData.length >= 1)
+    ? indexOfCaseInsensitive(sheetData[0], tableName)
+    : -1;
 
   if (tableStartCol < 0) {
-    if (tableInfo && !tableInfo.required) {
-      Logger.info(`Optional table '${tableName}' not found in sheet '${sheetName}'. Treating as empty.`, "Table missing");
+    if (!tableRequired) {
+      Logger.info(tf("dm_optional_table_missing", [tableName, sheetName]), "Table missing");
       return [];
     }
-    Logger.critical(tf("dm_cannot_find_table_in_worksheet", [tableName, sheetName]) + " " + t("dm_verify_doc"));
+    Logger.critical(
+      tf("dm_required_table_missing_in_sheet", [tableName, sheetName]) + " " + t("dm_verify_doc"),
+      "Table missing"
+    );
     return null;
   }
 
-  let tableEndCol = sheetData[1].indexOf("", tableStartCol);
+  let tableEndCol = (sheetData.length >= 2) ? sheetData[1].indexOf("", tableStartCol) : -1;
   if (tableEndCol < 0) {
-    tableEndCol = sheetData[1].length;
+    tableEndCol = sheetData[1]?.length ?? tableStartCol + 1;
   }
 
   const subTable = [];
-  // Start at row 1 (skipping the meta-header row which contains the table name)
   for (let row = 1; row < sheetData.length; row++) {
     const cells = sheetData[row].slice(tableStartCol, tableEndCol);
     if (isArrayOfEmptyStrings(cells)) break;
@@ -157,6 +160,10 @@ function extractSubTableData(sheetData, sheetName, tableName, tableInfo, langCod
 
 /**
  * Validates the headers of a sub-table against the expected schema.
+ *
+ * Required table  → any missing column is a critical error (aborts further column checks).
+ * Optional table  → missing columns are reported as a single error listing all absent names;
+ *                   processing continues so other checks still run.
  */
 function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLangCode) {
   // 1. Check for ambiguous columns
@@ -174,16 +181,30 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
 
   // 2. Check for missing expected columns
   const expectedHeaders = Object.values(tableInfo.columns).map((c) => c.name);
-  for (const expectedHeader of expectedHeaders) {
-    const match = headers.find((header) => {
+  const missingColumns = expectedHeaders.filter((expectedHeader) =>
+    !headers.find((header) => {
       const h = header.toLowerCase();
       const eh = expectedHeader.toLowerCase();
       return h === eh || h.startsWith(eh + ":");
-    });
+    })
+  );
 
-    if (match === undefined) {
-      Logger.critical(`Could not find expected column '${expectedHeader}' in table ${tableInfo.name} ${t("dm_verify_doc")}`, "Column missing");
+  if (missingColumns.length > 0) {
+    if (tableInfo.required !== false) {
+      // Required table: first missing column is fatal
+      Logger.critical(
+        tf("dm_required_table_columns_missing", [tableInfo.name, missingColumns.join(", ")]) +
+        " " + t("dm_verify_doc"),
+        "Column missing"
+      );
       return;
+    } else {
+      // Optional table present in the file but columns are missing → error (not critical)
+      Logger.error(
+        tf("dm_optional_table_columns_missing", [tableInfo.name, missingColumns.join(", ")]),
+        "Column missing"
+      );
+      // Do not return — allow remaining checks (multilingual, etc.) to run
     }
   }
 
@@ -245,7 +266,11 @@ function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) 
       const colIndex = getMultilingualColumnIndex(headers, colName, langCode, defaultLangCode);
 
       if (colIndex < 0) {
-        Logger.error(tf("dm_column_not_found", [colName, tableInfo.name]), "Column missing");
+        // Column-missing was already reported by validateColumnNames; elevate to critical
+        // only for required tables to avoid duplicate messages.
+        if (tableInfo.required !== false) {
+          Logger.critical(tf("dm_column_not_found", [colName, tableInfo.name]), "Column missing");
+        }
         hasError = true;
       } else {
         let value = rawSubTable[row][colIndex];
@@ -342,56 +367,56 @@ function processLanguages(workbook, schema) {
 function processMetaStructure(workbook, schema) {
   Object.keys(schema.sheets).forEach((sheetKey) => {
     const sheetDef = schema.sheets[sheetKey];
-    if (sheetDef.type === "meta") {
-      // READ SHEET ONCE PER SHEET DEFINITION
-      const sheetData = parseSheetData(workbook, sheetDef.name);
+    if (sheetDef.type !== "meta") return;
 
-      // Handle Missing Sheets
-      if (!sheetData) {
-        if (sheetDef.required) {
-          Logger.critical(`Cannot find required sheet '${sheetDef.name}'`, "Sheet missing");
-          return; // Skip processing since the required sheet is missing
-        } else {
-          Logger.info(`Cannot find optional sheet '${sheetDef.name}'. Treating all its tables as empty.`, "Sheet missing");
-        }
+    const sheetData = parseSheetData(workbook, sheetDef.name);
+    const sheetRequired = sheetDef.required !== false;
+
+    if (!sheetData) {
+      if (sheetRequired) {
+        Logger.critical(tf("dm_required_sheet_missing", [sheetDef.name]), "Sheet missing");
+      } else {
+        Logger.info(tf("dm_optional_sheet_missing", [sheetDef.name]), "Sheet missing");
       }
-
+      // Whether required or optional: initialise all table data to empty arrays so
+      // downstream code never sees undefined for tableDef.data[lang.code].
       Object.keys(sheetDef.tables).forEach((tableKey) => {
         const tableDef = sheetDef.tables[tableKey];
         tableDef.data = {};
-
         schema.common.languages.supportedLanguages.forEach((lang) => {
-          let rawSubTable;
-
-          if (sheetData) {
-            // Sheet exists, try to extract table
-            rawSubTable = extractSubTableData(
-              sheetData,
-              sheetDef.name,
-              tableDef.name,
-              tableDef,
-              lang.code,
-              schema.common.languages.defaultLanguageCode
-            );
-          } else {
-            // Sheet is missing but optional. Fallback tables to empty automatically.
-            rawSubTable = [];
-          }
-
-          if (rawSubTable) {
-            tableDef.data[lang.code] = mapSubTableToObject(
-              rawSubTable,
-              tableDef,
-              lang.code,
-              schema.common.languages.defaultLanguageCode
-            );
-          } else {
-            // Safe fallback if extraction failed strictly (required table missing)
-            tableDef.data[lang.code] = [];
-          }
+          tableDef.data[lang.code] = [];
         });
       });
+      return;
     }
+
+    Object.keys(sheetDef.tables).forEach((tableKey) => {
+      const tableDef = sheetDef.tables[tableKey];
+      const tableRequired = tableDef.required !== false;
+      tableDef.data = {};
+
+      schema.common.languages.supportedLanguages.forEach((lang) => {
+        // extractSubTableData returns:
+        //   null  → table not found in sheet (already logged appropriately)
+        //   []    → table found but empty (or optional+missing)
+        //   rows  → table found with data
+        const rawSubTable = extractSubTableData(
+          sheetData,
+          sheetDef.name,
+          tableDef.name,
+          tableDef,
+          lang.code,
+          schema.common.languages.defaultLanguageCode
+        );
+
+        // null means the table was absent:
+        //   required  → critical already logged by extractSubTableData; use [] to avoid crashes
+        //   optional  → info already logged; use []
+        tableDef.data[lang.code] = rawSubTable
+          ? mapSubTableToObject(rawSubTable, tableDef, lang.code, schema.common.languages.defaultLanguageCode)
+          : [];
+      });
+    });
   });
 }
 

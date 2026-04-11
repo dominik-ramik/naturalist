@@ -1554,31 +1554,22 @@ export let DataManager = function () {
       if (sheet.type == "meta") {
         Object.keys(sheet.tables).forEach(function (tableKey) {
           let table = sheet.tables[tableKey];
+          const tableRequired = table.required !== false;
+
           data.common.languages.supportedLanguages.forEach(function (lang) {
             let tableData = table.data[lang.code];
+
+            // null means the table could not be loaded at all
             if (tableData == null) {
-              Logger.critical("Missing table " + table.name);
+              if (tableRequired) {
+                Logger.critical(tf("dm_required_table_missing", [table.name]));
+              }
+              // optional missing table → already handled (empty []) by ExcelBridge; null is defensive
               return;
             }
 
-            //verify presence of all required columns
-            for (const row of tableData) {
-              for (const key in row) {
-                let value = row[key];
-                if (value === undefined) {
-                  //value was not read, this means the column is missing
-                  Logger.critical(
-                    "Missing required column " +
-                    table.columns[key].name +
-                    " in table " +
-                    table.name +
-                    ". " +
-                    t("dm_verify_doc")
-                  );
-                  return;
-                }
-              }
-            }
+            // Empty optional table → nothing to validate
+            if (tableData.length === 0) return;
 
             tableData.forEach(function (dataRow) {
               Object.keys(table.columns).forEach(function (columnKey) {
@@ -1589,25 +1580,25 @@ export let DataManager = function () {
                 let integrity = column.integrity;
                 let value = dataRow[columnKey];
 
+                // undefined means the column was not found in the sheet at all.
+                // This is already reported by validateColumnNames / mapSubTableToObject;
+                // here we only adjust severity based on required.
                 if (value === undefined) {
-                  Logger.critical(
-                    "Missing column name " +
-                    column.name +
-                    " in table " +
-                    table.name +
-                    " " +
-                    t("dm_verify_doc")
-                  );
+                  if (tableRequired) {
+                    Logger.critical(
+                      tf("dm_required_table_columns_missing", [table.name, column.name]) +
+                      " " + t("dm_verify_doc")
+                    );
+                  }
+                  // optional table with present-but-incomplete columns: already reported as error
                   return;
                 }
 
                 let isEmpty =
-                  value === undefined ||
                   value === null ||
-                  value.toString().trim() == "";
+                  value.toString().trim() === "";
 
                 if (!integrity.allowEmpty && isEmpty) {
-                  console.log("XX", dataRow, integrity);
                   Logger.error(
                     tf("dm_value_cannot_be_empty", [column.name, table.name])
                   );
@@ -1780,381 +1771,9 @@ export let DataManager = function () {
     });
 
     //
-    // Manual checks of logic
+    // Manual checks of logic — delegated to a standalone pure function
     //
-
-    // ── mapRegionsLegend cross-row validation ───────────────────────────────────
-    data.common.languages.supportedLanguages.forEach(function (lang) {
-      const rows = data.sheets.appearance.tables.mapRegionsLegend.data[lang.code];
-
-      if (!rows || rows.length === 0) return;
-
-      const tableName = data.sheets.appearance.tables.mapRegionsLegend.name;
-
-      // Collect all mapregions column paths for reference validation
-      const mapregionsPaths = new Set(
-        (data.sheets.content.tables.customDataDefinition.data[lang.code] || [])
-          .filter(r => (r.formatting || "").trim().toLowerCase() === "mapregions")
-          .map(r => (r.columnName || "").trim().toLowerCase())
-      );
-
-      // 1. Compound-key uniqueness: (columnName + status) must be unique
-      const seenPairs = new Map(); // "columnName|status" -> row index (1-based)
-      rows.forEach(function (row, idx) {
-        const colName = (row.columnName || "").toString().trim().toLowerCase();
-        const status = (row.status || "").toString().trim();
-        const pairKey = colName + "|" + status;
-        if (seenPairs.has(pairKey)) {
-          Logger.error(
-            tf("dm_mapregions_duplicate_pair", [tableName, colName || "(empty)", status || "(empty)", seenPairs.get(pairKey), idx + 1])
-          );
-        } else {
-          seenPairs.set(pairKey, idx + 1);
-        }
-      });
-
-      // 2. columnName (when non-empty) must refer to an existing mapregions column
-      rows.forEach(function (row, idx) {
-        const colName = (row.columnName || "").toString().trim().toLowerCase();
-        if (colName === "") return; // global row — OK
-        if (!mapregionsPaths.has(colName)) {
-          Logger.error(
-            tf("dm_mapregions_unknown_column", [tableName, idx + 1, colName])
-          );
-        }
-      });
-
-      // 3. For gradient/stepped rows: status must be a valid anchor notation (A1-A5)
-      //    A1: plain number (int or decimal, optional leading minus)
-      //    A2: number%
-      //    A3: numberp
-      //    A4: numbers
-      //    A5: [±number][%|s]c[number]
-      const anchorRegex = /^-?(\d+(\.\d+)?)(%)?(p)?(s)?$|^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
-
-      rows.forEach(function (row, idx) {
-        const legendType = (row.legendType || "").toString().trim().toLowerCase();
-        if (legendType !== "gradient" && legendType !== "stepped") return;
-        const status = (row.status ?? "").toString().trim();
-
-        if (status === "") {
-          Logger.error(
-            tf("dm_mapregions_empty_anchor", [tableName, idx + 1, legendType]), "Empty status code"
-          );
-          return;
-        }
-        if (!anchorRegex.test(status)) {
-          Logger.error(
-            tf("dm_mapregions_invalid_anchor", [tableName, idx + 1, status, legendType]), "Invalid status code"
-          );
-        }
-      });
-
-      // 4. Gradient/stepped columns: at least 2 anchor rows per (columnName, legendType) group
-      //    Group key: columnName + legendType
-      const anchorGroupCounts = new Map();
-      rows.forEach(function (row) {
-        const legendType = (row.legendType || "").toString().trim().toLowerCase();
-        if (legendType !== "gradient" && legendType !== "stepped") return;
-        const colName = (row.columnName || "").toString().trim().toLowerCase();
-        const groupKey = colName + "|" + legendType;
-        anchorGroupCounts.set(groupKey, (anchorGroupCounts.get(groupKey) || 0) + 1);
-      });
-      anchorGroupCounts.forEach(function (count, groupKey) {
-        if (count < 2) {
-          const [colName, legendType] = groupKey.split("|");
-          Logger.warning(
-            colName
-              ? tf("dm_mapregions_single_anchor", [tableName, legendType, colName])
-              : tf("dm_mapregions_single_anchor_global", [tableName, legendType])
-          );
-        }
-      });
-
-      // 5. A5 consistency: all rows for the same (columnName, legendType=gradient/stepped)
-      //    that use the cNNN suffix must declare the same center value
-      //    Group by columnName; within each group collect all c-center values
-      const a5CenterByColumn = new Map(); // columnName -> Set of centerValues
-      const A5_REGEX = /^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
-      rows.forEach(function (row, idx) {
-        const legendType = (row.legendType || "").toString().trim().toLowerCase();
-        if (legendType !== "gradient" && legendType !== "stepped") return;
-        const colName = (row.columnName || "").toString().trim().toLowerCase();
-        const status = (row.status || "").toString().trim();
-        const m5 = A5_REGEX.exec(status);
-        if (!m5) return;
-        const center = m5[4]; // the part after 'c'
-        const key = colName + "|" + legendType;
-        if (!a5CenterByColumn.has(key)) a5CenterByColumn.set(key, new Set());
-        a5CenterByColumn.get(key).add(center);
-      });
-      a5CenterByColumn.forEach(function (centerSet, groupKey) {
-        if (centerSet.size > 1) {
-          const [colName, legendType] = groupKey.split("|");
-          Logger.error(
-            colName
-              ? tf("dm_mapregions_a5_center_mismatch", [tableName, legendType, colName, [...centerSet].join(", ")])
-              : tf("dm_mapregions_a5_center_mismatch_global", [tableName, legendType, [...centerSet].join(", ")])
-          );
-        }
-      });
-
-      // 6. appendedLegend on gradient/stepped rows: warn (not block) — it is silently ignored at runtime
-      rows.forEach(function (row, idx) {
-        const legendType = (row.legendType || "").toString().trim().toLowerCase();
-        if (legendType !== "gradient") return;
-        const appended = (row.appendedLegend || "").toString().trim();
-        if (appended !== "") {
-          Logger.warning(
-            tf("dm_mapregions_appended_legend_ignored", [tableName, idx + 1, appended, legendType]), "Appended legend for gradient legend types"
-          );
-        }
-      });
-    });
-    // ── end mapRegionsLegend validation ────────────────────────────────────────
-
-    // Ensure all languages are displayable and proper fallback language is provided if translation is missing
-    data.common.languages.supportedLanguages.forEach(function (lang) {
-      if (
-        i18nMetadata.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
-        i18nMetadata.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
-      ) {
-        Logger.warning(
-          tf("dm_specify_fallback_language", [
-            lang.name,
-            "Supported languages",
-            data.sheets.appearance.name,
-            i18nMetadata.getSupportedLanguageCodes().join(", "),
-          ])
-        );
-      }
-    });
-
-    /*
-    // All column names through all tables should be unique
-    //!!! this can be relaxed, no real reason to enforce this
-    */
-    let uniqueColumnNames = {};
-    getAllColumnInfos(nlDataStructure, data.common.languages.defaultLanguageCode)
-      .forEach(function (item) {
-        if (
-          Object.keys(uniqueColumnNames).indexOf(item.name.toLowerCase()) < 0 ||
-          item.table == uniqueColumnNames[item.name.toLowerCase()].table
-        ) {
-          uniqueColumnNames[item.name.toLowerCase()] = item;
-        } else {
-          if (
-            item.table == "Maps" ||
-            uniqueColumnNames[item.name].table == "Maps"
-          ) {
-            return;
-          }
-
-          Logger.error(
-            tf("dm_column_name_duplicate", [
-              item.name,
-              item.table,
-              uniqueColumnNames[item.name].table,
-            ])
-          );
-        }
-      });
-
-    //*/
-
-    // Hue has to be 0-360
-    data.common.languages.supportedLanguages.forEach(function (lang) {
-      const monthNamesValidation = validateConfiguredMonthNames(
-        getItem(
-          data.sheets.appearance.tables.customization.data,
-          "Month names",
-          lang.code,
-          ""
-        )
-      );
-
-      if (monthNamesValidation.hasValue) {
-        if (monthNamesValidation.wrongCount) {
-          Logger.error(
-            "Customization item 'Month names' for language '" +
-            lang.code +
-            "' must contain exactly 12 non-empty comma-separated month names."
-          );
-        }
-
-        if (monthNamesValidation.duplicates.length > 0) {
-          Logger.error(
-            "Customization item 'Month names' for language '" +
-            lang.code +
-            "' contains duplicate month names: " +
-            monthNamesValidation.duplicates.join(", ")
-          );
-        }
-      }
-
-      let hueRow = data.sheets.appearance.tables.customization.data[
-        lang.code
-      ].find(function (row) {
-        if (row.item == "Color theme hue") {
-          return true;
-        }
-      });
-      let hueString = hueRow ? hueRow.value : NaN;
-
-      let hue = parseInt(hueString);
-
-      if (!hue || hueString.toString().trim() === "") {
-        // Allow empty hue, which means default
-        return;
-      }
-
-      if (isNaN(hue) || hue < 0 || hue > 360) {
-        Logger.error(
-          tf("dm_hue_value", [
-            data.sheets.appearance.tables.customization.name,
-          ])
-        );
-      }
-    });
-
-    data.common.languages.supportedLanguages.forEach(function (lang) {
-      let table =
-        data.sheets.content.tables.customDataDefinition.data[lang.code];
-      if (table === null) {
-        // do not logger this, the table is not requiredLogger.critical("Cannot find custom data def");
-        return;
-      }
-
-      let allColumnNames = table
-        .map(function (row) {
-          return row.columnName?.toLowerCase();
-        })
-        .filter((value) => value !== undefined);
-
-      for (const row of table) {
-        let columnName = row.columnName;
-
-        if (columnName === undefined) {
-          Logger.critical("Not found column " + columnName);
-          return null;
-        }
-
-        let colPosition = dataPath.analyse.position(
-          allColumnNames,
-          columnName.toLowerCase()
-        );
-
-        // Only root column can have "placement"
-        if (
-          row.placement != "" &&
-          !(colPosition.isSimpleItem || colPosition.isRoot)
-        ) {
-          Logger.error(
-            tf("dm_wrong_placement", [
-              columnName,
-              row.placement,
-              columnName.substring(0, columnName.indexOf(".")),
-            ])
-          );
-        }
-
-        // Only leaf column can have "template"
-        if (row.template != "" && !colPosition.isLeaf) {
-          Logger.error(tf("dm_wrong_template", [columnName]));
-        }
-
-        // Only leaf column can have category "formatting"
-        if (row.formatting.toLowerCase() == "category" && !colPosition.isLeaf) {
-          Logger.error(
-            tf("dm_wrong_category", [
-              columnName,
-              data.sheets.content.tables.customDataDefinition.columns.formatting
-                .name,
-            ])
-          );
-        }
-
-        // "list" formatting should only be on columns with children
-        if (row.formatting.toLowerCase().startsWith("list") && !colPosition.hasChildren) {
-          Logger.error(
-            tf("dm_wrong_separator", [
-              columnName,
-              data.sheets.content.tables.customDataDefinition.columns
-                .formatting.name,
-            ])
-          );
-        }
-
-        /*
-                // Setting "allow empty values" on non-leaf means all leaves can be empty
-                if (row.allowEmptyValues == "yes" && colPosition.hasChildren) {
-                    let children = dataPath.analyse.getChildrenOf(allColumnNames, columnName);
-                    table.forEach(function(row) {
-                        if (children.indexOf(row.columnName.toLowerCase()) >= 0) {
-                            row.allowEmptyValues = "yes";
-                            //console.log("Added allowEmptyValues to "  + row.columnName);
-                        }
-                    });
-                }
-                */
-
-        // Hidden cannot have any props (like title, template, ...)
-        if (row.hidden == "yes") {
-          Object.keys(row).forEach(function (columnKey) {
-            if (
-              columnKey != "columnName" &&
-              columnKey != "hidden" &&
-              row[columnKey].toString().trim() != ""
-            ) {
-              if (columnKey == "searchCategoryTitle") {
-                //skip search title, as this is allowed
-                return;
-              }
-              console.log(columnKey);
-              console.log(row[columnKey]);
-              Logger.warning(
-                tf("dm_hidden_column_name", [
-                  columnName,
-                  data.sheets.content.tables.customDataDefinition.columns[
-                    columnKey
-                  ].name,
-                ])
-              );
-              row[columnKey] = "";
-            }
-          });
-        }
-
-        // --- Integrity check for placement=details and allowed formatting ---
-        if (row.placement && row.placement.split("|").map(x => x.trim()).includes("details")) {
-          const allowedFormatting = ["", "text", "list", "markdown", "image", "sound", "map", "mapregions"];
-          const baseFormatting = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
-          if (!allowedFormatting.includes(baseFormatting)) {
-            Logger.error(
-              tf("dm_details_formatting_invalid", [
-                row.columnName,
-                row.formatting,
-                row.placement
-              ])
-            );
-          }
-
-          /*
-          const thisDataPath = dataPath.modify.itemNumbersToHash(columnName).toLowerCase();
-          const children = dataPath.analyse.getChildrenOf(allColumnNames, thisDataPath);
-          if (children.length > 0) {
-            Logger.error(
-              tf("dm_details_with_children_invalid", [
-                row.columnName,
-                children.join(", ")
-              ])
-            );
-          }
-            */
-        }
-        // --- END ADDITION ---
-      }
-    });
+    runManualIntegrityChecks(data);
   }
 
   function postprocessMetadata() {
@@ -2197,7 +1816,8 @@ export let DataManager = function () {
         Object.keys(sheet.tables).forEach(function (tableKey) {
           let table = sheet.tables[tableKey];
           data.common.languages.supportedLanguages.forEach(function (lang) {
-            let tableData = table.data[lang.code];
+            const tableData = table.data[lang.code];
+            if (!tableData || tableData.length === 0) return;
             tableData.forEach(function (dataRow) {
               Object.keys(table.columns).forEach(function (columnKey) {
                 let column = table.columns[columnKey];
@@ -2236,7 +1856,8 @@ export let DataManager = function () {
         Object.keys(sheet.tables).forEach(function (tableKey) {
           let table = sheet.tables[tableKey];
           data.common.languages.supportedLanguages.forEach(function (lang) {
-            let tableData = table.data[lang.code];
+            const tableData = table.data[lang.code];
+            if (!tableData || tableData.length === 0) return;
             tableData.forEach(function (dataRow) {
               Object.keys(table.columns).forEach(function (columnKey) {
                 let column = table.columns[columnKey];
@@ -2263,44 +1884,7 @@ export let DataManager = function () {
     });
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
-      // verify that customDataDefinition column names present all data paths eg. without info.redlist missing between info and info.redlist.code
-      let allDataPaths = data.sheets.content.tables.customDataDefinition.data[
-        lang.code
-      ].map(function (row) {
-        return dataPath.modify.itemNumbersToHash(row.columnName).toLowerCase();
-      });
-      data.sheets.content.tables.customDataDefinition.data[lang.code].forEach(
-        function (row) {
-          let current = dataPath.modify
-            .itemNumbersToHash(row.columnName)
-            .toLowerCase();
-
-          if (!dataPath.validate.isDataPath(current)) {
-            // Skip invalid data paths not to introduce false suggestions on "you are missing ..."
-            return;
-          }
-
-          let split = dataPath.modify.pathToSegments(current);
-
-          for (let index = 0; index < split.length; index++) {
-            let cumulative = split
-              .slice(0, index + 1)
-              .join(".")
-              .replaceAll(".#", "#");
-
-            if (allDataPaths.indexOf(cumulative) < 0) {
-              Logger.error(
-                tf("dm_hidden_missing_index", [
-                  cumulative,
-                  data.sheets.content.tables.customDataDefinition.name,
-                  data.sheets.content.tables.customDataDefinition.columns
-                    .columnName.name,
-                ])
-              );
-            }
-          }
-        }
-      );
+      checkCustomDataDefinitionDataPaths(data, lang.code, dataPath);
     });
   }
 
@@ -2585,4 +2169,343 @@ function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
   });
 
   return [table[0], ...dataRows];
+}
+
+// =============================================================================
+// PURE MODULE-SCOPE INTEGRITY FUNCTIONS
+// (no closure over DataManager state — receive everything they need as args)
+// =============================================================================
+
+/**
+ * Checks that every intermediate data-path segment is declared in the
+ * customDataDefinition table.  E.g. if "info.redlist.code" is defined,
+ * both "info" and "info.redlist" must also appear.
+ *
+ * Must be called AFTER postprocessMetadata has lowercased columnNames.
+ *
+ * @param {object} data       – nlDataStructure (mutated in place by the pipeline)
+ * @param {string} langCode   – language code to inspect
+ * @param {object} dataPathLib – the dataPath utility object
+ */
+function checkCustomDataDefinitionDataPaths(data, langCode, dataPathLib) {
+  const table = data.sheets.content.tables.customDataDefinition.data[langCode];
+  if (!table || table.length === 0) return;
+
+  const allDataPaths = table.map((row) =>
+    dataPathLib.modify.itemNumbersToHash(row.columnName).toLowerCase()
+  );
+
+  table.forEach(function (row) {
+    const current = dataPathLib.modify
+      .itemNumbersToHash(row.columnName)
+      .toLowerCase();
+
+    if (!dataPathLib.validate.isDataPath(current)) return;
+
+    const split = dataPathLib.modify.pathToSegments(current);
+
+    for (let index = 0; index < split.length; index++) {
+      const cumulative = split
+        .slice(0, index + 1)
+        .join(".")
+        .replaceAll(".#", "#");
+
+      if (!allDataPaths.includes(cumulative)) {
+        Logger.error(
+          tf("dm_hidden_missing_index", [
+            cumulative,
+            data.sheets.content.tables.customDataDefinition.name,
+            data.sheets.content.tables.customDataDefinition.columns.columnName.name,
+          ])
+        );
+      }
+    }
+  });
+}
+
+/**
+ * Runs all manual integrity checks that go beyond what can be inferred from
+ * the `integrity` props in nlDataStructure.  Pure function: reads `data` and
+ * calls Logger / i18n helpers; does not mutate `data`.
+ *
+ * Checks performed:
+ *  1. mapRegionsLegend cross-row rules (uniqueness, column refs, anchor format,
+ *     min-2-anchors per group, A5 center consistency, appendedLegend on gradient)
+ *  2. Language UI fallback coverage
+ *  3. Cross-table column-name uniqueness (Maps table excluded)
+ *  4. Color-theme hue range (0–360)
+ *  5. Month names count / duplicate validation
+ *  6. customDataDefinition positional rules (placement/template/formatting/list/hidden)
+ *
+ * @param {object} data – nlDataStructure (read-only intent; hidden-column reset
+ *                        is the only mutation and is intentional side-effect)
+ */
+function runManualIntegrityChecks(data) {
+
+  // ── 1. mapRegionsLegend cross-row validation ──────────────────────────────
+  data.common.languages.supportedLanguages.forEach(function (lang) {
+    const rows = data.sheets.appearance.tables.mapRegionsLegend.data[lang.code];
+    if (!rows || rows.length === 0) return;
+
+    const tableName = data.sheets.appearance.tables.mapRegionsLegend.name;
+
+    const mapregionsPaths = new Set(
+      (data.sheets.content.tables.customDataDefinition.data[lang.code] || [])
+        .filter((r) => (r.formatting || "").trim().toLowerCase() === "mapregions")
+        .map((r) => (r.columnName || "").trim().toLowerCase())
+    );
+
+    // 1a. Compound-key uniqueness: (columnName + status) must be unique per lang
+    const seenPairs = new Map();
+    rows.forEach(function (row, idx) {
+      const colName = (row.columnName || "").toString().trim().toLowerCase();
+      const status  = (row.status || "").toString().trim();
+      const pairKey = colName + "|" + status;
+      if (seenPairs.has(pairKey)) {
+        Logger.error(
+          tf("dm_mapregions_duplicate_pair", [
+            tableName, colName || "(empty)", status || "(empty)",
+            seenPairs.get(pairKey), idx + 1,
+          ])
+        );
+      } else {
+        seenPairs.set(pairKey, idx + 1);
+      }
+    });
+
+    // 1b. Non-empty columnName must reference a declared mapregions column
+    rows.forEach(function (row, idx) {
+      const colName = (row.columnName || "").toString().trim().toLowerCase();
+      if (colName === "") return;
+      if (!mapregionsPaths.has(colName)) {
+        Logger.error(tf("dm_mapregions_unknown_column", [tableName, idx + 1, colName]));
+      }
+    });
+
+    // 1c. gradient/stepped rows: status must match anchor notation
+    const anchorRegex =
+      /^-?(\d+(\.\d+)?)(%)?(p)?(s)?$|^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
+
+    rows.forEach(function (row, idx) {
+      const legendType = (row.legendType || "").toString().trim().toLowerCase();
+      if (legendType !== "gradient" && legendType !== "stepped") return;
+      const status = (row.status ?? "").toString().trim();
+      if (status === "") {
+        Logger.error(
+          tf("dm_mapregions_empty_anchor", [tableName, idx + 1, legendType]),
+          "Empty status code"
+        );
+        return;
+      }
+      if (!anchorRegex.test(status)) {
+        Logger.error(
+          tf("dm_mapregions_invalid_anchor", [tableName, idx + 1, status, legendType]),
+          "Invalid status code"
+        );
+      }
+    });
+
+    // 1d. Each (columnName, legendType) group needs ≥ 2 anchor rows
+    const anchorGroupCounts = new Map();
+    rows.forEach(function (row) {
+      const legendType = (row.legendType || "").toString().trim().toLowerCase();
+      if (legendType !== "gradient" && legendType !== "stepped") return;
+      const colName  = (row.columnName || "").toString().trim().toLowerCase();
+      const groupKey = colName + "|" + legendType;
+      anchorGroupCounts.set(groupKey, (anchorGroupCounts.get(groupKey) || 0) + 1);
+    });
+    anchorGroupCounts.forEach(function (count, groupKey) {
+      if (count < 2) {
+        const [colName, legendType] = groupKey.split("|");
+        Logger.warning(
+          colName
+            ? tf("dm_mapregions_single_anchor", [tableName, legendType, colName])
+            : tf("dm_mapregions_single_anchor_global", [tableName, legendType])
+        );
+      }
+    });
+
+    // 1e. A5 center consistency: all rows in a (columnName, legendType) group
+    //     that use the cNNN suffix must share the same center value
+    const A5_REGEX = /^-?(\d+(\.\d+)?)([%s]?)c(-?\d+(\.\d+)?)$/i;
+    const a5CenterByGroup = new Map();
+    rows.forEach(function (row) {
+      const legendType = (row.legendType || "").toString().trim().toLowerCase();
+      if (legendType !== "gradient" && legendType !== "stepped") return;
+      const colName = (row.columnName || "").toString().trim().toLowerCase();
+      const status  = (row.status || "").toString().trim();
+      const m5 = A5_REGEX.exec(status);
+      if (!m5) return;
+      const center   = m5[4];
+      const groupKey = colName + "|" + legendType;
+      if (!a5CenterByGroup.has(groupKey)) a5CenterByGroup.set(groupKey, new Set());
+      a5CenterByGroup.get(groupKey).add(center);
+    });
+    a5CenterByGroup.forEach(function (centerSet, groupKey) {
+      if (centerSet.size > 1) {
+        const [colName, legendType] = groupKey.split("|");
+        Logger.error(
+          colName
+            ? tf("dm_mapregions_a5_center_mismatch", [tableName, legendType, colName, [...centerSet].join(", ")])
+            : tf("dm_mapregions_a5_center_mismatch_global", [tableName, legendType, [...centerSet].join(", ")])
+        );
+      }
+    });
+
+    // 1f. appendedLegend on gradient rows is silently ignored at runtime → warn
+    rows.forEach(function (row, idx) {
+      const legendType = (row.legendType || "").toString().trim().toLowerCase();
+      if (legendType !== "gradient") return;
+      const appended = (row.appendedLegend || "").toString().trim();
+      if (appended !== "") {
+        Logger.warning(
+          tf("dm_mapregions_appended_legend_ignored", [tableName, idx + 1, appended, legendType]),
+          "Appended legend for gradient legend types"
+        );
+      }
+    });
+  });
+
+  // ── 2. Language UI fallback coverage ─────────────────────────────────────
+  data.common.languages.supportedLanguages.forEach(function (lang) {
+    if (
+      i18nMetadata.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
+      i18nMetadata.getSupportedLanguageCodes().indexOf(lang.fallbackLanguage) < 0
+    ) {
+      Logger.warning(
+        tf("dm_specify_fallback_language", [
+          lang.name,
+          "Supported languages",
+          data.sheets.appearance.name,
+          i18nMetadata.getSupportedLanguageCodes().join(", "),
+        ])
+      );
+    }
+  });
+
+  // ── 3. Cross-table column-name uniqueness (Maps table exempted) ───────────
+  const uniqueColumnNames = {};
+  getAllColumnInfos(nlDataStructure, data.common.languages.defaultLanguageCode)
+    .forEach(function (item) {
+      const key = item.name.toLowerCase();
+      if (
+        !Object.prototype.hasOwnProperty.call(uniqueColumnNames, key) ||
+        item.table === uniqueColumnNames[key].table
+      ) {
+        uniqueColumnNames[key] = item;
+      } else {
+        if (item.table === "Maps" || uniqueColumnNames[key].table === "Maps") return;
+        Logger.error(
+          tf("dm_column_name_duplicate", [item.name, item.table, uniqueColumnNames[key].table])
+        );
+      }
+    });
+
+  // ── 4 & 5. Hue range + month names (per language) ────────────────────────
+  data.common.languages.supportedLanguages.forEach(function (lang) {
+    const customizationData = data.sheets.appearance.tables.customization.data[lang.code];
+    if (!customizationData) return;
+
+    // 4. Month names
+    const monthNamesValidation = validateConfiguredMonthNames(
+      getItem(customizationData, "Month names", lang.code, "")
+    );
+    if (monthNamesValidation.hasValue) {
+      if (monthNamesValidation.wrongCount) {
+        Logger.error(
+          tf("dm_month_names_wrong_count", [lang.code])
+        );
+      }
+      if (monthNamesValidation.duplicates.length > 0) {
+        Logger.error(
+          tf("dm_month_names_duplicates", [lang.code, monthNamesValidation.duplicates.join(", ")])
+        );
+      }
+    }
+
+    // 5. Color theme hue must be 0–360 when provided
+    const hueRow = customizationData.find((row) => row.item === "Color theme hue");
+    const hueString = hueRow ? hueRow.value : "";
+    if (hueString.toString().trim() !== "") {
+      const hue = parseInt(hueString);
+      if (isNaN(hue) || hue < 0 || hue > 360) {
+        Logger.error(
+          tf("dm_hue_value", [data.sheets.appearance.tables.customization.name])
+        );
+      }
+    }
+  });
+
+  // ── 6. customDataDefinition positional / structural rules ─────────────────
+  data.common.languages.supportedLanguages.forEach(function (lang) {
+    const table = data.sheets.content.tables.customDataDefinition.data[lang.code];
+    if (!table || table.length === 0) return;
+
+    const cddColumns = data.sheets.content.tables.customDataDefinition.columns;
+
+    const allColumnNames = table
+      .map((row) => row.columnName?.toLowerCase())
+      .filter((v) => v !== undefined);
+
+    for (const row of table) {
+      const columnName = row.columnName;
+      if (columnName === undefined) continue; // already reported upstream
+
+      const colPosition = dataPath.analyse.position(allColumnNames, columnName.toLowerCase());
+
+      // 6a. Only root/simple columns may carry a placement
+      if (row.placement !== "" && !(colPosition.isSimpleItem || colPosition.isRoot)) {
+        Logger.error(
+          tf("dm_wrong_placement", [
+            columnName,
+            row.placement,
+            columnName.substring(0, columnName.indexOf(".")),
+          ])
+        );
+      }
+
+      // 6b. Only leaf columns may carry a template
+      if (row.template !== "" && !colPosition.isLeaf) {
+        Logger.error(tf("dm_wrong_template", [columnName]));
+      }
+
+      // 6c. "category" formatting only on leaf columns
+      if (row.formatting.toLowerCase() === "category" && !colPosition.isLeaf) {
+        Logger.error(tf("dm_wrong_category", [columnName, cddColumns.formatting.name]));
+      }
+
+      // 6d. "list" formatting only on columns with children
+      if (row.formatting.toLowerCase().startsWith("list") && !colPosition.hasChildren) {
+        Logger.error(tf("dm_wrong_separator", [columnName, cddColumns.formatting.name]));
+      }
+
+      // 6e. "details" placement only allows certain formatting types
+      if (row.placement && row.placement.split("|").map((x) => x.trim()).includes("details")) {
+        const allowedFormatting = ["", "text", "list", "markdown", "image", "sound", "map", "mapregions"];
+        const baseFormatting = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
+        if (!allowedFormatting.includes(baseFormatting)) {
+          Logger.error(
+            tf("dm_details_formatting_invalid", [columnName, row.formatting, row.placement])
+          );
+        }
+      }
+
+      // 6f. Hidden columns must not carry other display properties
+      if (row.hidden === "yes") {
+        Object.keys(row).forEach(function (columnKey) {
+          if (
+            columnKey === "columnName" ||
+            columnKey === "hidden" ||
+            columnKey === "searchCategoryTitle" // allowed on hidden columns
+          ) return;
+          if (row[columnKey].toString().trim() !== "") {
+            Logger.warning(
+              tf("dm_hidden_column_name", [columnName, cddColumns[columnKey].name])
+            );
+            row[columnKey] = ""; // intentional: reset to avoid misleading downstream
+          }
+        });
+      }
+    }
+  });
 }

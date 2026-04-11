@@ -444,6 +444,7 @@ export let nlDataStructure = {
         },
         customDataDefinition: {
           name: "Custom data definition",
+          required: false,
           description:
             'Typically you will want to show some additional data next to each taxon in your checklist. This is the place where you tie different data columns of the checklist spreadsheet to how <strong>NaturaList</strong> should handle or display them.\nRead about the <a href="#g-datapath">data path</a> concept to see how you can represent complex data like arrays (multiple items of the same type, like assigning several habitat types to a taxon) or structured data (like publication information with year, name and link to the publication) by using simple spreadsheet columns.',
           columns: {
@@ -567,6 +568,7 @@ export let nlDataStructure = {
         },
         searchOnline: {
           name: "Search online",
+          required: false,
           description:
             "When you click on any taxon in the checklist app, a 'Details' pane opens with the taxon details. If you fill this table, you can display a series of links to search engines of herbaria, collections, encyclopedia or other where the taxon may be found through a template URL adress. You can find some exemples in the <a href=\"us-birds.xlsx\">Birds of the US</a> sample checklist.\nThis table can be left completely empty, if you do not want to provide users means to search the taxa in external search engines. This being said, adding appropriate search engines will help users find relevant information about the taxa you present (e.g. digitalized specimens, if you provide a link to a muzeum or herbarium collection).",
           columns: {
@@ -627,6 +629,7 @@ export let nlDataStructure = {
         },
         singleAccessKeys: {
           name: "Single-access keys",
+          required: false,
           description:
             "This table allows you to define identification keys directly in the spreadsheet. It uses a simplified 4-column structure that permits you to create both dichotomous and polytomous keys.",
           columns: {
@@ -688,6 +691,7 @@ export let nlDataStructure = {
         },
         bibliography: {
           name: "Bibliography",
+          required: false,
           description:
             "BibTeX citations for @-notation references. Each row contains one complete BibTeX entry. Copy entries directly from reference managers.",
           columns: {
@@ -706,6 +710,7 @@ export let nlDataStructure = {
         },
         databaseShortcodes: {
           name: "Database shortcodes",
+          required: false,
           description:
             "Define custom shortcodes for embedding hyperlinks to external biological databases or any URL-based resource inside Markdown fields. Built-in shortcodes (gbif, gbif.s, inat, ebird, clml, obse) are always available; rows here can add new ones or override built-ins.",
           columns: {
@@ -753,12 +758,14 @@ export let nlDataStructure = {
     },
     appearance: {
       name: "nl_appearance",
+      required: false,
       description:
         "This sheet allows you to configure the appearance of the data from the checklist sheet in the app.",
       type: "meta",
       tables: {
         supportedLanguages: {
           name: "Supported languages",
+          required: false,
           description:
             'This table allows for declaration of one or more languages in which the checklist is presented. It is possible to create checklists which will display data in different languages. See the <a href="us-birds.xlsx">Birds of the US</a> sample checklist which is a bilingual English/French checklist, and scan through headers on all three sheets for column names ending with ":fr" (French version) or ":en" (default, English version). Once you have declared your language codes and names you wish to use (en / English and fr / French in the sample), you can append ":" and langauge code (e.g. ":fr") to columns which are allowed to be multilingual to mark them to be used for a specific language version of the checklist.\nYou have to define at least one language for your checklist.',
           columns: {
@@ -805,6 +812,7 @@ export let nlDataStructure = {
         },
         customization: {
           name: "Customization",
+          required: false,
           description:
             "This table allows for customization of some elements of the checklist. The entries in the column Item are fixed, you can change the value of cells in the column Value. This column can be multilingual, so if you have more than one language, say a bi-lingual English-French checklist, you can change the header to Value:en and add immediately to the right a new column with the header Value:fr",
           columns: {
@@ -840,6 +848,7 @@ export let nlDataStructure = {
         },
         dataCodes: {
           name: "Data codes",
+          required: false,
           description: "",
           columns: {
             columnName: {
@@ -884,6 +893,7 @@ export let nlDataStructure = {
         },
         categories: {
           name: "Colored categories",
+          required: false,
           description:
             "If your checklist contains small sets of categorical data (e.g. Red List codes, status like Native, Introduced, Endemic, ...), you can make them visually stand out by transforming them into a colored 'category'. The columns from the checklist sheet whose data will be presented as categories and the color of the individual values are defined in this table.\nThis table can be left completely empty, if you do not need to display colored categories. You do not have to style all categorical data. It is perfectly fine to label data in 'Custom data definition' table with 'category' formatting and not style it as a colored category in this table. In that case the data will be displayed as a simple text, but will still be searchable through a category filter if you set 'Search category title' in the 'Custom data definition' table.",
           columns: {
@@ -961,6 +971,7 @@ export let nlDataStructure = {
         },
         mapRegionsNames: {
           name: "Map regions information",
+          required: false,
           description:
             "<strong>NaturaList</strong> allows you to associate different kinds of maps with each taxon. If you are using maps of type 'regions' (defined on sheet <b>nl_content</b>, table <b>Maps</b>), you can define here how different regions will be colored and what legend will be displayed for them. See more on maps in the documentation of table <a href=\"#table-maps\">Maps</a>.\nThis table can be left completely empty, if you do not need use region maps.",
           columns: {
@@ -996,6 +1007,7 @@ export let nlDataStructure = {
         },
         mapRegionsLegend: {
           name: "Map regions legend",
+          required: false,
           description:
             "Configures the color, legend label, and scale behaviour for every status value or numeric anchor used in <b>mapregions</b> data columns. Four modes are supported and can be combined freely:\n<ul>" +
             "<li><b>Simple presence/absence:</b> leave Status code empty (or use a single arbitrary code). One row is sufficient.</li>" +
@@ -1109,6 +1121,7 @@ export let nlDataStructure = {
         },
         searchOrder: {
           name: "Search category custom order",
+          required: false,
           description:
             "When you assign a 'Search category title' to a checklist data column (see the documentation of table <a href=\"#table-customDataDefinition\">Custom data definiton</a> under 'Search category title' column), the content of that data column is used to show a filter to search through it. By default the content of the filter is ordered alphabetically and this will likely work best in most cases. However, if you need the items to appear in the filter in a custom order, you can use this table to define it. A sample use case could be the Red List category, where it is less useful to have the categories appear in alphabetical order (i.e. Critically endangered first, followed by Endangered, Extinct in the wild, etc.). Instead, you may wish this filter to appear in order of threat severity from the highest to the least. Another use case could concern the topmost taxonomic category in a botanical checklist, where there could be e.g. Lycophytes, Ferns, Gymnosperms, Monocots and Dicots and instead of showing them alphabetically ordered in the checklist, one could order them in a way to put the most prominent categories at the top. See the sample <a href=\"us-birds.xlsx\">Birds of the US</a> checklist for an example of custom ordering of columns 'redlist.name' and 'presence'. Items will be presented in the filter in the order in which they appear in this table. Any item that was not included in the table will be rendered at the end of the list in alphabetical order.\nThis table can be left completely empty, if you do not need custom order in your filters.",
           columns: {
