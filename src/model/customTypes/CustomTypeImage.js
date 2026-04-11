@@ -41,7 +41,7 @@ export let customTypeImage = {
     if (!data || typeof data !== "object") return [];
     const result = [];
     if (data.title) result.push(data.title);
-    if (data.source) result.push(data.source);
+    
     return result;
   },
   render: function (data, uiContext) {
