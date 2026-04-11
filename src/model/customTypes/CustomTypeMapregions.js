@@ -617,9 +617,10 @@ function renderRegionsList(data, uiContext) {
     const resolved = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
 
     // Per spec §4.6:
-    //   category → show appendedLegend from the matched row
-    //   stepped  → show appendedLegend from the matched bin (now populated by engine)
-    //   gradient → show the actual raw data value in place of appendedLegend
+    //   category → show appendedLegend from the matched row (may be empty — intentional)
+    //   stepped  → show appendedLegend from the matched bin if non-empty;
+    //              fall back to the raw numeric value if appendedLegend is empty
+    //   gradient → always show the raw numeric value (appendedLegend is never used)
     //   fallback → no appended text
     let appendedLegend = "";
     if (resolved?.resolvedAs === 'gradient') {
@@ -627,8 +628,17 @@ function renderRegionsList(data, uiContext) {
       if (rawVal) {
         appendedLegend = cachedMarkdown(" _(" + rawVal + ")_");
       }
-    } else if (resolved?.appendedLegend?.trim()) {
-      appendedLegend = cachedMarkdown(" _(" + resolved.appendedLegend + ")_");
+    } else if (resolved?.resolvedAs === 'stepped') {
+      const binLabel = resolved.appendedLegend?.trim();
+      const text = binLabel || status.trim();
+      if (text) {
+        appendedLegend = cachedMarkdown(" _(" + text + ")_");
+      }
+    } else if (resolved?.resolvedAs === 'category') {
+      if (resolved.appendedLegend?.trim()) {
+        appendedLegend = cachedMarkdown(" _(" + resolved.appendedLegend + ")_");
+      }
+      // empty appendedLegend on a category row is intentional — show nothing
     }
 
     const regionName = Checklist.nameForMapRegion(regionCode);
