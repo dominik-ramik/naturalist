@@ -545,17 +545,13 @@ export let Checklist = {
           };
         }
 
+        const _plugin = dataCustomTypes[filterType]?.filterPlugin;
         Checklist.filter.data[filterPath] = {
-          all: [],
-          possible: {},
-          selected: [],
           color: "",
-          type: filterType,
-          numeric: {
-            threshold1: null,
-            threshold2: null,
-            operation: "",
-          },
+          ...(_plugin?.createFilterDef
+            ? _plugin.createFilterDef(filterType)
+            : { type: filterType, all: [], possible: {}, selected: [], numeric: null }
+          ),
         };
       }
     });
@@ -606,40 +602,21 @@ export let Checklist = {
 
           let leafData = Checklist.getAllLeafData(value, false, dataPath);
 
-          if (
-            Checklist.filter[dataType][dataPath].type == "text" ||
-            Checklist.filter[dataType][dataPath].type == "mapregions" ||
-            Checklist.filter[dataType][dataPath].type == "category" ||
-            Checklist.filter[dataType][dataPath].type == "months"
-          ) {
-            leafData.forEach(function (value) {
-              if (Checklist.filter[dataType][dataPath].all.indexOf(value) < 0) {
-                Checklist.filter[dataType][dataPath].all.push(value);
+          const _customType = dataCustomTypes[Checklist.filter[dataType][dataPath].type];
+          const _allValues  = _customType?.extractAllValues
+            ? _customType.extractAllValues(value, leafData)
+            : leafData;  // default: dedup string/number leaf values (text, category, months, mapregions)
+          _allValues.forEach(function (v) {
+            if (_customType?.extractAllValues) {
+              if (Array.isArray(v) || Checklist.filter[dataType][dataPath].all.indexOf(v) < 0) {
+                Checklist.filter[dataType][dataPath].all.push(v);
               }
-            });
-          } else if (
-            Checklist.filter[dataType][dataPath].type === "interval"
-          ) {
-            // value is [from, to] — store the pair directly, not the unwrapped numbers
-            if (Array.isArray(value) && value.length === 2) {
-              Checklist.filter[dataType][dataPath].all.push(value);
-            }
-          } else if (
-            Checklist.filter[dataType][dataPath].type === "interval"
-          ) {
-            // value is [from, to] — store the pair directly, not the unwrapped numbers
-            if (Array.isArray(value) && value.length === 2) {
-              Checklist.filter[dataType][dataPath].all.push(value);
-            }
-          } else if (
-            ["number", "date"].includes(Checklist.filter.data[dataPath].type)
-          ) {
-            leafData.forEach(function (value) {
-              if (typeof value === "number" && !isNaN(value)) {
-                Checklist.filter[dataType][dataPath].all.push(value);
+            } else {
+              if (Checklist.filter[dataType][dataPath].all.indexOf(v) < 0) {
+                Checklist.filter[dataType][dataPath].all.push(v);
               }
-            });
-          }
+            }
+          });
         });
       });
     });
@@ -977,21 +954,18 @@ export let Checklist = {
     if (!this.getAllLeafDataCache.has(cacheKey)) {
       let data = [];
 
-      if (Checklist.getDataMeta()[currentPath]?.formatting == "mapregions") {
-        // Work directly with object format
-        if (typeof taxonData === "object" && taxonData) {
-          data = Object.keys(taxonData).map((regionCode) =>
-            Checklist.nameForMapRegion(regionCode)
-          );
-        }
-      } else if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
+      // Let the CustomType extract its own atomic leaf values when it knows better
+      // than the generic recursive descent (interval pairs, mapregion name mapping).
+      const _fmt        = Checklist.getDataMeta()[currentPath]?.formatting;
+      const _customType = _fmt ? dataCustomTypes[_fmt] : null;
+      if (_customType?.extractFilterLeafValues) {
+        const _result = _customType.extractFilterLeafValues(taxonData, currentPath);
+        this.getAllLeafDataCache.set(cacheKey, _result);
+        return _result;
+      }
+
+      if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
         data = "<img src='" + "?" + "' />";
-      } else if (Checklist.getDataMeta()[currentPath]?.formatting == "interval") {
-        // [from, to] is an atomic pair — treat the whole array as one leaf value,
-        // identical to the months/map-regions guards above.
-        if (Array.isArray(taxonData) && taxonData.length === 2) {
-          data.push(taxonData);
-        }
       } else if (Array.isArray(taxonData)) {
         taxonData.forEach(function (item) {
           data = data.concat(

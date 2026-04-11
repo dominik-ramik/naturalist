@@ -1,9 +1,13 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 import { processMarkdownWithBibliography } from "../../components/Utils.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMarkdown = {
   dataType: "markdown",
+  
+  filterPlugin: filterPluginText,
+
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     let columnIndex = headers.indexOf(computedPath.toLowerCase());

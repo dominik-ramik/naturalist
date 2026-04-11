@@ -259,6 +259,8 @@ function buildMapUrl(template, lat, long) {
 export let customTypeGeopoint = {
   dataType: "geopoint",
 
+  filterPlugin: null, // No full-text search plugin for geopoints (proximity search would be more appropriate but is deferred)
+
   defaultTemplate: "https://www.google.com/maps?q={{lat}},{{long}}",
 
   readData(context, computedPath) {

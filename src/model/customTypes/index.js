@@ -50,13 +50,26 @@ function verifyReaders() {
   const duplicateDataTypes = [];
 
   Object.entries(dataCustomTypes).forEach(([dataType, reader], index) => {
+    //try getting the reader dataType property and use it instead of index, fall back to index if not available to provide more context in error messages
+    const readerDataType = reader.dataType || `index ${index}`;
+
+
     // Check for required properties and their types
     if (
       !reader.hasOwnProperty("dataType") ||
       typeof reader.dataType !== "string"
     ) {
       console.error(
-        `Reader at index ${index} is missing required 'dataType' property or it's not a string`
+        `CustomType at ${readerDataType} is missing required 'dataType' property or it's not a string`
+      );
+    }
+
+    if (
+      !reader.hasOwnProperty("filterPlugin") ||
+      (typeof reader.filterPlugin !== "object" && reader.filterPlugin !== null)
+    ) {
+      console.error(
+        `CustomType at ${readerDataType} is missing required 'filterPlugin' property or it's not an object or null`
       );
     }
 
@@ -65,7 +78,7 @@ function verifyReaders() {
       typeof reader.readData !== "function"
     ) {
       console.error(
-        `Reader at index ${index} is missing required 'readData' property or it's not a function`
+        `CustomType at ${readerDataType} is missing required 'readData' property or it's not a function`
       );
     }
 
@@ -74,14 +87,14 @@ function verifyReaders() {
       typeof reader.render !== "function"
     ) {
       console.error(
-        `Reader at index ${index} is missing required 'render' property or it's not a function`
+        `CustomType at ${readerDataType} is missing required 'render' property or it's not a function`
       );
     }
 
     // Check if object key matches reader's dataType
     if (dataType !== reader.dataType) {
       console.error(
-        `Reader key '${dataType}' doesn't match reader's dataType '${reader.dataType}'`
+        `CustomType key '${dataType}' doesn't match CustomType's dataType '${reader.dataType}'`
       );
     }
 
@@ -105,7 +118,7 @@ function verifyReaders() {
   // Additional check for getSearchableText method
   Object.entries(dataCustomTypes).forEach(([dataType, reader]) => {
     if (!reader.hasOwnProperty("getSearchableText") || typeof reader.getSearchableText !== "function") {
-      console.error(`Reader '${dataType}' is missing 'getSearchableText' method - search may not work properly`);
+      console.error(`CustomType '${dataType}' is missing 'getSearchableText' method - search may not work properly`);
     }
   });
 }

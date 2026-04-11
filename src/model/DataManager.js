@@ -9,7 +9,7 @@ import {
 } from "../components/Utils.js";
 import { getAllColumnInfos, getItem, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
-import { loadDataByType, clearDataCodesCache } from "./customTypes/index.js";
+import { loadDataByType, clearDataCodesCache, dataCustomTypes } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
@@ -2505,6 +2505,22 @@ function runManualIntegrityChecks(data) {
             row[columnKey] = ""; // intentional: reset to avoid misleading downstream
           }
         });
+      }
+
+      // 6g. searchCategoryTitle set on a formatting that has no filter plugin
+      const baseFormatting6g = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
+      const searchCategoryTitle6g = (row.searchCategoryTitle || "").trim();
+      if (
+        baseFormatting6g !== "" &&
+        baseFormatting6g !== "list" &&
+        searchCategoryTitle6g !== ""
+      ) {
+        const customType6g = dataCustomTypes[baseFormatting6g];
+        if (customType6g && customType6g.filterPlugin === null) {
+          Logger.error(
+            tf("dm_cdd_no_filter_plugin", [columnName, searchCategoryTitle6g, baseFormatting6g])
+          );
+        }
       }
     }
   });

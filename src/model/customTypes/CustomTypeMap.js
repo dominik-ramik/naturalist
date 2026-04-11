@@ -3,9 +3,11 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMap = {
   dataType: "map",
+  filterPlugin: filterPluginText,
   readData: function (context, computedPath) {
     let mapData = readDataFromPath(
       context,

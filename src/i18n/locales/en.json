@@ -219,6 +219,8 @@
   "dm_fdirective_invalid_url": "Invalid F: URL or not same origin: {0} ({1})",
   "dm_details_formatting_invalid": "Column {0} has placement 'details' but formatting '{1}'. Only '', 'text', 'markdown', 'image', 'sound', 'map', or 'mapregions' are allowed for placement 'details'. (Current placement: '{2}')",
   "dm_details_with_children_invalid": "Column {0} has placement 'details' but also has dependent columns: {1}. For placement 'details', the column must be a simple value and not have any child columns.",
+  "dm_cdd_no_filter_plugin": "Column '{0}' has 'Search category title' set ('{1}'), but formatting '{2}' does not support filtering. Remove the 'Search category title' to hide the filter button, or use a formatting type that supports filtering.",
+  "filter_no_plugin": "Filter for '{0}' doesn't exist",
   "filter_or": "or",
   "filter_cat_text": "Contains text",
   "check_all_shown": "Check all shown items",

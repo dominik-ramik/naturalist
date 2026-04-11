@@ -3,6 +3,7 @@ import m from "mithril";
 
 import { Checklist } from "../Checklist.js";
 import { helpers } from "./helpers.js";
+import { filterPluginDate } from "../filterPlugins/filterPluginDate.js";
 
 function getDateFormat(langCode) {
   return Checklist.getCurrentDateFormat(langCode);
@@ -51,6 +52,12 @@ export let customTypeDate = {
 
     const langCode = uiContext?.langCode || Checklist.getCurrentLanguage();
     return [dateObj.format(getDateFormat(langCode))];
+  },
+
+  filterPlugin: filterPluginDate,
+
+  extractAllValues(_rawValue, leafData) {
+    return leafData.filter(v => typeof v === "number" && !isNaN(v));
   },
 
   render: function (data, uiContext) {

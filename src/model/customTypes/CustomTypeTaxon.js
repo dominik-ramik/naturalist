@@ -1,8 +1,12 @@
 import m from "mithril";
 import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeTaxon = {
   dataType: "taxon",
+  
+  filterPlugin: filterPluginText,
+
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
 

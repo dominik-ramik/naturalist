@@ -4,9 +4,13 @@ import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { MinimalAudioPlayer } from "../../components/MinimalAudioPlayer.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeSound = {
   dataType: "sound",
+
+  filterPlugin: filterPluginText,
+
   readData: function (context, computedPath) {
     let soundData = readDataFromPath(
       context,

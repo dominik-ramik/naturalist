@@ -43,6 +43,7 @@
 import m from "mithril";
 import { Logger } from "../../components/Logger.js";
 import { helpers } from "./helpers.js";
+import { filterPluginInterval } from "../filterPlugins/filterPluginInterval.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -160,6 +161,16 @@ export let customTypeInterval = {
 
     const [fr, tr] = splitCell(cell);
     return buildInterval(fr.trim(), tr.trim(), cell);
+  },
+
+  filterPlugin: filterPluginInterval,
+
+  extractFilterLeafValues(rawValue) {
+    return Array.isArray(rawValue) && rawValue.length === 2 ? [rawValue] : [];
+  },
+
+  extractAllValues(rawValue) {
+    return Array.isArray(rawValue) && rawValue.length === 2 ? [rawValue] : [];
   },
 
   /**

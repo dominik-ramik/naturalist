@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
+import { dataCustomTypes } from "./customTypes/index.js";
 
 export let Settings = {
   // Full-text search OR separator symbol
@@ -395,154 +396,71 @@ export let Settings = {
 
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
-    getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
+getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
+  if (itemObject === undefined) {
+    itemObject = JSON.parse(Checklist.queryKey());
+  }
 
-      if (itemObject === undefined) {
-        itemObject = JSON.parse(Checklist.queryKey());
+  // Strip tool/scope keys — only the filter portion matters here
+  const { v: _v, s: pinnedScope, ...filterPart } = itemObject;
+  itemObject = filterPart;
+
+  if (Object.keys(itemObject).length === 0) {
+    const scope = pinnedScope || Settings.analyticalIntent();
+    return scope === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
+  }
+
+  const opts  = { html: !usePlainTextOutput };
+  const names = [];
+
+  ["taxa", "data"].forEach(function (type) {
+    if (!itemObject.hasOwnProperty(type)) return;
+    Object.keys(itemObject[type]).forEach(function (dataPath) {
+      // Guard: stale pinned searches may reference removed data paths
+      if (type === "data" && !Object.prototype.hasOwnProperty.call(Checklist.getDataMeta(), dataPath)) {
+        Settings.pinnedSearches.remove(itemObject);
+        return;
       }
 
-      // Strip tool/scope keys for filter description
-      const { v: _v, s: pinnedScope, ...filterPart } = itemObject;
-      itemObject = filterPart;
+      const categoryName = type === "taxa"
+        ? Checklist.getNameOfTaxonLevel(dataPath)
+        : Checklist.getDataMeta()[dataPath].searchCategory;
 
-      if (Object.keys(itemObject).length == 0) {
-        const scope = pinnedScope || Settings.analyticalIntent();
-        return scope === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
-      }
+      // For taxa the filterDef type is always "text"; for data use the column's formatting
+      const formatting = type === "taxa"
+        ? "text"
+        : Checklist.getMetaForDataPath(dataPath).formatting;
 
-      let names = [];
+      const plugin = dataCustomTypes[formatting]?.filterPlugin;
+      if (!plugin) return;
 
-      ["taxa", "data"].forEach(function (type) {
-        if (itemObject.hasOwnProperty(type)) {
-          Object.keys(itemObject[type]).forEach(function (dataPath) {
-            let categoryName = "";
+      const desc = plugin.describeSerializedValue(
+        dataPath,
+        itemObject[type][dataPath],
+        { ...opts, categoryName }
+      );
+      if (desc) names.push(desc);
+    });
+  });
 
-            if (type == "taxa") {
-              categoryName = Checklist.getNameOfTaxonLevel(dataPath);
-            } else if (type == "data") {
-              if (Object.keys(Checklist.getDataMeta()).indexOf(dataPath) < 0) {
-                Settings.pinnedSearches.remove(itemObject);
-                return;
-              }
+  if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
+    let textDisplay = itemObject.text;
+    if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
+      const joiner = usePlainTextOutput
+        ? " " + t("crumb_or") + " "
+        : "</strong> " + t("crumb_or") + " <strong>";
+      textDisplay = textDisplay.split(Settings.SEARCH_OR_SEPARATOR).join(joiner);
+    }
+    names.push(
+      t("text_is_list_joiner") + " " +
+      (usePlainTextOutput ? "" : "<strong>") +
+      textDisplay +
+      (usePlainTextOutput ? "" : "</strong>")
+    );
+  }
 
-              categoryName = Checklist.getDataMeta()[dataPath].searchCategory;
-            }
-
-            if (
-              type == "taxa" ||
-              Checklist.getMetaForDataPath(dataPath).formatting == "text" ||
-              Checklist.getMetaForDataPath(dataPath).formatting == "category" ||
-              Checklist.getMetaForDataPath(dataPath).formatting ==
-              "mapregions" ||
-              Checklist.getMetaForDataPath(dataPath).formatting == "months"
-              ||
-              (
-                ["number", "date"].includes(
-                  Checklist.getMetaForDataPath(dataPath).formatting
-                ) &&
-                Array.isArray(itemObject[type][dataPath])
-              )
-            ) {
-              let displayValues = itemObject[type][dataPath];
-              if (!Array.isArray(displayValues)) {
-                displayValues = [displayValues];
-              }
-
-              if (Checklist.getMetaForDataPath(dataPath)?.formatting == "date") {
-                displayValues = itemObject[type][dataPath].map((value) => {
-                  const dateObj = dayjs(value);
-                  return dateObj.isValid()
-                    ? dateObj.format(Checklist.getCurrentDateFormat())
-                    : value?.toString?.() || "";
-                });
-              } else if (
-                Checklist.getMetaForDataPath(dataPath)?.formatting == "number"
-              ) {
-                displayValues = itemObject[type][dataPath].map((value) =>
-                  value?.toLocaleString?.() || value?.toString?.() || ""
-                );
-              } else if (
-                Checklist.getMetaForDataPath(dataPath)?.formatting == "months" // <-- ADD THIS BLOCK
-              ) {
-                displayValues = itemObject[type][dataPath].map((value) =>
-                  Checklist.filter.monthLabelForValue(value)
-                );
-              }
-              
-
-              names.push(
-                categoryName +
-                " " +
-                t("is_list_joiner") +
-                " " +
-                formatList(
-                  displayValues,
-                  t("or_list_joiner"),
-                  usePlainTextOutput ? "" : "<strong>",
-                  usePlainTextOutput ? "" : "</strong>"
-                )
-              );
-            } else if (
-              ["number", "date"].includes(
-                Checklist.getMetaForDataPath(dataPath).formatting
-              )
-            ) {
-              let operation = itemObject[type][dataPath].o;
-              let t1 = itemObject[type][dataPath].a;
-              let t2 = itemObject[type][dataPath].b;
-
-              names.push(
-                Checklist.getMetaForDataPath(dataPath).formatting == "date"
-                  ? Checklist.filter.dateFilterToHumanReadable(
-                    dataPath,
-                    operation,
-                    t1,
-                    t2,
-                    usePlainTextOutput ? "" : "<strong>",
-                    usePlainTextOutput ? "" : "</strong>"
-                  )
-                  : Checklist.filter.numericFilterToHumanReadable(
-                    dataPath,
-                    operation,
-                    t1,
-                    t2,
-                    usePlainTextOutput ? "" : "<strong>",
-                    usePlainTextOutput ? "" : "</strong>"
-                  )
-              );
-            }
-          });
-        }
-      });
-
-      if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
-        let textDisplay = itemObject.text;
-
-        // Check if the search text contains the OR separator
-        if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
-          let parts = textDisplay.split(Settings.SEARCH_OR_SEPARATOR);
-
-          // If output is HTML, we interrupt the surrounding <strong> tags 
-          // to insert a bolded OR separator.
-          // Example result: <strong>Term1</strong> <b> OR </b> <strong>Term2</strong>
-          let joiner = usePlainTextOutput ?
-            (" " + t("crumb_or") + " ") :
-            ("</strong> " + t("crumb_or") + " <strong>");
-
-          textDisplay = parts.join(joiner);
-        }
-
-        names.push(
-          t("text_is_list_joiner") +
-          " " +
-          (usePlainTextOutput ? "" : "<strong>") +
-          textDisplay +
-          (usePlainTextOutput ? "" : "</strong>")
-        );
-      }
-
-      return formatList(names);
-    },
+  return formatList(names);
+},
     isCurrentSearchPinned: function () {
       return this.getAll().some(function (pinnedItem) {
         return Settings.pinnedSearches.matchesCurrent(pinnedItem);

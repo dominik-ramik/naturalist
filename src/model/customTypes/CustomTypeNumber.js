@@ -1,5 +1,6 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
+import { filterPluginNumber } from "../filterPlugins/filterPluginNumber.js";
 
 export let customTypeNumber = {
   dataType: "number",
@@ -41,6 +42,12 @@ export let customTypeNumber = {
   getSearchableText: function (data, uiContext) {
     if (data === null || data === undefined) return [];
     return [data.toString()];
+  },
+
+  filterPlugin: filterPluginNumber,
+
+  extractAllValues(_rawValue, leafData) {
+    return leafData.filter(v => typeof v === "number" && !isNaN(v));
   },
 
   render: function (data, uiContext) {

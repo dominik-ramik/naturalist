@@ -25,6 +25,7 @@ import m from "mithril";
 import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
 import { Logger } from "../../components/Logger.js";
+import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -282,6 +283,8 @@ export let customTypeMonths = {
 
     return months.length > 0 ? months : [];
   },
+
+  filterPlugin: filterPluginMonths,
 
   /**
    * Returns the full rendered i18n string as a single searchable element.

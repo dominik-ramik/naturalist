@@ -3,9 +3,11 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeImage = {
   dataType: "image",
+  filterPlugin: filterPluginText,
   readData: function (context, computedPath) {
     let imageData = readDataFromPath(
       context,

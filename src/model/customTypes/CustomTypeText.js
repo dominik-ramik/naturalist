@@ -1,5 +1,6 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeText = {
   dataType: "text",
@@ -39,6 +40,8 @@ export let customTypeText = {
     if (!data || typeof data !== "string") return [];
     return [data];
   },
+
+  filterPlugin: filterPluginText,
 
   render: function (data, uiContext) {
     // Handle null/undefined

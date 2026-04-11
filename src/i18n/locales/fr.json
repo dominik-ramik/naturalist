@@ -214,6 +214,8 @@
   "dm_fdirective_invalid_url": "URL F: invalide ou origine différente: {0} ({1})",
   "dm_details_formatting_invalid": "La colonne {0} a le placement 'details' mais le formatage '{1}'. Seuls '', 'text', 'markdown', 'image', 'sound', 'map', ou 'mapregions' sont autorisés pour le placement 'details'. (Placement actuel: '{2}')",
   "dm_details_with_children_invalid": "La colonne {0} a le placement 'details' mais a aussi des colonnes dépendantes: {1}. Pour le placement 'details', la colonne doit être une valeur simple et ne pas avoir de colonnes enfants.",
+  "dm_cdd_no_filter_plugin": "La colonne '{0}' a un 'Search category title' défini ('{1}'), mais le formatage '{2}' ne supporte pas le filtrage. Supprimez le 'Search category title' pour masquer le bouton de filtre, ou utilisez un formatage qui supporte le filtrage.",
+  "filter_no_plugin": "Filtre pour '{0}' inexistant",
   "filter_or": "ou",
   "filter_cat_text": "Contient le texte",
   "check_all_shown": "Cocher tous les éléments affichés",

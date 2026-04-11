@@ -27,6 +27,7 @@ import {
   steppedBinsForConfig,
   parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
+import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
 
 const nlData = nlDataStructure;
 
@@ -159,6 +160,13 @@ export let customTypeMapregions = {
       if (regionName && !result.includes(regionName)) result.push(regionName);
     });
     return result;
+  },
+
+  filterPlugin: filterPluginMapregions,
+
+  extractFilterLeafValues(rawValue) {
+    if (!rawValue || typeof rawValue !== "object") return [];
+    return Object.keys(rawValue).map(code => Checklist.nameForMapRegion(code));
   },
 
   render: function (data, uiContext) {

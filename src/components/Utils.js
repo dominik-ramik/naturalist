@@ -370,7 +370,7 @@ export function routeTo(destination, query, language, replace = false) {
 
   m.route.set(destination, {
     l: lang,
-    q: query ? query : Checklist.queryKey(),
+    q: (query ? query : Checklist.queryKey()).replaceAll("#", "%23"),
     v: Settings.viewType(),
     s: Settings.analyticalIntent().replace("#", ""),
   }, replace ? { replace: true } : undefined);
