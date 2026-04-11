@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { dataReaders } from "../../model/customTypes/index.js";
+import { dataCustomTypes } from "../../model/customTypes/index.js";
 
 export function TabText(tabData, taxon, taxonName) {
   if (!tabData || tabData.length === 0) {
@@ -82,7 +82,7 @@ export function TabText(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataReaders[meta.formatting] || dataReaders["text"];
+        const reader = dataCustomTypes[meta.formatting] || dataCustomTypes["text"];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem && meta.title) {
           return m("div", [
@@ -126,7 +126,7 @@ export function TabText(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataReaders[meta.formatting] || dataReaders["text"];
+        const reader = dataCustomTypes[meta.formatting] || dataCustomTypes["text"];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {

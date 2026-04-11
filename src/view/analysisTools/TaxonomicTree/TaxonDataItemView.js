@@ -5,7 +5,7 @@ import "./TaxonDataItemView.css";
 
 import { Checklist } from "../../../model/Checklist.js";
 import { filterMatches, routeTo, shouldHide } from "../../../components/Utils.js";
-import { dataReaders } from "../../../model/customTypes/index.js";
+import { dataCustomTypes } from "../../../model/customTypes/index.js";
 import { AppLayoutView } from "../../AppLayoutView.js";
 
 export let TaxonDataItemView = {
@@ -20,7 +20,7 @@ export let TaxonDataItemView = {
     }
 
     if (meta.formatting) {
-      const reader = dataReaders[meta.formatting];
+      const reader = dataCustomTypes[meta.formatting];
       if (reader && reader.render) {
         const readerResult = TaxonDataItemView.renderWithReader(
           data,
@@ -110,7 +110,7 @@ export let TaxonDataItemView = {
 
     if (itemType == "object") {
       // Try the reader first - let readers decide if they can handle object data
-      const reader = dataReaders[meta.formatting];
+      const reader = dataCustomTypes[meta.formatting];
       if (reader && reader.render) {
         const readerResult = TaxonDataItemView.renderWithReader(
           data,
@@ -179,7 +179,7 @@ export let TaxonDataItemView = {
    * Returns null if the reader returns null (should be hidden).
    */
   renderWithReader: function (data, meta, dataPath, taxon, tailingSeparator) {
-    const reader = dataReaders[meta.formatting];
+    const reader = dataCustomTypes[meta.formatting];
     if (reader && reader.render) {
       // Normalize taxon to { name, authority }
       let taxonObj = taxon;

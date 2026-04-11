@@ -25,7 +25,7 @@ import { customTypeMonths } from "./CustomTypeMonths.js";
 import { customTypeGeopoint } from "./CustomTypeGeopoint.js";
 import { customTypeInterval } from "./CustomTypeInterval.js";
 
-const dataReaders = buildReaders(
+const dataCustomTypes = buildReaders(
   customTypeText,
   customTypeMarkdown,
   customTypeTaxon,
@@ -41,15 +41,15 @@ const dataReaders = buildReaders(
   customTypeInterval
 );
 
-// Export dataReaders for use in UI rendering
-export { dataReaders };
+// Export dataCustomTypes for use in UI rendering
+export { dataCustomTypes };
 
 // Verify readers
 function verifyReaders() {
   const dataTypes = new Set();
   const duplicateDataTypes = [];
 
-  Object.entries(dataReaders).forEach(([dataType, reader], index) => {
+  Object.entries(dataCustomTypes).forEach(([dataType, reader], index) => {
     // Check for required properties and their types
     if (
       !reader.hasOwnProperty("dataType") ||
@@ -103,7 +103,7 @@ function verifyReaders() {
   }
 
   // Additional check for getSearchableText method
-  Object.entries(dataReaders).forEach(([dataType, reader]) => {
+  Object.entries(dataCustomTypes).forEach(([dataType, reader]) => {
     if (!reader.hasOwnProperty("getSearchableText") || typeof reader.getSearchableText !== "function") {
       console.error(`Reader '${dataType}' is missing 'getSearchableText' method - search may not work properly`);
     }
@@ -126,7 +126,7 @@ export function clearDataCodesCache() {
  * @returns {string[]} Array of searchable strings
  */
 export function getSearchableTextByType(data, formatting, uiContext) {
-  const reader = dataReaders[formatting];
+  const reader = dataCustomTypes[formatting];
   if (!reader || !reader.getSearchableText) return [];
   return reader.getSearchableText(data, uiContext);
 }
@@ -145,7 +145,7 @@ export function getSearchableTextByType(data, formatting, uiContext) {
  */
 export function loadDataByType(context, computedPath, info) {
   // Try to find a matching reader for the formatting type
-  const matchingReader = dataReaders[info.formatting];
+  const matchingReader = dataCustomTypes[info.formatting];
 
   if (matchingReader) {
     // Call the reader's readData function and return the result
@@ -154,7 +154,7 @@ export function loadDataByType(context, computedPath, info) {
     return dataRead;
   } else {
     // No matching reader found, log error with available types
-    const availableFormattings = Object.keys(dataReaders).join(", ");
+    const availableFormattings = Object.keys(dataCustomTypes).join(", ");
     Logger.error(
       `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
     );

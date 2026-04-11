@@ -2,7 +2,7 @@ import m from "mithril";
 
 import { Checklist } from "../../model/Checklist";
 import { Settings } from "../../model/Settings";
-import { dataReaders } from "../../model/customTypes/index.js";
+import { dataCustomTypes } from "../../model/customTypes/index.js";
 
 import "./TabSummary.css";
 
@@ -720,7 +720,7 @@ function renderCategoryData(breakdown, meta) {
   return [header, ...breakdown.map(({ value, count, pct }) => {
     let badge;
     try {
-      badge = dataReaders["category"].render(value, { meta });
+      badge = dataCustomTypes["category"].render(value, { meta });
     } catch (_) {
       badge = m("span.sp-cat-plain", value);
     }

@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import { dataReaders } from "../../model/customTypes/index.js";
+import { dataCustomTypes } from "../../model/customTypes/index.js";
 
 export function TabMedia(tabData, taxon, taxonName) {
   if (!tabData || tabData.length === 0) {
@@ -30,7 +30,7 @@ export function TabMedia(tabData, taxon, taxonName) {
                 },
                 placement: "details",
               };
-              const reader = dataReaders[meta.formatting];
+              const reader = dataCustomTypes[meta.formatting];
               let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               // Render meta.title for each item if present
               if (renderedItem && meta.title) {
@@ -57,7 +57,7 @@ export function TabMedia(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataReaders[meta.formatting];
+        const reader = dataCustomTypes[meta.formatting];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {

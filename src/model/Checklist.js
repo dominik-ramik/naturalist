@@ -17,7 +17,7 @@ import {
   getShortMonthLabel,
   resolveMonthNames,
 } from "./MonthNames.js";
-import { dataReaders, getSearchableTextByType } from "./customTypes/index.js";
+import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
 import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
@@ -491,7 +491,7 @@ export let Checklist = {
       let templateString = meta.template != null ? String(meta.template).trim() : "";
 
       if (templateString === "" && meta.formatting) {
-        const reader = dataReaders[meta.formatting];
+        const reader = dataCustomTypes[meta.formatting];
         if (reader && reader.defaultTemplate) {
           templateString = reader.defaultTemplate;
 

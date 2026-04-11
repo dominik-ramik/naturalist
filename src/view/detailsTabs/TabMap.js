@@ -2,7 +2,7 @@ import m from "mithril";
 
 import "./TabMap.css";
 
-import { dataReaders } from "../../model/customTypes/index.js";
+import { dataCustomTypes } from "../../model/customTypes/index.js";
 
 export function TabMap(tabData, taxon, taxonName) {
   if (!tabData || tabData.length === 0) {
@@ -31,7 +31,7 @@ export function TabMap(tabData, taxon, taxonName) {
                 },
                 placement: "details",
               };
-              const reader = dataReaders[meta.formatting];
+              const reader = dataCustomTypes[meta.formatting];
               let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               if (renderedItem && meta.title) {
                 return m(".media-item", [
@@ -56,7 +56,7 @@ export function TabMap(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataReaders[meta.formatting];
+        const reader = dataCustomTypes[meta.formatting];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {
