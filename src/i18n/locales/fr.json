@@ -353,6 +353,7 @@
   "sp_cat_col_pct": "%",
   "sp_region_col_region": "Région",
   "sp_region_col_status": "Statut",
+  "sp_region_col_status_range": "Plage de valeurs",
   "sp_region_col_count": "n",
   "sp_region_col_pct": "%"
 }

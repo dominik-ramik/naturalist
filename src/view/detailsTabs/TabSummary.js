@@ -743,12 +743,14 @@ function renderCategoryData(breakdown, meta) {
 function renderRegionsData(breakdown) {
   if (!breakdown?.length) return null;
 
+  const isGradient = breakdown.some(r => r.statuses.some(s => s.resolvedAs === "gradient"));
+
   const header = m(".sp-region-row.sp-region-header-row", [
     m("span.sp-region-dot", { style: { visibility: "hidden" } }),
     m("span.sp-region-name", t("sp_region_col_region")),
     m(".sp-region-stats",
       m(".sp-region-status", [
-        m("span.sp-region-status-label", t("sp_region_col_status")),
+        m("span.sp-region-status-label", isGradient ? t("sp_region_col_status_range") : t("sp_region_col_status")),
         m("span.sp-stat-count", t("sp_region_col_count")),
         m("span.sp-stat-sep", "/"),
         m("span.sp-stat-pct", t("sp_region_col_pct")),
