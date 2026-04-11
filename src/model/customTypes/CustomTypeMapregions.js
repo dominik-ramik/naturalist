@@ -25,6 +25,7 @@ import {
   gradientCSSForConfig,
   gradientTicksForConfig,
   steppedBinsForConfig,
+  parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
 
 const nlData = nlDataStructure;
@@ -176,8 +177,8 @@ function parseRegionString(inputString) {
   if (safeStringSource.trim() === "") return result;
 
   const placeholder = "§§HASH_PLACEHOLDER§§";
-  const safeString  = safeStringSource.replace(/\\#/g, placeholder);
-  const parts       = safeString.split("#").map(p => p.trim());
+  const safeString = safeStringSource.replace(/\\#/g, placeholder);
+  const parts = safeString.split("#").map(p => p.trim());
 
   if (parts.length > 0) result.status = parts[0].replace(new RegExp(placeholder, "g"), "#");
   for (let i = 1; i < parts.length; i++) {
@@ -194,11 +195,11 @@ function parseInlineMapRegions(mapRegions) {
   mapRegions.split("|").map(r => r.trim()).forEach(regionStr => {
     if (!regionStr) return;
     const idxColon = regionStr.indexOf(":");
-    const idxHash  = regionStr.indexOf("#");
+    const idxHash = regionStr.indexOf("#");
     let splitIndex = -1;
     if (idxColon !== -1 && idxHash !== -1) splitIndex = Math.min(idxColon, idxHash);
     else if (idxColon !== -1) splitIndex = idxColon;
-    else if (idxHash  !== -1) splitIndex = idxHash;
+    else if (idxHash !== -1) splitIndex = idxHash;
 
     let regionCode, tail;
     if (splitIndex === -1) { regionCode = regionStr; tail = ""; }
@@ -233,7 +234,7 @@ function readSimpleData(context, path) {
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 function buildRegionColors(data, legendConfig, datasetStats, fixForWorldMap, dataPath) {
-  const regionColors  = {};
+  const regionColors = {};
 
   Object.keys(data).forEach(regionCode => {
     const regionData = data[regionCode];
@@ -282,7 +283,7 @@ function renderDetailsMap(data, uiContext) {
   const regionCodes = Object.keys(data);
   if (!regionCodes.length) return null;
 
-  const dataPath     = uiContext.dataPath;
+  const dataPath = uiContext.dataPath;
   const legendConfig = getLegendConfig(dataPath);
   const datasetStats = getCachedDatasetStats(data, legendConfig, dataPath);
 
@@ -291,13 +292,13 @@ function renderDetailsMap(data, uiContext) {
     source = uiContext.meta.template;
     if (Checklist.handlebarsTemplates[dataPath]) {
       const td = Checklist.getDataObjectForHandlebars("", uiContext.originalData, uiContext.taxon.name, uiContext.taxon.authority);
-      source   = Checklist.handlebarsTemplates[dataPath](td);
+      source = Checklist.handlebarsTemplates[dataPath](td);
     }
   }
   if (!source || source.trim() === "") return null;
   if (source.startsWith("/")) source = source.substring(1);
 
-  const mapId   = "map_" + dataPath.replace(/\./g, "_");
+  const mapId = "map_" + dataPath.replace(/\./g, "_");
   const isWorld = source.toLowerCase().endsWith("world.svg");
 
   const regionColors = buildRegionColors(data, legendConfig, datasetStats, isWorld, dataPath);
@@ -324,140 +325,280 @@ function renderDetailsMap(data, uiContext) {
   ]);
 }
 
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Format a number for compact display in legend/stats annotations.
+ * Strips trailing zeros; adapts decimal precision to magnitude.
+ */
+const fmtNum = n => {
+  if (n == null || isNaN(n)) return '';
+  const abs = Math.abs(n);
+  const dec = abs >= 1000 ? 0 : abs >= 10 ? 1 : abs >= 0.1 ? 2 : 3;
+  return parseFloat(n.toFixed(dec)).toString();
+};
+
+/**
+ * Return region codes sorted according to display rules:
+ *   – No numeric mode → mapRegionsNames default order.
+ *   – Numeric only    → highest value first.
+ *   – Mixed           → category rows (default order) then numeric rows (value desc).
+ */
+function sortedRegionCodes(data, legendConfig) {
+  const { numericMode, categoryStatusSet } = legendConfig;
+  const codes = Object.keys(data);
+
+  const namesMeta = Checklist.getMapRegionsNamesMeta() || [];
+  const posMap = new Map(namesMeta.map((x, i) => [x.code, i]));
+  const defaultPos = code => posMap.get(code) ?? Infinity;
+
+  if (!numericMode) {
+    return [...codes].sort((a, b) => defaultPos(a) - defaultPos(b));
+  }
+
+  const isCat = code => categoryStatusSet.has(data[code]?.status ?? '');
+  const cats = codes.filter(isCat).sort((a, b) => defaultPos(a) - defaultPos(b));
+  const nums = codes.filter(c => !isCat(c)).sort((a, b) => {
+    const va = parseNumericStatus(data[a]?.status ?? '') ?? -Infinity;
+    const vb = parseNumericStatus(data[b]?.status ?? '') ?? -Infinity;
+    return vb - va; // highest first
+  });
+
+  return cats.length && nums.length ? [...cats, ...nums] : cats.length ? cats : nums;
+}
+
+/**
+ * Render a statistical appendix below the data table.
+ * Shows category counts (with colour swatches) and/or numeric summary stats.
+ */
+function renderTableStats(data, legendConfig, datasetStats) {
+  const { numericMode, categoryRows, categoryStatusSet } = legendConfig;
+  const groups = [];
+
+  // ── Category counts ────────────────────────────────────────────────────────
+  if (categoryRows.length) {
+    const counts = new Map();
+    Object.values(data).forEach(rd => {
+      const s = rd?.status ?? '';
+      if (categoryStatusSet.has(s)) counts.set(s, (counts.get(s) || 0) + 1);
+    });
+    const present = categoryRows.filter(r => counts.has(r.status));
+    if (present.length) {
+      groups.push(m('.map-stats-group', present.map(r =>
+        m('.map-stats-row', [
+          m('span.map-data-table-dot', { style: { backgroundColor: r.fill } }),
+          m('span.map-stats-label', r.legend || r.status),
+          m('span.map-stats-value', String(counts.get(r.status))),
+        ])
+      )));
+    }
+  }
+
+  // ── Numeric summary ────────────────────────────────────────────────────────
+  if (numericMode && datasetStats) {
+    const { min, max, mean, sorted } = datasetStats;
+    const n = sorted.length;
+    const median = n % 2 === 1
+      ? sorted[Math.floor(n / 2)]
+      : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+
+    const statRows = [
+      { key: 'max', label: t('map_stats_max'), value: max },
+      { key: 'mean', label: t('map_stats_mean'), value: mean },
+      { key: 'median', label: t('map_stats_median'), value: median },
+      { key: 'min', label: t('map_stats_min'), value: min },
+    ];
+
+    groups.push(m('.map-stats-group', statRows.map(({ label, value }) => {
+      const fill = resolveRegionColor(String(value), legendConfig, datasetStats)?.fill ?? '#ccc';
+      return m('.map-stats-row', [
+        m('span.map-data-table-dot', { style: { backgroundColor: fill } }),
+        m('span.map-stats-label', label),
+        m('span.map-stats-value', fmtNum(value)),
+      ]);
+    })));
+  }
+
+  return groups.length ? m('.map-stats-appendix', groups) : null;
+}
+
 // ─── Legend ───────────────────────────────────────────────────────────────────
 
 /**
  * Render the map legend.
  *
- * Gradient mode: a continuous colour ramp with tick marks pinned at each
- * anchor's proportional position along the ramp.  Labels hang below their
- * tick.  Only the first and last label are always shown; intermediate labels
- * are shown only when the ticks are far enough apart to avoid collision.
+ * Gradient mode: continuous colour ramp with tick marks pinned at each
+ * anchor's proportional position.  With ≤2 ticks all labels go below;
+ * with ≥3 ticks labels alternate below/above to avoid crowding.
+ * Resolved dataset values are appended in grey parentheses (issue 6).
  *
- * Stepped mode: colour swatch + label per bin, left-to-right.
- *
+ * Stepped mode: colour swatch + label + resolved range per bin.
  * Category rows always follow numeric rows.
  */
 function renderMapLegend(legendConfig, datasetStats, data) {
   const { categoryRows, numericRows, numericMode } = legendConfig;
-  const presentStatuses = new Set(Object.values(data).map(r => r?.status ?? ""));
-  const presentCatRows  = categoryRows.filter(r => presentStatuses.has(r.status));
+  const presentStatuses = new Set(Object.values(data).map(r => r?.status ?? ''));
+  const presentCatRows = categoryRows.filter(r => presentStatuses.has(r.status));
   const items = [];
 
-  if (numericMode === "gradient") {
-    const css   = gradientCSSForConfig(numericRows, datasetStats);
+  if (numericMode === 'gradient') {
+    const css = gradientCSSForConfig(numericRows, datasetStats);
     const ticks = gradientTicksForConfig(numericRows, datasetStats);
     if (css && ticks.length >= 2) {
-      items.push(m(".legend-item.legend-item--gradient",
-        m(".map-gradient-widget", [
-          // ── Ramp bar ──────────────────────────────────────────────────────
-          m(".map-gradient-ramp", { style: { background: css } },
-            // Tick lines sit inside the ramp, positioned absolutely
-            ticks.map(tick =>
-              m(".map-gradient-tick", { style: { left: tick.pct.toFixed(2) + "%" } })
-            )
+      // Issue 2: alternate below/above for ≥3 ticks; ≤2 → all below.
+      const hasAbove = ticks.length > 2;
+      const ticksIdx = ticks.map((t, i) => ({ ...t, idx: i }));
+      const belowTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 0) : ticksIdx;
+      const aboveTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 1) : [];
+
+      // Issue 1 & 6: label renderer — first always left, last always right,
+      // resolved value in grey parentheses.
+      const renderLabel = (t, total) => {
+        const isFirst = t.idx === 0;
+        const isLast = t.idx === total - 1;
+        const align = isFirst ? 'left' : isLast ? 'right' : 'center';
+        const tx = align === 'left' ? '0%' : align === 'right' ? '-100%' : '-50%';
+        return m('span.map-gradient-label', {
+          style: { left: t.pct.toFixed(2) + '%', transform: `translateX(${tx})` },
+          class: (isFirst || isLast) ? 'map-gradient-label--edge' : 'map-gradient-label--mid',
+        }, [
+          t.legend,
+          t.resolved != null
+            ? m('span.map-gradient-label-value', ` (${fmtNum(t.resolved)})`)
+            : null,
+        ]);
+      };
+
+      const tickEl = (t, above = false) =>
+        m('.map-gradient-tick' + (above ? '.map-gradient-tick--above' : ''),
+          { style: { left: t.pct.toFixed(2) + '%' } });
+
+      items.push(m('.legend-item.legend-item--gradient',
+        m('.map-gradient-widget', [
+          hasAbove
+            ? m('.map-gradient-labels.map-gradient-labels--above',
+              aboveTicks.map(t => renderLabel(t, ticks.length)))
+            : null,
+          m('.map-gradient-ramp', { style: { background: css } },
+            [...belowTicks.map(t => tickEl(t)), ...aboveTicks.map(t => tickEl(t, true))]
           ),
-          // ── Labels row (one per tick, positioned absolutely) ──────────────
-          m(".map-gradient-labels",
-            ticks.map((tick, i) => {
-              // Determine horizontal alignment so edge labels don't overflow
-              const align = tick.pct < 15 ? "left" : tick.pct > 85 ? "right" : "center";
-              const translateX = align === "left" ? "0%" : align === "right" ? "-100%" : "-50%";
-              return m("span.map-gradient-label", {
-                style: {
-                  left:      tick.pct.toFixed(2) + "%",
-                  transform: `translateX(${translateX})`,
-                },
-                // Mark extremes so CSS can always show them, hide middle ones
-                // when tight (controlled via CSS .map-gradient-label--mid)
-                class: (i === 0 || i === ticks.length - 1)
-                  ? "map-gradient-label--edge"
-                  : "map-gradient-label--mid",
-              }, tick.legend);
-            })
-          ),
+          m('.map-gradient-labels.map-gradient-labels--below',
+            belowTicks.map(t => renderLabel(t, ticks.length))),
         ])
       ));
     }
-  } else if (numericMode === "stepped") {
-    steppedBinsForConfig(numericRows, datasetStats).forEach(bin => {
-      items.push(m(".legend-item", [
-        m(".map-fill", { style: { backgroundColor: bin.fill } }),
-        m(".map-legend-title", bin.legend),
+
+  } else if (numericMode === 'stepped') {
+    // Issue 6: show resolved range [binLo – binHi) in grey parentheses.
+    const bins = steppedBinsForConfig(numericRows, datasetStats);
+    bins.forEach((bin, i) => {
+      const nextResolved = bins[i + 1]?.resolved;
+      const rangeStr = bin.resolved != null
+        ? (nextResolved != null
+          ? `${fmtNum(bin.resolved)}–${fmtNum(nextResolved)}`
+          : `≥${fmtNum(bin.resolved)}`)
+        : null;
+      items.push(m('.legend-item', [
+        m('.map-fill', { style: { backgroundColor: bin.fill } }),
+        m('.map-legend-title', [
+          bin.legend,
+          rangeStr ? m('span.map-legend-resolved-value', ` (${rangeStr})`) : null,
+        ]),
       ]));
     });
   }
 
   presentCatRows.forEach(r => {
-    items.push(m(".legend-item", [
-      m(".map-fill", { style: { backgroundColor: r.fill } }),
-      m(".map-legend-title", r.legend),
+    items.push(m('.legend-item', [
+      m('.map-fill', { style: { backgroundColor: r.fill } }),
+      m('.map-legend-title', r.legend),
     ]));
   });
 
-  return items.length ? m(".legend.media-map-legend", items) : null;
+  return items.length ? m('.legend.media-map-legend', items) : null;
 }
 
 // ─── Data table ───────────────────────────────────────────────────────────────
 
 function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
-  const isExpanded  = !!_tableExpanded[mapId];
-  const regionCodes = Object.keys(data);
-  const hasNotes    = regionCodes.some(rc => data[rc].notes?.length > 0);
+  const isExpanded = !!_tableExpanded[mapId];
+  // Issue 3: sorted region codes (default order / gradient desc / mixed)
+  const regionCodes = sortedRegionCodes(data, legendConfig);
+  const hasNotes = regionCodes.some(rc => data[rc].notes?.length > 0);
 
   const toggleTable = e => {
+    let sc = e.currentTarget.parentElement;
+    while (sc) {
+      const oy = window.getComputedStyle(sc).overflowY;
+      if (oy === 'auto' || oy === 'scroll') break;
+      sc = sc.parentElement;
+    }
+    const savedTop = sc ? sc.scrollTop : 0;
+
     _tableExpanded[mapId] = !_tableExpanded[mapId];
     e.stopPropagation();
-    m.redraw();
+
+    if (sc) requestAnimationFrame(() => { sc.scrollTop = savedTop; });
   };
 
-  return m(".map-data-table-wrap", [
-    m(".map-data-table-header", { onclick: toggleTable }, [
-      m("span.map-data-table-toggle", isExpanded ? "▲" : "▼"),
-      m("span.map-data-table-header-label", t("map_data_table")),
-      m("span.map-data-table-count", tf("map_data_table_count{0}", [regionCodes.length], true)),
+  return m('.map-data-table-wrap', [
+    m('.map-data-table-header', { onclick: toggleTable }, [
+      m('span.map-data-table-toggle', isExpanded ? '▲' : '▼'),
+      m('span.map-data-table-header-label', t('map_data_table')),
+      m('span.map-data-table-count', tf('map_data_table_count{0}', [regionCodes.length], true)),
     ]),
-    isExpanded ? m(".map-data-table-body",
-      m("table.map-data-table", [
-        m("thead", m("tr", [
-          m("th.map-data-table-th", t("map_data_table_region")),
-          m("th.map-data-table-th", t("map_data_table_status")),
-          hasNotes ? m("th.map-data-table-th", t("map_data_table_notes")) : null,
+    isExpanded ? m('.map-data-table-body', [
+      // statistical appendix
+      renderTableStats(data, legendConfig, datasetStats),
+      m('table.map-data-table', [
+        m('thead', m('tr', [
+          m('th.map-data-table-th', t('map_data_table_region')),
+          m('th.map-data-table-th', t('map_data_table_status')),
+          hasNotes ? m('th.map-data-table-th', t('map_data_table_notes')) : null,
         ])),
-        m("tbody", regionCodes.map((regionCode, index) => {
+        m('tbody', regionCodes.map((regionCode, index) => {
           const regionData = data[regionCode];
-          const resolved   = getCachedRegionColor(regionData.status ?? "", legendConfig, datasetStats, dataPath);
+          const resolved = getCachedRegionColor(regionData.status ?? '', legendConfig, datasetStats, dataPath);
+          const rawStatus = regionData.status ?? '';
 
-          // Per spec §4.6: gradient cells show the actual data value; stepped and
-          // category cells show the human-readable legend label for the matched bin/row.
-          const statusLabel = resolved?.resolvedAs === 'gradient'
-            ? (regionData.status ?? "")
-            : (resolved?.legend ?? regionData.status ?? "");
+          // Issue 4: stepped shows bin label + actual value in parentheses.
+          // Gradient shows the raw value. Category/fallback shows legend label.
+          const statusCell = (() => {
+            if (!resolved) return rawStatus;
+            if (resolved.resolvedAs === 'gradient') return rawStatus;
+            if (resolved.resolvedAs === 'stepped') {
+              return [
+                resolved.legend,
+                rawStatus ? m('span.map-data-table-value-actual', ` (${rawStatus})`) : null,
+              ];
+            }
+            return resolved.legend ?? rawStatus;
+          })();
 
-          return m("tr.map-data-table-row" + (index % 2 === 0 ? ".map-data-table-row-even" : ""), [
-            m("td.map-data-table-td", Checklist.nameForMapRegion(regionCode)),
-            m("td.map-data-table-td", [
-              m("span.map-data-table-dot", { style: { backgroundColor: resolved?.fill ?? "#ccc" } }),
-              m("span", statusLabel),
+          return m('tr.map-data-table-row' + (index % 2 === 0 ? '.map-data-table-row-even' : ''), [
+            m('td.map-data-table-td', Checklist.nameForMapRegion(regionCode)),
+            m('td.map-data-table-td', [
+              m('span.map-data-table-dot', { style: { backgroundColor: resolved?.fill ?? '#ccc' } }),
+              m('span', statusCell),
             ]),
-            hasNotes ? m("td.map-data-table-td.map-data-table-td-notes", (regionData.notes || []).join("; ")) : null,
+            hasNotes ? m('td.map-data-table-td.map-data-table-td-notes', (regionData.notes || []).join('; ')) : null,
           ]);
         })),
-      ])
-    ) : null,
+      ]),
+    ]) : null,
   ]);
 }
 
 // ─── Regions list ─────────────────────────────────────────────────────────────
 
 function renderRegionsList(data, uiContext) {
-  const dataPath     = uiContext.dataPath;
+  const dataPath = uiContext.dataPath;
   const legendConfig = getLegendConfig(dataPath);
   const datasetStats = getCachedDatasetStats(data, legendConfig, dataPath);
 
-  const uniqueNotesMap  = new Map();
+  const uniqueNotesMap = new Map();
   const uniqueNotesList = [];
-  let   noteCounter     = 1;
+  let noteCounter = 1;
 
   function registerNote(rawNote) {
     if (!rawNote?.trim()) return null;
@@ -472,8 +613,8 @@ function renderRegionsList(data, uiContext) {
 
   const renderedRegions = Object.keys(data).map(regionCode => {
     const regionInfo = data[regionCode];
-    const status     = regionInfo.status ?? "";
-    const resolved   = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
+    const status = regionInfo.status ?? "";
+    const resolved = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
 
     // Per spec §4.6:
     //   category → show appendedLegend from the matched row
@@ -490,8 +631,8 @@ function renderRegionsList(data, uiContext) {
       appendedLegend = cachedMarkdown(" _(" + resolved.appendedLegend + ")_");
     }
 
-    const regionName      = Checklist.nameForMapRegion(regionCode);
-    const notesArray      = Array.isArray(regionInfo.notes) ? regionInfo.notes : (regionInfo.notes ? [regionInfo.notes] : []);
+    const regionName = Checklist.nameForMapRegion(regionCode);
+    const notesArray = Array.isArray(regionInfo.notes) ? regionInfo.notes : (regionInfo.notes ? [regionInfo.notes] : []);
     const footnoteIndices = notesArray.map(registerNote).filter(i => i !== null);
 
     const regionContent = [m("strong", regionName)];

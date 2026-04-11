@@ -27,6 +27,7 @@
     padding: 0.55em 0.85em;
     border-top: 1px solid rgba(0, 0, 0, 0.07);
     gap: 0.4em 0.85em;
+    box-sizing: border-box;;
 }
 
 .legend.media-map-legend .legend-item {
@@ -145,6 +146,7 @@
 /* ==========================================================================
    Gradient Legend Widget
    A full-width ramp bar with proportionally-placed tick marks and labels.
+   Labels alternate below/above the ramp when there are ≥3 breakpoints.
    ========================================================================== */
 
 /* The legend-item--gradient spans the full legend row width */
@@ -154,31 +156,29 @@
     padding: 0;
 }
 
-/* Outer widget: ramp + labels stacked, full width */
+/* Outer widget: ramp + label rows stacked, full width */
 .map-gradient-widget {
     display: flex;
     flex-direction: column;
     width: 100%;
     gap: 0;
-    /* extra bottom padding makes room for the labels that hang below */
-    padding-bottom: 1.4em;
 }
 
 /* ── Ramp bar ── */
 .map-gradient-ramp {
-    position: relative;   /* tick lines use absolute positioning inside */
+    position: relative;
     width: 100%;
     height: 0.65em;
     border-radius: 0.35em;
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
-    overflow: visible;    /* ticks extend below the bar */
+    overflow: visible;    /* ticks extend outside the bar */
+    box-sizing: border-box; /* prevent border from exceeding container width */
 }
 
-/* ── Tick marks ── */
+/* ── Tick marks — shared base ── */
 .map-gradient-tick {
     position: absolute;
-    top: 100%;               /* sits flush below the ramp bottom edge */
     width: 1px;
     height: 0.45em;
     background: rgba(0, 0, 0, 0.35);
@@ -186,14 +186,35 @@
     pointer-events: none;
 }
 
-/* ── Labels row ── */
+/* Below tick: hangs down from ramp bottom */
+.map-gradient-tick:not(.map-gradient-tick--above) {
+    top: 100%;
+}
+
+/* Above tick: pokes up from ramp top */
+.map-gradient-tick--above {
+    top: auto;
+    bottom: 100%;
+}
+
+/* ── Shared label row layout ── */
 .map-gradient-labels {
     position: relative;
     width: 100%;
-    height: 1.1em;          /* fixed height; labels are absolutely positioned */
-    margin-top: 0.45em;     /* gap between tick bottom and label top */
+    height: 1.1em;
 }
 
+/* Below labels: rendered after ramp; margin creates room for tick + gap */
+.map-gradient-labels--below {
+    margin-top: 0.9em; /* tick height (0.45em) + visual gap (0.45em) */
+}
+
+/* Above labels: rendered before ramp; labels anchor to bottom of container */
+.map-gradient-labels--above {
+    margin-bottom: 0.9em; /* tick height (0.45em) + visual gap (0.45em) */
+}
+
+/* ── Individual label ── */
 .map-gradient-label {
     position: absolute;
     top: 0;
@@ -201,34 +222,78 @@
     color: #444;
     white-space: nowrap;
     line-height: 1.2;
-    /* horizontal alignment is set inline (left/right/center variants) */
 }
 
-/* Edge labels (first and last) are always visible */
+/* Above labels anchor to bottom of their container so they sit flush above the tick */
+.map-gradient-labels--above .map-gradient-label {
+    top: auto;
+    bottom: 0;
+}
+
+/* Edge labels (first and last) are always visible and slightly bolder */
 .map-gradient-label--edge {
     font-weight: 600;
     color: #333;
 }
 
-/* Middle labels: shown by default, but hidden on narrow containers.
-   The parent .media-map-card constrains width.  At very small sizes we
-   hide mid-point labels to avoid overlap.  Edge labels are always kept. */
+/* Grey resolved-value annotations in parentheses */
+.map-gradient-label-value,
+.map-legend-resolved-value {
+    color: #999;
+    font-weight: normal;
+}
+
+/* Middle labels: hide on very narrow cards to prevent overlap */
 @media (max-width: 380px) {
     .map-gradient-label--mid {
         display: none;
     }
 }
+/* ==========================================================================
+   Data Table — per-cell annotation (stepped actual value)
+   ========================================================================== */
 
-/* If there are many ticks (≥5), always hide mid labels unless hovered */
-.map-gradient-widget:not(:hover) .map-gradient-label--mid:not(:first-child):not(:last-child) {
-    /* Use a CSS counter trick: if there are more than 4 labels, hide middle ones.
-       Since we can't count children in pure CSS without :nth-child tricks,
-       we rely on the JS class assignment and a data-count attribute set by JS.
-       As a safe fallback: hide mid labels when the widget is narrower than 220px.
-       That covers the common card-in-sidebar case. */
+.map-data-table-value-actual {
+    color: #999;
+    font-size: 0.9em;
 }
 
-/* Compact: on very narrow cards hide all mid labels unconditionally */
-.media-map-card .map-gradient-label--mid {
-    /* visible by default; media query above handles overflow */
+/* ==========================================================================
+   Stats Appendix
+   Appears below the data table body; shows category counts + numeric summary.
+   ========================================================================== */
+
+.map-stats-appendix {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.6em 2em;
+    padding: 0.55em 0.85em;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background-color: rgba(255, 255, 255, 0.2);
+    font-size: 0.82em;
+}
+
+.map-stats-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+}
+
+.map-stats-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.45em;
+}
+
+.map-stats-label {
+    text-align: left;
+    color: #666;
+    min-width: 4.5em;
+}
+
+.map-stats-value {
+    font-weight: 600;
+    color: #333;
 }

@@ -11,11 +11,7 @@ import {
   collectNumericValues,
   parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun",
-                    "jul", "aug", "sep", "oct", "nov", "dec"];
+import { MONTH_KEYS } from "../../model/MonthNames.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Public entry point
@@ -711,7 +707,17 @@ function renderSpecimensData(row) {
 
 function renderCategoryData(breakdown, meta) {
   if (!breakdown?.length) return null;
-  return breakdown.map(({ value, count, pct }) => {
+
+  const header = m(".sp-cat-item.sp-cat-header-row", [
+    m(".sp-cat-badge", m("span.sp-cat-plain", t("sp_cat_col_value"))),
+    m(".sp-cat-stats", [
+      m("span.sp-stat-count", t("sp_cat_col_count")),
+      m("span.sp-stat-sep", "/"),
+      m("span.sp-stat-pct", t("sp_cat_col_pct")),
+    ]),
+  ]);
+
+  return [header, ...breakdown.map(({ value, count, pct }) => {
     let badge;
     try {
       badge = dataReaders["category"].render(value, { meta });
@@ -729,7 +735,7 @@ function renderCategoryData(breakdown, meta) {
         m("span.sp-stat-pct", pct + "%"),
       ]),
     ]);
-  });
+  })];
 }
 
 // ── Map regions ───────────────────────────────────────────────────────────────
@@ -737,7 +743,20 @@ function renderCategoryData(breakdown, meta) {
 function renderRegionsData(breakdown) {
   if (!breakdown?.length) return null;
 
-  return breakdown.map(region => {
+  const header = m(".sp-region-row.sp-region-header-row", [
+    m("span.sp-region-dot", { style: { visibility: "hidden" } }),
+    m("span.sp-region-name", t("sp_region_col_region")),
+    m(".sp-region-stats",
+      m(".sp-region-status", [
+        m("span.sp-region-status-label", t("sp_region_col_status")),
+        m("span.sp-stat-count", t("sp_region_col_count")),
+        m("span.sp-stat-sep", "/"),
+        m("span.sp-stat-pct", t("sp_region_col_pct")),
+      ])
+    ),
+  ]);
+
+  return [header, ...breakdown.map(region => {
     const multiStatus = region.statuses.length > 1;
 
     return m(".sp-region-row", [
@@ -767,7 +786,7 @@ function renderRegionsData(breakdown) {
             ])
       ),
     ]);
-  });
+  })];
 }
 
 // ── Months grid ───────────────────────────────────────────────────────────────

@@ -246,6 +246,14 @@
   white-space: nowrap;
 }
 
+/* Column header row */
+.sp-cat-header-row {
+  opacity: 0.55;
+  font-style: italic;
+  margin-bottom: 0.15em;
+  pointer-events: none;
+}
+
 /* ─── Map regions ─────────────────────────────────────────────────────────── */
 
 .sp-region-row {
@@ -304,6 +312,18 @@
 .sp-region-status-label {
   color: #666;
   flex: 1;
+}
+
+/* Column header row */
+.sp-region-header-row {
+  opacity: 0.55;
+  font-style: italic;
+  margin-bottom: 0.15em;
+  pointer-events: none;
+}
+
+.sp-region-header-row .sp-region-name {
+  font-weight: normal;
 }
 
 /* ─── Months grid ─────────────────────────────────────────────────────────── */

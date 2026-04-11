@@ -393,9 +393,10 @@ export function gradientTicksForConfig(numericRows, datasetStats) {
   const lo = sorted[0].resolved, hi = sorted[sorted.length - 1].resolved;
   const range = hi - lo || 1;
   return sorted.map(a => ({
-    fill:   a.fill,
-    legend: a.legend,
-    pct:    ((a.resolved - lo) / range) * 100,
+    fill:     a.fill,
+    legend:   a.legend,
+    resolved: a.resolved,
+    pct:      ((a.resolved - lo) / range) * 100,
   }));
 }
 
