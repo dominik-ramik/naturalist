@@ -8,6 +8,8 @@
 import * as d3 from "d3";
 import { Checklist } from "../../Checklist.js";
 
+import "./histogramUtils.css";
+
 const NUMBER_OF_BINS = 20;
 
 // ── Shared SVG renderer ───────────────────────────────────────────────────────

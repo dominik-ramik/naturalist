@@ -14,6 +14,9 @@ import { drawHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
 import { buildRangeFilterLabel, numericFilters, describeList, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/rangeFilterUtils.js";
 
+import "./filterPluginNumber.css";
+import "./shared/numericDropdown.css";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const numberFilterOperations = ["list", "lesser", "lesserequal", "equal", "greaterequal", "greater", "between", "around"];
@@ -54,6 +57,53 @@ function normalizeNumberOperation(op) {
 
 function getNumberOperationIcon(op) {
   return op === "list" ? "list" : numericFilters[op].icon;
+}
+
+/**
+ * Returns a ghost/hint placeholder string for a threshold input.
+ *
+ * Per-operation logic:
+ *   lesser / lesserequal  — user specifies the upper bound → ghost = max
+ *   greater / greaterequal — user specifies the lower bound → ghost = min
+ *   equal                  — any point; show "min – max" range as hint
+ *   between                — t1 = lower bound (min), t2 = upper bound (max)
+ *   around                 — t1 = center point (midpoint), t2 = radius (no obvious default → empty)
+ *
+ * All returned strings are locale-formatted numbers so they match the locale
+ * the user expects in the input field.
+ *
+ * @param {number} thresholdNumber – 1 or 2
+ * @param {string} op              – current operation key
+ * @param {number|null} min        – min of the preview dataset
+ * @param {number|null} max        – max of the preview dataset
+ * @returns {string}
+ */
+function getNumberPlaceholder(thresholdNumber, op, min, max) {
+  const fmt = v => (v != null ? v.toLocaleString() : "");
+  switch (op) {
+    case "lesser":
+    case "lesserequal":
+      return thresholdNumber === 1 ? fmt(max) : "";
+    case "greater":
+    case "greaterequal":
+      return thresholdNumber === 1 ? fmt(min) : "";
+    case "equal":
+      // Show the full range so the user knows what values exist.
+      if (thresholdNumber === 1 && min != null && max != null) {
+        return min === max ? fmt(min) : fmt(min) + " \u2013 " + fmt(max);
+      }
+      return "";
+    case "between":
+      return thresholdNumber === 1 ? fmt(min) : fmt(max);
+    case "around":
+      // Center point: show midpoint. Radius: no sensible default, leave empty.
+      if (thresholdNumber === 1 && min != null && max != null) {
+        return fmt(roundWithPrecision((min + max) / 2, 2));
+      }
+      return "";
+    default:
+      return "";
+  }
 }
 
 // ── Dropdown component ────────────────────────────────────────────────────────
@@ -134,14 +184,22 @@ let DropdownNumber = function (initialVnode) {
     Checklist.filter.commit();
   }
 
-  // Input builder — extra error check for "between" (t2 < t1) and "around" (t2 ≤ 0)
+  // Input builder.
+  // getPlaceholder is a closure so it always reads the current preview bounds
+  // and actualOperation at render time — no stale captures.
   const numericInput = makeNumericInputFn({
-    state: thresholdState,
+    state:        thresholdState,
     dropdownId,
     getOperation: () => actualOperation,
+    getPlaceholder(thresholdNumber) {
+      const preview = getPreviewData();
+      const min = preview.min ?? Checklist.filter.data[dataPath]?.globalMin ?? null;
+      const max = preview.max ?? Checklist.filter.data[dataPath]?.globalMax ?? null;
+      return getNumberPlaceholder(thresholdNumber, actualOperation, min, max);
+    },
     getExtraError(thresholdNumber, thresholds, op) {
       if (op === "between" && thresholdNumber === 2 && thresholds[2] !== null && thresholds[2] < thresholds[1]) return true;
-      if (op === "around" && thresholdNumber === 2 && thresholds[2] !== null && thresholds[2] <= 0) return true;
+      if (op === "around"  && thresholdNumber === 2 && thresholds[2] !== null && thresholds[2] <= 0) return true;
       return false;
     },
   });
@@ -186,7 +244,7 @@ let DropdownNumber = function (initialVnode) {
       previewData = null;
     },
     oncreate() { redrawHistogramIfVisible(); },
-    onupdate() { redrawHistogramIfVisible(); },
+    onupdate()  { redrawHistogramIfVisible(); },
 
     view(vnode) {
       dataPath = vnode.attrs.dataPath;
@@ -223,13 +281,13 @@ let DropdownNumber = function (initialVnode) {
       // Build operator input UI
       let inputUi = null;
       switch (actualOperation) {
-        case "equal": inputUi = [m(".label1", t("numeric_filter_equal")), numericInput(1, inputMin, inputMax)]; break;
-        case "lesser": inputUi = [m(".label1", t("numeric_filter_lesser")), numericInput(1, inputMin, inputMax)]; break;
-        case "lesserequal": inputUi = [m(".label1", t("numeric_filter_lesserequal")), numericInput(1, inputMin, inputMax)]; break;
-        case "greater": inputUi = [m(".label1", t("numeric_filter_greater")), numericInput(1, inputMin, inputMax)]; break;
+        case "equal":        inputUi = [m(".label1", t("numeric_filter_equal")),        numericInput(1, inputMin, inputMax)]; break;
+        case "lesser":       inputUi = [m(".label1", t("numeric_filter_lesser")),       numericInput(1, inputMin, inputMax)]; break;
+        case "lesserequal":  inputUi = [m(".label1", t("numeric_filter_lesserequal")),  numericInput(1, inputMin, inputMax)]; break;
+        case "greater":      inputUi = [m(".label1", t("numeric_filter_greater")),      numericInput(1, inputMin, inputMax)]; break;
         case "greaterequal": inputUi = [m(".label1", t("numeric_filter_greaterequal")), numericInput(1, inputMin, inputMax)]; break;
-        case "between": inputUi = [m(".label1", t("numeric_filter_between")), numericInput(1, inputMin, inputMax), m(".label2", t("numeric_filter_and")), numericInput(2, inputMin, inputMax)]; break;
-        case "around": inputUi = [m(".label1", t("numeric_filter_around")), numericInput(1, inputMin, inputMax), m(".label2", t("numeric_filter_plusminus")), numericInput(2, inputMin, inputMax)]; break;
+        case "between":      inputUi = [m(".label1", t("numeric_filter_between")),      numericInput(1, inputMin, inputMax), m(".label2", t("numeric_filter_and")),      numericInput(2, inputMin, inputMax)]; break;
+        case "around":       inputUi = [m(".label1", t("numeric_filter_around")),       numericInput(1, inputMin, inputMax), m(".label2", t("numeric_filter_plusminus")), numericInput(2, inputMin, inputMax)]; break;
         default: break;
       }
       if (unit && inputUi) inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];

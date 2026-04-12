@@ -11,6 +11,8 @@ import m from "mithril";
 import { sortByCustomOrder, textLowerCaseAccentless } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
 
+import "./DropdownCheckItem.css";
+
 // ── Pure presentational row ───────────────────────────────────────────────────
 
 export let DropdownCheckItemSkeleton = function (initialVnode) {

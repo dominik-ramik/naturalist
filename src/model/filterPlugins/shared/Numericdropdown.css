@@ -1,0 +1,150 @@
+/*
+ * filterPlugins/shared/numericDropdown.css
+ *
+ * Scope: all plugins that render .inner-dropdown-area.numeric — that is,
+ * filterPluginNumber, filterPluginDate, and filterPluginInterval.
+ *
+ * There is no numericDropdown.js; each of the three plugins above must
+ * import this file directly:
+ *
+ *   import "./shared/numericDropdown.css";
+ *
+ * Covers: operation-button strip, threshold input row, unit suffix, stats
+ * block, and the numeric-filter-button component (shared across all three).
+ */
+
+/* ── Operation-button strip ──────────────────────────────────────────────── */
+
+.inner-dropdown-area.numeric .numeric-filter-buttons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: var(--pad-small);
+  width: 100%;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0.25em 0.25em 0.5em;
+  box-sizing: border-box;
+  background-color: #ebebeb;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 4em;
+}
+
+/* Vertical separator between the "list" mode button and operator buttons
+   (used by filterPluginDate to visually separate the two groups). */
+.inner-dropdown-area.numeric .numeric-filter-buttons .separator {
+  display: block;
+  width: 0;
+  height: 2em;
+  border-left: 0.2em solid #e9e9e9;
+}
+
+.inner-dropdown-area.numeric .numeric-filter-buttons .numeric-filter-button img {
+  height: 1.5em;
+  padding: var(--pad-small);
+}
+
+/* ── Individual numeric-filter-button ────────────────────────────────────── */
+
+/*
+ * The .numeric-filter-button component is rendered inside .numeric-filter-buttons.
+ * The selector uses .filter-dropdown as the outermost scope because it is
+ * rendered inside a FilterDropdown shell.
+ */
+
+.filter-dropdown .numeric-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--pad-small) 0;
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: var(--pad-small);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+.filter-dropdown .numeric-filter-button img {
+  display: block;
+}
+
+.filter-dropdown .numeric-filter-button:active {
+  background-color: #e9e9e9;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(1px);
+}
+
+.filter-dropdown .numeric-filter-button.selected {
+  background-color: #e9e9e9;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(1px);
+  cursor: default;
+}
+
+/* Keep "selected" appearance stable if user taps the already-selected button. */
+.filter-dropdown .numeric-filter-button.selected:active {
+  background-color: #e9e9e9;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(1px);
+}
+
+/* ── Threshold input row ─────────────────────────────────────────────────── */
+
+.inner-dropdown-area.numeric .input-ui {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  padding: var(--pad-small);
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.inner-dropdown-area .input-ui .filter-unit {
+  margin-left: 0.5em;
+}
+
+.inner-dropdown-area.numeric .input-ui input {
+  font-family: var(--font-normal);
+  text-align: right;
+  flex-grow: 1;
+  width: 20%;
+  border: 1px solid #bfbfbf;
+  font-size: 120%;
+  padding: var(--pad-small);
+}
+
+.inner-dropdown-area.numeric .input-ui input.error {
+  background-color: #ffcbcb;
+  color: red;
+}
+
+.inner-dropdown-area.numeric .input-ui .label1 {
+  margin-right: var(--pad-small);
+}
+
+.inner-dropdown-area.numeric .input-ui .label1.centered {
+  text-align: center;
+  flex-grow: 1;
+}
+
+.inner-dropdown-area.numeric .input-ui .label2 {
+  margin-left: var(--pad-small);
+  margin-right: var(--pad-small);
+}
+
+/* ── Clear button inside the input row ───────────────────────────────────── */
+
+.inner-dropdown-area.numeric .clear-button img {
+  height: 1.75em;
+  padding: var(--pad-small);
+}
+
+/* ── Mini-stats list ─────────────────────────────────────────────────────── */
+
+ul.stats {
+  padding: var(--pad-small);
+}

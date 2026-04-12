@@ -1,0 +1,199 @@
+/*
+ * filterPluginMapregions.css
+ *
+ * Scope: filterPluginMapregions.js only.
+ *
+ * The dropdown is a flex column with three vertical regions:
+ *   1. .search-filter                (shared, DropdownCheckItem.css)
+ *   2. .mapregions-status-filter     (optional, capped at 50% height)
+ *      └─ .sf-range                  (numeric min–max, single line)
+ *      └─ .sf-categories             (legend category checklist)
+ *   3. .options.mapregions-regions   (region list, fills remaining space, scrolls)
+ *
+ * ── Why .option-item rules are duplicated here ────────────────────────────
+ * DropdownCheckItem.css scopes all item-row rules under
+ * ".filter-dropdown .options .option-item".  Category rows inside
+ * .sf-categories are NOT inside an .options wrapper — adding one would pull
+ * in unwanted overflow/flex-grow behaviour.  The full row layout is therefore
+ * re-declared under ".mapregions-status-filter .option-item" so the checkbox,
+ * swatch, label and count all render at the correct size and alignment.
+ */
+
+/* ── Flex-column host ────────────────────────────────────────────────────── */
+
+.inner-dropdown-area.mapregions {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Status-filter panel ─────────────────────────────────────────────────── */
+
+.mapregions-status-filter {
+  flex-shrink: 0;       /* Never compress below content height… */
+  max-height: 50%;      /* …but never exceed half the dropdown height. */
+  overflow-y: auto;
+  border-bottom: 1px solid #e9e9e9;
+  padding: var(--pad-large) 0;
+}
+
+.mapregions-status-filter-title {
+  font-weight: bold;
+  font-variant: small-caps;
+  margin-bottom: var(--pad-small);
+  color: #555;
+  padding-left: var(--pad-large);
+  padding-right: var(--pad-large);
+}
+
+/* ── Numeric range row ───────────────────────────────────────────────────── */
+
+.sf-range {
+  padding: 0 var(--pad-large) var(--pad-small);
+}
+
+/* Single-line: two inputs grow equally, separator and clear icon are fixed. */
+.sf-range-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pad-small);
+  flex-wrap: nowrap;
+}
+
+.sf-range-input {
+  flex: 1 1 0;
+  min-width: 0;           /* Allows inputs to shrink past their intrinsic width. */
+  font-family: var(--font-normal);
+  padding: var(--pad-small);
+  font-size: 100%;
+  border: 1px solid #bfbfbf;
+  /* Remove browser spinners — they waste horizontal space on a compact row. */
+  -moz-appearance: textfield;
+}
+
+.sf-range-input::-webkit-inner-spin-button,
+.sf-range-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.sf-range-sep {
+  flex-shrink: 0;
+  color: #888;
+}
+
+/* Trash icon — clears only the numeric range, not category selections. */
+.sf-range-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  opacity: 0.6;
+  line-height: 0;
+}
+
+.sf-range-clear:hover { opacity: 1; }
+.sf-range-clear img   { height: 1.25em; }
+
+/* ── Category checklist ──────────────────────────────────────────────────── */
+
+.sf-categories {
+  padding: var(--pad-small) 0;
+}
+
+/*
+ * Full flex-row layout for category option rows.
+ *
+ * These rows live inside .sf-categories which is NOT a .options element, so
+ * they do NOT inherit the shared layout from DropdownCheckItem.css
+ * (".filter-dropdown .options .option-item").  Without the rules below:
+ *   - items render as block (not flex row)
+ *   - the checkbox image displays at its natural SVG size instead of 2em
+ *   - the label does not flex-grow to fill available width
+ *   - text and icon are misaligned
+ * Every property here intentionally mirrors its counterpart in
+ * DropdownCheckItem.css so category rows look identical to region rows.
+ */
+.mapregions-status-filter .option-item {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  padding: var(--pad-small) var(--pad-large);
+  cursor: pointer;
+}
+
+.mapregions-status-filter .option-item:hover {
+  background-color: #e0f1fc;
+}
+
+.mapregions-status-filter .option-item .item-checkbox {
+  height: 2em;
+}
+
+/* Color swatch sits between the checkbox and label. */
+.sf-swatch {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 2px;
+  margin-right: var(--pad-small);
+  flex-shrink: 0;
+}
+
+.mapregions-status-filter .option-item .item-label {
+  flex-grow: 1;
+}
+
+.mapregions-status-filter .option-item .item-count {
+  margin-right: var(--pad-small);
+  color: #666;
+}
+
+/* Inactive (impossible) rows — grayed, non-interactive. */
+.mapregions-status-filter .option-item.inactive {
+  color: gray;
+  cursor: default;
+}
+
+.mapregions-status-filter .option-item.inactive:hover {
+  background-color: transparent;
+}
+
+.mapregions-status-filter .option-item.inactive .item-checkbox {
+  opacity: 0.5;
+}
+
+/* Trash icon — clears only the category selection, not numeric range. */
+.sf-cat-clear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 2px var(--pad-large) var(--pad-small);
+  cursor: pointer;
+  opacity: 0.6;
+  line-height: 0;
+}
+
+.sf-cat-clear:hover { opacity: 1; }
+.sf-cat-clear img   { height: 1.25em; }
+
+/* ── Region checklist (scrollable, fills remaining space) ─────────────────── */
+
+/*
+ * .options already handles item layout (DropdownCheckItem.css).
+ * .mapregions-regions adds flex-grow + scroll so the region list fills
+ * whatever vertical space the status panel does not use.
+ *
+ * min-height: 0 is critical — without it a flex child with overflow-y: auto
+ * does not shrink below its content height, breaking the 50/50 split.
+ */
+.options.mapregions-regions {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+}

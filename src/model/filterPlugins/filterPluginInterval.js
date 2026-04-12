@@ -13,10 +13,10 @@ import { drawIntervalHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
 import { buildRangeFilterLabel, describeList } from "./shared/rangeFilterUtils.js";
 
+import "./shared/numericDropdown.css";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-// Moved from Filter.js — exported so other plugins can import if needed.
 export const intervalFilters = {
   contains:     { operation: "contains",     icon: "contains",     values: 1, comparer: (from, to, t1)     => from <= t1 && t1 <= to },
   overlaps:     { operation: "overlaps",     icon: "overlaps",     values: 2, comparer: (from, to, t1, t2) => from <= t2 && to >= t1 },
@@ -27,6 +27,40 @@ const intervalFilterOperations = ["contains", "overlaps", "fully_inside"];
 
 function getIntervalOperationIcon(op) {
   return intervalFilters[op]?.icon || "equal";
+}
+
+/**
+ * Returns a ghost/hint placeholder for a threshold input.
+ *
+ * contains     (1 threshold)  — the point inside the interval.
+ *                               ghost: "min – max" of all intervals to show
+ *                               the valid range at a glance.
+ * overlaps     (2 thresholds) — [t1, t2] must overlap with intervals.
+ *                               t1 ghost = min, t2 ghost = max.
+ * fully_inside (2 thresholds) — interval must fit inside [t1, t2].
+ *                               t1 ghost = min, t2 ghost = max.
+ *
+ * @param {number}      thresholdNumber – 1 or 2
+ * @param {string}      op              – current operation key
+ * @param {number|null} min
+ * @param {number|null} max
+ * @returns {string}
+ */
+function getIntervalPlaceholder(thresholdNumber, op, min, max) {
+  const fmt = v => (v != null ? v.toLocaleString() : "");
+  switch (op) {
+    case "contains":
+      // Single threshold: show the full possible range as orientation.
+      if (thresholdNumber === 1 && min != null && max != null) {
+        return min === max ? fmt(min) : fmt(min) + " \u2013 " + fmt(max);
+      }
+      return "";
+    case "overlaps":
+    case "fully_inside":
+      return thresholdNumber === 1 ? fmt(min) : fmt(max);
+    default:
+      return "";
+  }
 }
 
 // ── Dropdown component ────────────────────────────────────────────────────────
@@ -65,10 +99,15 @@ let DropdownInterval = function (initialVnode) {
   function canApply()     { return inputsOk() && countResults() > 0; }
 
   const numericInput = makeNumericInputFn({
-    state:       thresholdState,
+    state:        thresholdState,
     dropdownId,
     getOperation: () => actualOperation,
-    // Interval: error only on NaN (handled by default in makeNumericInputFn) + t2 < t1 for 2-value ops
+    getPlaceholder(thresholdNumber) {
+      const fd  = Checklist.filter.data[dataPath];
+      const min = fd.min ?? fd.globalMin ?? null;
+      const max = fd.max ?? fd.globalMax ?? null;
+      return getIntervalPlaceholder(thresholdNumber, actualOperation, min, max);
+    },
     getExtraError(thresholdNumber, thresholds, _op) {
       const opDef = intervalFilters[actualOperation];
       if (opDef?.values === 2 && thresholdNumber === 2 &&
@@ -101,7 +140,7 @@ let DropdownInterval = function (initialVnode) {
       dataPath = vnode.attrs.dataPath;
       thresholdState.thresholdsShown = 0;
 
-      const fd      = Checklist.filter.data[dataPath];
+      const fd       = Checklist.filter.data[dataPath];
       const allPairs = fd.possible || [];
       const bounds   = { min: fd.min ?? fd.globalMin ?? 0, max: fd.max ?? fd.globalMax ?? 100 };
       const unit     = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));

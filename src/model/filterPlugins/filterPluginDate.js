@@ -12,6 +12,8 @@ import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { textLowerCaseAccentless } from "../../components/Utils.js";
 import { describeList, buildRangeFilterLabel, numericFilters, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/rangeFilterUtils.js";
 
+import "./filterPluginDate.css";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const DATE_INPUT_FORMAT = "YYYY-MM-DD";
@@ -49,16 +51,6 @@ function normalizeDateOperation(op) {
 
 function getDateOperationIcon(op) {
   return op === "list" ? "list" : numericFilters[op].icon;
-}
-
-function getRangeValueBounds(values) {
-  let min = null, max = null;
-  (values || []).forEach(v => {
-    if (typeof v !== "number" || isNaN(v)) return;
-    min = min === null ? v : Math.min(min, v);
-    max = max === null ? v : Math.max(max, v);
-  });
-  return { min, max };
 }
 
 // ── Dropdown component ────────────────────────────────────────────────────────
@@ -225,13 +217,19 @@ let DropdownDate = function (initialVnode) {
       dataPath = vnode.attrs.dataPath;
       thresholdsShown = 0;
 
-      const fd           = Checklist.filter.data[dataPath];
-      const dateFormat   = Checklist.getCurrentDateFormat();
-      const preview      = getPreviewData();
-      const inputMin     = formatDateForInput(preview.min    ?? fd.globalMin);
-      const inputMax     = formatDateForInput(preview.max    ?? fd.globalMax);
-      const statsValues  = isListMode() ? fd.possible : getDisplayedOperatorValues();
-      const statsBounds  = getRangeValueBounds(statsValues);
+      const fd         = Checklist.filter.data[dataPath];
+      const dateFormat = Checklist.getCurrentDateFormat();
+      const preview    = getPreviewData();
+      const inputMin   = formatDateForInput(preview.min    ?? fd.globalMin);
+      const inputMax   = formatDateForInput(preview.max    ?? fd.globalMax);
+
+      // Stats always reflect the full preview range (all data passing OTHER filters),
+      // not the currently-matched subset. This ensures the min/max dates are always
+      // visible as soon as the dropdown opens, even before the user has entered any
+      // threshold values.
+      const statsMin = preview.min ?? fd.globalMin;
+      const statsMax = preview.max ?? fd.globalMax;
+
       const possibleCounts = getDateValueCounts(fd.possible);
       const selectedDates  = fd.selected || [];
       const allDates       = getSortedUniqueDateValues(fd.all);
@@ -263,7 +261,11 @@ let DropdownDate = function (initialVnode) {
         default: break;
       }
 
-      return m(".inner-dropdown-area.numeric", [
+      // In operator mode, append a compact class so the dropdown does not
+      // maintain list-mode height when only a few rows are visible.
+      const areaClass = ".inner-dropdown-area.numeric" + (isListMode() ? "" : ".operator-mode");
+
+      return m(areaClass, [
         // Operation buttons
         m(".numeric-filter-buttons", dateFilterOperations.map(key => [
           m(".numeric-filter-button.clickable" + (actualOperation === key ? ".selected" : ""), {
@@ -317,6 +319,14 @@ let DropdownDate = function (initialVnode) {
               : t("numeric_apply_show_results", [countResults()]))
           : null,
 
+        // Stats — always rendered, always show the preview (full possible) range.
+        // Shown in both list mode and operator mode so the date range context is
+        // never hidden regardless of which mode or threshold state the user is in.
+        m("ul.stats", [
+          statsMin !== null ? m("li", t("stats_min") + ": " + dayjs(statsMin).format(dateFormat)) : null,
+          statsMax !== null ? m("li", t("stats_max") + ": " + dayjs(statsMax).format(dateFormat)) : null,
+        ]),
+
         // List mode: search
         isListMode()
           ? m(".search-filter",
@@ -353,12 +363,6 @@ let DropdownDate = function (initialVnode) {
               },
             }, t("check_all_shown"))
           : null,
-
-        // Stats
-        m("ul.stats", [
-          statsBounds.min !== null ? m("li", t("stats_min") + ": " + dayjs(statsBounds.min).format(dateFormat)) : null,
-          statsBounds.max !== null ? m("li", t("stats_max") + ": " + dayjs(statsBounds.max).format(dateFormat)) : null,
-        ]),
 
         // List mode: apply/close
         isListMode()

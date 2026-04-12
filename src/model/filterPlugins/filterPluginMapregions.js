@@ -24,6 +24,13 @@
  *   • fd.possibleStatuses only counts a status for regions that are currently
  *                       selected (so the status list reacts to region changes).
  *                       When no regions are selected all statuses are counted.
+ *
+ * ── Stable placeholder bounds ─────────────────────────────────────────────────
+ *   fd.globalStatusMin / fd.globalStatusMax track the numeric range of ALL
+ *   statuses across ALL regions and ALL taxa, never scoped by selection and
+ *   never cleared.  They are used as placeholder text in the numeric range
+ *   inputs so the "Min / Max" ghost values remain accurate regardless of what
+ *   the user has selected.
  */
 
 import m from "mithril";
@@ -32,6 +39,8 @@ import { Checklist } from "../Checklist.js";
 import { parseLegendConfig, parseNumericStatus } from "../../components/MapregionsColorEngine.js";
 import { DropdownCheckItem, DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/rangeFilterUtils.js";
+
+import "./filterPluginMapregions.css";
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -65,6 +74,14 @@ function isStatusFilterActive(sf) {
   return !!sf && (sf.selectedStatuses?.length > 0 || sf.rangeMin != null || sf.rangeMax != null);
 }
 
+function isRangeFilterActive(sf) {
+  return !!sf && (sf.rangeMin != null || sf.rangeMax != null);
+}
+
+function isCategoryFilterActive(sf) {
+  return !!sf && sf.selectedStatuses?.length > 0;
+}
+
 function statusFilterTitle(sf) {
   if (sf.selectedStatuses?.length > 0) return sf.selectedStatuses.join(", ");
   const parts = [];
@@ -76,72 +93,134 @@ function statusFilterTitle(sf) {
 
 // ── Status filter section renderers (module-private) ─────────────────────────
 
-function _renderStatusCategorySection(presentCatRows, sf, possibleSt, type, dataPath) {
+/**
+ * Numeric range row.
+ *
+ * Stays on a single line.  Placeholder text reads "Min (X)" / "Max (X)" using
+ * the global (never-scoped) status bounds so it remains accurate even when the
+ * user has narrowed the region or category selection.  Includes a dedicated
+ * trash icon that resets only the numeric range, leaving category selections
+ * untouched.
+ *
+ * @param {object}      sf         – statusFilter object (mutable)
+ * @param {number|null} globalMin  – fd.globalStatusMin (stable across all passes)
+ * @param {number|null} globalMax  – fd.globalStatusMax (stable across all passes)
+ */
+function _renderStatusRangeSection(sf, globalMin, globalMax) {
+  function setRange(field, rawValue) {
+    const n = rawValue === "" ? null : parseFloat(rawValue);
+    sf[field] = (n == null || isNaN(n)) ? null : n;
+    Checklist.filter.commit();
+  }
+
+  // Placeholder text communicates open-ended semantics:
+  // leaving "to" empty means "up to Max", leaving "from" empty means "from Min".
+  const fromPlaceholder = globalMin !== null
+    ? t("sf_range_min_placeholder", [globalMin.toLocaleString()])
+    : t("sf_range_from");
+  const toPlaceholder = globalMax !== null
+    ? t("sf_range_max_placeholder", [globalMax.toLocaleString()])
+    : t("sf_range_to");
+
+  return m(".sf-range", [
+    m(".sf-range-row", [
+      m("input.sf-range-input[type=number]", {
+        value:       sf.rangeMin ?? "",
+        placeholder: fromPlaceholder,
+        oninput(e) { setRange("rangeMin", e.target.value); },
+      }),
+      m("span.sf-range-sep", "–"),
+      m("input.sf-range-input[type=number]", {
+        value:       sf.rangeMax ?? "",
+        placeholder: toPlaceholder,
+        oninput(e) { setRange("rangeMax", e.target.value); },
+      }),
+      // Dedicated clear for the numeric range only — does NOT touch category selections.
+      isRangeFilterActive(sf)
+        ? m("button.sf-range-clear.clickable", {
+            title:   t("sf_range_clear"),
+            onclick(e) {
+              e.stopPropagation();
+              sf.rangeMin = null;
+              sf.rangeMax = null;
+              Checklist.filter.commit();
+            },
+          }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+        : null,
+    ]),
+  ]);
+}
+
+/**
+ * Category checklist.
+ *
+ * Shows ALL category rows defined in the legend config, not just those present
+ * in the current possible-statuses set.  Rows whose status is absent from
+ * `possibleSt` (i.e. impossible given the current region selection or other
+ * filters) are rendered as "inactive" (grayed, non-interactive) — mirroring
+ * the behaviour of the region checklist for impossible regions.
+ *
+ * Toggle logic only operates over possible rows so that impossible statuses
+ * are never stored in `selectedStatuses` inadvertently.
+ *
+ * Includes a dedicated "clear categories" button visible only when at least
+ * one category is explicitly selected.
+ *
+ * @param {object[]} allCatRows  – all category rows from parseLegendConfig (the full legend)
+ * @param {object}   sf          – statusFilter object (mutable)
+ * @param {object}   possibleSt  – fd.possibleStatuses
+ */
+function _renderStatusCategorySection(allCatRows, sf, possibleSt) {
+  const possibleRows = allCatRows.filter(r =>
+    Object.prototype.hasOwnProperty.call(possibleSt, r.status)
+  );
   const noneSelected = sf.selectedStatuses.length === 0;
 
   function toggleStatus(status) {
     if (noneSelected) {
-      // Clicking any item when "all" are on means: exclude that one item.
-      // Store all others as explicitly selected so unchecking works correctly.
-      sf.selectedStatuses = presentCatRows.filter(r => r.status !== status).map(r => r.status);
+      // All possible rows are effectively "on"; clicking one means: exclude it.
+      sf.selectedStatuses = possibleRows
+        .filter(r => r.status !== status)
+        .map(r => r.status);
     } else {
       const idx = sf.selectedStatuses.indexOf(status);
       if (idx > -1) {
         sf.selectedStatuses.splice(idx, 1);
-        // If everything is selected again, collapse back to "all selected" (empty array)
-        if (sf.selectedStatuses.length === presentCatRows.length) sf.selectedStatuses = [];
+        // Collapse back to implicit "all selected" when nothing is excluded.
+        if (sf.selectedStatuses.length === possibleRows.length) sf.selectedStatuses = [];
       } else {
         sf.selectedStatuses.push(status);
       }
     }
-    // Status toggles are NOT region-list selections — do NOT set delayCommitDataPath.
-    // The region list must be allowed to recalculate immediately so it reflects the
-    // new status constraint.
     Checklist.filter.commit();
   }
 
-  return m(".sf-categories",
-    presentCatRows.map(row => {
-      const isChecked = noneSelected || sf.selectedStatuses.includes(row.status);
-      return m(".option-item", { onclick: () => toggleStatus(row.status) }, [
+  return m(".sf-categories", [
+    allCatRows.map(row => {
+      const isPossible = Object.prototype.hasOwnProperty.call(possibleSt, row.status);
+      const isChecked  = isPossible && (noneSelected || sf.selectedStatuses.includes(row.status));
+      const isInactive = !isPossible;
+
+      return m(".option-item" + (isInactive ? ".inactive" : ""), {
+        onclick: !isInactive ? () => toggleStatus(row.status) : undefined,
+      }, [
         m("img.item-checkbox[src=img/ui/search/checkbox_" + (isChecked ? "checked" : "unchecked") + ".svg]"),
         m("span.sf-swatch", { style: { backgroundColor: row.fill } }),
         m(".item-label", row.legend || row.status),
-        m(".item-count", possibleSt[row.status] || ""),
+        m(".item-count", isPossible ? (possibleSt[row.status] || "") : ""),
       ]);
-    })
-  );
-}
-
-function _renderStatusRangeSection(sf, possibleSt, type, dataPath) {
-  const numericVals = Object.keys(possibleSt).map(s => parseNumericStatus(s)).filter(n => n !== null);
-  const dataMin = numericVals.length ? Math.min(...numericVals) : null;
-  const dataMax = numericVals.length ? Math.max(...numericVals) : null;
-
-  function setRange(field, rawValue) {
-    const n = rawValue === "" ? null : parseFloat(rawValue);
-    sf[field] = (n == null || isNaN(n)) ? null : n;
-    // Range inputs are NOT region-list selections — do NOT set delayCommitDataPath.
-    // The region list must be allowed to recalculate immediately so it reflects the
-    // new numeric bounds.
-    Checklist.filter.commit();
-  }
-
-  return m(".sf-range", [
-    m(".sf-range-row", [
-      m("span.sf-range-label", t("sf_range_from")),
-      m("input.sf-range-input[type=number]", {
-        value: sf.rangeMin ?? "",
-        placeholder: dataMin != null ? String(dataMin) : "",
-        oninput(e) { setRange("rangeMin", e.target.value); },
-      }),
-      m("span.sf-range-label", t("sf_range_to")),
-      m("input.sf-range-input[type=number]", {
-        value: sf.rangeMax ?? "",
-        placeholder: dataMax != null ? String(dataMax) : "",
-        oninput(e) { setRange("rangeMax", e.target.value); },
-      }),
-    ]),
+    }),
+    // Dedicated clear for category selection only — does NOT touch numeric range.
+    isCategoryFilterActive(sf)
+      ? m("button.sf-cat-clear.clickable", {
+          title:   t("sf_cat_clear"),
+          onclick(e) {
+            e.stopPropagation();
+            sf.selectedStatuses = [];
+            Checklist.filter.commit();
+          },
+        }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+      : null,
   ]);
 }
 
@@ -160,23 +239,22 @@ let DropdownMapregions = function (initialVnode) {
 
     view(vnode) {
       const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
-      const filterDef   = Checklist.filter[type][dataPath];
-      const sf          = filterDef.statusFilter || { selectedStatuses: [], rangeMin: null, rangeMax: null };
-      const possible    = filterDef.possible    || {};
-      const allRegions  = filterDef.all         || [];
-      const lc          = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
-      const possibleSt  = filterDef.possibleStatuses || {};
+      const filterDef  = Checklist.filter[type][dataPath];
+      const sf         = filterDef.statusFilter || { selectedStatuses: [], rangeMin: null, rangeMax: null };
+      const possible   = filterDef.possible    || {};
+      const allRegions = filterDef.all         || [];
+      const lc         = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
+      const possibleSt = filterDef.possibleStatuses || {};
 
       function matchesSearch(text) {
         if (!filter) return true;
-        const t = textLowerCaseAccentless(text);
-        return t.startsWith(filter) || t.indexOf(" " + filter) > 0;
+        const n = textLowerCaseAccentless(text);
+        return n.startsWith(filter) || n.indexOf(" " + filter) > 0;
       }
 
       let totalItems = 0, totalPossibleUnchecked = 0;
       let filteredPossible = [];
       let showSelected = false, showPossible = false, showImpossible = false;
-      let itemsOverflowing = false;
 
       const selectedItems = filterDef.selected
         .filter(item => Object.prototype.hasOwnProperty.call(possible, item) && matchesSearch(item))
@@ -203,13 +281,15 @@ let DropdownMapregions = function (initialVnode) {
         })
         .map(item => m(DropdownCheckItemSkeleton, { state: "inactive", item, count: "" }));
 
-      itemsOverflowing = totalItems > itemsOverflowLimit;
+      const itemsOverflowing = totalItems > itemsOverflowLimit;
 
-      const hasNumericMode    = lc.numericMode !== null;
-      const presentCatRows    = lc.categoryRows.filter(r => Object.prototype.hasOwnProperty.call(possibleSt, r.status));
-      const showStatusFilter  = hasNumericMode || presentCatRows.length > 0;
+      const hasNumericMode = lc.numericMode !== null;
+      // All category rows defined in the legend — shown even if currently impossible.
+      const allCatRows     = lc.categoryRows;
+      const showStatusFilter = hasNumericMode || allCatRows.length > 0;
 
-      return m(".inner-dropdown-area", [
+      return m(".inner-dropdown-area.mapregions", [
+        // ── Search ─────────────────────────────────────────────────────────
         m(".search-filter",
           m("input.options-search[type=search][placeholder=" + t("search") + "][id=" + dropdownId + "_text]", {
             oninput(e) {
@@ -218,7 +298,27 @@ let DropdownMapregions = function (initialVnode) {
           })
         ),
 
-        m(".options", [
+        // ── Status filter panel: numeric first, then categories ───────────
+        // Capped at 50% of the dropdown height by CSS (.mapregions-status-filter).
+        // The panel is present only when the legend defines numeric or category modes.
+        showStatusFilter
+          ? m(".mapregions-status-filter", [
+              m(".mapregions-status-filter-title", t("mapregions_status_filter")),
+              hasNumericMode
+                ? _renderStatusRangeSection(
+                    sf,
+                    filterDef.globalStatusMin ?? null,
+                    filterDef.globalStatusMax ?? null
+                  )
+                : null,
+              allCatRows.length > 0
+                ? _renderStatusCategorySection(allCatRows, sf, possibleSt)
+                : null,
+            ])
+          : null,
+
+        // ── Region checklist (scrollable, fills remaining space) ──────────
+        m(".options.mapregions-regions", [
           showSelected   ? m(".options-section", selectedItems)   : null,
           showPossible   ? m(".options-section", possibleItems)   : null,
           showImpossible ? m(".options-section", impossibleItems) : null,
@@ -229,30 +329,9 @@ let DropdownMapregions = function (initialVnode) {
           !showSelected && !showPossible && !showImpossible
             ? m(".no-items-filter", t("no_items_filter"))
             : null,
-
-          // Status filter (scrolls together with region list)
-          showStatusFilter
-            ? m(".mapregions-status-filter", [
-                m(".mapregions-status-filter-title", t("mapregions_status_filter")),
-                hasNumericMode
-                  ? _renderStatusRangeSection(sf, possibleSt, type, dataPath)
-                  : null,
-                presentCatRows.length > 0
-                  ? _renderStatusCategorySection(presentCatRows, sf, possibleSt, type, dataPath)
-                  : null,
-                isStatusFilterActive(sf)
-                  ? m(".sf-clear-all.clickable", {
-                      onclick() {
-                        sf.selectedStatuses = []; sf.rangeMin = null; sf.rangeMax = null;
-                        Checklist.filter.commit();
-                      },
-                    }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
-                  : null,
-              ])
-            : null,
         ]),
 
-        // Check-all-shown (while searching)
+        // ── Check-all-shown (while text-searching) ────────────────────────
         filter.length > 0 && totalPossibleUnchecked > 1
           ? m(".apply", {
               onclick() {
@@ -322,7 +401,7 @@ export const filterPluginMapregions = {
   },
 
   describeSerializedValue(dataPath, serialized, opts = {}) {
-    const cat    = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+    const cat     = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
     const regions = Array.isArray(serialized) ? serialized : (serialized?.regions ?? []);
     const sf      = serialized?.sf;
 
@@ -354,13 +433,17 @@ export const filterPluginMapregions = {
 
   createFilterDef() {
     return {
-      type: "mapregions",
-      all: [],
-      possible: {},
-      selected: [],
-      numeric: null,
-      statusFilter: { selectedStatuses: [], rangeMin: null, rangeMax: null },
+      type:             "mapregions",
+      all:              [],
+      possible:         {},
+      selected:         [],
+      numeric:          null,
+      statusFilter:     { selectedStatuses: [], rangeMin: null, rangeMax: null },
       possibleStatuses: {},
+      // Stable placeholder bounds — set once, never cleared, never scoped.
+      // Mirrors the globalMin/globalMax pattern used by number/date plugins.
+      globalStatusMin:  null,
+      globalStatusMax:  null,
     };
   },
 
@@ -368,11 +451,14 @@ export const filterPluginMapregions = {
     fd.selected         = [];
     fd.statusFilter     = { selectedStatuses: [], rangeMin: null, rangeMax: null };
     fd.possibleStatuses = {};
+    // globalStatusMin / globalStatusMax intentionally NOT cleared:
+    // they represent the data range and must survive filter resets.
   },
 
   clearPossible(fd) {
     fd.possible         = {};
     fd.possibleStatuses = {};
+    // globalStatusMin / globalStatusMax intentionally NOT cleared.
   },
 
   /**
@@ -391,6 +477,11 @@ export const filterPluginMapregions = {
    *   A status is counted only for currently-selected regions (or all regions
    *   when none are selected). This makes the status panel react to region
    *   selections.
+   *
+   * fd.globalStatusMin / fd.globalStatusMax:
+   *   Updated from every numeric status across every region unconditionally,
+   *   so placeholder text in the numeric inputs never collapses or disappears
+   *   when the user narrows the region or category selection.
    */
   accumulatePossible(fd, rawValue, _leafValues) {
     if (!rawValue || typeof rawValue !== "object") return;
@@ -402,7 +493,18 @@ export const filterPluginMapregions = {
       const name   = Checklist.nameForMapRegion(code);
       const status = regionData?.status ?? "";
 
-      // ── fd.possible (region checklist) ──────────────────────────
+      // ── Global numeric bounds (unscoped, never cleared) ──────────────
+      // Processed before any selection scoping so placeholders remain
+      // accurate regardless of what the user has filtered.
+      if (status !== "") {
+        const n = parseNumericStatus(status);
+        if (n !== null) {
+          if (fd.globalStatusMin === null || n < fd.globalStatusMin) fd.globalStatusMin = n;
+          if (fd.globalStatusMax === null || n > fd.globalStatusMax) fd.globalStatusMax = n;
+        }
+      }
+
+      // ── fd.possible (region checklist) ──────────────────────────────
       // Count this region only when its status satisfies the current
       // status filter. When no status filter is active every region counts.
       if (!sfActive || statusMatchesSF(status, sf)) {
@@ -411,9 +513,9 @@ export const filterPluginMapregions = {
         }
       }
 
-      // ── fd.possibleStatuses (status panel) ──────────────────────
+      // ── fd.possibleStatuses (status panel) ──────────────────────────
       // Scope to selected regions so the status panel reflects only
-      // statuses that are relevant to the user's current region selection.
+      // statuses relevant to the user's current region selection.
       if (fd.selected.length > 0) {
         if (!fd.selected.includes(name) && !fd.selected.includes(code)) return;
       }

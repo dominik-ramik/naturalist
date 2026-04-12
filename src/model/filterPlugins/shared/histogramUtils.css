@@ -1,0 +1,49 @@
+/*
+ * filterPlugins/shared/histogramUtils.css
+ *
+ * Scope: histogramUtils.js — the histogram SVG wrapper, the legend strip
+ * below it, and the fullscreen toggle class applied by onclick.
+ *
+ * Imported by: histogramUtils.js
+ * Consumers (via import chain): filterPluginNumber, filterPluginInterval.
+ */
+
+/* ── Histogram canvas wrapper ────────────────────────────────────────────── */
+
+.histogram {
+  height: 12em;
+  margin-left: var(--pad-large);
+  margin-right: var(--pad-large);
+  box-sizing: content-box;
+}
+
+/* ── Outer border + legend area ──────────────────────────────────────────── */
+
+.histogram-wrap {
+  border-top: 1px solid #bfbfbf;
+  border-bottom: 1px solid #bfbfbf;
+}
+
+.histogram-wrap .legend {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: var(--pad-large);
+  font-size: 85%;
+}
+
+.histogram-wrap .legend-item {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  margin-right: var(--pad-large);
+  align-items: center;
+}
+
+.histogram-wrap .legend .legend-item .map-fill {
+  display: block;
+  height: 1em;
+  width: 2em;
+  margin-right: var(--pad-large);
+}

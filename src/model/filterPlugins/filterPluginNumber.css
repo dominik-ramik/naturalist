@@ -1,0 +1,40 @@
+/*
+ * filterPluginNumber.css
+ *
+ * Scope: filterPluginNumber.js only.
+ *
+ * Covers the collapsible histogram toggle that is unique to the number plugin.
+ * All shared numeric rules (operation buttons, input-ui, stats) live in
+ * filterPlugins/shared/numericDropdown.css.
+ * The histogram canvas itself is styled in filterPlugins/shared/histogramUtils.css.
+ */
+
+/* ── Distribution / histogram collapse toggle ────────────────────────────── */
+
+.filter-dropdown .distribution-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pad-small);
+  text-align: center;
+  cursor: pointer;
+  padding-top: var(--pad-large);
+  padding-bottom: var(--pad-large);
+  font-size: 110%;
+  border-top: 1px solid #e9e9e9;
+}
+
+.filter-dropdown .distribution-toggle:hover {
+  background-color: var(--hover-background);
+}
+
+.filter-dropdown .distribution-toggle-icon {
+  width: 1em;
+  height: 1em;
+  transition: transform 0.15s ease;
+}
+
+/* Rotate the chevron when the histogram is expanded. */
+.filter-dropdown .distribution-toggle.expanded .distribution-toggle-icon {
+  transform: rotate(180deg);
+}

@@ -10,11 +10,12 @@
  */
 
 import m from "mithril";
-import "./FilterDropdownView.css";
 
 import { copyToClipboard, getUnitFromTemplate, unitToHtml } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { getFilterPlugin } from "../model/filterPlugins/index.js";
+
+import "./FilterDropdownView.css";
 
 // ── FilterDropdown ─────────────────────────────────────────────────────────────
 

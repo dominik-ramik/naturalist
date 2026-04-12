@@ -1,0 +1,32 @@
+/*
+ * filterPluginDate.css
+ *
+ * Styles specific to the date filter dropdown (DropdownDate).
+ *
+ * Shared numeric-dropdown rules (operation buttons, input-ui, apply, stats,
+ * histogram) live in FilterDropdownView.css.  Only date-specific overrides
+ * and the operator-mode compactness rule belong here.
+ */
+
+/*
+ * Operator mode: the dropdown contains only the operation buttons, an input
+ * row, an apply button, and the stats line.  Without this rule the dropdown
+ * inherits the full list-mode height from .inner-dropdown-area, leaving a
+ * large empty whitespace below the few visible elements.
+ *
+ * height: auto lets the container size to its content.  The parent
+ * DropdownShell still applies rectifyPosition() so the panel never overflows
+ * the viewport.
+ */
+.inner-dropdown-area.numeric.operator-mode {
+  height: auto;
+}
+
+/*
+ * In operator mode the stats block is the bottom-most element.
+ * Give it a small top margin so it does not feel cramped against the apply
+ * button above it.
+ */
+.inner-dropdown-area.numeric.operator-mode ul.stats {
+  margin-top: 6px;
+}
