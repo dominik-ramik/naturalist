@@ -423,5 +423,6 @@
   "sf_range_max_placeholder": "Max ({0})",
   "sf_range_clear": "Clear numeric range filter",
   "sf_cat_clear": "Clear category selection",
-  "mapregions_status_filter": "Filter by status"
+  "mapregions_status_filter": "Filter by status",
+  "sf_no_categories": "No categories"
 }
