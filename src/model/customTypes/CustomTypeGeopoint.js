@@ -259,6 +259,42 @@ function buildMapUrl(template, lat, long) {
 export let customTypeGeopoint = {
   dataType: "geopoint",
 
+  meta: {
+    summary: "A geographic point coordinate (latitude/longitude). Rendered as a clickable badge showing the original coordinate text; clicking opens a configurable online map URL at those coordinates.",
+    whenToUse: "Collection localities, observation coordinates, specimen origins — any geographic point coordinate that users should be able to open on an online map.",
+    behaviorFulltextIndexing: "Geographic coordinates are not indexed for full-text search. A proximity filter would be more appropriate and is planned for a future iteration.",
+    detailsPaneTab: null,
+    inputFormats: [
+      {
+        label: "Format 1: Two columns (.lat and .long)",
+        syntax: "`<columnname>.lat` and `<columnname>.long` as separate columns. Each accepts DD, DDM, DMS, hemisphere letters (N/S/E/W) as prefix or suffix.",
+        example: {
+          columns: ["location.lat", "location.long"],
+          rows: [["48.8566", "2.3522"], ["51°30'N", "0°7'W"]],
+        },
+      },
+      {
+        label: "Format 2: Single column — pipe-separated",
+        syntax: "`lat|long` in one cell.",
+        example: { columns: ["location"], rows: [["48.8566|2.3522"]] },
+      },
+      {
+        label: "Format 3: Single cell — auto-parsed",
+        syntax: "Supports DD, DDM, DMS, ISO 6709, hemisphere letters, French decimal commas, and Excel apostrophe-prefix. Parsing failures are logged as warnings.",
+        example: {
+          columns: ["location"],
+          rows: [["48.8566, 2.3522"], ["N 48°51'23.76\" E 2°21'7.92\""], ["+4851.396+00221.132/"]],
+        },
+      },
+    ],
+    notes: [
+      {
+        type: "tip",
+        text: "The **Template** column must specify the map URL pattern using `{{lat}}` and `{{long}}` placeholders — e.g. `https://www.google.com/maps?q={{lat}},{{long}}`. Without a template the field falls back to a Google Maps URL.",
+      },
+    ],
+  },
+
   filterPlugin: null, // No full-text search plugin for geopoints (proximity search would be more appropriate but is deferred)
 
   defaultTemplate: "https://www.google.com/maps?q={{lat}},{{long}}",

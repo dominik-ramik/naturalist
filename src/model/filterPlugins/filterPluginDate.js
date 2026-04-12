@@ -385,6 +385,11 @@ let DropdownDate = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginDate = {
+  meta: {
+    filterType: "date-range",
+    filterLabel: "Date range",
+    filterDescription: "Shows a date range control with the same operations as the numeric range filter. Dates are compared as timestamps so all standard operators apply.",
+  },
   isActive(filterDef) {
     return filterDef.selected.length > 0 || filterDef.numeric.operation !== "";
   },

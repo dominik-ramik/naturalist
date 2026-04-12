@@ -351,6 +351,11 @@ let DropdownMapregions = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginMapregions = {
+  meta: {
+    filterType: "categorical",
+    filterLabel: "Categorical multi-select (region names) + optional status filter",
+    filterDescription: "Shows region names as checkboxes, resolved from the Map Regions Information table. An optional status sub-filter (categorical or numeric range) is shown when the column's Map Regions Legend contains status codes.",
+  },
   isActive(filterDef) {
     return filterDef.selected.length > 0 || isStatusFilterActive(filterDef.statusFilter);
   },

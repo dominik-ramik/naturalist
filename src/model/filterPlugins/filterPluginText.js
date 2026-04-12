@@ -73,7 +73,9 @@ let DropdownText = function (initialVnode) {
 
 export const filterPluginText = {
   meta: {
-
+    filterType: "categorical",
+    filterLabel: "Categorical multi-select",
+    filterDescription: "Shows a searchable dropdown of all unique values present in the data. Users tick one or more values; a taxon matches if it has **any** of the selected values (OR logic within the filter).",
   },
 
   isActive(filterDef) {

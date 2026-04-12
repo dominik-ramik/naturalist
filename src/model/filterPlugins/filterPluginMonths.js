@@ -55,6 +55,11 @@ let DropdownMonths = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginMonths = {
+  meta: {
+    filterType: "categorical",
+    filterLabel: "Categorical multi-select (month names)",
+    filterDescription: "Shows month names as checkboxes. A taxon matches if it is active in **any** of the selected months.",
+  },
   isActive(filterDef) {
     return filterDef.selected.length > 0;
   },

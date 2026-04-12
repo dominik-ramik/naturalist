@@ -239,6 +239,11 @@ let DropdownInterval = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginInterval = {
+  meta: {
+    filterType: "numeric-range",
+    filterLabel: "Numeric range (interval)",
+    filterDescription: "Shows a range control identical to the numeric filter. A taxon matches if any part of its [from, to] interval satisfies the chosen operation.",
+  },
   isActive(filterDef) {
     return filterDef.numeric.operation !== "";
   },
