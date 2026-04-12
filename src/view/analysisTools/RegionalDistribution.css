@@ -138,7 +138,7 @@
  * below 400 px on mobile once flex-wrap kicks in.
  */
 .map-chart-image-wrap-outer {
-  flex: 2 1 400px;
+  flex: 1 1 400px;
   border-radius: 8px;
   overflow: hidden;          /* clip, not scroll — the inner wrap handles overflow */
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -376,4 +376,558 @@ table.results-table td.region-color {
   padding: 0.25em;
 }
 
-/* control-panel removed - replaced by .chart-controls-card */
+/* ============================================================
+   RegionalDistribution — CSS additions
+   Append to or replace RegionalDistribution_additions.css
+   ============================================================ */
+
+/* ── Config card ─────────────────────────────────────────────────────────── */
+
+.rd-config-card {
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+  margin: 10px;
+}
+
+.rd-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
+}
+
+/* When body is absent (collapsed), header bottom rounds too */
+.rd-config-header:only-child,
+.rd-config-header:last-child { border-radius: var(--pad-large, 1em); border-bottom: none; }
+
+.rd-config-header:hover { background-color: rgba(0,0,0,0.03); }
+
+.rd-config-title {
+  font-weight: bold;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #444;
+}
+
+.rd-config-toggle { font-size: 0.75em; color: #777; }
+
+.rd-config-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-start;
+  padding: 15px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.rd-config-body .chart-control-group,
+.rd-config-body .chart-control-group-full {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Verb sentence — always visible, bottom of card */
+.rd-verb-box {
+  padding: 8px 15px 10px;
+  font-size: 0.85em;
+  color: #444;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  border-radius: 0 0 var(--pad-large, 1em) var(--pad-large, 1em);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.rd-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+/* ── Map + table layout ──────────────────────────────────────────────────────
+   .map-chart is a flex column. .map-and-table-container gets flex:1 so it
+   fills the space freed when the config card collapses.
+   overflow:visible on .map-chart lets natural height work (parent context
+   determines actual height; the original overflow:hidden was mainly to prevent
+   scroll — we can keep it but change to auto so it only appears when needed).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.map-chart {
+  overflow: auto;
+}
+
+.map-and-table-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── Table wrapper — width cap ───────────────────────────────────────────────
+   Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
+   smaller). Contents that overflow are hidden — no stray horizontal scroll bar
+   on the wrapper on wide screens.
+   On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.table-responsive-wrapper {
+  max-width: min(50%, 420px);
+  overflow-x: hidden;
+}
+
+@media (max-width: 600px) {
+  .table-responsive-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ── Aggregate table ─────────────────────────────────────────────────────── */
+
+.rd-table-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+table.rd-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+table.rd-table td,
+table.rd-table th {
+  padding: 6px 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+table.rd-table .rd-cell-dot   { width: 1.4em; padding-right: 0; }
+table.rd-table .rd-cell-name  { text-align: left; }
+table.rd-table .rd-cell-value,
+table.rd-table .rd-cell-count { text-align: right; white-space: nowrap; }
+table.rd-table .rd-cell-arrow { width: 1.6em; text-align: center; color: #aaa; font-size: 0.75em; }
+
+.rd-dot {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 2px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+tr.rd-table-row { cursor: pointer; transition: background-color 0.1s; }
+tr.rd-table-row:hover               { background-color: #e8f4fb; }
+tr.rd-row-active                    { background-color: #d6eaf7 !important; }
+tr.rd-row-group td                  { font-weight: bold; background-color: #f0f4f7; }
+tr.rd-row-group.rd-row-active td    { background-color: #c8dff0 !important; }
+
+.rd-table-hint {
+  font-size: 0.78em;
+  color: #888;
+  padding: 4px 8px 6px;
+  text-align: right;
+  font-style: italic;
+}
+
+/* ── Drill-down panel ────────────────────────────────────────────────────── */
+
+tr.rd-drill-row td {
+  padding: 0;
+  background: #f7fbff;
+  border-bottom: 2px solid #b0cde8;
+}
+
+.rd-drill-panel {
+  padding: 10px 14px 12px;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.rd-numeric-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 0.85em;
+  margin-bottom: 8px;
+  background: rgba(85,118,155,0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.rd-stat { white-space: nowrap; }
+.rd-stat strong { color: #55769b; }
+
+.rd-drill-members {
+  font-size: 0.82em;
+  color: #555;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.rd-member-code {
+  display: inline-block;
+  background: rgba(85,118,155,0.12);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.92em;
+  margin: 1px;
+}
+
+.rd-drill-excluded {
+  font-size: 0.8em;
+  color: #a05000;
+  background: #fff3e0;
+  border-left: 3px solid #f59e0b;
+  padding: 3px 8px;
+  margin-bottom: 6px;
+  border-radius: 0 3px 3px 0;
+}
+
+table.rd-drill-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85em;
+  margin-top: 6px;
+}
+
+table.rd-drill-table th {
+  text-align: left;
+  background: #eaf1f8;
+  padding: 4px 8px;
+  font-weight: bold;
+  border-bottom: 1px solid #cde;
+  word-break: break-word;
+}
+
+table.rd-drill-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #e8edf2;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+table.rd-drill-table tr:last-child td { border-bottom: none; }
+
+.rd-drill-overflow {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+  padding: 5px;
+}
+
+.rd-drill-empty {
+  color: #888;
+  font-style: italic;
+  font-size: 0.85em;
+  padding: 4px 0;
+}
+
+.rd-status-dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 2px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.1);
+  margin-right: 3px;
+  flex-shrink: 0;
+}
+
+.rd-no-data { padding: 16px; }
+
+@media (max-width: 600px) {
+  .rd-config-body   { gap: 10px; padding: 10px; }
+  .rd-numeric-stats { gap: 6px 10px; }
+}
+
+/* ============================================================
+   RegionalDistribution — CSS additions
+   Append to or replace RegionalDistribution_additions.css
+   ============================================================ */
+
+/* ── Config card ─────────────────────────────────────────────────────────── */
+
+.rd-config-card {
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+  margin: 10px;
+}
+
+.rd-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
+}
+
+/* When body is absent (collapsed), header bottom rounds too */
+.rd-config-header:only-child,
+.rd-config-header:last-child { border-radius: var(--pad-large, 1em); border-bottom: none; }
+
+.rd-config-header:hover { background-color: rgba(0,0,0,0.03); }
+
+.rd-config-title {
+  font-weight: bold;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #444;
+}
+
+.rd-config-toggle { font-size: 0.75em; color: #777; }
+
+.rd-config-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-start;
+  padding: 15px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.rd-config-body .chart-control-group,
+.rd-config-body .chart-control-group-full {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Verb sentence — always visible, bottom of card */
+.rd-verb-box {
+  padding: 8px 15px 10px;
+  font-size: 0.85em;
+  color: #444;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  border-radius: 0 0 var(--pad-large, 1em) var(--pad-large, 1em);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.rd-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+/* ── Map + table layout ──────────────────────────────────────────────────────
+   .map-chart is a flex column. .map-and-table-container gets flex:1 so it
+   fills the space freed when the config card collapses.
+   overflow:visible on .map-chart lets natural height work (parent context
+   determines actual height; the original overflow:hidden was mainly to prevent
+   scroll — we can keep it but change to auto so it only appears when needed).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.map-chart {
+  overflow: auto;
+}
+
+.map-and-table-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── Table wrapper — width cap ───────────────────────────────────────────────
+   Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
+   smaller). Contents that overflow are hidden — no stray horizontal scroll bar
+   on the wrapper on wide screens.
+   On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.table-responsive-wrapper {
+  max-width: min(50%, 420px);
+  overflow-x: hidden;
+}
+
+@media (max-width: 600px) {
+  .table-responsive-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ── Aggregate table ─────────────────────────────────────────────────────── */
+
+.rd-table-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+table.rd-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+table.rd-table td,
+table.rd-table th {
+  padding: 6px 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+table.rd-table .rd-cell-dot   { width: 1.4em; padding-right: 0; }
+table.rd-table .rd-cell-name  { text-align: left; }
+table.rd-table .rd-cell-value,
+table.rd-table .rd-cell-count { text-align: right; white-space: nowrap; }
+table.rd-table .rd-cell-arrow { width: 1.6em; text-align: center; color: #aaa; font-size: 0.75em; }
+
+.rd-dot {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 2px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+tr.rd-table-row { cursor: pointer; transition: background-color 0.1s; }
+tr.rd-table-row:hover               { background-color: #e8f4fb; }
+tr.rd-row-active                    { background-color: #d6eaf7 !important; }
+tr.rd-row-group td                  { font-weight: bold; background-color: #f0f4f7; }
+tr.rd-row-group.rd-row-active td    { background-color: #c8dff0 !important; }
+
+.rd-table-hint {
+  font-size: 0.78em;
+  color: #888;
+  padding: 4px 8px 6px;
+  text-align: right;
+  font-style: italic;
+}
+
+/* ── Drill-down panel ────────────────────────────────────────────────────── */
+
+tr.rd-drill-row td {
+  padding: 0;
+  background: #f7fbff;
+  border-bottom: 2px solid #b0cde8;
+}
+
+.rd-drill-panel {
+  padding: 10px 14px 12px;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.rd-numeric-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 0.85em;
+  margin-bottom: 8px;
+  background: rgba(85,118,155,0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.rd-stat { white-space: nowrap; }
+.rd-stat strong { color: #55769b; }
+
+.rd-drill-members {
+  font-size: 0.82em;
+  color: #555;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.rd-member-code {
+  display: inline-block;
+  background: rgba(85,118,155,0.12);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.92em;
+  margin: 1px;
+}
+
+.rd-drill-excluded {
+  font-size: 0.8em;
+  color: #a05000;
+  background: #fff3e0;
+  border-left: 3px solid #f59e0b;
+  padding: 3px 8px;
+  margin-bottom: 6px;
+  border-radius: 0 3px 3px 0;
+}
+
+table.rd-drill-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85em;
+  margin-top: 6px;
+}
+
+table.rd-drill-table th {
+  text-align: left;
+  background: #eaf1f8;
+  padding: 4px 8px;
+  font-weight: bold;
+  border-bottom: 1px solid #cde;
+  word-break: break-word;
+}
+
+table.rd-drill-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #e8edf2;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+table.rd-drill-table tr:last-child td { border-bottom: none; }
+
+.rd-drill-overflow {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+  padding: 5px;
+}
+
+.rd-drill-empty {
+  color: #888;
+  font-style: italic;
+  font-size: 0.85em;
+  padding: 4px 0;
+}
+
+.rd-status-dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 2px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.1);
+  margin-right: 3px;
+  flex-shrink: 0;
+}
+
+.rd-no-data { padding: 16px; }
+
+@media (max-width: 600px) {
+  .rd-config-body   { gap: 10px; padding: 10px; }
+  .rd-numeric-stats { gap: 6px 10px; }
+}

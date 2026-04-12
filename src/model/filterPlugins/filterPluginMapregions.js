@@ -48,10 +48,9 @@
 
 import m from "mithril";
 import "./filterPluginMapregions.css";
-import { textLowerCaseAccentless } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { parseLegendConfig, parseNumericStatus } from "../../components/MapregionsColorEngine.js";
-import { DropdownCheckItem, DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
+import { buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/rangeFilterUtils.js";
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
@@ -259,47 +258,15 @@ let DropdownMapregions = function (initialVnode) {
       const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
       const filterDef  = Checklist.filter[type][dataPath];
       const sf         = filterDef.statusFilter || { selectedStatuses: null, rangeMin: null, rangeMax: null };
-      const possible   = filterDef.possible    || {};
-      const allRegions = filterDef.all         || [];
       const lc         = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
       const possibleSt = filterDef.possibleStatuses || {};
 
-      function matchesSearch(text) {
-        if (!filter) return true;
-        const n = textLowerCaseAccentless(text);
-        return n.startsWith(filter) || n.indexOf(" " + filter) > 0;
-      }
-
-      let totalItems = 0, totalPossibleUnchecked = 0;
-      let filteredPossible = [];
-      let showSelected = false, showPossible = false, showImpossible = false;
-
-      const selectedItems = filterDef.selected
-        .filter(item => Object.prototype.hasOwnProperty.call(possible, item) && matchesSearch(item))
-        .map(item => {
-          showSelected = true;
-          return m(DropdownCheckItem, { state: "checked", type, dataPath, item, count: possible[item] || 0 });
-        });
-
-      const possibleItems = Object.keys(possible)
-        .filter(item => {
-          if (filterDef.selected.includes(item) || !matchesSearch(item)) return false;
-          if (totalItems++ > itemsOverflowLimit) return false;
-          showPossible = true; totalPossibleUnchecked++; filteredPossible.push(item);
-          return true;
-        })
-        .map(item => m(DropdownCheckItem, { state: "unchecked", type, dataPath, item, count: possible[item] || 0 }));
-
-      const impossibleItems = allRegions
-        .filter(item => {
-          if (Object.prototype.hasOwnProperty.call(possible, item) || filterDef.selected.includes(item) || !matchesSearch(item)) return false;
-          if (totalItems++ > itemsOverflowLimit) return false;
-          showImpossible = true;
-          return true;
-        })
-        .map(item => m(DropdownCheckItemSkeleton, { state: "inactive", item, count: "" }));
-
-      const itemsOverflowing = totalItems > itemsOverflowLimit;
+      const {
+        selected: selectedItems, showSelected,
+        possible: possibleItems, showPossible,
+        impossible: impossibleItems, showImpossible,
+        itemsOverflowing, filteredPossible, totalPossibleUnchecked,
+      } = buildCheckItems({ type, dataPath, filter, itemsOverflowLimit });
       const hasNumericMode   = lc.numericMode !== null;
       const allCatRows       = lc.categoryRows;
       const showStatusFilter = hasNumericMode || allCatRows.length > 0;

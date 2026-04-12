@@ -1440,7 +1440,7 @@ export const nlDataStructureSheets = {
                         integrity: {
                             description: "Any value from the given column (after Data Code replacement). Duplicates within the same column are not allowed. Supports multilingual variants.",
                             allowEmpty: false,
-                            allowDuplicates: "no",
+                            allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: true,
                         },

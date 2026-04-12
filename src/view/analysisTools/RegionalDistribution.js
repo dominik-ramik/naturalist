@@ -1,43 +1,62 @@
-import m from "mithril";
+/**
+ * Regional Distribution analysis tool
+ *
+ * Aggregates mapregions data across the filtered record set and renders:
+ *   1. A collapsible config panel (map, segment, operation, denominator, groups)
+ *   2. A coloured SVG choropleth map
+ *   3. A sortable aggregate table with per-region drill-down
+ *
+ * Supports all mapregions flavours: presence/absence, named category statuses,
+ * numeric gradient/stepped, and mixed category+numeric maps.
+ */
 
-import "./RegionalDistribution.css";
+import m from 'mithril';
+import './RegionalDistribution.css';
 
-import { Settings } from "../../model/Settings.js";
+import { Settings }  from '../../model/Settings.js';
+import { Checklist } from '../../model/Checklist.js';
+import { filterTerminalLeavesForMode, relativeToUsercontent } from '../../components/Utils.js';
+import { colorSVGMap }    from '../../components/ColorSVGMap.js';
+import { getLegendConfig } from '../../model/customTypes/CustomTypeMapregions.js';
+
 import {
-  colorFromRatio,
-  filterTerminalLeavesForMode,
-  relativeToUsercontent,
-} from "../../components/Utils.js";
-import { Checklist } from "../../model/Checklist.js";
-import { colorSVGMap } from "../../components/ColorSVGMap.js";
-// ButtonGroup removed in favor of native selects and segmented controls
+  detectSegments,
+  collectRegionData,
+  mergeToGroups,
+  computeRegionAggregates,
+  computeAllRegionCounts,
+  buildEffectiveAllCounts,
+  computeColorMapping,
+  getRegionGroups,
+  remapForWorldMap,
+} from './RegionalDistribution/aggregate.js';
+
+import { getMapState, setMapState, getGlobalState, setGlobalState } from './RegionalDistribution/state.js';
+import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
+import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
+
+// ─── Tool registration config ─────────────────────────────────────────────────
 
 export const config = {
-  id: "tool_regional_distribution",
-  label: "Regional Distribution",
+  id:    'tool_regional_distribution',
+  label: 'Regional Distribution',
   iconPath: {
-    light: "./img/ui/menu/view_map-light.svg",
-    dark: "./img/ui/menu/view_map.svg",
+    light: './img/ui/menu/view_map-light.svg',
+    dark:  './img/ui/menu/view_map.svg',
   },
-  info: "Visualize the regional distribution of your data, using filters to map exactly where specific records are concentrated",
+  info: 'Aggregate regional distribution across filtered records — count presences, compare categories, or compute numeric statistics per region',
   getTaxaAlongsideSpecimens: false,
 
-  getAvailability: (availableIntents, checklistData) => {
-    // 1. Filter intents based on whether they yield at least one map
-    const supportedIntents = availableIntents.filter(intent => {
-      const maps = getAvailableMaps(intent);
-      return maps.length > 0;
-    });
-
-    // 2. Return the availability object
+  getAvailability: (availableIntents) => {
+    const supportedIntents = availableIntents.filter(
+      intent => getAvailableMaps(intent).length > 0
+    );
     return {
       supportedIntents,
       isAvailable: supportedIntents.length > 0,
-      toolDisabledReason: "No regional map data found in this dataset.",
-      scopeDisabledReason: (intent) => {
-        const scopeName = intent === "#T" ? "Taxa" : "Specimens";
-        return `${config.label} requires map data to be present with ${scopeName}.`;
-      }
+      toolDisabledReason: 'No regional map data found in this dataset.',
+      scopeDisabledReason: intent =>
+        `${config.label} requires map data associated with ${intent === '#T' ? 'Taxa' : 'Specimens'}.`,
     };
   },
 
@@ -45,475 +64,255 @@ export const config = {
     mapChart(filteredTaxa, allTaxa, datasetRevision),
 };
 
-let currentMap = Settings.mapChartCurrentMap();
-let currentSumMethod = Settings.mapChartCurrentSumMethod();
+// ─── Module-level cache ───────────────────────────────────────────────────────
 
-let currentFilterResultsLength = 0;
-let sessionCache = {}; // key: map.dataPath, value: __all__ for all mapped occurrences, key:value for region:number matching
-let currentRegions = {};
+let _rev              = -1;
+let _mapsCache        = {};   // mode → map[]
+let _countsCache      = {};   // `${dataPath}|${mode}` → allRegionCounts
+let _svgColorsJSON    = '';   // guards redundant DOM colorSVGMap calls
+let _pendingColorTimer = null;
 
-let availableMapsCache = {}; // keyed by chartMode: "taxa" | "specimen"
-
-let oldColoredRegionsJSON = "";
-let colors = null;
-let regionalDistributionDatasetRevision = -1;
-
-function resetRegionalDistributionState() {
-  currentMap = Settings.mapChartCurrentMap();
-  currentSumMethod = Settings.mapChartCurrentSumMethod();
-  currentFilterResultsLength = 0;
-  sessionCache = {};
-  currentRegions = {};
-  availableMapsCache = {};
-  oldColoredRegionsJSON = "";
-  colors = null;
+function invalidateCaches(newRev) {
+  _rev              = newRev;
+  _mapsCache        = {};
+  _countsCache      = {};
+  _svgColorsJSON    = '';
+  clearTimeout(_pendingColorTimer);
+  _pendingColorTimer = null;
 }
 
-function ensureRegionalDistributionStateFresh(datasetRevision) {
-  if (datasetRevision !== regionalDistributionDatasetRevision) {
-    resetRegionalDistributionState();
-    regionalDistributionDatasetRevision = datasetRevision;
-  }
+// ─── Available maps ───────────────────────────────────────────────────────────
+
+function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
+  if (rev !== _rev) invalidateCaches(rev);
+
+  const mode = (intent || Settings.analyticalIntent()) === '#S' ? 'specimen' : 'taxa';
+  if (_mapsCache[mode]) return _mapsCache[mode];
+
+  const specimenIdx = Checklist.getSpecimenMetaIndex();
+  const checklist   = Checklist.getEntireChecklist();
+  const dataMeta    = Checklist.getDataMeta();
+  const maps        = [];
+
+  Object.entries(dataMeta).forEach(([dataPath, meta]) => {
+    if (meta.formatting !== 'mapregions' || !meta.template?.trim()) return;
+
+    let source = meta.template;
+    if (Checklist.handlebarsTemplates?.[dataPath]) {
+      source = Checklist.handlebarsTemplates[dataPath](
+        Checklist.getDataObjectForHandlebars('', {}, '', '')
+      );
+    }
+    if (!source?.trim()) return;
+    if (source.startsWith('/')) source = source.slice(1);
+
+    const hasData = checklist.some(row => {
+      const isSpecimen = specimenIdx !== -1 && row.t[specimenIdx] != null;
+      if (mode === 'taxa'     &&  isSpecimen) return false;
+      if (mode === 'specimen' && !isSpecimen) return false;
+      const d = Checklist.getDataFromDataPath(row.d, dataPath);
+      return d && typeof d === 'object' && Object.keys(d).length > 0;
+    });
+
+    if (hasData) maps.push({
+      title:      meta.title || dataPath,
+      dataPath,
+      source:     relativeToUsercontent(source),
+      isWorldMap: source.toLowerCase().endsWith('world.svg'),
+    });
+  });
+
+  _mapsCache[mode] = maps;
+  return maps;
 }
 
-function globalCountsCacheKey(dataPath) {
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  return dataPath + "|" + mapChartMode;
-}
-
-const sumMethods = [
-  { name: t("view_map_sum_by_filter"), method: "filter" },
-  { name: t("view_map_sum_by_region"), method: "region" },
-  { name: t("view_map_sum_by_total"), method: "total" },
-];
+// ─── Main render ──────────────────────────────────────────────────────────────
 
 function mapChart(filteredTaxa, allTaxa, datasetRevision) {
-  ensureRegionalDistributionStateFresh(datasetRevision);
+  if (datasetRevision !== _rev) invalidateCaches(datasetRevision);
 
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  let currentMapStringified = JSON.stringify(currentMap);
-  if (
-    !getAvailableMaps().find(
-      (map) => JSON.stringify(map) == currentMapStringified
-    )
-  ) {
-    currentMap = null;
+  const mode         = Settings.analyticalIntent() === '#S' ? 'specimen' : 'taxa';
+  const specimenIdx  = Checklist.getSpecimenMetaIndex();
+  const filterEmpty  = Checklist.filter.isEmpty();
+  const availableMaps = getAvailableMaps();
+
+  // ── Resolve current map ──
+  let globalState = getGlobalState();
+  let currentMap  = availableMaps.find(m => m.dataPath === globalState.currentMapDataPath) ?? null;
+  if (!currentMap && availableMaps.length) {
+    currentMap = availableMaps[0];
+    globalState = setGlobalState({ currentMapDataPath: currentMap.dataPath });
   }
 
-  if (Checklist.filter.isEmpty()) {
-    currentSumMethod = "total";
-  } else {
-    currentSumMethod = Settings.mapChartCurrentSumMethod();
+  // ── Per-map state with auto-detection and guard rails ──
+  let mapState     = currentMap ? getMapState(currentMap.dataPath) : {};
+  let legendConfig = currentMap ? getLegendConfig(currentMap.dataPath) : null;
+  let segments     = legendConfig ? detectSegments(legendConfig) : null;
+
+  if (currentMap && segments) {
+    let { segmentTrack } = mapState;
+
+    // First visit: auto-select the most meaningful track
+    if (!segmentTrack) {
+      segmentTrack = (segments.hasNumeric && !segments.namedCategories.length)
+        ? 'numeric'
+        : 'category';
+      mapState = setMapState(currentMap.dataPath, { segmentTrack });
+    }
+
+    // Guard: numeric track selected but map has no numeric data
+    if (segmentTrack === 'numeric' && !segments.hasNumeric) {
+      mapState = setMapState(currentMap.dataPath, { segmentTrack: 'category', categoryStatus: null });
+    }
+
+    // Guard: invalid categoryStatus (e.g. from a previous map's state)
+    if (mapState.segmentTrack === 'category' && mapState.categoryStatus) {
+      const stillValid = segments.namedCategories.some(c => c.status === mapState.categoryStatus);
+      if (!stillValid) mapState = setMapState(currentMap.dataPath, { categoryStatus: null });
+    }
+
+    // When no filter is active, denominator 'filter' and 'total' are equivalent;
+    // quietly coerce to 'total' so the verb sentence reads correctly.
+    if (filterEmpty && mapState.denominator === 'filter') {
+      mapState = { ...mapState, denominator: 'total' };
+    }
   }
 
-  if (currentMap != null) {
-    colors = calculateRegionColors(
-      filteredTaxa,
-      allTaxa,
-      currentMap.dataPath,
-      currentSumMethod
+  // ── Leaf computation ──
+  const filteredLeaves = currentMap
+    ? filterTerminalLeavesForMode(filteredTaxa, mode, specimenIdx)
+    : [];
+  const filteredCount = filteredLeaves.length;
+
+  // ── Cached all-region counts ──
+  let allRegionCounts = {};
+  if (currentMap) {
+    const cKey = currentMap.dataPath + '|' + mode;
+    if (!_countsCache[cKey]) {
+      const allLeaves  = filterTerminalLeavesForMode(allTaxa, mode, specimenIdx);
+      _countsCache[cKey] = computeAllRegionCounts(allLeaves, currentMap.dataPath, mode, specimenIdx);
+    }
+    allRegionCounts = _countsCache[cKey];
+  }
+
+  // ── Data pipeline ──
+  const regionGroups = currentMap ? getRegionGroups(currentMap.dataPath) : [];
+  let regionData     = {};
+  let regionAggregates = {};
+  let colors         = {};
+  let effectiveAllCounts = {};
+
+  if (currentMap && mapState.segmentTrack) {
+    const raw = collectRegionData(filteredLeaves, currentMap.dataPath, mode, specimenIdx);
+
+    const workingData = (mapState.useGroups && regionGroups.length)
+      ? mergeToGroups(raw, regionGroups).groupedMap
+      : raw;
+    regionData       = workingData;
+
+    regionAggregates = computeRegionAggregates(
+      workingData,
+      mapState.segmentTrack,
+      mapState.categoryStatus,
+      mapState.numericOperation,
+      mapState.threshold,
+    );
+
+    effectiveAllCounts = buildEffectiveAllCounts(allRegionCounts, workingData);
+
+    colors = computeColorMapping(
+      regionAggregates,
+      mapState.segmentTrack,
+      mapState.numericOperation,
+      legendConfig,
+      mapState.denominator,
+      filteredCount,
+      effectiveAllCounts,
+      mapState.categoryStatus,
     );
   }
 
-  return m(".map-chart", [
-    renderControlPanel(),
-    m(".chart-info-box", [
-      m(".chart-info-item", mapVerb()),
-      Checklist.hasSpecimens() ? m(".chart-info-item",
-        mapChartMode === "taxa" ? t("view_chart_mode_taxa_info") : t("view_chart_mode_specimen_info")
-      ) : null
-    ]),
-    m(".map-and-table-container", [
-      currentMap == null ? null : renderMap(currentMap),
-      currentMap == null ? null : m(".table-responsive-wrapper", renderDataTable(currentMap.dataPath, currentSumMethod)),
-    ]),
-  ]);
-}
+  // ── Event handlers ──
+  const onMapChange = map => {
+    setGlobalState({ currentMapDataPath: map.dataPath });
+    resetDrillState();
+    _svgColorsJSON = '';
+  };
 
-function getAvailableMaps(intent, datasetRevision = Checklist.getDataRevision()) {
-  ensureRegionalDistributionStateFresh(datasetRevision);
-
-  // Use passed intent for availability checks, fallback to current settings for UI rendering
-  const currentIntent = intent || Settings.analyticalIntent();
-  const mapChartMode = currentIntent === "#S" ? "specimen" : "taxa";
-
-  if (availableMapsCache[mapChartMode] !== undefined) {
-    return availableMapsCache[mapChartMode];
-  }
-
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const checklist = Checklist.getEntireChecklist();
-  const dataMeta = Checklist.getDataMeta();
-  let availableMaps = [];
-
-  Object.keys(dataMeta).forEach(function (dataPath) {
-    const meta = dataMeta[dataPath];
-
-    if (
-      meta.formatting === "mapregions" &&
-      meta.template &&
-      meta.template.trim() !== ""
-    ) {
-      let source = meta.template;
-
-      if (Checklist.handlebarsTemplates[dataPath]) {
-        let templateData = Checklist.getDataObjectForHandlebars("", {}, "", "");
-        source = Checklist.handlebarsTemplates[dataPath](templateData);
-      }
-
-      if (source && source.trim() !== "") {
-        if (source.startsWith("/")) {
-          source = source.substring(1);
-        }
-
-        const mapPath = relativeToUsercontent(source);
-
-        // Only include this map if at least one row of the current mode has
-        // direct (non-inherited) data for this dataPath.
-        // In specimen mode we deliberately check taxon.d only — we never
-        // infer map availability from the parent taxon's data.
-        const hasData = checklist.some((taxon) => {
-          const isSpecimen =
-            specimenMetaIndex !== -1 &&
-            taxon.t[specimenMetaIndex] !== null &&
-            taxon.t[specimenMetaIndex] !== undefined;
-
-          if (mapChartMode === "taxa" && isSpecimen) return false;
-          if (mapChartMode === "specimen" && !isSpecimen) return false;
-
-          const mapData = Checklist.getDataFromDataPath(taxon.d, dataPath);
-          return (
-            mapData !== null &&
-            mapData !== undefined &&
-            typeof mapData === "object" &&
-            Object.keys(mapData).length > 0
-          );
-        });
-
-        if (hasData) {
-          availableMaps.push({
-            title: meta.title || dataPath,
-            dataPath: dataPath,
-            source: mapPath,
-            isWorldMap: source.toLowerCase().endsWith("world.svg"),
-          });
-        }
-      }
+  const onStateChange = partial => {
+    setMapState(currentMap.dataPath, partial);
+    if (partial.useGroups !== undefined || partial.segmentTrack !== undefined) {
+      resetDrillState();
     }
-  });
+    _svgColorsJSON = '';
+  };
 
-  availableMapsCache[mapChartMode] = availableMaps;
-  return availableMaps;
-}
+  const onToggleCollapse = () =>
+    setGlobalState({ configCollapsed: !globalState.configCollapsed });
 
-function renderControlPanel() {
-  return m(".chart-controls-card", [
-    m(".chart-control-group.chart-control-group-full", [
-      m("label", "Map"),
-      m("select.chart-select", {
-        value: currentMap ? JSON.stringify(currentMap) : "",
-        onchange: (e) => {
-          if (!e.target.value) return;
-          currentMap = JSON.parse(e.target.value);
-          Settings.mapChartCurrentMap(e.target.value);
-        }
-      }, [
-        m("option", { value: "", disabled: true }, "— " + t("view_map_select_map") + " —"),
-        ...getAvailableMaps().map((map) =>
-          m("option", { value: JSON.stringify(map) }, map.title)
-        )
-      ])
-    ]),
+  // ── Render ──
+  return m('.map-chart', [
 
-    currentMap == null ? null : m(".chart-control-group", [
-      m("label", "Method"),
-      Checklist.filter.isEmpty()
-        ? m("div.chart-segmented-control.disabled", [m("button.selected", { disabled: true }, t("view_map_no_filter"))])
-        : m(".chart-segmented-control", sumMethods.map((mt) =>
-          m("button" + (mt.method === currentSumMethod ? ".selected" : ""), {
-            onclick: () => {
-              if (mt.method === currentSumMethod) return false;
-              currentSumMethod = mt.method;
-              Settings.mapChartCurrentSumMethod(currentSumMethod);
-            }
-          }, mt.name)
-        ))
+    renderConfigPanel({
+      availableMaps,
+      currentMap,
+      segments,
+      mapState: { ...mapState, _hasGroups: regionGroups.length > 0 },
+      onMapChange,
+      onStateChange,
+      configCollapsed: globalState.configCollapsed,
+      onToggleCollapse,
+      filteredCount,
+    }),
+
+    currentMap == null ? m('.chart-info-box',
+      m('.chart-info-item', t('view_map_select_map'))
+    ) : m('.map-and-table-container', [
+      renderSVGMap(currentMap, colors),
+      m('.table-responsive-wrapper',
+        Object.keys(regionAggregates).length === 0
+          ? m('.rd-no-data', m('.chart-info-item', t('rd_no_data_message')))
+          : renderAggregateTable({
+              regionAggregates,
+              colors,
+              regionData,
+              mapState,
+              filteredCount,
+              effectiveAllCounts,
+              legendConfig,
+            })
+      ),
     ]),
 
   ]);
 }
 
-function mapVerb() {
-  let verb = "";
+// ─── SVG map rendering ────────────────────────────────────────────────────────
 
-  if (currentMap === null) {
-    return t("view_map_select_map");
-  }
+function renderSVGMap(map, colors) {
+  const displayColors = map.isWorldMap ? remapForWorldMap(colors) : colors;
+  const newJSON       = JSON.stringify(displayColors);
 
-  let filterVerb = Settings.pinnedSearches.getHumanNameForSearch(
-    JSON.parse(Checklist.queryKey()),
-    true
-  );
-
-  const suffix = (Settings.analyticalIntent() === "#S") ? "_specimen" : "";
-  const filterEmptySuffix = Checklist.filter.isEmpty() ? "_all" : "";
-
-  switch (currentSumMethod) {
-    case "filter":
-      verb = tf("view_map_verb_filter" + filterEmptySuffix + suffix, [filterVerb]);
-      break;
-    case "region":
-      verb = tf("view_map_verb_region" + filterEmptySuffix + suffix, [filterVerb]);
-      break;
-    case "total":
-      verb = tf("view_map_verb_total" + filterEmptySuffix + suffix, [filterVerb]);
-      break;
-
-    default:
-      console.error("Unknown sumMethod", currentSumMethod);
-      break;
-  }
-
-  return m.trust(verb);
-}
-
-function renderMap(map) {
-  if (map == null) {
-    return null;
-  }
-
-  let newJSON = JSON.stringify(colors);
-  if (newJSON != oldColoredRegionsJSON) {
-    oldColoredRegionsJSON = newJSON;
-    window.setTimeout(function () {
-      colorSVGMap(document.getElementById("map"), colors);
+  if (newJSON !== _svgColorsJSON) {
+    _svgColorsJSON = newJSON;
+    clearTimeout(_pendingColorTimer);
+    _pendingColorTimer = setTimeout(() => {
+      _pendingColorTimer = null;
+      const el = document.getElementById('rd-map');
+      if (el?.contentDocument) colorSVGMap(el, displayColors);
     }, 50);
   }
 
-  return m(".map-chart-image-wrap-outer", [
-    m(
-      ".map-chart-image-wrap.fullscreenable-image", //.clickable
-      {
-        onclick: function (e) {
-          this.classList.toggle("fullscreen");
-          this.classList.toggle("clickable");
-          e.preventDefault();
-          e.stopPropagation();
-        },
+  return m('.map-chart-image-wrap-outer',
+    m('.map-chart-image-wrap.fullscreenable-image', {
+      onclick(e) {
+        this.classList.toggle('fullscreen');
+        e.preventDefault();
+        e.stopPropagation();
       },
-      m(
-        "object#map" +
-        "[style=pointer-events: none;][type=image/svg+xml][data=" +
-        map.source +
-        "]",
-        {
-          onload: function () {
-            colorSVGMap(this, colors);
-          },
-        }
-      )
-    ),
-  ]);
-}
-
-function renderDataTable(dataPath, sumMethod) {
-  const globalCounts = sessionCache[globalCountsCacheKey(dataPath)];
-
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  const countKey = mapChartMode === "specimen" ? "view_map_count_specimen" : "view_map_count_taxa";
-
-  let sortedRegions = [...Object.keys(currentRegions)];
-  sortedRegions.sort((a, b) => {
-    let rA = regionRatio(currentRegions[a], globalCounts, a, sumMethod);
-    let rB = regionRatio(currentRegions[b], globalCounts, b, sumMethod);
-    return rB - rA;
-  });
-
-  return m(
-    "table.results-table",
-    m("tr", [
-      m("th.underline[colspan=2]", t("view_map_sum_by_region")),
-      m("th.underline", "%"),
-      m("th.underline", t(countKey)),
-    ]),
-    ...[
-      sortedRegions.map((regionKey) => {
-        let basis = 0;
-
-        switch (sumMethod) {
-          case "filter":
-            basis = currentFilterResultsLength;
-            break;
-          case "region":
-            basis = globalCounts[regionKey] || currentRegions[regionKey];
-            break;
-          case "total":
-            basis = globalCounts.__all__;
-            break;
-
-          default:
-            break;
-        }
-
-        return m("tr", [
-          m("td", Checklist.nameForMapRegion(regionKey)),
-          m(
-            "td.region-color[style=background-color: " + colors[regionKey] + "]"
-          ),
-          m(
-            "td",
-            (
-              100.0 *
-              regionRatio(
-                currentRegions[regionKey],
-                globalCounts,
-                regionKey,
-                sumMethod
-              )
-            ).toFixed(2) + "% "
-          ),
-          m("td", currentRegions[regionKey] + " / " + basis),
-        ]);
-      }),
-    ]
-  );
-}
-
-function calculateRegionColors(filteredTaxa, allTaxa, dataPath, sumMethod) {
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const terminalLeaves = filterTerminalLeavesForMode(
-    filteredTaxa, mapChartMode, specimenMetaIndex
-  );
-
-  currentFilterResultsLength = terminalLeaves.length;
-  const cacheKey = globalCountsCacheKey(dataPath);
-
-  if (!Object.keys(sessionCache).includes(cacheKey)) {
-    sessionCache[cacheKey] = cacheAllTaxa(allTaxa || Checklist.getEntireChecklist(), dataPath, mapChartMode);
-  }
-  const globalCounts = sessionCache[cacheKey];
-  const regionCounts = {};
-
-  const colors = {};
-
-  terminalLeaves.forEach((taxon) => {
-    const effectiveD = mapChartMode === "specimen"
-      ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), filteredTaxa)
-      : taxon.d;
-    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
-
-    const presentRegions = getPresentRegions(mapData);
-
-    if (presentRegions.length > 0) {
-      presentRegions.forEach((region) => {
-        if (!regionCounts[region]) {
-          regionCounts[region] = 0;
-        }
-        regionCounts[region]++;
-      });
-    }
-  });
-
-  currentRegions = regionCounts;
-
-  let unscaledRatios = {};
-
-  Object.keys(regionCounts).forEach((regionKey) => {
-    const regionCount = regionCounts[regionKey];
-
-    unscaledRatios[regionKey] = regionRatio(
-      regionCount,
-      globalCounts,
-      regionKey,
-      sumMethod
-    );
-  });
-
-  let minRatio = Math.min(...Object.values(unscaledRatios));
-  let maxRatio = Math.max(...Object.values(unscaledRatios));
-
-  Object.keys(regionCounts).forEach((regionKey) => {
-    let ratio = unscaledRatios[regionKey];
-
-    if (ratio == 0) {
-      colors[regionKey] = "#fff";
-    } else if (ratio == 1) {
-      colors[regionKey] = "indianred";
-    } else {
-      let scaledRatio = scaleToZeroOne(ratio, minRatio, maxRatio);
-      colors[regionKey] = colorFromRatio(scaledRatio);
-    }
-  });
-
-  return colors;
-}
-
-function scaleToZeroOne(value, min, max) {
-  // Handle edge case where all values are the same
-  if (min === max) {
-    return 0.5; // Scale all to the middle of the range
-  }
-
-  return (value - min) / (max - min);
-}
-
-function regionRatio(regionCount, globalCounts, regionKey, sumMethod) {
-  let ratio = 0;
-  switch (sumMethod) {
-    case "region":
-      // Fallback to regionCount to prevent NaN if global cache is missing the key
-      let denom = globalCounts[regionKey];
-      if (!denom) denom = regionCount;
-      ratio = (1.0 * regionCount) / denom;
-      break;
-    case "filter":
-      ratio = (1.0 * regionCount) / currentFilterResultsLength;
-      break;
-    case "total":
-      ratio = (1.0 * regionCount) / globalCounts.__all__;
-      break;
-    default:
-      break;
-  }
-
-  return ratio;
-}
-
-function getPresentRegions(mapData) {
-  // Work directly with object format
-  if (typeof mapData === "object" && mapData) {
-    return Object.keys(mapData);
-  }
-  return [];
-}
-
-function cacheAllTaxa(allTaxa, dataPath, mode) {
-  let cache = { __all__: 0 };
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-
-  // Use the exact same leaf filter as the numerator
-  const terminalLeaves = filterTerminalLeavesForMode(allTaxa, mode, specimenMetaIndex);
-
-  terminalLeaves.forEach((taxon) => {
-    // Dynamically pull data based on mode, mirroring calculateRegionColors
-    const effectiveD = mode === "specimen"
-      ? Checklist.getEffectiveDataForNode(taxon, specimenMetaIndex, allTaxa)
-      : taxon.d;
-
-    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
-    const presentRegions = getPresentRegions(mapData);
-
-    if (presentRegions.length > 0) {
-      presentRegions.forEach((region) => {
-        if (!cache[region]) {
-          cache[region] = 0;
-        }
-        cache[region]++;
-      });
-      cache.__all__++;
-    }
-  });
-
-  return cache;
+    },
+    m('object#rd-map[type=image/svg+xml][style=pointer-events: none;][data=' + map.source + ']', {
+      onload() { colorSVGMap(this, displayColors); },
+    })
+  ));
 }
