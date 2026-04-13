@@ -9,7 +9,7 @@ import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParam
 
 export let ChecklistView = {
   oninit: function () {
-    if (!Checklist.hasSpecimens() && Settings.analyticalIntent() !== "#T") {
+    if (!Checklist.hasOccurrences() && Settings.analyticalIntent() !== "#T") {
       Settings.analyticalIntent("#T");
     }
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
@@ -43,8 +43,8 @@ export let ChecklistView = {
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
-    const filteredTaxa    = filterOutSpecimenTaxa(allFilteredTaxa);
-    const allTaxa         = filterOutSpecimenTaxa(Checklist.getData().checklist);
+    const filteredTaxa    = filterOutOccurrenceTaxa(allFilteredTaxa);
+    const allTaxa         = filterOutOccurrenceTaxa(Checklist.getData().checklist);
     const datasetRevision = Checklist.getDataRevision();
 
     const tool = getCurrentTool();
@@ -82,24 +82,24 @@ export let ChecklistView = {
   },
 };
 
-// ─── Scope / specimen filter ──────────────────────────────────────────────────
+// ─── Scope / occurrence filter ──────────────────────────────────────────────────
 
-function filterOutSpecimenTaxa(taxa) {
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+function filterOutOccurrenceTaxa(taxa) {
+  const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
   const intent = Settings.analyticalIntent();
 
   let scoped = taxa;
 
   if (intent === "#T") {
     scoped = scoped.filter(taxon =>
-      taxon.t?.[specimenMetaIndex] === null ||
-      taxon.t?.[specimenMetaIndex] === undefined
+      taxon.t?.[occurrenceMetaIndex] === null ||
+      taxon.t?.[occurrenceMetaIndex] === undefined
     );
   } else if (intent === "#S") {
-    if (!getCurrentTool()?.getTaxaAlongsideSpecimens) {
+    if (!getCurrentTool()?.getTaxaAlongsideOccurrences) {
       scoped = scoped.filter(taxon =>
-        taxon.t?.[specimenMetaIndex] !== null &&
-        taxon.t?.[specimenMetaIndex] !== undefined
+        taxon.t?.[occurrenceMetaIndex] !== null &&
+        taxon.t?.[occurrenceMetaIndex] !== undefined
       );
     }
   }

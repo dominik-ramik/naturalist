@@ -1179,13 +1179,13 @@ export let DataManager = function () {
     });
 
     const taxonColumnInfos = allColumnInfos.filter(i => i.formatting === "checklist-taxon");
-    const specimenColIndex = taxonColumnInfos.findIndex(
-      i => i.fullRow.taxonName.trim().toLowerCase() === "specimen"
+    const occurrenceColIndex = taxonColumnInfos.findIndex(
+      i => i.fullRow.taxonName.trim().toLowerCase() === "occurrence"
     );
-    if (specimenColIndex !== -1 && specimenColIndex !== taxonColumnInfos.length - 1) {
+    if (occurrenceColIndex !== -1 && occurrenceColIndex !== taxonColumnInfos.length - 1) {
       Logger.error(
-        tf("dm_specimen_must_be_last_taxon", [
-          taxonColumnInfos[specimenColIndex].name,
+        tf("dm_occurrence_must_be_last_taxon", [
+          taxonColumnInfos[occurrenceColIndex].name,
           taxonColumnInfos[taxonColumnInfos.length - 1].name,
         ])
       );
@@ -1254,15 +1254,15 @@ export let DataManager = function () {
               if (!doneWithTaxa) {
                 rowObj.t.push(taxon);
               } else {
-                // Skip the check for taxon name "specimen"
-                if (info.fullRow.taxonName.trim().toLowerCase() == "specimen") {
-                  // Pad t with nulls so the specimen lands at its correct positional index,
+                // Skip the check for taxon name "occurrence"
+                if (info.fullRow.taxonName.trim().toLowerCase() == "occurrence") {
+                  // Pad t with nulls so the occurrence lands at its correct positional index,
                   // preserving the positional contract that the rest of the codebase relies on.
                   const taxonColumnInfos = allColumnInfos.filter(
                     i => i.formatting === "checklist-taxon"
                   );
-                  const specimenMetaIndex = taxonColumnInfos.indexOf(info);
-                  while (rowObj.t.length < specimenMetaIndex) {
+                  const occurrenceMetaIndex = taxonColumnInfos.indexOf(info);
+                  while (rowObj.t.length < occurrenceMetaIndex) {
                     rowObj.t.push(null);
                   }
                   rowObj.t.push(taxon);
@@ -1326,37 +1326,37 @@ export let DataManager = function () {
       const localTaxaMeta = {};
       const taxaTableData = data.sheets.content.tables.taxa.data[lang.code] || [];
 
-      let specimenMetaIndex = -1;
+      let occurrenceMetaIndex = -1;
 
       taxaTableData.forEach(function (row) {
         if (row.columnName) {
           localTaxaMeta[row.columnName] = { name: row.taxonName };
-          if (row.taxonName.trim().toLowerCase() === "specimen") {
-            specimenMetaIndex = Object.keys(localTaxaMeta).indexOf(row.columnName);
+          if (row.taxonName.trim().toLowerCase() === "occurrence") {
+            occurrenceMetaIndex = Object.keys(localTaxaMeta).indexOf(row.columnName);
           }
         }
       });
 
-      if (specimenMetaIndex !== -1) {
-        const seenSpecimenIds = new Map(); // specimen name -> first row number
+      if (occurrenceMetaIndex !== -1) {
+        const seenOccurrenceIds = new Map(); // occurrence name -> first row number
 
         data.sheets.checklist.data[lang.code].forEach(function (rowObj, arrayIndex) {
-          const specimenEntry = rowObj.t[specimenMetaIndex];
-          if (!specimenEntry || specimenEntry.name.trim() === "") return;
+          const occurrenceEntry = rowObj.t[occurrenceMetaIndex];
+          if (!occurrenceEntry || occurrenceEntry.name.trim() === "") return;
 
-          const specimenName = specimenEntry.name.trim();
+          const occurrenceName = occurrenceEntry.name.trim();
           const rowNumber = arrayIndex + 1 + data.common.checklistHeadersStartRow;
 
-          if (seenSpecimenIds.has(specimenName)) {
+          if (seenOccurrenceIds.has(occurrenceName)) {
             Logger.error(
-              tf("dm_duplicate_specimen_id", [
-                specimenName,
-                seenSpecimenIds.get(specimenName),
+              tf("dm_duplicate_occurrence_id", [
+                occurrenceName,
+                seenOccurrenceIds.get(occurrenceName),
                 rowNumber,
               ])
             );
           } else {
-            seenSpecimenIds.set(specimenName, rowNumber);
+            seenOccurrenceIds.set(occurrenceName, rowNumber);
           }
         });
       }

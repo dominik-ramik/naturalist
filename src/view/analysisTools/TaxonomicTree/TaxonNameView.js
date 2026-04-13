@@ -20,7 +20,7 @@ export let TaxonNameView = {
 
     let parentTaxonIndicator;
     if (isSparse) {
-      // For specimens, offset-based parent lookup is unreliable on sparse t arrays.
+      // For occurrences, offset-based parent lookup is unreliable on sparse t arrays.
       // Look up the full t array from the cache and find the actual last non-null parent.
       const taxonEntry = Checklist.getTaxonByName(vnode.attrs.taxonTree.taxon.name);
       parentTaxonIndicator = null;

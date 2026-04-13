@@ -45,7 +45,7 @@ export const config = {
     dark:  './img/ui/menu/view_map.svg',
   },
   info: 'Aggregate regional distribution across filtered records — count presences, compare categories, or compute numeric statistics per region',
-  getTaxaAlongsideSpecimens: false,
+  getTaxaAlongsideOccurrences: false,
 
   getAvailability: (availableIntents) => {
     const supportedIntents = availableIntents.filter(
@@ -56,7 +56,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: 'No regional map data found in this dataset.',
       scopeDisabledReason: intent =>
-        `${config.label} requires map data associated with ${intent === '#T' ? 'Taxa' : 'Specimens'}.`,
+        `${config.label} requires map data associated with ${intent === '#T' ? 'Taxa' : 'Occurrences'}.`,
     };
   },
 
@@ -86,10 +86,10 @@ function invalidateCaches(newRev) {
 function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
   if (rev !== _rev) invalidateCaches(rev);
 
-  const mode = (intent || Settings.analyticalIntent()) === '#S' ? 'specimen' : 'taxa';
+  const mode = (intent || Settings.analyticalIntent()) === '#S' ? 'occurrence' : 'taxa';
   if (_mapsCache[mode]) return _mapsCache[mode];
 
-  const specimenIdx = Checklist.getSpecimenMetaIndex();
+  const occurrenceIdx = Checklist.getOccurrenceMetaIndex();
   const checklist   = Checklist.getEntireChecklist();
   const dataMeta    = Checklist.getDataMeta();
   const maps        = [];
@@ -107,9 +107,9 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
     if (source.startsWith('/')) source = source.slice(1);
 
     const hasData = checklist.some(row => {
-      const isSpecimen = specimenIdx !== -1 && row.t[specimenIdx] != null;
-      if (mode === 'taxa'     &&  isSpecimen) return false;
-      if (mode === 'specimen' && !isSpecimen) return false;
+      const isOccurrence = occurrenceIdx !== -1 && row.t[occurrenceIdx] != null;
+      if (mode === 'taxa'     &&  isOccurrence) return false;
+      if (mode === 'occurrence' && !isOccurrence) return false;
       const d = Checklist.getDataFromDataPath(row.d, dataPath);
       return d && typeof d === 'object' && Object.keys(d).length > 0;
     });
@@ -131,8 +131,8 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
 function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   if (datasetRevision !== _rev) invalidateCaches(datasetRevision);
 
-  const mode         = Settings.analyticalIntent() === '#S' ? 'specimen' : 'taxa';
-  const specimenIdx  = Checklist.getSpecimenMetaIndex();
+  const mode         = Settings.analyticalIntent() === '#S' ? 'occurrence' : 'taxa';
+  const occurrenceIdx  = Checklist.getOccurrenceMetaIndex();
   const filterEmpty  = Checklist.filter.isEmpty();
   const availableMaps = getAvailableMaps();
 
@@ -180,7 +180,7 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
 
   // ── Leaf computation ──
   const filteredLeaves = currentMap
-    ? filterTerminalLeavesForMode(filteredTaxa, mode, specimenIdx)
+    ? filterTerminalLeavesForMode(filteredTaxa, mode, occurrenceIdx)
     : [];
   const filteredCount = filteredLeaves.length;
 
@@ -189,8 +189,8 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   if (currentMap) {
     const cKey = currentMap.dataPath + '|' + mode;
     if (!_countsCache[cKey]) {
-      const allLeaves  = filterTerminalLeavesForMode(allTaxa, mode, specimenIdx);
-      _countsCache[cKey] = computeAllRegionCounts(allLeaves, currentMap.dataPath, mode, specimenIdx);
+      const allLeaves  = filterTerminalLeavesForMode(allTaxa, mode, occurrenceIdx);
+      _countsCache[cKey] = computeAllRegionCounts(allLeaves, currentMap.dataPath, mode, occurrenceIdx);
     }
     allRegionCounts = _countsCache[cKey];
   }
@@ -205,7 +205,7 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   let groupIndex = {};   // groupTitle → [region codes]
 
   if (currentMap && mapState.segmentTrack) {
-    const raw = collectRegionData(filteredLeaves, currentMap.dataPath, mode, specimenIdx);
+    const raw = collectRegionData(filteredLeaves, currentMap.dataPath, mode, occurrenceIdx);
 
     if (mapState.useGroups && regionGroups.length) {
       const merged = mergeToGroups(raw, regionGroups);

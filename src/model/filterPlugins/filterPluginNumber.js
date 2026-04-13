@@ -401,7 +401,7 @@ let DropdownNumber = function (initialVnode) {
           }, [
             m("img.distribution-toggle-icon[src=img/ui/search/expand.svg]"),
             m(".distribution-toggle-label",
-              showDistribution ? t("histogram_toggle_hide") : t("histogram_toggle_show")),
+              showDistribution ? t("histogram_toggle_show") : t("histogram_toggle_hide")),
           ])
           : null,
 

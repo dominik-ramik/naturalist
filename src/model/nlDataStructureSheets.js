@@ -24,7 +24,7 @@ export const nlDataStructureSheets = {
                 notes: [
                     {
                         type: "warning",
-                        text: "If you use specimen records, the taxon level whose **Taxon name** is exactly `Specimen` must be the **last row** in this table, below all other ranks. See [Specimen and Collection Mode](/author-guide/specimen-collection-mode).",
+                        text: "If you use occurrence records, the taxon level whose **Taxon name** is exactly `Occurrence` must be the **last row** in this table, below all other ranks. See [Occurrence and Collection Mode](/author-guide/occurrence-collection-mode).",
                     },
                     {
                         type: "tip",
@@ -34,7 +34,7 @@ export const nlDataStructureSheets = {
                 seeAlso: [
                     { label: "Taxa Definition — authoring walkthrough", path: "/author-guide/nl-content#31-table-taxa-definition" },
                     { label: "Taxon Columns in the data sheet", path: "/author-guide/data-sheet#24-taxon-columns" },
-                    { label: "Specimen and Collection Mode", path: "/author-guide/specimen-collection-mode" },
+                    { label: "Occurrence and Collection Mode", path: "/author-guide/occurrence-collection-mode" },
                 ],
                 columns: {
                     columnName: {
@@ -76,7 +76,7 @@ export const nlDataStructureSheets = {
                         notes: [
                             {
                                 type: "warning",
-                                text: "The special value `Specimen` (case-insensitive) activates collection mode for that rank level. See [Specimen and Collection Mode](/author-guide/specimen-collection-mode).",
+                                text: "The special value `Occurrence` (case-insensitive) activates collection mode for that rank level. See [Occurrence and Collection Mode](/author-guide/occurrence-collection-mode).",
                             },
                         ],
                         examples: [
@@ -718,7 +718,7 @@ export const nlDataStructureSheets = {
                         name: "Code",
                         description:
                             "The keyword written after `@` in the shortcode syntax. Must be lowercase letters `a–z` only, with one optional dot separator (e.g. `mydb` or `mydb.type`). No digits, underscores, or hyphens. Defining a code that matches a built-in logs an info message and overwrites the built-in for that project.",
-                        whenToUse: "Choose a short, memorable code that reflects the database name. Use a dot separator to distinguish record types from the same source (e.g. `mydb.specimen` and `mydb.taxon`).",
+                        whenToUse: "Choose a short, memorable code that reflects the database name. Use a dot separator to distinguish record types from the same source (e.g. `mydb.occurrence` and `mydb.taxon`).",
                         notes: [],
                         examples: [
                             {
@@ -768,7 +768,7 @@ export const nlDataStructureSheets = {
                             {
                                 label: "URL template for a herbarium",
                                 columns: ["Code", "URL template"],
-                                rows: [["myherb", "https://herbarium.example.org/specimens/{{id}}"]],
+                                rows: [["myherb", "https://herbarium.example.org/occurrences/{{id}}"]],
                             },
                         ],
                         integrity: {

@@ -10,28 +10,28 @@ import "./TaxonView.css";
 
 export let TaxonView = {
   view: function (vnode) {
-    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-    const isSpecimenLevel = vnode.attrs.currentTaxonLevel === specimenMetaIndex;
+    const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+    const isOccurrenceLevel = vnode.attrs.currentTaxonLevel === occurrenceMetaIndex;
 
-    if (isSpecimenLevel && !Settings.checklistShowSpecimens()) {
+    if (isOccurrenceLevel && !Settings.checklistShowOccurrences()) {
       return null;
     }
 
     /**
      * Recursively checks if this taxon node or any of its children 
-     * contain a specimen record.
+     * contain a occurrence record.
      */
-    const branchHasSpecimens = (node) => {
-      // If this node is a specimen, the branch has specimens.
-      if (node.taxonMetaIndex === specimenMetaIndex) return true;
-      // If it's a taxon, check if any of its children have specimens.
+    const branchHasOccurrences = (node) => {
+      // If this node is a occurrence, the branch has occurrences.
+      if (node.taxonMetaIndex === occurrenceMetaIndex) return true;
+      // If it's a taxon, check if any of its children have occurrences.
       if (!node.children) return false;
-      return Object.values(node.children).some(branchHasSpecimens);
+      return Object.values(node.children).some(branchHasOccurrences);
     };
 
-    // If the setting "Show taxa without specimens" is FALSE,
-    // and this branch contains no specimens, prune it.
-    if (!Settings.checklistPruneEmpty() && !branchHasSpecimens(vnode.attrs.taxonTree)) {
+    // If the setting "Show taxa without occurrences" is FALSE,
+    // and this branch contains no occurrences, prune it.
+    if (!Settings.checklistPruneEmpty() && !branchHasOccurrences(vnode.attrs.taxonTree)) {
       return null;
     }
 
@@ -84,32 +84,32 @@ export let TaxonView = {
     const sortedChildKeys = Object.keys(vnode.attrs.taxonTree.children)
       .filter((key) => {
         return (
-          Settings.checklistShowSpecimens() ||
-          vnode.attrs.taxonTree.children[key].taxonMetaIndex !== specimenMetaIndex
+          Settings.checklistShowOccurrences() ||
+          vnode.attrs.taxonTree.children[key].taxonMetaIndex !== occurrenceMetaIndex
         );
       })
       .sort(function (a, b) {
-        const aIsSpecimen =
-          vnode.attrs.taxonTree.children[a].taxonMetaIndex === specimenMetaIndex;
-        const bIsSpecimen =
-          vnode.attrs.taxonTree.children[b].taxonMetaIndex === specimenMetaIndex;
-        if (aIsSpecimen && !bIsSpecimen) return -1;
-        if (!aIsSpecimen && bIsSpecimen) return 1;
+        const aIsOccurrence =
+          vnode.attrs.taxonTree.children[a].taxonMetaIndex === occurrenceMetaIndex;
+        const bIsOccurrence =
+          vnode.attrs.taxonTree.children[b].taxonMetaIndex === occurrenceMetaIndex;
+        if (aIsOccurrence && !bIsOccurrence) return -1;
+        if (!aIsOccurrence && bIsOccurrence) return 1;
         return 0;
       });
 
     const showSearchAll = sortedChildKeys.length > 0;
-    const nonSpecimenChildKeys = Object.keys(vnode.attrs.taxonTree.children).filter(
-      (key) => vnode.attrs.taxonTree.children[key].taxonMetaIndex !== specimenMetaIndex
+    const nonOccurrenceChildKeys = Object.keys(vnode.attrs.taxonTree.children).filter(
+      (key) => vnode.attrs.taxonTree.children[key].taxonMetaIndex !== occurrenceMetaIndex
     );
-    const isTerminalNode = nonSpecimenChildKeys.length === 0;
+    const isTerminalNode = nonOccurrenceChildKeys.length === 0;
     if (vnode.attrs.terminalOnly && !isTerminalNode) {
       return sortedChildKeys.map(function (currentTaxonKey) {
         const childNode = vnode.attrs.taxonTree.children[currentTaxonKey];
 
         if (
           vnode.attrs.displayMode != "" &&
-          childNode.taxonMetaIndex !== specimenMetaIndex &&
+          childNode.taxonMetaIndex !== occurrenceMetaIndex &&
           Object.keys(Checklist.getTaxaMeta()).indexOf(
             vnode.attrs.displayMode
           ) < childNode.taxonMetaIndex
@@ -127,13 +127,13 @@ export let TaxonView = {
           currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
           displayMode: vnode.attrs.displayMode,
           showTaxonMeta: vnode.attrs.showTaxonMeta,
-          showSpecimenMeta: vnode.attrs.showSpecimenMeta,
+          showOccurrenceMeta: vnode.attrs.showOccurrenceMeta,
           terminalOnly: vnode.attrs.terminalOnly,
         });
       });
     }
 
-    return m("ul.card.taxon-level" + inverseTaxonLevel + (isSpecimenLevel ? ".specimen-level" : ""), [
+    return m("ul.card.taxon-level" + inverseTaxonLevel + (isOccurrenceLevel ? ".occurrence-level" : ""), [
 
       m("li.taxon", [
         m(".taxon-name-stripe", [
@@ -188,8 +188,8 @@ export let TaxonView = {
           ]),
         ]),
         vnode.attrs.displayMode == "" &&
-          ((isSpecimenLevel && vnode.attrs.showSpecimenMeta !== false) ||
-            (!isSpecimenLevel && vnode.attrs.showTaxonMeta !== false))
+          ((isOccurrenceLevel && vnode.attrs.showOccurrenceMeta !== false) ||
+            (!isOccurrenceLevel && vnode.attrs.showTaxonMeta !== false))
           ? m(TaxonDataView, {
             taxon: vnode.attrs.taxonTree,
           })
@@ -200,7 +200,7 @@ export let TaxonView = {
 
         if (
           vnode.attrs.displayMode != "" &&
-          childNode.taxonMetaIndex !== specimenMetaIndex &&
+          childNode.taxonMetaIndex !== occurrenceMetaIndex &&
           Object.keys(Checklist.getTaxaMeta()).indexOf(
             vnode.attrs.displayMode
           ) <= vnode.attrs.currentTaxonLevel
@@ -220,7 +220,7 @@ export let TaxonView = {
           currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
           displayMode: vnode.attrs.displayMode,
           showTaxonMeta: vnode.attrs.showTaxonMeta,
-          showSpecimenMeta: vnode.attrs.showSpecimenMeta,
+          showOccurrenceMeta: vnode.attrs.showOccurrenceMeta,
           terminalOnly: vnode.attrs.terminalOnly,
         });
       }),

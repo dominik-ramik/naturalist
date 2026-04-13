@@ -222,9 +222,9 @@ export let Settings = {
     return Settings.checklistIncludeChildren(value);
   },
 
-  includeSpecimensInView: function (value) {
+  includeOccurrencesInView: function (value) {
     // Legacy alias kept for backward compatibility.
-    return Settings.checklistShowSpecimens(value);
+    return Settings.checklistShowOccurrences(value);
   },
 
   analyticalIntent: function (value) {
@@ -232,7 +232,7 @@ export let Settings = {
       let stored = window.localStorage.getItem("analyticalIntent");
 
       if (stored === null) {
-        const defaultVal = Checklist.hasSpecimens() ? "#S" : "#T";
+        const defaultVal = Checklist.hasOccurrences() ? "#S" : "#T";
         window.localStorage.setItem("analyticalIntent", defaultVal);
         return defaultVal;
       }
@@ -243,12 +243,12 @@ export let Settings = {
     }
   },
 
-  checklistShowSpecimens: function (value) {
+  checklistShowOccurrences: function (value) {
     if (value === undefined) {
-      const stored = window.localStorage.getItem("checklistShowSpecimens");
+      const stored = window.localStorage.getItem("checklistShowOccurrences");
       return stored === null ? true : stored === "true";
     } else {
-      window.localStorage.setItem("checklistShowSpecimens", value);
+      window.localStorage.setItem("checklistShowOccurrences", value);
     }
   },
 
@@ -270,12 +270,12 @@ export let Settings = {
     }
   },
 
-  checklistShowSpecimenMeta: function (value) {
+  checklistShowOccurrenceMeta: function (value) {
     if (value === undefined) {
-      const stored = window.localStorage.getItem("checklistShowSpecimenMeta");
+      const stored = window.localStorage.getItem("checklistShowOccurrenceMeta");
       return stored === null ? true : stored === "true";
     } else {
-      window.localStorage.setItem("checklistShowSpecimenMeta", value);
+      window.localStorage.setItem("checklistShowOccurrenceMeta", value);
     }
   },
 
@@ -407,7 +407,7 @@ getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
 
   if (Object.keys(itemObject).length === 0) {
     const scope = pinnedScope || Settings.analyticalIntent();
-    return scope === "#S" ? t("view_chart_mode_specimen") : t("view_chart_mode_taxa");
+    return scope === "#S" ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
   }
 
   const opts  = { html: !usePlainTextOutput };

@@ -57,7 +57,7 @@ export function validateToolConfig(config) {
   const errors = [];
   const {
     id, label, iconPath, info,
-    getTaxaAlongsideSpecimens,
+    getTaxaAlongsideOccurrences,
     render, parameters, getAvailability,
   } = config;
 
@@ -70,8 +70,8 @@ export function validateToolConfig(config) {
     errors.push("Missing or invalid 'info' (expected string).");
 
   // 2. Required objects / booleans
-  if (typeof getTaxaAlongsideSpecimens !== "boolean")
-    errors.push("Missing or invalid 'getTaxaAlongsideSpecimens' (expected boolean).");
+  if (typeof getTaxaAlongsideOccurrences !== "boolean")
+    errors.push("Missing or invalid 'getTaxaAlongsideOccurrences' (expected boolean).");
   if (!iconPath || typeof iconPath !== "object" ||
       typeof iconPath.light !== "string" || typeof iconPath.dark !== "string")
     errors.push("Missing or invalid 'iconPath' (expected object with 'light' and 'dark' string paths).");
@@ -140,7 +140,7 @@ export function validateToolConfig(config) {
  * provided checklist data.  Mutates Settings to safe defaults if invalid.
  */
 export function validateActiveToolState(checklistData) {
-  const allIntents   = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  const allIntents   = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
   let currentToolId  = Settings.viewType() || DEFAULT_TOOL;
   let currentIntent  = Settings.analyticalIntent() || "#T";
 
@@ -174,7 +174,7 @@ export function validateActiveToolState(checklistData) {
  * Auto-switches analytical intent if the new tool does not support the current one.
  */
 export function requestToolChange(toolId, checklistData) {
-  const allIntents     = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  const allIntents     = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
   const requestedTool  = TOOL_REGISTRY[toolId];
 
   if (!requestedTool) return; // Unknown tool — ignore
@@ -197,11 +197,11 @@ export function requestToolChange(toolId, checklistData) {
 }
 
 /**
- * Safely changes the analytical intent (Taxa / Specimens).
+ * Safely changes the analytical intent (Taxa / Occurrences).
  * Validates that the currently active tool supports the requested intent.
  */
 export function requestIntentChange(intentId, checklistData) {
-  const allIntents   = Checklist.hasSpecimens() ? ["#T", "#S"] : ["#T"];
+  const allIntents   = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
   const currentToolId = Settings.viewType() || DEFAULT_TOOL;
   const activeTool   = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
 

@@ -358,7 +358,7 @@ path {
   padding-left: 0.75em;
 }
 
-.summary-cell-specimens {
+.summary-cell-occurrences {
   text-align: right;
   white-space: nowrap;
   font-size: 0.85em;
@@ -366,7 +366,7 @@ path {
   padding-left: 0.5em;
 }
 
-.summary-specimen-icon {
+.summary-occurrence-icon {
   height: 0.85em;
   opacity: 0.45;
   vertical-align: middle;

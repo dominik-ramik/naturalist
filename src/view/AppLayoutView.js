@@ -10,7 +10,7 @@ import { ConfigurationDialog } from "./ConfigurationDialog.js";
 function currentScopeLabel() {
     switch (Settings.analyticalIntent()) {
         case "#S":
-            return "Specimens";
+            return "Occurrences";
         case "#T":
             return "Taxa";
         default:

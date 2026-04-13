@@ -24,7 +24,7 @@ export const config = {
     dark:  "./img/ui/menu/view_circle_pack.svg",
   },
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
-  getTaxaAlongsideSpecimens: false,
+  getTaxaAlongsideOccurrences: false,
 
   getAvailability: (availableIntents, checklistData) => {
     const supportedIntents = availableIntents.filter(intent => {
@@ -37,7 +37,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: "No data found in this dataset.",
       scopeDisabledReason: (intent) =>
-        `${config.label} is unavailable ${intent === "#S" ? "for specimens" : "for taxa"} because none were found.`,
+        `${config.label} is unavailable ${intent === "#S" ? "for occurrences" : "for taxa"} because none were found.`,
     };
   },
 
@@ -60,7 +60,7 @@ export const config = {
     circlePackingView(allTaxa, filteredTaxa, datasetRevision),
 };
 
-const specimenTagIconPath =
+const occurrenceTagIconPath =
   "M856-390 570-104q-12 12-27 18t-30 6q-15 0-30-6t-27-18L103-457q-11-11-17-25.5T80-513v-287q0-33 23.5-56.5T160-880h287q16 0 31 6.5t26 17.5l352 353q12 12 17.5 27t5.5 30q0 15-5.5 29.5T856-390ZM260-640q25 0 42.5-17.5T320-700q0-25-17.5-42.5T260-760q-25 0-42.5 17.5T200-700q0 25 17.5 42.5T260-640Z";
 
 function circlePacking(options) {
@@ -73,48 +73,48 @@ function circlePacking(options) {
   let labelOpacity = options.labelOpacity || 0.75;
   let fontFamily = options.fontFamily || "sans-serif";
   let showDownloadButton = options.showDownloadButton === false ? false : true;
-  let specimenMetaIndex = options.specimenMetaIndex;
+  let occurrenceMetaIndex = options.occurrenceMetaIndex;
 
   if (Settings.analyticalIntent() === "#S") {
     // Deep clone to prevent mutating the original dataSource which might be used in other views
     data = JSON.parse(JSON.stringify(options.dataSource));
 
-    function groupSpecimens(node) {
+    function groupOccurrences(node) {
       if (!node.children || node.children.length === 0) return;
 
       let taxaChildren = [];
-      let specimenChildren = [];
+      let occurrenceChildren = [];
 
       node.children.forEach(child => {
-        // Determine if the child is a specimen based on existing logic
-        const isSpec = specimenMetaIndex !== undefined &&
-          specimenMetaIndex !== -1 &&
-          child.taxonMetaIndex === specimenMetaIndex;
+        // Determine if the child is a occurrence based on existing logic
+        const isSpec = occurrenceMetaIndex !== undefined &&
+          occurrenceMetaIndex !== -1 &&
+          child.taxonMetaIndex === occurrenceMetaIndex;
 
         if (isSpec) {
-          specimenChildren.push(child);
+          occurrenceChildren.push(child);
         } else {
           taxaChildren.push(child);
         }
 
         // Recursively traverse downwards
-        groupSpecimens(child);
+        groupOccurrences(child);
       });
 
-      // Apply the container ONLY if the level is mixed (has both taxa and specimens)
-      if (taxaChildren.length > 0 && specimenChildren.length > 0) {
+      // Apply the container ONLY if the level is mixed (has both taxa and occurrences)
+      if (taxaChildren.length > 0 && occurrenceChildren.length > 0) {
         let containerTotal = 0;
         let containerMatching = 0;
 
         // Sum up metrics so that coloring and tooltips still function cleanly
-        specimenChildren.forEach(c => {
+        occurrenceChildren.forEach(c => {
           containerTotal += c.totalLeafCount !== undefined ? c.totalLeafCount : 1;
           containerMatching += c.matchingLeafCount || 0;
         });
 
         const containerNode = {
-          name: tf("taxon_specimens", [node.name], true),
-          children: specimenChildren,
+          name: tf("taxon_occurrences", [node.name], true),
+          children: occurrenceChildren,
           totalLeafCount: containerTotal,
           matchingLeafCount: containerMatching
         };
@@ -124,7 +124,7 @@ function circlePacking(options) {
       }
     }
 
-    groupSpecimens(data);
+    groupOccurrences(data);
   }
 
   let isFilterMode = data.matchingLeafCount != data.totalLeafCount;
@@ -303,15 +303,15 @@ function circlePacking(options) {
       .join(">");
   }
 
-  function isSpecimenNode(node) {
+  function isOccurrenceNode(node) {
     return (
-      specimenMetaIndex !== undefined &&
-      specimenMetaIndex !== -1 &&
-      node?.data?.taxonMetaIndex === specimenMetaIndex
+      occurrenceMetaIndex !== undefined &&
+      occurrenceMetaIndex !== -1 &&
+      node?.data?.taxonMetaIndex === occurrenceMetaIndex
     );
   }
 
-  function specimenIconSize(node) {
+  function occurrenceIconSize(node) {
     return node.r * 0.6;
   }
 
@@ -546,13 +546,13 @@ function circlePacking(options) {
 
     labelGroups.each(function (d) {
       const labelGroup = d3.select(this);
-      const specimen = isSpecimenNode(d);
+      const occurrence = isOccurrenceNode(d);
 
-      if (specimen) {
-        const iconSize = specimenIconSize(d);
+      if (occurrence) {
+        const iconSize = occurrenceIconSize(d);
         const scale = iconSize / 960;
         labelGroup.append("path")
-          .attr("d", specimenTagIconPath)
+          .attr("d", occurrenceTagIconPath)
           .style("fill", "black")
           .style("stroke", "#000000")
           .attr("stroke-width", 2)
@@ -565,7 +565,7 @@ function circlePacking(options) {
         .attr("opacity", labelOpacity)
         // Pushes the text to the top for parent nodes to prevent overlap
         .attr("dominant-baseline", d.children ? "hanging" : "middle")
-        .attr("y", d.children ? -d.r + 12 : (specimen ? specimenIconSize(d) * 0.4 : 0))
+        .attr("y", d.children ? -d.r + 12 : (occurrence ? occurrenceIconSize(d) * 0.4 : 0))
         .style("font-family", fontFamily)
         .style("text-anchor", "middle");
 
@@ -783,7 +783,7 @@ function computeTextRadius(text, targetWidth, options = {}) {
 // ─── D3 data-transform helpers (owned by this module) ─────────────────────
 
 function checklistDataForD3FromTaxa(taxa) {
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+  const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
 
   const root = {
     name: "root",
@@ -807,16 +807,16 @@ function checklistDataForD3FromTaxa(taxa) {
       return;
     }
 
-    const specimenEntry =
-      specimenMetaIndex === -1 ? null : taxonRow.t?.[specimenMetaIndex];
-    const isSpecimenRow =
-      specimenEntry !== null &&
-      specimenEntry !== undefined &&
-      specimenEntry.name?.trim() !== "";
+    const occurrenceEntry =
+      occurrenceMetaIndex === -1 ? null : taxonRow.t?.[occurrenceMetaIndex];
+    const isOccurrenceRow =
+      occurrenceEntry !== null &&
+      occurrenceEntry !== undefined &&
+      occurrenceEntry.name?.trim() !== "";
 
-    const ancestry = isSpecimenRow
+    const ancestry = isOccurrenceRow
       ? nonNullTaxa.filter(function (item) {
-        return item.index !== specimenMetaIndex;
+        return item.index !== occurrenceMetaIndex;
       })
       : nonNullTaxa;
 
@@ -830,17 +830,17 @@ function checklistDataForD3FromTaxa(taxa) {
       );
     });
 
-    if (isSpecimenRow) {
-      const specimenNode = ensureCirclePackChild(
+    if (isOccurrenceRow) {
+      const occurrenceNode = ensureCirclePackChild(
         currentNode,
-        "__specimen__" + specimenEntry.name,
-        specimenEntry,
-        specimenMetaIndex,
-        { displayName: specimenEntry.name }
+        "__occurrence__" + occurrenceEntry.name,
+        occurrenceEntry,
+        occurrenceMetaIndex,
+        { displayName: occurrenceEntry.name }
       );
-      specimenNode.data = taxonRow.d;
-      specimenNode.taxon = specimenEntry;
-      specimenNode.taxonMetaIndex = specimenMetaIndex;
+      occurrenceNode.data = taxonRow.d;
+      occurrenceNode.taxon = occurrenceEntry;
+      occurrenceNode.taxonMetaIndex = occurrenceMetaIndex;
       return;
     }
 
@@ -944,8 +944,8 @@ function renderBubblesInfoBox(isFilterEmpty, mapChartMode, matchingCount, totalC
   if (isFilterEmpty) {
     message = t("view_bubbles_no_filter_tip");
   } else {
-    const key = mapChartMode === "specimen"
-      ? "view_bubbles_filter_info_specimen"
+    const key = mapChartMode === "occurrence"
+      ? "view_bubbles_filter_info_occurrence"
       : "view_bubbles_filter_info_taxa";
     message = tf(key, [matchingCount, totalCount]);
   }
@@ -986,10 +986,10 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
   ensureCirclePackingCacheFresh(datasetRevision);
 
   const isFilterEmpty = Checklist.filter.isEmpty();
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? "occurrence" : "taxa";
 
   // Use the raw array lengths as leaf counts — these correspond 1-to-1 with
-  // terminal nodes in the hierarchy (each taxa/specimen row → one leaf).
+  // terminal nodes in the hierarchy (each taxa/occurrence row → one leaf).
   const totalCount = allTaxa.length;
   const matchingCount = matchingTaxa.length;
 
@@ -1004,7 +1004,7 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
         const cacheKey = JSON.stringify({
           queryKey: Checklist.queryKey(),
           includeMatchChildren: Settings.checklistIncludeChildren(),
-          includeSpecimensInView: Settings.checklistShowSpecimens(),
+          includeOccurrencesInView: Settings.checklistShowOccurrences(),
           analyticalIntent: Settings.analyticalIntent(),
           circlePackingMaxLevels: Settings.circlePackingMaxLevels(),
         });
@@ -1021,7 +1021,7 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
           dataSource: cachedData,
           colorInterpolation: colorFromRatio,
           fontFamily: "Regular",
-          specimenMetaIndex: Checklist.getSpecimenMetaIndex(),
+          occurrenceMetaIndex: Checklist.getOccurrenceMetaIndex(),
         };
       },
     })]);

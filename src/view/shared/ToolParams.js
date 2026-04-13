@@ -129,7 +129,7 @@ export function renderParams(paramDefs, scope) {
 
 /**
  * Builds a descriptive summary of every non-default, notifiable, active param.
- * Returns strings like ["Show specimen metadata: on", "Taxon level: Genus"].
+ * Returns strings like ["Show occurrence metadata: on", "Taxon level: Genus"].
  */
 export function describeNonDefaultParams(paramDefs, scope) {
   return getNonDefaultParams(paramDefs, scope).map(p => {

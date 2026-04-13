@@ -23,7 +23,7 @@ export function TabSummary(taxon) {
 
   const perspectives = [
     buildTaxonomyPerspective(ctx),
-    ...(ctx.showSpecimens ? [buildSpecimensPerspective(ctx)] : []),
+    ...(ctx.showOccurrences ? [buildOccurrencesPerspective(ctx)] : []),
     ...buildCategoryPerspectives(ctx),
     ...buildMapRegionsPerspectives(ctx),
     ...buildMonthsPerspectives(ctx),
@@ -56,15 +56,15 @@ const SummaryView = {
 
     let nav = null;
     if (perspectives.length > 1) {
-      const hasSpec    = perspectives.some(p =>  p.forSpecimen);
-      const hasNonSpec = perspectives.some(p => !p.forSpecimen);
+      const hasSpec    = perspectives.some(p =>  p.forOccurrence);
+      const hasNonSpec = perspectives.some(p => !p.forOccurrence);
       if (hasSpec && hasNonSpec) {
         nav = m("select.sp-nav-select", selectAttrs, [
           m("optgroup", { label: t("sp_general") },
-            perspectives.map((p, i) => !p.forSpecimen ? toOption(p, i) : null)
+            perspectives.map((p, i) => !p.forOccurrence ? toOption(p, i) : null)
           ),
-          m("optgroup", { label: t("sp_specimens") },
-            perspectives.map((p, i) =>  p.forSpecimen ? toOption(p, i) : null)
+          m("optgroup", { label: t("sp_occurrences") },
+            perspectives.map((p, i) =>  p.forOccurrence ? toOption(p, i) : null)
           ),
         ]);
       } else {
@@ -89,16 +89,16 @@ function buildContext(taxon) {
   const checklist         = Checklist.getEntireChecklist();
   const taxaMeta          = Checklist.getTaxaMeta();
   const taxaKeys          = Object.keys(taxaMeta);
-  const specimenDataPath  = Checklist.getSpecimenDataPath();
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const showSpecimens     = Settings.analyticalIntent() === "#S"
-    && Checklist.hasSpecimens()
-    && specimenMetaIndex !== -1;
+  const occurrenceDataPath  = Checklist.getOccurrenceDataPath();
+  const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+  const showOccurrences     = Settings.analyticalIntent() === "#S"
+    && Checklist.hasOccurrences()
+    && occurrenceMetaIndex !== -1;
 
-  // Deepest non-null, non-specimen taxon level for this node
+  // Deepest non-null, non-occurrence taxon level for this node
   let currentLevelIndex = -1;
   for (let i = taxaKeys.length - 1; i >= 0; i--) {
-    if (taxaKeys[i] === specimenDataPath) continue;
+    if (taxaKeys[i] === occurrenceDataPath) continue;
     if (taxon.t[i] != null) { currentLevelIndex = i; break; }
   }
   if (currentLevelIndex === -1) return null;
@@ -106,7 +106,7 @@ function buildContext(taxon) {
   // Ancestry map: levelIndex → taxon name
   const ancestry = {};
   for (let i = 0; i <= currentLevelIndex; i++) {
-    if (taxaKeys[i] === specimenDataPath || taxon.t[i] == null) continue;
+    if (taxaKeys[i] === occurrenceDataPath || taxon.t[i] == null) continue;
     ancestry[i] = taxon.t[i].name;
   }
 
@@ -118,8 +118,8 @@ function buildContext(taxon) {
   const _scopeCache = {};
   const ctx = {
     taxon, checklist, subtreeRows, taxaMeta, taxaKeys,
-    specimenDataPath, specimenMetaIndex, currentLevelIndex,
-    ancestry, showSpecimens,
+    occurrenceDataPath, occurrenceMetaIndex, currentLevelIndex,
+    ancestry, showOccurrences,
     dataMeta: Checklist.getDataMeta(),
   };
   ctx.getScopeForLevel = (li) => {
@@ -135,20 +135,20 @@ function buildContext(taxon) {
 // Shared helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Deepest taxon level index, ignoring the specimen pseudo-level. */
-function deepestTaxonLevelOf(row, specimenMetaIndex) {
+/** Deepest taxon level index, ignoring the occurrence pseudo-level. */
+function deepestTaxonLevelOf(row, occurrenceMetaIndex) {
   let d = -1;
   for (let i = 0; i < row.t.length; i++) {
-    if (i === specimenMetaIndex) continue;
+    if (i === occurrenceMetaIndex) continue;
     if (row.t[i] != null) d = i;
   }
   return d;
 }
 
-function isSpecimenRow(row, specimenMetaIndex) {
-  return specimenMetaIndex !== -1
-    && row.t[specimenMetaIndex] != null
-    && row.t[specimenMetaIndex].name?.trim() !== "";
+function isOccurrenceRow(row, occurrenceMetaIndex) {
+  return occurrenceMetaIndex !== -1
+    && row.t[occurrenceMetaIndex] != null
+    && row.t[occurrenceMetaIndex].name?.trim() !== "";
 }
 
 /**
@@ -198,12 +198,12 @@ function countTaxaAtLevel(rows, li) {
 // ── 1. Taxonomy ───────────────────────────────────────────────────────────────
 
 function buildTaxonomyPerspective(ctx) {
-  const { taxaKeys, taxaMeta, specimenDataPath, currentLevelIndex,
+  const { taxaKeys, taxaMeta, occurrenceDataPath, currentLevelIndex,
           ancestry, checklist, subtreeRows } = ctx;
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
-    if (levelKey === specimenDataPath) return;
+    if (levelKey === occurrenceDataPath) return;
     const levelName = taxaMeta[levelKey].name;
 
     if (li <= currentLevelIndex) {
@@ -229,21 +229,21 @@ function buildTaxonomyPerspective(ctx) {
     }
   });
 
-  return rows.length ? { type: "taxonomy", title: t("sp_taxonomy"), rows, forSpecimen: false } : null;
+  return rows.length ? { type: "taxonomy", title: t("sp_taxonomy"), rows, forOccurrence: false } : null;
 }
 
-// ── 2. Specimens ──────────────────────────────────────────────────────────────
+// ── 2. Occurrences ──────────────────────────────────────────────────────────────
 
-function buildSpecimensPerspective(ctx) {
-  const { taxaKeys, taxaMeta, specimenDataPath, specimenMetaIndex,
+function buildOccurrencesPerspective(ctx) {
+  const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
           currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
   const rows = [];
 
   // No early guard: getScopeForLevel includes sibling branches, so ancestor-
-  // level rows populate even when the current taxon's own subtree has no specimens.
+  // level rows populate even when the current taxon's own subtree has no occurrences.
 
   taxaKeys.forEach((levelKey, li) => {
-    if (levelKey === specimenDataPath) return;
+    if (levelKey === occurrenceDataPath) return;
     const levelName = taxaMeta[levelKey].name;
 
     if (li <= currentLevelIndex) {
@@ -253,9 +253,9 @@ function buildSpecimensPerspective(ctx) {
       const scope = ctx.getScopeForLevel(li);
       let direct = 0, cumulative = 0;
       scope.forEach(row => {
-        if (!isSpecimenRow(row, specimenMetaIndex)) return;
+        if (!isOccurrenceRow(row, occurrenceMetaIndex)) return;
         cumulative++;
-        if (deepestTaxonLevelOf(row, specimenMetaIndex) === li) direct++;
+        if (deepestTaxonLevelOf(row, occurrenceMetaIndex) === li) direct++;
       });
       if (direct === 0 && cumulative === 0) return;
 
@@ -266,9 +266,9 @@ function buildSpecimensPerspective(ctx) {
     } else {
       let direct = 0, cumulative = 0;
       subtreeRows.forEach(row => {
-        if (!isSpecimenRow(row, specimenMetaIndex) || row.t[li] == null) return;
+        if (!isOccurrenceRow(row, occurrenceMetaIndex) || row.t[li] == null) return;
         cumulative++;
-        if (deepestTaxonLevelOf(row, specimenMetaIndex) === li) direct++;
+        if (deepestTaxonLevelOf(row, occurrenceMetaIndex) === li) direct++;
       });
       if (direct === 0 && cumulative === 0) return;
       const n = countTaxaAtLevel(subtreeRows, li);
@@ -276,13 +276,13 @@ function buildSpecimensPerspective(ctx) {
     }
   });
 
-  return rows.length ? { type: "specimens", title: t("sp_specimens"), rows, forSpecimen: true } : null;
+  return rows.length ? { type: "occurrences", title: t("sp_occurrences"), rows, forOccurrence: true } : null;
 }
 
 // ── 3. Categories ─────────────────────────────────────────────────────────────
 
 function buildCategoryPerspectives(ctx) {
-  const { dataMeta, showSpecimens, subtreeRows, specimenMetaIndex } = ctx;
+  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
   const catPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "category");
 
   return catPaths.flatMap(catPath => {
@@ -293,11 +293,11 @@ function buildCategoryPerspectives(ctx) {
       return v != null && v.toString().trim() !== "";
     };
 
-    if (subtreeRows.some(r => !isSpecimenRow(r, specimenMetaIndex) && hasVal(r))) {
+    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasVal(r))) {
       const p = buildCategoryPerspective(ctx, catPath, meta, false);
       if (p) results.push(p);
     }
-    if (showSpecimens && subtreeRows.some(r => isSpecimenRow(r, specimenMetaIndex) && hasVal(r))) {
+    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasVal(r))) {
       const p = buildCategoryPerspective(ctx, catPath, meta, true);
       if (p) results.push(p);
     }
@@ -305,8 +305,8 @@ function buildCategoryPerspectives(ctx) {
   });
 }
 
-function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
-  const { taxaKeys, taxaMeta, specimenDataPath, specimenMetaIndex,
+function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
+  const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
           currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   // Use getAllLeafData so that multi-valued lists (e.g. "list comma"
@@ -318,12 +318,12 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
       .filter(x => x != null && String(x).trim() !== "");
   };
   const eligible = rows =>
-    rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && getVals(r).length > 0);
+    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && getVals(r).length > 0);
 
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
-    if (levelKey === specimenDataPath) return;
+    if (levelKey === occurrenceDataPath) return;
     const levelName = taxaMeta[levelKey].name;
 
     if (li <= currentLevelIndex) {
@@ -340,7 +340,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
     } else {
       // Filter to deepest-level rows to avoid double-counting genus + species
       const e = eligible(subtreeRows)
-        .filter(r => deepestTaxonLevelOf(r, specimenMetaIndex) === li);
+        .filter(r => deepestTaxonLevelOf(r, occurrenceMetaIndex) === li);
       if (e.length === 0) return;
       rows.push({
         kind: "descendant", levelName,
@@ -353,14 +353,14 @@ function buildCategoryPerspective(ctx, catPath, meta, forSpecimen) {
 
   if (!rows.length) return null;
   const base = meta.title || meta.searchCategory || catPath;
-  const title = forSpecimen ? tf("sp_title_for_specimens", [base], true) : base;
-  return { type: "category", title, catPath, meta, rows, forSpecimen };
+  const title = forOccurrence ? tf("sp_title_for_occurrences", [base], true) : base;
+  return { type: "category", title, catPath, meta, rows, forOccurrence };
 }
 
 // ── 4. Map regions ────────────────────────────────────────────────────────────
 
 function buildMapRegionsPerspectives(ctx) {
-  const { dataMeta, showSpecimens, subtreeRows, specimenMetaIndex } = ctx;
+  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
   const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "mapregions");
 
   return mapPaths.flatMap(mapPath => {
@@ -371,11 +371,11 @@ function buildMapRegionsPerspectives(ctx) {
       return v && typeof v === "object" && Object.keys(v).length > 0;
     };
 
-    if (subtreeRows.some(r => !isSpecimenRow(r, specimenMetaIndex) && hasData(r))) {
+    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
       const p = buildMapRegionsPerspective(ctx, mapPath, meta, false);
       if (p) results.push(p);
     }
-    if (showSpecimens && subtreeRows.some(r => isSpecimenRow(r, specimenMetaIndex) && hasData(r))) {
+    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
       const p = buildMapRegionsPerspective(ctx, mapPath, meta, true);
       if (p) results.push(p);
     }
@@ -383,8 +383,8 @@ function buildMapRegionsPerspectives(ctx) {
   });
 }
 
-function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
-  const { taxaKeys, taxaMeta, specimenDataPath, specimenMetaIndex,
+function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
+  const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
           currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   const hasData = r => {
@@ -392,7 +392,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
     return v && typeof v === "object" && Object.keys(v).length > 0;
   };
   const eligible = rows =>
-    rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && hasData(r));
+    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && hasData(r));
 
   const lc = getLegendConfig(mapPath);
   const allNumericValues = [];
@@ -405,7 +405,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
-    if (levelKey === specimenDataPath) return;
+    if (levelKey === occurrenceDataPath) return;
     const levelName = taxaMeta[levelKey].name;
 
     if (li <= currentLevelIndex) {
@@ -421,7 +421,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
       });
     } else {
       const e = eligible(subtreeRows)
-        .filter(r => deepestTaxonLevelOf(r, specimenMetaIndex) === li);
+        .filter(r => deepestTaxonLevelOf(r, occurrenceMetaIndex) === li);
       if (e.length === 0) return;
       const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats);
       if (!breakdown.length) return;
@@ -435,8 +435,8 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forSpecimen) {
 
   if (!rows.length) return null;
   const base = meta.title || meta.searchCategory || mapPath;
-  const title = forSpecimen ? tf("sp_title_for_specimens", [base], true) : base;
-  return { type: "mapregions", title, mapPath, meta, rows, forSpecimen };
+  const title = forOccurrence ? tf("sp_title_for_occurrences", [base], true) : base;
+  return { type: "mapregions", title, mapPath, meta, rows, forOccurrence };
 }
 
 /**
@@ -551,7 +551,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
 // ── 5. Months ─────────────────────────────────────────────────────────────────
 
 function buildMonthsPerspectives(ctx) {
-  const { dataMeta, showSpecimens, subtreeRows, specimenMetaIndex } = ctx;
+  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
   const monthPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "months");
 
   return monthPaths.flatMap(monthsPath => {
@@ -562,11 +562,11 @@ function buildMonthsPerspectives(ctx) {
       return Array.isArray(v) && v.length > 0;
     };
 
-    if (subtreeRows.some(r => !isSpecimenRow(r, specimenMetaIndex) && hasData(r))) {
+    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
       const p = buildMonthsPerspective(ctx, monthsPath, meta, false);
       if (p) results.push(p);
     }
-    if (showSpecimens && subtreeRows.some(r => isSpecimenRow(r, specimenMetaIndex) && hasData(r))) {
+    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
       const p = buildMonthsPerspective(ctx, monthsPath, meta, true);
       if (p) results.push(p);
     }
@@ -574,8 +574,8 @@ function buildMonthsPerspectives(ctx) {
   });
 }
 
-function buildMonthsPerspective(ctx, monthsPath, meta, forSpecimen) {
-  const { taxaKeys, taxaMeta, specimenDataPath, specimenMetaIndex,
+function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
+  const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
           currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   const hasData = r => {
@@ -583,7 +583,7 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forSpecimen) {
     return Array.isArray(v) && v.length > 0;
   };
   const eligible = rows =>
-    rows.filter(r => isSpecimenRow(r, specimenMetaIndex) === forSpecimen && hasData(r));
+    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && hasData(r));
   const getMonths = row => {
     const v = Checklist.getDataFromDataPath(row.d, monthsPath);
     return Array.isArray(v) ? v : [];
@@ -592,7 +592,7 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forSpecimen) {
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
-    if (levelKey === specimenDataPath) return;
+    if (levelKey === occurrenceDataPath) return;
     const levelName = taxaMeta[levelKey].name;
 
     if (li <= currentLevelIndex) {
@@ -623,8 +623,8 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forSpecimen) {
 
   if (!rows.length) return null;
   const base = meta.title || meta.searchCategory || monthsPath;
-  const title = forSpecimen ? tf("sp_title_for_specimens", [base], true) : base;
-  return { type: "months", title, monthsPath, meta, rows, forSpecimen };
+  const title = forOccurrence ? tf("sp_title_for_occurrences", [base], true) : base;
+  return { type: "months", title, monthsPath, meta, rows, forOccurrence };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -677,7 +677,7 @@ function renderLevelHeader(row, p) {
 function renderLevelData(row, p) {
   switch (p.type) {
     case "taxonomy":  return null;
-    case "specimens": return renderSpecimensData(row);
+    case "occurrences": return renderOccurrencesData(row);
     case "category":  return renderCategoryData(row.breakdown, p.meta);
     case "mapregions": return renderRegionsData(row.breakdown);
     case "months":    return renderMonthsGrid(row.months);
@@ -685,12 +685,12 @@ function renderLevelData(row, p) {
   }
 }
 
-// ── Specimens ─────────────────────────────────────────────────────────────────
+// ── Occurrences ─────────────────────────────────────────────────────────────────
 
-function renderSpecimensData(row) {
+function renderOccurrencesData(row) {
   // Two explicit labeled columns. Labels are always visible — no tooltip needed.
-  // "Own" = specimens whose deepest identification is exactly this taxonomic level.
-  // "Total" = all specimens in this branch, regardless of further sub-level IDs.
+  // "Own" = occurrences whose deepest identification is exactly this taxonomic level.
+  // "Total" = all occurrences in this branch, regardless of further sub-level IDs.
   return m(".sp-spec-cols", [
     m(".sp-spec-col", [
       m(".sp-spec-label", t("sp_spec_own")),

@@ -20,7 +20,7 @@ export const config = {
     dark: "./img/ui/menu/view_category_density.svg",
   },
   info: "Evaluate the breakdown of your data by chosen traits and apply filters to focus the comparison on specific records",
-  getTaxaAlongsideSpecimens: false,
+  getTaxaAlongsideOccurrences: false,
 
   getAvailability: (availableIntents, checklistData) => {
     const supportedIntents = availableIntents.filter(intent =>
@@ -31,7 +31,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: "No categorical trait data found in this dataset.",
       scopeDisabledReason: (intent) => {
-        const scopeName = intent === "#T" ? "Taxa" : "Specimens";
+        const scopeName = intent === "#T" ? "Taxa" : "Occurrences";
         return `${config.label} requires categorical trait data to be present with ${scopeName}.`;
       }
     };
@@ -207,13 +207,13 @@ function normaliseLabelValue(v) {
  * Shared param positions across all four i18n keys:
  *   {0} percentage string  "{0}" e.g. "30%"
  *   {1} raw count          e.g. "15"
- *   {2} unit               e.g. "taxa" / "specimens"
+ *   {2} unit               e.g. "taxa" / "occurrences"
  *   {3} rowLabel           e.g. "<strong>Chordata</strong>"
  *   {4} colLabel           e.g. "<strong>Red List Status: Endangered</strong>"
  */
 function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verbCtx) {
   const { chartMode, isCustomMode, colTraitName, rowTraitName } = verbCtx;
-  const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
+  const unit = t(chartMode === "occurrence" ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
   const colLabel = `<strong>${colTraitName}: ${cKey}</strong>`;
   const rowLabel = isCustomMode
     ? `<strong>${rowTraitName}: ${rowKey}</strong>`
@@ -267,8 +267,8 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
   const categoryType = Checklist.filter.data[dataCategory]?.type;
   if (!categoryType) return [];
 
-  const rawData = (mode === "specimen" && categoryType !== "mapregions")
-    ? Checklist.getEffectiveDataForNode(taxon, Checklist.getSpecimenMetaIndex(), allTaxa)
+  const rawData = (mode === "occurrence" && categoryType !== "mapregions")
+    ? Checklist.getEffectiveDataForNode(taxon, Checklist.getOccurrenceMetaIndex(), allTaxa)
     : taxon.d;
 
   const get = path => Checklist.getDataFromDataPath(rawData, path);
@@ -475,7 +475,7 @@ function renderPanelSummary(colTraitName, rowDimLabel) {
  * teaching the comparison-direction concept through the resulting question itself.
  *
  * Template param positions for tm_living_* keys:
- *   {0} = unit (taxa / specimens)
+ *   {0} = unit (taxa / occurrences)
  *   {1} = rowDimLabel
  *   {2} = colTraitName
  */
@@ -511,11 +511,11 @@ function categoryChart(filteredTaxa) {
   const result = [];
   const isCustomMode = secondaryDimMode === "custom";
 
-  const chartMode = Settings.analyticalIntent() === "#S" ? "specimen" : "taxa";
-  const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-  const allTaxaForInheritance = chartMode === "specimen" ? Checklist.getEntireChecklist() : filteredTaxa;
+  const chartMode = Settings.analyticalIntent() === "#S" ? "occurrence" : "taxa";
+  const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+  const allTaxaForInheritance = chartMode === "occurrence" ? Checklist.getEntireChecklist() : filteredTaxa;
 
-  filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, specimenMetaIndex);
+  filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, occurrenceMetaIndex);
 
   // ── Derived labels & flags ────────────────────────────────────────────────
 
@@ -530,7 +530,7 @@ function categoryChart(filteredTaxa) {
   const rowDimLabel = isCustomMode && secondaryDimCategory
     ? (Checklist.getMetaForDataPath(secondaryDimCategory)?.searchCategory || secondaryDimCategory)
     : t("tm_rows_taxonomy");
-  const unit = t(chartMode === "specimen" ? "view_cat_unit_specimens" : "view_cat_unit_taxa");
+  const unit = t(chartMode === "occurrence" ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
 
   // ── Compute cross-tabulation first so refine-strip can show accurate counts ─
 

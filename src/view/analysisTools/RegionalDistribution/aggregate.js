@@ -76,12 +76,12 @@ export function getOperationMeta(id) {
  *   numerics  – subset that parsed as numbers (via parseNumericStatus)
  *   records   – [{name, status, numeric|null}] for drill-down display
  */
-export function collectRegionData(leaves, dataPath, mode, specimenMetaIndex) {
+export function collectRegionData(leaves, dataPath, mode, occurrenceMetaIndex) {
   const map = {};
 
   leaves.forEach(leaf => {
-    const effectiveD = mode === 'specimen'
-      ? Checklist.getEffectiveDataForNode(leaf, specimenMetaIndex, leaves)
+    const effectiveD = mode === 'occurrence'
+      ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, leaves)
       : leaf.d;
     const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
     if (!mapData || typeof mapData !== 'object') return;
@@ -281,14 +281,14 @@ export function computeRegionAggregates(regionMap, segmentTrack, categoryStatus,
  * @returns {Object}  { regionCode: count, ..., __total__: totalLeavesWithMapData }
  *   __total__ = leaves that have at least one region entry in this map column.
  */
-export function computeAllRegionCounts(allLeaves, dataPath, mode, specimenMetaIndex) {
+export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMetaIndex) {
   const counts   = { __total__: 0 };
   const leafSets = {};   // regionCode → Set<leafName> — used by buildEffectiveAllCounts for groups
   const seen     = new Set();
 
   allLeaves.forEach(leaf => {
-    const effectiveD = mode === 'specimen'
-      ? Checklist.getEffectiveDataForNode(leaf, specimenMetaIndex, allLeaves)
+    const effectiveD = mode === 'occurrence'
+      ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, allLeaves)
       : leaf.d;
     const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
     if (!mapData || typeof mapData !== 'object' || !Object.keys(mapData).length) return;

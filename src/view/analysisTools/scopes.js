@@ -10,11 +10,11 @@ export const SCOPE_CHOICES = [
   },
   {
     id: "#S",
-    label: "Specimens",
+    label: "Occurrences",
     iconPath: {
       light: "./img/ui/checklist/tag-light.svg",
       dark: "./img/ui/checklist/tag.svg",
     },
-    info: "Analyze the data at the resolution of individual specimens"
+    info: "Analyze the data at the resolution of individual occurrences"
   },
 ];

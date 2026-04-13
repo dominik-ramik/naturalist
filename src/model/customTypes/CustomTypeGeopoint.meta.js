@@ -5,7 +5,7 @@ export const customTypeGeopointMeta = {
   filterMeta: null,
   meta: {
     summary:                  "A geographic point coordinate (latitude/longitude). Rendered as a clickable badge showing the original coordinate text; clicking opens a configurable online map URL at those coordinates.",
-    whenToUse:                "Collection localities, observation coordinates, specimen origins — any geographic point coordinate that users should open on an online map.",
+    whenToUse:                "Collection localities, observation coordinates, occurrence origins — any geographic point coordinate that users should open on an online map.",
     behaviorFulltextIndexing: "Geographic coordinates are not indexed for full-text search.",
     detailsPaneTab:           null,
     inputFormats: [

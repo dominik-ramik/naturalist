@@ -104,44 +104,44 @@ export function filterTerminalLeaves(nodes) {
 /**
  * Mode-aware variant of filterTerminalLeaves for use in chart views.
  *
- * In "taxa" mode: returns the structurally lowest non-specimen leaves.
- * Specimen-level rows are stripped before the terminal-leaf calculation,
- * so a species with specimens is still treated as a leaf.
+ * In "taxa" mode: returns the structurally lowest non-occurrence leaves.
+ * Occurrence-level rows are stripped before the terminal-leaf calculation,
+ * so a species with occurrences is still treated as a leaf.
  *
- * In "specimen" mode: returns only rows that are actual specimens
- * (i.e. t[specimenMetaIndex] is non-null). Taxa without any specimens
+ * In "occurrence" mode: returns only rows that are actual occurrences
+ * (i.e. t[occurrenceMetaIndex] is non-null). Taxa without any occurrences
  * are excluded entirely — this is intentional and should be communicated
  * in the UI.
  *
  * @param {Array} nodes - The flat filtered taxa array from the filter engine.
- * @param {string} mode - "taxa" or "specimen"
- * @param {number} specimenMetaIndex - Index of the specimen level in t[].
- *   Pass -1 or undefined if no specimen level exists.
+ * @param {string} mode - "taxa" or "occurrence"
+ * @param {number} occurrenceMetaIndex - Index of the occurrence level in t[].
+ *   Pass -1 or undefined if no occurrence level exists.
  * @returns {Array} Terminal leaves appropriate for the current mode.
  */
-export function filterTerminalLeavesForMode(nodes, mode, specimenMetaIndex) {
-  const hasSpecimenLevel =
-    specimenMetaIndex !== undefined && specimenMetaIndex !== -1;
+export function filterTerminalLeavesForMode(nodes, mode, occurrenceMetaIndex) {
+  const hasOccurrenceLevel =
+    occurrenceMetaIndex !== undefined && occurrenceMetaIndex !== -1;
 
-  if (!hasSpecimenLevel || mode === "taxa") {
-    // Strip specimen rows before computing terminal leaves so that
-    // a species with attached specimens is still treated as a leaf.
-    const nonSpecimenNodes = hasSpecimenLevel
+  if (!hasOccurrenceLevel || mode === "taxa") {
+    // Strip occurrence rows before computing terminal leaves so that
+    // a species with attached occurrences is still treated as a leaf.
+    const nonOccurrenceNodes = hasOccurrenceLevel
       ? nodes.filter(
         (n) =>
-          n.t[specimenMetaIndex] === null ||
-          n.t[specimenMetaIndex] === undefined
+          n.t[occurrenceMetaIndex] === null ||
+          n.t[occurrenceMetaIndex] === undefined
       )
       : nodes;
-    return filterTerminalLeaves(nonSpecimenNodes);
+    return filterTerminalLeaves(nonOccurrenceNodes);
   }
 
-  // Specimen mode: return only rows that actually are specimens.
+  // Occurrence mode: return only rows that actually are occurrences.
   return nodes.filter(
     (n) =>
-      n.t[specimenMetaIndex] !== null &&
-      n.t[specimenMetaIndex] !== undefined &&
-      n.t[specimenMetaIndex].name?.trim() !== ""
+      n.t[occurrenceMetaIndex] !== null &&
+      n.t[occurrenceMetaIndex] !== undefined &&
+      n.t[occurrenceMetaIndex].name?.trim() !== ""
   );
 }
 

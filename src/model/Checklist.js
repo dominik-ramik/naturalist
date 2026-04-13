@@ -46,8 +46,8 @@ export let Checklist = {
   _taxonCache: new Map(),
   _keyReachableTaxaCache: new Map(),
   _keyLCACache: new Map(), // Add LCA cache
-  _specimenDataPathCache: undefined,
-  _hasSpecimensCache: null,
+  _occurrenceDataPathCache: undefined,
+  _hasOccurrencesCache: null,
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
@@ -463,8 +463,8 @@ export let Checklist = {
     Checklist._keyReachableTaxaCache = new Map();
     Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
     Checklist.treefiedTaxaCache = null;
-    Checklist._specimenDataPathCache = undefined;
-    Checklist._hasSpecimensCache = null;
+    Checklist._occurrenceDataPathCache = undefined;
+    Checklist._hasOccurrencesCache = null;
     Checklist._bibFormatterCache = {};
     Checklist.nameForMapRegionCache = new Map();
     Checklist.getCustomOrderGroupItemsCache = new Map();
@@ -1037,18 +1037,18 @@ export let Checklist = {
 
   /**
    * Returns the effective data blob for a node, merging parent taxon data
-   * when the node represents a specimen.
+   * when the node represents a occurrence.
    *
-   * If `specimenMetaIndex` is missing/invalid or the node has no specimen at
+   * If `occurrenceMetaIndex` is missing/invalid or the node has no occurrence at
    * that index, the node's own `.d` is returned unchanged.
    *
-   * When a specimen is present the function searches `allTaxa` for the nearest
+   * When a occurrence is present the function searches `allTaxa` for the nearest
    * ancestor row that (a) has the same taxon name at the ancestor level and
    * (b) has no lower-level taxon entries after that level (i.e. its `t`
    *   entries for indices > i are all `null`/`undefined`). If such a parent
-   * row with `.d` is found, the parent's data is merged with the specimen's
+   * row with `.d` is found, the parent's data is merged with the occurrence's
    * `.d` and the merged result is returned. If no parent is found the
-   * specimen's `.d` is returned.
+   * occurrence's `.d` is returned.
    *
    * Merge semantics (see `_deepMergeDataBlobs`):
    * - `formatting` is determined by `Checklist.getMetaForDataPath(dataPath)`;
@@ -1056,42 +1056,42 @@ export let Checklist = {
    *   `formatting === "text"`.
    * - Structural nodes:
    *   - Arrays: concatenated then deduplicated using `Set` for primitives.
-   *   - Plain objects: merged recursively (specimen values override parent
+   *   - Plain objects: merged recursively (occurrence values override parent
    *     where present).
-   *   - Scalars: specimen value wins if not empty (see `_isValueEmpty`),
+   *   - Scalars: occurrence value wins if not empty (see `_isValueEmpty`),
    *     otherwise parent is kept.
    * - Non-structural (atomic) nodes (e.g., "mapregions", "months"):
-   *   treated as opaque: parent value is preserved if present; specimen
-   *   replaces parent only when the parent value is empty and specimen
+   *   treated as opaque: parent value is preserved if present; occurrence
+   *   replaces parent only when the parent value is empty and occurrence
    *   provides data.
    *
    * Emptiness checks: `_isValueEmpty` treats `null`, `undefined`, empty
    * string, empty array, and empty object as empty.
    *
    * @param {Object} node - A taxon row from the flat checklist array.
-   * @param {number} specimenMetaIndex - Index of specimen level in t[].
+   * @param {number} occurrenceMetaIndex - Index of occurrence level in t[].
    * @param {Array} allTaxa - The full or filtered checklist array (used to
    *   locate the parent row for inheritance). The filter engine already
    *   includes parent rows in filtered results via parentKeySet, so passing
    *   filteredTaxa is sufficient in most cases.
    * @returns {Object} The effective data blob to use for chart data reads.
    */
-  getEffectiveDataForNode: function (node, specimenMetaIndex, allTaxa) {
-    const isSpecimen =
-      specimenMetaIndex !== undefined &&
-      specimenMetaIndex !== -1 &&
-      node.t[specimenMetaIndex] !== null &&
-      node.t[specimenMetaIndex] !== undefined;
+  getEffectiveDataForNode: function (node, occurrenceMetaIndex, allTaxa) {
+    const isOccurrence =
+      occurrenceMetaIndex !== undefined &&
+      occurrenceMetaIndex !== -1 &&
+      node.t[occurrenceMetaIndex] !== null &&
+      node.t[occurrenceMetaIndex] !== undefined;
 
-    if (!isSpecimen) {
+    if (!isOccurrence) {
       return node.d;
     }
 
     // Walk up t[] to find the parent taxon row.
     // The parent is the nearest ancestor whose row exists in allTaxa
-    // and whose t[] stops before the specimen index.
+    // and whose t[] stops before the occurrence index.
     let parentData = null;
-    for (let i = specimenMetaIndex - 1; i >= 0; i--) {
+    for (let i = occurrenceMetaIndex - 1; i >= 0; i--) {
       if (node.t[i] === null || node.t[i] === undefined) continue;
       const ancestorName = node.t[i].name;
 
@@ -1127,23 +1127,23 @@ export let Checklist = {
   },
 
   /**
-   * Deep merges specimen data into parent data based on schema formatting.
+   * Deep merges occurrence data into parent data based on schema formatting.
    * @param {Object} parentData - The base data (target)
-   * @param {Object} specimenData - The incoming data to merge
+   * @param {Object} occurrenceData - The incoming data to merge
    * @param {string} currentPath - The dot-notation path for fetching metadata
    */
-  _deepMergeDataBlobs: function (parentData, specimenData, currentPath = "") {
-    if (!parentData) return specimenData || {};
-    if (!specimenData) return parentData || {};
+  _deepMergeDataBlobs: function (parentData, occurrenceData, currentPath = "") {
+    if (!parentData) return occurrenceData || {};
+    if (!occurrenceData) return parentData || {};
 
     const result = Object.assign({}, parentData);
 
-    Object.keys(specimenData).forEach((key) => {
-      const specimenVal = specimenData[key];
+    Object.keys(occurrenceData).forEach((key) => {
+      const occurrenceVal = occurrenceData[key];
       const parentVal = parentData[key];
 
-      if (specimenVal === null || specimenVal === undefined) {
-        // Specimen has absolutely nothing — keep parent value
+      if (occurrenceVal === null || occurrenceVal === undefined) {
+        // Occurrence has absolutely nothing — keep parent value
         return;
       }
 
@@ -1157,36 +1157,36 @@ export let Checklist = {
 
       if (isStructural) {
         // --- RECURSIVE STRUCTURAL MERGE ---
-        if (Array.isArray(specimenVal) && Array.isArray(parentVal)) {
+        if (Array.isArray(occurrenceVal) && Array.isArray(parentVal)) {
           // Merge arrays by concatenation.
           // Using Set seamlessly deduplicates primitive values (e.g. ["tree", "tree"] -> ["tree"])
           // while safely keeping distinct object references side-by-side.
-          result[key] = Array.from(new Set([...parentVal, ...specimenVal]));
+          result[key] = Array.from(new Set([...parentVal, ...occurrenceVal]));
 
         } else if (
-          typeof specimenVal === "object" &&
-          !Array.isArray(specimenVal) &&
+          typeof occurrenceVal === "object" &&
+          !Array.isArray(occurrenceVal) &&
           typeof parentVal === "object" &&
           !Array.isArray(parentVal) &&
           parentVal !== null
         ) {
           // Drill down into nested objects (e.g., 'info' -> 'habitsearch')
-          result[key] = this._deepMergeDataBlobs(parentVal, specimenVal, dataPath);
+          result[key] = this._deepMergeDataBlobs(parentVal, occurrenceVal, dataPath);
 
         } else {
-          // Scalar fallback for structural types: Specimen wins if it has data
-          const isEmpty = this._isValueEmpty(specimenVal);
-          result[key] = isEmpty ? parentVal : specimenVal;
+          // Scalar fallback for structural types: Occurrence wins if it has data
+          const isEmpty = this._isValueEmpty(occurrenceVal);
+          result[key] = isEmpty ? parentVal : occurrenceVal;
         }
       } else {
         // --- ATOMIC LITERAL MERGE (e.g., "mapregions", "months") ---
         // Treat as opaque: Perform merge ONLY if the target (parent) doesn't have it defined at all.
         const parentEmpty = this._isValueEmpty(parentVal);
-        const specimenEmpty = this._isValueEmpty(specimenVal);
+        const occurrenceEmpty = this._isValueEmpty(occurrenceVal);
 
-        if (parentEmpty && !specimenEmpty) {
-          // Parent lacks data, specimen provides it -> Specimen wins
-          result[key] = specimenVal;
+        if (parentEmpty && !occurrenceEmpty) {
+          // Parent lacks data, occurrence provides it -> Occurrence wins
+          result[key] = occurrenceVal;
         } else {
           // Parent already has data (or both are empty) -> Parent wins
           result[key] = parentVal;
@@ -1229,57 +1229,57 @@ export let Checklist = {
     }));
   },
 
-  getSpecimenDataPath: function () {
-    if (this._specimenDataPathCache !== undefined) {
-      return this._specimenDataPathCache;
+  getOccurrenceDataPath: function () {
+    if (this._occurrenceDataPathCache !== undefined) {
+      return this._occurrenceDataPathCache;
     }
 
     if (!this._data) {
       return null;
     }
 
-    this._specimenDataPathCache =
+    this._occurrenceDataPathCache =
       Object.keys(Checklist.getTaxaMeta()).find(
         (key) =>
           Checklist.getTaxaMeta()[key].name?.trim().toLowerCase() ===
-          "specimen"
+          "occurrence"
       ) || null;
 
-    return this._specimenDataPathCache;
+    return this._occurrenceDataPathCache;
   },
 
-  getSpecimenMetaIndex: function () {
-    const specimenDataPath = Checklist.getSpecimenDataPath();
+  getOccurrenceMetaIndex: function () {
+    const occurrenceDataPath = Checklist.getOccurrenceDataPath();
 
-    if (specimenDataPath === null) {
+    if (occurrenceDataPath === null) {
       return -1;
     }
 
-    return Object.keys(Checklist.getTaxaMeta()).indexOf(specimenDataPath);
+    return Object.keys(Checklist.getTaxaMeta()).indexOf(occurrenceDataPath);
   },
 
-  hasSpecimens: function () {
-    if (this._hasSpecimensCache !== null) {
-      return this._hasSpecimensCache;
+  hasOccurrences: function () {
+    if (this._hasOccurrencesCache !== null) {
+      return this._hasOccurrencesCache;
     }
 
     if (!this._data) {
       return false;
     }
 
-    const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
-    this._hasSpecimensCache =
-      specimenMetaIndex !== -1 &&
+    const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+    this._hasOccurrencesCache =
+      occurrenceMetaIndex !== -1 &&
       Checklist.getData().checklist.some(function (taxon) {
-        const specimenEntry = taxon.t?.[specimenMetaIndex];
+        const occurrenceEntry = taxon.t?.[occurrenceMetaIndex];
         return (
-          specimenEntry !== null &&
-          specimenEntry !== undefined &&
-          specimenEntry.name?.trim() !== ""
+          occurrenceEntry !== null &&
+          occurrenceEntry !== undefined &&
+          occurrenceEntry.name?.trim() !== ""
         );
       });
 
-    return this._hasSpecimensCache;
+    return this._hasOccurrencesCache;
   },
 
   getDataMeta: function (dataType) {
@@ -1362,7 +1362,7 @@ export let Checklist = {
     taxa.forEach(function (taxon) {
       let currentParent = treefied;
       taxon.t.forEach(function (taxonOfThisLevel, index) {
-        // Skip missing taxonomic levels so we can support "specimens" as dangling taxon without a full taxonomy above them
+        // Skip missing taxonomic levels so we can support "occurrences" as dangling taxon without a full taxonomy above them
         if (taxonOfThisLevel === null || taxonOfThisLevel === undefined) {
           return;
         }

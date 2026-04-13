@@ -11,7 +11,7 @@ export const config = {
         dark: "./img/ui/menu/view_checklist.svg",
     },
     info: "Browse your data as a taxonomic tree, applying filters to easily isolate the exact records you need",
-    getTaxaAlongsideSpecimens: true,
+    getTaxaAlongsideOccurrences: true,
 
     getAvailability: (availableIntents, checklistData) => {
         const supportedIntents = availableIntents.filter(intent => {
@@ -24,7 +24,7 @@ export const config = {
             isAvailable: supportedIntents.length > 0,
             toolDisabledReason: "No data found in this dataset.",
             scopeDisabledReason: (intent) =>
-                `${config.label} is unavailable ${intent === "#S" ? "for specimens" : "for taxa"} because none were found.`,
+                `${config.label} is unavailable ${intent === "#S" ? "for occurrences" : "for taxa"} because none were found.`,
         };
     },
 
@@ -50,9 +50,9 @@ export const config = {
             // handles this without any accessor-side normalization.
             values: () => {
                 const taxaMeta = Checklist.getTaxaMeta() || {};
-                const specimenIndex = Checklist.getSpecimenMetaIndex();
+                const occurrenceIndex = Checklist.getOccurrenceMetaIndex();
                 const levelOptions = Object.keys(taxaMeta)
-                    .filter((_, i) => i !== specimenIndex)
+                    .filter((_, i) => i !== occurrenceIndex)
                     .map(key => `${key} | ${taxaMeta[key]?.name || key}`);
                 return [`| ${t("display_all_taxa")}`, ...levelOptions];
             },
@@ -67,22 +67,22 @@ export const config = {
         },
 
         {
-            id: "showSpecimenMeta",
-            label: "Show specimen metadata",
+            id: "showOccurrenceMeta",
+            label: "Show occurrence metadata",
             type: "toggle",
             default: true,
-            accessor: Settings.checklistShowSpecimenMeta,
-            // Only visible (and only flagged as non-default) in specimen scope
+            accessor: Settings.checklistShowOccurrenceMeta,
+            // Only visible (and only flagged as non-default) in occurrence scope
             condition: (scope) => scope === "#S",
         },
 
         {
             id: "pruneEmpty",
-            label: "Show taxa without specimens",
+            label: "Show taxa without occurrences",
             type: "toggle",
             default: true,
             accessor: Settings.checklistPruneEmpty,
-            // Pruning only makes sense in specimen scope
+            // Pruning only makes sense in occurrence scope
             condition: (scope) => scope === "#S",
         },
 
@@ -153,7 +153,7 @@ function ChecklistTree() {
                 queryKey: queryKey,
                 dataLength: clampedTaxa.length,
                 intent: Settings.analyticalIntent(),
-                showSpecimens: Settings.checklistShowSpecimens(),
+                showOccurrences: Settings.checklistShowOccurrences(),
                 pruneEmpty: Settings.checklistPruneEmpty(),
                 displayLevel: displayLevel,
             });
@@ -163,22 +163,22 @@ function ChecklistTree() {
                 lastCacheKey = cacheKey;
             }
 
-            const includeSpecimensInView = Settings.checklistShowSpecimens();
+            const includeOccurrencesInView = Settings.checklistShowOccurrences();
             const showEmptyTaxa = Settings.checklistPruneEmpty();
-            const specimenMetaIndex = Checklist.getSpecimenMetaIndex();
+            const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
 
-            const branchHasSpecimens = (node) => {
-                if (node.taxonMetaIndex === specimenMetaIndex) return true;
+            const branchHasOccurrences = (node) => {
+                if (node.taxonMetaIndex === occurrenceMetaIndex) return true;
                 if (!node.children) return false;
-                return Object.values(node.children).some(branchHasSpecimens);
+                return Object.values(node.children).some(branchHasOccurrences);
             };
 
             const visibleTopLevelTaxa = Object.keys(cachedTree.children).filter((taxonKey) => {
                 const node = cachedTree.children[taxonKey];
 
-                const isNotSpecimenLevel = node.taxonMetaIndex !== specimenMetaIndex;
-                const visibilityByLevel = includeSpecimensInView || isNotSpecimenLevel;
-                const visibilityByContent = showEmptyTaxa || branchHasSpecimens(node);
+                const isNotOccurrenceLevel = node.taxonMetaIndex !== occurrenceMetaIndex;
+                const visibilityByLevel = includeOccurrencesInView || isNotOccurrenceLevel;
+                const visibilityByContent = showEmptyTaxa || branchHasOccurrences(node);
 
                 return visibilityByLevel && visibilityByContent;
             });
@@ -192,7 +192,7 @@ function ChecklistTree() {
                         currentTaxonLevel: cachedTree.children[taxonLevel].taxonMetaIndex,
                         displayMode: displayLevel,
                         showTaxonMeta: Settings.checklistShowTaxonMeta(),
-                        showSpecimenMeta: Settings.checklistShowSpecimenMeta(),
+                        showOccurrenceMeta: Settings.checklistShowOccurrenceMeta(),
                         terminalOnly: Settings.checklistShowTerminalOnly(),
                     })
                 ),

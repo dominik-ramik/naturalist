@@ -33,8 +33,8 @@ export const ConfigurationDialog = {
   view() {
     if (!ConfigurationDialog.isOpen) return null;
 
-    const hasSpecimens    = Checklist.hasSpecimens();
-    const availableIntents = hasSpecimens ? ["#T", "#S"] : ["#T"];
+    const hasOccurrences    = Checklist.hasOccurrences();
+    const availableIntents = hasOccurrences ? ["#T", "#S"] : ["#T"];
     const checklistData   = Checklist.getData();
 
     const currentViewId  = Settings.viewType() || TOOL_LIST[0].id;
@@ -93,8 +93,8 @@ export const ConfigurationDialog = {
           ),
         ]),
 
-        // ── Data Scope (only when specimens exist) ────────────────────────────
-        hasSpecimens && m(".configuration-section", [
+        // ── Data Scope (only when occurrences exist) ────────────────────────────
+        hasOccurrences && m(".configuration-section", [
           m(".configuration-section-label", "Data Scope"),
           m(".configuration-scope-segmented",
             SCOPE_CHOICES.map(scope => {

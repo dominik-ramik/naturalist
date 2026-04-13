@@ -73,7 +73,7 @@ a[target="_blank"]:after {
   text-align: center;
 }
 
-ul.card.specimen-level {
+ul.card.occurrence-level {
   /* Solidify the background slightly so text is highly readable, like a data table */
   background-color: #ffffffff;
   /* No outer shadow, pure flat design */
@@ -85,13 +85,13 @@ ul.card.specimen-level {
   /* Anchor the left with your slate blue */
   border-left: 4px solid var(--nlblue) !important;
   /* Sharp corners to strongly contrast with the rounded (var(--pad-large)) parent taxa */
-  /* Close the gap between sibling specimens so they look like one continuous table */
+  /* Close the gap between sibling occurrences so they look like one continuous table */
   margin-bottom: 1px;
   margin-left: 0.5em;
 }
 
-/* Give the specimen ID a distinct, technical feel */
-.specimen-level .taxon-name-stripe .taxon-name {
+/* Give the occurrence ID a distinct, technical feel */
+.occurrence-level .taxon-name-stripe .taxon-name {
   font-family: var(--font-light);
   background-color: var(--nlblue);
   color: white;
@@ -104,7 +104,7 @@ ul.card.specimen-level {
 /* ------------- */
 
 /* 1. Style the entire copiable wrapper as the ID Badge with the SVG background */
-.specimen-level .taxon-name-stripe .copiable {
+.occurrence-level .taxon-name-stripe .copiable {
   display: inline-flex;
   align-items: center;
   background-color: var(--nlblue); 

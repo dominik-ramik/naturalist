@@ -263,8 +263,8 @@ function menuTopBar() {
         m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
         m("span.global-indicator-label", activeTool.label),
 
-        // ── Scope icon + label (only when specimens data is available) ───────
-        Checklist.hasSpecimens() && activeScope && [
+        // ── Scope icon + label (only when occurrences data is available) ───────
+        Checklist.hasOccurrences() && activeScope && [
           m("span.global-indicator-sep"),
           m("img.global-indicator-img", {
             src: activeScope.iconPath.light,
