@@ -89,12 +89,6 @@ export const filterPluginText = {
   // Phase 1: opt-in flag
   supportsMatchMode: true,
 
-  meta: {
-    filterType:        "categorical",
-    filterLabel:       "Categorical multi-select",
-    filterDescription: "Shows a searchable dropdown of all unique values present in the data. Users tick one or more values; the Boolean mode (Any / All / Exclude) controls how the selection is evaluated.",
-  },
-
   isActive(filterDef) {
     return filterDef.selected.length > 0;
   },

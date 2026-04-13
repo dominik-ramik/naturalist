@@ -4,7 +4,6 @@
 // meta sidecar files. Kept here rather than duplicated in each sidecar.
 //
 // These are the documentation-facing descriptors for each filter plugin type.
-// Update these if the corresponding filterPlugin*.js meta objects change.
 
 export const filterMetaText = {
   filterType:        "categorical",

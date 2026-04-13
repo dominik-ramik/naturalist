@@ -66,12 +66,6 @@ export const filterPluginMonths = {
   // Phase 1: opt-in
   supportsMatchMode: true,
 
-  meta: {
-    filterType:        "categorical",
-    filterLabel:       "Categorical multi-select (month names)",
-    filterDescription: "Shows month names as checkboxes. Match mode controls whether the taxon must be active in any, all, or none of the selected months.",
-  },
-
   isActive(filterDef) {
     return filterDef.selected.length > 0;
   },
