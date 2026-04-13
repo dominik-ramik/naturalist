@@ -17,6 +17,25 @@
     display: block;
     border-radius: 0;
     /* card handles the corners */
+    cursor: zoom-in;
+}
+
+/* Positioning context for the expand hint — only when not fullscreen,
+   so that .fullscreenable-image.fullscreen's position:absolute is not overridden */
+.media-map-card .image-wrap:not(.fullscreen) {
+    position: relative;
+}
+
+/* Expand hint icon — bottom-right corner, mirrors RegionalDistribution chrome */
+.media-map-card .image-wrap:not(.fullscreen)::after {
+    content: "⛶";
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-size: 1.1em;
+    color: rgba(85, 118, 155, 0.55);
+    pointer-events: none;
+    line-height: 1;
 }
 
 /* ==========================================================================

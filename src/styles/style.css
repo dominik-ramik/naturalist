@@ -44,6 +44,7 @@ a[target="_blank"]:after {
   object-fit: contain;
   background-color: #000000a8 !important;
   overflow: hidden;
+  cursor: zoom-out;
 }
 
 .fullscreenable-image.fullscreen img,
