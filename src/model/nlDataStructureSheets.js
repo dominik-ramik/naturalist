@@ -437,6 +437,46 @@ export const nlDataStructureSheets = {
                             supportsMultilingual: false,
                         },
                     },
+                    belongsTo: {
+                        name: "Belongs to",
+                        description:
+                            "Declares whether this data column belongs to taxon rows or occurrence rows.\n\n- Empty (default): the column belongs to taxon rows. This is the backward-compatible default — columns that pre-date this feature are treated as taxon columns.\n- `taxon`: the column belongs to taxon rows only. Data found in this column on a occurrence row raises a compiler error and is excluded from the compiled output.\n- `occurrence`: the column belongs to occurrence rows only. Data found in this column on a taxon row raises a compiler error and is excluded from the compiled output.\n\nEvery column must belong to one entity or the other. There is no shared option.\n\nOnly set this on root or simple columns — child columns (`.subfield`, `#`) inherit the value automatically. Setting it on a child column raises a validation error.",
+                        whenToUse:
+                            "Leave empty (= `taxon`) for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality). There is no shared option — if a column applies to occurrences it must be declared `occurrence`; if it applies to taxa it should be declared `taxon` (or left blank).",
+                        notes: [
+                            {
+                                type: "tip",
+                                text: "In the filter sidebar, `taxon` columns are hidden when the user switches to Occurrence mode, and `occurrence` columns are hidden in Taxon mode. This keeps the filter panel uncluttered regardless of which view is active.",
+                            },
+                            {
+                                type: "warning",
+                                text: "Only set **Belongs to** on the root row of a column group. For example, set it on `origPub`, not on `origPub.author` or `origPub.year` — the value cascades to all child paths automatically.",
+                            },
+                        ],
+                        examples: [
+                            {
+                                label: "Mixed taxon and occurrence columns",
+                                columns: ["Column name", "Title", "Belongs to"],
+                                rows: [
+                                    ["redlist", "Red List", "taxon"],
+                                    ["description", "Description", "taxon"],
+                                    ["collector", "Collector", "occurrence"],
+                                    ["collectionDate", "Collection date", "occurrence"],
+                                    ["catalogNumber", "Catalog number", "occurrence"],
+                                    ["distribution", "Distribution", "taxon"],
+                                ],
+                            },
+                        ],
+                        integrity: {
+                            description: "Leave empty (defaults to `taxon`), or enter `taxon` or `occurrence`. Only valid on root or simple columns.",
+                            allowEmpty: true,
+                            allowDuplicates: "yes",
+                            allowedContent: "list",
+                            listItems: ["", "taxon", "occurrence"],
+                            defaultValue: "",
+                            supportsMultilingual: false,
+                        },
+                    },
                 },
                 data: [],
             },

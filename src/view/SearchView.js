@@ -8,6 +8,7 @@ import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { routeTo, shouldHide } from "../components/Utils.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
+import { getCurrentTool } from "./analysisTools/index.js";
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
 
@@ -15,14 +16,33 @@ export let SearchView = {
 
     view: function () {
 
+        const intent           = Settings.analyticalIntent();
+        const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+        // Whether the active tool passes taxa data through in occurrence mode
+        // (e.g. TaxonomicTree does; RegionalDistribution does not).
+        const toolShowsTaxaInOccurrenceMode = getCurrentTool()?.getTaxaAlongsideOccurrences ?? false;
+
         let taxaFilterDropdown = [];
         Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
+            // Hide the occurrence taxon-level slot in #T mode — there are no
+            // occurrences to filter by in that mode.
+            if (index === occurrenceMetaIndex && intent === "#T") return;
             taxaFilterDropdown.push(m("li", m(FilterDropdown, { color: Checklist.filter.taxa[dataPath].color, title: Checklist.getNameOfTaxonLevel(dataPath), type: "taxa", dataPath: dataPath })));
         });
 
         let categorizedDataFilters = {};
 
         Object.keys(Checklist.filter.data).forEach(function (dataPath) {
+            const belongsTo = Checklist.filter.data[dataPath].belongsTo || "taxon";
+
+            // Hide occurrence-only filters when browsing taxa.
+            if (belongsTo === "occurrence" && intent === "#T") return;
+            // Hide taxon-only filters in occurrence mode for tools that receive
+            // clean occurrence leaves (getTaxaAlongsideOccurrences === false) —
+            // those tools strip taxa from the result so taxon filters have no
+            // effect on what is displayed.
+            if (belongsTo === "taxon" && intent === "#S" && !toolShowsTaxaInOccurrenceMode) return;
+
             let category = "";
             let title = "";
 

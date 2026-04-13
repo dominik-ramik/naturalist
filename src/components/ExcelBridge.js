@@ -200,11 +200,11 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
       return;
     } else {
       // Optional table present in the file but columns are missing → error (not critical)
-      Logger.error(
+      Logger.critical(
         tf("dm_optional_table_columns_missing", [tableInfo.name, missingColumns.join(", ")]),
         "Column missing"
       );
-      // Do not return — allow remaining checks (multilingual, etc.) to run
+      return; //this is a critical failure for integrity so we won't continue with further checks to avoid overwhelming the user with messages that are likely all caused by the same root issue (missing columns).
     }
   }
 

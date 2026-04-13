@@ -72,6 +72,14 @@ class LoggerClass {
   }
 
   /**
+   * Check if there are any critical messages
+   * @returns {boolean} True if there are critical errors
+   */
+  hasCritical() {
+    return this.messages.some(msg => msg.level === 'critical');
+  }
+
+  /**
    * Check if there are any errors or critical messages
    * @returns {boolean} True if there are errors
    */

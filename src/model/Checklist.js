@@ -539,10 +539,12 @@ export let Checklist = {
           // Create a synthetic metadata entry for the # path so that
           // SearchView, FilterDropdownView, FilterCrumbsView and
           // TabSummary can resolve title, formatting and categories.
+          // Inherit belongsTo from the root column's meta.
           allMeta[filterPath] = {
             ...(subMeta || {}),
             searchCategory: searchCategory,
             searchCategoryOrder: meta.searchCategoryOrder || [],
+            belongsTo: meta.belongsTo || "taxon",
           };
         }
 
@@ -553,6 +555,9 @@ export let Checklist = {
             ? _plugin.createFilterDef(filterType)
             : { type: filterType, all: [], possible: {}, selected: [], numeric: null }
           ),
+          // Expose belongsTo so filter-panel rendering can hide irrelevant
+          // filters per analytical intent without touching Filter internals.
+          belongsTo: meta?.belongsTo || "taxon",
         };
       }
     });

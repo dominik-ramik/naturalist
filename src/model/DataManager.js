@@ -18,6 +18,94 @@ import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js
 
 // Global array to collect assets from F: directives
 
+// ─── Pure helpers for "Belongs to" column attribution ────────────────────────
+
+/**
+ * Returns the root segment of a CDD data path — the portion before the first
+ * '.' or '#'.  This is the column on which `belongsTo` is declared; all child
+ * paths inherit from it.
+ *
+ * Examples:
+ *   "redlist"        → "redlist"
+ *   "origPub.author" → "origPub"
+ *   "habitat#"       → "habitat"
+ */
+function getRootDataPath(colName) {
+  const dotIdx  = colName.indexOf(".");
+  const hashIdx = colName.indexOf("#");
+  const sepIdx  = Math.min(
+    dotIdx  === -1 ? Infinity : dotIdx,
+    hashIdx === -1 ? Infinity : hashIdx
+  );
+  return sepIdx === Infinity ? colName : colName.slice(0, sepIdx);
+}
+
+/**
+ * Builds a Map<rootColName(lowercase) → "taxon"|"occurrence"> from a CDD
+ * table's row array.  Only processes root-level rows; child rows inherit
+ * through `resolveBelongsTo`.  Blank value is normalised to "taxon" —
+ * the backward-compatible default for columns that pre-date this feature.
+ *
+ * @param {Object[]} cddRows  Rows from customDataDefinition.data[langCode]
+ * @returns {Map<string, "taxon"|"occurrence">}
+ */
+function buildRootBelongsToMap(cddRows) {
+  const map = new Map();
+  if (!cddRows) return map;
+  cddRows.forEach(function (row) {
+    const colName = (row.columnName || "").toLowerCase().trim();
+    if (!colName) return;
+    // Only index root rows — child rows have no standalone belongsTo value
+    if (getRootDataPath(colName) !== colName) return;
+    const raw = (row.belongsTo || "").toLowerCase().trim();
+    // Blank defaults to "taxon" — all pre-existing columns are taxon columns.
+    map.set(colName, raw === "occurrence" ? "occurrence" : "taxon");
+  });
+  return map;
+}
+
+/**
+ * Resolves the effective `belongsTo` value for any data path by looking up
+ * its root in the pre-built map.
+ *
+ * @param {string}             colName          Data path (any depth)
+ * @param {Map<string,string>} rootBelongsToMap From buildRootBelongsToMap()
+ * @returns {"taxon"|"occurrence"}
+ */
+function resolveBelongsTo(colName, rootBelongsToMap) {
+  return rootBelongsToMap.get(getRootDataPath(colName.toLowerCase())) || "taxon";
+}
+
+/**
+ * Returns true if any spreadsheet cell belonging to the given root column
+ * (or its children) contains a non-empty value in the current row.
+ * Used to suppress false-positive cross-entity errors on rows where the
+ * column simply has no data.
+ *
+ * Matches:
+ *   • exact header  ("redlist")
+ *   • dotted child  ("origpub.author")
+ *   • numbered array child ("habitat1", "habitat2", …)
+ *
+ * @param {string[]} headers  Lowercased spreadsheet column headers
+ * @param {any[]}    row      Raw row values
+ * @param {string}   rootColName  Root column name (lowercase)
+ * @returns {boolean}
+ */
+function hasAnyDataForRootColumn(headers, row, rootColName) {
+  const base = rootColName.toLowerCase();
+  return headers.some(function (h, i) {
+    if (h !== base) {
+      if (!h.startsWith(base)) return false;
+      const rest = h.slice(base.length);
+      // Accept dotted children ("origpub.author") and numbered array children
+      // ("habitat1").  Reject accidental prefix matches ("origpublisher").
+      if (rest[0] !== "." && !/^\d/.test(rest)) return false;
+    }
+    const val = row[i];
+    return val != null && val.toString().trim() !== "";
+  });
+}
 
 export let DataManager = function () {
   const data = nlDataStructure;
@@ -870,6 +958,12 @@ export let DataManager = function () {
 
       let allDataPaths = (data.common.allUsedDataPaths[lang.code] || []).sort();
 
+      // Pre-build the root→belongsTo map once for this language pass so that
+      // every computedDataPath can resolve its cascaded value in O(1).
+      const rootBelongsToMap = buildRootBelongsToMap(
+        data.sheets.content.tables.customDataDefinition.data[lang.code]
+      );
+
       let meta = {};
 
       /*
@@ -997,8 +1091,7 @@ export let DataManager = function () {
             if (
               info.fullRow.hidden !== "yes" &&
               info.fullRow.hidden !== "no" &&
-              info.fullRow.hidden !== "data" &&
-              info.fullRow.hidden  // falsy (empty string, null, undefined) treated as "no"
+              info.fullRow.hidden !== "data"
             ) {
               let expr = info.fullRow.hidden;
 
@@ -1010,7 +1103,6 @@ export let DataManager = function () {
                     expr,
                   ])
                 );
-                return; // malformed expression: skip further validation to avoid accessing undefined split parts
               }
 
               if (!["if", "unless"].includes(split[0])) {
@@ -1069,6 +1161,8 @@ export let DataManager = function () {
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
+            // Cascade: any child path inherits the root column's belongsTo value.
+            meta[computedDataPath].belongsTo = resolveBelongsTo(computedDataPath, rootBelongsToMap);
 
             if (parsedFormatting.toLowerCase() == "category") {
               meta[computedDataPath].categories = [];
@@ -1193,6 +1287,18 @@ export let DataManager = function () {
       );
     }
 
+    // The lowercase header name of the occurrence column (null when no occurrences).
+    // Used per-row to decide whether the current row is a occurrence row.
+    const occurrenceColumnName = occurrenceColIndex !== -1
+      ? taxonColumnInfos[occurrenceColIndex].name  // already lowercased by getAllColumnInfos
+      : null;
+
+    // Root→belongsTo map built once from the default language CDD data.
+    // belongsTo is structural (not translatable), so the default language suffices.
+    const rootBelongsToMap = buildRootBelongsToMap(
+      data.sheets.content.tables.customDataDefinition.data[data.common.languages.defaultLanguageCode]
+    );
+
     // Sort raw checklist rows by taxa columns so the spreadsheet does not need
     // to be manually ordered. Uses a stable sort so rows sharing the same full
     // taxon path keep their original relative position.
@@ -1231,6 +1337,14 @@ export let DataManager = function () {
       for (let rowIndex = 1; rowIndex < table.length; rowIndex++) {
         const row = table[rowIndex];
         context.row = row; // Update context with the current row
+
+        // Determine whether this row is a occurrence row by inspecting the raw
+        // occurrence column cell.  Computed once per row so the forEach below
+        // can use it without re-scanning.
+        const isOccurrenceRow = occurrenceColumnName !== null && (function () {
+          const idx = headers.indexOf(occurrenceColumnName);
+          return idx !== -1 && row[idx] != null && row[idx].toString().trim() !== "";
+        })();
 
         let rowObj = { t: [], d: {} };
         let doneWithTaxa = false;
@@ -1281,6 +1395,33 @@ export let DataManager = function () {
             }
             return; // Skip the rest of the loop for taxon columns
           }
+
+          // ── Cross-entity attribution check ──────────────────────────────────
+          // Only relevant when a occurrence column is declared; pure-taxon
+          // datasets (occurrenceColumnName === null) are never checked.
+          if (occurrenceColumnName !== null) {
+            const resolvedBelongsTo = resolveBelongsTo(info.name, rootBelongsToMap);
+            const actualEntity      = isOccurrenceRow ? "occurrence" : "taxon";
+
+            if (resolvedBelongsTo !== actualEntity) {
+              // Report once per root/simple column to avoid flooding the log
+              // with one error per child path (origPub.author, origPub.year…).
+              if ((position.isRoot || position.isSimpleItem) &&
+                  hasAnyDataForRootColumn(headers, row, info.name)) {
+                Logger.error(
+                  tf("dm_wrong_belongs_to", [
+                    rowIndex + data.common.checklistHeadersStartRow,
+                    info.name,
+                    resolvedBelongsTo,
+                    actualEntity,
+                  ])
+                , "Wrong 'Belongs to' attribution");
+              }
+              // Skip loading — error already reported at root level above.
+              if (position.isLeaf) return;
+            }
+          }
+          // ── End cross-entity check ──────────────────────────────────────────
 
           if (!position.isLeaf) {
             return;
@@ -1773,8 +1914,11 @@ export let DataManager = function () {
     });
 
     //
-    // Manual checks of logic — delegated to a standalone pure function
+    // Manual checks of logic — delegated to a standalone pure function.
+    // Skip if a critical error was already logged: the data may be incomplete
+    // enough to cause misleading secondary errors.
     //
+    if (Logger.hasCritical()) return;
     runManualIntegrityChecks(data);
   }
 
@@ -2445,6 +2589,19 @@ function runManualIntegrityChecks(data) {
 
     const cddColumns = data.sheets.content.tables.customDataDefinition.columns;
 
+    // 6-pre. "Belongs to" column presence — CDD is optional as a whole, but
+    //        when it is present every declared column must exist.  A missing
+    //        "Belongs to" column causes silent wrong defaults rather than
+    //        obvious load failures, so we flag it explicitly once per table.
+    if (table[0].belongsTo === undefined) {
+      Logger.error(
+        "\"" + data.sheets.content.tables.customDataDefinition.name + "\" table is " +
+        "missing the \"" + cddColumns.belongsTo.name + "\" column. " +
+        "Add the column and set each row to \"taxon\" or \"occurrence\" (leave blank to default to \"taxon\"). " +
+        "Without it the cross-entity attribution check is disabled and filter visibility per mode will not work correctly."
+      );
+    }
+
     const allColumnNames = table
       .map((row) => row.columnName?.toLowerCase())
       .filter((v) => v !== undefined);
@@ -2523,6 +2680,27 @@ function runManualIntegrityChecks(data) {
             tf("dm_cdd_no_filter_plugin", [columnName, searchCategoryTitle6g, baseFormatting6g])
           );
         }
+      }
+
+      // 6h. "Belongs to" value must be one of the recognised keywords
+      const belongsToRaw = (row.belongsTo || "").trim().toLowerCase();
+      if (belongsToRaw !== "" && belongsToRaw !== "taxon" && belongsToRaw !== "occurrence") {
+        Logger.error(
+          "Column \"" + columnName + "\": invalid \"Belongs to\" value \"" + row.belongsTo +
+          "\". Allowed values are \"taxon\", \"occurrence\", or empty (defaults to \"taxon\")."
+        );
+        row.belongsTo = ""; // reset to avoid misleading downstream, mirrors 6f pattern
+      }
+
+      // 6i. "Belongs to" may only be set on root or simple columns — child columns
+      //     inherit it automatically.  This mirrors the 6a rule for "Placement".
+      if (belongsToRaw !== "" && !(colPosition.isSimpleItem || colPosition.isRoot)) {
+        Logger.error(
+          "Column \"" + columnName + "\": \"Belongs to\" can only be declared on root columns. " +
+          "\"" + columnName + "\" is a child path; set it on \"" +
+          getRootDataPath(columnName) + "\" and it will cascade automatically."
+        );
+        row.belongsTo = ""; // reset to avoid misleading downstream
       }
     }
   });
