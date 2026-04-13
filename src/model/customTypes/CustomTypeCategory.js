@@ -4,25 +4,7 @@ import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeCategory = {
   dataType: "category",
-  meta: {
-    summary: "Categorical text value rendered as a coloured pill/badge. Identical data reading to `text` but looks up the value in the Colored Categories table for visual styling.",
-    whenToUse: "Any column with a small, fixed set of categorical values that benefit from colour coding — Red List categories, presence/origin status, life-form codes, etc.",
-    behaviorFulltextIndexing: "The string value (after Data Code replacement) is indexed.",
-    detailsPaneTab: "Text",
-    inputFormats: [
-      {
-        label: "Single cell",
-        syntax: "Any string value. Data Code replacement applies first. The result is then matched against the Colored Categories table using a case-insensitive substring match.",
-        example: { columns: ["redlist"], rows: [["LC"], ["EN"], ["CR"]] },
-      },
-    ],
-    notes: [
-      {
-        type: "warning",
-        text: "The Colored Categories table in `nl_appearance` must be populated for this type to show coloured badges. Setting the formatting to `category` alone does nothing visual without corresponding category definitions.",
-      },
-    ],
-  },
+
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     let columnIndex = headers.indexOf(computedPath.toLowerCase());

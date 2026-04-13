@@ -239,39 +239,6 @@ function renderRanges(ranges, uiContext = {}) {
 export let customTypeMonths = {
   dataType: "months",
 
-  meta: {
-    summary: "Phenological data — which months of the year a taxon is active, flowering, breeding, etc. Stored as a set of months or ranges; rendered compactly with December–January wraparound support and bold month names.",
-    whenToUse: "Flowering periods, breeding seasons, flight periods, activity windows — any phenological attribute expressed as a set of months.",
-    behaviorFulltextIndexing: "The full rendered range string (e.g. `Jan–Feb and Dec`) is indexed as a single token.",
-    detailsPaneTab: null,
-    inputFormats: [
-      {
-        label: "Format 1: Per-month columns",
-        syntax: "Create columns named `<columnname>.jan`, `<columnname>.feb`, … `<columnname>.dec`. Any non-empty cell activates that month.",
-        example: {
-          columns: ["flowering.jan", "flowering.feb", "flowering.mar", "…", "flowering.dec"],
-          rows: [["x", "x", "", "", "x"], ["", "x", "x", "x", ""]],
-        },
-      },
-      {
-        label: "Format 2: Inline cell — three-letter codes",
-        syntax: "Three-letter month codes (case-insensitive), pipe- or comma-separated, with optional dash ranges. Wraparound ranges (e.g. `nov-feb`) are supported.",
-        example: { columns: ["flowering"], rows: [["jan-feb|dec"], ["feb-apr"], ["nov-feb"]] },
-      },
-      {
-        label: "Format 2: Inline cell — numeric (1-based)",
-        syntax: "1-based month numbers with the same separator and range syntax.",
-        example: { columns: ["flowering"], rows: [["1-2|12"], ["2-4"], ["11-2"]] },
-      },
-    ],
-    notes: [
-      {
-        type: "tip",
-        text: "Customise displayed month names in `nl_appearance` → Customization → **Month names** with a comma-separated list of 12 names in January–December order. Month data entry always uses the standard `jan-mar` / numeric syntax regardless of custom names.",
-      },
-    ],
-  },
-
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     const lowerPath = computedPath.toLowerCase();

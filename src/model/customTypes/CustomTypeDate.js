@@ -12,26 +12,6 @@ function getDateFormat(langCode) {
 export let customTypeDate = {
   dataType: "date",
 
-  meta: {
-    summary: "Date value. Parsed using day.js — accepts ISO 8601, common date strings, and Excel date serial numbers. Rendered according to the Date format setting in `nl_appearance`.",
-    whenToUse: "Collection dates, publication dates, observation dates, any date-stamped field.",
-    behaviorFulltextIndexing: "The formatted date string (using the active Date format setting) is indexed.",
-    detailsPaneTab: null,
-    inputFormats: [
-      {
-        label: "Single cell — any day.js-parseable date",
-        syntax: "ISO 8601 (`2024-01-15`), common formats (`Jan 15, 2024`, `15/01/2024`), or Excel date serial numbers when the cell is formatted as a date in Excel.",
-        example: { columns: ["collectionDate"], rows: [["2024-01-15"], ["1978-06-14"], ["2003-08-02"]] },
-      },
-    ],
-    notes: [
-      {
-        type: "tip",
-        text: "Configure the display format in `nl_appearance` → Customization → **Date format** using [day.js format tokens](https://day.js.org/docs/en/display/format). Different formats can be set per language: `MMM D, YYYY` for English and `DD/MM/YYYY` for French.",
-      },
-    ],
-  },
-
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;
     const candidateColumns = [

@@ -7,25 +7,7 @@ import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMap = {
   dataType: "map",
-  meta: {
-    summary: "A static map image (JPG, PNG, SVG, PDF, etc.) displayed as a clickable thumbnail in the taxon card, or in the **Map** tab of the Details pane. Use this for scanned range maps or distribution maps as static image files — for interactive SVG region maps, use `mapregions` instead.",
-    whenToUse: "Scanned range maps, hand-drawn distribution maps, or any static image that represents geographic information for a taxon.",
-    behaviorFulltextIndexing: "The map title is indexed for full-text search.",
-    detailsPaneTab: "Map",
-    inputFormats: [
-      {
-        label: "Two columns (source + title)",
-        syntax: "`<columnname>.source` and `<columnname>.title` as separate columns. Source is a path or URL to any image file.",
-        example: { columns: ["rangemap.source", "rangemap.title"], rows: [["maps/litoria_range.png", "Known range"], ["https://example.org/map.svg", "Modelled range"]] },
-      },
-      {
-        label: "Single column — pipe-separated",
-        syntax: "`source|title` in one cell.",
-        example: { columns: ["rangemap"], rows: [["maps/litoria_range.png|Known range"]] },
-      },
-    ],
-    notes: [],
-  },
+
   filterPlugin: filterPluginText,
   readData: function (context, computedPath) {
     let mapData = readDataFromPath(
