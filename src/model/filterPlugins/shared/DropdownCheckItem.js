@@ -10,6 +10,7 @@
 import m from "mithril";
 import { sortByCustomOrder, textLowerCaseAccentless } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
+import { MATCH_MODES } from "./MatchModeToggle.js";
 
 import "./DropdownCheckItem.css";
 
@@ -153,12 +154,15 @@ export function buildCheckItems({ type, dataPath, filter, itemsOverflowLimit }) 
   }
 
   const possibleKeys = Object.keys(fd.possible);
+  const isExclude = (fd.matchMode || MATCH_MODES.ANY) === MATCH_MODES.EXCLUDE;
 
   let showSelected = false;
   const selected = buildSection(
     fd.selected,
     "checked",
-    item => possibleKeys.includes(item),
+    // In exclude mode selected items won't appear in fd.possible (they are
+    // filtered OUT), but they must still render as checked.
+    item => isExclude || possibleKeys.includes(item),
     () => { showSelected = true; }
   );
 
@@ -172,7 +176,9 @@ export function buildCheckItems({ type, dataPath, filter, itemsOverflowLimit }) 
 
   let showImpossible = false;
   const impossible = buildSection(
-    (fd.all || []).filter(item => !possibleKeys.includes(item)),
+    // In exclude mode, selected items already appear in the checked section
+    // above — filter them out here to avoid duplicates.
+    (fd.all || []).filter(item => !possibleKeys.includes(item) && !(isExclude && fd.selected.includes(item))),
     "inactive",
     () => totalItems <= itemsOverflowLimit,
     () => { showImpossible = true; totalItems++; }

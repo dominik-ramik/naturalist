@@ -114,6 +114,18 @@
   visibility: visible;
 }
 
+/* ── Match-mode indicators (non-default modes) ──────────────────────────── */
+
+.crumb-mode-indicator {
+  font-weight: bold;
+  opacity: 0.85;
+}
+
+.filter-crumbs .crumb.crumb--exclude .filter-value {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
 .filter-crumbs .reset-filter-spacer {
   flex-grow: 1;
   min-width: 1em;

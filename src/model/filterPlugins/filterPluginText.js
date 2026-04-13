@@ -118,7 +118,9 @@ export const filterPluginText = {
   getCrumbs(filterDef, _ctx) {
     const mode = filterDef.matchMode || MATCH_MODES.ANY;
     return filterDef.selected
-      .filter(item => Object.prototype.hasOwnProperty.call(filterDef.possible, item))
+      // In exclude mode selected items are deliberately absent from fd.possible
+      // (they were filtered out), so skip the possible-set check.
+      .filter(item => mode === MATCH_MODES.EXCLUDE || Object.prototype.hasOwnProperty.call(filterDef.possible, item))
       .map(item => ({ title: item, matchMode: mode }));
   },
 

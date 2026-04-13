@@ -93,13 +93,21 @@ let Crumb = {
       ? getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath))
       : null;
 
-    const extraClass = descriptor.isStatusFilter ? ".crumb--status-filter" : "";
+    const extraClass = descriptor.isStatusFilter ? ".crumb--status-filter"
+      : descriptor.matchMode === "exclude" ? ".crumb--exclude"
+      : descriptor.matchMode === "all"     ? ".crumb--match-all"
+      : "";
+
+    const modeIndicator = descriptor.matchMode === "exclude" ? m("span.crumb-mode-indicator", "\u2260\u2009")
+      : descriptor.matchMode === "all" ? m("span.crumb-mode-indicator", "&\u2009")
+      : null;
 
     return m(".crumb.clickable" + extraClass, { style: { backgroundColor: color }, onclick }, [
       m(".crumb-recycle-wrap", m("img.crumb-overlay-recycler[src=img/ui/search/clear_filter.svg]")),
       m(".crumb-text", [
         m("span.filter-category", category),
         m("span.filter-value" + (descriptor.isStatusFilter ? ".filter-value--status" : ""), [
+          modeIndicator,
           descriptor.title,
           unit ? m("span.crumb-unit", m.trust(" " + unitToHtml(unit))) : null,
         ]),
