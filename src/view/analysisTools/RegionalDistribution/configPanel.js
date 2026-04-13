@@ -43,7 +43,7 @@ export function renderConfigPanel({
 
   const {
     segmentTrack, categoryStatus, numericOperation,
-    threshold, denominator, useGroups, _hasGroups,
+    threshold, denominator, useGroups, _hasGroups, _groupTitles,
   } = mapState;
 
   const opMeta     = getOperationMeta(numericOperation);
@@ -65,8 +65,8 @@ export function renderConfigPanel({
     // ── Body (collapses) ──
     configCollapsed ? null : m('.rd-config-body', [
 
-      // Map selector — always first
-      m('.chart-control-group.chart-control-group-full', [
+      // Map selector + groups toggle — these form a logical unit
+      m('.chart-control-group.rd-control-map', [
         m('label', t('rd_map_label')),
         m('select.chart-select', {
           value: currentMap?.dataPath ?? '',
@@ -78,12 +78,23 @@ export function renderConfigPanel({
           m('option', { value: '', disabled: true }, '— ' + t('view_map_select_map') + ' —'),
           ...availableMaps.map(map => m('option', { value: map.dataPath }, map.title)),
         ]),
+        (_hasGroups && currentMap) ? m('label.rd-checkbox-label.rd-groups-checkbox', [
+          m('input[type=checkbox]', {
+            checked:  useGroups,
+            onchange: e => onStateChange({ useGroups: e.target.checked }),
+          }),
+          ' ',
+          t('rd_group_toggle'),
+          _groupTitles?.length
+            ? ' (' + _groupTitles.slice(0, 3).join(', ') + (_groupTitles.length > 3 ? ', \u2026' : '') + ')'
+            : null,
+        ]) : null,
       ]),
 
       currentMap == null ? null : [
 
         // Segment picker
-        showSeg ? m('.chart-control-group.chart-control-group-full', [
+        showSeg ? m('.chart-control-group.rd-control-segment', [
           m('label', t('rd_segment_label')),
           m('.chart-segmented-control', [
             segBtn(t('rd_segment_any'),
@@ -129,18 +140,6 @@ export function renderConfigPanel({
             segBtn(t('view_map_sum_by_filter'), denominator === 'filter', () => onStateChange({ denominator: 'filter' })),
             segBtn(t('view_map_sum_by_region'), denominator === 'region', () => onStateChange({ denominator: 'region' })),
             segBtn(t('view_map_sum_by_total'),  denominator === 'total',  () => onStateChange({ denominator: 'total' })),
-          ]),
-        ]) : null,
-
-        // Group toggle
-        _hasGroups ? m('.chart-control-group', [
-          m('label.rd-checkbox-label', [
-            m('input[type=checkbox]', {
-              checked: useGroups,
-              onchange: e => onStateChange({ useGroups: e.target.checked }),
-            }),
-            ' ',
-            t('rd_group_toggle'),
           ]),
         ]) : null,
 

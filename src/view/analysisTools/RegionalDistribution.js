@@ -202,23 +202,28 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   let colors         = {};
   let effectiveAllCounts = {};
 
+  let groupIndex = {};   // groupTitle → [region codes]
+
   if (currentMap && mapState.segmentTrack) {
     const raw = collectRegionData(filteredLeaves, currentMap.dataPath, mode, specimenIdx);
 
-    const workingData = (mapState.useGroups && regionGroups.length)
-      ? mergeToGroups(raw, regionGroups).groupedMap
-      : raw;
-    regionData       = workingData;
+    if (mapState.useGroups && regionGroups.length) {
+      const merged = mergeToGroups(raw, regionGroups);
+      regionData = merged.groupedMap;
+      groupIndex = merged.groupIndex;
+    } else {
+      regionData = raw;
+    }
 
     regionAggregates = computeRegionAggregates(
-      workingData,
+      regionData,
       mapState.segmentTrack,
       mapState.categoryStatus,
       mapState.numericOperation,
       mapState.threshold,
     );
 
-    effectiveAllCounts = buildEffectiveAllCounts(allRegionCounts, workingData);
+    effectiveAllCounts = buildEffectiveAllCounts(allRegionCounts, regionData);
 
     colors = computeColorMapping(
       regionAggregates,
@@ -257,7 +262,10 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
       availableMaps,
       currentMap,
       segments,
-      mapState: { ...mapState, _hasGroups: regionGroups.length > 0 },
+      mapState: { ...mapState,
+        _hasGroups: regionGroups.length > 0,
+        _groupTitles: regionGroups.map(g => g.title),
+      },
       onMapChange,
       onStateChange,
       configCollapsed: globalState.configCollapsed,
@@ -268,7 +276,7 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
     currentMap == null ? m('.chart-info-box',
       m('.chart-info-item', t('view_map_select_map'))
     ) : m('.map-and-table-container', [
-      renderSVGMap(currentMap, colors),
+      renderSVGMap(currentMap, expandGroupColors(colors, groupIndex)),
       m('.table-responsive-wrapper',
         Object.keys(regionAggregates).length === 0
           ? m('.rd-no-data', m('.chart-info-item', t('rd_no_data_message')))
@@ -285,6 +293,27 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
     ]),
 
   ]);
+}
+
+// ─── Group → region colour expansion ──────────────────────────────────────────
+
+/**
+ * When groups are active, `colors` is keyed by group title.
+ * The SVG map needs colours keyed by region code.
+ * Expand each group colour to every member region code so the map renders
+ * uniformly coloured groups.  Non-group keys pass through unchanged.
+ */
+function expandGroupColors(colors, groupIndex) {
+  if (!Object.keys(groupIndex).length) return colors;
+  const expanded = {};
+  Object.entries(colors).forEach(([key, color]) => {
+    if (groupIndex[key]) {
+      groupIndex[key].forEach(code => { expanded[code] = color; });
+    } else {
+      expanded[key] = color;
+    }
+  });
+  return expanded;
 }
 
 // ─── SVG map rendering ────────────────────────────────────────────────────────

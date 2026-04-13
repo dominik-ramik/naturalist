@@ -93,7 +93,7 @@ export function collectRegionData(leaves, dataPath, mode, specimenMetaIndex) {
       if (!map[code]) map[code] = { statuses: [], numerics: [], records: [] };
       map[code].statuses.push(status);
       if (numeric !== null) map[code].numerics.push(numeric);
-      map[code].records.push({ name, status, numeric });
+      map[code].records.push({ name, status, numeric, regionCode: code });
     });
   });
 
@@ -111,19 +111,28 @@ function leafDisplayName(leaf) {
 
 /**
  * Return groups declared in the map column's searchCategoryOrder.
- * Only entries with an `items` sub-array are groups; plain ordering entries
- * without `items` are ignored.
  *
- * The `items` values are region **names** (human-readable, as stored in fd.all
- * by the filter plugin via Checklist.nameForMapRegion), NOT raw region codes.
+ * The searchCategoryOrder is a flat array of `{group, title}` entries where
+ * `group` is a shared group heading and `title` is a region name.
+ * We derive groups by collecting unique non-empty `group` values and gathering
+ * their member `title` values.
  *
  * @returns {Array<{title: string, names: string[]}>}
  */
 export function getRegionGroups(dataPath) {
   const order = Checklist.getMetaForDataPath?.(dataPath)?.searchCategoryOrder ?? [];
-  return order
-    .filter(g => Array.isArray(g.items) && g.items.length > 0)
-    .map(g => ({ title: g.title, names: g.items }));
+  const seen = new Set();
+  const groups = [];
+  for (const entry of order) {
+    if (entry.group && !seen.has(entry.group)) {
+      seen.add(entry.group);
+      groups.push(entry.group);
+    }
+  }
+  return groups.map(groupTitle => ({
+    title: groupTitle,
+    names: order.filter(e => e.group === groupTitle).map(e => e.title),
+  }));
 }
 
 /**
@@ -214,7 +223,11 @@ function aggregateRegion(data, segmentTrack, categoryStatus, numericOperation, t
     const excluded = data.statuses.length - data.numerics.length;
 
     if (numericOperation === 'count') {
-      return { value: data.statuses.length, count: data.statuses.length, recordCount: data.statuses.length, excluded: 0 };
+      // For groups a leaf can appear in multiple member regions; count unique leaves.
+      const count = data._isGroup
+        ? new Set(data.records.map(r => r.name)).size
+        : data.statuses.length;
+      return { value: count, count, recordCount: count, excluded: 0 };
     }
     if (numericOperation === 'pct_above') {
       if (!data.numerics.length) return null;
@@ -230,6 +243,16 @@ function aggregateRegion(data, segmentTrack, categoryStatus, numericOperation, t
   }
 
   // Category / presence track
+  // For groups a leaf can appear in multiple member regions; deduplicate by name.
+  if (data._isGroup) {
+    const uniqueLeafNames = new Set(data.records.map(r => r.name));
+    const matching = categoryStatus
+      ? new Set(data.records.filter(r => r.status === categoryStatus).map(r => r.name)).size
+      : uniqueLeafNames.size;
+    if (matching === 0) return null;
+    return { value: matching, count: matching, recordCount: uniqueLeafNames.size, excluded: 0 };
+  }
+
   const matching = categoryStatus
     ? data.statuses.filter(s => s === categoryStatus).length
     : data.statuses.length;
@@ -259,8 +282,9 @@ export function computeRegionAggregates(regionMap, segmentTrack, categoryStatus,
  *   __total__ = leaves that have at least one region entry in this map column.
  */
 export function computeAllRegionCounts(allLeaves, dataPath, mode, specimenMetaIndex) {
-  const counts = { __total__: 0 };
-  const seen   = new Set();
+  const counts   = { __total__: 0 };
+  const leafSets = {};   // regionCode → Set<leafName> — used by buildEffectiveAllCounts for groups
+  const seen     = new Set();
 
   allLeaves.forEach(leaf => {
     const effectiveD = mode === 'specimen'
@@ -271,9 +295,14 @@ export function computeAllRegionCounts(allLeaves, dataPath, mode, specimenMetaIn
 
     const name = leafDisplayName(leaf);
     if (!seen.has(name)) { seen.add(name); counts.__total__++; }
-    Object.keys(mapData).forEach(code => { counts[code] = (counts[code] || 0) + 1; });
+    Object.keys(mapData).forEach(code => {
+      counts[code] = (counts[code] || 0) + 1;
+      if (!leafSets[code]) leafSets[code] = new Set();
+      leafSets[code].add(name);
+    });
   });
 
+  counts.__leafSets__ = leafSets;
   return counts;
 }
 
@@ -282,10 +311,15 @@ export function computeAllRegionCounts(allLeaves, dataPath, mode, specimenMetaIn
  * The `__total__` key is preserved unchanged (it refers to all leaves, not regions).
  */
 export function buildEffectiveAllCounts(allRegionCounts, regionData) {
-  const result = { __total__: allRegionCounts.__total__ };
+  const result   = { __total__: allRegionCounts.__total__ };
+  const leafSets = allRegionCounts.__leafSets__ ?? {};
   Object.entries(regionData).forEach(([key, data]) => {
     if (data._isGroup && data.memberCodes) {
-      result[key] = data.memberCodes.reduce((s, c) => s + (allRegionCounts[c] || 0), 0);
+      // Union the per-region leaf-name sets so each leaf is counted only once
+      // even if it appears in multiple member regions.
+      const union = new Set();
+      data.memberCodes.forEach(c => (leafSets[c] ?? new Set()).forEach(n => union.add(n)));
+      result[key] = union.size;
     } else {
       result[key] = allRegionCounts[key] || 0;
     }

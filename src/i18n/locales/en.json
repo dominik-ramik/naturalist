@@ -442,7 +442,7 @@
   "rd_op_pct_below": "% below threshold",
   "rd_threshold_label": "Threshold",
   "rd_denominator_label": "Show as % of",
-  "rd_group_toggle": "Group regions by category",
+  "rd_group_toggle": "Group regions for statistics",
   "rd_unit_taxa": "taxa",
   "rd_unit_specimens": "specimens",
   "rd_verb_presence": "Presence of",
@@ -469,5 +469,9 @@
   "rd_drill_group_members": "Regions in group",
   "rd_drill_empty": "No matching records for the current segment.",
   "rd_drill_excluded": "{0} record(s) with non-numeric status excluded from calculation.",
-  "rd_drill_overflow": "… and {0} more records not shown."
+  "rd_drill_overflow": "… and {0} more records not shown.",
+  "rd_drill_show_all": "Show all {0} records",
+  "rd_drill_show_less": "Show less",
+  "sf_include_numeric": "Include numeric values",
+  "sf_no_numeric": "Numeric excluded"
 }

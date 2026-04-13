@@ -18,32 +18,39 @@
  * whenever it needs cross-filtering across multiple sub-dimensions of a single
  * structured field.
  *
- * The two dimensions constrain each other as follows:
- *   • fd.possible       only counts a region if its status passes the active
- *                       statusFilter (so the region list reacts to status changes).
- *   • fd.possibleStatuses counts TAXA (not regions) so its numbers match the
- *                       counts shown in the region list (i.e. "how many taxa
- *                       would still match if I selected this status").
+ * ── Status filter state model ─────────────────────────────────────────────────
+ * Numeric and categorical statuses are TWO INDEPENDENT dimensions. Each has its
+ * own control; neither affects the other.
  *
- * ── Category filter state model ───────────────────────────────────────────────
- * sf.selectedStatuses uses null / [] / [...] to distinguish three states:
+ *   sf.includeNumeric       (boolean, default true)
+ *     true  → numeric-status regions are included (optionally within rangeMin/Max)
+ *     false → numeric-status regions are excluded entirely (range inputs hidden)
  *
- *   null  — no category filter is active; all statuses pass (default)
- *   []    — filter is active but empty; NO category passes (user has explicitly
- *           unchecked every item — useful in mixed numeric+category maps to show
- *           only taxa with numeric values)
- *   [...] — only the listed statuses pass
+ *   sf.selectedStatuses     (null | [] | [...])
+ *     null  → no category filter; ALL categorical statuses pass
+ *     []    → category filter active, empty; NO categorical status passes
+ *     [...] → only the listed categorical statuses pass
  *
- * The old model used [] for both "no filter" and "nothing selected", making it
- * impossible to express an empty-selection filter.  The null sentinel removes
- * that ambiguity.
+ *   sf.rangeMin / sf.rangeMax  (number | null)
+ *     Only apply when includeNumeric=true. Both null = no range constraint.
+ *
+ * This two-dimensional model enables all four meaningful states in mixed-mode
+ * maps (maps that have both numeric and category-status regions):
+ *
+ *   1. No filter                          → includeNumeric=true, selectedStatuses=null
+ *   2. Only numeric regions               → includeNumeric=true, selectedStatuses=[]
+ *   3. Only category regions              → includeNumeric=false, selectedStatuses=null
+ *   4. Specific categories only           → includeNumeric=false, selectedStatuses=[...]
+ *   5. Numeric within range + categories  → includeNumeric=true, range set, sel=[...]
+ *   …etc.
+ *
+ * The old single-gate model (pre this change) conflated the two dimensions:
+ * unchecking all categories in mixed mode incorrectly excluded numeric regions too.
  *
  * ── Stable placeholder bounds ─────────────────────────────────────────────────
  *   fd.globalStatusMin / fd.globalStatusMax track the numeric range of ALL
  *   statuses across ALL regions and ALL taxa, never scoped by selection and
- *   never cleared.  They are used as placeholder text in the numeric range
- *   inputs so the "Min / Max" ghost values remain accurate regardless of what
- *   the user has selected.
+ *   never cleared.  They power the "Min (X)" / "Max (X)" placeholder text.
  */
 
 import m from "mithril";
@@ -56,40 +63,44 @@ import { describeList } from "./shared/rangeFilterUtils.js";
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
 /**
- * Returns true when the given status value passes the supplied status-filter.
+ * Returns true when the given status value passes the status-filter.
  * Pure function — no side-effects.
  *
- * ── Category filter semantics ────────────────────────────────────────────────
- *   sf.selectedStatuses === null  → no category filter; all statuses pass
- *   sf.selectedStatuses === []    → filter active, empty; NO status passes
- *   sf.selectedStatuses === [...] → only listed statuses pass
- *
- * When only a range is set, non-numeric statuses do not pass (they cannot be
- * compared to numeric bounds by definition).
- *
- * When both a range and a category selection are present, a status passes if
- * it satisfies the range OR is in the category list.
+ * Numeric and categorical statuses are evaluated independently:
+ *   - Numeric:     passes when sf.includeNumeric is true AND (no range OR within range)
+ *   - Categorical: passes when sf.selectedStatuses is null (no filter) OR is included
+ *                  in the explicit list. [] means nothing passes.
  */
 function statusMatchesSF(status, sf) {
-  const hasCatFilter  = sf.selectedStatuses !== null;
-  const hasRangeLimit = sf.rangeMin !== null || sf.rangeMax !== null;
-  if (!hasCatFilter && !hasRangeLimit) return true;
-  if (hasRangeLimit) {
-    const n = parseNumericStatus(status);
-    if (n !== null) {
-      const passesRange = (sf.rangeMin === null || n >= sf.rangeMin) &&
-                          (sf.rangeMax === null || n <= sf.rangeMax);
-      if (passesRange) return true;
-    }
+  const n         = parseNumericStatus(status);
+  const isNumeric = n !== null;
+
+  if (isNumeric) {
+    // ── Numeric dimension ────────────────────────────────────────────
+    if (!sf.includeNumeric) return false;
+    const hasRange = sf.rangeMin !== null || sf.rangeMax !== null;
+    if (!hasRange) return true;
+    return (sf.rangeMin === null || n >= sf.rangeMin) &&
+           (sf.rangeMax === null || n <= sf.rangeMax);
+  } else {
+    // ── Categorical dimension ────────────────────────────────────────
+    if (sf.selectedStatuses === null) return true;     // no cat filter
+    return sf.selectedStatuses.includes(status);       // [] → always false
   }
-  // Array.includes on an empty array always returns false,
-  // which correctly implements "no category passes" when selectedStatuses = [].
-  return hasCatFilter && sf.selectedStatuses.includes(status);
 }
 
+/**
+ * The filter is active whenever any control deviates from its default:
+ *   numeric: includeNumeric=false OR rangeMin/Max set
+ *   category: selectedStatuses !== null
+ */
 function isStatusFilterActive(sf) {
-  // null selectedStatuses = no filter; [] or [...] = filter is active.
-  return !!sf && (sf.selectedStatuses !== null || sf.rangeMin != null || sf.rangeMax != null);
+  return !!sf && (
+    sf.includeNumeric === false ||
+    sf.rangeMin       != null  ||
+    sf.rangeMax       != null  ||
+    sf.selectedStatuses !== null
+  );
 }
 
 function isRangeFilterActive(sf) {
@@ -97,30 +108,55 @@ function isRangeFilterActive(sf) {
 }
 
 function isCategoryFilterActive(sf) {
-  // Explicitly activated (even if empty) vs null (not activated).
   return !!sf && sf.selectedStatuses !== null;
 }
 
+/**
+ * Builds the short text used in the status-filter crumb.
+ * Combines all active sub-filters into a semicolon-separated summary.
+ */
 function statusFilterTitle(sf) {
-  if (sf.selectedStatuses !== null && sf.selectedStatuses.length > 0) {
-    return sf.selectedStatuses.join(", ");
-  }
   const parts = [];
-  if (sf.rangeMin != null) parts.push(sf.rangeMin.toLocaleString());
-  parts.push("–");
-  if (sf.rangeMax != null) parts.push(sf.rangeMax.toLocaleString());
-  return parts.join("");
+
+  if (sf.includeNumeric === false) {
+    parts.push(t("sf_no_numeric"));
+  } else if (isRangeFilterActive(sf)) {
+    const rangeParts = [];
+    if (sf.rangeMin != null) rangeParts.push(sf.rangeMin.toLocaleString());
+    rangeParts.push("\u2013");
+    if (sf.rangeMax != null) rangeParts.push(sf.rangeMax.toLocaleString());
+    parts.push(rangeParts.join(""));
+  }
+
+  if (sf.selectedStatuses !== null) {
+    parts.push(
+      sf.selectedStatuses.length > 0
+        ? sf.selectedStatuses.join(", ")
+        : t("sf_no_categories")
+    );
+  }
+
+  return parts.join("; ");
 }
 
 // ── Status filter section renderers (module-private) ─────────────────────────
 
 /**
- * Numeric range row — single line.
- * Placeholder reads "Min (X)" / "Max (X)" from globalMin/globalMax so it
- * remains accurate when the user narrows region/category selections.
- * Dedicated trash icon clears only the numeric range.
+ * Numeric section: "include numeric" toggle + optional min/max range row.
+ *
+ * The "include numeric" checkbox is only shown in mixed mode (when the legend
+ * also defines category rows), because in a pure-numeric map there is no
+ * alternative dimension to switch to — the checkbox would be meaningless.
+ *
+ * When includeNumeric is false, the range inputs are hidden; they have no
+ * effect and showing them would be confusing.
+ *
+ * @param {object}      sf          – statusFilter object (mutable)
+ * @param {number|null} globalMin   – fd.globalStatusMin (never scoped/cleared)
+ * @param {number|null} globalMax   – fd.globalStatusMax (never scoped/cleared)
+ * @param {boolean}     isMixedMode – true when legend has both numeric and category rows
  */
-function _renderStatusRangeSection(sf, globalMin, globalMax) {
+function _renderStatusRangeSection(sf, globalMin, globalMax, isMixedMode) {
   function setRange(field, rawValue) {
     const n = rawValue === "" ? null : parseFloat(rawValue);
     sf[field] = (n == null || isNaN(n)) ? null : n;
@@ -135,63 +171,85 @@ function _renderStatusRangeSection(sf, globalMin, globalMax) {
     : t("sf_range_to");
 
   return m(".sf-range", [
-    m(".sf-range-row", [
-      m("input.sf-range-input[type=number]", {
-        value:       sf.rangeMin ?? "",
-        placeholder: fromPlaceholder,
-        oninput(e) { setRange("rangeMin", e.target.value); },
-      }),
-      m("span.sf-range-sep", "–"),
-      m("input.sf-range-input[type=number]", {
-        value:       sf.rangeMax ?? "",
-        placeholder: toPlaceholder,
-        oninput(e) { setRange("rangeMax", e.target.value); },
-      }),
-      isRangeFilterActive(sf)
-        ? m("button.sf-range-clear.clickable", {
-            title:   t("sf_range_clear"),
-            onclick(e) {
-              e.stopPropagation();
-              sf.rangeMin = null;
-              sf.rangeMax = null;
+    // "Include numeric values" toggle — only meaningful in mixed mode.
+    isMixedMode
+      ? m("label.sf-include-numeric-label", [
+          m("input.sf-include-numeric-check[type=checkbox]", {
+            checked: sf.includeNumeric,
+            onchange(e) {
+              sf.includeNumeric = e.target.checked;
+              // Unchecking also clears any range that was set, since range
+              // inputs will be hidden and the user can no longer edit them.
+              if (!sf.includeNumeric) {
+                sf.rangeMin = null;
+                sf.rangeMax = null;
+              }
               Checklist.filter.commit();
             },
-          }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
-        : null,
-    ]),
+          }),
+          t("sf_include_numeric"),
+        ])
+      : null,
+
+    // Range inputs — only relevant and shown when numeric is included.
+    sf.includeNumeric
+      ? m(".sf-range-row", [
+          m("input.sf-range-input[type=number]", {
+            value:       sf.rangeMin ?? "",
+            placeholder: fromPlaceholder,
+            oninput(e) { setRange("rangeMin", e.target.value); },
+          }),
+          m("span.sf-range-sep", "\u2013"),
+          m("input.sf-range-input[type=number]", {
+            value:       sf.rangeMax ?? "",
+            placeholder: toPlaceholder,
+            oninput(e) { setRange("rangeMax", e.target.value); },
+          }),
+          // Trash clears only rangeMin/Max; does not touch includeNumeric.
+          isRangeFilterActive(sf)
+            ? m("button.sf-range-clear.clickable", {
+                title:   t("sf_range_clear"),
+                onclick(e) {
+                  e.stopPropagation();
+                  sf.rangeMin = null;
+                  sf.rangeMax = null;
+                  Checklist.filter.commit();
+                },
+              }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+            : null,
+        ])
+      : null,
   ]);
 }
 
 /**
  * Category checklist.
  *
- * Shows ALL category rows defined in the legend (even impossible ones, grayed).
+ * Shows ALL category rows defined in the legend (even currently-impossible ones,
+ * rendered grayed/inactive), mirroring the region list treatment of impossible items.
  *
  * ── Toggle model ──────────────────────────────────────────────────────────────
- * The model uses null / [] / [...] for selectedStatuses (see file header).
- * Toggle semantics when clicking a possible row:
+ * selectedStatuses: null → no filter (all categories pass)
+ * selectedStatuses: []   → filter active, empty (no category passes)
+ * selectedStatuses: [...] → only listed categories pass
  *
- *   null → first click activates the filter, excluding the clicked item.
- *           All other possible rows are stored in selectedStatuses.
+ * Click semantics:
+ *   null  → activate filter, store all possible rows EXCEPT the clicked one
+ *   [...] → normal toggle. When selection grows back to all possible rows → null
  *
- *   [...] → normal checkbox toggle: add or remove the clicked status.
- *            When the selection grows back to cover all possible rows, the
- *            filter is deactivated (null) — equivalent to "select all".
+ * The user can reach [] by unchecking every item one by one. In mixed mode
+ * with includeNumeric=true, this correctly shows only taxa with numeric regions.
  *
- * This allows the user to reach selectedStatuses = [] by unchecking every item
- * one by one — a valid state meaning "no category passes".  In mixed
- * numeric+category maps this lets the user view only taxa with numeric values.
+ * Trash button (shown when filter is active) resets to null.
  */
 function _renderStatusCategorySection(allCatRows, sf, possibleSt) {
   const possibleRows = allCatRows.filter(r =>
     Object.prototype.hasOwnProperty.call(possibleSt, r.status)
   );
-  // null means no filter (all effectively checked); [] means all explicitly unchecked.
   const noFilter = sf.selectedStatuses === null;
 
   function toggleStatus(status) {
     if (noFilter) {
-      // Activate filter, excluding the clicked item.
       sf.selectedStatuses = possibleRows
         .filter(r => r.status !== status)
         .map(r => r.status);
@@ -199,9 +257,8 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt) {
       const idx = sf.selectedStatuses.indexOf(status);
       if (idx > -1) {
         sf.selectedStatuses.splice(idx, 1);
-        // If the explicit list now covers every possible row, deactivate the
-        // filter (collapse back to null = "all pass") rather than keeping an
-        // explicit full-set that is semantically equivalent to "no filter".
+        // When the explicit selection covers all possible rows again, collapse
+        // to null (semantically: "all pass" = "no filter").
         if (sf.selectedStatuses.length === possibleRows.length) {
           sf.selectedStatuses = null;
         }
@@ -227,7 +284,7 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt) {
         m(".item-count", isPossible ? (possibleSt[row.status] || "") : ""),
       ]);
     }),
-    // Trash icon — clears category filter only (sets back to null = inactive).
+    // Trash resets to null = "no category filter"; does not touch includeNumeric/range.
     isCategoryFilterActive(sf)
       ? m("button.sf-cat-clear.clickable", {
           title:   t("sf_cat_clear"),
@@ -257,7 +314,7 @@ let DropdownMapregions = function (initialVnode) {
     view(vnode) {
       const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
       const filterDef  = Checklist.filter[type][dataPath];
-      const sf         = filterDef.statusFilter || { selectedStatuses: null, rangeMin: null, rangeMax: null };
+      const sf         = filterDef.statusFilter || { selectedStatuses: null, rangeMin: null, rangeMax: null, includeNumeric: true };
       const lc         = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
       const possibleSt = filterDef.possibleStatuses || {};
 
@@ -267,8 +324,12 @@ let DropdownMapregions = function (initialVnode) {
         impossible: impossibleItems, showImpossible,
         itemsOverflowing, filteredPossible, totalPossibleUnchecked,
       } = buildCheckItems({ type, dataPath, filter, itemsOverflowLimit });
-      const hasNumericMode   = lc.numericMode !== null;
-      const allCatRows       = lc.categoryRows;
+
+      const hasNumericMode = lc.numericMode !== null;
+      const allCatRows     = lc.categoryRows;
+      // Mixed mode: legend defines both numeric and category representations.
+      // The "include numeric" checkbox is only meaningful here.
+      const isMixedMode    = hasNumericMode && allCatRows.length > 0;
       const showStatusFilter = hasNumericMode || allCatRows.length > 0;
 
       return m(".inner-dropdown-area.mapregions", [
@@ -284,7 +345,12 @@ let DropdownMapregions = function (initialVnode) {
           ? m(".mapregions-status-filter", [
               m(".mapregions-status-filter-title", t("mapregions_status_filter")),
               hasNumericMode
-                ? _renderStatusRangeSection(sf, filterDef.globalStatusMin ?? null, filterDef.globalStatusMax ?? null)
+                ? _renderStatusRangeSection(
+                    sf,
+                    filterDef.globalStatusMin ?? null,
+                    filterDef.globalStatusMax ?? null,
+                    isMixedMode
+                  )
                 : null,
               allCatRows.length > 0
                 ? _renderStatusCategorySection(allCatRows, sf, possibleSt)
@@ -357,9 +423,11 @@ export const filterPluginMapregions = {
 
   clearCrumb(filterDef, _ctx, descriptor) {
     if (descriptor.isStatusFilter) {
-      filterDef.statusFilter.selectedStatuses = null;   // null = deactivate, not []
+      // Full reset of the status filter to all defaults.
+      filterDef.statusFilter.selectedStatuses = null;
       filterDef.statusFilter.rangeMin         = null;
       filterDef.statusFilter.rangeMax         = null;
+      filterDef.statusFilter.includeNumeric   = true;
     } else {
       const idx = filterDef.selected.indexOf(descriptor.title);
       if (idx > -1) filterDef.selected.splice(idx, 1);
@@ -377,18 +445,27 @@ export const filterPluginMapregions = {
       : "";
 
     if (sf) {
-      let sfDesc = "";
-      if (sf.s?.length > 0) {
-        sfDesc = sf.s.join(", ");
-      } else if (sf.s?.length === 0) {
-        sfDesc = t("sf_no_categories");
+      const sfParts = [];
+
+      if (sf.inc === false) {
+        sfParts.push(t("sf_no_numeric"));
       } else if (sf.min != null || sf.max != null) {
-        sfDesc = sf.min != null && sf.max != null
-          ? `${sf.min}\u2013${sf.max}`
-          : sf.min != null ? `\u2265${sf.min}` : `\u2264${sf.max}`;
+        sfParts.push(
+          sf.min != null && sf.max != null
+            ? `${sf.min}\u2013${sf.max}`
+            : sf.min != null ? `\u2265${sf.min}` : `\u2264${sf.max}`
+        );
       }
-      if (sfDesc) {
+
+      if ('s' in sf) {
+        sfParts.push(
+          sf.s?.length > 0 ? sf.s.join(", ") : t("sf_no_categories")
+        );
+      }
+
+      if (sfParts.length > 0) {
         const sfLabel = t("mapregions_status_filter");
+        const sfDesc  = sfParts.join("; ");
         desc = desc
           ? `${desc} (${sfLabel}: ${sfDesc})`
           : `${cat} \u2013 ${sfLabel}: ${sfDesc}`;
@@ -407,16 +484,26 @@ export const filterPluginMapregions = {
       possible:         {},
       selected:         [],
       numeric:          null,
-      statusFilter:     { selectedStatuses: null, rangeMin: null, rangeMax: null },
+      statusFilter: {
+        selectedStatuses: null,   // null | [] | [...] — see file header
+        rangeMin:         null,
+        rangeMax:         null,
+        includeNumeric:   true,   // whether numeric-status regions participate
+      },
       possibleStatuses: {},
-      globalStatusMin:  null,
+      globalStatusMin:  null,   // never scoped, never cleared
       globalStatusMax:  null,
     };
   },
 
   clearFilter(fd) {
-    fd.selected         = [];
-    fd.statusFilter     = { selectedStatuses: null, rangeMin: null, rangeMax: null };
+    fd.selected     = [];
+    fd.statusFilter = {
+      selectedStatuses: null,
+      rangeMin:         null,
+      rangeMax:         null,
+      includeNumeric:   true,
+    };
     fd.possibleStatuses = {};
     // globalStatusMin / globalStatusMax intentionally NOT cleared.
   },
@@ -434,18 +521,15 @@ export const filterPluginMapregions = {
    *
    * fd.possible:
    *   Counts how many taxa have this region with a passing status.
-   *   (same semantics as any other checklist filter's possible counts)
    *
    * fd.possibleStatuses:
    *   Counts how many TAXA have at least one region with each status.
-   *   A Set is used to ensure each status is counted at most once per taxon
-   *   call, regardless of how many regions of that taxon share that status.
-   *   This keeps possibleStatuses counts comparable to the region list counts
-   *   and to the total number of taxa — they represent the same unit.
+   *   A Set ensures each status is counted once per taxon call, so numbers
+   *   are comparable to the region list counts and to total-taxa counts.
    *
    * fd.globalStatusMin / fd.globalStatusMax:
-   *   Updated unconditionally from every numeric status so placeholder text
-   *   never collapses when the user narrows the region/category selection.
+   *   Widened from every numeric status unconditionally so placeholder text
+   *   never collapses when the user narrows selections.
    */
   accumulatePossible(fd, rawValue, _leafValues) {
     if (!rawValue || typeof rawValue !== "object") return;
@@ -453,8 +537,6 @@ export const filterPluginMapregions = {
     const sf       = fd.statusFilter;
     const sfActive = isStatusFilterActive(sf);
 
-    // Collect unique statuses for THIS taxon before incrementing, so each
-    // status is counted once per taxon (not once per region within a taxon).
     const statusesForThisTaxon = new Set();
 
     Object.entries(rawValue).forEach(([code, regionData]) => {
@@ -478,7 +560,6 @@ export const filterPluginMapregions = {
       }
 
       // ── Collect statuses in scope for this taxon ─────────────────────
-      // Scoped to selected regions when regions are selected.
       const inScope = fd.selected.length === 0
         || fd.selected.includes(name)
         || fd.selected.includes(code);
@@ -487,7 +568,7 @@ export const filterPluginMapregions = {
       }
     });
 
-    // Increment possibleStatuses once per status per taxon.
+    // One increment per status per taxon.
     statusesForThisTaxon.forEach(status => {
       fd.possibleStatuses[status] = (fd.possibleStatuses[status] || 0) + 1;
     });
@@ -523,11 +604,14 @@ export const filterPluginMapregions = {
     const obj = { regions: fd.selected };
     if (sfActive) {
       obj.sf = {};
-      // Include the 's' key whenever selectedStatuses is not null (even if []).
-      // Absence of 's' key in deserialization means null (no category filter).
-      if (fd.statusFilter.selectedStatuses !== null) obj.sf.s = fd.statusFilter.selectedStatuses;
+      // 's' key present (even as []) = category filter active; absent = null (no filter).
+      if (fd.statusFilter.selectedStatuses !== null) {
+        obj.sf.s = fd.statusFilter.selectedStatuses;
+      }
       if (fd.statusFilter.rangeMin !== null) obj.sf.min = fd.statusFilter.rangeMin;
       if (fd.statusFilter.rangeMax !== null) obj.sf.max = fd.statusFilter.rangeMax;
+      // 'inc' key only serialized when false (default true is implied by absence).
+      if (fd.statusFilter.includeNumeric === false) obj.sf.inc = false;
     }
     return obj;
   },
@@ -535,13 +619,14 @@ export const filterPluginMapregions = {
   deserializeFromQuery(fd, val) {
     fd.selected = Array.isArray(val) ? val : Array.isArray(val?.regions) ? val.regions : [];
     if (val?.sf) {
-      // Presence of 's' key (even with empty array) means the category filter
-      // is active.  Absence of 's' key means null (filter not activated).
+      // selectedStatuses: presence of 's' key (even []) = active; absence = null.
       fd.statusFilter.selectedStatuses = ('s' in val.sf)
         ? (Array.isArray(val.sf.s) ? val.sf.s : null)
         : null;
-      fd.statusFilter.rangeMin = val.sf.min ?? null;
-      fd.statusFilter.rangeMax = val.sf.max ?? null;
+      fd.statusFilter.rangeMin       = val.sf.min  ?? null;
+      fd.statusFilter.rangeMax       = val.sf.max  ?? null;
+      // inc absent = true (default); inc: false = explicitly excluded.
+      fd.statusFilter.includeNumeric = val.sf.inc  !== false;
     }
   },
 };
