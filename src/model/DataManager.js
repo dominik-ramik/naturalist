@@ -997,7 +997,8 @@ export let DataManager = function () {
             if (
               info.fullRow.hidden !== "yes" &&
               info.fullRow.hidden !== "no" &&
-              info.fullRow.hidden !== "data"
+              info.fullRow.hidden !== "data" &&
+              info.fullRow.hidden  // falsy (empty string, null, undefined) treated as "no"
             ) {
               let expr = info.fullRow.hidden;
 
@@ -1009,6 +1010,7 @@ export let DataManager = function () {
                     expr,
                   ])
                 );
+                return; // malformed expression: skip further validation to avoid accessing undefined split parts
               }
 
               if (!["if", "unless"].includes(split[0])) {

@@ -302,6 +302,10 @@ function mapSubTableToObject(rawSubTable, tableInfo, langCode, defaultLangCode) 
 // =============================================================================
 
 function processLanguages(workbook, schema) {
+  // Reset before populating to prevent language entries from accumulating
+  // across multiple compilations (nlDataStructure is a module-level singleton).
+  schema.common.languages.supportedLanguages = [];
+
   const appearanceSheetName = schema.sheets.appearance.name;
   const generalSheetData = parseSheetData(workbook, appearanceSheetName);
 
