@@ -1,14 +1,5 @@
 /**
  * MatchModeToggle.js — progressive-disclosure Boolean-mode picker.
- *
- * Shared by filterPluginText, filterPluginMonths, and filterPluginMapregions.
- * Rendered at the top of any opt-in plugin's inner-dropdown-area.
- *
- * Props
- * ─────
- *   filterDef       {object}  mutable filter definition — matchMode is read/written
- *   supportsMatchAll {boolean} when false the "all" option is omitted
- *   onCommit        {Function} called (with no arguments) after a mode change
  */
 
 import m from "mithril";
@@ -22,7 +13,6 @@ export const MATCH_MODES = Object.freeze({
   EXCLUDE: "exclude",
 });
 
-// Static descriptor table — drives both the config panel and the summary line.
 const MODE_DESCRIPTORS = [
   {
     mode:            MATCH_MODES.ANY,
@@ -36,7 +26,7 @@ const MODE_DESCRIPTORS = [
     labelKey:        "match_mode_all",
     subtitleKey:     "match_mode_all_sub",
     summaryKey:      "match_mode_all_summary",
-    requiresAllFlag: true,   // omitted when supportsMatchAll is false
+    requiresAllFlag: true,
   },
   {
     mode:            MATCH_MODES.EXCLUDE,
@@ -46,6 +36,27 @@ const MODE_DESCRIPTORS = [
     requiresAllFlag: false,
   },
 ];
+
+// ── Helper: Icons ─────────────────────────────────────────────────────────────
+
+const getModeIcon = (mode) => {
+  if (mode === MATCH_MODES.ALL) {
+    return m("svg.match-mode-icon", { viewBox: "0 0 24 24", "aria-hidden": "true" }, [
+      m("path", { d: "M2 12l4 4 8-8", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+      m("path", { d: "M7 17l4 4 8-8", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" })
+    ]);
+  }
+  if (mode === MATCH_MODES.EXCLUDE) {
+    return m("svg.match-mode-icon", { viewBox: "0 0 24 24", "aria-hidden": "true" }, [
+      m("circle", { cx: "12", cy: "12", r: "10", fill: "none", stroke: "currentColor", "stroke-width": "2" }),
+      m("line", { x1: "4.93", y1: "4.93", x2: "19.07", y2: "19.07", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round" })
+    ]);
+  }
+  // ANY
+  return m("svg.match-mode-icon", { viewBox: "0 0 24 24", "aria-hidden": "true" }, [
+    m("path", { d: "M5 12l5 5L20 7", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" })
+  ]);
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -66,7 +77,12 @@ export let MatchModeToggle = function () {
       // ── Default / summary view ─────────────────────────────────────────────
       if (!configuring) {
         return m(".match-mode-toggle", [
-          m("span.match-mode-summary", t(currentDesc.summaryKey)),
+          m(".match-mode-summary-container", [
+            m("span.match-mode-summary", { class: "mode-" + currentMode }, [
+              getModeIcon(currentMode),
+              m("span", t(currentDesc.summaryKey))
+            ])
+          ]),
           m("button.match-mode-change-btn", {
             type: "button",
             onclick(e) { e.stopPropagation(); configuring = true; },
@@ -87,7 +103,10 @@ export let MatchModeToggle = function () {
               },
             }),
             m(".match-mode-option-text", [
-              m("span.match-mode-option-label", t(desc.labelKey)),
+              m("span.match-mode-option-label", { class: "mode-label-" + desc.mode }, [
+                getModeIcon(desc.mode),
+                m("span", t(desc.labelKey))
+              ]),
               m("span.match-mode-option-sub",   t(desc.subtitleKey)),
             ]),
           ])
