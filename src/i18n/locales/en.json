@@ -473,5 +473,18 @@
   "rd_drill_show_all": "Show all {0} records",
   "rd_drill_show_less": "Show less",
   "sf_include_numeric": "Include numeric values",
-  "sf_no_numeric": "Numeric excluded"
+  "sf_no_numeric": "Numeric excluded",
+  "match_mode_change": "Change",
+  "match_mode_cancel": "Cancel",
+  "match_mode_any": "Match any",
+  "match_mode_any_sub": "Show taxa that have at least one of the selected values.",
+  "match_mode_any_summary": "Matches any selected",
+  "match_mode_all": "Match all",
+  "match_mode_all_sub": "Show only taxa that have every selected value simultaneously.",
+  "match_mode_all_summary": "Matches all selected",
+  "match_mode_exclude": "Exclude",
+  "match_mode_exclude_sub": "Hide taxa that have any of the selected values. Taxa with no data for this field are also hidden.",
+  "match_mode_exclude_summary": "Excludes selected",
+  "is_all_list_joiner": "is all of",
+  "is_not_list_joiner": "is not"
 }

@@ -127,10 +127,15 @@ export function buildCheckItems({ type, dataPath, filter, itemsOverflowLimit }) 
               action: state === "inactive" ? undefined : function () {
                 if (state === "checked") {
                   fd.selected = fd.selected.filter(e => !groupItems.includes(e));
+                  Checklist.filter.commit();
                 } else if (state === "unchecked") {
+                  // Set the delay flag before committing so that possible values
+                  // for this path are not recalculated mid-session, matching the
+                  // same behaviour as individual DropdownCheckItem "unchecked" clicks.
+                  Checklist.filter.delayCommitDataPath = type + "." + dataPath;
                   fd.selected = [...new Set([...fd.selected, ...groupItems])];
+                  Checklist.filter.commit();
                 }
-                Checklist.filter.commit();
               },
             }));
           }

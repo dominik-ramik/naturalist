@@ -7,7 +7,6 @@
  *   1. .search-filter                (shared, DropdownCheckItem.css)
  *   2. .mapregions-status-filter     (optional, capped at 50% height)
  *      └─ .sf-range                  (numeric section)
- *         └─ .sf-include-numeric-label  ("include numeric" toggle, mixed mode only)
  *         └─ .sf-range-row           (min–max inputs, shown only when incl. numeric)
  *      └─ .sf-categories             (legend category checklist)
  *   3. .options.mapregions-regions   (region list, fills remaining space, scrolls)
@@ -50,27 +49,6 @@
   padding: 0 var(--pad-large) var(--pad-small);
 }
 
-/* "Include numeric values" checkbox + label.
- * Sits directly above the min/max inputs when in mixed mode.
- * cursor: pointer on the label makes the whole row clickable. */
-.sf-include-numeric-label {
-  display: flex;
-  align-items: center;
-  gap: var(--pad-small);
-  padding: var(--pad-small) 0;
-  cursor: pointer;
-  font-size: var(--font-smaller, 0.875rem);
-  color: #444;
-  user-select: none;
-}
-
-.sf-include-numeric-check {
-  cursor: pointer;
-  /* Match the size of the checklist checkboxes visually. */
-  width: 1em;
-  height: 1em;
-  flex-shrink: 0;
-}
 
 /* Single-line range row: inputs grow equally, separator and clear are fixed. */
 .sf-range-row {

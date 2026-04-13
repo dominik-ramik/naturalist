@@ -1,19 +1,20 @@
 /**
  * filterPluginMonths — filter UI for the "months" data type.
  *
- * Renders all 12 months in calendar order as a selectable checklist.
- * Active months show a count; inactive months (no data in current result set) are greyed out.
+ * Months data is inherently multi-value (a taxon can be active in several months),
+ * so all three Match Modes — Any, All, Exclude — are offered via MatchModeToggle.
  */
 
 import m from "mithril";
 import { Checklist } from "../Checklist.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../customTypes/CustomTypeMonths.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
-import { describeList } from "./shared/rangeFilterUtils.js";
+import { describeList } from "./shared/filterUtils.js";
+import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 
 // ── Dropdown component ────────────────────────────────────────────────────────
 
-let DropdownMonths = function (initialVnode) {
+let DropdownMonths = function () {
   return {
     view(vnode) {
       const { type, dataPath, openHandler } = vnode.attrs;
@@ -45,6 +46,13 @@ let DropdownMonths = function (initialVnode) {
       });
 
       return m(".inner-dropdown-area", [
+        // Months is always multi-value → supportsMatchAll: true
+        m(MatchModeToggle, {
+          filterDef,
+          supportsMatchAll: true,
+          onCommit()        { Checklist.filter.commit(); },
+        }),
+
         m(".options", m(".options-section", items)),
         m(".apply", { onclick: () => openHandler(false) }, t("apply_selection")),
       ]);
@@ -55,17 +63,20 @@ let DropdownMonths = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginMonths = {
+  // Phase 1: opt-in
+  supportsMatchMode: true,
+
   meta: {
-    filterType: "categorical",
-    filterLabel: "Categorical multi-select (month names)",
-    filterDescription: "Shows month names as checkboxes. A taxon matches if it is active in **any** of the selected months.",
+    filterType:        "categorical",
+    filterLabel:       "Categorical multi-select (month names)",
+    filterDescription: "Shows month names as checkboxes. Match mode controls whether the taxon must be active in any, all, or none of the selected months.",
   },
+
   isActive(filterDef) {
     return filterDef.selected.length > 0;
   },
 
   getCount(filterDef) {
-    // Count months that have data in the current result set
     return Object.keys(filterDef.possible).filter(k => filterDef.possible[k] > 0).length;
   },
 
@@ -77,14 +88,11 @@ export const filterPluginMonths = {
     return m(DropdownMonths, { type, dataPath, openHandler, dropdownId });
   },
 
-  /**
-   * A single crumb showing the grouped month-range summary
-   * (e.g. "Mar–May and Oct").  Clearing it wipes the whole months selection.
-   */
   getCrumbs(filterDef, _ctx) {
     if (filterDef.selected.length === 0) return [];
     return [{
-      title: renderRangesString(groupMonthsIntoRanges(filterDef.selected)),
+      title:     renderRangesString(groupMonthsIntoRanges(filterDef.selected)),
+      matchMode: filterDef.matchMode || MATCH_MODES.ANY,
     }];
   },
 
@@ -93,33 +101,79 @@ export const filterPluginMonths = {
     Checklist.filter.commit();
   },
 
-    describeSerializedValue(dataPath, serialized, opts = {}) {
+  describeSerializedValue(dataPath, serialized, opts = {}) {
     const cat  = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
-    const vals = (Array.isArray(serialized) ? serialized : [serialized])
-      .map(v => Checklist.getMonthLabel(parseInt(v, 10)));
-    return cat + " " + t("is_list_joiner") + " " + describeList(vals, opts);
+    const raw  = Array.isArray(serialized) ? serialized
+               : Array.isArray(serialized?.items) ? serialized.items
+               : [serialized];
+    const mode = serialized?.mm || MATCH_MODES.ANY;
+    const vals = raw.map(v => Checklist.getMonthLabel(parseInt(v, 10)));
+
+    const verbKey = mode === MATCH_MODES.ALL     ? "is_all_list_joiner"
+                  : mode === MATCH_MODES.EXCLUDE ? "is_not_list_joiner"
+                  : "is_list_joiner";
+
+    return cat + " " + t(verbKey) + " " + describeList(vals, opts);
   },
 
-  // ── Lifecycle ─────────────────────────────────────────────────────
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
   createFilterDef() {
-    return { type: "months", all: [], possible: {}, selected: [], numeric: null };
+    return {
+      type:      "months",
+      all:       [],
+      possible:  {},
+      selected:  [],
+      numeric:   null,
+      matchMode: MATCH_MODES.ANY,
+    };
   },
-  clearFilter(fd)   { fd.selected = []; },
+
+  clearFilter(fd) {
+    fd.selected  = [];
+    fd.matchMode = MATCH_MODES.ANY;
+  },
+
   clearPossible(fd) { fd.possible = {}; },
+
   accumulatePossible(fd, _rawValue, leafValues) {
     leafValues.forEach(v => {
       if (!Object.prototype.hasOwnProperty.call(fd.possible, v)) fd.possible[v] = 0;
       fd.possible[v]++;
     });
   },
+
   serializeToQuery(fd) {
-    return fd.selected.length > 0 ? [...fd.selected] : null;
+    if (fd.selected.length === 0) return null;
+    const mode = fd.matchMode || MATCH_MODES.ANY;
+    if (mode === MATCH_MODES.ANY) return [...fd.selected];
+    return { items: [...fd.selected], mm: mode };
   },
+
   deserializeFromQuery(fd, val) {
-    const arr = Array.isArray(val) ? val : [val];
-    fd.selected = arr.map(v => parseInt(v, 10));
+    const arr    = Array.isArray(val) ? val
+                 : Array.isArray(val?.items) ? val.items
+                 : [val];
+    fd.selected  = arr.map(v => parseInt(v, 10));
+    fd.matchMode = val?.mm || MATCH_MODES.ANY;
   },
+
+  /**
+   * Phase 4 — core matching.
+   * ANY: active in ≥1 selected month.
+   * ALL: active in every selected month.
+   * EXCLUDE: active in none of the selected months.
+   */
   matches(fd, _rawValue, leafValues) {
-    return fd.selected.length === 0 || leafValues.some(v => fd.selected.includes(v));
+    if (fd.selected.length === 0) return true;
+    const mode = fd.matchMode || MATCH_MODES.ANY;
+
+    if (mode === MATCH_MODES.EXCLUDE) {
+      return leafValues.every(v => !fd.selected.includes(v));
+    }
+    if (mode === MATCH_MODES.ALL) {
+      return fd.selected.every(v => leafValues.includes(v));
+    }
+    return leafValues.some(v => fd.selected.includes(v));
   },
 };

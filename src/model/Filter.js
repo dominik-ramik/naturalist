@@ -115,14 +115,6 @@ export let Filter = {
       const plugin = getFilterPlugin(fd);
       if (plugin?.finalizeAccumulation) plugin.finalizeAccumulation(fd);
     });
-
-    // ── Release the delay lock after each accumulation pass ───────────────────
-    // delayCommitDataPath is a one-shot hint set by "add item" interactions so
-    // that the just-selected item stays visible during the immediate redraw.
-    // It must be cleared here — not by the caller — so it never leaks across
-    // accumulation passes and permanently blocks clearPossible/accumulatePossible
-    // for the locked path.
-    Filter.delayCommitDataPath = "";
   },
 
   // NOTE: one deliberate type-check remains — interval preview needs pair-aware
@@ -266,16 +258,32 @@ export let Filter = {
 
       let localMask = 0;
       for (let r = 0; r < requirements.length; r++) {
-        let req = requirements[r];
+        let req    = requirements[r];
         let passed = false;
+
         if (req.type === "taxa") {
-          if (req.filter.index < item.t.length && item.t[req.filter.index] !== null && req.filter.selected.includes(item.t[req.filter.index].name)) passed = true;
+          const taxonValue = (req.filter.index < item.t.length && item.t[req.filter.index] !== null)
+            ? item.t[req.filter.index].name
+            : null;
+
+          if (req.filter.matchMode === "exclude") {
+            // Ancestors (taxonValue === null) pass: they don't carry the excluded value.
+            // Phase 6 fast-fail is not applied to taxa because null means "ancestor node",
+            // not "missing data" — ancestors are valid biological entities that should remain
+            // visible alongside their non-excluded descendants.
+            passed = taxonValue === null || !req.filter.selected.includes(taxonValue);
+          } else {
+            // "any" and "all" are equivalent for single-value taxon levels
+            passed = taxonValue !== null && req.filter.selected.includes(taxonValue);
+          }
+
         } else if (req.type === "data") {
           passed = Filter._checkDataFilters(item, [req.filter]);
         } else if (req.type === "text") {
           let searchableText = fullTextIndexArray ? fullTextIndexArray[i] : Checklist.getSearchableTextForTaxon(i);
           passed = req.regex.test(searchableText);
         }
+
         if (passed) localMask |= req.bit;
       }
       localMasks[i] = localMask;
@@ -336,24 +344,35 @@ export let Filter = {
     return snapshot;
   },
 
+// ─── in _getActiveFilters ──────────────────────────────────────────────────────
+// CHANGE: forward matchMode so the query engine respects Exclude for taxa
+
   _getActiveFilters: function (excludedFilterKey = "") {
     const active = { taxa: [], data: [] };
     const taxaKeys = Object.keys(Filter.taxa);
+
     taxaKeys.forEach((dataPath, index) => {
       if (excludedFilterKey === "taxa." + dataPath) return;
       const fd = Filter.taxa[dataPath];
       if (fd.selected.length > 0) {
-        active.taxa.push({ dataPath, index, selected: fd.selected });
+        active.taxa.push({
+          dataPath,
+          index,
+          selected:  fd.selected,
+          matchMode: fd.matchMode || "any",   // Phase 4: forward mode
+        });
       }
     });
+
     Object.keys(Filter.data).forEach(dataPath => {
       if (excludedFilterKey === "data." + dataPath) return;
-      const fd = Filter.data[dataPath];
+      const fd     = Filter.data[dataPath];
       const plugin = getFilterPlugin(fd);
       if (plugin?.isActive(fd)) {
         active.data.push({ dataPath, filterDef: fd });
       }
     });
+
     return active;
   },
 
@@ -369,7 +388,13 @@ export let Filter = {
   _checkDataFilters: function (item, dataFilters) {
     for (const { dataPath, filterDef } of dataFilters) {
       const rawValue = Checklist.getDataFromDataPath(item.d, dataPath);
-      if (filterDef.type !== "mapregions" && rawValue === null) return false;
+      if (rawValue === null) {
+        // Phase 6 (Exclude fast-fail) + general null handling:
+        // A taxon with no data cannot satisfy any categorical/numeric selection (Any/All),
+        // and must not silently pass an Exclude filter through an empty leafValues array.
+        // mapregions handles its own null case inside matches() to avoid double-counting.
+        if (filterDef.type !== "mapregions") return false;
+      }
       const leafValues = rawValue !== null
         ? Checklist.getAllLeafData(rawValue, false, dataPath)
         : [];

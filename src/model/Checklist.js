@@ -481,6 +481,7 @@ export let Checklist = {
         selected: [],
         color: "",
         type: "text",
+        matchMode: "any",
       };
     });
 
@@ -1436,6 +1437,26 @@ export let Checklist = {
     return meta;
     //data not intended to be shown in view
     //return this.getData().meta.data["$$default-custom$$"];
+  },
+
+  /**
+   * Returns true when the data at `dataPath` is inherently multi-value,
+   * meaning a single taxon can hold more than one value simultaneously.
+   *
+   * Used by MatchModeToggle consumers (Phase 1) to decide whether the
+   * "Match All" radio option should be offered.
+   *
+   *   List items  (#-paths):  a taxon may belong to multiple habit categories.
+   *   months:                 a taxon is active in multiple months.
+   *   mapregions:             a taxon occurs in multiple geographic regions.
+   *   Everything else:        single-value — "Match All" would be a logical paradox.
+   */
+  isMultiValueDataPath: function (dataPath) {
+    if (!this._isDataReady) return false;
+    // List sub-item paths are registered with a trailing "#"
+    if (dataPath.endsWith("#")) return true;
+    const meta = this.getMetaForDataPath(dataPath);
+    return meta?.formatting === "months" || meta?.formatting === "mapregions";
   },
 
   getTaxonLevelMeta(levelOrDataPath) {

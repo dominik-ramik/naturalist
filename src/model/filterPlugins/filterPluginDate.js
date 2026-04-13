@@ -10,7 +10,7 @@ import m from "mithril";
 import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { textLowerCaseAccentless } from "../../components/Utils.js";
-import { describeList, buildRangeFilterLabel, numericFilters, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/rangeFilterUtils.js";
+import { describeList, buildRangeFilterLabel, numericFilters, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/filterUtils.js";
 
 import "./filterPluginDate.css";
 
@@ -385,11 +385,7 @@ let DropdownDate = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginDate = {
-  meta: {
-    filterType: "date-range",
-    filterLabel: "Date range",
-    filterDescription: "Shows a date range control with the same operations as the numeric range filter. Dates are compared as timestamps so all standard operators apply.",
-  },
+  supportsMatchMode: false,
   isActive(filterDef) {
     return filterDef.selected.length > 0 || filterDef.numeric.operation !== "";
   },

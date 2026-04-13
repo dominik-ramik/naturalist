@@ -12,7 +12,7 @@ import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { drawHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
-import { buildRangeFilterLabel, numericFilters, describeList, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/rangeFilterUtils.js";
+import { buildRangeFilterLabel, numericFilters, describeList, makeScalarRangeLifecycle, sortedUniqueNumbers } from "./shared/filterUtils.js";
 
 import "./filterPluginNumber.css";
 import "./shared/numericDropdown.css";
@@ -443,11 +443,7 @@ let DropdownNumber = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginNumber = {
-  meta: {
-    filterType: "numeric-range",
-    filterLabel: "Numeric range",
-    filterDescription: "Shows a range control with operations: equal to, less than, less than or equal, greater than, greater than or equal, between (two bounds), and around (value ± margin).",
-  },
+  supportsMatchMode: false,
   // ── UI ───────────────────────────────────────────────────────────
   isActive(fd) {
     return fd.selected.length > 0 || fd.numeric.operation !== "";

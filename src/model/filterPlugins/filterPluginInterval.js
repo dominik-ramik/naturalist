@@ -11,7 +11,7 @@ import { getUnitFromTemplate, unitToHtml } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { drawIntervalHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
-import { buildRangeFilterLabel, describeList } from "./shared/rangeFilterUtils.js";
+import { buildRangeFilterLabel, describeList } from "./shared/filterUtils.js";
 
 import "./shared/numericDropdown.css";
 
@@ -239,11 +239,7 @@ let DropdownInterval = function (initialVnode) {
 // ── Plugin object ─────────────────────────────────────────────────────────────
 
 export const filterPluginInterval = {
-  meta: {
-    filterType: "numeric-range",
-    filterLabel: "Numeric range (interval)",
-    filterDescription: "Shows a range control identical to the numeric filter. A taxon matches if any part of its [from, to] interval satisfies the chosen operation.",
-  },
+  supportsMatchMode: false,
   isActive(filterDef) {
     return filterDef.numeric.operation !== "";
   },
