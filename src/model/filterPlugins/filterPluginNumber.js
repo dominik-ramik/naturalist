@@ -204,11 +204,22 @@ let DropdownNumber = function (initialVnode) {
     },
   });
 
+  let _lastHistogramKey = "";
+
   function redrawHistogramIfVisible() {
     if (isListMode() && !showDistribution) return;
+    const fd = Checklist.filter.data[dataPath];
+    const key = JSON.stringify([
+      fd.all?.length,
+      isListMode() ? Object.keys(fd.possible || {}).length : actualOperation,
+      isListMode() ? null : thresholdState.actualThresholds,
+      showDistribution,
+    ]);
+    if (key === _lastHistogramKey) return;
+    _lastHistogramKey = key;
     window.setTimeout(() => {
-      drawHistogram(dropdownId, Checklist.filter.data[dataPath].all, isListMode()
-        ? Checklist.filter.data[dataPath].possible
+      drawHistogram(dropdownId, fd.all, isListMode()
+        ? fd.possible
         : getDisplayedOperatorValues()
       );
     }, 0);

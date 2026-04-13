@@ -160,6 +160,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25em;
+  max-height: 20em;
+  overflow: auto;
 }
 
 /* ─── Specimens ───────────────────────────────────────────────────────────── */

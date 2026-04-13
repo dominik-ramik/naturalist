@@ -94,6 +94,44 @@ let sortColumn = null;
 let sortDirection = "desc";
 let currentCellVerb = t("view_cat_click_on_cell");
 
+// ─── Cross-tabulation cache ───────────────────────────────────────────────────
+
+let _tmCacheKey = "";
+let _tmCachedData = null;
+
+function getCachedCrossTabulation(
+  filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
+  categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+) {
+  const key = JSON.stringify([
+    filteredTaxa.length,
+    categoryToView,
+    secondaryDimCategory,
+    isCustomMode,
+    categoryRoot,
+    chartMode,
+    dateBinning,
+    secondaryDimDateBinning,
+    Checklist.queryKey(),
+  ]);
+  if (key === _tmCacheKey && _tmCachedData !== null) return _tmCachedData;
+
+  let result = null;
+  if (isCustomMode && secondaryDimCategory) {
+    result = dataForCategoryChartCustomRows(
+      filteredTaxa, categoryToView, secondaryDimCategory,
+      chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+    );
+  } else {
+    result = dataForCategoryChart(
+      categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
+    );
+  }
+  _tmCacheKey = key;
+  _tmCachedData = result;
+  return result;
+}
+
 // ─── Generic UI helpers ───────────────────────────────────────────────────────
 
 const segBtn = (label, isSelected, onClick) =>
@@ -510,22 +548,17 @@ function categoryChart(filteredTaxa) {
   };
 
   if (categoryToView !== "") {
-    if (isCustomMode && secondaryDimCategory) {
-      categorizedData = dataForCategoryChartCustomRows(
-        filteredTaxa, categoryToView, secondaryDimCategory,
-        chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+    categorizedData = getCachedCrossTabulation(
+      filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
+      categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+    );
+    if (categorizedData == null && !isCustomMode) {
+      categoryRoot = ""; Settings.categoryChartRoot("");
+      categoryToView = ""; Settings.categoryChartCategory("");
+      categorizedData = getCachedCrossTabulation(
+        filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
+        categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
       );
-    } else {
-      categorizedData = dataForCategoryChart(
-        categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
-      );
-      if (categorizedData == null) {
-        categoryRoot = ""; Settings.categoryChartRoot("");
-        categoryToView = ""; Settings.categoryChartCategory("");
-        categorizedData = dataForCategoryChart(
-          categoryRoot, filteredTaxa, categoryToView, chartMode, allTaxaForInheritance, dateBinning
-        );
-      }
     }
 
     if (categorizedData && Object.keys(categorizedData.individualResults).length > 0) {

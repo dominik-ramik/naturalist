@@ -32,10 +32,12 @@ export let D3ChartView = function (initialVnode) {
     onbeforeupdate: function (vnode) {
       chart = vnode.attrs.chart;
       options = vnode.attrs.options;
+      // Always allow Mithril to diff the vdom; the real guard
+      // is inside renderChart (options().shouldUpdate).
+      return true;
     },
     onupdate: function (vnode) {
-      chart = vnode.attrs.chart;
-      options = vnode.attrs.options;
+      // attrs already captured in onbeforeupdate — skip redundant assignment
       renderChart(false);
     },
     onbeforeremove: function (vnode) {

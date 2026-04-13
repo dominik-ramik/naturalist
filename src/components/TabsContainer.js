@@ -12,26 +12,20 @@ export let TabsContainer = {
     view: function(vnode) {
 
         let tabs = vnode.attrs.tabs;
-        if (tabs === null || Object.keys(tabs).length == 0) {
+        const tabNames = Object.keys(tabs);
+        if (tabs === null || tabNames.length == 0) {
             return null;
         }
-        let tabNames = Object.keys(tabs);
 
-        if (TabsContainer.selectedTab === null && vnode.attrs.activeTab !== null) {
-            TabsContainer.selectedTab = vnode.attrs.activeTab;
-        }
         TabsContainer.selectedTab = vnode.attrs.activeTab;
 
-        let currentTab = "";
-        if (Object.keys(tabs).indexOf(TabsContainer.selectedTab) < 0) {
-            currentTab = Object.keys(tabs)[0];
-        } else {
-            currentTab = TabsContainer.selectedTab;
-        }
+        let currentTab = tabNames.indexOf(TabsContainer.selectedTab) < 0
+            ? tabNames[0]
+            : TabsContainer.selectedTab;
 
         return m(".tabs-container", [
             m(".tabs-container-buttons", [
-                Object.keys(tabs).map(function(key, index) {
+                tabNames.map(function(key, index) {
                     let tab = tabs[key];
                     return m("button.tabs-container-tab-button" + (tabNames[index] == TabsContainer.selectedTab ? ".tabs-container-active-tab-button" : ""), {
                         onclick: function() {

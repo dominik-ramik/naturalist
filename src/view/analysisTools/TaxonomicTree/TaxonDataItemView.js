@@ -306,8 +306,12 @@ export let TaxonDataItemView = {
     ]);
   },
 
-  onupdate: function () {
-    document.querySelectorAll("a[data-citekey]").forEach((e) => {
+  onupdate: function (vnode) {
+    const el = vnode.dom;
+    if (!el) return;
+    const links = el.querySelectorAll("a[data-citekey]:not([data-bound])");
+    links.forEach((e) => {
+      e.setAttribute("data-bound", "1");
       e.onclick = () => {
         routeTo("references/" + e.getAttribute("data-citekey"));
       };

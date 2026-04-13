@@ -36,7 +36,7 @@ export function MinimalAudioPlayer() {
             audio.play();
             isPlaying = true;
           }
-          m.redraw();
+          // No m.redraw() needed: Mithril auto-redraws after DOM event handlers
         }
       }, [
         m('.play-button', {

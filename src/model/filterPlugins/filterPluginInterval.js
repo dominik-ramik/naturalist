@@ -117,9 +117,19 @@ let DropdownInterval = function (initialVnode) {
     },
   });
 
+  let _lastHistogramKey = "";
+
   function redrawHistogram() {
+    const fd = Checklist.filter.data[dataPath];
+    const key = JSON.stringify([
+      (fd.possible || []).length,
+      actualOperation,
+      thresholdState.actualThresholds,
+    ]);
+    if (key === _lastHistogramKey) return;
+    _lastHistogramKey = key;
     window.setTimeout(() => {
-      const allPairs = Checklist.filter.data[dataPath].possible || [];
+      const allPairs = fd.possible || [];
       drawIntervalHistogram(dropdownId, allPairs, getFilteredPairs());
     }, 0);
   }
