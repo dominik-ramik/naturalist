@@ -21,6 +21,38 @@ import { compressor } from "./components/LZString.js";
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
 
+let RenderTracker;
+const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
+if (import.meta.env.DEV && TRACE_RENDERING) {
+          let burstCount = 0;
+          let renderTimeout;
+
+          RenderTracker = {
+              view: function(vnode) {
+                  burstCount++;
+                  
+                  // Log the live count as it happens
+                  console.log(`[Render] VDOM evaluating... (${burstCount})`);
+
+                  // Clear the previous timer if a new render happens quickly
+                  clearTimeout(renderTimeout);
+
+                  // Set a new timer. If 200ms passes without another render, 
+                  // we consider the interaction "done" and reset.
+                  renderTimeout = setTimeout(() => {
+                      console.log(`%c--- Interaction Complete: ${burstCount} render(s) ---`, 'color: #4CAF50; font-weight: bold;');
+                      burstCount = 0; // Reset for the next interaction
+                  }, 1000);
+
+                  return vnode.children; 
+              }
+          };
+      }
+
+function componentRender(component) {
+  return import.meta.env.DEV ? m(RenderTracker, component) : component;
+}
+
 const messageChannel = new MessageChannel();
 
 console.log("NaturaList version " + appVersion);
@@ -289,44 +321,44 @@ Handlebars.registerHelper("unit", function (...args) {
   // ── Unit dictionary ────────────────────────────────────────────────────────
   const UNITS = {
     // Length  (base: m)
-    um:  { category: "length",  factor: 0.000001 },
-    mm:  { category: "length",  factor: 0.001 },
-    cm:  { category: "length",  factor: 0.01 },
-    m:   { category: "length",  factor: 1 },
-    km:  { category: "length",  factor: 1000 },
+    um: { category: "length", factor: 0.000001 },
+    mm: { category: "length", factor: 0.001 },
+    cm: { category: "length", factor: 0.01 },
+    m: { category: "length", factor: 1 },
+    km: { category: "length", factor: 1000 },
     // Time  (base: s)
-    ms:  { category: "time",    factor: 0.001 },
-    s:   { category: "time",    factor: 1 },
-    min: { category: "time",    factor: 60 },
-    h:   { category: "time",    factor: 3600 },
-    d:   { category: "time",    factor: 86400 },
-    y:   { category: "time",    factor: 31556736 },
+    ms: { category: "time", factor: 0.001 },
+    s: { category: "time", factor: 1 },
+    min: { category: "time", factor: 60 },
+    h: { category: "time", factor: 3600 },
+    d: { category: "time", factor: 86400 },
+    y: { category: "time", factor: 31556736 },
     // Weight  (base: g)
-    mg:  { category: "weight",  factor: 0.001 },
-    g:   { category: "weight",  factor: 1 },
-    kg:  { category: "weight",  factor: 1000 },
-    t:   { category: "weight",  factor: 1000000 },
+    mg: { category: "weight", factor: 0.001 },
+    g: { category: "weight", factor: 1 },
+    kg: { category: "weight", factor: 1000 },
+    t: { category: "weight", factor: 1000000 },
     // Area  (base: m2)
-    um2: { category: "area",    factor: 1e-12 },
-    mm2: { category: "area",    factor: 1e-6 },
-    cm2: { category: "area",    factor: 0.0001 },
-    m2:  { category: "area",    factor: 1 },
-    km2: { category: "area",    factor: 1000000 },
+    um2: { category: "area", factor: 1e-12 },
+    mm2: { category: "area", factor: 1e-6 },
+    cm2: { category: "area", factor: 0.0001 },
+    m2: { category: "area", factor: 1 },
+    km2: { category: "area", factor: 1000000 },
     // Volume  (base: m3)
-    um3: { category: "volume",  factor: 1e-18 },
-    mm3: { category: "volume",  factor: 1e-9 },
-    cm3: { category: "volume",  factor: 1e-6 },
-    ml:  { category: "volume",  factor: 1e-6 },
-    l:   { category: "volume",  factor: 0.001 },
-    m3:  { category: "volume",  factor: 1 },
-    km3: { category: "volume",  factor: 1e9 },
+    um3: { category: "volume", factor: 1e-18 },
+    mm3: { category: "volume", factor: 1e-9 },
+    cm3: { category: "volume", factor: 1e-6 },
+    ml: { category: "volume", factor: 1e-6 },
+    l: { category: "volume", factor: 0.001 },
+    m3: { category: "volume", factor: 1 },
+    km3: { category: "volume", factor: 1e9 },
   };
 
   const CATEGORY_UNITS = {
     length: ["um", "mm", "cm", "m", "km"],
-    time:   ["ms", "s", "min", "h", "d", "y"],
+    time: ["ms", "s", "min", "h", "d", "y"],
     weight: ["mg", "g", "kg", "t"],
-    area:   ["um2", "mm2", "cm2", "m2", "km2"],
+    area: ["um2", "mm2", "cm2", "m2", "km2"],
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -424,10 +456,10 @@ Handlebars.registerHelper("unit", function (...args) {
 
     // Time uses threshold cascades, not base-10 scaling
     if (category === "time") {
-      if (absVal < 1)        return "ms";
-      if (absVal < 60)       return "s";
-      if (absVal < 3600)     return "min";
-      if (absVal < 86400)    return "h";
+      if (absVal < 1) return "ms";
+      if (absVal < 60) return "s";
+      if (absVal < 3600) return "min";
+      if (absVal < 86400) return "h";
       if (absVal < 31556736) return "d";
       return "y";
     }
@@ -468,8 +500,8 @@ Handlebars.registerHelper("unit", function (...args) {
     if (numVal === 0) return { value: 0, unitKey: inputKey };
 
     const baseValue = numVal * unitInfo.factor;
-    const unitList  = getCategoryUnits(unitInfo.category, inputKey);
-    const bestKey   = findBestUnit(baseValue, unitInfo.category, unitList);
+    const unitList = getCategoryUnits(unitInfo.category, inputKey);
+    const bestKey = findBestUnit(baseValue, unitInfo.category, unitList);
     const converted = baseValue / UNITS[bestKey].factor;
 
     return { value: converted, unitKey: bestKey };
@@ -528,7 +560,7 @@ function runApp() {
       }
 
       readyPreloadableAssets();
-      
+
       function updateLanguage() {
         const lang = m.route.param("l");
         if (lang) {
@@ -588,30 +620,30 @@ function runApp() {
         "/checklist": {
           render: function () {
             // AppLayoutView.display = "checklist"; // DELETE display setting
-            return m(AppLayoutView, [m(SearchView)]);
+            return componentRender(m(AppLayoutView, [m(SearchView)]));
           },
           onmatch: onMatchGuard,
         },
         "/details/:taxon/:tab": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(DetailsView)]);
+            return componentRender(m(AppLayoutView, [m(DetailsView)]));
           },
           onmatch: onMatchGuard,
         },
         "/about/checklist": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [
+            return componentRender(m(AppLayoutView, [
               m(AboutView, { text: Checklist.getProjectAbout() }),
-            ]);
+            ]));
           },
           onmatch: onMatchGuard,
         },
         "/about/cite": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [
+            return componentRender(m(AppLayoutView, [
               m(AboutView, {
                 text:
                   tf("how_to_cite_header", [Checklist.getProjectName()]) +
@@ -619,56 +651,56 @@ function runApp() {
                   Checklist.getProjectHowToCite() +
                   " </p>",
               }),
-            ]);
+            ]));
           },
           onmatch: onMatchGuard,
         },
         "/references": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(LiteratureView)]);
+            return componentRender(m(AppLayoutView, [m(LiteratureView)]));
           },
           onmatch: onMatchGuard,
         },
         "/references/:citekey": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(LiteratureView)]);
+            return componentRender(m(AppLayoutView, [m(LiteratureView)]));
           },
           onmatch: onMatchGuard,
         },
         "/single-access-keys": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
           },
           onmatch: onMatchGuard,
         },
         "/single-access-keys/filter/:taxon": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
           },
           onmatch: onMatchGuard,
         },
         "/single-access-keys/:key": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
           },
           onmatch: onMatchGuard,
         },
         "/single-access-keys/:key/:steps": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(SingleAccessKeyView)]);
+            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
           },
           onmatch: onMatchGuard,
         },
         "/pinned": {
           render: function () {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(PinnedView)]);
+            return componentRender(m(AppLayoutView, [m(PinnedView)]));
           },
           onmatch: onMatchGuard,
         },
@@ -676,9 +708,9 @@ function runApp() {
           render: function () {
             AppLayoutView.display = "details";
             console.log("Rendering about app with version: " + appVersion);
-            return m(AppLayoutView, [
+            return componentRender(m(AppLayoutView, [
               m(AboutView, { text: t("about_app", appVersion) }),
-            ]);
+            ]));
           },
           onmatch: onMatchGuard,
         },
@@ -691,7 +723,7 @@ function runApp() {
         "/manage/:step": {
           render: function (vnode) {
             AppLayoutView.display = "details";
-            return m(AppLayoutView, [m(ManageView, vnode.attrs)]);
+            return componentRender(m(AppLayoutView, [m(ManageView, vnode.attrs)]));
           },
         },
       });
