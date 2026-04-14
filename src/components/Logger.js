@@ -96,11 +96,17 @@ class LoggerClass {
   }
 
   /**
-   * Get deduplicated messages in reverse order for UI display
-   * @returns {Array} Array of deduplicated log messages in reverse order
+   * Get deduplicated messages ordered by severity for UI display.
+   * Within the same severity level, insertion order is preserved.
+   * @returns {Array} Array of deduplicated log messages ordered by severity
    */
   getMessagesForDisplay() {
-    return [...this.messages].reverse();
+    const severityOrder = { critical: 0, error: 1, warning: 2, info: 3 };
+    return [...this.messages].sort((a, b) => {
+      const sa = severityOrder[a.level] ?? 4;
+      const sb = severityOrder[b.level] ?? 4;
+      return sa - sb;
+    });
   }
 
   getCounts() {
