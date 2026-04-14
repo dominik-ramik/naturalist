@@ -341,7 +341,12 @@ function renderSVGMap(map, colors) {
       },
     },
     m('object#rd-map[type=image/svg+xml][style=pointer-events: none;][data=' + map.source + ']', {
-      onload() { colorSVGMap(this, displayColors); },
+      oncreate: function (vnode) {
+        // Native listener avoids a Mithril auto-redraw on SVG load.
+        vnode.dom.addEventListener("load", function () {
+          colorSVGMap(vnode.dom, displayColors);
+        });
+      },
     })
   ));
 }

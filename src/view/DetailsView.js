@@ -19,15 +19,31 @@ import { TabExternalSearch } from "./detailsTabs/TabExternalSearch.js";
 import { TabMedia } from "./detailsTabs/TabMedia.js";
 
 export let DetailsView = {
-  selectedTaxon: null,
   taxonName: "",
   taxonAuthority: "",
   taxonData: {},
 
+  oninit: function (vnode) {
+    DetailsView._updateTaxonState();
+  },
+
+  onbeforeupdate: function (vnode) {
+    DetailsView._updateTaxonState();
+  },
+
+  _updateTaxonState: function () {
+    const name = m.route.param("taxon") ?? "";
+    if (name === DetailsView.taxonName) return; // skip if unchanged
+    DetailsView.taxonName = name;
+    const taxon = Checklist.getTaxonByName(name);
+    if (taxon.isInChecklist) {
+      DetailsView.taxonAuthority = taxon.t[taxon.t.length - 1].a;
+      DetailsView.taxonData = taxon.d;
+    }
+  },
+
   view: function (vnode) {
-    DetailsView.taxonName = m.route.param("taxon")
-      ? m.route.param("taxon")
-      : "";
+    const taxonName = DetailsView.taxonName;
 
     let path = location.hash;
     let tab;
@@ -42,11 +58,6 @@ export let DetailsView = {
     }
 
     let taxon = Checklist.getTaxonByName(DetailsView.taxonName);
-
-    if (taxon.isInChecklist) {
-      DetailsView.taxonAuthority = taxon.t[taxon.t.length - 1].a;
-      DetailsView.taxonData = taxon.d;
-    }
 
     const tabs = TabsForDetails(
       Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
@@ -113,9 +124,9 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
 
     let tabData = null;
     switch (key) {
-      case "media":   tabData = TabMedia(detailsTabs[key], taxon, taxonName); break;
-      case "map":     tabData = TabMap(detailsTabs[key], taxon, taxonName); break;
-      case "text":    tabData = TabText(detailsTabs[key], taxon, taxonName); break;
+      case "media": tabData = TabMedia(detailsTabs[key], taxon, taxonName); break;
+      case "map": tabData = TabMap(detailsTabs[key], taxon, taxonName); break;
+      case "text": tabData = TabText(detailsTabs[key], taxon, taxonName); break;
       case "externalsearch":
         tabData = TabExternalSearch(
           detailsTabs[key],

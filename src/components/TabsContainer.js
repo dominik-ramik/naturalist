@@ -3,13 +3,9 @@ import m from "mithril";
 import "./TabsContainer.css";
 
 export let TabsContainer = {
-    selectedTab: null,
 
-    oncreate: function(vnode) {
-        TabsContainer.selectedTab = vnode.attrs.activeTab;
-    },
 
-    view: function(vnode) {
+    view: function (vnode) {
 
         let tabs = vnode.attrs.tabs;
         const tabNames = Object.keys(tabs);
@@ -17,21 +13,32 @@ export let TabsContainer = {
             return null;
         }
 
-        TabsContainer.selectedTab = vnode.attrs.activeTab;
-
-        let currentTab = tabNames.indexOf(TabsContainer.selectedTab) < 0
-            ? tabNames[0]
-            : TabsContainer.selectedTab;
+        // When a parent provides activeTab (route-driven), it is the sole source
+        // of truth. When no parent drives the selection (no callback), fall back
+        // to local state so the component works standalone.
+        const externalTab = vnode.attrs.activeTab;
+        const currentTab = (externalTab && tabNames.includes(externalTab))
+            ? externalTab
+            : (vnode.state.selectedTab && tabNames.includes(vnode.state.selectedTab))
+                ? vnode.state.selectedTab
+                : tabNames[0];
 
         return m(".tabs-container", [
             m(".tabs-container-buttons", [
-                tabNames.map(function(key, index) {
+                tabNames.map(function (key) {
                     let tab = tabs[key];
-                    return m("button.tabs-container-tab-button" + (tabNames[index] == TabsContainer.selectedTab ? ".tabs-container-active-tab-button" : ""), {
-                        onclick: function() {
-                            TabsContainer.selectedTab = tabNames[index];
+                    return m("button.tabs-container-tab-button" + (key == currentTab ? ".tabs-container-active-tab-button" : ""), {
+                        onclick: function (e) {
                             if (tab.onTabActivatedCallback) {
+                                // The callback calls m.route.set which will drive
+                                // the next render. Suppress the event auto-redraw
+                                // so only one render cycle occurs instead of two.
+                                e.redraw = false;
                                 tab.onTabActivatedCallback();
+                            } else {
+                                // No route-based navigation: use local state so
+                                // the normal event auto-redraw updates the UI.
+                                vnode.state.selectedTab = key;
                             }
                         }
                     }, [

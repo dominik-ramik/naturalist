@@ -353,11 +353,16 @@ function renderDetailsMap(data, uiContext) {
           e.preventDefault(); e.stopPropagation();
         }
       }, m(`object#${mapId}[style=pointer-events: none; width: 100%; height: auto;][type=image/svg+xml][data=usercontent/${source}]`, {
-        onload() {
-          clearTimeout(_pendingRecolorTimers[mapId]);
-          delete _pendingRecolorTimers[mapId];
-          colorSVGMap(this, regionColors);
-        }
+        oncreate: function (vnode) {
+          // Use a native addEventListener instead of a Mithril onload attribute.
+          // Mithril wraps attribute-based event handlers with auto-redraw; a raw
+          // SVG load should not cause a full tree redraw.
+          vnode.dom.addEventListener("load", function () {
+            clearTimeout(_pendingRecolorTimers[mapId]);
+            delete _pendingRecolorTimers[mapId];
+            colorSVGMap(vnode.dom, regionColors);
+          });
+        },
       })),
       renderMapLegend(legendConfig, datasetStats, data),
       renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId),

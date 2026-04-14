@@ -22,33 +22,33 @@ export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
 
 let RenderTracker;
-const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
+const TRACE_RENDERING = true; // Set to true to enable render tracking in development mode
 const SHOULD_TRACE = import.meta.env.DEV && TRACE_RENDERING;
 if (SHOULD_TRACE) {
-          let burstCount = 0;
-          let renderTimeout;
+  let burstCount = 0;
+  let renderTimeout;
 
-          RenderTracker = {
-              view: function(vnode) {
-                  burstCount++;
-                  
-                  // Log the live count as it happens
-                  console.log(`[Render] VDOM evaluating... (${burstCount})`);
+  RenderTracker = {
+    view: function (vnode) {
+      burstCount++;
 
-                  // Clear the previous timer if a new render happens quickly
-                  clearTimeout(renderTimeout);
+      // Log the live count as it happens
+      console.log(`[Render] VDOM evaluating... (${burstCount})`);
 
-                  // Set a new timer. If 200ms passes without another render, 
-                  // we consider the interaction "done" and reset.
-                  renderTimeout = setTimeout(() => {
-                      console.log(`%c--- Interaction Complete: ${burstCount} render(s) ---`, 'color: #4CAF50; font-weight: bold;');
-                      burstCount = 0; // Reset for the next interaction
-                  }, 1000);
+      // Clear the previous timer if a new render happens quickly
+      clearTimeout(renderTimeout);
 
-                  return vnode.children; 
-              }
-          };
-      }
+      // Set a new timer. If 200ms passes without another render, 
+      // we consider the interaction "done" and reset.
+      renderTimeout = setTimeout(() => {
+        console.log(`%c--- Interaction Complete: ${burstCount} render(s) ---`, 'color: #4CAF50; font-weight: bold;');
+        burstCount = 0; // Reset for the next interaction
+      }, 1000);
+
+      return vnode.children;
+    }
+  };
+}
 
 function componentRender(component) {
   return SHOULD_TRACE ? m(RenderTracker, component) : component;
