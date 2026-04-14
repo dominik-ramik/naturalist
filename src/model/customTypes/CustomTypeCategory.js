@@ -1,6 +1,7 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
-import { filterPluginText } from "../filterPlugins/filterPluginText.js";import { applyHighlight } from "../highlightUtils.js";
+import { filterPluginText } from "../filterPlugins/filterPluginText.js";
+import { applyHighlight, textMatchesHighlight } from "../highlightUtils.js";
 
 export let customTypeCategory = {
   dataType: "category",
@@ -80,7 +81,7 @@ export let customTypeCategory = {
 
     if (badgeFormat) {
       return m.trust(
-        "<span class='category" + (uiContext?.highlightRegex?.test(dataString) ? " search-highlight-field" : "") + "' style='" +
+        "<span class='category" + (textMatchesHighlight(dataString, uiContext?.highlightRegex) ? " search-highlight-field" : "") + "' style='" +
           (badgeFormat.background
             ? "background-color: " + purifyCssString(badgeFormat.background) + ";"
             : "") +

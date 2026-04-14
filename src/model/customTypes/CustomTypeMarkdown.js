@@ -1,6 +1,6 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
-import { processMarkdownWithBibliography } from "../../components/Utils.js";
+import { htmlToPlainText, processMarkdownWithBibliography } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMarkdown = {
@@ -39,7 +39,11 @@ export let customTypeMarkdown = {
    */
   getSearchableText: function (data, uiContext) {
     if (!data || typeof data !== "string") return [];
-    return [helpers.extractSearchableTextFromMarkdown(data)];
+
+    const displayData = helpers.processTemplate(data, uiContext);
+    const htmlContent = processMarkdownWithBibliography(String(displayData ?? ""));
+    const searchable = htmlToPlainText(htmlContent).trim();
+    return searchable ? [searchable] : [];
   },
 
   render: function (data, uiContext) {
@@ -53,7 +57,7 @@ export let customTypeMarkdown = {
     }
 
     // Apply template if available
-    let displayData = helpers.processTemplate(data, uiContext);
+    let displayData = String(helpers.processTemplate(data, uiContext) ?? "");
 
     // Process markdown
     const htmlContent = processMarkdownWithBibliography(displayData, "", false, uiContext?.highlightRegex);

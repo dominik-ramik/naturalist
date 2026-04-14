@@ -262,9 +262,8 @@ export let Filter = {
     let includeChildren = Settings.includeMatchChildren();
     let checklistData = Checklist.getData().checklist;
     let currentLang = Checklist.getCurrentLanguage();
-    let fullTextIndexArray = Checklist._dataFulltextIndex
-      ? Checklist._dataFulltextIndex[currentLang]
-      : null;
+    Checklist.precomputeSearchableText(currentLang);
+    let fullTextIndexArray = Checklist._searchableTextCache[currentLang] || null;
 
     let requirements = [];
     activeFilters.taxa.forEach(f => requirements.push({ type: "taxa", filter: f, bit: 1 << requirements.length }));

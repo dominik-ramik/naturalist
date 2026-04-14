@@ -1,6 +1,7 @@
 import m from "mithril";
 import { Logger } from "../../components/Logger.js";
 import { helpers } from "./helpers.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 const GOOGLE_MAPS_FALLBACK = "https://www.google.com/maps?q={{lat}},{{long}}";
 
@@ -333,7 +334,7 @@ export let customTypeGeopoint = {
    * would be the correct mechanism (deferred to a future iteration).
    */
   getSearchableText(_data, _uiContext) {
-    return [];
+    return _data?.verbatim ? [_data.verbatim] : [];
   },
 
   render(data, uiContext) {
@@ -387,7 +388,7 @@ export let customTypeGeopoint = {
           return false;
         },
       },
-      [m("span.geopoint-coords", data.verbatim)]
+      [m("span.geopoint-coords", applyHighlight(data.verbatim, uiContext?.highlightRegex))]
     );
   },
 };

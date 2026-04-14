@@ -39,8 +39,14 @@ export let customTypeText = {
    * @returns {string[]} Array of searchable strings
    */
   getSearchableText: function (data, uiContext) {
-    if (!data || typeof data !== "string") return [];
-    return [data];
+    if (data === null || data === undefined) return [];
+
+    const displayData = helpers.processTemplate(
+      typeof data === "string" ? data : String(data),
+      uiContext
+    );
+    const searchable = String(displayData ?? "").trim();
+    return searchable ? [searchable] : [];
   },
 
   filterPlugin: filterPluginText,
@@ -73,7 +79,7 @@ export let customTypeText = {
     }
 
     // Apply template if available
-    displayData = helpers.processTemplate(displayData, uiContext);
+    displayData = String(helpers.processTemplate(displayData, uiContext) ?? "");
 
     return m("span", applyHighlight(displayData, uiContext?.highlightRegex));
   },

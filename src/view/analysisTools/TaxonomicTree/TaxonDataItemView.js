@@ -211,6 +211,7 @@ export let TaxonDataItemView = {
       const uiContext = {
         meta: meta,
         dataPath: dataPath,
+        langCode: Checklist.getCurrentLanguage(),
         taxon: taxonObj,
         originalData: TaxonDataItemView.originalData,
         highlightRegex,

@@ -26,7 +26,7 @@ import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
 import { Logger } from "../../components/Logger.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { textMatchesHighlight } from "../highlightUtils.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -225,7 +225,7 @@ function renderRanges(ranges, uiContext = {}, highlightRegex = null, filterSelec
       const label = Checklist.getMonthLabel(mo, uiContext.langCode);
       const highlighted = filterSelected
         ? filterSelected.has(mo)
-        : !!(highlightRegex && highlightRegex.test(label));
+        : textMatchesHighlight(label, highlightRegex);
       segments.push({ label, highlighted });
     }
 
@@ -359,15 +359,20 @@ export let customTypeMonths = {
   filterPlugin: filterPluginMonths,
 
   /**
-   * Returns the full rendered i18n string as a single searchable element.
-   * Text search for any month name will thus match the entire months field,
-   * which is the correct behaviour (the spec: "highlight the entire rendered
-   * text if any of its unravelled constituents match").
+   * Returns one searchable string per active month (its localized label).
+   *
+   * Indexing individual labels — rather than the collapsed range string — is
+   * required because renderRangesString only emits the two *endpoints* of each
+   * range (e.g. "Janvier-Avril"), so intermediate months like "Mars" would
+   * never appear in the indexed text and plain-text search would silently miss
+   * any item whose matching month sits in the interior of a range.
+   *
+   * renderRanges already iterates per-month and calls textMatchesHighlight on
+   * each label, so highlight rendering works correctly once search hits land.
    */
   getSearchableText: function (data, uiContext) {
     if (!data || !Array.isArray(data) || data.length === 0) return [];
-    const text = renderRangesString(groupMonthsIntoRanges(data), uiContext);
-    return text ? [text] : [];
+    return data.map(monthNum => Checklist.getMonthLabel(monthNum, uiContext.langCode));
   },
 
   render: function (data, uiContext) {

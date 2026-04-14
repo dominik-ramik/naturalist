@@ -23,7 +23,8 @@ export const DOCS_URL = "https://naturalist.netlify.app/";
 
 let RenderTracker;
 const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
-if (import.meta.env.DEV && TRACE_RENDERING) {
+const SHOULD_TRACE = import.meta.env.DEV && TRACE_RENDERING;
+if (SHOULD_TRACE) {
           let burstCount = 0;
           let renderTimeout;
 
@@ -50,7 +51,7 @@ if (import.meta.env.DEV && TRACE_RENDERING) {
       }
 
 function componentRender(component) {
-  return import.meta.env.DEV ? m(RenderTracker, component) : component;
+  return SHOULD_TRACE ? m(RenderTracker, component) : component;
 }
 
 const messageChannel = new MessageChannel();

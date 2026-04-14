@@ -91,10 +91,13 @@ export const helpers = {
    * @returns {any} Processed data or original data if no template
    */
   processTemplate: function(data, uiContext, additionalParams = {}) {
+    const compiledTemplate =
+      uiContext?.compiledTemplate || Checklist.handlebarsTemplates?.[uiContext?.dataPath];
+
     if (
-      uiContext.meta.template && 
+      uiContext?.meta?.template &&
       uiContext.meta.template !== "" &&
-      Checklist.handlebarsTemplates[uiContext.dataPath]
+      compiledTemplate
     ) {
       let templateData = Checklist.getDataObjectForHandlebars(
         data,
@@ -103,7 +106,7 @@ export const helpers = {
         uiContext.taxon.authority,
         additionalParams
       );
-      return Checklist.handlebarsTemplates[uiContext.dataPath](templateData);
+      return compiledTemplate(templateData);
     }
     return data;
   },

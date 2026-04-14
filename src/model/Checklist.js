@@ -51,6 +51,7 @@ export let Checklist = {
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
+  _templateCompileCache: new Map(),
 
   // Replace single _bibFormatter with a per-language cache
   _bibFormatterCache: {},
@@ -469,6 +470,7 @@ export let Checklist = {
     Checklist.nameForMapRegionCache = new Map();
     Checklist.getCustomOrderGroupItemsCache = new Map();
     Checklist.getCustomOrderGroupCache = new Map();
+    Checklist._templateCompileCache = new Map();
     clearSortByCustomOrderCache();
     clearLegendConfigCache();
 
@@ -637,9 +639,8 @@ export let Checklist = {
       ) {
         Checklist._dataFulltextIndex[lang.code][index] =
           textLowerCaseAccentless(
-            Checklist.primitiveKeysOfObject(
+            Checklist.collectSearchableStringsForTaxon(
               taxon,
-              customDatatypeDataPaths,
               lang.code
             ).join("\n")
           );
@@ -686,46 +687,89 @@ export let Checklist = {
    * Pre-compute searchable text for all checklist items
    * Called during data loading
    */
-  precomputeSearchableText: function () {
-    const lang = Checklist.getCurrentLanguage();
+  precomputeSearchableText: function (langCode = Checklist.getCurrentLanguage()) {
+    const lang = langCode;
 
     if (this._searchableTextCache[lang]) {
       return; // Already computed for this language
     }
 
-    //console.time("Precompute searchable text");
-
-    const checklist = this.getData().checklist;
-    const dataMeta = this.getDataMeta();
+    const checklist = this._data?.versions?.[lang]?.dataset?.checklist || [];
 
     this._searchableTextCache[lang] = [];
 
     checklist.forEach((taxon, index) => {
-      const searchableStrings = [];
-
-      // Add taxa names and authorities
-      taxon.t.forEach((taxonLevel) => {
-        if (!taxonLevel) return;   // skip null gaps
-        if (taxonLevel.name) searchableStrings.push(taxonLevel.name);
-        if (taxonLevel.authority) searchableStrings.push(taxonLevel.authority);
-      });
-
-      // Add data fields using readers
-      this._collectSearchableData(taxon.d, "", dataMeta, searchableStrings, lang);
-
-      // Join and normalize for fulltext search
       this._searchableTextCache[lang][index] = textLowerCaseAccentless(
-        searchableStrings.join("\n")
+        this.collectSearchableStringsForTaxon(taxon, lang).join("\n")
       );
     });
+  },
 
-    //console.timeEnd("Precompute searchable text");
+  _getDataMetaForLanguage(langCode) {
+    return this._data?.versions?.[langCode]?.dataset?.meta?.data || {};
+  },
+
+  _getLeafTaxonForSearch(taxon) {
+    const levels = Array.isArray(taxon?.t) ? taxon.t : [];
+    for (let i = levels.length - 1; i >= 0; i--) {
+      const level = levels[i];
+      if (!level) continue;
+      return {
+        name: level.name || "",
+        authority: level.authority || level.a || "",
+      };
+    }
+    return { name: "", authority: "" };
+  },
+
+  _getCompiledTemplateForMeta(dataPath, meta, langCode) {
+    const templateString = meta?.template != null ? String(meta.template).trim() : "";
+    if (!templateString) return null;
+
+    const cacheKey = `${langCode}|${dataPath}|${templateString}`;
+    if (!this._templateCompileCache.has(cacheKey)) {
+      this._templateCompileCache.set(cacheKey, Handlebars.compile(templateString));
+    }
+    return this._templateCompileCache.get(cacheKey);
+  },
+
+  _buildSearchUiContext(taxon, dataPath, meta, langCode) {
+    return {
+      langCode,
+      dataPath,
+      meta,
+      originalData: taxon?.d || {},
+      taxon: this._getLeafTaxonForSearch(taxon),
+      compiledTemplate: this._getCompiledTemplateForMeta(dataPath, meta, langCode),
+    };
+  },
+
+  collectSearchableStringsForTaxon: function (taxon, langCode = Checklist.getCurrentLanguage()) {
+    const searchableStrings = [];
+
+    taxon.t.forEach((taxonLevel) => {
+      if (!taxonLevel) return;
+      if (taxonLevel.name) searchableStrings.push(taxonLevel.name);
+      const authority = taxonLevel.authority || taxonLevel.a || "";
+      if (authority) searchableStrings.push(authority);
+    });
+
+    this._collectSearchableData(
+      taxon.d,
+      "",
+      this._getDataMetaForLanguage(langCode),
+      searchableStrings,
+      langCode,
+      taxon
+    );
+
+    return searchableStrings;
   },
 
   /**
    * Recursively collect searchable data from a data object
    */
-  _collectSearchableData: function (dataObj, currentPath, dataMeta, results, langCode) {
+  _collectSearchableData: function (dataObj, currentPath, dataMeta, results, langCode, taxon) {
     if (!dataObj || typeof dataObj !== "object") return;
 
     Object.keys(dataObj).forEach((key) => {
@@ -738,7 +782,11 @@ export let Checklist = {
         // "list" is structural (container of sub-items), so iterate children instead.
         const ownMeta = dataMeta[dataPath];
         if (ownMeta && ownMeta.formatting && ownMeta.formatting !== "list") {
-          const searchable = getSearchableTextByType(value, ownMeta.formatting, { langCode, dataPath });
+          const searchable = getSearchableTextByType(
+            value,
+            ownMeta.formatting,
+            this._buildSearchUiContext(taxon, dataPath, ownMeta, langCode)
+          );
           results.push(...searchable);
         } else {
           // Sub-item array: each element has its own child formatting
@@ -747,10 +795,14 @@ export let Checklist = {
             const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
 
             if (meta && meta.formatting) {
-              const searchable = getSearchableTextByType(item, meta.formatting, { langCode, dataPath: arrayPath });
+              const searchable = getSearchableTextByType(
+                item,
+                meta.formatting,
+                this._buildSearchUiContext(taxon, arrayPath, meta, langCode)
+              );
               results.push(...searchable);
             } else if (typeof item === "object") {
-              this._collectSearchableData(item, arrayPath, dataMeta, results, langCode);
+              this._collectSearchableData(item, arrayPath, dataMeta, results, langCode, taxon);
             } else if (item !== null && item !== undefined) {
               results.push(String(item));
             }
@@ -760,10 +812,14 @@ export let Checklist = {
         const meta = dataMeta[dataPath];
 
         if (meta && meta.formatting && meta.formatting !== "list") {
-          const searchable = getSearchableTextByType(value, meta.formatting, { langCode, dataPath });
+          const searchable = getSearchableTextByType(
+            value,
+            meta.formatting,
+            this._buildSearchUiContext(taxon, dataPath, meta, langCode)
+          );
           results.push(...searchable);
         } else if (typeof value === "object") {
-          this._collectSearchableData(value, dataPath, dataMeta, results, langCode);
+          this._collectSearchableData(value, dataPath, dataMeta, results, langCode, taxon);
         } else if (value !== null && value !== undefined) {
           results.push(String(value));
         }
@@ -777,7 +833,7 @@ export let Checklist = {
   getSearchableTextForTaxon: function (index) {
     const lang = Checklist.getCurrentLanguage();
     if (!this._searchableTextCache[lang]) {
-      this.precomputeSearchableText();
+      this.precomputeSearchableText(lang);
     }
     return this._searchableTextCache[lang][index] || "";
   },
