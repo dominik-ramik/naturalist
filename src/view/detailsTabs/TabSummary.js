@@ -80,7 +80,10 @@ const SummaryView = {
     }
 
     return m(".sp-wrapper", [
-      nav,
+      m(".sp-dropdown-wrapper", [
+        m(".dropdown-title", t("sp_view")),
+         nav
+    ]),
       renderPerspective(perspectives[vnode.state.activeIdx]),
     ]);
   },

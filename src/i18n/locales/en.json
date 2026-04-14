@@ -381,6 +381,7 @@
   "url_fetching_via_proxy": "Fetching spreadsheet via server proxy…",
   "url_fetching_direct": "Fetching spreadsheet directly (CORS restrictions may apply)…",
   "summary_cell_count": "{0} taxa",
+  "sp_view": "View",
   "sp_occurrences": "Occurrences",
   "sp_general": "General",
   "sp_in_group": "sibling taxa",
