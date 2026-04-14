@@ -2,6 +2,7 @@ import m from "mithril";
 import "./MenuStripView.css";
 
 import { copyToClipboard, routeTo } from "../components/Utils.js";
+import { DOCS_URL } from "../app.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
@@ -133,6 +134,13 @@ function menuPanel() {
             title: t("manage"),
           }),
           m(MenuDivider),
+          m(MenuItem, {
+            onclick: function () {
+              window.open(DOCS_URL, "_blank");
+            },
+            icon: "docs",
+            title: t("documentation"),
+          }),
           m(MenuItem, {
             onclick: function () {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
