@@ -757,7 +757,7 @@ export const nlDataStructureSheets = {
                     code: {
                         name: "Code",
                         description:
-                            "The keyword written after `@` in the shortcode syntax. Must be lowercase letters `a–z` only, with one optional dot separator (e.g. `mydb` or `mydb.type`). No digits, underscores, or hyphens. Defining a code that matches a built-in logs an info message and overwrites the built-in for that project.",
+                            "The keyword written after `@` in the shortcode syntax. Must be lowercase letters `a-z` only, with one optional dot separator (e.g. `mydb` or `mydb.type`). No digits, underscores, or hyphens. Defining a code that matches a built-in logs an info message and overwrites the built-in for that project.",
                         whenToUse: "Choose a short, memorable code that reflects the database name. Use a dot separator to distinguish record types from the same source (e.g. `mydb.occurrence` and `mydb.taxon`).",
                         notes: [],
                         examples: [
@@ -768,7 +768,7 @@ export const nlDataStructureSheets = {
                             },
                         ],
                         integrity: {
-                            description: "Lowercase letters `a–z` only, with one optional dot separator. No digits, spaces, underscores, or hyphens. Must be unique among custom codes.",
+                            description: "Lowercase letters `a-z` only, with one optional dot separator. No digits, spaces, underscores, or hyphens. Must be unique among custom codes.",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "regex",
@@ -930,7 +930,7 @@ export const nlDataStructureSheets = {
                                 label: "Customization table overview",
                                 columns: ["Item", "Default", "What it controls"],
                                 rows: [
-                                    ["Color theme hue", "212", "Hue (0–360) of the app colour theme"],
+                                    ["Color theme hue", "212", "Hue (0-360) of the app colour theme"],
                                     ["Checklist name", "(empty)", "Short name shown in the app header"],
                                     ["About section", "(empty)", "About page text; supports Markdown and F-directives"],
                                     ["How to cite", "(empty)", "Citation text shown to users"],
@@ -955,7 +955,7 @@ export const nlDataStructureSheets = {
                     value: {
                         name: "Value",
                         description:
-                            "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) — useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0–360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **Name of checklist data sheet**: data sheet tab name, if different from the default `checklist`.\n- **Checklist data headers row**: 1-based row number of the column headers row in the data sheet. Default is `1`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
+                            "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) — useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **Name of checklist data sheet**: data sheet tab name, if different from the default `checklist`.\n- **Checklist data headers row**: 1-based row number of the column headers row in the data sheet. Default is `1`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
                         whenToUse: "Fill in only the items you need to change from their defaults. Leave the Value cell empty for any item you are happy with at its default.",
                         notes: [
                             {
@@ -1186,7 +1186,7 @@ export const nlDataStructureSheets = {
                 notes: [
                     {
                         type: "warning",
-                        text: "Region codes must be all-lowercase letters (`a–z`) only — no digits, hyphens, or underscores. Every code that appears in any `mapregions` data column must have a row here.",
+                        text: "Region codes must be all-lowercase letters (`a-z`) only — no digits, hyphens, or underscores. Every code that appears in any `mapregions` data column must have a row here.",
                     },
                 ],
                 seeAlso: [
@@ -1196,7 +1196,7 @@ export const nlDataStructureSheets = {
                     code: {
                         name: "Region code",
                         description:
-                            "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a–z`) only — no digits, hyphens, or spaces.",
+                            "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a-z`) only — no digits, hyphens, or spaces.",
                         whenToUse: "Use the same codes as in your data sheet `mapregions` cells. Conventional ISO 3166-1 alpha-2 country codes (e.g. `fr`, `de`, `gb`) work well for country-level maps.",
                         notes: [],
                         examples: [
@@ -1207,7 +1207,7 @@ export const nlDataStructureSheets = {
                             },
                         ],
                         integrity: {
-                            description: "Lowercase letters `a–z` only. Must be unique across the table.",
+                            description: "Lowercase letters `a-z` only. Must be unique across the table.",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             defaultValue: "",
@@ -1238,11 +1238,11 @@ export const nlDataStructureSheets = {
                 name: "Map regions legend",
                 required: false,
                 description:
-                    "Configures the colour, legend label, and scale behaviour for every status value or numeric anchor used in `mapregions` data columns. Three modes are supported and can be combined freely within the same column:\n\n- **Category** (default): one row per distinct status string. Each maps to a fixed colour.\n- **Gradient**: two or more anchor rows with `gradient` legend type. Colours are smoothly interpolated between anchors based on numeric data values.\n- **Stepped**: like gradient but colour assignment is discrete — each value snaps to the colour of the highest anchor it does not exceed.\n\nModes can coexist in the same column: add categorical override rows alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\nBy default, rows without a **Column name** apply to every `mapregions` column in the project. Fill **Column name** to restrict a row to one specific map column, enabling different colour schemes per map.\n\nFor dynamic anchor notations (A2–A5), the 'dataset' is the set of all numeric status values present in the *current taxon's* mapregions data for the given column — so each taxon has its own independent colour scale.\n\nThis table can be left completely empty if you do not use region maps.",
+                    "Configures the colour, legend label, and scale behaviour for every status value or numeric anchor used in `mapregions` data columns. Three modes are supported and can be combined freely within the same column:\n\n- **Category** (default): one row per distinct status string. Each maps to a fixed colour.\n- **Gradient**: two or more anchor rows with `gradient` legend type. Colours are smoothly interpolated between anchors based on numeric data values.\n- **Stepped**: like gradient but colour assignment is discrete — each value snaps to the colour of the highest anchor it does not exceed.\n\nModes can coexist in the same column: add categorical override rows alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\nBy default, rows without a **Column name** apply to every `mapregions` column in the project. Fill **Column name** to restrict a row to one specific map column, enabling different colour schemes per map.\n\nFor dynamic anchor notations (A2-A5), the 'dataset' is the set of all numeric status values present in the *current taxon's* mapregions data for the given column — so each taxon has its own independent colour scale.\n\nThis table can be left completely empty if you do not use region maps.",
                 notes: [
                     {
                         type: "tip",
-                        text: "See [Appearance & Branding → Map Regions Legend](/author-guide/nl-appearance#46-table-map-regions-legend) for the full anchor notation reference (A1–A5) and eleven configuration examples covering every mode and combination.",
+                        text: "See [Appearance & Branding → Map Regions Legend](/author-guide/nl-appearance#46-table-map-regions-legend) for the full anchor notation reference (A1-A5) and eleven configuration examples covering every mode and combination.",
                     },
                 ],
                 seeAlso: [
@@ -1280,7 +1280,7 @@ export const nlDataStructureSheets = {
                     status: {
                         name: "Status code",
                         description:
-                            "The status value or anchor position for this row. Interpretation depends on **Legend type**.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`). Leave empty to define the **global fallback** — any region whose value matches no other row receives this colour.\n\n**For `gradient` and `stepped` rows**: an anchor position in one of five notations (A1–A5). All data cells for the column must contain parseable numbers.\n\n- **A1 — Raw value**: a plain integer or decimal (e.g. `7.6`, `0`, `-5`). Anchor sits at that absolute value. Use for data with meaningful fixed thresholds (pH, temperature, concentration).\n- **A2 — Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves linearly between dataset minimum (0%) and maximum (100%). Use when relative position matters more than absolute value.\n- **A3 — Percentile**: a number followed by `p` (e.g. `25p`, `75p`, `2.5p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **A4 — Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many standard deviations from the dataset mean. Use to visualise statistical outliers.\n- **A5 — Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]`. Creates a scale diverging from a declared center point. Modifier is `%` (percentage of max distance from center), `s` (σ units), or absent (raw units). Examples: `-100%c0`, `50%c14`, `-2sc28`. Use for diverging colour schemes anchored to an ecologically meaningful midpoint.\n\nA1–A5 may be mixed freely. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's colour.",
+                            "The status value or anchor position for this row. Interpretation depends on **Legend type**.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`). Leave empty to define the **global fallback** — any region whose value matches no other row receives this colour.\n\n**For `gradient` and `stepped` rows**: an anchor position in one of five notations (A1-A5). All data cells for the column must contain parseable numbers.\n\n- **A1 — Raw value**: a plain integer or decimal (e.g. `7.6`, `0`, `-5`). Anchor sits at that absolute value. Use for data with meaningful fixed thresholds (pH, temperature, concentration).\n- **A2 — Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves linearly between dataset minimum (0%) and maximum (100%). Use when relative position matters more than absolute value.\n- **A3 — Percentile**: a number followed by `p` (e.g. `25p`, `75p`, `2.5p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **A4 — Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many standard deviations from the dataset mean. Use to visualise statistical outliers.\n- **A5 — Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]`. Creates a scale diverging from a declared center point. Modifier is `%` (percentage of max distance from center), `s` (σ units), or absent (raw units). Examples: `-100%c0`, `50%c14`, `-2sc28`. Use for diverging colour schemes anchored to an ecologically meaningful midpoint.\n\nA1-A5 may be mixed freely. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's colour.",
                         whenToUse:
                             "For simple categorical maps, enter the status strings used in your data. For numeric data, choose the anchor notation that best matches the data's nature and the intended visual communication.",
                         notes: [],
@@ -1374,7 +1374,7 @@ export const nlDataStructureSheets = {
                     legendType: {
                         name: "Legend type",
                         description:
-                            "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (A1–A5 notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (A1–A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value — equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
+                            "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (A1-A5 notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (A1-A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value — equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
                         whenToUse:
                             "Use `category` (or empty) for named status values. Use `gradient` for continuous numeric data where smooth colour transitions are meaningful. Use `stepped` for numeric data best communicated as discrete bins.",
                         notes: [],

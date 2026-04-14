@@ -8,11 +8,12 @@ import { Settings } from "../model/Settings.js";
 import { Toast } from "../view/AppLayoutView.js";
 import { ianaLocaleSubtags } from "./IanaLocaleSubtags.js";
 import { materialColors } from "./MaterialColors.js";
+import { highlightHtml } from "../model/highlightUtils.js";
 
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
-export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false) {
+export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false, highlightRegex = null) {
   //process bibliography
   try {
     data = Checklist.transformDatabaseShortcodes(data);
@@ -39,6 +40,10 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "", ski
   if (!skipInterpolationToUserContentFolder) {
     data = mdImagesClickableAndUsercontentRelative(data);
   }
+
+if (highlightRegex) {
+  data = highlightHtml(data, highlightRegex);
+}
 
   return data;
 }
@@ -494,12 +499,33 @@ export function textLowerCaseAccentless(text) {
 }
 
 export function filterMatches(data) {
-  if (
-    Checklist.filter.text.trim() != "" &&
-    typeof data === "string" &&
-    data.toLowerCase().includes(Checklist.filter.text.toLowerCase())
-  ) {
-    return true;
+  if (typeof data !== "string" || !data) return false;
+
+  // Check full-text search
+  const rawText = Checklist.filter?.text;
+  if (rawText && rawText.trim() !== "") {
+    const terms = rawText
+      .split(Settings.SEARCH_OR_SEPARATOR)
+      .map(t => t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                 .replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"))
+      .filter(Boolean);
+    if (terms.length > 0) {
+      const regex = new RegExp("(" + terms.map(t => "\\b" + t).join("|") + ")", "i");
+      const normalised = data.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (regex.test(normalised)) return true;
+    }
+  }
+
+  // Check taxa filter selections — highlight the taxon name when it is
+  // directly selected in any active taxa filter (e.g. genus "Ficus" selected).
+  const taxaFilter = Checklist.filter?.taxa;
+  if (taxaFilter) {
+    for (const key of Object.keys(taxaFilter)) {
+      const fd = taxaFilter[key];
+      if (fd?.selected?.length > 0 && fd.matchMode !== "exclude") {
+        if (fd.selected.includes(data)) return true;
+      }
+    }
   }
 
   return false;

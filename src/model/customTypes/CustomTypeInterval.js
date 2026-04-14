@@ -43,7 +43,8 @@
 import m from "mithril";
 import { Logger } from "../../components/Logger.js";
 import { helpers } from "./helpers.js";
-import { filterPluginInterval } from "../filterPlugins/filterPluginInterval.js";
+import { filterPluginInterval, intervalFilters } from "../filterPlugins/filterPluginInterval.js";
+import { applyHighlight, highlightHtml, textMatchesHighlight } from "../highlightUtils.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -58,7 +59,7 @@ function parseIntervalNumber(raw) {
   if (s === "") return null;
 
   const hasPeriod = s.includes(".");
-  const hasComma  = s.includes(",");
+  const hasComma = s.includes(",");
 
   if (hasPeriod && hasComma) {
     Logger.error(
@@ -78,19 +79,19 @@ function parseIntervalNumber(raw) {
  */
 function buildInterval(fromRaw, toRaw, source) {
   const fromEmpty = fromRaw == null || fromRaw.trim() === "";
-  const toEmpty   = toRaw  == null || toRaw.trim()  === "";
+  const toEmpty = toRaw == null || toRaw.trim() === "";
 
   if (fromEmpty && toEmpty) return [];
 
   const parsedFrom = fromEmpty ? null : parseIntervalNumber(fromRaw);
-  const parsedTo   = toEmpty   ? null : parseIntervalNumber(toRaw);
+  const parsedTo = toEmpty ? null : parseIntervalNumber(toRaw);
 
   if (parsedFrom !== null && isNaN(parsedFrom)) return null;
-  if (parsedTo   !== null && isNaN(parsedTo))   return null;
+  if (parsedTo !== null && isNaN(parsedTo)) return null;
 
   // Missing side → assume same value as the present side
   const from = parsedFrom ?? parsedTo;
-  const to   = parsedTo   ?? parsedFrom;
+  const to = parsedTo ?? parsedFrom;
 
   if (from > to) {
     Logger.error(
@@ -185,21 +186,98 @@ export let customTypeInterval = {
   render(data, uiContext) {
     if (!Array.isArray(data) || data.length !== 2) return null;
 
+    const filterDef = uiContext?.filterDef || null;
+    const operation = filterDef?.numeric?.operation;
+    const comparer = operation ? intervalFilters[operation]?.comparer : null;
+    const matchedByFilter = !!comparer &&
+      comparer(data[0], data[1], filterDef.numeric.threshold1, filterDef.numeric.threshold2);
+    const rawIntervalText = data[0] === data[1] ? `${data[0]}` : `${data[0]} - ${data[1]}`;
+    const matchedByRegex = textMatchesHighlight(rawIntervalText, uiContext?.highlightRegex);
+
+    function renderPart(part) {
+      const partString = String(part);
+      const hasHtml = /<[^>]+>/.test(partString);
+
+      if (uiContext?.highlightRegex) {
+        if (hasHtml) {
+          const highlightedHtml = highlightHtml(partString, uiContext.highlightRegex);
+          if (highlightedHtml !== partString) {
+            return { node: m.trust(highlightedHtml), hasVisibleHighlight: true };
+          }
+        } else {
+          const highlightedText = applyHighlight(partString, uiContext.highlightRegex);
+          if (Array.isArray(highlightedText)) {
+            return { node: highlightedText, hasVisibleHighlight: true };
+          }
+        }
+      }
+
+      return {
+        node: hasHtml ? m.trust(partString) : partString,
+        hasVisibleHighlight: false,
+      };
+    }
+
     // When a Handlebars template is configured, apply it to each end of the range
     // independently so the template (e.g. {{unit value "cm"}}) receives a plain
     // number each time.  processTemplate returns the original value reference when
     // no template is active, so strict reference inequality is a reliable signal.
     if (uiContext) {
       const fromResult = helpers.processTemplate(data[0], uiContext);
-      const toResult   = helpers.processTemplate(data[1], uiContext);
+      const toResult = helpers.processTemplate(data[1], uiContext);
       if (fromResult !== data[0] || toResult !== data[1]) {
-        const fromStr = String(fromResult);
-        const toStr   = String(toResult);
-        return m("span.simple-value", m.trust(fromStr === toStr ? fromStr : fromStr + '&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;' + toStr));
+        const fromPart = renderPart(fromResult);
+        const toPart = renderPart(toResult);
+        const shouldHighlightWholeField =
+          !fromPart.hasVisibleHighlight &&
+          !toPart.hasVisibleHighlight &&
+          (matchedByRegex || matchedByFilter);
+
+        if (String(fromResult) === String(toResult)) {
+          return m("span.simple-value",
+            shouldHighlightWholeField
+              ? m("mark.search-highlight", fromPart.node)
+              : fromPart.node
+          );
+        }
+
+        const content = [
+          fromPart.node,
+          m.trust('&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;'),
+          toPart.node,
+        ];
+        return m("span.simple-value",
+          shouldHighlightWholeField
+            ? m("mark.search-highlight", content)
+            : content
+        );
       }
     }
 
-    // Default: "from – to" or a bare number when both ends are equal
-    return m("span.simple-value", data[0] === data[1] ? m.trust(`${data[0]}`) : m.trust(`${data[0]}&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;${data[1]}`));
+    const fromHighlighted = applyHighlight(`${data[0]}`, uiContext?.highlightRegex);
+    const toHighlighted = applyHighlight(`${data[1]}`, uiContext?.highlightRegex);
+    const hasVisibleHighlight =
+      Array.isArray(fromHighlighted) || Array.isArray(toHighlighted);
+    const shouldHighlightWholeField = !hasVisibleHighlight && matchedByFilter;
+
+    if (data[0] === data[1]) {
+      const content = fromHighlighted;
+      return m("span.simple-value",
+        shouldHighlightWholeField
+          ? m("mark.search-highlight", content)
+          : content
+      );
+    }
+
+    const content = [
+      fromHighlighted,
+      m.trust('&nbsp;<span class="unit-dash">&ndash;</span>&nbsp;'),
+      toHighlighted,
+    ];
+    return m("span.simple-value",
+      shouldHighlightWholeField
+        ? m("mark.search-highlight", content)
+        : content
+    );
   },
 };

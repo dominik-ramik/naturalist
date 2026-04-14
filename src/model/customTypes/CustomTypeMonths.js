@@ -26,6 +26,7 @@ import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
 import { Logger } from "../../components/Logger.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 // ---------------------------------------------------------------------------
 // Parsing helpers
@@ -100,7 +101,7 @@ function expandSegment(token, uiContext = {}) {
   } else {
     // Wraparound (e.g. nov-feb → 11,12,1,2)
     for (let i = start; i <= 12; i++) result.push(i);
-    for (let i = 1;     i <= end; i++) result.push(i);
+    for (let i = 1; i <= end; i++) result.push(i);
   }
   return result;
 }
@@ -145,7 +146,7 @@ export function groupMonthsIntoRanges(months) {
   // Build linear runs
   const ranges = [];
   let start = sorted[0];
-  let prev  = sorted[0];
+  let prev = sorted[0];
 
   for (let i = 1; i < sorted.length; i++) {
     if (sorted[i] === prev + 1) {
@@ -153,7 +154,7 @@ export function groupMonthsIntoRanges(months) {
     } else {
       ranges.push([start, prev]);
       start = sorted[i];
-      prev  = sorted[i];
+      prev = sorted[i];
     }
   }
   ranges.push([start, prev]);
@@ -164,9 +165,9 @@ export function groupMonthsIntoRanges(months) {
     ranges[ranges.length - 1][1] === 12 &&
     ranges[0][0] === 1
   ) {
-    const wrappedStart  = ranges[ranges.length - 1][0]; // e.g. 12 or 11
-    const wrappedEnd    = ranges[0][1];                 // e.g. 1 or 2
-    const middleRanges  = ranges.slice(1, ranges.length - 1);
+    const wrappedStart = ranges[ranges.length - 1][0]; // e.g. 12 or 11
+    const wrappedEnd = ranges[0][1];                 // e.g. 1 or 2
+    const middleRanges = ranges.slice(1, ranges.length - 1);
     // Merged wrap range goes LAST so mid-year ranges are listed first
     return [...middleRanges, [wrappedStart, wrappedEnd]];
   }
@@ -205,28 +206,99 @@ export function renderRangesString(ranges, uiContext = {}) {
 }
 
 // VNode-only render: always return mithril VNodes where month names are wrapped in <strong>
-function renderRanges(ranges, uiContext = {}) {
+function renderRanges(ranges, uiContext = {}, highlightRegex = null, filterSelected = null) {
   if (!ranges || ranges.length === 0) return null;
 
   const parts = ranges.map(([start, end]) => {
-    const startLabel = Checklist.getMonthLabel(start, uiContext.langCode);
-    const startNode = m("strong", startLabel);
-    if (start === end) return startNode;
-    const endLabel = Checklist.getMonthLabel(end, uiContext.langCode);
-    const endNode = m("strong", endLabel);
-    return m("span", [startNode, "-", endNode]);
+    // Enumerate every month in this range (handles wraparound)
+    const months = [];
+    if (start <= end) {
+      for (let mo = start; mo <= end; mo++) months.push(mo);
+    } else {
+      for (let mo = start; mo <= 12; mo++) months.push(mo);
+      for (let mo = 1; mo <= end; mo++) months.push(mo);
+    }
+
+    // Build per-month segments with highlight status
+    const segments = []; // { label: string, highlighted: bool }
+    for (const mo of months) {
+      const label = Checklist.getMonthLabel(mo, uiContext.langCode);
+      const highlighted = filterSelected
+        ? filterSelected.has(mo)
+        : !!(highlightRegex && highlightRegex.test(label));
+      segments.push({ label, highlighted });
+    }
+
+    const hasHighlights = segments.some(s => s.highlighted);
+
+    if (!hasHighlights) {
+      // No highlights: render as "first-last" or just a single label
+      if (segments.length === 1) return m("strong", segments[0].label);
+      return m("span", [
+        m("strong", segments[0].label),
+        "-",
+        m("strong", segments[segments.length - 1].label),
+      ]);
+    }
+
+    // Has highlights: build a compact "spine" — only the outermost label of each
+    // non-highlighted run is shown, with highlighted months as pivots connected by "-".
+    // e.g. Feb–Dec with Apr highlighted → Feb-[Apr]-Dec
+    //      Jan–May with Jan highlighted → [Jan]-May
+    const pieces = []; // { type: "hl", seg } | { type: "nonhl", run: segments[] }
+    let i = 0;
+    while (i < segments.length) {
+      if (segments[i].highlighted) {
+        pieces.push({ type: "hl", seg: segments[i] });
+        i++;
+      } else {
+        let j = i;
+        while (j < segments.length && !segments[j].highlighted) j++;
+        pieces.push({ type: "nonhl", run: segments.slice(i, j) });
+        i = j;
+      }
+    }
+
+    const children = [];
+    for (let k = 0; k < pieces.length; k++) {
+      const piece = pieces[k];
+      if (piece.type === "hl") {
+        if (children.length > 0) children.push("-");
+        children.push(m("strong", m("mark.search-highlight", piece.seg.label)));
+      } else {
+        const run = piece.run;
+        const prevIsHL = k > 0 && pieces[k - 1].type === "hl";
+        const nextIsHL = k < pieces.length - 1 && pieces[k + 1].type === "hl";
+
+        if (prevIsHL && nextIsHL) {
+          // Bridge between two highlights: show both endpoints of the gap
+          children.push("-");
+          children.push(m("strong", run[0].label));
+          if (run.length > 1) {
+            children.push("-");
+            children.push(m("strong", run[run.length - 1].label));
+          }
+        } else if (prevIsHL) {
+          // Trailing run: show only the last (rightmost) label
+          children.push("-");
+          children.push(m("strong", run[run.length - 1].label));
+        } else {
+          // Leading run (nextIsHL is true): show only the first (leftmost) label
+          children.push(m("strong", run[0].label));
+        }
+      }
+    }
+
+    if (children.length === 1) return children[0];
+    return m("span", children);
   });
 
   if (parts.length === 1) return parts[0];
 
   const nodes = [];
   for (let i = 0; i < parts.length; i++) {
-    if (i > 0 && i < parts.length - 1) {
-      nodes.push(", ");
-    }
-    if (i === parts.length - 1 && parts.length > 1) {
-      nodes.push(" " + t("months_and") + " ");
-    }
+    if (i > 0 && i < parts.length - 1) nodes.push(", ");
+    if (i === parts.length - 1 && parts.length > 1) nodes.push(" " + t("months_and") + " ");
     nodes.push(parts[i]);
   }
   return nodes;
@@ -256,7 +328,7 @@ export let customTypeMonths = {
       monthColumns.forEach(colName => {
         const monthKey = colName.substring(lowerPath.length + 1);
         const monthNum = MONTH_KEYS.indexOf(monthKey) + 1; // 1-based
-        const colIdx   = headers.indexOf(colName);
+        const colIdx = headers.indexOf(colName);
         if (
           colIdx >= 0 &&
           row[colIdx] !== undefined &&
@@ -300,7 +372,18 @@ export let customTypeMonths = {
 
   render: function (data, uiContext) {
     if (!data || !Array.isArray(data) || data.length === 0) return null;
-    const vnode = renderRanges(groupMonthsIntoRanges(data), uiContext);
+
+    // For a months filter, fd.selected contains numeric month numbers (1-12).
+    // A regex built from those numbers would spuriously match inside other strings,
+    // so we use a direct numeric intersection instead and only use the regex for
+    // free-text search (where the user types month names).
+    const filterPath = uiContext.dataPath; // months is never a list sub-item
+    const fd = Checklist.filter.data[filterPath] || null;
+    const filterSelected = (fd && fd.selected?.length > 0 && fd.matchMode !== "exclude")
+      ? new Set(fd.selected.map(Number))
+      : null;
+    const vnode = renderRanges(groupMonthsIntoRanges(data), uiContext, uiContext?.highlightRegex, filterSelected);
+
     if (!vnode) return null;
     return m("span.months-data", vnode);
   },

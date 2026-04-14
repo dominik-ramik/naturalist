@@ -4,6 +4,7 @@ import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeImage = {
   dataType: "image",
@@ -83,7 +84,7 @@ export let customTypeImage = {
     if (uiContext.placement === "details") {
       return m("div", [
         imageElement,
-        title ? m(".title", title) : null,
+        title ? m(".title", applyHighlight(title, uiContext?.highlightRegex)) : null,
       ]);
     } else {
       return imageElement;

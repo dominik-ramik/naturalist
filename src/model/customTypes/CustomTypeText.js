@@ -1,6 +1,7 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeText = {
   dataType: "text",
@@ -74,6 +75,6 @@ export let customTypeText = {
     // Apply template if available
     displayData = helpers.processTemplate(displayData, uiContext);
 
-    return m("span", displayData);
+    return m("span", applyHighlight(displayData, uiContext?.highlightRegex));
   },
 };

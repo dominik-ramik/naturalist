@@ -1,6 +1,48 @@
 import m from "mithril";
 import { helpers } from "./helpers.js";
 import { filterPluginNumber } from "../filterPlugins/filterPluginNumber.js";
+import { numericFilters } from "../filterPlugins/shared/filterUtils.js";
+import { applyHighlight, highlightHtml, textMatchesHighlight } from "../highlightUtils.js";
+
+function matchesNumberFilter(value, filterDef) {
+  if (!filterDef) return false;
+
+  const operation = filterDef.numeric?.operation;
+  if (operation) {
+    const comparer = numericFilters[operation]?.comparer;
+    return !!comparer && comparer(value, filterDef.numeric.threshold1, filterDef.numeric.threshold2);
+  }
+
+  return Array.isArray(filterDef.selected) && filterDef.selected.includes(value);
+}
+
+function renderDisplayString(displayString, highlightRegex, highlightWholeField) {
+  const hasHtml = /<[^>]+>/.test(displayString);
+
+  if (highlightRegex) {
+    if (hasHtml) {
+      const highlightedHtml = highlightHtml(displayString, highlightRegex);
+      if (highlightedHtml !== displayString) {
+        return m("span", m.trust(highlightedHtml));
+      }
+    } else {
+      const highlightedText = applyHighlight(displayString, highlightRegex);
+      if (Array.isArray(highlightedText)) {
+        return m("span", highlightedText);
+      }
+    }
+  }
+
+  if (highlightWholeField) {
+    return hasHtml
+      ? m("span", m("mark.search-highlight", m.trust(displayString)))
+      : m("span", m("mark.search-highlight", displayString));
+  }
+
+  return hasHtml
+    ? m("span", m.trust(displayString))
+    : m("span", displayString);
+}
 
 export let customTypeNumber = {
   dataType: "number",
@@ -63,13 +105,27 @@ export let customTypeNumber = {
       return null;
     }
 
-    // Apply template if available
-    let displayData = helpers.processTemplate(data, uiContext);
+    const rawStr = data.toString();
+    const matchedByRegex = textMatchesHighlight(rawStr, uiContext?.highlightRegex);
+    const matchedByFilter = matchesNumberFilter(data, uiContext?.filterDef);
+    const displayData = helpers.processTemplate(data, uiContext);
 
-    if (typeof displayData !== "string") {
-      return m("span", displayData?.toLocaleString?.() || displayData?.toString?.() || "");
+    if (typeof displayData === "number") {
+      const localeStr = displayData?.toLocaleString?.() ?? rawStr;
+      const highlighted = applyHighlight(localeStr, uiContext?.highlightRegex);
+      if (Array.isArray(highlighted)) {
+        return m("span", highlighted);
+      }
+      if (matchedByRegex || matchedByFilter) {
+        return m("span", m("mark.search-highlight", localeStr));
+      }
+      return m("span", localeStr);
     }
 
-    return m("span", m.trust(displayData));
+    return renderDisplayString(
+      displayData?.toString?.() ?? String(displayData),
+      uiContext?.highlightRegex,
+      matchedByRegex || matchedByFilter
+    );
   },
 };

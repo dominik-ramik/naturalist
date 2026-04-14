@@ -5,6 +5,7 @@ import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { MinimalAudioPlayer } from "../../components/MinimalAudioPlayer.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeSound = {
   dataType: "sound",
@@ -71,7 +72,9 @@ export let customTypeSound = {
           gap: "8px",
         },
       },
-      [m(MinimalAudioPlayer, { src: source }), title ? m(".title", title) : null]
+      [m(MinimalAudioPlayer, { src: source }), 
+        title ? m(".title", applyHighlight(title, uiContext?.highlightRegex)) : null
+      ]
     );
   },
 };

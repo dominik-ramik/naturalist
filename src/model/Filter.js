@@ -169,6 +169,7 @@ export let Filter = {
     if (!Object.keys(key.taxa).length) delete key.taxa;
     if (!Object.keys(key.data).length) delete key.data;
     if (Filter.text?.length > 0) key.text = Filter.text;
+    key.intent = Settings.analyticalIntent();
 
     let stringified = JSON.stringify(key);
     return stringified;

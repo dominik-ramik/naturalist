@@ -738,7 +738,7 @@ export let Checklist = {
         // "list" is structural (container of sub-items), so iterate children instead.
         const ownMeta = dataMeta[dataPath];
         if (ownMeta && ownMeta.formatting && ownMeta.formatting !== "list") {
-          const searchable = getSearchableTextByType(value, ownMeta.formatting, { langCode });
+          const searchable = getSearchableTextByType(value, ownMeta.formatting, { langCode, dataPath });
           results.push(...searchable);
         } else {
           // Sub-item array: each element has its own child formatting
@@ -747,7 +747,7 @@ export let Checklist = {
             const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
 
             if (meta && meta.formatting) {
-              const searchable = getSearchableTextByType(item, meta.formatting, { langCode });
+              const searchable = getSearchableTextByType(item, meta.formatting, { langCode, dataPath: arrayPath });
               results.push(...searchable);
             } else if (typeof item === "object") {
               this._collectSearchableData(item, arrayPath, dataMeta, results, langCode);
@@ -760,7 +760,7 @@ export let Checklist = {
         const meta = dataMeta[dataPath];
 
         if (meta && meta.formatting && meta.formatting !== "list") {
-          const searchable = getSearchableTextByType(value, meta.formatting, { langCode });
+          const searchable = getSearchableTextByType(value, meta.formatting, { langCode, dataPath });
           results.push(...searchable);
         } else if (typeof value === "object") {
           this._collectSearchableData(value, dataPath, dataMeta, results, langCode);
@@ -889,6 +889,9 @@ export let Checklist = {
       //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
 
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "mapregions") {
+        getSearchableTextByType(currentData, "mapregions", { langCode, dataPath }).forEach(
+          text => primitives.push(text)
+        );
         return primitives;
       }
 
@@ -898,7 +901,7 @@ export let Checklist = {
         // crash because those child paths don't exist. Instead, delegate to the
         // reader's getSearchableText so i18n month names ("January" etc.) are
         // properly indexed for full-text search.
-        getSearchableTextByType(currentData, "months", { langCode }).forEach(
+        getSearchableTextByType(currentData, "months", { langCode, dataPath }).forEach(
           text => primitives.push(text)
         );
         return primitives;
@@ -907,7 +910,7 @@ export let Checklist = {
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "interval") {
         // interval data is [from, to] — a pair of numbers, NOT a sub-item array.
         // Delegate to the reader so "3.5 - 7.2" is indexed for full-text search.
-        getSearchableTextByType(currentData, "interval", {}).forEach(
+        getSearchableTextByType(currentData, "interval", { dataPath }).forEach(
           text => primitives.push(text)
         );
         return primitives;

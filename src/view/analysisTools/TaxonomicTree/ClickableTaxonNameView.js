@@ -2,7 +2,28 @@ import m from "mithril";
 
 import { Checklist } from "../../../model/Checklist.js";
 import { Settings } from "../../../model/Settings.js";
-import { filterMatches,  routeTo,  } from "../../../components/Utils.js";
+import { routeTo } from "../../../components/Utils.js";
+import { applyHighlight, buildSearchRegex } from "../../../model/highlightUtils.js";
+
+function getTaxonHighlightRegex() {
+  const terms = [];
+
+  Object.values(Checklist.filter?.taxa || {}).forEach(fd => {
+    if (fd?.matchMode === "exclude" || !Array.isArray(fd?.selected)) return;
+    terms.push(...fd.selected.map(String));
+  });
+
+  Object.values(Checklist.filter?.data || {}).forEach(fd => {
+    if (fd?.type !== "taxon" || fd?.matchMode === "exclude" || !Array.isArray(fd?.selected)) return;
+    terms.push(...fd.selected.map(String));
+  });
+
+  if (Checklist.filter?.text?.trim()) {
+    terms.push(...Checklist.filter.text.split(Settings.SEARCH_OR_SEPARATOR));
+  }
+
+  return buildSearchRegex(terms);
+}
 
 export let ClickableTaxonName = {
   view: function (vnode) {
@@ -15,9 +36,7 @@ export let ClickableTaxonName = {
       return null;
     }
 
-    let filterMatch = filterMatches(
-      taxonTree.taxon.name + " " + taxonTree.taxon.authority
-    );
+    const highlightRegex = getTaxonHighlightRegex();
 
     return m(
       "span.copiable.clickable",
@@ -31,12 +50,10 @@ export let ClickableTaxonName = {
       [
         m(
           nameTag +
-            ".taxon-name" +
-            (filterMatch ? ".found" : "") +
-            "[style=font-size: " +
+            ".taxon-name[style=font-size: " +
             vnode.attrs.fontSize +
             "%]",
-          taxonTree.taxon.name
+          applyHighlight(taxonTree.taxon.name, highlightRegex)
         ),
         taxonTree.taxon.authority == ""
           ? null
@@ -44,7 +61,7 @@ export let ClickableTaxonName = {
               "span.taxon-authority[style=font-size: " +
                 vnode.attrs.fontSize +
                 "%]",
-              " " + taxonTree.taxon.authority
+              applyHighlight(" " + taxonTree.taxon.authority, highlightRegex)
             ),
       ]
     );

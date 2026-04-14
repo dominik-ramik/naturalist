@@ -56,7 +56,7 @@ export let customTypeMarkdown = {
     let displayData = helpers.processTemplate(data, uiContext);
 
     // Process markdown
-    const htmlContent = processMarkdownWithBibliography(displayData);
+    const htmlContent = processMarkdownWithBibliography(displayData, "", false, uiContext?.highlightRegex);
 
     return m("span", m.trust(htmlContent));
   },

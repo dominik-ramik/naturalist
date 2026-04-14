@@ -4,9 +4,13 @@ import DOMPurify from "dompurify";
 import "./TaxonDataItemView.css";
 
 import { Checklist } from "../../../model/Checklist.js";
-import { filterMatches, routeTo, shouldHide } from "../../../components/Utils.js";
+import { routeTo, shouldHide } from "../../../components/Utils.js";
 import { dataCustomTypes } from "../../../model/customTypes/index.js";
 import { AppLayoutView } from "../../AppLayoutView.js";
+import { buildSearchRegex } from "../../../model/highlightUtils.js";
+import { Settings } from "../../../model/Settings.js";
+
+import "./search-highlight.css";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -191,12 +195,28 @@ export let TaxonDataItemView = {
       } else if (typeof taxon === "string") {
         taxonObj = { name: taxon, authority: "" };
       }
+
+      // Resolve active filter def - list items use a trailing "#" key
+      const filterPath = dataPath.replace(/\d+$/, "#");
+      const fd = Checklist.filter.data[dataPath] || Checklist.filter.data[filterPath] || null;
+      const EXCLUDE = "exclude";
+      const highlightTerms = [];
+      if (fd && Array.isArray(fd.selected) && fd.selected.length > 0 && fd.matchMode !== EXCLUDE) {
+        highlightTerms.push(...fd.selected.map(String));
+      }
+      if (Checklist.filter.text?.trim()) {
+        highlightTerms.push(...Checklist.filter.text.split(Settings.SEARCH_OR_SEPARATOR));
+      }
+      const highlightRegex = buildSearchRegex(highlightTerms);
       const uiContext = {
         meta: meta,
         dataPath: dataPath,
         taxon: taxonObj,
         originalData: TaxonDataItemView.originalData,
+        highlightRegex,
+        filterDef: fd,
       };
+
       let rendered = reader.render(data, uiContext);
       if (rendered === null) {
         return null;
@@ -299,7 +319,7 @@ export let TaxonDataItemView = {
     return m("span", [
       title,
       itemType == "simple"
-        ? m("span.simple-value" + (filterMatches(data) ? ".found" : ""), data)
+       ? m("span.simple-value", data)
         : subitemsList,
       // Manually append separator for complex types (Simple types already have it inside 'data')
       itemType !== "simple" && tailingSeparator ? tailingSeparator : null

@@ -4,6 +4,7 @@ import m from "mithril";
 import { Checklist } from "../Checklist.js";
 import { helpers } from "./helpers.js";
 import { filterPluginDate } from "../filterPlugins/filterPluginDate.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 function getDateFormat(langCode) {
   return Checklist.getCurrentDateFormat(langCode);
@@ -75,6 +76,6 @@ export let customTypeDate = {
       formattedDate = helpers.processTemplate(formattedDate, uiContext);
     }
 
-    return m("span.data-date", formattedDate);
+    return m("span.data-date", applyHighlight(formattedDate, uiContext?.highlightRegex));
   },
 };

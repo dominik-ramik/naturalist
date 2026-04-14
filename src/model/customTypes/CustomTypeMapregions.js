@@ -17,6 +17,8 @@ import { Checklist } from "../Checklist.js";
 import { processMarkdownWithBibliography } from "../../components/Utils.js";
 import { Logger } from "../../components/Logger.js";
 import { colorSVGMap } from "../../components/ColorSVGMap.js";
+import { applyHighlight, highlightHtml } from "../highlightUtils.js";
+
 import {
   parseLegendConfig,
   collectNumericValues,
@@ -27,6 +29,7 @@ import {
   steppedBinsForConfig,
   parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
+
 import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
 
 const nlData = nlDataStructure;
@@ -61,20 +64,32 @@ export function getCachedRegionColor(status, legendConfig, datasetStats, dataPat
     _resolvedColorCache.set(dataPath, new Map());
   }
   const sub = _resolvedColorCache.get(dataPath);
-  if (!sub.has(status)) {
-    sub.set(status, resolveRegionColor(status, legendConfig, datasetStats));
+  const statsKey = datasetStats
+    ? `${datasetStats.min}|${datasetStats.max}|${datasetStats.mean}|${datasetStats.sd}|${datasetStats.sorted.join(",")}`
+    : "no-stats";
+  const cacheKey = `${status}::${statsKey}`;
+
+  if (!sub.has(cacheKey)) {
+    sub.set(cacheKey, resolveRegionColor(status, legendConfig, datasetStats));
   }
-  return sub.get(status);
+  return sub.get(cacheKey);
 }
 
 const _datasetStatsCache = new Map();
+
+function buildMapregionsDataSignature(data) {
+  return Object.entries(data || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([code, regionData]) => `${code}=${regionData?.status ?? ""}`)
+    .join("|");
+}
 
 export function clearDatasetStatsCache() {
   _datasetStatsCache.clear();
 }
 
 export function getCachedDatasetStats(data, legendConfig, dataPath) {
-  const key = dataPath + ":" + Object.keys(data).sort().join(",");
+  const key = dataPath + ":" + buildMapregionsDataSignature(data);
   if (!_datasetStatsCache.has(key)) {
     const numericVals = collectNumericValues(data, legendConfig);
     _datasetStatsCache.set(key, computeDatasetStats(numericVals));
@@ -152,12 +167,29 @@ export let customTypeMapregions = {
     return resultObject;
   },
 
-  getSearchableText: function (data) {
+  getSearchableText: function (data, uiContext) {
     if (!data || typeof data !== "object") return [];
     const result = [];
+    const dataPath = uiContext?.dataPath;
+    const legendConfig = dataPath ? getLegendConfig(dataPath) : null;
+    const datasetStats = dataPath ? getCachedDatasetStats(data, legendConfig, dataPath) : null;
+
     Object.keys(data).forEach(regionCode => {
       const regionName = Checklist.nameForMapRegion(regionCode);
       if (regionName && !result.includes(regionName)) result.push(regionName);
+
+      if (!legendConfig) return;
+
+      const status = data[regionCode]?.status ?? "";
+      const resolved = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
+      const appendedLegend = (
+        resolved?.resolvedAs === "category" ||
+        resolved?.resolvedAs === "stepped"
+      ) ? resolved?.appendedLegend?.trim() : "";
+
+      if (appendedLegend && !result.includes(appendedLegend)) {
+        result.push(appendedLegend);
+      }
     });
     return result;
   },
@@ -653,9 +685,30 @@ function renderRegionsList(data, uiContext) {
     const notesArray = Array.isArray(regionInfo.notes) ? regionInfo.notes : (regionInfo.notes ? [regionInfo.notes] : []);
     const footnoteIndices = notesArray.map(registerNote).filter(i => i !== null);
 
-    const regionContent = [m("strong", regionName)];
+    const hl = uiContext?.highlightRegex || null;
+    // For the region filter, fd.selected contains names — the hl regex covers them.
+    // For the status filter, check exact match against the raw status code to avoid
+    // substring false-positives (e.g. "v" matching inside "vagrant").
+    const fd = uiContext?.filterDef || Checklist.filter.data[uiContext.dataPath] || null;
+    const sfStatuses = fd?.statusFilter?.selectedStatuses;
+    const statusIsSelected = sfStatuses?.length > 0 && sfStatuses.includes(status);
+    const numericStatus = parseNumericStatus(status);
+    const statusRange = fd?.statusFilter || null;
+    const statusIsInNumericRange = numericStatus !== null &&
+      (statusRange?.rangeMin !== null || statusRange?.rangeMax !== null) &&
+      (statusRange?.rangeMin === null || numericStatus >= statusRange.rangeMin) &&
+      (statusRange?.rangeMax === null || numericStatus <= statusRange.rangeMax);
+
+    const regionContent = [m("strong", applyHighlight(regionName, hl))];
     if (footnoteIndices.length > 0) regionContent.push(m("sup", footnoteIndices.sort((a, b) => a - b).join(",")));
-    if (appendedLegend) regionContent.push(m("em", m.trust(appendedLegend)));
+    if (appendedLegend) {
+      regionContent.push(
+        (statusIsSelected || statusIsInNumericRange)
+          ? m("em", m("mark.search-highlight", m.trust(appendedLegend)))
+          : m("em", m.trust(highlightHtml(appendedLegend, hl)))
+      );
+    }
+
     return m("span", regionContent);
   });
 

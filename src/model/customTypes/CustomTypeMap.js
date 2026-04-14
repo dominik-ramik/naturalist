@@ -4,6 +4,7 @@ import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
+import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeMap = {
   dataType: "map",
@@ -79,7 +80,7 @@ export let customTypeMap = {
     if (uiContext.placement === "details") {
       return m("div", [
         imageElement,
-        title ? m(".title", title) : null,
+        title ? m(".title", applyHighlight(title, uiContext?.highlightRegex)) : null,
       ]);
     } else {
       return imageElement;

@@ -88,7 +88,7 @@ function isCategoryFilterActive(sf) {
   return !!sf && sf.selectedStatuses?.length > 0;
 }
 
-function statusFilterTitle(sf) {
+function statusFilterTitle(sf, categoryRows) {
   const parts = [];
 
   if (isRangeFilterActive(sf)) {
@@ -100,7 +100,11 @@ function statusFilterTitle(sf) {
   }
 
   if (isCategoryFilterActive(sf)) {
-    parts.push(sf.selectedStatuses.join(", "));
+    const legends = sf.selectedStatuses.map(status => {
+      const row = categoryRows?.find(r => r.status === status);
+      return row?.legend || status;
+    });
+    parts.push(legends.join(", "));
   }
 
   return parts.join("; ");
@@ -331,7 +335,7 @@ export const filterPluginMapregions = {
     return m(DropdownMapregions, { type, dataPath, openHandler, dropdownId });
   },
 
-  getCrumbs(filterDef, _ctx) {
+  getCrumbs(filterDef, ctx) {
     const mode   = filterDef.matchMode || MATCH_MODES.ANY;
     const crumbs = filterDef.selected
       // In exclude mode selected items are deliberately absent from fd.possible
@@ -340,8 +344,9 @@ export const filterPluginMapregions = {
       .map(item => ({ title: item, matchMode: mode }));
 
     if (isStatusFilterActive(filterDef.statusFilter)) {
+      const categoryRows = parseLegendConfig(Checklist.getMapRegionsLegendRows(), ctx.dataPath).categoryRows;
       crumbs.push({
-        title:          statusFilterTitle(filterDef.statusFilter),
+        title:          statusFilterTitle(filterDef.statusFilter, categoryRows),
         isStatusFilter: true,
       });
     }

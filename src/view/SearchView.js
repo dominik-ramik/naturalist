@@ -89,41 +89,58 @@ export let SearchView = {
 
 let SearchBox = {
     typingTimer: null,
+    // ghostText holds what the user has typed before the debounce fires.
+    // Rendering from ghostText (rather than Checklist.filter.text) means that
+    // Mithril redraws triggered by route commits can never clobber in-progress input.
+    ghostText: null,
+
     view: function (vnode) {
         const { isExpanded, toggleHandler } = vnode.attrs;
 
+        const displayValue = SearchBox.ghostText !== null
+            ? SearchBox.ghostText
+            : Checklist.filter.text;
+
         // SearchBox is now a flex container (styled in CSS)
         return m(".search-box", [
-            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", [Settings.SEARCH_OR_SEPARATOR], true) + "][value=" + Checklist.filter.text + "]", {
+            m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", [Settings.SEARCH_OR_SEPARATOR], true) + "]", {
+                value: displayValue,
                 oninput: function (e) {
-                    const oldText = Checklist.filter.text;
                     const newText = e.target.value;
 
-                    Checklist.filter.text = newText;
+                    // Always keep ghost in sync with the actual DOM value so that
+                    // any redraw during debounce shows exactly what the user typed.
+                    SearchBox.ghostText = newText;
 
-                    // Clear any existing timer
                     if (SearchBox.typingTimer) {
                         clearTimeout(SearchBox.typingTimer);
                         SearchBox.typingTimer = null;
                     }
 
-                    // LOGIC: 
-                    // 1. If starting a search (oldText was empty), commit immediately to establish URL state.
-                    // 2. If clearing a search (newText is empty), commit immediately to reset view.
-                    // 3. Otherwise (refining search), debounce to avoid flooding history.
-                    if (oldText.length === 0 || newText.length === 0) {
+                    if (newText.length === 0) {
+                        // Clearing the field: commit immediately and drop the ghost.
+                        SearchBox.ghostText = null;
+                        Checklist.filter.text = "";
                         Checklist.filter.commit();
                     } else {
+                        // Debounce all non-empty input uniformly — including the very
+                        // first character — to avoid a route commit mid-keystroke.
                         SearchBox.typingTimer = setTimeout(function () {
+                            SearchBox.ghostText = null;
+                            Checklist.filter.text = newText;
                             Checklist.filter.commit();
                         }, 500);
                     }
                 },
                 onkeydown: function (e) {
-                    if (e.key == "Enter") {
+                    if (e.key === "Enter") {
                         if (SearchBox.typingTimer) {
                             clearTimeout(SearchBox.typingTimer);
                             SearchBox.typingTimer = null;
+                        }
+                        if (SearchBox.ghostText !== null) {
+                            Checklist.filter.text = SearchBox.ghostText;
+                            SearchBox.ghostText = null;
                         }
                         Checklist.filter.commit();
                     }
@@ -139,6 +156,11 @@ let SearchBox = {
             ]),
             !Checklist.filter.isEmpty() ? m("button.filter-button.mobile-clear-filters", {
                 onclick: function () {
+                    if (SearchBox.typingTimer) {
+                        clearTimeout(SearchBox.typingTimer);
+                        SearchBox.typingTimer = null;
+                    }
+                    SearchBox.ghostText = null;
                     Checklist.filter.clear();
                     Checklist.filter.commit();
                 },

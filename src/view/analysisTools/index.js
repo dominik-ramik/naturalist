@@ -189,6 +189,7 @@ export function requestToolChange(toolId, checklistData) {
       Settings.analyticalIntent(availability.supportedIntents[0]);
     }
 
+    Checklist.filter._queryResultCache = {};
     _programmaticRouteChange = true;
     updateRouteParams();
   } else {
@@ -209,6 +210,7 @@ export function requestIntentChange(intentId, checklistData) {
 
   if (availability.supportedIntents.includes(intentId)) {
     Settings.analyticalIntent(intentId);
+    Checklist.filter._queryResultCache = {};
     _programmaticRouteChange = true;
     updateRouteParams();
   } else {

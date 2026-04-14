@@ -52,7 +52,7 @@ export function buildRangeFilterLabel(dataPath, operation, threshold1, threshold
   title += t("numeric_filter_" + operation + "_short") + " ";
   title += formatThreshold(threshold1);
   if (opDef?.values > 1) {
-    title += " " + (operation === "between" ? t("numeric_filter_and") : t("numeric_filter_plusminus")) + " ";
+    title += " " + (operation !== "around" ? t("numeric_filter_and") : t("numeric_filter_plusminus")) + " ";
     title += formatThreshold(threshold2);
   }
   return title;
