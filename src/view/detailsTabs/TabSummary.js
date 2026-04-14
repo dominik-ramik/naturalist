@@ -464,8 +464,8 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
   const lc = getLegendConfig(mapPath);
 
   // byRegion: regionCode → {
-  //   _grad?: { min, max, count }   — gradient numeric accumulator
-  //   [binLabel]: { fill, count, resolvedAs }  — stepped / category bins
+  //   _grad?: { min, max, count, rawValues }  — gradient numeric accumulator
+  //   [binLabel]: { fill, count, resolvedAs, rawValues }  — stepped / category bins
   // }
   const byRegion = {};
 
@@ -485,21 +485,26 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
         // Accumulate numeric gradient values as a range per region.
         const n = parseNumericStatus(status);
         if (!byRegion[code]._grad) {
-          byRegion[code]._grad = { min: n, max: n, count: 0 };
+          byRegion[code]._grad = { min: n, max: n, count: 0, rawValues: [] };
         } else {
           byRegion[code]._grad.min = Math.min(byRegion[code]._grad.min, n);
           byRegion[code]._grad.max = Math.max(byRegion[code]._grad.max, n);
         }
         byRegion[code]._grad.count++;
+        // Store per-value fill so summary stats get correct colors
+        byRegion[code]._grad.rawValues.push({ value: n, fill: resolved.fill });
       } else {
         // Categorical, stepped, and fallback: group by the resolved legend label.
         // Colour is captured now from the actual resolved status — not re-derived
         // from the label string later, which would fail to find a match.
         const binLabel = resolved.legend || status;
         if (!byRegion[code][binLabel]) {
-          byRegion[code][binLabel] = { fill: resolved.fill, count: 0, resolvedAs: resolved.resolvedAs };
+          byRegion[code][binLabel] = { fill: resolved.fill, count: 0, resolvedAs: resolved.resolvedAs, rawValues: [] };
         }
         byRegion[code][binLabel].count++;
+        // Capture the raw numeric value with its individually-resolved fill
+        const rawNum = parseNumericStatus(status);
+        if (rawNum !== null) byRegion[code][binLabel].rawValues.push({ value: rawNum, fill: resolved.fill });
       }
     });
   });
@@ -525,6 +530,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
           fill:       midResolved?.fill ?? "#ccc",
           legend:     rangeLabel,
           resolvedAs: "gradient",
+          rawValues:  g.rawValues,
         });
         totalCount += g.count;
       }
@@ -539,6 +545,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
           fill:       bin.fill,
           legend:     binLabel,
           resolvedAs: bin.resolvedAs,
+          rawValues:  bin.rawValues,
         });
         totalCount += bin.count;
       });
@@ -687,7 +694,7 @@ function renderLevelData(row, p) {
     case "taxonomy":  return null;
     case "occurrences": return renderOccurrencesData(row);
     case "category":  return renderCategoryData(row.breakdown, p.meta);
-    case "mapregions": return renderRegionsData(row.breakdown);
+    case "mapregions": return renderRegionsLevelContent(row.breakdown);
     case "months":    return renderMonthsGrid(row.months);
     default:          return null;
   }
@@ -748,7 +755,231 @@ function renderCategoryData(breakdown, meta) {
 
 // ── Map regions ───────────────────────────────────────────────────────────────
 
-function renderRegionsData(breakdown) {
+// ── Summary helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Given a flat array of { value, fill, count } items (count = how many
+ * observations this value represents), compute weighted min/avg/median/max
+ * and pick the fill from the entry whose value is nearest each stat.
+ */
+function computeWeightedStats(weightedPoints) {
+  if (!weightedPoints.length) return null;
+
+  // Expand into a sorted flat list respecting observation counts
+  const expanded = [];
+  weightedPoints.forEach(({ value, fill, count }) => {
+    for (let i = 0; i < count; i++) expanded.push({ value, fill });
+  });
+  expanded.sort((a, b) => a.value - b.value);
+
+  const vals   = expanded.map(x => x.value);
+  const min    = vals[0];
+  const max    = vals[vals.length - 1];
+  const sum    = vals.reduce((s, v) => s + v, 0);
+  const avg    = sum / vals.length;
+  const n      = vals.length;
+  const median = n % 2 === 0
+    ? (vals[n / 2 - 1] + vals[n / 2]) / 2
+    : vals[Math.floor(n / 2)];
+
+  const nearest = (target) =>
+    expanded.reduce((best, x) =>
+      Math.abs(x.value - target) < Math.abs(best.value - target) ? x : best
+    ).fill;
+
+  return {
+    min,    fill_min:    nearest(min),
+    max,    fill_max:    nearest(max),
+    avg:    Math.round(avg    * 100) / 100,  fill_avg:    nearest(avg),
+    median: Math.round(median * 100) / 100,  fill_median: nearest(median),
+  };
+}
+
+/**
+ * Aggregate all region statuses in a breakdown into a level-wide summary.
+ *
+ * Returns { type: "categorical" | "numeric" | "mixed", categorical, numeric }
+ *
+ * categorical.entries — [ { fill, legend, count, pct } ]
+ * categorical.stats   — computeWeightedStats result from actual raw values when
+ *                        stepped/numeric data is present, else null
+ * numeric             — computeWeightedStats result for pure gradient columns
+ */
+function buildRegionLevelSummary(breakdown) {
+  if (!breakdown?.length) return null;
+
+  // legend → { fill, count, rawValues: number[] }
+  const catTotals  = {};
+  // All individual raw numeric values from gradient entries → { value, fill, count:1 }
+  const gradPoints = [];
+
+  breakdown.forEach(region => {
+    region.statuses.forEach(s => {
+      if (s.resolvedAs === "gradient") {
+        // rawValues are {value, fill} pairs with per-value resolved colors
+        const rv = s.rawValues ?? [];
+        rv.forEach(pt => gradPoints.push({ value: pt.value, fill: pt.fill, count: 1 }));
+      } else {
+        const key = s.legend || s.status || "";
+        if (!catTotals[key]) {
+          catTotals[key] = { fill: s.fill, count: 0, rawValues: [] };
+        }
+        catTotals[key].count += s.count;
+        // Collect {value, fill} pairs (available for stepped bins)
+        const rv = s.rawValues ?? [];
+        catTotals[key].rawValues.push(...rv);
+      }
+    });
+  });
+
+  const hasCat  = Object.keys(catTotals).length > 0;
+  const hasGrad = gradPoints.length > 0;
+
+  // ── Categorical block ──────────────────────────────────────────────────────
+  let categorical = null;
+  if (hasCat) {
+    const grandTotal = Object.values(catTotals).reduce((s, v) => s + v.count, 0);
+
+    // Stepped-numeric: any entry that has actual raw numeric values.
+    const hasSteppedNums = Object.values(catTotals).some(e => e.rawValues.length > 0);
+
+    // Compute stats from actual raw underlying values with per-value fills
+    let catStats = null;
+    if (hasSteppedNums) {
+      const allRawPoints = [];
+      Object.values(catTotals).forEach(e => {
+        e.rawValues.forEach(pt => allRawPoints.push({ value: pt.value, fill: pt.fill, count: 1 }));
+      });
+      catStats = computeWeightedStats(allRawPoints);
+    }
+
+    // Determine sort order: if any entry has raw numeric data, sort by the
+    // median of its raw values so bins read low → high.
+    const entries = Object.entries(catTotals)
+      .map(([legend, { fill, count, rawValues }]) => {
+        const sortKey = rawValues.length > 0
+          ? rawValues.reduce((s, pt) => s + pt.value, 0) / rawValues.length
+          : null;
+        return {
+          legend, fill, count,
+          pct: grandTotal > 0 ? Math.round(count / grandTotal * 100) : 0,
+          sortKey,
+        };
+      })
+      .sort((a, b) =>
+        (a.sortKey !== null && b.sortKey !== null)
+          ? a.sortKey - b.sortKey        // stepped bins: ascending by value
+          : (a.sortKey !== null ? -1      // numeric entries before text
+            : b.sortKey !== null ? 1
+            : b.count - a.count)          // pure text: most frequent first
+      );
+
+    categorical = {
+      entries,
+      stats:          catStats,
+      hasSteppedNums,
+    };
+  }
+
+  // ── Pure gradient / numeric block ─────────────────────────────────────────
+  let numeric = null;
+  if (hasGrad) {
+    numeric = computeWeightedStats(gradPoints);
+  }
+
+  const type = hasCat && hasGrad ? "mixed" : hasCat ? "categorical" : "numeric";
+  return { type, categorical, numeric };
+}
+
+/**
+ * Render the collapsed-by-default level summary for mapregions.
+ * Summary is always visible; the per-region detail table is inside <details>.
+ */
+function renderRegionsLevelContent(breakdown) {
+  if (!breakdown?.length) return null;
+
+  const summary = buildRegionLevelSummary(breakdown);
+  if (!summary) return null;
+
+  const summaryNode = m(".sp-region-level-summary", [
+    summary.categorical ? renderCategoricalSummary(summary.categorical) : null,
+    summary.numeric     ? renderNumericSummary(summary.numeric)         : null,
+  ]);
+
+  const detailsNode = m("details.sp-region-details", [
+    m("summary.sp-region-details-toggle", t("sp_region_details_toggle")),
+    m(".sp-region-detail-table", renderRegionsDetailRows(breakdown)),
+  ]);
+
+  return [summaryNode, detailsNode];
+}
+
+function renderCategoricalSummary(categorical) {
+  const { entries, stats, hasSteppedNums } = categorical;
+  if (!entries?.length) return null;
+
+  const header = m(".sp-region-summary-row.sp-region-summary-header", [
+    m("span.sp-region-summary-swatch-col"),
+    m("span.sp-region-summary-label-col", t("sp_region_col_status")),
+    m("span.sp-stat-count",               t("sp_region_col_count")),
+    m("span.sp-stat-sep",                 "/"),
+    m("span.sp-stat-pct",                 t("sp_region_col_pct")),
+  ]);
+
+  const rows = entries.map(({ fill, legend, count, pct }) =>
+    m(".sp-region-summary-row", [
+      m("span.sp-region-summary-swatch-col",
+        m("span.sp-region-swatch", { style: { background: fill } })
+      ),
+      m("span.sp-region-summary-label-col", legend),
+      m("span.sp-stat-count", String(count)),
+      m("span.sp-stat-sep",   "/"),
+      m("span.sp-stat-pct",   pct + "%"),
+    ])
+  );
+
+  // For stepped / binned numeric columns, append the aggregate stats block
+  // directly beneath the per-bin table so the user sees both breakdowns.
+  const statsBlock = (hasSteppedNums && stats)
+    ? renderNumericSummary(stats)
+    : null;
+
+  return m(".sp-region-cat-summary", [header, ...rows, statsBlock]);
+}
+
+function renderNumericSummary(numeric) {
+  const { min, max, avg, median, fill_min, fill_max, fill_avg, fill_median } = numeric;
+
+  const fmt = v => (Number.isInteger(v) ? String(v) : v.toLocaleString());
+
+  const statDefs = [
+    { label: t("sp_region_stat_max"),    value: fmt(max),    fill: fill_max    },
+    { label: t("sp_region_stat_avg"),    value: fmt(avg),    fill: fill_avg    },
+    { label: t("sp_region_stat_median"), value: fmt(median), fill: fill_median },
+    { label: t("sp_region_stat_min"),    value: fmt(min),    fill: fill_min    },
+  ];
+
+  const header = m(".sp-region-summary-row.sp-region-summary-header", [
+    m("span.sp-region-summary-swatch-col"),
+    m("span.sp-region-summary-label-col", t("sp_region_col_status_range")),
+    m("span.sp-stat-count",               t("sp_region_stat_value")),
+  ]);
+
+  const rows = statDefs.map(({ label, value, fill }) =>
+    m(".sp-region-summary-row", [
+      m("span.sp-region-summary-swatch-col",
+        m("span.sp-region-swatch", { style: { background: fill } })
+      ),
+      m("span.sp-region-summary-label-col", label),
+      m("span.sp-stat-count", value),
+    ])
+  );
+
+  return m(".sp-region-num-summary", [header, ...rows]);
+}
+
+/** The original per-region detail rows — now rendered inside <details>. */
+function renderRegionsDetailRows(breakdown) {
   if (!breakdown?.length) return null;
 
   const isGradient = breakdown.some(r => r.statuses.some(s => s.resolvedAs === "gradient"));
@@ -770,7 +1001,6 @@ function renderRegionsData(breakdown) {
     const multiStatus = region.statuses.length > 1;
 
     return m(".sp-region-row", [
-      // Colour dot using the dominant (highest-count) status colour
       m("span.sp-region-dot",
         { style: { background: region.statuses[0]?.fill ?? "#ccc" } }
       ),

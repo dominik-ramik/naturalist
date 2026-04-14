@@ -321,7 +321,7 @@
   font-size: 0.82em;
 }
 
-/* Small swatch for multi-status lines */
+/* Small swatch for multi-status lines and summary rows */
 .sp-region-swatch {
   display: inline-block;
   width: 0.55em;
@@ -337,12 +337,145 @@
   flex: 1;
 }
 
-/* Column header row */
+/* Column header row (used in both summary and detail tables) */
 .sp-region-header-row {
   opacity: 0.55;
   font-style: italic;
   margin-bottom: 0.15em;
   pointer-events: none;
+}
+
+.sp-region-header-row .sp-region-name {
+  font-weight: normal;
+}
+
+/* ── Level summary (always-visible aggregated stats) ──────────────────────── */
+
+.sp-region-level-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  margin-bottom: 0.35em;
+}
+
+/* Categorical and numeric summary blocks share the same row grid */
+.sp-region-cat-summary,
+.sp-region-num-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+}
+
+/* Separator between cat and numeric blocks when both are present as siblings */
+.sp-region-cat-summary + .sp-region-num-summary {
+  padding-top: 0.45em;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  margin-top: 0.1em;
+}
+
+/* Stats sub-block when nested inside a stepped-numeric categorical summary */
+.sp-region-cat-summary > .sp-region-num-summary {
+  margin-top: 0.45em;
+  padding-top: 0.45em;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+/*
+ * Summary row: swatch col (fixed) · label col (flex) · count · sep · pct
+ * Mirrors the column rhythm of .sp-region-row / .sp-cat-item.
+ */
+.sp-region-summary-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.3em;
+  width: 100%;
+  font-size: 0.82em;
+}
+
+.sp-region-summary-row.sp-region-summary-header {
+  opacity: 0.55;
+  font-style: italic;
+  margin-bottom: 0.1em;
+  pointer-events: none;
+}
+
+/* Fixed-width column that holds the colour swatch (keeps labels aligned) */
+.sp-region-summary-swatch-col {
+  width: 1em;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The swatch inside the column is sized the same as .sp-region-swatch */
+.sp-region-summary-swatch-col .sp-region-swatch {
+  /* inherits size + border from .sp-region-swatch */
+}
+
+/* Label grows to fill available space */
+.sp-region-summary-label-col {
+  flex: 1;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp-region-summary-header .sp-region-summary-label-col {
+  color: inherit;
+}
+
+/* ── Collapsible per-region detail table ──────────────────────────────────── */
+
+.sp-region-details {
+  margin-top: 0.1em;
+}
+
+/* The <summary> toggle button */
+.sp-region-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  cursor: pointer;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--nlblue, #55769b);
+  user-select: none;
+  list-style: none;    /* hide default UA triangle in Firefox */
+  padding: 0.2em 0;
+  border-radius: 0.25em;
+  transition: opacity 0.1s;
+}
+
+/* Hide default disclosure triangle in WebKit / Blink */
+.sp-region-details-toggle::-webkit-details-marker { display: none; }
+
+.sp-region-details-toggle::before {
+  content: "▶";
+  display: inline-block;
+  font-size: 0.7em;
+  transition: transform 0.15s ease;
+  color: var(--nlblue, #55769b);
+}
+
+.sp-region-details[open] > .sp-region-details-toggle::before {
+  transform: rotate(90deg);
+}
+
+.sp-region-details-toggle:hover {
+  opacity: 0.75;
+}
+
+/* Inner wrapper that holds the per-region table rows */
+.sp-region-detail-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  margin-top: 0.4em;
+  padding-top: 0.35em;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
 }
 
 .sp-region-header-row .sp-region-name {
