@@ -19,6 +19,7 @@ import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clea
 import { compressor } from "./components/LZString.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
+export const DOCS_URL = "https://naturalist.netlify.app/";
 
 const messageChannel = new MessageChannel();
 
