@@ -89,10 +89,34 @@ export let Filter = {
       });
     });
 
+    // Identify the occurrence taxa level once so per-row entity checks are O(1).
+    // When occurrenceMetaIndex === -1 the dataset has no occurrences and entity
+    // separation is a no-op — all rows are taxon rows and counts are unambiguous.
+    const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+    const hasOccurrenceLevel  = occurrenceMetaIndex !== -1;
+
     taxa.forEach(function (taxon) {
+      // Determine row entity type once per row.  An occurrence row is one
+      // where the occurrence-level taxon slot is populated.
+      const isOccurrenceRow = hasOccurrenceLevel &&
+        taxon.t[occurrenceMetaIndex] != null;
+
       Object.keys(Filter.taxa).forEach(function (path, index) {
         if (Filter.delayCommitDataPath === "taxa." + path) return;
         if (index >= taxon.t.length || taxon.t[index] === null) return;
+
+        // Entity separation for taxa-filter slots:
+        // • The occurrence slot accumulates only from occurrence rows.
+        // • Every other slot (family, genus, species…) accumulates only from
+        //   taxon rows, preventing occurrence rows from inflating the counts
+        //   for higher-rank slots (each occurrence carries its full t[] ancestry,
+        //   which would otherwise double-count species/genus/family values).
+        if (hasOccurrenceLevel) {
+          const isOccurrenceSlot = index === occurrenceMetaIndex;
+          if (isOccurrenceSlot && !isOccurrenceRow) return;
+          if (!isOccurrenceSlot &&  isOccurrenceRow) return;
+        }
+
         const fd = Filter.taxa[path];
         const plugin = getFilterPlugin(fd);
         const leafValues = [taxon.t[index].name];
@@ -101,6 +125,18 @@ export let Filter = {
 
       Object.keys(Filter.data).forEach(function (path) {
         if (Filter.delayCommitDataPath === "data." + path) return;
+
+        // Entity separation for data-filter slots: accumulate each slot only
+        // from rows of the matching entity type.  After the DataManager
+        // cross-entity check, taxon rows carry no occurrence data and vice versa,
+        // so the null-value guard below would already silence most bleed — but
+        // the explicit check here is faster and makes the intent unambiguous.
+        if (hasOccurrenceLevel) {
+          const belongsTo = Filter.data[path].belongsTo || "taxon";
+          if (belongsTo === "occurrence" && !isOccurrenceRow) return;
+          if (belongsTo === "taxon"      &&  isOccurrenceRow) return;
+        }
+
         const rawValue = Checklist.getDataFromDataPath(taxon.d, path);
         if (rawValue === null) return;
         const fd = Filter.data[path];
