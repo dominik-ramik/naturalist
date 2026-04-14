@@ -43,11 +43,16 @@ const SummaryView = {
   oninit(vnode) {
     vnode.state.activeIdx = 0;
   },
-  view(vnode) {
-    const { perspectives } = vnode.attrs;
-    if (vnode.state.activeIdx >= perspectives.length) {
+  onbeforeupdate(vnode) {
+    // Clamp the index when the perspectives array shrinks (e.g. taxon switch).
+    // Done here rather than in view() so state is never mutated while Mithril
+    // is building the vnode tree.
+    if (vnode.state.activeIdx >= vnode.attrs.perspectives.length) {
       vnode.state.activeIdx = 0;
     }
+  },
+  view(vnode) {
+    const { perspectives } = vnode.attrs;
     const selectAttrs = {
       value: vnode.state.activeIdx,
       onchange(e) { vnode.state.activeIdx = +e.target.value; },

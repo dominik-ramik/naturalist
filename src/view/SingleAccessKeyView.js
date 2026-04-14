@@ -151,6 +151,21 @@ const KeyCard = {
         const hasSteps = vnode.attrs.isActive && vnode.attrs.currentPath && vnode.attrs.currentPath.length > 1;
         vnode.state.isDetailsExpanded = hasSteps;
         vnode.state.isTaxaExpanded = vnode.attrs.isActive;
+        KeyCard._syncFilter(vnode.attrs);
+    },
+
+    onbeforeupdate: (vnode) => {
+        KeyCard._syncFilter(vnode.attrs);
+    },
+
+    // Synchronise the checklist text-filter to the taxa reachable from the
+    // current key step.  Called from oninit and onbeforeupdate so that the
+    // mutation never happens while Mithril is building the vnode tree.
+    _syncFilter: ({ keyData, isActive, currentPath }) => {
+        if (!isActive) return;
+        const currentStepId = currentPath[currentPath.length - 1];
+        const reachableTaxa = KeyLogic.getRecursiveTaxa(keyData, currentStepId);
+        Checklist.setFilterForPossibleTaxa(reachableTaxa);
     },
 
     view: (vnode) => {
@@ -163,17 +178,12 @@ const KeyCard = {
         const stepsPassed = isActive && currentPath.length > 1;
 
         // --- CALCULATION: Reachable Taxa ---
-        // We calculate this here so we can use it for both the Footer and the External Filter Call
+        // We calculate this here so we can use it for the Footer rendering.
+        // The filter sync itself is handled in oninit/onbeforeupdate (_syncFilter).
         const allTaxa = KeyLogic.getRecursiveTaxa(keyData, 1);
         const reachableTaxa = isActive
             ? KeyLogic.getRecursiveTaxa(keyData, currentStepId)
             : allTaxa;
-
-        // --- EXTERNAL CALL: Set Filter ---
-        // Called immediately on render if in single view (isActive)
-        if (isActive) {
-            Checklist.setFilterForPossibleTaxa(reachableTaxa);
-        }
 
         // --- 1. Header Logic ---
 

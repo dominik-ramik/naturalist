@@ -70,7 +70,11 @@ export let DetailsView = {
       tab = "externalsearch" in tabs ? "externalsearch" : "summary";
     }
 
-    Settings.currentDetailsTab(tab);
+    // Only persist when the active tab actually changed – avoids redundant
+    // localStorage writes (and any future side-effects) on every redraw.
+    if (Settings.currentDetailsTab() !== tab) {
+      Settings.currentDetailsTab(tab);
+    }
 
     return m(".details", [
       m(".details-taxon-crumbs-zone", taxonomyCrumbs(DetailsView.taxonName)),

@@ -505,7 +505,10 @@ function renderUploadSource() {
 const SubViews = {
   upload: function () {
     if (ManageStore.dataman && !ManageStore.isProcessing) {
-      ManageStore.reset();
+      // Defer the reset so state is never mutated while Mithril is building the
+      // vnode tree.  The next scheduled redraw (triggered automatically by the
+      // setTimeout) will then see the cleared state.
+      setTimeout(() => { ManageStore.reset(); m.redraw(); }, 0);
     }
 
     const isDataReady = Checklist._isDataReady;
@@ -626,7 +629,10 @@ const SubViews = {
 
   publish: function () {
     if (!ManageStore.dataman) {
-      m.route.set("/manage/upload");
+      // Defer the route change so it never fires synchronously while Mithril
+      // is rendering (consistent with the deferred pattern used by the
+      // sibling SubViews.processing and SubViews.review helpers).
+      setTimeout(() => m.route.set("/manage/upload"), 0);
       return null;
     }
 

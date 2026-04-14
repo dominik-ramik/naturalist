@@ -553,8 +553,15 @@ function categoryChart(filteredTaxa) {
       categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
     );
     if (categorizedData == null && !isCustomMode) {
-      categoryRoot = ""; Settings.categoryChartRoot("");
-      categoryToView = ""; Settings.categoryChartCategory("");
+      // Reset local variables synchronously so the fallback getCachedCrossTabulation
+      // call below uses the cleared values.  The Settings (localStorage) writes are
+      // deferred so they never mutate persistent state while Mithril is rendering.
+      categoryRoot = "";
+      categoryToView = "";
+      setTimeout(() => {
+        Settings.categoryChartRoot("");
+        Settings.categoryChartCategory("");
+      }, 0);
       categorizedData = getCachedCrossTabulation(
         filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
         categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning

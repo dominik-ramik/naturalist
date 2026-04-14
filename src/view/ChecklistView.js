@@ -13,15 +13,19 @@ export let ChecklistView = {
       Settings.analyticalIntent("#T");
     }
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
+    ChecklistView._syncFilterFromRoute();
   },
 
-  view: function () {
-    if (!Checklist._isDataReady) {
-      return m(".checklist");
-    }
+  onbeforeupdate: function () {
+    ChecklistView._syncFilterFromRoute();
+  },
+
+  // Applies URL query params to the filter model.  Extracted from view() so
+  // that state mutations never happen while Mithril is building the vnode tree.
+  _syncFilterFromRoute: function () {
+    if (!Checklist._isDataReady) return;
 
     let currentQuery = JSON.stringify(Checklist.queryKey());
-
     if (m.route.param("q") && m.route.param("q").length > 0) {
       currentQuery = decodeURI(m.route.param("q"));
     }
@@ -40,6 +44,12 @@ export let ChecklistView = {
         const listed = document.getElementsByClassName("listed-taxa");
         if (listed && listed.length > 0) listed[0].scrollTo(0, 0);
       }, 100);
+    }
+  },
+
+  view: function () {
+    if (!Checklist._isDataReady) {
+      return m(".checklist");
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
