@@ -1,5 +1,4 @@
-// src/model/customTypes/CustomTypeTaxon.meta.js
-import { filterMetaText } from "./filterMeta.js";
+import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeTaxonMeta = {
   dataType:   "taxon",

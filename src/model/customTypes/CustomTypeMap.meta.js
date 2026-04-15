@@ -1,5 +1,4 @@
-// src/model/customTypes/CustomTypeMap.meta.js
-import { filterMetaText } from "./filterMeta.js";
+import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeMapMeta = {
   dataType:   "map",

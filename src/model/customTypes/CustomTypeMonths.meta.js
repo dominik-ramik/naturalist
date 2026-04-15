@@ -1,5 +1,4 @@
-// src/model/customTypes/CustomTypeMonths.meta.js
-import { filterMetaMonths } from "./filterMeta.js";
+import { filterMetaMonths } from "../filterPlugins/filterPluginMonths.meta.js";
 
 export const customTypeMonthsMeta = {
   dataType:   "months",

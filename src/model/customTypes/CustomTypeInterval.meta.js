@@ -1,5 +1,4 @@
-// src/model/customTypes/CustomTypeInterval.meta.js
-import { filterMetaInterval } from "./filterMeta.js";
+import { filterMetaInterval } from "../filterPlugins/filterPluginInterval.meta.js";
 
 export const customTypeIntervalMeta = {
   dataType:   "interval",

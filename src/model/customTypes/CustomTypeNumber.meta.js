@@ -1,5 +1,5 @@
 // src/model/customTypes/CustomTypeNumber.meta.js
-import { filterMetaNumber } from "./filterMeta.js";
+import { filterMetaNumber } from "../filterPlugins/filterPluginNumber.meta.js";
 
 export const customTypeNumberMeta = {
   dataType:   "number",

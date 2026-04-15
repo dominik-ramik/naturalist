@@ -1,5 +1,5 @@
 // src/model/customTypes/CustomTypeSound.meta.js
-import { filterMetaText } from "./filterMeta.js";
+import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeSoundMeta = {
   dataType:   "sound",

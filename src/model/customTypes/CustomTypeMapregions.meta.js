@@ -1,5 +1,4 @@
-// src/model/customTypes/CustomTypeMapregions.meta.js
-import { filterMetaMapregions } from "./filterMeta.js";
+import { filterMetaMapregions } from "../filterPlugins/filterPluginMapregions.meta.js";
 
 export const customTypeMapregionsMeta = {
   dataType:   "mapregions",

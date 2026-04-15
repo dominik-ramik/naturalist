@@ -1,5 +1,5 @@
 // src/model/customTypes/CustomTypeMarkdown.meta.js
-import { filterMetaText } from "./filterMeta.js";
+import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeMarkdownMeta = {
   dataType:   "markdown",

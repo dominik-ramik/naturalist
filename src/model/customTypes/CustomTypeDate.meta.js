@@ -1,5 +1,5 @@
 // src/model/customTypes/CustomTypeDate.meta.js
-import { filterMetaDate } from "./filterMeta.js";
+import { filterMetaDate } from "../filterPlugins/filterPluginDate.meta.js";
 
 export const customTypeDateMeta = {
   dataType:   "date",
