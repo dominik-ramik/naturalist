@@ -15,6 +15,8 @@ import { dataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
 import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
+import { compileDwcArchive } from "./dwc/DwcArchiveCompiler.js";
+import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 
 // Global array to collect assets from F: directives
 
@@ -31,10 +33,10 @@ import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js
  *   "habitat#"       → "habitat"
  */
 function getRootDataPath(colName) {
-  const dotIdx  = colName.indexOf(".");
+  const dotIdx = colName.indexOf(".");
   const hashIdx = colName.indexOf("#");
-  const sepIdx  = Math.min(
-    dotIdx  === -1 ? Infinity : dotIdx,
+  const sepIdx = Math.min(
+    dotIdx === -1 ? Infinity : dotIdx,
     hashIdx === -1 ? Infinity : hashIdx
   );
   return sepIdx === Infinity ? colName : colName.slice(0, sepIdx);
@@ -59,7 +61,7 @@ function buildRootBelongsToMap(cddRows) {
     if (getRootDataPath(colName) !== colName) return;
     const raw = (row.belongsTo || "").toLowerCase().trim();
     // Blank defaults to "taxon" — all pre-existing columns are taxon columns.
-    map.set(colName, raw === "occurrence" ? "occurrence" : "taxon");
+    map.set(colName, raw === OCCURRENCE_IDENTIFIER ? OCCURRENCE_IDENTIFIER : "taxon");
   });
   return map;
 }
@@ -1276,7 +1278,7 @@ export let DataManager = function () {
 
     const taxonColumnInfos = allColumnInfos.filter(i => i.formatting === "checklist-taxon");
     const occurrenceColIndex = taxonColumnInfos.findIndex(
-      i => i.fullRow.taxonName.trim().toLowerCase() === "occurrence"
+      i => i.fullRow.taxonName.trim().toLowerCase() === OCCURRENCE_IDENTIFIER
     );
     if (occurrenceColIndex !== -1 && occurrenceColIndex !== taxonColumnInfos.length - 1) {
       Logger.error(
@@ -1303,6 +1305,9 @@ export let DataManager = function () {
     // to be manually ordered. Uses a stable sort so rows sharing the same full
     // taxon path keep their original relative position.
     table = sortRawChecklistByTaxa(table, taxonColumnInfos, data.common.languages.defaultLanguageCode);
+
+    data.sheets.checklist.rawHeaders = table[0].map(h => (h || "").toString().toLowerCase());
+    data.sheets.checklist.rawRows = table.slice(1);
 
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
@@ -1371,7 +1376,7 @@ export let DataManager = function () {
                 rowObj.t.push(taxon);
               } else {
                 // Skip the check for taxon name "occurrence"
-                if (info.fullRow.taxonName.trim().toLowerCase() == "occurrence") {
+                if (info.fullRow.taxonName.trim().toLowerCase() == OCCURRENCE_IDENTIFIER) {
                   // Pad t with nulls so the occurrence lands at its correct positional index,
                   // preserving the positional contract that the rest of the codebase relies on.
                   const taxonColumnInfos = allColumnInfos.filter(
@@ -1401,13 +1406,13 @@ export let DataManager = function () {
           // datasets (occurrenceColumnName === null) are never checked.
           if (occurrenceColumnName !== null) {
             const resolvedBelongsTo = resolveBelongsTo(info.name, rootBelongsToMap);
-            const actualEntity      = isOccurrenceRow ? "occurrence" : "taxon";
+            const actualEntity = isOccurrenceRow ? OCCURRENCE_IDENTIFIER : "taxon";
 
             if (resolvedBelongsTo !== actualEntity) {
               // Report once per root/simple column to avoid flooding the log
               // with one error per child path (origPub.author, origPub.year…).
               if ((position.isRoot || position.isSimpleItem) &&
-                  hasAnyDataForRootColumn(headers, row, info.name)) {
+                hasAnyDataForRootColumn(headers, row, info.name)) {
                 Logger.error(
                   tf("dm_wrong_belongs_to", [
                     rowIndex + data.common.checklistHeadersStartRow,
@@ -1415,7 +1420,7 @@ export let DataManager = function () {
                     resolvedBelongsTo,
                     actualEntity,
                   ])
-                , "Wrong 'Belongs to' attribution");
+                  , "Wrong 'Belongs to' attribution");
               }
               // Skip loading — error already reported at root level above.
               if (position.isLeaf) return;
@@ -1474,7 +1479,7 @@ export let DataManager = function () {
       taxaTableData.forEach(function (row) {
         if (row.columnName) {
           localTaxaMeta[row.columnName] = { name: row.taxonName };
-          if (row.taxonName.trim().toLowerCase() === "occurrence") {
+          if (row.taxonName.trim().toLowerCase() === OCCURRENCE_IDENTIFIER) {
             occurrenceMetaIndex = Object.keys(localTaxaMeta).indexOf(row.columnName);
           }
         }
@@ -2116,6 +2121,43 @@ export let DataManager = function () {
 
       return jsonData;
     },
+
+    getDwcArchive() {
+      return compiledChecklistCache?._dwcArchive ?? null;
+    },
+
+    /**
+     * Compile the DwC archive for the default language and store the result on
+     * the compiled checklist cache.  Must be called after getCompiledChecklist().
+     *
+     * Validation errors are emitted through Logger so that ManageView's normal
+     * error gate (Logger.hasErrors()) blocks the UI in exactly the same way it
+     * does for checklist compilation errors — DwC issues are never silently
+     * swallowed and the user cannot proceed to publish until they are fixed.
+     *
+     * If the DwC archive table is absent or empty this is a no-op; getDwcArchive()
+     * will continue to return null and ManageView will show the configuration tip.
+     *
+     * @returns {Promise<void>}
+     */
+    async compileDwcArchiveAsync() {
+      const defaultLangCode = data.common.languages.defaultLanguageCode;
+      const dwcTableRows = data.sheets.content.tables.dwcArchive?.data?.[defaultLangCode];
+      if (!dwcTableRows || dwcTableRows.length === 0) {
+        return; // DwC table absent or empty — nothing to compile, no errors to log
+      }
+      const result = await compileDwcArchive({
+        dwcTableRows,
+        compiledTree:      compiledChecklistCache,
+        taxaColumnDefs:    data.sheets.content.tables.taxa.data[defaultLangCode],
+        customizationData: data.sheets.appearance.tables.customization.data[defaultLangCode],
+        cddRows:           data.sheets.content.tables.customDataDefinition.data[defaultLangCode],
+        checklistHeaders:  data.sheets.checklist.rawHeaders,
+        checklistRawRows:  data.sheets.checklist.rawRows,
+        defaultLangCode,
+      });
+      compiledChecklistCache._dwcArchive = result;
+    },
   };
 
   return dataManager;
@@ -2405,7 +2447,7 @@ function runManualIntegrityChecks(data) {
     const seenPairs = new Map();
     rows.forEach(function (row, idx) {
       const colName = (row.columnName || "").toString().trim().toLowerCase();
-      const status  = (row.status || "").toString().trim();
+      const status = (row.status || "").toString().trim();
       const pairKey = colName + "|" + status;
       if (seenPairs.has(pairKey)) {
         Logger.error(
@@ -2456,7 +2498,7 @@ function runManualIntegrityChecks(data) {
     rows.forEach(function (row) {
       const legendType = (row.legendType || "").toString().trim().toLowerCase();
       if (legendType !== "gradient" && legendType !== "stepped") return;
-      const colName  = (row.columnName || "").toString().trim().toLowerCase();
+      const colName = (row.columnName || "").toString().trim().toLowerCase();
       const groupKey = colName + "|" + legendType;
       anchorGroupCounts.set(groupKey, (anchorGroupCounts.get(groupKey) || 0) + 1);
     });
@@ -2479,10 +2521,10 @@ function runManualIntegrityChecks(data) {
       const legendType = (row.legendType || "").toString().trim().toLowerCase();
       if (legendType !== "gradient" && legendType !== "stepped") return;
       const colName = (row.columnName || "").toString().trim().toLowerCase();
-      const status  = (row.status || "").toString().trim();
+      const status = (row.status || "").toString().trim();
       const m5 = A5_REGEX.exec(status);
       if (!m5) return;
-      const center   = m5[4];
+      const center = m5[4];
       const groupKey = colName + "|" + legendType;
       if (!a5CenterByGroup.has(groupKey)) a5CenterByGroup.set(groupKey, new Set());
       a5CenterByGroup.get(groupKey).add(center);
@@ -2684,7 +2726,7 @@ function runManualIntegrityChecks(data) {
 
       // 6h. "Belongs to" value must be one of the recognised keywords
       const belongsToRaw = (row.belongsTo || "").trim().toLowerCase();
-      if (belongsToRaw !== "" && belongsToRaw !== "taxon" && belongsToRaw !== "occurrence") {
+      if (belongsToRaw !== "" && belongsToRaw !== "taxon" && belongsToRaw !== OCCURRENCE_IDENTIFIER) {
         Logger.error(
           "Column \"" + columnName + "\": invalid \"Belongs to\" value \"" + row.belongsTo +
           "\". Allowed values are \"taxon\", \"occurrence\", or empty (defaults to \"taxon\")."

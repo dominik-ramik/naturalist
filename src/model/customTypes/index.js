@@ -181,3 +181,7 @@ export function loadDataByType(context, computedPath, info) {
     return null;
   }
 }
+
+export function getAvailableDataTypeNames() {
+  return Object.keys(dataCustomTypes).map((key) => dataCustomTypes[key].dataType);
+}

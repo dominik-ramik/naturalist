@@ -55,10 +55,10 @@ self.addEventListener('fetch', function (e) {
         return;
     }
 
-    // B. Network-Only for Markdown files (User content)
+    // B. Network-Only for Markdown and EML files (User content)
     const isUserMdFile = (
         e.request.url.toLowerCase().includes("/usercontent/") &&
-        e.request.url.toLowerCase().endsWith(".md")
+        (e.request.url.toLowerCase().endsWith(".md") || e.request.url.toLowerCase().endsWith("eml.xml"))
     );
     if (isUserMdFile) {
         e.respondWith(fetch(e.request, { cache: "no-cache" }).catch((ex) => {
@@ -125,6 +125,7 @@ self.addEventListener('fetch', function (e) {
         let cache = null;
         function urlForUserCache(url) {
             if (url.includes("/usercontent/") && url.endsWith(".md")) return false;
+            if (url.includes("/usercontent/") && url.endsWith("eml.xml")) return false;
             return url.includes("/usercontent/") && !url.includes("/usercontent/identity");
         }
 
