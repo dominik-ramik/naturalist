@@ -1,11 +1,12 @@
 export const dataPath = {
   validate: {
     isSimpleColumnName: function (value) {
+      if (typeof value !== "string") return false;
       let simpleColumnName = new RegExp("^[a-zA-Z]+$", "gi");
       return simpleColumnName.test(value);
     },
     isDataPath(value) {
-      
+      if (typeof value !== "string") return false;
       let valueSplit = value.split(".");
       let correct = true;
       valueSplit.forEach(function (columnSegment) {
@@ -91,9 +92,11 @@ export const dataPath = {
   },
   modify: {
     itemNumbersToHash: function (value) {
+      if (typeof value !== "string") return "";
       return value.replace(/(\d+)/g, "#");
     },
     pathToSegments: function (path) {
+      if (typeof path !== "string") return [];
       let split = path.split(/\.|#/);
       split = split.map(function (item) {
         if (item == "") {
