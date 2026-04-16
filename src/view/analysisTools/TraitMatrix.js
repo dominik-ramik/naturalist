@@ -9,7 +9,7 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
 // ─── Tool config ──────────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: "No categorical trait data found in this dataset.",
       scopeDisabledReason: (intent) => {
-        const scopeName = intent === "#T" ? "Taxa" : "Occurrences";
+        const scopeName = intent === ANALYTICAL_INTENT_TAXA ? "Taxa" : "Occurrences";
         return `${config.label} requires categorical trait data to be present with ${scopeName}.`;
       }
     };
@@ -512,7 +512,7 @@ function categoryChart(filteredTaxa) {
   const result = [];
   const isCustomMode = secondaryDimMode === "custom";
 
-  const chartMode = Settings.analyticalIntent() === "#S" ? OCCURRENCE_IDENTIFIER : "taxa";
+  const chartMode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : "taxa";
   const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
   const allTaxaForInheritance = chartMode === OCCURRENCE_IDENTIFIER ? Checklist.getEntireChecklist() : filteredTaxa;
 

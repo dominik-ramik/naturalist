@@ -2,6 +2,7 @@ import m from "mithril";
 import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
 import { TaxonView } from "./TaxonomicTree/TaxonView.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
 export const config = {
     id: "tool_taxonomic_tree",
@@ -15,7 +16,7 @@ export const config = {
 
     getAvailability: (availableIntents, checklistData) => {
         const supportedIntents = availableIntents.filter(intent => {
-            if (intent === "#T" || intent === "#S") {
+            if (intent === ANALYTICAL_INTENT_TAXA || intent === ANALYTICAL_INTENT_OCCURRENCE) {
                 return checklistData.checklist && checklistData.checklist.length > 0;
             }
         });
@@ -24,7 +25,7 @@ export const config = {
             isAvailable: supportedIntents.length > 0,
             toolDisabledReason: "No data found in this dataset.",
             scopeDisabledReason: (intent) =>
-                `${config.label} is unavailable ${intent === "#S" ? "for occurrences" : "for taxa"} because none were found.`,
+                `${config.label} is unavailable ${intent === ANALYTICAL_INTENT_OCCURRENCE ? "for occurrences" : "for taxa"} because none were found.`,
         };
     },
 
@@ -73,7 +74,7 @@ export const config = {
             default: true,
             accessor: Settings.checklistShowOccurrenceMeta,
             // Only visible (and only flagged as non-default) in occurrence scope
-            condition: (scope) => scope === "#S",
+            condition: (scope) => scope === ANALYTICAL_INTENT_OCCURRENCE,
         },
 
         {
@@ -83,7 +84,7 @@ export const config = {
             default: true,
             accessor: Settings.checklistPruneEmpty,
             // Pruning only makes sense in occurrence scope
-            condition: (scope) => scope === "#S",
+            condition: (scope) => scope === ANALYTICAL_INTENT_OCCURRENCE,
         },
 
         {

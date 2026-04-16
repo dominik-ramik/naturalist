@@ -6,6 +6,7 @@ import { config as regionalDistribution } from "./RegionalDistribution.js";
 import { Settings } from "../../model/Settings.js";
 import { Checklist } from "../../model/Checklist.js";
 import { updateRouteParams } from "../../components/Utils.js";
+import { ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
 export { SCOPE_CHOICES } from "./scopes.js";
 
@@ -140,9 +141,9 @@ export function validateToolConfig(config) {
  * provided checklist data.  Mutates Settings to safe defaults if invalid.
  */
 export function validateActiveToolState(checklistData) {
-  const allIntents   = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
+  const allIntents   = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
   let currentToolId  = Settings.viewType() || DEFAULT_TOOL;
-  let currentIntent  = Settings.analyticalIntent() || "#T";
+  let currentIntent  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
   let activeTool    = TOOL_REGISTRY[currentToolId];
 
@@ -174,7 +175,7 @@ export function validateActiveToolState(checklistData) {
  * Auto-switches analytical intent if the new tool does not support the current one.
  */
 export function requestToolChange(toolId, checklistData) {
-  const allIntents     = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
+  const allIntents     = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
   const requestedTool  = TOOL_REGISTRY[toolId];
 
   if (!requestedTool) return; // Unknown tool — ignore
@@ -184,7 +185,7 @@ export function requestToolChange(toolId, checklistData) {
   if (availability.isAvailable) {
     Settings.viewType(toolId);
 
-    const currentIntent = Settings.analyticalIntent() || "#T";
+    const currentIntent = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
     if (!availability.supportedIntents.includes(currentIntent)) {
       Settings.analyticalIntent(availability.supportedIntents[0]);
     }
@@ -202,7 +203,7 @@ export function requestToolChange(toolId, checklistData) {
  * Validates that the currently active tool supports the requested intent.
  */
 export function requestIntentChange(intentId, checklistData) {
-  const allIntents   = Checklist.hasOccurrences() ? ["#T", "#S"] : ["#T"];
+  const allIntents   = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
   const currentToolId = Settings.viewType() || DEFAULT_TOOL;
   const activeTool   = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
 

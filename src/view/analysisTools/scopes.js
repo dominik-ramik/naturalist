@@ -1,6 +1,8 @@
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets";
+
 export const SCOPE_CHOICES = [
   {
-    id: "#T",
+    id: ANALYTICAL_INTENT_TAXA,
     label: "Taxa",
     iconPath: {
       light: "./img/ui/checklist/taxonomy-light.svg",
@@ -9,7 +11,7 @@ export const SCOPE_CHOICES = [
     info: "Analyze data diversity and distribution at the taxonomic level"
   },
   {
-    id: "#S",
+    id: ANALYTICAL_INTENT_OCCURRENCE,
     label: "Occurrences",
     iconPath: {
       light: "./img/ui/checklist/tag-light.svg",

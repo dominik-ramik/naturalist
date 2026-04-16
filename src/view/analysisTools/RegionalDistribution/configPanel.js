@@ -10,6 +10,7 @@ import m from 'mithril';
 import { Checklist } from '../../../model/Checklist.js';
 import { Settings }  from '../../../model/Settings.js';
 import { NUMERIC_OPERATIONS, getOperationMeta } from './aggregate.js';
+import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ export function renderConfigPanel({
   filteredCount,
 }) {
   const filterIsEmpty = Checklist.filter.isEmpty();
-  const mode          = Settings.analyticalIntent() === '#S' ? 'occurrence' : 'taxa';
+  const mode          = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
 
   const {
     segmentTrack, categoryStatus, numericOperation,
@@ -163,7 +164,7 @@ export function renderConfigPanel({
 function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filterIsEmpty }) {
   const { segmentTrack, categoryStatus, numericOperation, threshold, denominator } = mapState;
   const opMeta = getOperationMeta(numericOperation);
-  const unit   = t(mode === 'occurrence' ? 'rd_unit_occurrences' : 'rd_unit_taxa');
+  const unit   = t(mode === OCCURRENCE_IDENTIFIER ? 'rd_unit_occurrences' : 'rd_unit_taxa');
 
   // — What is being computed —
   let action;

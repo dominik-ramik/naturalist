@@ -34,6 +34,7 @@ import {
 import { getMapState, setMapState, getGlobalState, setGlobalState } from './RegionalDistribution/state.js';
 import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
 import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
+import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
 
 // ─── Tool registration config ─────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: 'No regional map data found in this dataset.',
       scopeDisabledReason: intent =>
-        `${config.label} requires map data associated with ${intent === '#T' ? 'Taxa' : 'Occurrences'}.`,
+        `${config.label} requires map data associated with ${intent === ANALYTICAL_INTENT_TAXA ? 'Taxa' : 'Occurrences'}.`,
     };
   },
 
@@ -86,7 +87,7 @@ function invalidateCaches(newRev) {
 function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
   if (rev !== _rev) invalidateCaches(rev);
 
-  const mode = (intent || Settings.analyticalIntent()) === '#S' ? 'occurrence' : 'taxa';
+  const mode = (intent || Settings.analyticalIntent()) === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
   if (_mapsCache[mode]) return _mapsCache[mode];
 
   const occurrenceIdx = Checklist.getOccurrenceMetaIndex();
@@ -109,7 +110,7 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
     const hasData = checklist.some(row => {
       const isOccurrence = occurrenceIdx !== -1 && row.t[occurrenceIdx] != null;
       if (mode === 'taxa'     &&  isOccurrence) return false;
-      if (mode === 'occurrence' && !isOccurrence) return false;
+      if (mode === OCCURRENCE_IDENTIFIER && !isOccurrence) return false;
       const d = Checklist.getDataFromDataPath(row.d, dataPath);
       return d && typeof d === 'object' && Object.keys(d).length > 0;
     });
@@ -131,7 +132,7 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
 function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   if (datasetRevision !== _rev) invalidateCaches(datasetRevision);
 
-  const mode         = Settings.analyticalIntent() === '#S' ? 'occurrence' : 'taxa';
+  const mode         = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
   const occurrenceIdx  = Checklist.getOccurrenceMetaIndex();
   const filterEmpty  = Checklist.filter.isEmpty();
   const availableMaps = getAvailableMaps();

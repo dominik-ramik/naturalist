@@ -8,7 +8,7 @@ import { D3ChartView } from "../shared/D3ChartView.js";
 import { SelectParam } from "../shared/FormControls.js";
 
 import "./HierarchyBubbles.css";
-import { OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
 // ─── Tool config export ────────────────────────────────────────────────────
 
@@ -29,7 +29,7 @@ export const config = {
 
   getAvailability: (availableIntents, checklistData) => {
     const supportedIntents = availableIntents.filter(intent => {
-      if (intent === "#T" || intent === "#S") {
+      if (intent === ANALYTICAL_INTENT_TAXA || intent === ANALYTICAL_INTENT_OCCURRENCE) {
         return checklistData.checklist && checklistData.checklist.length > 0;
       }
     });
@@ -38,7 +38,7 @@ export const config = {
       isAvailable: supportedIntents.length > 0,
       toolDisabledReason: "No data found in this dataset.",
       scopeDisabledReason: (intent) =>
-        `${config.label} is unavailable ${intent === "#S" ? "for occurrences" : "for taxa"} because none were found.`,
+        `${config.label} is unavailable ${intent === ANALYTICAL_INTENT_OCCURRENCE ? "for occurrences" : "for taxa"} because none were found.`,
     };
   },
 
@@ -76,7 +76,7 @@ function circlePacking(options) {
   let showDownloadButton = options.showDownloadButton === false ? false : true;
   let occurrenceMetaIndex = options.occurrenceMetaIndex;
 
-  if (Settings.analyticalIntent() === "#S") {
+  if (Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE) {
     // Deep clone to prevent mutating the original dataSource which might be used in other views
     data = JSON.parse(JSON.stringify(options.dataSource));
 
@@ -987,7 +987,7 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
   ensureCirclePackingCacheFresh(datasetRevision);
 
   const isFilterEmpty = Checklist.filter.isEmpty();
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? OCCURRENCE_IDENTIFIER : "taxa";
+  const mapChartMode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : "taxa";
 
   // Use the raw array lengths as leaf counts — these correspond 1-to-1 with
   // terminal nodes in the hierarchy (each taxa/occurrence row → one leaf).

@@ -6,11 +6,12 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 
 export let ChecklistView = {
   oninit: function () {
-    if (!Checklist.hasOccurrences() && Settings.analyticalIntent() !== "#T") {
-      Settings.analyticalIntent("#T");
+    if (!Checklist.hasOccurrences() && Settings.analyticalIntent() !== ANALYTICAL_INTENT_TAXA) {
+      Settings.analyticalIntent(ANALYTICAL_INTENT_TAXA);
     }
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
     ChecklistView._syncFilterFromRoute();
@@ -100,12 +101,12 @@ function filterOutOccurrenceTaxa(taxa) {
 
   let scoped = taxa;
 
-  if (intent === "#T") {
+  if (intent === ANALYTICAL_INTENT_TAXA) {
     scoped = scoped.filter(taxon =>
       taxon.t?.[occurrenceMetaIndex] === null ||
       taxon.t?.[occurrenceMetaIndex] === undefined
     );
-  } else if (intent === "#S") {
+  } else if (intent === ANALYTICAL_INTENT_OCCURRENCE) {
     if (!getCurrentTool()?.getTaxaAlongsideOccurrences) {
       scoped = scoped.filter(taxon =>
         taxon.t?.[occurrenceMetaIndex] !== null &&
@@ -146,7 +147,7 @@ function filterOutOccurrenceTaxa(taxa) {
 function modifiedParamsNotice(tool) {
   if (!tool.parameters?.length) return null;
 
-  const scope       = Settings.analyticalIntent() || "#T";
+  const scope       = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
   const descriptions = describeNonDefaultParams(tool.parameters, scope);
 
   if (descriptions.length === 0) return null;

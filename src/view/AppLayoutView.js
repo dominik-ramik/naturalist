@@ -6,18 +6,7 @@ import { ChecklistView } from "./ChecklistView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-
-function currentScopeLabel() {
-    switch (Settings.analyticalIntent()) {
-        case "#S":
-            return "Occurrences";
-        case "#T":
-            return "Taxa";
-        default:
-            return "Full Catalog";
-    }
-}
-
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 export let AppLayoutView = {
     display: "checklist",
 

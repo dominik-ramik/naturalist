@@ -12,6 +12,7 @@ import {
   parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
 import { MONTH_KEYS } from "../../model/MonthNames.js";
+import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Public entry point
@@ -99,7 +100,7 @@ function buildContext(taxon) {
   const taxaKeys          = Object.keys(taxaMeta);
   const occurrenceDataPath  = Checklist.getOccurrenceDataPath();
   const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
-  const showOccurrences     = Settings.analyticalIntent() === "#S"
+  const showOccurrences     = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE
     && Checklist.hasOccurrences()
     && occurrenceMetaIndex !== -1;
 

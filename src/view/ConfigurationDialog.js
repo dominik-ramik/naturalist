@@ -20,6 +20,7 @@ import {
 import { renderParams } from "./shared/ToolParams.js";
 
 import "./ConfigurationDialog.css";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG COMPONENT
@@ -34,11 +35,11 @@ export const ConfigurationDialog = {
     if (!ConfigurationDialog.isOpen) return null;
 
     const hasOccurrences    = Checklist.hasOccurrences();
-    const availableIntents = hasOccurrences ? ["#T", "#S"] : ["#T"];
+    const availableIntents = hasOccurrences ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
     const checklistData   = Checklist.getData();
 
     const currentViewId  = Settings.viewType() || TOOL_LIST[0].id;
-    const selectedScope  = Settings.analyticalIntent() || "#T";
+    const selectedScope  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
     const activeTool             = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
     const activeToolAvailability = activeTool.getAvailability(availableIntents, checklistData);

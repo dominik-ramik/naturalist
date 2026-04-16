@@ -1,5 +1,8 @@
 export const OCCURRENCE_IDENTIFIER = "occurrence";
 
+export const ANALYTICAL_INTENT_TAXA = "#T";
+export const ANALYTICAL_INTENT_OCCURRENCE = "#S";
+
 export const nlDataStructureSheets = {
     content: {
         name: "nl_content",

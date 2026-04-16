@@ -18,7 +18,7 @@ export let SearchView = {
 
         const intent              = Settings.analyticalIntent();
         const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
-        const inTaxonMode         = intent === "#T";
+        const inTaxonMode         = intent === ANALYTICAL_INTENT_TAXA;
 
         let taxaFilterDropdown = [];
         Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {

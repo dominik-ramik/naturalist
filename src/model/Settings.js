@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { dataCustomTypes } from "./customTypes/index.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "./nlDataStructureSheets.js";
 
 export let Settings = {
   // Full-text search OR separator symbol
@@ -232,7 +233,7 @@ export let Settings = {
       let stored = window.localStorage.getItem("analyticalIntent");
 
       if (stored === null) {
-        const defaultVal = Checklist.hasOccurrences() ? "#S" : "#T";
+        const defaultVal = Checklist.hasOccurrences() ? ANALYTICAL_INTENT_OCCURRENCE : ANALYTICAL_INTENT_TAXA;
         window.localStorage.setItem("analyticalIntent", defaultVal);
         return defaultVal;
       }
@@ -407,7 +408,7 @@ getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
 
   if (Object.keys(itemObject).length === 0) {
     const scope = pinnedScope || Settings.analyticalIntent();
-    return scope === "#S" ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
+    return scope === ANALYTICAL_INTENT_OCCURRENCE ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
   }
 
   const opts  = { html: !usePlainTextOutput };

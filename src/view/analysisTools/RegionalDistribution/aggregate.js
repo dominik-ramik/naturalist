@@ -12,6 +12,7 @@ import {
   resolveRegionColor,
   parseNumericStatus,
 } from '../../../components/MapregionsColorEngine.js';
+import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
 
 // ─── Segment detection ────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export function collectRegionData(leaves, dataPath, mode, occurrenceMetaIndex) {
   const map = {};
 
   leaves.forEach(leaf => {
-    const effectiveD = mode === 'occurrence'
+    const effectiveD = mode === OCCURRENCE_IDENTIFIER
       ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, leaves)
       : leaf.d;
     const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
@@ -287,7 +288,7 @@ export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMeta
   const seen     = new Set();
 
   allLeaves.forEach(leaf => {
-    const effectiveD = mode === 'occurrence'
+    const effectiveD = mode === OCCURRENCE_IDENTIFIER
       ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, allLeaves)
       : leaf.d;
     const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);

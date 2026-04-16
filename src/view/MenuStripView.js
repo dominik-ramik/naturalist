@@ -7,6 +7,7 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
 import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
+import { ANALYTICAL_INTENT_OCCURRENCE } from "../model/nlDataStructureSheets.js";
 
 export let MenuStripView = {
   menuOpen: false,
@@ -239,11 +240,11 @@ let MenuExpandable = function (initialVnode) {
 function menuTopBar() {
   const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
   const activeTool    = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
-  const currentScope  = Settings.analyticalIntent() || "#T";
+  const currentScope  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
   // Dynamic scope lookup from ViewRegistry.
   const activeScope   = SCOPE_CHOICES.find(s => s.id === currentScope) 
-                     || SCOPE_CHOICES.find(s => s.id === "#S") 
+                     || SCOPE_CHOICES.find(s => s.id === ANALYTICAL_INTENT_OCCURRENCE) 
                      || SCOPE_CHOICES[0];
 
   return [
