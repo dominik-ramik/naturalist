@@ -859,6 +859,7 @@ export const dwcTermInventory = {
         compound: {
             image: "source",  // extract .source URL from customTypeImage result
             sound: "source",  // extract .source URL from customTypeSound result
+            map: "source",    // extract .source URL from customTypeMap result
         },
         autoGenerate: null,
         tier2Trigger: false,
