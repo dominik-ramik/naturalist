@@ -425,6 +425,133 @@ function processMetaStructure(workbook, schema) {
 }
 
 // =============================================================================
+// DATA SHEET MERGING (pure helpers)
+// =============================================================================
+
+/**
+ * Reads one data sheet from the workbook and returns a raw 2-D table
+ * (header row + data rows) exactly as the original getRawChecklistData did,
+ * but for an arbitrary named sheet.
+ *
+ * Returns null when the sheet cannot be found (caller decides how to log).
+ *
+ * @param {object} workbook        – XLSX workbook object
+ * @param {string} sheetName       – Name of the sheet to read
+ * @param {number} headerRowIndex  – 0-based index of the header row
+ * @returns {any[][]|null}
+ */
+function readOneDataSheet(workbook, sheetName, headerRowIndex) {
+  const sheetData = parseSheetData(workbook, sheetName);
+  if (!sheetData) return null;
+
+  // Clamp headerRowIndex defensively
+  const safeHeaderIdx =
+    headerRowIndex >= 0 && headerRowIndex < sheetData.length ? headerRowIndex : 0;
+
+  const headerRow = sheetData[safeHeaderIdx];
+
+  // Determine usable table width from the header row (mirrors original logic)
+  let tableEndCol = 1;
+  if (headerRow) {
+    headerRow.forEach((header, index) => {
+      if (header !== undefined && header.toString().trim() !== "") {
+        tableEndCol = index + 1;
+      }
+    });
+  }
+
+  const result = [];
+
+  for (let row = 0; row < sheetData.length; row++) {
+    const cells = sheetData[row].slice(0, tableEndCol);
+
+    // Date Conversion Logic (unchanged from original getRawChecklistData)
+    for (let column = 0; column < cells.length; column++) {
+      let cell = cells[column];
+      if (cell instanceof Date) {
+        cell = new Date(cell - cell.getTimezoneOffset() * 60 * 1000);
+        cells[column] =
+          cell.getFullYear() +
+          "-" +
+          pad((cell.getMonth() + 1).toString(), 2, "0") +
+          "-" +
+          pad(cell.getDate().toString(), 2, "0");
+      }
+    }
+
+    if (isArrayOfEmptyStrings(cells)) break;
+    result.push(cells);
+  }
+
+  return result;
+}
+
+/**
+ * Merges multiple per-sheet raw checklist tables into a single unified table.
+ *
+ * Contract:
+ *  - The header row from the PRIMARY (first) sheet is the canonical header.
+ *  - Columns from subsequent sheets are matched by lowercase-trimmed name, so
+ *    column-order differences between sheets do not corrupt data.
+ *  - Every data row gets a non-enumerable `_sourceSheet` string so that Logger
+ *    calls downstream can report the exact originating sheet name without
+ *    affecting JSON serialisation, header-based column lookups, or any other
+ *    existing row-processing code.
+ *  - When only one sheet is provided the output is structurally identical to
+ *    what the original single-sheet code path returned.
+ *
+ * @param {Array<{ sheetName: string, table: any[][] }>} sheetTables
+ *   Ordered array of { sheetName, table } where table[0] is the header row
+ *   and table[1..] are data rows.
+ * @returns {any[][]}  Merged table: canonical header at [0], annotated data rows after.
+ */
+function mergeChecklistSheetTables(sheetTables) {
+  if (sheetTables.length === 0) return [];
+
+  // Primary sheet provides the canonical header row
+  const primaryHeaders = sheetTables[0].table[0].map((h) =>
+    (h || "").toString().toLowerCase().trim()
+  );
+
+  const mergedRows = [sheetTables[0].table[0]]; // keep the original header row object
+
+  for (const { sheetName, table } of sheetTables) {
+    if (table.length <= 1) continue; // header-only or empty sheet → nothing to merge
+
+    const thisHeaders = table[0].map((h) =>
+      (h || "").toString().toLowerCase().trim()
+    );
+
+    // Build a column-remap index: for each primary header position, find the
+    // matching column index in this sheet's headers (or -1 if absent).
+    const colRemap = primaryHeaders.map((ph) => thisHeaders.indexOf(ph));
+
+    for (let r = 1; r < table.length; r++) {
+      const sourceRow = table[r];
+
+      // Re-order cells to align with the primary header layout
+      const alignedRow = colRemap.map((srcIdx) =>
+        srcIdx >= 0 ? sourceRow[srcIdx] : ""
+      );
+
+      // Attach a lightweight, invisible meta flag for Logger attribution.
+      // defineProperty keeps _sourceSheet out of for..in and JSON.stringify,
+      // so it is invisible to all existing row-processing code.
+      Object.defineProperty(alignedRow, "_sourceSheet", {
+        value: sheetName,
+        enumerable: false,
+        writable: false,
+        configurable: false,
+      });
+
+      mergedRows.push(alignedRow);
+    }
+  }
+
+  return mergedRows;
+}
+
+// =============================================================================
 // EXPORT
 // =============================================================================
 
@@ -446,68 +573,38 @@ export let ExcelBridge = function (excelFile) {
     },
 
     getRawChecklistData: function () {
-      // No re-read of workbook here, uses closure 'workbook'
-      const sheetName = data.sheets.checklist.name;
-      const sheetData = parseSheetData(workbook, sheetName);
+      // No re-read of workbook here, uses closure 'workbook'.
+      //
+      // data.sheets.checklist.name is set by postprocessMetadata() from the
+      // "Data sheets names" Customization row before this is called.
+      // It may now contain a comma-separated list of sheet names.
+      const sheetNames = data.sheets.checklist.sheetsNames;
 
-      if (!sheetData) {
-        Logger.critical("Could not locate checklist sheet");
+      if (sheetNames.length === 0) {
+        Logger.critical("No data sheet supplied. Please specify at least one sheet name in the 'Data sheets names' customization row.");
         return null;
       }
 
-      let headerRowIndex = -1;
-      if (data.common && data.common.checklistHeadersStartRow) {
-        headerRowIndex = data.common.checklistHeadersStartRow - 1;
-      }
-      else {
-        headerRowIndex = 0;
-      }
+      const headerRowIndex = 0;
 
-      // Ensure we don't go out of bounds if the sheet is empty/small
-      if (headerRowIndex < 0) headerRowIndex = 0;
-      if (headerRowIndex >= sheetData.length) headerRowIndex = 0;
+      const sheetTables = [];
 
-      const headerRow = sheetData[headerRowIndex];
+      for (const sheetName of sheetNames) {
+        const table = readOneDataSheet(workbook, sheetName, headerRowIndex);
 
-      // 2. Determine table width based on the ACTUAL header row, not sheetData[0]
-      let tableEndCol = 1;
-      if (headerRow) {
-        headerRow.forEach((header, index) => {
-          if (header !== undefined && header.toString().trim() !== "") {
-            tableEndCol = index + 1;
-          }
-        });
-      }
-
-      //console.log("Table end column:", tableEndCol);
-
-      const rawChecklistTable = [];
-
-      // Process rows
-      for (let row = 0; row < sheetData.length; row++) {
-        const cells = sheetData[row].slice(0, tableEndCol);
-
-        // Date Conversion Logic
-        for (let column = 0; column < cells.length; column++) {
-          let cell = cells[column];
-          if (cell instanceof Date) {
-            cell = new Date(cell - cell.getTimezoneOffset() * 60 * 1000);
-            cells[column] =
-              cell.getFullYear() +
-              "-" +
-              pad((cell.getMonth() + 1).toString(), 2, "0") +
-              "-" +
-              pad(cell.getDate().toString(), 2, "0");
-          }
+        if (table == null) {
+          Logger.critical("Could not locate data sheet '" + sheetName + "'");
+          return null;
         }
 
-        if (isArrayOfEmptyStrings(cells)) break;
-        rawChecklistTable.push(cells);
+        sheetTables.push({ sheetName, table });
       }
 
-      //console.log("Raw checklist data:", rawChecklistTable);
+      if (sheetTables.length === 0) return null;
 
-      return rawChecklistTable;
+      // Merge all sheets into one unified raw table and return it.
+      // When only one sheet is present this is a transparent pass-through.
+      return mergeChecklistSheetTables(sheetTables);
     },
   };
 };

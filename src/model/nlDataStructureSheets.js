@@ -962,12 +962,12 @@ export const nlDataStructureSheets = {
                                     ["Checklist name", "(empty)", "Short name shown in the app header"],
                                     ["About section", "(empty)", "About page text; supports Markdown and F-directives"],
                                     ["How to cite", "(empty)", "Citation text shown to users"],
-                                    ["Name of checklist data sheet", "checklist", "Data sheet tab name if renamed"],
-                                    ["Checklist data headers row", "1", "Row number (1-based) of the headers row"],
+                                    ["Data sheets names", "checklist", "Data sheet tab name if renamed"],
                                     ["Date format", "YYYY-MM-DD", "day.js format string for date display"],
                                     ["Precache max file size", "0.5", "Maximum individual file size (MB) to precache"],
                                     ["Precache max total size", "200", "Maximum total precache size (MB)"],
                                     ["Month names", "English months", "Comma-separated list of 12 month names"],
+                                    ["Custom eml.xml location", "(empty)", "Path to a custom DwC-A EML file in the usercontent folder (including the filename, e.g. `dwc/eml.xml`)"],
                                 ],
                             },
                         ],
@@ -978,12 +978,12 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
-                        templateData: ["Color theme hue", "Checklist name", "About section", "How to cite", "Name of checklist data sheet", "Checklist data headers row", "Date format", "Month names", "Precache max file size", "Precache max total size"],
+                        templateData: ["Color theme hue", "Checklist name", "About section", "How to cite", "Data sheets names", "Date format", "Month names", "Precache max file size", "Precache max total size", "Custom eml.xml location"],
                     },
                     value: {
                         name: "Value",
                         description:
-                            "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) — useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **Name of checklist data sheet**: data sheet tab name, if different from the default `checklist`.\n- **Checklist data headers row**: 1-based row number of the column headers row in the data sheet. Default is `1`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
+                            "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) — useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **Data sheets names**: comma-separated list of data sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
                         whenToUse: "Fill in only the items you need to change from their defaults. Leave the Value cell empty for any item you are happy with at its default.",
                         notes: [
                             {
@@ -999,6 +999,7 @@ export const nlDataStructureSheets = {
                                     ["Checklist name", "Birds of Vanuatu", "Oiseaux du Vanuatu"],
                                     ["Date format", "MMM D, YYYY", "DD/MM/YYYY"],
                                     ["Color theme hue", "45", "45"],
+                                    ["Data sheets names", "checklist", "checklist"],
                                 ],
                             },
                         ],

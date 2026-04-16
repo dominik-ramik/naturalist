@@ -1391,7 +1391,7 @@ export let DataManager = function () {
                 else {
                   Logger.error(
                     tf("dm_incomplete_taxa_info_row", [
-                      rowIndex + data.common.checklistHeadersStartRow,
+                      rowIndex, //used to use checklistHeadersStartRow
                       info.name,
                     ])
                   );
@@ -1415,7 +1415,7 @@ export let DataManager = function () {
                 hasAnyDataForRootColumn(headers, row, info.name)) {
                 Logger.error(
                   tf("dm_wrong_belongs_to", [
-                    rowIndex + data.common.checklistHeadersStartRow,
+                    rowIndex, //used to use checklistHeadersStartRow
                     info.name,
                     resolvedBelongsTo,
                     actualEntity,
@@ -1456,7 +1456,7 @@ export let DataManager = function () {
 
         if (pathKey === "") return; // skip empty rows
 
-        const rowNumber = arrayIndex + 1 + data.common.checklistHeadersStartRow;
+        const rowNumber = arrayIndex + 1; //used to use checklistHeadersStartRow
 
         if (seenPaths.has(pathKey)) {
           Logger.error(
@@ -1493,7 +1493,7 @@ export let DataManager = function () {
           if (!occurrenceEntry || occurrenceEntry.name.trim() === "") return;
 
           const occurrenceName = occurrenceEntry.name.trim();
-          const rowNumber = arrayIndex + 1 + data.common.checklistHeadersStartRow;
+          const rowNumber = arrayIndex + 1; //used to use checklistHeadersStartRow
 
           if (seenOccurrenceIds.has(occurrenceName)) {
             Logger.error(
@@ -1928,36 +1928,20 @@ export let DataManager = function () {
   }
 
   function postprocessMetadata() {
-    // Change checklist sheet name if needed
-    let customChecklistName = "";
+    // Change data sheets names if needed
+    let dataSheetsNames = [];
     data.sheets.appearance.tables.customization.data[
       data.common.languages.defaultLanguageCode
     ].forEach(function (row) {
-      if (row.item == "Name of checklist data sheet") {
-        customChecklistName = row.value;
+      if (row.item.toLowerCase().trim() == "data sheets names") {
+        dataSheetsNames = row.value.split(",").map((s) => s.trim()).filter((s) => s !== "");
       }
       return false;
     });
-    let customChecklistDataStartRow = "";
-    data.sheets.appearance.tables.customization.data[
-      data.common.languages.defaultLanguageCode
-    ].forEach(function (row) {
-      if (row.item == "Checklist data headers row") {
-        customChecklistDataStartRow = row.value;
-      }
-      return false;
-    });
-    if (customChecklistName && customChecklistName.length > 0) {
-      data.sheets.checklist.name = customChecklistName;
+    if(dataSheetsNames.length == 0){
+      dataSheetsNames = ["checklist"]; // default value
     }
-    if (
-      customChecklistDataStartRow &&
-      !isNaN(parseInt(customChecklistDataStartRow))
-    ) {
-      data.common.checklistHeadersStartRow = parseInt(
-        customChecklistDataStartRow
-      );
-    }
+    data.sheets.checklist.sheetsNames = dataSheetsNames;
 
     // set default values if needed
     //*
@@ -2081,13 +2065,6 @@ export let DataManager = function () {
 
       extractor.loadMeta(data);
 
-      //console.log("After extractor.loadMeta: supportedLanguages=", data.common.languages.supportedLanguages);
-      //console.log("After extractor.loadMeta: tables content:", {
-      //  content: data.sheets.content.tables,
-      //  appearance: data.sheets.appearance.tables,
-      //});
-      //console.log("Logger messages (so far):", dataManager.loggedMessages);
-
       checkMetaValidity();
       if (!Logger.hasErrors()) {
         postprocessMetadata();
@@ -2098,9 +2075,10 @@ export let DataManager = function () {
       }
 
       const rawChecklist = typeof extractor.getRawChecklistData === "function" ? extractor.getRawChecklistData() : null;
-      if (!rawChecklist) {
+
+      if (rawChecklist == null) {
         Logger.critical(
-          "Could not load checklist data sheet. Make sure the checklist sheet exists and its name matches the 'Name of checklist data sheet' setting."
+          "Could not load data sheet. Make sure the data sheet exists and its name matches the 'Data sheets names' setting."
         );
         console.error("DataManager.loadData: extractor.getRawChecklistData() returned null or undefined.");
         return;
