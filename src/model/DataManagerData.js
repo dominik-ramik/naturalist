@@ -1,11 +1,15 @@
 import * as XLSX from "xlsx-js-style"
 import { nlDataStructureSheets } from "./nlDataStructureSheets";
 
-export function exportTemplateSpreadsheet() {
-  localExportSpreadsheetFromNLData(nlDataStructure);
+export function exportTemplateSpreadsheetFilled() {
+  localExportSpreadsheetFromNLData(nlDataStructure, false);
 }
 
-function localExportSpreadsheetFromNLData(nlDataStructure) {
+export function exportTemplateSpreadsheetEmpty() {
+  localExportSpreadsheetFromNLData(nlDataStructure, true);
+}
+
+function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = false) {
   const wb = XLSX.utils.book_new();
 
   // --- Styles ---
@@ -73,12 +77,14 @@ function localExportSpreadsheetFromNLData(nlDataStructure) {
     // 3. Build Rows
     const rows = [headers]; // Row 0 is headers
 
-    for (let i = 0; i < maxRows; i++) {
-      const row = colKeys.map(k => {
-        const colName = table.columns[k].name;
-        return dataMap[colName] && dataMap[colName][i] !== undefined ? dataMap[colName][i] : "";
-      });
-      rows.push(row);
+    if (!completelyBlank) {
+      for (let i = 0; i < maxRows; i++) {
+        const row = colKeys.map(k => {
+          const colName = table.columns[k].name;
+          return dataMap[colName] && dataMap[colName][i] !== undefined ? dataMap[colName][i] : "";
+        });
+        rows.push(row);
+      }
     }
 
     return rows;
@@ -136,7 +142,21 @@ function localExportSpreadsheetFromNLData(nlDataStructure) {
     });
 
     const sheetData = [];
-    if (headerKeys.length > 0) {
+    const blankMessageA1 = "Your data will go into this sheet";
+    const blankMessageA2 = "Configure the nl_content and nl_appearance sheets following the documentation on naturalist.netlify.app";
+    const blankMessageA4 = "https://naturalist.netlify.app"
+
+    // When completelyBlank is requested, put a helpful placeholder into A1
+    if (completelyBlank) {
+      const ws = {};
+      ws['A1'] = { v: blankMessageA1, t: 's', s: { font: { color: { rgb: "FF0000" } } } };
+      ws['A2'] = { v: blankMessageA2, t: 's', s: { font: { color: { rgb: "FF0000" } } } };
+      ws['A4'] = { v: blankMessageA4, t: 's', s: { font: { color: { rgb: "0000FF" }, underline: true } }, l: { Target: blankMessageA4 } };
+      ws['!ref'] = 'A1:A4';
+      return ws;
+    }
+
+    if (!completelyBlank && headerKeys.length > 0) {
       sheetData.push(headerKeys);
       let maxRows = 0;
       Object.values(dataMap).forEach(arr => {
@@ -264,7 +284,8 @@ function localExportSpreadsheetFromNLData(nlDataStructure) {
     XLSX.utils.book_append_sheet(wb, ws, sheetDef.name || sheetKey);
   });
 
-  XLSX.writeFile(wb, "checklist_template.xlsx");
+  const outFilename = completelyBlank ? "nl_template_blank.xlsx" : "nl_template_sample_data.xlsx";
+  XLSX.writeFile(wb, outFilename);
 }
 
 export function getAllColumnInfos(nlDataStructure, langCode) {

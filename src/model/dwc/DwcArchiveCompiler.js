@@ -474,6 +474,24 @@ export async function compileDwcArchive(params) {
     cddRows,
     checklistHeaders,
     checklistRawRows,
+    /**
+     * Optional callback: (rawSourceValue: string, columnName: string, rawRow: any[]) => string
+     *
+     * When provided, the compiler calls this for every media column `.source`
+     * value instead of just applying relativeToUsercontent().  The callback is
+     * responsible for running the NL template pipeline (Handlebars substitution
+     * + usercontent resolution) so that CDD Template values are honoured in DwC
+     * output exactly the same way they are in the viewer.
+     *
+     * If absent, the compiler falls back to a plain relativeToUsercontent() call
+     * (legacy behaviour, no template expansion).
+     *
+     * Constructed by DataManager.compileDwcArchiveAsync(), which already has
+     * access to Handlebars and helpers.processSource.  Keeping this as a
+     * callback preserves decoupling: DwcArchiveCompiler has no import dependency
+     * on Handlebars or the customTypes helpers layer.
+     */
+    resolveMediaSource,
   } = params;
 
   const NULL_RESULT = { checklistZip: null, occurrenceZip: null };
@@ -841,25 +859,24 @@ export async function compileDwcArchive(params) {
 
         let extracted = extractCompoundValue(nlFmt, componentKey, raw, Logger);
 
-        // Apply relativeToUsercontent to media source URLs so the archive
-        // contains app-root-relative paths.  Template processing (from CDD's
-        // Template column) is intentionally NOT applied here — DwC export uses
-        // raw data; users needing template-transformed URLs should store the
-        // full path in the source column directly.
+        // Apply the full NL media-source pipeline to image/sound .source values.
+        //
+        // The pipeline is:
+        //   1. Handlebars template substitution (CDD "Template" column) — lets
+        //      users build dynamic paths like "images/{{name}}.jpg".
+        //   2. relativeToUsercontent() — makes the path absolute relative to
+        //      the app root so DwC consumers get a usable URL.
+        //
+        // This is delegated to the `resolveMediaSource` callback supplied by
+        // the caller (DataManager) which has access to Handlebars and helpers.
+        // If no callback is provided we fall back to plain usercontent resolution
+        // (no template expansion) for backward compatibility.
         if ((nlFmt === "image" || nlFmt === "sound") && componentKey === "source" && extracted) {
-          // We try to see if {{value}} is present and if so, we take the template and process it with the raw value. 
-          // This allows users to use the CDD Template column to build media URLs with other columns, and still have them correctly 
-          // relativized for DwC output.
-
-          //get the meta template for this column
-          const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === rootName.toLowerCase());
-          const template = cddDef?.template?.trim();
-
-          console.log("DwC Archive: resolveColumnValue", { termName, columnName, nlFmt, raw, extracted, template });
-
-          // use processTemplate here from customTypes/helpers.js
-          
-          extracted = relativeToUsercontent(String(extracted));
+          if (typeof resolveMediaSource === "function") {
+            extracted = resolveMediaSource(String(extracted), rootName, rawRow);
+          } else {
+            extracted = relativeToUsercontent(String(extracted));
+          }
         }
 
         const te = getDwcTerm(termName);

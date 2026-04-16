@@ -16,6 +16,7 @@ import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
 import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
 import { compileDwcArchive } from "./dwc/DwcArchiveCompiler.js";
+import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
 import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 
 // Global array to collect assets from F: directives
@@ -2105,6 +2106,27 @@ export let DataManager = function () {
     },
 
     /**
+     * Returns true if the spreadsheet contains a non-empty DwC archive table.
+     * Safe to call immediately after loadData() — does NOT require
+     * getCompiledChecklist() to have been called first.
+     * Used by ManageView for early DwC UI detection.
+     */
+    hasDwcTable() {
+      const defaultLangCode = data.common.languages.defaultLanguageCode;
+      const rows = data.sheets.content.tables.dwcArchive?.data?.[defaultLangCode];
+      return Array.isArray(rows) && rows.length > 0;
+    },
+
+    /**
+     * Returns true if compileDwcArchiveAsync() has already been called and
+     * produced a result (possibly null blobs if there were errors).
+     */
+    isDwcCompiled() {
+      return compiledChecklistCache != null &&
+        Object.prototype.hasOwnProperty.call(compiledChecklistCache, "_dwcArchive");
+    },
+
+    /**
      * Compile the DwC archive for the default language and store the result on
      * the compiled checklist cache.  Must be called after getCompiledChecklist().
      *
@@ -2124,15 +2146,73 @@ export let DataManager = function () {
       if (!dwcTableRows || dwcTableRows.length === 0) {
         return; // DwC table absent or empty — nothing to compile, no errors to log
       }
+
+      const cddRows = data.sheets.content.tables.customDataDefinition.data[defaultLangCode];
+
+      /**
+       * Build a per-column Handlebars template cache so we compile each template
+       * string only once across all rows.
+       */
+      const templateCache = new Map();
+      function getCompiledTemplate(columnName) {
+        if (templateCache.has(columnName)) return templateCache.get(columnName);
+        const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === columnName.toLowerCase());
+        const templateStr = cddDef?.template?.trim();
+        let compiled = null;
+        if (templateStr) {
+          try { compiled = Handlebars.compile(templateStr); } catch (ex) {
+            Logger.warning(`DwC Archive: Failed to compile Handlebars template for column "${columnName}": ${ex.message}`, "DwC Archive");
+          }
+        }
+        templateCache.set(columnName, compiled);
+        return compiled;
+      }
+
+      /**
+       * resolveMediaSource — implements the same pipeline as helpers.processSource()
+       * for use inside DwcArchiveCompiler without introducing a dependency on the
+       * customTypes layer from within the compiler.
+       *
+       * @param {string} rawSource  - Raw .source string from the data row
+       * @param {string} columnName - Root column name (e.g. "Photo")
+       * @param {any[]}  rawRow     - Current raw checklist row (for template context)
+       * @returns {string} Fully resolved source URL
+       */
+      const resolveMediaSource = (rawSource, columnName, rawRow) => {
+        const compiledTemplate = getCompiledTemplate(columnName);
+        const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === columnName.toLowerCase());
+
+        // Build the uiContext expected by helpers.processSource / helpers.processTemplate
+        const uiContext = {
+          compiledTemplate,
+          dataPath: columnName,
+          meta: { template: cddDef?.template?.trim() || "" },
+          // Reconstruct a minimal originalData object from the raw row so that
+          // Handlebars {{columnName}} references work the same as in the viewer.
+          originalData: (() => {
+            const obj = {};
+            const rawHeaders = data.sheets.checklist.rawHeaders || [];
+            rawRow.forEach((val, i) => {
+              if (rawHeaders[i]) obj[rawHeaders[i]] = val;
+            });
+            return obj;
+          })(),
+          taxon: { name: "", authority: "" }, // not needed for path templates
+        };
+
+        return customTypeHelpers.processSource(rawSource, uiContext);
+      };
+
       const result = await compileDwcArchive({
         dwcTableRows,
         compiledTree:      compiledChecklistCache,
         taxaColumnDefs:    data.sheets.content.tables.taxa.data[defaultLangCode],
         customizationData: data.sheets.appearance.tables.customization.data[defaultLangCode],
-        cddRows:           data.sheets.content.tables.customDataDefinition.data[defaultLangCode],
+        cddRows,
         checklistHeaders:  data.sheets.checklist.rawHeaders,
         checklistRawRows:  data.sheets.checklist.rawRows,
         defaultLangCode,
+        resolveMediaSource,
       });
       compiledChecklistCache._dwcArchive = result;
     },
