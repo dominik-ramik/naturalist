@@ -5,10 +5,9 @@ import "./SearchView.css";
 import { FilterDropdown } from "../view/FilterDropdownView.js";
 import { Checklist } from "../model/Checklist.js";
 import { FilterCrumbsView } from "./FilterCrumbsView.js";
-import { routeTo, shouldHide } from "../components/Utils.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
-import { OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
 

@@ -6,7 +6,7 @@ import { config as regionalDistribution } from "./RegionalDistribution.js";
 import { Settings } from "../../model/Settings.js";
 import { Checklist } from "../../model/Checklist.js";
 import { updateRouteParams } from "../../components/Utils.js";
-import { ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
 export { SCOPE_CHOICES } from "./scopes.js";
 

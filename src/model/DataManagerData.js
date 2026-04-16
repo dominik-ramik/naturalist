@@ -351,7 +351,6 @@ export let nlDataStructure = {
         },
       ]
     },
-    checklistHeadersStartRow: 1,
     allUsedDataPaths: {}, // allUsedDataPaths[lang.code] = dataPath
 
     _columnInfosCache: {}, // Add cache object
