@@ -1154,7 +1154,11 @@ export async function compileDwcArchive(params) {
         const latVal = latMap?.directive.type === "column" ? (resolveColumnValue("decimalLatitude", latMap.directive.value, rawRow) || "") : "";
         const lonMap = mappingByTerm.get("decimalLongitude");
         const lonVal = lonMap?.directive.type === "column" ? (resolveColumnValue("decimalLongitude", lonMap.directive.value, rawRow) || "") : "";
-        occurrenceId = await uuidV5(UUID_NS_OCCURRENCE, `${sciName}:${edVal}:${latVal}:${lonVal}`);
+        // Include the occurrence cell value (e.g. ACCNO) in the hash to guarantee
+        // row-level uniqueness.  Without it, two occurrences of the same taxon on
+        // the same date at the same location produce identical UUIDs.
+        const occCellStr = String(occCell).trim();
+        occurrenceId = await uuidV5(UUID_NS_OCCURRENCE, `${sciName}:${occCellStr}:${edVal}:${latVal}:${lonVal}`);
         Logger.warning("DwC Archive: No catalogNumber available — UUID v5 fallback used for <b>occurrenceID</b>.", "DwC Archive");
       }
 
