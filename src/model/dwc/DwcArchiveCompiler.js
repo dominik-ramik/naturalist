@@ -3,17 +3,30 @@
  *
  * Produces Darwin Core Archive (DwC-A) ZIP files from a compiled NaturaList
  * checklist. Generates:
- *   - taxa_dwca.zip         — always when Tier 1 passes. Contains taxa.csv,
- *                             meta.xml, and eml.xml.
- *   - occurrences_dwca.zip  — additionally when `basisOfRecord` is present and
- *                             Tier 2 passes. Contains occurrences.csv, meta.xml,
- *                             and eml.xml (same EML as above).
+ *   - taxa_dwca.zip         — Tier 1: taxa.csv + meta.xml + eml.xml
+ *   - occurrences_dwca.zip  — Tier 2 (when `basisOfRecord` row present):
+ *                             occurrences.csv + meta.xml + eml.xml
  *
- * ─── Compound extraction (issue 3) ───────────────────────────────────────────
+ * ─── Taxon column name resolution (.name sub-column pattern) ─────────────────
  *
- * Sub-values of compound NL types are addressed EXPLICITLY in the DwC archive
- * table Source column using a dotted suffix.  Nothing is inferred silently.
- * The user writes the full path including the component key:
+ * NaturaList allows taxa columns to store the name in a `.name` sub-column
+ * (e.g. "Species" definition column → actual header "Species.name").  The
+ * compiler handles this transparently:
+ *
+ *   taxaColHeaderIndices  tries exact name first, then "columnName.name"
+ *   taxa: directive       same fallback for no-component access
+ *   taxa: component path  handled via customTypeTaxon.readData which already
+ *                         implements the .name fallback internally
+ *
+ * ─── Rank guard for taxa: directives ─────────────────────────────────────────
+ *
+ * When a `taxa:Column.component` directive is processed for a taxon at a
+ * HIGHER rank than Column, the result is always "" — a genus row should not
+ * inherit the species epithet just because its representative raw row happens
+ * to be a species row.  The guard compares the referenced column's position in
+ * the taxa hierarchy against the current taxon's rank index.
+ *
+ * ─── Compound extraction — explicit component keys ───────────────────────────
  *
  *   location.lat              → decimalLatitude
  *   location.long             → decimalLongitude
@@ -26,59 +39,35 @@
  *   taxa:Species.lastNamePart → specificEpithet
  *   taxa:Species.name         → scientificName (explicit)
  *
- * Disambiguation with real sub-columns (e.g. origPub.author):
- *   1. Try the full path as an exact header in checklistHeaders.
- *   2. If found → real column, read directly (no compound extraction).
- *   3. If not found → split on last dot → check isKnownCompoundKey(type, suffix).
- *   4. Known compound key → compound extraction on root column.
- *   5. Otherwise → Logger.warning "column not found".
+ * Disambiguation: exact header lookup wins; compound path applies only when
+ * the full dotted path is NOT an existing header AND the suffix is a known
+ * compound key for the root column's NL type.
  *
- * ─── taxonRank (issue 2) ─────────────────────────────────────────────────────
+ * ─── EML — Option C Hybrid ───────────────────────────────────────────────────
  *
- * `taxa:ColumnName` no longer has a special case for `taxonRank`.
- * `taxa:Species` with term `taxonRank` would just read the Species column value,
- * which is a taxon name, not a rank — wrong and confusing.
+ * Priority:
+ *   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
+ *   2. usercontent/eml.xml auto-discovery   → Logger.info if found and used
+ *   3. eml: rows in the DwC archive table   → minimal EML built from them
+ *      Required when using this path: at least one creator name field must be present
+ *   4. None of the above                    → Logger.error, export continues
+ *      without eml.xml (GBIF will reject but archive is still produced)
  *
- * Users MUST write `auto:taxonRank` to get the rank inferred from the column's
- * position in the taxa hierarchy.  This is explicit and self-documenting.
+ * ─── Auto directives ─────────────────────────────────────────────────────────
  *
- * `taxa:ColumnName` now means exactly: "read the value in ColumnName for this row"
- * (plus optional component suffix for taxon-typed columns).
- *
- * ─── EML generation (issue 1) ────────────────────────────────────────────────
- *
- * A minimal GBIF-valid eml.xml is generated automatically.  It draws on:
- *   - title    ← resolved from `config:Checklist name` (auto)
- *   - abstract ← resolved from `config:About section` (auto, markdown stripped)
- *   - language ← `language` row
- *   - license  ← `license` row
- *   - pubDate  ← today (auto), overridable via `eml:pubDate`
- *
- * Additional EML fields are supplied via `eml:` prefix rows in the DwC archive
- * table.  The supported paths are:
- *
- *   eml:creator.organizationName
- *   eml:creator.givenName
- *   eml:creator.surName
- *   eml:creator.email
- *   eml:creator.url
- *   eml:creator.userId           (ORCID or similar)
- *   eml:pubDate                  (overrides auto date; YYYY-MM-DD)
- *   eml:geographicDescription
- *   eml:taxonomicDescription
- *   eml:temporalDescription
- *
- * If no eml: rows are present, a Logger.warning is emitted but export continues.
- * GBIF will accept the dataset with an empty creator block, but it is strongly
- * recommended to add at least eml:creator.organizationName and eml:creator.email.
+ *   auto:taxonID              → UUID v5 from institutionCode:collectionCode:name:rank
+ *   auto:parentNameUsageID    → taxonID of the immediate parent in the hierarchy
+ *   auto:taxonRank            → DwC rank vocabulary value from the column name
+ *   auto:scientificName       → current taxon's own name at its rank level
+ *   auto:scientificNameAuthorship → authority from the rankColumn.authority sub-column
+ *   auto:occurrenceID         → occurrence-only; warn if used in taxon rows
  *
  * ─── Sampling Event (Tier 3) ─────────────────────────────────────────────────
  *
- * `samplingProtocol` and `eventID` rows are recognised and logged as warnings
- * but otherwise skipped.  Tier 3 support is planned for a future release.
- * No changes to the table structure will be required to enable it.
+ * samplingProtocol / eventID rows are recognised and skipped with a warning.
+ * No table changes will be needed when Tier 3 is implemented.
  *
- * The resulting packages should always pass https://www.gbif.org/tools/data-validator/
+ * External dependency: jszip (npm install jszip)
  */
 
 import JSZip from "jszip";
@@ -87,6 +76,7 @@ import { extractCompoundValue, isKnownCompoundKey } from "./dwcCompoundExtractor
 import { getAvailableDataTypeNames, loadDataByType } from "../customTypes/index.js";
 import { Logger } from "../../components/Logger.js";
 import { OCCURRENCE_IDENTIFIER } from "../nlDataStructureSheets.js";
+import { relativeToUsercontent } from "../../components/Utils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UUID v5 — self-contained, no external dependency (RFC 4122 §4.3)
@@ -137,14 +127,14 @@ function buildCsvString(columns, rows) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildMetaXml(fieldUris, rowType, dataFile) {
-  const fields = fieldUris.slice(1)
-    .map((uri, i) => uri ? `    <field index="${i + 1}" term="${uri}"/>` : null)
+  const fields = fieldUris
+    .map((uri, i) => uri ? `    <field index="${i}" term="${uri}"/>` : null)
     .filter(Boolean).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <archive xmlns="http://rs.tdwg.org/dwc/text/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://rs.tdwg.org/dwc/text/ http://rs.tdwg.org/dwc/text/tdwg_dwc_text.xsd">
-  <core encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="&#10;"
+  <core encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="&#13;&#10;"
         fieldsEnclosedBy="&quot;" ignoreHeaderLines="1"
         rowType="${rowType}">
     <files><location>${dataFile}</location></files>
@@ -155,15 +145,54 @@ ${fields}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// eml.xml generation
+// EML fetch helper — Option C hybrid
 //
-// Produces a minimal EML 2.1.1 document that satisfies GBIF's indexing
-// requirements.  Only non-empty fields are emitted; optional coverage blocks
-// are omitted entirely if their values are empty.
+// Tries to load an eml.xml file from the usercontent folder.
+// Returns the file contents as a string, or null if not found/failed.
+// Path traversal is prevented by verifying the resolved URL stays within base.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function tryFetchEml(relativePath) {
+  try {
+    // Build the usercontent base URL from the current page location
+    const base = new URL(
+      "usercontent/",
+      window.location.origin + window.location.pathname
+    ).href;
+
+    // Resolve the path relative to usercontent/ and validate it stays within
+    const url = new URL(relativePath, base).href;
+    if (!url.startsWith(base)) {
+      Logger.error(
+        `DwC Archive: EML path "<b>${relativePath}</b>" resolves outside the usercontent/ ` +
+        `directory. Paths containing "../" or starting with "/" are not allowed.`,
+        "DwC Archive"
+      );
+      return null;
+    }
+
+    const resp = await fetch(url);
+
+    // 1. Check standard HTTP status
+    if (!resp.ok) return null;
+
+    // 2. Guard against SPA "Soft 404" fallback pages
+    const contentType = resp.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      return null;
+    }
+
+    return await resp.text();
+  } catch (_) {
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// eml.xml generation — minimal GBIF-valid EML 2.1.1
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildEmlXml(opts) {
-  /** XML-escape a string for safe embedding in element content and attributes. */
   const e = s => (s || "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
@@ -203,6 +232,9 @@ function buildEmlXml(opts) {
     `        <singleDateTime><calendarDate>${e(opts.temporalDescription)}</calendarDate></singleDateTime>\n` +
     `      </temporalCoverage>\n    </coverage>\n` : "";
 
+  // intellectualRights: use a human-readable label if available, else the URI
+  const licenseText = opts.licenseLabel || opts.license || "";
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -213,19 +245,18 @@ function buildEmlXml(opts) {
          xml:lang="${e(opts.language)}">
   <dataset>
     <title xml:lang="${e(opts.language)}">${e(opts.title)}</title>
-${creatorBlock}${metadataProviderBlock}    <pubDate>${e(opts.pubDate)}</pubDate>
+${creatorBlock}${metadataProviderBlock}<pubDate>${e(opts.pubDate)}</pubDate>
     <language>${e(opts.language)}</language>
     <abstract><para>${e(opts.abstract)}</para></abstract>
 ${geoCoverage}${taxCoverage}${tempCoverage}    <intellectualRights>
-      <para>This work is licensed under a <ulink url="${e(opts.license)}"><citetitle>${e(opts.licenseLabel)}</citetitle></ulink>.</para>
-    </intellectualRights>
-${contactBlock}
+      <para><ulink url="${e(opts.license)}"><citetitle>${e(licenseText)}</citetitle></ulink></para>
+    </intellectualRights>${contactBlock}
   </dataset>
 </eml:eml>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Markdown stripping (for EML abstract and DwC string fields sourced from markdown)
+// Markdown stripping
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function stripMarkdown(text) {
@@ -237,28 +268,25 @@ function stripMarkdown(text) {
     .replace(/(\*{1,2}|_{1,2})(.*?)\1/gs, "$2")
     .replace(/`{1,3}[^`]*`{1,3}/g, "")
     .replace(/^>\s+/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\n{2,}/g, " ")
+    .replace(/\n/g, " ")
     .trim();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Source column directive parsing
 //
-// Supported directive types and examples:
+//   config:Checklist name      → { type:"config",   value:"Checklist name",  component:null }
+//   eml:creator.email          → { type:"eml",      value:"creator.email",   component:null }
+//   auto:taxonRank             → { type:"auto",      value:"taxonRank",       component:null }
+//   taxa:Species               → { type:"taxa",      value:"Species",         component:null }
+//   taxa:Species.authority     → { type:"taxa",      value:"Species",         component:"authority" }
+//   {redlist} | Notes: {notes} → { type:"template",  value:(raw string),      component:null }
+//   altitude.from              → { type:"column",    value:"altitude.from",   component:null }
+//   recordedBy                 → { type:"column",    value:"recordedBy",      component:null }
+//   (blank)                    → { type:"empty",     value:"",                component:null }
 //
-//   config:Checklist name      → type:"config",   value:"Checklist name",  component:null
-//   eml:creator.email          → type:"eml",      value:"creator.email",   component:null
-//   taxa:Species               → type:"taxa",      value:"Species",         component:null
-//   taxa:Species.authority     → type:"taxa",      value:"Species",         component:"authority"
-//   taxa:Species.lastNamePart  → type:"taxa",      value:"Species",         component:"lastNamePart"
-//   auto:taxonRank             → type:"auto",      value:"taxonRank",       component:null
-//   {redlist} | Notes: {notes} → type:"template",  value:(raw string),      component:null
-//   location.lat               → type:"column",    value:"location.lat",    component:null
-//   recordedBy                 → type:"column",    value:"recordedBy",      component:null
-//   (blank)                    → type:"empty",     value:"",                component:null
-//
-// Note: for `column` type, the compound-path detection (e.g. "altitude.from")
-// happens later in resolveColumnValue, not here.  This keeps the parser simple.
+// For `column` type, compound-path detection happens later in resolveColumnValue.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function parseSourceDirective(raw) {
@@ -271,7 +299,7 @@ function parseSourceDirective(raw) {
   if (lo.startsWith("auto:")) return { type: "auto", value: s.slice(5).trim(), component: null };
 
   if (lo.startsWith("taxa:")) {
-    const rest = s.slice(5).trim();        // e.g. "Species.authority"
+    const rest = s.slice(5).trim();
     const dot = rest.indexOf(".");
     if (dot >= 0) {
       return { type: "taxa", value: rest.slice(0, dot).trim(), component: rest.slice(dot + 1).trim() || null };
@@ -287,11 +315,16 @@ function parseSourceDirective(raw) {
 // config: directive resolver
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Resolve a config: directive and return { value, found } so the caller can
+ * distinguish "item missing" from "item present but empty".
+ */
 function resolveConfigDirective(itemName, customizationRows) {
-  if (!Array.isArray(customizationRows) || !itemName) return "";
+  if (!Array.isArray(customizationRows) || !itemName) return { value: "", found: false };
   const target = itemName.toLowerCase();
   const found = customizationRows.find(r => (r.item || "").toLowerCase() === target);
-  return found ? (found.value || "").toString().trim() : "";
+  if (!found) return { value: "", found: false };
+  return { value: (found.value || "").toString().trim(), found: true };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -381,7 +414,6 @@ function columnNameToRankVocab(columnName) {
   return lo;
 }
 
-// Known compound keys per NL type — used in warning messages
 const KNOWN_KEYS_BY_TYPE = {
   geopoint: "lat, long, verbatim",
   interval: "from, to",
@@ -390,6 +422,28 @@ const KNOWN_KEYS_BY_TYPE = {
   image: "source",
   sound: "source",
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Known directive value sets — used for validation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// All valid auto: keys (lowercase, whitespace stripped)
+const KNOWN_AUTO_KEYS = new Set([
+  "taxonid", "parentnameusageid", "taxonrank",
+  "scientificname", "scientificnameauthorship", "occurrenceid",
+]);
+
+// All supported eml: field paths (lowercase)
+const KNOWN_EML_PATHS = new Set([
+  "title", "abstract",
+  "creator.organizationname", "creator.givenname", "creator.surname",
+  "creator.email", "creator.url", "creator.userid",
+  "pubdate",
+  "geographicdescription", "taxonomicdescription", "temporaldescription",
+]);
+
+// EML creator fields — at least one of these must be present when using eml: rows
+const EML_REQUIRED_CREATOR_FIELDS = ["creator.organizationname", "creator.surname", "creator.givenname"];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Main entry-point
@@ -401,11 +455,11 @@ const KNOWN_KEYS_BY_TYPE = {
  * @param {Object}     params
  * @param {Object[]}   params.dwcTableRows       Rows from 'DwC archive' table.
  *                                               Each row: { term, sourceColumn, constantValue }
- * @param {Object}     params.compiledTree        Full compiled checklist (available for future use)
- * @param {Object[]}   params.taxaColumnDefs      Taxa Definition table rows: { columnName, taxonName, … }
+ * @param {Object}     params.compiledTree        Full compiled checklist (reserved for future use)
+ * @param {Object[]}   params.taxaColumnDefs      Taxa Definition rows: { columnName, taxonName, … }
  * @param {Object[]}   params.customizationData   Customization table rows: { item, value }
  * @param {Object[]}   params.cddRows             Custom Data Definition rows: { columnName, formatting, … }
- * @param {string[]}   params.checklistHeaders    Lowercased column-header array from the checklist sheet
+ * @param {string[]}   params.checklistHeaders    Lowercased column headers from the checklist sheet
  * @param {any[][]}    params.checklistRawRows    Raw data rows from the checklist sheet
  * @param {string}     params.defaultLangCode     Application default language code
  *
@@ -425,14 +479,14 @@ export async function compileDwcArchive(params) {
   if (!Array.isArray(dwcTableRows) || dwcTableRows.length === 0) return NULL_RESULT;
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 1 — Parse table rows
+  // Step 1 — Parse rows
   //
-  // Rows beginning with `eml:` go into rawEmlMappings (for EML generation).
-  // All other rows go into parsedMappings (for CSV generation).
+  // eml: rows → rawEmlMappings (for EML building)
+  // all other rows → parsedMappings (for CSV)
   // ───────────────────────────────────────────────────────────────────────────
 
-  const parsedMappings = []; // DwC CSV mappings
-  const rawEmlMappings = []; // eml: rows (resolved later)
+  const parsedMappings = [];
+  const rawEmlMappings = []; // { path, directive, constantValue }
 
   for (const row of dwcTableRows) {
     const termRaw = (row.term || "").toString().trim();
@@ -465,7 +519,7 @@ export async function compileDwcArchive(params) {
   const langMapping = mappingByTerm.get("language");
   if (!langMapping?.constantValue) {
     Logger.error(
-      "DwC Archive: <b>language</b> row is missing or has no Constant value. " +
+      "DwC Archive: The <b>language</b> row is missing or has no Constant value. " +
       "A valid ISO 639-1 two-letter code (e.g. 'en') is required. Export aborted.",
       "DwC Archive"
     );
@@ -483,17 +537,14 @@ export async function compileDwcArchive(params) {
 
   const instCodeMapping = mappingByTerm.get("institutionCode");
   if (!instCodeMapping?.constantValue) {
-    Logger.error(
-      "DwC Archive: <b>institutionCode</b> is missing or not a Constant value. Required. Export aborted.",
-      "DwC Archive"
-    );
+    Logger.error("DwC Archive: <b>institutionCode</b> missing or not a Constant value. Export aborted.", "DwC Archive");
     return NULL_RESULT;
   }
   const institutionCode = instCodeMapping.constantValue;
 
   const collCodeMapping = mappingByTerm.get("collectionCode");
   const collectionCode = collCodeMapping?.constantValue || "";
-  if (!collCodeMapping) Logger.warning("DwC Archive: <b>collectionCode</b> not configured. Recommended for GBIF.", "DwC Archive");
+  if (!collCodeMapping) Logger.warning("DwC Archive: <b>collectionCode</b> not configured. Recommended.", "DwC Archive");
 
   const licenseMapping = mappingByTerm.get("license");
   if (!licenseMapping?.constantValue) {
@@ -502,17 +553,13 @@ export async function compileDwcArchive(params) {
   }
   const normalizedLicense = normalizeLicense(licenseMapping.constantValue);
   if (!normalizedLicense) {
-    Logger.warning(
-      `DwC Archive: License "${licenseMapping.constantValue}" is not a GBIF-accepted URI. ` +
-      `Use CC0, CC BY 4.0, or CC BY-NC 4.0 for GBIF submission.`, "DwC Archive"
-    );
+    Logger.warning(`DwC Archive: License "${licenseMapping.constantValue}" is not a GBIF-accepted URI. Use CC0, CC BY 4.0, or CC BY-NC 4.0.`, "DwC Archive");
   } else if (normalizedLicense !== licenseMapping.constantValue) {
     Logger.info(`DwC Archive: License alias normalized → "${normalizedLicense}".`, "DwC Archive");
     licenseMapping.constantValue = normalizedLicense;
   }
 
-  if (!mappingByTerm.has("datasetName"))
-    Logger.warning("DwC Archive: <b>datasetName</b> not configured. Recommended.", "DwC Archive");
+  if (!mappingByTerm.has("datasetName")) Logger.warning("DwC Archive: <b>datasetName</b> not configured.", "DwC Archive");
 
   const hasTaxaColumns = Array.isArray(taxaColumnDefs) && taxaColumnDefs.length > 0;
   if (!mappingByTerm.has("scientificName") && !hasTaxaColumns) {
@@ -531,7 +578,7 @@ export async function compileDwcArchive(params) {
     const borVal = borMapping.constantValue || "";
     const borVocab = getDwcTerm("basisOfRecord")?.vocabulary || [];
     if (!borVal) {
-      Logger.error(`DwC Archive: <b>basisOfRecord</b> present but has no Constant value. Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`, "DwC Archive");
+      Logger.error(`DwC Archive: <b>basisOfRecord</b> has no Constant value. Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`, "DwC Archive");
     } else if (!borVocab.includes(borVal)) {
       Logger.error(`DwC Archive: <b>basisOfRecord</b> value "${borVal}" not in vocabulary. Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`, "DwC Archive");
     } else {
@@ -543,8 +590,10 @@ export async function compileDwcArchive(params) {
         Logger.error("DwC Archive: <b>eventDate</b> required for occurrence export. Occurrence disabled.", "DwC Archive");
         occurrenceExportEnabled = false;
       }
-      const hasLat = mappingByTerm.has("decimalLatitude"), hasLon = mappingByTerm.has("decimalLongitude"), hasDatum = mappingByTerm.has("geodeticDatum");
-      if ((hasLat || hasLon || hasDatum) && !(hasLat && hasLon && hasDatum)) {
+      const hasLat = mappingByTerm.has("decimalLatitude");
+      const hasLon = mappingByTerm.has("decimalLongitude");
+      const hasDat = mappingByTerm.has("geodeticDatum");
+      if ((hasLat || hasLon || hasDat) && !(hasLat && hasLon && hasDat)) {
         Logger.error("DwC Archive: <b>decimalLatitude</b>, <b>decimalLongitude</b>, and <b>geodeticDatum</b> must all be present or all absent.", "DwC Archive");
       }
     }
@@ -560,29 +609,140 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 5 — Per-row type compatibility check
+  // Step 5 — Per-row type compatibility AND directive value validation
+  //
+  // Validates:
+  //   - `taxa:ColumnName` references an existing taxa column
+  //   - `auto:Key` uses a known auto key
+  //   - `config:ItemName` resolves to a non-empty value
+  //   - `eml:FieldPath` uses a known EML path
+  //   - For `column` directives: NL type compatibility with DwC term
   // ───────────────────────────────────────────────────────────────────────────
 
+  const allTaxaDefs = (taxaColumnDefs || []).filter(t => t?.columnName);
+  const taxaColumnNameSet = new Set(allTaxaDefs.map(t => t.columnName.toLowerCase()));
+
   for (const m of parsedMappings) {
-    if (m.directive.type !== "column") continue;
-    const termEntry = getDwcTerm(m.term);
-    if (!termEntry?.acceptedNlTypes) continue;
-    const colName = m.directive.value;
-    const exactIdx = checklistHeaders.indexOf(colName.toLowerCase());
-    const rootName = exactIdx < 0 && colName.lastIndexOf(".") > 0
-      ? colName.slice(0, colName.lastIndexOf("."))
-      : colName;
-    const nlFmt = getNlFormatting(rootName, cddRows, taxaColumnDefs);
-    if (!termEntry.acceptedNlTypes.includes(nlFmt)) {
+    const { directive, constantValue, term } = m;
+    if (constantValue !== null) continue; // constant values need no validation here
+
+    switch (directive.type) {
+      case "taxa":
+        if (!taxaColumnNameSet.has(directive.value.toLowerCase())) {
+          Logger.error(
+            `DwC Archive: <b>taxa:${directive.value}</b> references a column "<b>${directive.value}</b>" ` +
+            `that does not exist in the Taxa Definition table. ` +
+            `Known taxa columns: ${[...taxaColumnNameSet].join(", ")}.`,
+            "DwC Archive"
+          );
+        }
+        break;
+
+      case "auto": {
+        const ak = directive.value.toLowerCase().replace(/\s+/g, "");
+        if (!KNOWN_AUTO_KEYS.has(ak)) {
+          Logger.error(
+            `DwC Archive: <b>auto:${directive.value}</b> is not a recognised auto directive. ` +
+            `Known values: ${[...KNOWN_AUTO_KEYS].join(", ")}.`,
+            "DwC Archive"
+          );
+        }
+        break;
+      }
+
+      case "config": {
+        const { value: configVal, found } = resolveConfigDirective(directive.value, customizationData);
+        if (!found) {
+          Logger.error(
+            `DwC Archive: <b>config:${directive.value}</b> references a Customization item ` +
+            `"<b>${directive.value}</b>" that does not exist in the Customization table.`,
+            "DwC Archive"
+          );
+        } else if (!configVal) {
+          Logger.error(
+            `DwC Archive: <b>config:${directive.value}</b> references Customization item ` +
+            `"<b>${directive.value}</b>" which is present but empty.`,
+            "DwC Archive"
+          );
+        }
+        break;
+      }
+
+      case "column": {
+        // Type compatibility check (only for plain column references, not compound paths)
+        const termEntry = getDwcTerm(term);
+        if (!termEntry?.acceptedNlTypes) break;
+        const colName = directive.value;
+        const exactIdx = checklistHeaders.indexOf(colName.toLowerCase());
+        const rootName = exactIdx < 0 && colName.lastIndexOf(".") > 0
+          ? colName.slice(0, colName.lastIndexOf("."))
+          : colName;
+        const nlFmt = getNlFormatting(rootName, cddRows, taxaColumnDefs);
+        if (!termEntry.acceptedNlTypes.includes(nlFmt)) {
+          Logger.error(
+            `DwC Archive: Term <b>${term}</b> mapped to "<b>${colName}</b>" ` +
+            `(NL type: <b>${nlFmt}</b>), but only accepts: ${termEntry.acceptedNlTypes.join(", ")}.`,
+            "DwC Archive"
+          );
+        }
+        break;
+      }
+
+      default: break;
+    }
+  }
+
+  // Validate eml: rows
+  for (const em of rawEmlMappings) {
+    if (!KNOWN_EML_PATHS.has(em.path.toLowerCase())) {
       Logger.error(
-        `DwC Archive: Term <b>${m.term}</b> mapped to "<b>${colName}</b>" (NL type: <b>${nlFmt}</b>), ` +
-        `but only accepts: ${termEntry.acceptedNlTypes.join(", ")}.`, "DwC Archive"
+        `DwC Archive: <b>eml:${em.path}</b> is not a recognised EML field path. ` +
+        `Known paths: ${[...KNOWN_EML_PATHS].join(", ")}.`,
+        "DwC Archive"
+      );
+    }
+
+    // Validate config: directives inside eml: rows
+    if (em.directive.type === "config" && em.constantValue === null) {
+      const { value: configVal, found } = resolveConfigDirective(em.directive.value, customizationData);
+      if (!found) {
+        Logger.error(
+          `DwC Archive: <b>eml:${em.path}</b> uses <b>config:${em.directive.value}</b> which ` +
+          `does not exist in the Customization table.`,
+          "DwC Archive"
+        );
+      } else if (!configVal) {
+        Logger.error(
+          `DwC Archive: <b>eml:${em.path}</b> uses <b>config:${em.directive.value}</b> which ` +
+          `is present but empty.`,
+          "DwC Archive"
+        );
+      }
+    }
+  }
+
+  // If eml: rows are present at all, validate required creator fields
+  if (rawEmlMappings.length > 0) {
+    const emlPathsLo = new Set(rawEmlMappings.map(em => em.path.toLowerCase()));
+    const hasCreatorName = EML_REQUIRED_CREATOR_FIELDS.some(f => emlPathsLo.has(f));
+    if (!hasCreatorName) {
+      Logger.error(
+        "DwC Archive: At least one creator name field is required when using <b>eml:</b> rows. " +
+        "Add one of: <em>eml:creator.organizationName</em>, <em>eml:creator.surName</em>, " +
+        "or <em>eml:creator.givenName</em>.",
+        "DwC Archive"
+      );
+    }
+    if (!emlPathsLo.has("creator.email")) {
+      Logger.warning(
+        "DwC Archive: <b>eml:creator.email</b> is strongly recommended for GBIF compliance.",
+        "DwC Archive"
       );
     }
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 6 — Unknown terms
+  // Step 6 — Unknown DwC terms
   // ───────────────────────────────────────────────────────────────────────────
 
   for (const m of parsedMappings) {
@@ -591,23 +751,52 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
+  // Taxa / occurrence column setup
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const occurrenceLevelDef = allTaxaDefs.find(t => (t.taxonName || "").toLowerCase() === OCCURRENCE_IDENTIFIER);
+  const taxaColumns = allTaxaDefs.filter(t => (t.taxonName || "").toLowerCase() !== OCCURRENCE_IDENTIFIER);
+
+  // taxaColHeaderIndices: for each taxa column definition, find the actual header index.
+  // NaturaList allows taxa columns to use a `.name` sub-column (e.g. "Species" definition
+  // → actual header "Species.name").  We try the exact name first, then "name.name".
+  // This is the FIX for the missing species/subspecies bug.
+  const taxaColHeaderIndices = taxaColumns.map(t => {
+    const lo = t.columnName.toLowerCase();
+    let idx = checklistHeaders.indexOf(lo);
+    if (idx < 0) idx = checklistHeaders.indexOf(lo + ".name");
+    return idx;
+  });
+
+  // Rank lookup map: columnName (lowercase) → index in taxaColumns
+  // Used to enforce the rank guard on taxa: component directives.
+  const taxaColumnRankIndex = new Map(taxaColumns.map((t, i) => [t.columnName.toLowerCase(), i]));
+
+  const occColHeaderIndex = occurrenceLevelDef
+    ? checklistHeaders.indexOf(occurrenceLevelDef.columnName.toLowerCase()) : -1;
+
+  // ───────────────────────────────────────────────────────────────────────────
   // Shared helpers (closures over params)
   // ───────────────────────────────────────────────────────────────────────────
 
   const buildContext = rawRow => ({ headers: checklistHeaders, row: rawRow, langCode: exportLang });
 
   /**
-   * Read a column value, supporting both exact headers and explicit compound paths.
+   * Read a column value with full compound-path support.
    *
-   * "altitude.from" → if "altitude.from" is not a real header, reads "altitude"
-   * (interval type) and extracts component "from" via extractCompoundValue.
-   * "origPub.author" → found as exact header → reads directly.
+   * 1. If `columnName` exists as an exact header → read directly via loadDataByType.
+   * 2. Else, try splitting on last dot (rootName + componentKey):
+   *    a. If rootName exists as a header AND componentKey is a known compound key
+   *       for rootName's NL type → extract the component.
+   *    b. Otherwise → Logger.warning "column not found" and return "".
+   *
+   * Media sources (image/sound .source) have relativeToUsercontent applied
+   * so they are absolute-path URLs suitable for the DwC archive.
    */
   const resolveColumnValue = (termName, columnName, rawRow) => {
     const exactIdx = checklistHeaders.indexOf(columnName.toLowerCase());
 
     if (exactIdx >= 0) {
-      // Real column
       const nlFmt = getNlFormatting(columnName, cddRows, taxaColumnDefs);
       if (!getAvailableDataTypeNames().includes(nlFmt)) {
         Logger.warning(`DwC Archive: Column "<b>${columnName}</b>" has unsupported type "${nlFmt}". Skipped.`, "DwC Archive");
@@ -621,7 +810,7 @@ export async function compileDwcArchive(params) {
       return coerceOutputFormat(raw, te?.outputFormat || "string", termName, nlFmt, te?.validationRange);
     }
 
-    // Try compound path: split on last dot
+    // Try compound path
     const lastDot = columnName.lastIndexOf(".");
     if (lastDot > 0) {
       const rootName = columnName.slice(0, lastDot);
@@ -632,8 +821,8 @@ export async function compileDwcArchive(params) {
         const nlFmt = getNlFormatting(rootName, cddRows, taxaColumnDefs);
         if (!isKnownCompoundKey(nlFmt, componentKey)) {
           Logger.warning(
-            `DwC Archive: "<b>${columnName}</b>" not found as header, and "<b>${componentKey}</b>" ` +
-            `is not a known compound key for type "${nlFmt}". ` +
+            `DwC Archive: "<b>${columnName}</b>" not found as header, and ` +
+            `"<b>${componentKey}</b>" is not a known compound key for type "${nlFmt}". ` +
             `Known keys: ${KNOWN_KEYS_BY_TYPE[nlFmt] || "(none)"}. ` +
             `If "${rootName}.${componentKey}" is a real column, add it to your checklist sheet.`,
             "DwC Archive"
@@ -648,7 +837,30 @@ export async function compileDwcArchive(params) {
         try { raw = loadDataByType(buildContext(rawRow), rootName, { formatting: nlFmt }); }
         catch (ex) { Logger.warning(`DwC Archive: Error reading "<b>${rootName}</b>": ${ex.message}`, "DwC Archive"); return ""; }
         if (raw === null || raw === undefined) return "";
-        const extracted = extractCompoundValue(nlFmt, componentKey, raw, Logger);
+
+        let extracted = extractCompoundValue(nlFmt, componentKey, raw, Logger);
+
+        // Apply relativeToUsercontent to media source URLs so the archive
+        // contains app-root-relative paths.  Template processing (from CDD's
+        // Template column) is intentionally NOT applied here — DwC export uses
+        // raw data; users needing template-transformed URLs should store the
+        // full path in the source column directly.
+        if ((nlFmt === "image" || nlFmt === "sound") && componentKey === "source" && extracted) {
+          // We try to see if {{value}} is present and if so, we take the template and process it with the raw value. 
+          // This allows users to use the CDD Template column to build media URLs with other columns, and still have them correctly 
+          // relativized for DwC output.
+
+          //get the meta template for this column
+          const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === rootName.toLowerCase());
+          const template = cddDef?.template?.trim();
+
+          console.log("DwC Archive: resolveColumnValue", { termName, columnName, nlFmt, raw, extracted, template });
+
+          // use processTemplate here from customTypes/helpers.js
+          
+          extracted = relativeToUsercontent(String(extracted));
+        }
+
         const te = getDwcTerm(termName);
         return coerceOutputFormat(extracted, te?.outputFormat || "string", termName, nlFmt, te?.validationRange);
       }
@@ -663,26 +875,21 @@ export async function compileDwcArchive(params) {
     const te = getDwcTerm(termName);
     if (!te?.vocabulary?.length) return value;
     if (!te.vocabulary.includes(String(value)))
-      Logger.warning(`DwC Archive: Value "<b>${value}</b>" for <b>${termName}</b> not in controlled vocabulary (${te.vocabulary.join(", ")}). Output as-is.`, "DwC Archive");
+      Logger.warning(`DwC Archive: Value "<b>${value}</b>" for <b>${termName}</b> not in vocabulary (${te.vocabulary.join(", ")}). Output as-is.`, "DwC Archive");
     return value;
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Taxa / occurrence column indexes
-  // ───────────────────────────────────────────────────────────────────────────
-
-  const allTaxaDefs = (taxaColumnDefs || []).filter(t => t?.columnName);
-  const occurrenceLevelDef = allTaxaDefs.find(t => (t.taxonName || "").toLowerCase() === OCCURRENCE_IDENTIFIER);
-  const taxaColumns = allTaxaDefs.filter(t => (t.taxonName || "").toLowerCase() !== OCCURRENCE_IDENTIFIER);
-  const taxaColHeaderIndices = taxaColumns.map(t => checklistHeaders.indexOf(t.columnName.toLowerCase()));
-  const occColHeaderIndex = occurrenceLevelDef
-    ? checklistHeaders.indexOf(occurrenceLevelDef.columnName.toLowerCase()) : -1;
-
-  // ───────────────────────────────────────────────────────────────────────────
   // Step 7 — Unique taxon paths + taxonID pre-computation
+  //
+  // With the taxaColHeaderIndices fix, columns like "Species" that use a
+  // ".name" sub-column pattern (actual header: "species.name") are now
+  // correctly resolved.  This ensures species-level and subspecies-level
+  // taxa appear in the output instead of being silently mapped to their
+  // genus because the column index was -1.
   // ───────────────────────────────────────────────────────────────────────────
 
-  const uniqueTaxaMap = new Map(); // path-key → { path, rankIndex, rankColumnName, representativeRawRow }
+  const uniqueTaxaMap = new Map();
   for (const rawRow of (checklistRawRows || [])) {
     const path = taxaColumns.map((_, i) => {
       const idx = taxaColHeaderIndices[i];
@@ -694,7 +901,12 @@ export async function compileDwcArchive(params) {
       if (!path[i]) continue;
       const key = JSON.stringify(path.slice(0, i + 1));
       if (!uniqueTaxaMap.has(key))
-        uniqueTaxaMap.set(key, { path: path.slice(0, i + 1), rankIndex: i, rankColumnName: taxaColumns[i].columnName, representativeRawRow: rawRow });
+        uniqueTaxaMap.set(key, {
+          path: path.slice(0, i + 1),
+          rankIndex: i,
+          rankColumnName: taxaColumns[i].columnName,
+          representativeRawRow: rawRow,
+        });
     }
   }
 
@@ -727,25 +939,33 @@ export async function compileDwcArchive(params) {
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Core value resolver for taxon rows
+  // Taxon row value resolver
   //
-  // Directive semantics:
+  // KEY BEHAVIOURS:
   //
-  //   taxa:ColumnName           → read ColumnName column value for this raw row.
-  //                               EMPTY for rows at a rank higher than ColumnName
-  //                               (correct and expected — use auto:scientificName
-  //                               if you want the current taxon's own name).
+  //   taxa:ColumnName (no component)
+  //     Reads the raw column value from the representative row.
+  //     Also tries "ColumnName.name" if exact header not found (mirroring the
+  //     taxaColHeaderIndices fix so users don't need to know about .name columns).
+  //     Returns "" for rows where that column is empty (correct: a MajorGroup-level
+  //     taxon has no Family value).
   //
-  //   taxa:ColumnName.component → load ColumnName as taxon-typed, extract component.
+  //   taxa:ColumnName.component (with component)
+  //     RANK GUARD: returns "" if the referenced column is at a deeper rank than
+  //     the current taxon.  This prevents a genus row (whose representative raw
+  //     row happens to contain a species) from inheriting specificEpithet etc.
+  //     Then loads via taxon type and extracts the named component.
   //
-  //   auto:taxonRank            → inferred from column position in taxa hierarchy.
-  //   auto:taxonID              → UUID v5 for this taxon.
-  //   auto:parentNameUsageID    → UUID v5 of the immediate parent taxon.
-  //   auto:scientificName       → current taxon's own name at its rank level.
-  //   auto:scientificNameAuthorship       → current taxon's own authorship at its rank level.
+  //   auto:scientificName
+  //     The current taxon's own name (taxon.path[taxon.rankIndex]), not any
+  //     specific column.  Always correct regardless of column naming.
   //
-  // There is NO implicit dispatch on DwC term name.  The user declares exactly
-  // what they want via the directive.
+  //   auto:scientificNameAuthorship
+  //     Looks at the "rankColumnName.authority" header (e.g. "species.authority")
+  //     in the representative raw row.  Falls back to customTypeTaxon.authority.
+  //
+  //   auto:taxonRank
+  //     Vocabulary value inferred from the column name (e.g. "Species" → "species").
   // ───────────────────────────────────────────────────────────────────────────
 
   const resolveForTaxon = (mapping, taxon) => {
@@ -756,24 +976,36 @@ export async function compileDwcArchive(params) {
 
     switch (directive.type) {
 
-      case "config":
-        return resolveConfigDirective(directive.value, customizationData);
+      case "config": {
+        const { value: cv } = resolveConfigDirective(directive.value, customizationData);
+        return cv; // already validated non-empty in Step 5
+      }
 
       case "taxa": {
         const { value: colName, component } = directive;
+
         if (!component) {
-          // Read the column value for this row.  For higher-rank rows the
-          // lower columns will be empty — this is the correct behaviour.
-          // Users wanting the current taxon's own name use `auto:scientificName`.
-          const ci = checklistHeaders.indexOf(colName.toLowerCase());
+          // No component: read raw column value.
+          // Try exact header first, then ".name" fallback (same logic as taxaColHeaderIndices).
+          let ci = checklistHeaders.indexOf(colName.toLowerCase());
+          if (ci < 0) ci = checklistHeaders.indexOf(colName.toLowerCase() + ".name");
           return ci >= 0 && rawRow[ci] != null ? rawRow[ci].toString().trim() : "";
         }
-        // Component suffix → load as taxon type, extract named component
+
+        // Component path: taxa:ColumnName.component
+        // Rank guard: if the referenced column is deeper than the current taxon's rank,
+        // return "" — a Family-level taxon should not inherit specificEpithet even if
+        // its representative raw row is a species row.
+        const refRankIdx = taxaColumnRankIndex.get(colName.toLowerCase()) ?? -1;
+        if (refRankIdx > taxon.rankIndex) return "";
+
+        // Load via taxon type and extract the component
         const taxonData = loadDataByType(buildContext(rawRow), colName, { formatting: "taxon" });
         if (!taxonData) return "";
         const ext = extractCompoundValue("taxon", component, taxonData, Logger);
+        if (ext === null || ext === undefined) return "";
         const te = getDwcTerm(term);
-        return coerceOutputFormat(ext ?? "", te?.outputFormat || "string", term, "taxon", te?.validationRange);
+        return coerceOutputFormat(ext, te?.outputFormat || "string", term, "taxon", te?.validationRange);
       }
 
       case "auto": {
@@ -781,30 +1013,39 @@ export async function compileDwcArchive(params) {
         switch (ak) {
           case "taxonid":
             return taxonIdByKey.get(JSON.stringify(taxon.path)) || "";
+
           case "parentnameusageid":
             if (taxon.rankIndex === 0) return "";
             return taxonIdByKey.get(JSON.stringify(taxon.path.slice(0, taxon.rankIndex))) || "";
+
           case "taxonrank":
-            // This is the ONLY valid way to get the DwC taxonRank inferred from the
-            // column hierarchy.  `taxa:Species` with term `taxonRank` does NOT do
-            // this — it would just read the Species column value (a taxon name, not
-            // a rank).  `auto:taxonRank` is explicit and unambiguous.
             return columnNameToRankVocab(taxon.rankColumnName);
+
           case "scientificname":
-            // The current taxon's own name at its rank level, regardless of which
-            // column it lives in.  Distinct from `taxa:Species` which is only
-            // non-empty for species-level rows.
             return taxon.path[taxon.rankIndex] || "";
-          case "scientificnameauthorship":
-            // The current taxon's own authorship at its rank level, regardless of which
-            // column it lives in.  Distinct from `taxa:Species` which is only
-            // non-empty for species-level rows.
-            return taxon.path[taxon.rankIndex + 1] || "";
+
+          case "scientificnameauthorship": {
+            // Look for the authority sub-column: rankColumnName + ".authority"
+            // This matches NaturaList's convention where "Species.authority" is
+            // the authority sub-column of the "Species" taxa column.
+            const authHeader = taxon.rankColumnName.toLowerCase() + ".authority";
+            const authIdx = checklistHeaders.indexOf(authHeader);
+            if (authIdx >= 0 && rawRow[authIdx] != null) {
+              const val = rawRow[authIdx].toString().trim();
+              if (val) return val;
+            }
+            // Fallback: try loading the taxon-typed column and reading .authority
+            // (handles pipe-separated "Name|Authority" cells)
+            const taxonData = loadDataByType(buildContext(rawRow), taxon.rankColumnName, { formatting: "taxon" });
+            return taxonData?.authority || "";
+          }
+
           case "occurrenceid":
             Logger.warning("DwC Archive: <b>auto:occurrenceID</b> is only valid in occurrence rows.", "DwC Archive");
             return "";
+
           default:
-            Logger.warning(`DwC Archive: Unknown auto: directive "auto:${directive.value}" for <b>${term}</b>.`, "DwC Archive");
+            // Already validated in Step 5 — this branch should not be reached
             return "";
         }
       }
@@ -831,6 +1072,7 @@ export async function compileDwcArchive(params) {
 
     for (const term of allTaxonTerms) {
       if (term === "taxonID") { row[term] = myTaxonId; continue; }
+
       if (term === "parentNameUsageID") {
         const m = mappingByTerm.get(term);
         row[term] = m ? resolveForTaxon(m, taxon)
@@ -856,15 +1098,15 @@ export async function compileDwcArchive(params) {
   // ───────────────────────────────────────────────────────────────────────────
   // Step 8 — Build occurrence CSV rows (Tier 2)
   //
-  // Taxonomy fields are inherited from the parent taxon when the occurrence
-  // row itself has an empty value in the mapped source column.  This uses the
-  // same readFromRow helper for both the occurrence row and the parent's
-  // representative row — no special-casing per DwC term.
+  // Taxonomy fields use uniform inheritance:
+  //   1. Try reading the mapped column from the occurrence raw row.
+  //   2. If empty, fall back to the same column on the parent taxon's
+  //      representative raw row.
+  // The rank guard applies here too — taxa: component directives for columns
+  // deeper than the parent taxon's rank return "".
   // ───────────────────────────────────────────────────────────────────────────
 
   const occurrenceCsvRows = [];
-
-  // These terms trigger inheritance logic when their directive is taxa:-typed
   const TAXONOMY_TERMS = new Set([
     "scientificName", "scientificNameAuthorship", "taxonRank",
     "specificEpithet", "infraspecificEpithet",
@@ -897,10 +1139,12 @@ export async function compileDwcArchive(params) {
       // occurrenceID generation
       let occurrenceId = "";
       if (!needsAutoId) {
-        // Will be overwritten in the term loop
+        // resolved in term loop
       } else if (catMapping?.directive.type === "column") {
         const catNum = resolveColumnValue("catalogNumber", catMapping.directive.value, rawRow);
-        if (catNum) occurrenceId = collectionCode ? `${institutionCode}:${collectionCode}:${catNum}` : `${institutionCode}:${catNum}`;
+        if (catNum) occurrenceId = collectionCode
+          ? `${institutionCode}:${collectionCode}:${catNum}`
+          : `${institutionCode}:${catNum}`;
       }
       if (!occurrenceId) {
         const sciName = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
@@ -911,7 +1155,7 @@ export async function compileDwcArchive(params) {
         const lonMap = mappingByTerm.get("decimalLongitude");
         const lonVal = lonMap?.directive.type === "column" ? (resolveColumnValue("decimalLongitude", lonMap.directive.value, rawRow) || "") : "";
         occurrenceId = await uuidV5(UUID_NS_OCCURRENCE, `${sciName}:${edVal}:${latVal}:${lonVal}`);
-        Logger.warning("DwC Archive: No catalogNumber — UUID v5 fallback used for <b>occurrenceID</b>. Add a catalogNumber for stable IDs.", "DwC Archive");
+        Logger.warning("DwC Archive: No catalogNumber available — UUID v5 fallback used for <b>occurrenceID</b>.", "DwC Archive");
       }
 
       const occRow = { occurrenceID: occurrenceId };
@@ -927,14 +1171,18 @@ export async function compileDwcArchive(params) {
         let value = "";
 
         if (directive.type === "taxa" && TAXONOMY_TERMS.has(term)) {
-          // Uniform inheritance: try occurrence row, fall back to parent row.
-          // No term-specific dispatch — the component suffix in the directive
-          // (e.g. .authority, .lastNamePart) fully describes what to extract.
+          // Uniform inheritance: try occurrence row, fallback to parent row.
           const readFromRow = (sourceRow) => {
             const { value: colName, component } = directive;
             if (!component) {
-              const ci = checklistHeaders.indexOf(colName.toLowerCase());
+              let ci = checklistHeaders.indexOf(colName.toLowerCase());
+              if (ci < 0) ci = checklistHeaders.indexOf(colName.toLowerCase() + ".name");
               return ci >= 0 && sourceRow[ci] != null ? sourceRow[ci].toString().trim() : "";
+            }
+            // Rank guard
+            if (parentTaxon) {
+              const refRankIdx = taxaColumnRankIndex.get(colName.toLowerCase()) ?? -1;
+              if (refRankIdx > parentTaxon.rankIndex) return "";
             }
             const taxonData = loadDataByType(buildContext(sourceRow), colName, { formatting: "taxon" });
             if (!taxonData) return "";
@@ -949,21 +1197,37 @@ export async function compileDwcArchive(params) {
         }
 
         switch (directive.type) {
-          case "config":
-            value = resolveConfigDirective(directive.value, customizationData); break;
+          case "config": {
+            const { value: cv } = resolveConfigDirective(directive.value, customizationData);
+            value = cv;
+            break;
+          }
           case "auto": {
             const ak = directive.value.toLowerCase().replace(/\s+/g, "");
             if (ak === "occurrenceid") value = occurrenceId;
             else if (ak === "scientificname") value = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
             else if (ak === "taxonrank") value = parentTaxon ? columnNameToRankVocab(parentTaxon.rankColumnName) : "";
             else if (ak === "taxonid") value = parentKey ? (taxonIdByKey.get(parentKey) || "") : "";
-            else Logger.warning(`DwC Archive: Unknown auto: directive "auto:${directive.value}" in occurrence row.`, "DwC Archive");
+            else if (ak === "scientificnameauthorship") {
+              if (parentTaxon) {
+                const authHeader = parentTaxon.rankColumnName.toLowerCase() + ".authority";
+                const authIdx = checklistHeaders.indexOf(authHeader);
+                if (authIdx >= 0 && parentTaxon.representativeRawRow[authIdx] != null) {
+                  value = parentTaxon.representativeRawRow[authIdx].toString().trim();
+                }
+                if (!value) {
+                  const td = loadDataByType(buildContext(parentTaxon.representativeRawRow), parentTaxon.rankColumnName, { formatting: "taxon" });
+                  value = td?.authority || "";
+                }
+              }
+            }
             break;
           }
           case "taxa": {
             const { value: colName, component } = directive;
             if (!component) {
-              const ci = checklistHeaders.indexOf(colName.toLowerCase());
+              let ci = checklistHeaders.indexOf(colName.toLowerCase());
+              if (ci < 0) ci = checklistHeaders.indexOf(colName.toLowerCase() + ".name");
               value = ci >= 0 && rawRow[ci] != null ? rawRow[ci].toString().trim() : "";
             } else {
               const taxonData = loadDataByType(buildContext(rawRow), colName, { formatting: "taxon" });
@@ -972,88 +1236,136 @@ export async function compileDwcArchive(params) {
             break;
           }
           case "template":
-            value = renderTemplate(directive.value, cn => resolveColumnValue("_template", cn, rawRow) || ""); break;
+            value = renderTemplate(directive.value, cn => resolveColumnValue("_template", cn, rawRow) || "");
+            break;
           case "column":
-            value = resolveColumnValue(term, directive.value, rawRow); break;
+            value = resolveColumnValue(term, directive.value, rawRow);
+            break;
           default: value = "";
         }
         occRow[term] = checkVocabulary(term, value);
       }
 
-      // Cross-field: absent ↔ individualCount=0
       const occStatus = (occRow["occurrenceStatus"] || "").toString().toLowerCase();
       const indCount = occRow["individualCount"];
       if (occStatus === "absent" && indCount !== "" && indCount !== undefined && Number(indCount) !== 0)
-        Logger.warning(`DwC Archive: Row has <b>occurrenceStatus="absent"</b> but <b>individualCount="${indCount}"</b>. Should be 0.`, "DwC Archive");
+        Logger.warning(`DwC Archive: Row has occurrenceStatus="absent" but individualCount="${indCount}". Should be 0.`, "DwC Archive");
 
       occurrenceCsvRows.push(occRow);
     }
 
     if (occurrenceExportEnabled && occurrenceCsvRows.length === 0)
-      Logger.warning("DwC Archive: Occurrence export enabled but no occurrence rows found. Verify Taxa Definition has an 'Occurrence' row.", "DwC Archive");
+      Logger.warning("DwC Archive: Occurrence export enabled but no occurrence rows found.", "DwC Archive");
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // EML — resolve eml: rows then build
+  // EML — Option C Hybrid
+  //
+  // Priority order:
+  //   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
+  //   2. Auto-discover usercontent/eml.xml      → Logger.info if found
+  //   3. Build from eml: rows                  → validate required fields
+  //   4. None available                         → Logger.error, no eml.xml in archive
   // ───────────────────────────────────────────────────────────────────────────
 
-  const emlFieldValues = {};
-  for (const em of rawEmlMappings) {
-    let val = "";
-    if (em.constantValue !== null) {
-      val = em.constantValue;
-    } else if (em.directive.type === "config") {
-      val = resolveConfigDirective(em.directive.value, customizationData);
-    } else if (em.directive.type === "column" && checklistRawRows?.length > 0) {
-      val = resolveColumnValue("_eml", em.directive.value, checklistRawRows[0]);
+  let emlXml = null;
+
+  // Option C.1 — explicit path via Customization table
+  const emlLocationConfig = resolveConfigDirective("Custom eml.xml location", customizationData);
+  if (emlLocationConfig.found && emlLocationConfig.value) {
+    const fetched = await tryFetchEml(emlLocationConfig.value);
+    if (fetched) {
+      emlXml = fetched;
+      Logger.info(`DwC Archive: Using EML file from Customization "Custom eml.xml location": <em>${emlLocationConfig.value}</em>.`, "DwC Archive");
+    } else {
+      Logger.error(
+        `DwC Archive: Customization item "Custom eml.xml location" is set to "<b>${emlLocationConfig.value}</b>" ` +
+        `but the file could not be fetched from usercontent/${emlLocationConfig.value}. Check the path and that the file exists on your server.`,
+        "DwC Archive eml.xml"
+      );
+      // Do not continue to fallback — the explicit path was wrong; fail loudly.
     }
-    emlFieldValues[em.path] = val;
   }
 
-  if (!Object.keys(emlFieldValues).some(k => k.startsWith("creator."))) {
-    Logger.warning(
-      "DwC Archive: No <b>eml:</b> creator rows found. The EML will have an empty creator. " +
-      "Add <em>eml:creator.organizationName</em> and <em>eml:creator.email</em> rows to your DwC archive table.",
-      "DwC Archive"
+  // Option C.2 — auto-discover usercontent/eml.xml (only if no explicit path was set)
+  if (!emlXml && !emlLocationConfig.found) {
+    const fetched = await tryFetchEml("eml.xml");
+    if (fetched) {
+      emlXml = fetched;
+      Logger.info(
+        "DwC Archive: Found <em>usercontent/eml.xml</em> and included it in the archive. " +
+        "Any <em>eml:</em> rows in your DwC archive table were ignored in favour of this file.",
+        "DwC Archive eml.xml"
+      );
+    }
+  }
+
+  // Option C.3 — build from eml: rows (only if no external file found/used)
+  if (!emlXml && rawEmlMappings.length > 0) {
+    const emlFieldValues = {};
+    for (const em of rawEmlMappings) {
+      let val = "";
+      if (em.constantValue !== null) {
+        val = em.constantValue;
+      } else if (em.directive.type === "config") {
+        const { value: cv } = resolveConfigDirective(em.directive.value, customizationData);
+        val = cv;
+      } else if (em.directive.type === "column" && checklistRawRows?.length > 0) {
+        val = resolveColumnValue("_eml", em.directive.value, checklistRawRows[0]);
+      }
+      emlFieldValues[em.path.toLowerCase()] = val;
+    }
+
+    const emlTitle = emlFieldValues["title"] || resolveConfigDirective("Checklist name", customizationData).value || "Untitled dataset";
+    const emlAbstract = stripMarkdown(emlFieldValues["abstract"] || resolveConfigDirective("About section", customizationData).value || "");
+    const emlPubDate = emlFieldValues["pubdate"] || new Date().toISOString().slice(0, 10);
+    const emlPackageId = await uuidV5(UUID_NS_TAXON, `eml:${institutionCode}:${emlTitle}`);
+
+    emlXml = buildEmlXml({
+      title: emlTitle,
+      abstract: emlAbstract,
+      language: exportLang,
+      license: licenseMapping.constantValue || "",
+      licenseLabel: getLicenseLabel(licenseMapping.constantValue) || licenseMapping.constantValue || "",
+      pubDate: emlPubDate,
+      packageId: emlPackageId,
+      creator: {
+        organizationName: emlFieldValues["creator.organizationname"] || "",
+        givenName: emlFieldValues["creator.givenname"] || "",
+        surName: emlFieldValues["creator.surname"] || "",
+        email: emlFieldValues["creator.email"] || "",
+        url: emlFieldValues["creator.url"] || "",
+        userId: emlFieldValues["creator.userid"] || "",
+      },
+      geographicDescription: emlFieldValues["geographicdescription"] || "",
+      taxonomicDescription: emlFieldValues["taxonomicdescription"] || "",
+      temporalDescription: emlFieldValues["temporaldescription"] || "",
+    });
+  }
+
+  // Option C.4 — no EML available
+  if (!emlXml) {
+    Logger.error(
+      "DwC Archive: No EML metadata could be generated. " +
+      "Add <em>eml:</em> rows to your DwC archive table, place an <em>eml.xml</em> file in " +
+      "usercontent/, or set the <em>Custom eml.xml location</em> item in the Customization table. " +
+      "The archive will be produced without eml.xml but GBIF will reject datasets without EML.",
+      "DwC Archive eml.xml"
     );
   }
-
-  const emlTitle = emlFieldValues["title"] || resolveConfigDirective("Checklist name", customizationData) || "Untitled dataset";
-  const emlAbstract = stripMarkdown(emlFieldValues["abstract"] || resolveConfigDirective("About section", customizationData) || "");
-  const emlPubDate = emlFieldValues["pubDate"] || new Date().toISOString().slice(0, 10);
-  const emlPackageId = await uuidV5(UUID_NS_TAXON, `eml:${institutionCode}:${emlTitle}`);
-
-  const emlXml = buildEmlXml({
-    title: emlTitle, abstract: emlAbstract, language: exportLang,
-    license: licenseMapping.constantValue || "",
-    licenseLabel: getLicenseLabel(licenseMapping.constantValue) || licenseMapping.constantValue || "",
-    pubDate: emlPubDate,
-    packageId: emlPackageId,
-    creator: {
-      organizationName: emlFieldValues["creator.organizationName"] || "",
-      givenName: emlFieldValues["creator.givenName"] || "",
-      surName: emlFieldValues["creator.surName"] || "",
-      email: emlFieldValues["creator.email"] || "",
-      url: emlFieldValues["creator.url"] || "",
-      userId: emlFieldValues["creator.userId"] || "",
-    },
-    geographicDescription: emlFieldValues["geographicDescription"] || "",
-    taxonomicDescription: emlFieldValues["taxonomicDescription"] || "",
-    temporalDescription: emlFieldValues["temporalDescription"] || "",
-  });
 
   // ───────────────────────────────────────────────────────────────────────────
   // Step 9 — meta.xml
   // ───────────────────────────────────────────────────────────────────────────
 
   const termToUri = t => getDwcTerm(t)?.uri || `http://rs.tdwg.org/dwc/terms/${t}`;
-  const taxonFieldUris = allTaxonTerms.map((t, i) => i === 0 ? null : termToUri(t));
+  const taxonFieldUris = allTaxonTerms.map(t => termToUri(t));
   const taxonMetaXml = buildMetaXml(taxonFieldUris, "http://rs.tdwg.org/dwc/terms/Taxon", "taxa.csv");
 
   let occMetaXml = null;
   if (occurrenceExportEnabled && occurrenceCsvRows.length > 0) {
     const ot = ["occurrenceID", ...orderedExplicitTerms.filter(t => t !== "occurrenceID")];
-    occMetaXml = buildMetaXml(ot.map((t, i) => i === 0 ? null : termToUri(t)), "http://rs.tdwg.org/dwc/terms/Occurrence", "occurrences.csv");
+    occMetaXml = buildMetaXml(ot.map(t => termToUri(t)), "http://rs.tdwg.org/dwc/terms/Occurrence", "occurrences.csv");
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -1066,9 +1378,12 @@ export async function compileDwcArchive(params) {
     const zip = new JSZip();
     zip.file("taxa.csv", buildCsvString(allTaxonTerms, taxonCsvRows));
     zip.file("meta.xml", taxonMetaXml);
-    zip.file("eml.xml", emlXml);
+    if (emlXml) zip.file("eml.xml", emlXml);
     checklistZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-    Logger.info(`DwC Archive: Checklist archive ready — ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`, "DwC Archive");
+    Logger.info(
+      `DwC Archive: Checklist archive ready — ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`,
+      "DwC Archive"
+    );
   } else {
     Logger.warning("DwC Archive: No taxon rows generated. Check checklist sheet and Taxa Definition table.", "DwC Archive");
   }
@@ -1078,7 +1393,7 @@ export async function compileDwcArchive(params) {
     const zip = new JSZip();
     zip.file("occurrences.csv", buildCsvString(ot, occurrenceCsvRows));
     zip.file("meta.xml", occMetaXml);
-    zip.file("eml.xml", emlXml); // same EML for both archives
+    if (emlXml) zip.file("eml.xml", emlXml); // same EML for both archives
     occurrenceZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(`DwC Archive: Occurrence archive ready — ${occurrenceCsvRows.length} occurrence record(s).`, "DwC Archive");
   }
