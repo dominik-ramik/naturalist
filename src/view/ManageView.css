@@ -170,8 +170,15 @@
   font-size: 0.8em;
 }
 
-.manage-btn-tall {
-  min-height: 8em;
+.manage-btn-block {
+  width: 100%;
+}
+
+.manage-btn-secondary {
+  background-color: transparent;
+  border: 1px dashed #bbb;
+  color: #777;
+  font-size: 0.85em;
 }
 
 .manage-btn-fixed {
@@ -274,26 +281,24 @@
 }
 
 /* ==========================================================================
-   Notices
+   Inline Hints (lightweight status text replacing heavy notice boxes)
    ========================================================================== */
-.manage-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.75em;
-  padding: 1em;
-  border-radius: 0.5em;
-  margin-top: 1em;
+.manage-hint-error {
+  font-size: 0.85em;
+  color: #c62828;
+  margin: 0.5em 0;
 }
 
-.manage-notice-icon {
-  width: 1.5em;
-  height: 1.5em;
+.manage-hint-warning {
+  font-size: 0.85em;
+  color: #e65100;
+  margin: 0.5em 0;
 }
 
-.manage-notice-error {
-  background-color: #fff3cd;
-  border: 1px solid #ffc107;
-  color: #856404;
+.manage-hint-success {
+  font-size: 0.85em;
+  color: #2e7d32;
+  margin: 0.5em 0;
 }
 
 /* ==========================================================================
@@ -328,29 +333,18 @@
 }
 
 /* ==========================================================================
-   Review Options
+   Action Stacks (consistent vertical button layout)
    ========================================================================== */
-.manage-review-options {
-  display: flex;
-  gap: 1em;
-}
-
-.manage-review-option {
-  flex: 1;
+.manage-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 1em;
-  border-radius: 0.5em;
-  text-align: center;
-  background-color: rgba(255, 255, 255, 0.7);
-  border: 1px solid #ddd;
+  gap: 0.6em;
 }
 
-.manage-review-option p {
-  margin: 0 0 0.75em 0;
-  font-size: 0.9em;
-  color: #555;
+.manage-dwc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
 }
 
 /* ==========================================================================
@@ -719,10 +713,6 @@
 
   .manage-step-label {
     display: none;
-  }
-
-  .manage-review-options {
-    flex-direction: column;
   }
 
   .manage-dropzone {

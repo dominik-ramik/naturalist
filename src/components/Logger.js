@@ -109,6 +109,23 @@ class LoggerClass {
     });
   }
 
+  /**
+   * Remove all logged messages belonging to one or more groups.
+   * @param {string|RegExp} groupTitle - A plain string for an exact group match,
+   *   or a RegExp to remove all groups whose title matches the pattern.
+   */
+  clearGroup(groupTitle) {
+    const before = this.messages.length;
+    if (groupTitle instanceof RegExp) {
+      this.messages = this.messages.filter(msg => !groupTitle.test(msg.groupTitle));
+    } else {
+      this.messages = this.messages.filter(msg => msg.groupTitle !== groupTitle);
+    }
+    if (this.messages.length !== before) {
+      this.notifyObservers();
+    }
+  }
+
   getCounts() {
     return this.messages.reduce((acc, msg) => {
       acc[msg.level] = (acc[msg.level] || 0) + 1;

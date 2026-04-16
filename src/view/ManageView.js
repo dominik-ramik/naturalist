@@ -9,13 +9,14 @@ import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
 import { Settings } from "../model/Settings.js";
 import { Logger } from "../components/Logger.js";
-import { exportTemplateSpreadsheet } from "../model/DataManagerData.js";
+import { exportTemplateSpreadsheetEmpty, exportTemplateSpreadsheetFilled } from "../model/DataManagerData.js";
 import { compressor } from "../components/LZString.js";
 
 // --- INTERNAL STATE STORE ---
 const ManageStore = {
   dataman: null,
   isProcessing: false,
+  isDwcProcessing: false,
   isCompilingDownload: false,
   isPublishing: false,
   errorDetails: "",
@@ -31,6 +32,7 @@ const ManageStore = {
   reset: function () {
     this.dataman = null;
     this.isProcessing = false;
+    this.isDwcProcessing = false;
     this.errorDetails = "";
     this.messageCode = "";
   },
@@ -83,12 +85,13 @@ const ManageCard = {
 
 const ActionButton = {
   view: function (vnode) {
-    const { label, onclick, primary, small, icon, background, tall, loading } = vnode.attrs;
+    const { label, onclick, primary, secondary, small, icon, background, loading, block } = vnode.attrs;
     const classes = [
       "manage-btn",
       primary ? "manage-btn-primary" : "",
+      secondary ? "manage-btn-secondary" : "",
       small ? "manage-btn-small" : "",
-      tall ? "manage-btn-tall" : "",
+      block ? "manage-btn-block" : "",
     ]
       .filter(Boolean)
       .join(".");
@@ -245,10 +248,9 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
 
-  // Run DwC compilation before checking for errors so that DwC validation
-  // errors block the UI in exactly the same way checklist errors do.
-  // If the DwC table is absent or empty, this is a fast no-op.
-  await ManageStore.dataman.compileDwcArchiveAsync();
+  // DwC compilation is NOT run here. It is decoupled and triggered on-demand
+  // from the Review screen so that DwC configuration errors never block a
+  // normal checklist update.
 
   if (Logger.hasErrors()) {
     scheduleManageNavigation(() =>
@@ -261,6 +263,35 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
       onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true }))
     );
   }
+}
+
+/**
+ * Run only the DwC compilation pass on the already-loaded DataManager.
+ * Routes to /manage/processing while running, then back to /manage/review.
+ * Logger is NOT cleared - DwC messages are appended to existing checklist
+ * messages so the user sees the full picture in one place.
+ */
+async function _runDwcPipeline() {
+  if (!ManageStore.dataman) return;
+  ManageStore.isDwcProcessing = true;
+  // Clear only DwC-tagged messages so prior checklist messages are preserved
+  Logger.clearGroup(/$DwC Archive/);
+  m.route.set("/manage/processing");
+  m.redraw();
+
+  // Small delay so the processing screen renders before the async work begins
+  await new Promise(resolve => setTimeout(resolve, 50));
+
+  try {
+    await ManageStore.dataman.compileDwcArchiveAsync();
+  } catch (ex) {
+    Logger.error("DwC compilation threw an unexpected error: " + ex.message, "DwC Archive");
+  }
+
+  ManageStore.isDwcProcessing = false;
+  scheduleManageNavigation(() =>
+    m.route.set("/manage/review", null, { replace: true })
+  );
 }
 
 function scheduleManageNavigation(navigate) {
@@ -340,7 +371,7 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
       body.append("url", url);
       res = await fetch("../update.php?proxy", { method: "POST", body });
     } else {
-      // Static hosting: direct fetch — CORS restrictions may apply
+      // Static hosting: direct fetch - CORS restrictions may apply
       Logger.warning(t("url_fetching_direct"));
       res = await fetch(url, { mode: "cors" });
     }
@@ -454,10 +485,7 @@ function renderUrlInput() {
 
   return m(".manage-url-input", [
     isStatic
-      ? m(".manage-notice.manage-notice-warning", [
-        m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
-        m("span", t("static_hosting_cors_reminder")),
-      ])
+      ? m("p.manage-hint-warning", t("static_hosting_cors_reminder"))
       : null,
     m(".manage-form-group", [
       m("label[for=spreadsheet-url]", t("spreadsheet_url_label")),
@@ -477,19 +505,16 @@ function renderUrlInput() {
       ]),
       m("p.manage-dropzone-hint", t("check_assets_size2")),
     ]),
-    m(
-      "div",
-      { style: "margin-top: 1em;" },
-      m(ActionButton, {
-        label: t("load_from_url_button"),
-        primary: true,
-        onclick: () => {
-          const url = ManageStore.urlInputValue.trim();
-          Settings.spreadsheetUrl(url);
-          fetchAndProcessUrl(url, document.getElementById("checkassetssize-url").checked);
-        },
-      })
-    ),
+    m(ActionButton, {
+      label: t("load_from_url_button"),
+      primary: true,
+      block: true,
+      onclick: () => {
+        const url = ManageStore.urlInputValue.trim();
+        Settings.spreadsheetUrl(url);
+        fetchAndProcessUrl(url, document.getElementById("checkassetssize-url").checked);
+      },
+    }),
   ]);
 }
 
@@ -527,6 +552,34 @@ const SubViews = {
 
     const isDataReady = Checklist._isDataReady;
 
+    const scratchCard = m(ManageCard, {
+      title: t("start_scratch_title"),
+      icon: "img/ui/manage/docs.svg",
+      description: marked.parse(t("starting_from_scratch_links")),
+      children: [
+        m(ActionButton, {
+          label: t("download_blank_sheet_button"),
+          onclick: () => exportTemplateSpreadsheetEmpty(),
+          primary: true,
+          block: true,
+          style: "margin-bottom: 12px;",
+        }),
+        m("div[style=margin-bottom:12px]"),
+        m(ActionButton, {
+          label: t("download_filled_sheet_button"),
+          onclick: () => exportTemplateSpreadsheetFilled(),
+          primary: true,
+          block: true,
+        }),
+        m("div[style=margin-bottom:12px]"),
+        m(ActionButton, {
+          label: m.trust(t("open_documentation")),
+          onclick: () => window.open(DOCS_URL, "_blank"),
+          block: true,
+        }),
+      ],
+    });
+
     return [
       !isDataReady
         ? m(ManageCard, {
@@ -536,20 +589,7 @@ const SubViews = {
         })
         : null,
 
-      !isDataReady
-        ? m(ManageCard, {
-          title: t("start_scratch_title"),
-          icon: "img/ui/manage/docs.svg",
-          description: marked.parse(t("starting_from_scratch_links")),
-          children: [
-            m(ActionButton, {
-              label: t("download_blank_sheet_button"),
-              onclick: () => exportTemplateSpreadsheet(),
-              small: true,
-            }),
-          ],
-        })
-        : null,
+      !isDataReady ? scratchCard : null,
 
       m(ManageCard, {
         title: isDataReady ? t("update_checklist_title") : t("upload_spreadsheet_title"),
@@ -558,46 +598,36 @@ const SubViews = {
         children: [
           renderUploadSource(),
           Logger.hasErrors()
-            ? m(".manage-notice.manage-notice-error", [
-              m("img.manage-notice-icon", { src: "img/ui/manage/errors.svg" }),
-              m("span", t("data_upload_import_dirty")),
-            ])
+            ? m("p.manage-hint-error", t("data_upload_import_dirty"))
             : null,
         ],
       }),
 
       m(LogsPanel),
 
-      isDataReady
-        ? m(ManageCard, {
-          title: t("start_scratch_title"),
-          icon: "img/ui/manage/docs.svg",
-          description: marked.parse(t("starting_from_scratch_links")),
-          children: [
-            m(ActionButton, {
-              label: t("download_blank_sheet_button"),
-              onclick: () => exportTemplateSpreadsheet(),
-              small: true,
-            }),
-          ],
-        })
-        : null,
+      isDataReady ? scratchCard : null,
     ];
   },
 
   processing: function () {
-    if (!ManageStore.isProcessing) {
+    if (!ManageStore.isProcessing && !ManageStore.isDwcProcessing) {
       setTimeout(() => m.route.set("/manage/upload"), 0);
       return null;
     }
 
+    const title = ManageStore.isDwcProcessing
+      ? t("dwc_compiling") || "Compiling DwC archive…"
+      : t("processing");
+
     return m(ManageCard, {
-      title: t("processing"),
+      title,
       icon: "img/ui/manage/processing.svg",
       children: [
         m(".manage-processing", [
           m(".manage-spinner"),
-          m("p", t("data_upload_processing")),
+          m("p", ManageStore.isDwcProcessing
+            ? t("dwc_compiling_hint") || "Validating configuration and building the archive…"
+            : t("data_upload_processing")),
           m("p.manage-processing-hint", t("this_may_take_time")),
         ]),
       ],
@@ -610,35 +640,109 @@ const SubViews = {
       return null;
     }
 
-    return m(ManageCard, {
-      title: t("review_draft_heading"),
-      icon: "img/ui/manage/review.svg",
-      description: t("review_draft"),
-      children: [
-        m(".manage-review-options", [
-          m(".manage-review-option.manage-review-issues", [
-            m("p", t("not_all_good")),
-            m(ActionButton, {
-              label: t("back_to_upload"),
-              onclick: () => m.route.set("/manage/upload"),
-              background: "#ffc107",
-              icon: "img/ui/manage/errors.svg",
-              tall: true,
-            }),
-          ]),
-          m(".manage-review-option.manage-review-success", [
-            m("p", t("all_good")),
+    const hasDwc = ManageStore.dataman.hasDwcTable?.() ?? false;
+    const dwcCompiled = ManageStore.dataman.isDwcCompiled?.() ?? false;
+    const dwcResult = dwcCompiled ? ManageStore.dataman.getDwcArchive() : null;
+    const dwcHasErrors = dwcCompiled && Logger.getMessagesForDisplay().some(
+      m => (m.level === "error" || m.level === "critical") &&
+        (m.groupTitle === "DwC Archive" || m.groupTitle === "DwC Archive eml.xml")
+    );
+    const dwcSucceeded = dwcCompiled && !dwcHasErrors;
+
+    return [
+      m(ManageCard, {
+        title: t("review_draft_heading"),
+        icon: "img/ui/manage/review.svg",
+        description: t("review_draft"),
+        children: [
+          m(".manage-actions", [
             m(ActionButton, {
               label: t("proceed_to_update"),
+              primary: true,
+              block: true,
               onclick: () => m.route.set("/manage/publish"),
-              background: "#7cb342",
               icon: "img/ui/manage/clean.svg",
-              tall: true,
+              background: "#7cb342",
+            }),
+            m(ActionButton, {
+              label: t("back_to_upload"),
+              secondary: true,
+              block: true,
+              onclick: () => m.route.set("/manage/upload"),
+              icon: "img/ui/manage/upload.svg",
             }),
           ]),
-        ]),
-      ],
-    });
+        ],
+      }),
+
+      // ── DwC Export Panel ─────────────────────────────────────────────────
+      hasDwc
+        ? m(ManageCard, {
+          title: t("dwc_section_title") || "DwC / GBIF Export",
+          icon: "img/ui/manage/download.svg",
+          children: [
+            // State A: not yet compiled
+            !dwcCompiled
+              ? m(".manage-dwc-panel", [
+                m("p", t("dwc_export_configured") || "DwC export is configured in your spreadsheet."),
+                m("p.manage-processing-hint",
+                  t("dwc_compile_invitation") ||
+                  "Click below to validate your DwC mapping and generate the archive. " +
+                  "This step is optional - you can publish the checklist without it."
+                ),
+                m(ActionButton, {
+                  label: t("compile_dwc_export") || "Compile DwC Export",
+                  primary: true,
+                  block: true,
+                  icon: "img/ui/manage/processing.svg",
+                  onclick: () => _runDwcPipeline(),
+                }),
+              ])
+              : null,
+
+            // State B: compiled with errors
+            dwcCompiled && dwcHasErrors
+              ? m(".manage-dwc-panel", [
+                m("p.manage-hint-error",
+                  t("dwc_export_has_errors") ||
+                  "DwC compilation completed with errors. Review the messages below and retry after fixing your spreadsheet."
+                ),
+              ])
+              : null,
+
+            // State C: compiled successfully
+            dwcSucceeded
+              ? m(".manage-dwc-panel", [
+                m("p.manage-hint-success", t("dwc_export_ready") || "DwC archive compiled successfully."),
+                m(".manage-actions", [
+                  dwcResult?.checklistZip
+                    ? m(ActionButton, {
+                      label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
+                      icon: "img/ui/manage/download.svg",
+                      block: true,
+                      onclick: () => downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip"),
+                    })
+                    : null,
+                  dwcResult?.occurrenceZip
+                    ? m(ActionButton, {
+                      label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
+                      icon: "img/ui/manage/download.svg",
+                      block: true,
+                      onclick: () => downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip"),
+                    })
+                    : null,
+                  m(ActionButton, {
+                    label: t("retry_dwc_export") || "Retry DwC Export",
+                    small: true,
+                    onclick: () => _runDwcPipeline(),
+                  }),
+                ]),
+              ])
+              : null,
+          ],
+        })
+        : null,
+    ];
   },
 
   publish: function () {
@@ -651,7 +755,7 @@ const SubViews = {
     }
 
     return [
-      ManageStore.shouldShowUploadForm === true
+      ManageStore.shouldShowUploadForm === true || 1 == 1
         ? m(ManageCard, {
           title: t("data_upload_integrate_data"),
           icon: "img/ui/manage/publish.svg",
@@ -665,71 +769,32 @@ const SubViews = {
         icon: "img/ui/manage/download.svg",
         description: marked.parse(t("download_for_manual_update")),
         children: [
-          m(ActionButton, {
-            label: t("download_checklist"),
-            primary: true,
-            loading: ManageStore.isCompilingDownload,
-            onclick: function () {
-              ManageStore.isCompilingDownload = true;
-              setTimeout(() => {
-                let json = ManageStore.dataman.getCompiledChecklist();
-                var blob = new Blob([compressor.compress(JSON.stringify(json))], {
-                  type: "application/json;charset=utf-8",
-                });
-                downloadCompiledData(blob, "checklist.json");
-                ManageStore.isCompilingDownload = false;
-                m.redraw();
-              }, 50);
-            },
-          }),
-          // --- DwC / GBIF Export ---
-          (function() {
-            const dwcResult = ManageStore.dataman?.getDwcArchive?.();
-
-            if (!dwcResult) {
-              // Table absent or not configured: show a tip
-              return m(".manage-dwc-tip", [
-                m("p", m.trust(
-                  t("dwc_export_tip") ||
-                  `GBIF/DwC export is available. Configure the <strong>DwC archive</strong> table in your <em>nl_content</em> sheet to enable it. ` +
-                  `<a href="${DOCS_URL}/author-guide/dwc-export" target="_blank" rel="noopener">See documentation</a>.`
-                )),
-              ]);
-            }
-
-            const buttons = [];
-
-            if (dwcResult.checklistZip) {
-              buttons.push(m(ActionButton, {
-                label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
-                icon: "img/ui/manage/download.svg",
-                onclick: function () {
-                  downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip");
-                },
-              }));
-            }
-
-            if (dwcResult.occurrenceZip) {
-              buttons.push(m(ActionButton, {
-                label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
-                icon: "img/ui/manage/download.svg",
-                onclick: function () {
-                  downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip");
-                },
-              }));
-            }
-
-            return m(".manage-dwc-downloads", buttons);
-          })(),
-          m(
-            "div",
-            { style: "margin-top: 1em;" },
+          m(".manage-actions", [
+            m(ActionButton, {
+              label: t("download_checklist"),
+              primary: true,
+              block: true,
+              loading: ManageStore.isCompilingDownload,
+              onclick: function () {
+                ManageStore.isCompilingDownload = true;
+                setTimeout(() => {
+                  let json = ManageStore.dataman.getCompiledChecklist();
+                  var blob = new Blob([compressor.compress(JSON.stringify(json))], {
+                    type: "application/json;charset=utf-8",
+                  });
+                  downloadCompiledData(blob, "checklist.json");
+                  ManageStore.isCompilingDownload = false;
+                  m.redraw();
+                }, 50);
+              },
+            }),
             m(ActionButton, {
               label: t("back_to_upload_small"),
+              secondary: true,
+              block: true,
               onclick: () => m.route.set("/manage/upload"),
-              small: true,
-            })
-          ),
+            }),
+          ]),
         ],
       }),
     ];
@@ -746,6 +811,8 @@ const SubViews = {
             : m("p", ManageStore.errorDetails),
           m(ActionButton, {
             label: t("back_to_upload_after_error"),
+            secondary: true,
+            block: true,
             onclick: () => m.route.set("/manage/publish"),
           }),
         ]),
@@ -763,6 +830,7 @@ const SubViews = {
           m(ActionButton, {
             label: t("manage_back_to_search"),
             primary: true,
+            block: true,
             onclick: function () {
               Checklist._isDraft = false;
               if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -895,7 +963,7 @@ function renderServerUploadForm() {
               }
             } else {
               let parsed;
-              try { parsed = JSON.parse(request.responseText); } catch {}
+              try { parsed = JSON.parse(request.responseText); } catch { }
               ManageStore.errorDetails = parsed?.details ?? (request.statusText.toLowerCase() == "not found" ? t("upload_disabled") : t("network_error") + " " + request.statusText);
               ManageStore.messageCode = parsed?.messageCode ?? "";
               m.redraw();
@@ -919,6 +987,7 @@ function renderServerUploadForm() {
       m(ActionButton, {
         label: t("publish_checklist"),
         primary: true,
+        block: true,
         loading: ManageStore.isPublishing,
         onclick: function (e) {
           e.preventDefault();
