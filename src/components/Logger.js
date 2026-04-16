@@ -15,7 +15,7 @@ class LoggerClass {
    * @param {string} message - The message to log
    */
   log(level, groupTitle, message) {
-    const normalizedGroup = groupTitle ?? null;
+    const normalizedGroup = groupTitle ?? "Other";
 
     let hasCritical = this.messages.some(msg => msg.level === 'critical');
 
