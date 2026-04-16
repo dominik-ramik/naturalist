@@ -865,6 +865,7 @@ export const dwcTermInventory = {
         notes: "Multiple values from array columns are joined with a space separator as GBIF recommends.",
     },
 
+    /*
     samplingProtocol: {
         uri: "http://rs.tdwg.org/dwc/terms/samplingProtocol",
         namespace: "dwc",
@@ -892,6 +893,7 @@ export const dwcTermInventory = {
         tier2Trigger: false,
         notes: "TIER 3 (Sampling Event) — not implemented in v1. Recognized but ignored with Logger.warning.",
     },
+    */
 
     // DUBLIN CORE terms
     "dcterms:modified": {

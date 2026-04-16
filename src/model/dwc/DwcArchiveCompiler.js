@@ -66,6 +66,7 @@
  *
  * samplingProtocol / eventID rows are recognised and skipped with a warning.
  * No table changes will be needed when Tier 3 is implemented.
+ * There are currently no plans to implement Tier 3 in v1, but the term inventory and compiler are designed to allow it to be added in a future update without breaking changes.
  *
  * External dependency: jszip (npm install jszip)
  */
