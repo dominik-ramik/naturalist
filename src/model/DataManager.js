@@ -1092,6 +1092,8 @@ export let DataManager = function () {
 
             //verify syntax of .hidden
             if (
+              info.fullRow.hidden != null &&
+              info.fullRow.hidden !== "" &&
               info.fullRow.hidden !== "yes" &&
               info.fullRow.hidden !== "no" &&
               info.fullRow.hidden !== "data"
@@ -1106,6 +1108,7 @@ export let DataManager = function () {
                     expr,
                   ])
                 );
+                return;
               }
 
               if (!["if", "unless"].includes(split[0])) {
@@ -2718,7 +2721,7 @@ function runManualIntegrityChecks(data) {
           tf("dm_wrong_placement", [
             columnName,
             row.placement,
-            columnName.substring(0, columnName.indexOf(".")),
+            columnName.split(/[\.\#]/)[0], // root segment
           ])
         );
       }

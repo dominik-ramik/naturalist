@@ -210,7 +210,7 @@
   "dm_total_precache_size_too_large": "Total precache size {0} MB exceeds the configured maximum of {1} MB. Consider compressing your assets or increasing the limit in the configuration.",
   "dm_empty_row_in_data": "Empty row detected in sheet '{0}' at line {1}.",
   "dm_data_after_empty_row_ignored": "Data found after the empty row will be ignored.",
-  "dm_hidden_syntax": "The column 'Hidden' in 'Custom data definition' on line {0} has incorrect syntax {1}. It should start with 'if' or 'unless'",
+  "dm_hidden_syntax": "The column 'Hidden' in 'Custom data definition' on line {0} has incorrect syntax {1}.",
   "dm_hidden_syntax_wrong_operator": "The column 'Hidden' in 'Custom data definition' on line {0} has incorrect syntax {1}. The filter name should be followed by any of the following keywords 'is', 'isset', 'notset', 'notsetor'",
   "dm_hidden_syntax_wrong_filter": "The column 'Hidden' in 'Custom data definition' on line {0} has incorrect syntax {1}. The filter name should be a valid data path and correspond to a Column name with Search category title set",
   "dm_hidden_syntax_wrong_length": "The column 'Hidden' in 'Custom data definition' on line {0} has incorrect syntax {1}.",
