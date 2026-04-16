@@ -1,6 +1,7 @@
 import { nlDataStructure } from "../DataManagerData.js";
 import { dataPath } from "../DataPath.js";
 import { Checklist } from "../Checklist.js";
+import { relativeToUsercontent } from "../../components/Utils.js";
 
 const data = nlDataStructure;
 
@@ -159,5 +160,68 @@ export const helpers = {
     text = text.replace(/\s+/g, ' ').trim();
     
     return text;
-  }
+  },
+
+  /**
+   * Resolve a media source path to its final URL, applying Handlebars template
+   * substitution (if configured) and then resolving it relative to the
+   * usercontent folder.
+   *
+   * This is the canonical pipeline shared by all media custom types (image,
+   * sound, map).  Call it early in a `render` function, right after extracting
+   * the raw `source` string from the data object.
+   *
+   * Processing steps, in order:
+   *   1. **Template substitution** – if `uiContext.meta.template` is a
+   *      non-empty string and a compiled Handlebars template is available
+   *      (either via `uiContext.compiledTemplate` or
+   *      `Checklist.handlebarsTemplates[uiContext.dataPath]`), the source
+   *      string is passed through that template.  The template receives the
+   *      full data object, original row data, and taxon metadata so that
+   *      dynamic path segments (e.g. `{{name}}`) can be resolved at render
+   *      time.
+   *   2. **Usercontent resolution** – the resulting string is converted to a
+   *      path relative to the application's usercontent base directory via
+   *      `relativeToUsercontent`, making it safe to use as an `src` / `href`
+   *      attribute regardless of where the app is hosted.
+   *
+   * @param {string} source - Raw source value read from the data row.  May be
+   *   a plain relative path (e.g. `"images/frog.jpg"`), an absolute URL, or a
+   *   Handlebars template string (e.g. `"sounds/{{name}}.mp3"`) when
+   *   `uiContext.meta.template` is set.
+   *
+   * @param {Object} uiContext - UI rendering context passed down from the view.
+   *   @param {Function}  [uiContext.compiledTemplate] - Pre-compiled Handlebars
+   *     template function.  When present it takes priority over the global
+   *     `Checklist.handlebarsTemplates` lookup.
+   *   @param {string}    [uiContext.dataPath] - The column/data-path key used
+   *     to look up a pre-compiled template in `Checklist.handlebarsTemplates`
+   *     when `uiContext.compiledTemplate` is absent.
+   *   @param {Object}    [uiContext.meta] - Column metadata object.
+   *   @param {string}    [uiContext.meta.template] - Raw Handlebars template
+   *     string declared in the spreadsheet column definition.  Template
+   *     substitution is only performed when this is a non-empty string and a
+   *     compiled template is available.
+   *   @param {Object}    [uiContext.originalData] - The full data row (taxon
+   *     record) for the currently rendered item.  Passed as context to the
+   *     Handlebars template so that per-row field values can be referenced.
+   *   @param {Object}    [uiContext.taxon] - Taxon descriptor object.
+   *   @param {string}    [uiContext.taxon.name] - Scientific name of the taxon.
+   *   @param {string}    [uiContext.taxon.authority] - Taxonomic authority.
+   *   @param {string}    [uiContext.placement] - Where the component is being
+   *     rendered, e.g. `"details"` (details panel) or `"list"` (checklist
+   *     row).  Not used by this function but present in the same context
+   *     object.
+   *   @param {RegExp|null} [uiContext.highlightRegex] - Search-term highlight
+   *     regex.  Not used by this function but present in the same context
+   *     object.
+   *
+   * @returns {string} The fully resolved source URL ready for use in `src` /
+   *   `href` attributes.
+   */
+  processSource: function (source, uiContext) {
+    source = this.processTemplate(source, uiContext);
+    source = relativeToUsercontent(source);
+    return source;
+  },
 };

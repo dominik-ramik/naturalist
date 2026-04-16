@@ -2,7 +2,7 @@ import m from "mithril";
 
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
-import { processMarkdownWithBibliography, relativeToUsercontent } from "../../components/Utils.js";
+import { processMarkdownWithBibliography } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 import { applyHighlight } from "../highlightUtils.js";
 
@@ -57,8 +57,7 @@ export let customTypeImage = {
     let source = data.source;
     let title = data.title;
 
-    source = helpers.processTemplate(source, uiContext);
-    source = relativeToUsercontent(source);
+    source = helpers.processSource(source, uiContext);
 
     // Interpret the title as Markdown
     if (title && title.trim() !== "") {

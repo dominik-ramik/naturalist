@@ -2,7 +2,6 @@ import m from "mithril";
 
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
-import { relativeToUsercontent } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 import { applyHighlight } from "../highlightUtils.js";
 
@@ -57,10 +56,7 @@ export let customTypeMap = {
     let source = data.source;
     let title = data.title;
     
-    source = helpers.processTemplate(source, uiContext);
-
-    // Default image rendering
-    source = relativeToUsercontent(source);
+    source = helpers.processSource(source, uiContext);
 
     const imageElement = m(
       "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
