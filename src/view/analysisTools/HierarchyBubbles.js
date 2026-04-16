@@ -239,7 +239,36 @@ function circlePacking(options) {
         .sort((a, b) => b.totalLeafCount - a.totalLeafCount)
     );
 
+  // When a parent has exactly one child, d3.pack makes the child circle
+  // nearly identical in size to the parent, looking like an empty circle.
+  // Shrink single-child nodes (and their descendants) so the nesting is visible.
+  function shrinkSingleChildren(node) {
+    if (node.children && node.children.length === 1) {
+      const child = node.children[0];
+      const scaleFactor = 0.85;
+      const newR = node.r * scaleFactor;
+      const oldR = child.r;
+      if (oldR > 0) {
+        const scale = newR / oldR;
+        const oldX = child.x;
+        const oldY = child.y;
+        const newX = node.x;
+        const newY = node.y;
+        (function rescale(n) {
+          n.x = newX + (n.x - oldX) * scale;
+          n.y = newY + (n.y - oldY) * scale;
+          n.r = n.r * scale;
+          if (n.children) n.children.forEach(rescale);
+        })(child);
+      }
+    }
+    if (node.children) {
+      node.children.forEach(shrinkSingleChildren);
+    }
+  }
+
   const root = pack(data);
+  shrinkSingleChildren(root);
   let currentRoot = root;
 
   function adaptLabelFontSize(d) {
@@ -483,6 +512,7 @@ function circlePacking(options) {
     renderDownloadButton();
 
     const tree = pack(newFocus.data);
+    shrinkSingleChildren(tree);
     tree.parent = newFocus.parent;
     const view = [tree.x, tree.y, tree.r * 2];
 
@@ -520,11 +550,15 @@ function circlePacking(options) {
       .attr("r", (d) => d.r)
       .on("mouseenter", function () {
         d3.select(this)
-          .attr("old-opacity", d3.select(this).attr("opacity"))
-          .attr("opacity", 0.05);
+          .attr("stroke", "rgba(255,255,255,0.9)")
+          .attr("stroke-width", 4)
+          .style("filter", "brightness(0.78)");
       })
       .on("mouseout", function () {
-        d3.select(this).attr("opacity", d3.select(this).attr("old-opacity"));
+        d3.select(this)
+          .attr("stroke", null)
+          .attr("stroke-width", 0.5)
+          .style("filter", null);
       })
       .on("click", (event, d) => {
         event.stopPropagation();
