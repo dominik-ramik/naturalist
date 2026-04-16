@@ -21,6 +21,7 @@ import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
 import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
+import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -1306,7 +1307,7 @@ export let Checklist = {
       Object.keys(Checklist.getTaxaMeta()).find(
         (key) =>
           Checklist.getTaxaMeta()[key].name?.trim().toLowerCase() ===
-          "occurrence"
+          OCCURRENCE_IDENTIFIER
       ) || null;
 
     return this._occurrenceDataPathCache;

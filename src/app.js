@@ -22,7 +22,7 @@ export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
 
 let RenderTracker;
-const TRACE_RENDERING = true; // Set to true to enable render tracking in development mode
+const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
 const SHOULD_TRACE = import.meta.env.DEV && TRACE_RENDERING;
 if (SHOULD_TRACE) {
   let burstCount = 0;

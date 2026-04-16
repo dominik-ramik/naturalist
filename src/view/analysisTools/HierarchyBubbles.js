@@ -8,6 +8,7 @@ import { D3ChartView } from "../shared/D3ChartView.js";
 import { SelectParam } from "../shared/FormControls.js";
 
 import "./HierarchyBubbles.css";
+import { OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
 // ─── Tool config export ────────────────────────────────────────────────────
 
@@ -944,7 +945,7 @@ function renderBubblesInfoBox(isFilterEmpty, mapChartMode, matchingCount, totalC
   if (isFilterEmpty) {
     message = t("view_bubbles_no_filter_tip");
   } else {
-    const key = mapChartMode === "occurrence"
+    const key = mapChartMode === OCCURRENCE_IDENTIFIER
       ? "view_bubbles_filter_info_occurrence"
       : "view_bubbles_filter_info_taxa";
     message = tf(key, [matchingCount, totalCount]);
@@ -986,7 +987,7 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
   ensureCirclePackingCacheFresh(datasetRevision);
 
   const isFilterEmpty = Checklist.filter.isEmpty();
-  const mapChartMode = Settings.analyticalIntent() === "#S" ? "occurrence" : "taxa";
+  const mapChartMode = Settings.analyticalIntent() === "#S" ? OCCURRENCE_IDENTIFIER : "taxa";
 
   // Use the raw array lengths as leaf counts — these correspond 1-to-1 with
   // terminal nodes in the hierarchy (each taxa/occurrence row → one leaf).

@@ -8,6 +8,7 @@ import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { routeTo, shouldHide } from "../components/Utils.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
+import { OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
 
@@ -39,7 +40,7 @@ export let SearchView = {
             // includeChildren path in the query engine, so hiding them would
             // prevent legitimate cross-entity filtering.
             const belongsTo = Checklist.filter.data[dataPath].belongsTo || "taxon";
-            if (inTaxonMode && belongsTo === "occurrence") return;
+            if (inTaxonMode && belongsTo === OCCURRENCE_IDENTIFIER) return;
 
             let category = "";
             let title = "";

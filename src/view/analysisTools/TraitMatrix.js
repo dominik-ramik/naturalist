@@ -9,6 +9,7 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
+import { OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
 // ─── Tool config ──────────────────────────────────────────────────────────────
 
@@ -213,7 +214,7 @@ function normaliseLabelValue(v) {
  */
 function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verbCtx) {
   const { chartMode, isCustomMode, colTraitName, rowTraitName } = verbCtx;
-  const unit = t(chartMode === "occurrence" ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
+  const unit = t(chartMode === OCCURRENCE_IDENTIFIER ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
   const colLabel = `<strong>${colTraitName}: ${cKey}</strong>`;
   const rowLabel = isCustomMode
     ? `<strong>${rowTraitName}: ${rowKey}</strong>`
@@ -267,7 +268,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
   const categoryType = Checklist.filter.data[dataCategory]?.type;
   if (!categoryType) return [];
 
-  const rawData = (mode === "occurrence" && categoryType !== "mapregions")
+  const rawData = (mode === OCCURRENCE_IDENTIFIER && categoryType !== "mapregions")
     ? Checklist.getEffectiveDataForNode(taxon, Checklist.getOccurrenceMetaIndex(), allTaxa)
     : taxon.d;
 
@@ -511,9 +512,9 @@ function categoryChart(filteredTaxa) {
   const result = [];
   const isCustomMode = secondaryDimMode === "custom";
 
-  const chartMode = Settings.analyticalIntent() === "#S" ? "occurrence" : "taxa";
+  const chartMode = Settings.analyticalIntent() === "#S" ? OCCURRENCE_IDENTIFIER : "taxa";
   const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
-  const allTaxaForInheritance = chartMode === "occurrence" ? Checklist.getEntireChecklist() : filteredTaxa;
+  const allTaxaForInheritance = chartMode === OCCURRENCE_IDENTIFIER ? Checklist.getEntireChecklist() : filteredTaxa;
 
   filteredTaxa = filterTerminalLeavesForMode(filteredTaxa, chartMode, occurrenceMetaIndex);
 
@@ -530,7 +531,7 @@ function categoryChart(filteredTaxa) {
   const rowDimLabel = isCustomMode && secondaryDimCategory
     ? (Checklist.getMetaForDataPath(secondaryDimCategory)?.searchCategory || secondaryDimCategory)
     : t("tm_rows_taxonomy");
-  const unit = t(chartMode === "occurrence" ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
+  const unit = t(chartMode === OCCURRENCE_IDENTIFIER ? "view_cat_unit_occurrences" : "view_cat_unit_taxa");
 
   // ── Compute cross-tabulation first so refine-strip can show accurate counts ─
 

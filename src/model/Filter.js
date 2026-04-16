@@ -4,6 +4,7 @@ import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { getMonthNumbers } from "./MonthNames.js";
 import { getFilterPlugin } from "./filterPlugins/index.js";
+import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 
 export let Filter = {
   taxa: {},
@@ -133,7 +134,7 @@ export let Filter = {
         // the explicit check here is faster and makes the intent unambiguous.
         if (hasOccurrenceLevel) {
           const belongsTo = Filter.data[path].belongsTo || "taxon";
-          if (belongsTo === "occurrence" && !isOccurrenceRow) return;
+          if (belongsTo === OCCURRENCE_IDENTIFIER && !isOccurrenceRow) return;
           if (belongsTo === "taxon"      &&  isOccurrenceRow) return;
         }
 

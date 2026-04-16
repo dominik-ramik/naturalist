@@ -1,3 +1,5 @@
+export const OCCURRENCE_IDENTIFIER = "occurrence";
+
 export const nlDataStructureSheets = {
     content: {
         name: "nl_content",
@@ -460,9 +462,9 @@ export const nlDataStructureSheets = {
                                 rows: [
                                     ["redlist", "Red List", "taxon"],
                                     ["description", "Description", "taxon"],
-                                    ["collector", "Collector", "occurrence"],
-                                    ["collectionDate", "Collection date", "occurrence"],
-                                    ["catalogNumber", "Catalog number", "occurrence"],
+                                    ["collector", "Collector", OCCURRENCE_IDENTIFIER],
+                                    ["collectionDate", "Collection date", OCCURRENCE_IDENTIFIER],
+                                    ["catalogNumber", "Catalog number", OCCURRENCE_IDENTIFIER],
                                     ["distribution", "Distribution", "taxon"],
                                 ],
                             },
@@ -472,7 +474,7 @@ export const nlDataStructureSheets = {
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "list",
-                            listItems: ["", "taxon", "occurrence"],
+                            listItems: ["", "taxon", OCCURRENCE_IDENTIFIER],
                             defaultValue: "",
                             supportsMultilingual: false,
                         },
@@ -818,6 +820,29 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
+                    },
+                },
+                data: [],
+            },
+            dwcArchive: {
+                name: "DwC archive",
+                required: false,
+                description: "Configures Darwin Core Archive (DwC-A) export for GBIF submission.",
+                columns: {
+                    term: {
+                        name: "DwC term",
+                        description: "The Darwin Core term name (camelCase, e.g. 'decimalLatitude').",
+                        integrity: { allowEmpty: false, allowDuplicates: "no", allowedContent: "any", supportsMultilingual: false },
+                    },
+                    sourceColumn: {
+                        name: "Source column",
+                        description: "The NaturaList data path to read from. Supports: plain column name | {col1} text {col2} template | config:Item Name | taxa:ColumnName | auto:termName. Leave empty if using Constant value.",
+                        integrity: { allowEmpty: true, allowDuplicates: "yes", allowedContent: "any", supportsMultilingual: false },
+                    },
+                    constantValue: {
+                        name: "Constant value",
+                        description: "A literal string applied to every record. Leave empty if using Source column.",
+                        integrity: { allowEmpty: true, allowDuplicates: "yes", allowedContent: "any", supportsMultilingual: false },
                     },
                 },
                 data: [],

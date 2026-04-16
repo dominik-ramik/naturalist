@@ -2,7 +2,7 @@ import m from "mithril";
 import "./ManageView.css";
 import { marked } from "marked";
 
-import { checkForChecklistUpdate } from "../app.js";
+import { checkForChecklistUpdate, DOCS_URL } from "../app.js";
 import { ExcelBridge } from "../components/ExcelBridge.js";
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
@@ -106,11 +106,11 @@ const ActionButton = {
 const LogsPanel = {
   expandedGroups: new Set(),
 
-  toggleGroup: function (title) {
-    if (LogsPanel.expandedGroups.has(title)) {
-      LogsPanel.expandedGroups.delete(title);
+  toggleGroup: function (id) {
+    if (LogsPanel.expandedGroups.has(id)) {
+      LogsPanel.expandedGroups.delete(id);
     } else {
-      LogsPanel.expandedGroups.add(title);
+      LogsPanel.expandedGroups.add(id);
     }
   },
 
@@ -121,6 +121,7 @@ const LogsPanel = {
     const counts = Logger.getCounts();
     const groupMap = new Map();
     const ungrouped = [];
+    let groupIdCounter = 0;
 
     messages.forEach((msg) => {
       if (!msg.groupTitle) {
@@ -130,6 +131,7 @@ const LogsPanel = {
       const groupKey = `${msg.groupTitle}-${msg.level}`;
       if (!groupMap.has(groupKey)) {
         groupMap.set(groupKey, {
+          id: groupIdCounter++,
           title: msg.groupTitle,
           messages: [],
           counts: { critical: 0, error: 0, warning: 0, info: 0 },
@@ -157,18 +159,18 @@ const LogsPanel = {
     }
 
     function renderGroup(group) {
-      const isExpanded = LogsPanel.expandedGroups.has(group.title);
+      const isExpanded = LogsPanel.expandedGroups.has(group.id);
       const worst = worstLevel(group.counts);
       const errorCount = group.counts.critical + group.counts.error;
       const warnCount = group.counts.warning;
       const totalCount = group.messages.length;
 
-      return m(".manage-log-group." + worst, { key: group.title }, [
+      return m(".manage-log-group." + worst, { key: group.id }, [
         m(
           ".manage-log-group-header",
           {
             onclick: () => {
-              LogsPanel.toggleGroup(group.title);
+              LogsPanel.toggleGroup(group.id);
               m.redraw();
             },
             title: group.title,
@@ -225,16 +227,28 @@ const LogsPanel = {
 // --- SHARED PROCESSING PIPELINE ---
 
 /**
- * Core pipeline: ExcelBridge → DataManager → compile → route.
+ * Core pipeline: ExcelBridge → DataManager → compile → DwC → route.
  * Extracted to avoid duplication between file-upload and URL-fetch flows.
+ *
+ * DwC archive compilation runs in-band: any DwC validation errors (missing
+ * required terms, bad license, type mismatches, etc.) are emitted through
+ * Logger and therefore participate in the same error gate that prevents
+ * checklist publication.  The UI remains on the processing spinner while the
+ * async DwC build runs, then routes normally once it resolves.
+ *
  * @param {ArrayBuffer} buffer
  * @param {boolean} checkAssetsSize
  * @param {Function} onSuccess - Called instead of default "/manage/review" redirect on success
  */
-function _runPipeline(buffer, checkAssetsSize, onSuccess) {
+async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
   ManageStore.dataman = new DataManager();
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
+
+  // Run DwC compilation before checking for errors so that DwC validation
+  // errors block the UI in exactly the same way checklist errors do.
+  // If the DwC table is absent or empty, this is a fast no-op.
+  await ManageStore.dataman.compileDwcArchiveAsync();
 
   if (Logger.hasErrors()) {
     scheduleManageNavigation(() =>
@@ -668,6 +682,45 @@ const SubViews = {
               }, 50);
             },
           }),
+          // --- DwC / GBIF Export ---
+          (function() {
+            const dwcResult = ManageStore.dataman?.getDwcArchive?.();
+
+            if (!dwcResult) {
+              // Table absent or not configured: show a tip
+              return m(".manage-dwc-tip", [
+                m("p", m.trust(
+                  t("dwc_export_tip") ||
+                  `GBIF/DwC export is available. Configure the <strong>DwC archive</strong> table in your <em>nl_content</em> sheet to enable it. ` +
+                  `<a href="${DOCS_URL}/author-guide/dwc-export" target="_blank" rel="noopener">See documentation</a>.`
+                )),
+              ]);
+            }
+
+            const buttons = [];
+
+            if (dwcResult.checklistZip) {
+              buttons.push(m(ActionButton, {
+                label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
+                icon: "img/ui/manage/download.svg",
+                onclick: function () {
+                  downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip");
+                },
+              }));
+            }
+
+            if (dwcResult.occurrenceZip) {
+              buttons.push(m(ActionButton, {
+                label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
+                icon: "img/ui/manage/download.svg",
+                onclick: function () {
+                  downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip");
+                },
+              }));
+            }
+
+            return m(".manage-dwc-downloads", buttons);
+          })(),
           m(
             "div",
             { style: "margin-top: 1em;" },
