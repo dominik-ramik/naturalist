@@ -225,10 +225,12 @@ export let Checklist = {
   isKeyRelevantToTaxon: function (key, filterTaxonName) {
     const lcaPath = this.getKeyLCA(key);
 
-    // If no LCA (no valid results), not relevant
-    if (lcaPath.length === 0) return false;
+    // An empty lcaPath means the key spans multiple root-level taxa (virtual root as LCA).
+    // In that case every taxon that is an ancestor of a reachable result taxon is still
+    // relevant, so we must NOT return early here — fall through to the reachableTaxa check.
+    if (lcaPath.length === 0 && this.getKeyReachableTaxa(key).length === 0) return false;
 
-    const lcaName = lcaPath[lcaPath.length - 1]; // The LCA taxon name
+    const lcaName = lcaPath[lcaPath.length - 1]; // The LCA taxon name (undefined when path is empty = virtual root)
 
     // Case 1: The filter taxon IS the LCA
     if (filterTaxonName === lcaName) return true;
