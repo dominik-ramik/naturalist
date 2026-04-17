@@ -950,11 +950,17 @@ export const nlDataStructureSheets = {
                 data: [],
                 templateData: [
                     {
+                        title: "iNaturalist",
+                        icon: "inaturalist.png",
+                        searchUrlTemplate: "https://www.inaturalist.org/search?q={{taxon.name}}&source%5B%5D=taxa",
+                        restrictToTaxon: ""
+                    },
+                    {
                         title: "Search Google",
                         icon: "google.png",
                         searchUrlTemplate: "https://www.google.com/search?q={{taxon.name}}",
                         restrictToTaxon: ""
-                    }
+                    },
                 ]
             },
             singleAccessKeys: {
@@ -1093,7 +1099,7 @@ export const nlDataStructureSheets = {
                 templateData: [
                     {
                         step: "vanuatu_herpetofauna",
-                        text: "Key to the Amphibians and Reptiles of Vanuatu | Covers all 8 species in this checklist. Based on Zug (1993), Bauer & Vindum (1990), and Cogger (2014). Use on adult or near-adult specimens.",
+                        text: "Key to the Amphibians and Reptiles of Vanuatu | Covers all 8 species in this checklist. Based on @zug1993 and @bauer1990. Use on adult or near-adult specimens.",
                         target: "1",
                         images: ""
                     },
