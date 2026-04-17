@@ -33,7 +33,7 @@
  *   location.verbatim         → verbatimCoordinates
  *   altitude.from             → minimumElevationInMeters
  *   altitude.to               → maximumElevationInMeters
- *   collectionDate.iso8601    → eventDate
+ *   collectionDate.ymd    → eventDate
  *   collectionDate.year       → year
  *   taxa:Species.authority    → scientificNameAuthorship
  *   taxa:Species.lastNamePart → specificEpithet
@@ -529,7 +529,7 @@ const KNOWN_KEYS_BY_TYPE = {
   geopoint: "lat, long, verbatim",
   interval: "from, to",
   taxon: "name, authority, lastNamePart",
-  date: "iso8601, year, month, day",
+  date: "ymd, year, month, day",
   image: "source",
   sound: "source",
 };

@@ -507,7 +507,7 @@ export const dwcTermInventory = {
         outputFormat: "iso8601date",
         vocabulary: null,
         compound: {
-            date: "iso8601",  // from customTypeDate result (a dayjs timestamp number), format as YYYY-MM-DD
+            date: "ymd",  // from customTypeDate result (a dayjs timestamp number), format as YYYY-MM-DD
         },
         autoGenerate: null,
         tier2Trigger: false,
@@ -743,7 +743,7 @@ export const dwcTermInventory = {
         acceptedNlTypes: ["date", "text"],
         outputFormat: "iso8601date",
         vocabulary: null,
-        compound: { date: "iso8601" },
+        compound: { date: "ymd" },
         autoGenerate: null,
         tier2Trigger: false,
         notes: null,
@@ -848,12 +848,12 @@ export const dwcTermInventory = {
         vocabulary: null, compound: null, autoGenerate: null, tier2Trigger: false, notes: null,
     },
 
-associatedMedia: {
+    associatedMedia: {
         uri: "http://rs.tdwg.org/dwc/terms/associatedMedia",
         namespace: "dwc",
         tier: 2,
         required: false,
- 
+
         // null = accept any NL type in the Source column.
         //
         // associatedMedia MUST use the dedicated `media:` directive (see notes),
@@ -862,13 +862,13 @@ associatedMedia: {
         // allowing the case "media": validation branch to check each individual
         // path for image / sound / map formatting.
         acceptedNlTypes: null,
- 
+
         outputFormat: "string",  // pipe-joined URL string, e.g. "https://…/a.jpg | https://…/b.mp3"
         vocabulary: null,
         compound: null,          // source extraction is handled inside resolveAssociatedMedia(); not via extractCompoundValue()
         autoGenerate: null,
         tier2Trigger: false,
- 
+
         notes:
             "Use the `media:` directive in the Source column to collect and resolve media\n" +
             "URLs from one or more NaturaList image, sound, or map columns - including\n" +
@@ -957,8 +957,11 @@ associatedMedia: {
     "dcterms:modified": {
         uri: "http://purl.org/dc/terms/modified",
         namespace: "dcterms",
-        tier: 0, required: false, acceptedNlTypes: ["date", "text"], outputFormat: "iso8601date",
-        vocabulary: null, compound: { date: "iso8601" }, autoGenerate: null, tier2Trigger: false,
+        tier: 0,
+        required: false,
+        acceptedNlTypes: ["date", "text"],
+        outputFormat: "iso8601date",
+        vocabulary: null, compound: { date: "ymd" }, autoGenerate: null, tier2Trigger: false,
         notes: null,
     },
 };

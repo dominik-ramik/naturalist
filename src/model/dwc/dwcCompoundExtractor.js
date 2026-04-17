@@ -15,7 +15,7 @@
  *   location.verbatim     → verbatim coordinate string
  *   altitude.from         → lower bound of an interval
  *   altitude.to           → upper bound of an interval
- *   collectionDate.iso8601 → ISO 8601 date string
+ *   collectionDate.ymd → ISO 8601 date string
  *   collectionDate.year   → year integer
  *   collectionDate.month  → month integer (1-based)
  *   collectionDate.day    → day-of-month integer
@@ -80,7 +80,7 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
         case "taxon":
             return ["name", "authority", "lastNamePart"].includes(componentKey);
         case "date":
-            return ["iso8601", "year", "month", "day"].includes(componentKey);
+            return ["ymd", "year", "month", "day"].includes(componentKey);
         case "image":
         case "sound":
             return ["source"].includes(componentKey);
@@ -100,7 +100,7 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
  * @param {string} nlFormatting  - The NaturaList formatting type of the source
  *                                 column, e.g. "geopoint", "interval", "date".
  * @param {string} componentKey  - The component to extract, e.g. "lat", "from",
- *                                 "iso8601", "name", "authority", "lastNamePart".
+ *                                 "ymd", "name", "authority", "lastNamePart".
  * @param {*}      rawValue      - The value returned by customTypeXxx.readData().
  * @param {Object} Logger        - Logger instance for emitting warnings.
  *
@@ -126,7 +126,7 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
  *                          string when name is non-empty: falls back to the full
  *                          name if it contains no spaces.
  *
- *  date      → iso8601     YYYY-MM-DD string (from dayjs timestamp)
+ *  date      → ymd     YYYY-MM-DD string (from dayjs timestamp)
  *              year        4-digit integer
  *              month       1-based integer (1 = January)
  *              day         day-of-month integer
@@ -262,14 +262,14 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
                 return null;
             }
             switch (componentKey) {
-                case "iso8601": return d.format("YYYY-MM-DD");
+                case "ymd": return d.format("YYYY-MM-DD");
                 case "year":    return d.year();
                 case "month":   return d.month() + 1; // dayjs months are 0-based
                 case "day":     return d.date();
                 default:
                     Logger.warning(
                         `DwC Archive: Unknown component key "<b>${componentKey}</b>" for ` +
-                        `date. Known keys: iso8601, year, month, day.`,
+                        `date. Known keys: ymd, year, month, day.`,
                         "DwC Archive"
                     );
                     return rawValue;
