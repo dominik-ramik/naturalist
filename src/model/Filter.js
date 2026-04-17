@@ -156,6 +156,12 @@ export let Filter = {
 
   // NOTE: one deliberate type-check remains - interval preview needs pair-aware
   // accumulation. Candidate for plugin.getPreviewAccumulator() in a future pass.
+  //
+  // NOTE: analyticalIntent is intentionally NOT included here. The cache is
+  // namespaced by intent separately in queryCache so that this serialization
+  // remains a pure representation of filter state, decoupled from intent.
+  // The URL `s` param already owns intent persistence; embedding it here was
+  // redundant and caused the intent to appear twice in the URL `q` param.
   queryKey: function (excludedFilterKey = "") {
     const key = { taxa: {}, data: {} };
     ["taxa", "data"].forEach(type => {
@@ -170,7 +176,6 @@ export let Filter = {
     if (!Object.keys(key.taxa).length) delete key.taxa;
     if (!Object.keys(key.data).length) delete key.data;
     if (Filter.text?.length > 0) key.text = Filter.text;
-    key.intent = Settings.analyticalIntent();
 
     let stringified = JSON.stringify(key);
     return stringified;
@@ -178,7 +183,10 @@ export let Filter = {
 
   queryCache: {
     cache: function (searchResults, excludedFilterKey = "") {
-      let queryKey = Filter.queryKey(excludedFilterKey);
+      // Namespace by intent so that switching analytical intent correctly
+      // invalidates cached results without polluting the filter serialization.
+      let intent = Settings.analyticalIntent();
+      let queryKey = intent + "|" + Filter.queryKey(excludedFilterKey);
       Filter._queryResultCache[queryKey] = {
         taxa: searchResults,
         filterSnapshot: {
@@ -189,7 +197,8 @@ export let Filter = {
       };
     },
     retrieve: function (excludedFilterKey = "") {
-      let queryKey = Filter.queryKey(excludedFilterKey);
+      let intent = Settings.analyticalIntent();
+      let queryKey = intent + "|" + Filter.queryKey(excludedFilterKey);
       return Filter._queryResultCache.hasOwnProperty(queryKey)
         ? Filter._queryResultCache[queryKey]
         : false;
