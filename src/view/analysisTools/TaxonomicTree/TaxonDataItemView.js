@@ -4,7 +4,7 @@ import DOMPurify from "dompurify";
 import "./TaxonDataItemView.css";
 
 import { Checklist } from "../../../model/Checklist.js";
-import { routeTo, shouldHide } from "../../../components/Utils.js";
+import { injectCiteKeyLinks, routeTo, shouldHide } from "../../../components/Utils.js";
 import { dataCustomTypes } from "../../../model/customTypes/index.js";
 import { AppLayoutView } from "../../AppLayoutView.js";
 import { buildSearchRegex } from "../../../model/highlightUtils.js";
@@ -224,10 +224,10 @@ export let TaxonDataItemView = {
       }
       if (tailingSeparator) {
         if (typeof rendered === "string" || typeof rendered === "number") {
-           rendered = rendered + tailingSeparator;
+          rendered = rendered + tailingSeparator;
         } else {
-           // Wrap in array [Content, Separator] - Mithril handles this natively
-           rendered = [rendered, tailingSeparator]; 
+          // Wrap in array [Content, Separator] - Mithril handles this natively
+          rendered = [rendered, tailingSeparator];
         }
       }
       return rendered;
@@ -320,23 +320,15 @@ export let TaxonDataItemView = {
     return m("span", [
       title,
       itemType == "simple"
-       ? m("span.simple-value", data)
+        ? m("span.simple-value", data)
         : subitemsList,
       // Manually append separator for complex types (Simple types already have it inside 'data')
       itemType !== "simple" && tailingSeparator ? tailingSeparator : null
     ]);
   },
 
-  onupdate: function (vnode) {
-    const el = vnode.dom;
-    if (!el) return;
-    const links = el.querySelectorAll("a[data-citekey]:not([data-bound])");
-    links.forEach((e) => {
-      e.setAttribute("data-bound", "1");
-      e.onclick = () => {
-        routeTo("references/" + e.getAttribute("data-citekey"));
-      };
-    });
+  oncreate: function (vnode) {
+    injectCiteKeyLinks(vnode.dom);
   },
 
   view: function (vnode) {

@@ -951,7 +951,7 @@ export const nlDataStructureSheets = {
                 templateData: [
                     {
                         title: "iNaturalist",
-                        icon: "inaturalist.png",
+                        icon: "inat.png",
                         searchUrlTemplate: "https://www.inaturalist.org/search?q={{taxon.name}}&source%5B%5D=taxa",
                         restrictToTaxon: ""
                     },
@@ -2796,7 +2796,7 @@ export const nlDataStructureSheets = {
                 "Species.authority": "(Linnaeus, 1766)",
                 "redlist": "LC",
                 "status": "N",
-                "notes": "A pelagic sea snake of circumtropical distribution, the sole member of *Pelamis*. Venom is potently neurotoxic but bites to humans are rare. Buoyant at the surface owing to its laterally compressed tail and low specific gravity [@zug1993, p. 428]."
+                "notes": "A pelagic sea snake of circumtropical distribution, the sole member of *Pelamis*. Venom is potently neurotoxic but bites to humans are rare. Buoyant at the surface owing to its laterally compressed tail and low specific gravity [@zug1993, p. 428]. Also see @inat:193429759 for a recent record from Vanuatu."
             },
             {
                 "Class": "Reptilia",

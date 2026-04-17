@@ -13,6 +13,18 @@ import { highlightHtml } from "../model/highlightUtils.js";
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
+export function injectCiteKeyLinks(el) {
+  if (!el) return;
+
+  const links = el.querySelectorAll("a[data-citekey]:not([data-bound])");
+  links.forEach((e) => {
+    e.setAttribute("data-bound", "1");
+    e.onclick = () => {
+      routeTo("references/" + e.getAttribute("data-citekey"));
+    };
+  });
+}
+
 export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false, highlightRegex = null) {
   //process bibliography
   try {
@@ -35,15 +47,16 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "", ski
   data = marked.parse(data);
   //in case markdown introduced some dirt, purify it again
   data = DOMPurify.sanitize(data, { ADD_ATTR: ["target"] });
+
   data = data.trim() + (tailingSeparator ? tailingSeparator : "");
 
   if (!skipInterpolationToUserContentFolder) {
     data = mdImagesClickableAndUsercontentRelative(data);
   }
 
-if (highlightRegex) {
-  data = highlightHtml(data, highlightRegex);
-}
+  if (highlightRegex) {
+    data = highlightHtml(data, highlightRegex);
+  }
 
   return data;
 }
@@ -469,7 +482,7 @@ export function getUnitFromTemplate(meta) {
  * Handles both Unicode superscript chars (², ³ …) and caret notation (^2, ^3 …).
  */
 export function unitToHtml(unit) {
-   return unit.replace(/2$/, "<sup>2</sup>").replace(/3$/, "<sup>3</sup>");
+  return unit.replace(/2$/, "<sup>2</sup>").replace(/3$/, "<sup>3</sup>");
 }
 
 export function isValidHttpUrl(string) {
@@ -514,7 +527,7 @@ export function filterMatches(data) {
     const terms = rawText
       .split(Settings.SEARCH_OR_SEPARATOR)
       .map(t => t.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                 .replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"))
+        .replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"))
       .filter(Boolean);
     if (terms.length > 0) {
       const regex = new RegExp("(" + terms.map(t => "\\b" + t).join("|") + ")", "i");

@@ -1,7 +1,7 @@
 import m from "mithril";
 import "./SingleAccessKeyView.css";
 import { Checklist } from "../model/Checklist.js";
-import { processMarkdownWithBibliography } from "../components/Utils.js";
+import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";
 
 // ==========================================
@@ -111,11 +111,17 @@ const KeyLogic = {
 // 2. SUB-COMPONENTS
 // ==========================================
 
-// Helper to check if click was on a link
+// Helper to check if a click landed on an interactive element (link, button,
+// or any element with an onclick handler — e.g. bibtex-toolbox citation links
+// which use onclick instead of href).
 const isLinkClick = (e) => {
     let el = e.target;
     while (el && el !== e.currentTarget) {
-        if (el.tagName === 'A') return true;
+        if (el.tagName === 'A' || el.tagName === 'BUTTON') return true;
+        // Covers onclick="…" HTML attributes (bibtex-toolbox style)
+        if (el.hasAttribute && el.hasAttribute('onclick')) return true;
+        // Covers onclick handlers attached via JS
+        if (typeof el.onclick === 'function') return true;
         el = el.parentElement;
     }
     return false;
@@ -238,6 +244,9 @@ const KeyCard = {
         const renderDescription = () => {
             if (!showDescription) return null;
             return m(".sak-description", {
+                oncreate: function (vnode) {
+                    injectCiteKeyLinks(vnode.dom);
+                },
                 onclick: (e) => {
                     // Allow links to work normally
                     if (isLinkClick(e)) return;
