@@ -25,7 +25,7 @@
  *                              (for use with specificEpithet, infraspecificEpithet, cultivarEpithet)
  *
  * This means the compiler does NOT silently infer which component to extract
- * based on the DwC term name — the user states it unambiguously.  The
+ * based on the DwC term name - the user states it unambiguously.  The
  * dwcTermInventory.compound map is kept for documentation purposes only; the
  * actual extraction is driven by the component key from the Source column.
  *
@@ -52,7 +52,7 @@
  * ─── Note on dwcTermInventory import ─────────────────────────────────────────
  *
  * This file imports dwcTermInventory only for the `isKnownCompoundKey` helper.
- * The `extractCompoundValue` function itself does NOT consult the inventory —
+ * The `extractCompoundValue` function itself does NOT consult the inventory -
  * it operates purely on the explicit component key provided by the caller.
  */
 
@@ -142,7 +142,7 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
         || ["geopoint", "interval", "taxon", "date", "image", "sound"].includes(nlFormatting);
 
     if (!hasCompoundRules) {
-        // Not a compound type — return rawValue unchanged. Caller decides what to do.
+        // Not a compound type - return rawValue unchanged. Caller decides what to do.
         return rawValue;
     }
 
@@ -243,7 +243,7 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
 
         // ── date ─────────────────────────────────────────────────────────────
         // rawValue: Unix timestamp in milliseconds (number)
-        // (from customTypeDate.readData — returns dayjs.valueOf())
+        // (from customTypeDate.readData - returns dayjs.valueOf())
         case "date": {
             if (typeof rawValue !== "number" || isNaN(rawValue)) {
                 Logger.warning(
@@ -302,7 +302,7 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
 
         // ── Unknown formatting type ───────────────────────────────────────────
         default:
-            // Not a compound type at all — return rawValue unchanged.
+            // Not a compound type at all - return rawValue unchanged.
             // This is not a warning: the caller already checked isKnownCompoundKey
             // before calling this function, so reaching here means the formatting
             // type legitimately has no compound structure.

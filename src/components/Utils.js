@@ -286,6 +286,13 @@ export function splitN(str, delimiter, n) {
   return result;
 }
 
+export function absoluteUsercontent(url) {
+  if (!url) return url;
+  // Already absolute — leave unchanged
+  if (url.indexOf("://") >= 0) return url;
+  return new URL(url, window.location.href).href;
+}
+
 export function relativeToUsercontent(url) {
   //Add an initial period to relative URLs
   if (url.length > 1 && url[0] == "/" && url[1] != "/") {

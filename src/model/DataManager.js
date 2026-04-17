@@ -2,6 +2,7 @@ import Handlebars from "handlebars";
 import { TinyBibReader } from 'bibtex-json-toolbox';
 
 import {
+  absoluteUsercontent,
   isValidHttpUrl,
   pad,
   relativeToUsercontent,
@@ -24,7 +25,7 @@ import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 // ─── Pure helpers for "Belongs to" column attribution ────────────────────────
 
 /**
- * Returns the root segment of a CDD data path — the portion before the first
+ * Returns the root segment of a CDD data path - the portion before the first
  * '.' or '#'.  This is the column on which `belongsTo` is declared; all child
  * paths inherit from it.
  *
@@ -46,7 +47,7 @@ function getRootDataPath(colName) {
 /**
  * Builds a Map<rootColName(lowercase) → "taxon"|"occurrence"> from a CDD
  * table's row array.  Only processes root-level rows; child rows inherit
- * through `resolveBelongsTo`.  Blank value is normalised to "taxon" —
+ * through `resolveBelongsTo`.  Blank value is normalised to "taxon" -
  * the backward-compatible default for columns that pre-date this feature.
  *
  * @param {Object[]} cddRows  Rows from customDataDefinition.data[langCode]
@@ -58,10 +59,10 @@ function buildRootBelongsToMap(cddRows) {
   cddRows.forEach(function (row) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
-    // Only index root rows — child rows have no standalone belongsTo value
+    // Only index root rows - child rows have no standalone belongsTo value
     if (getRootDataPath(colName) !== colName) return;
     const raw = (row.belongsTo || "").toLowerCase().trim();
-    // Blank defaults to "taxon" — all pre-existing columns are taxon columns.
+    // Blank defaults to "taxon" - all pre-existing columns are taxon columns.
     map.set(colName, raw === OCCURRENCE_IDENTIFIER ? OCCURRENCE_IDENTIFIER : "taxon");
   });
   return map;
@@ -1426,7 +1427,7 @@ export let DataManager = function () {
                   ])
                   , "Wrong 'Belongs to' attribution");
               }
-              // Skip loading — error already reported at root level above.
+              // Skip loading - error already reported at root level above.
               if (position.isLeaf) return;
             }
           }
@@ -1923,7 +1924,7 @@ export let DataManager = function () {
     });
 
     //
-    // Manual checks of logic — delegated to a standalone pure function.
+    // Manual checks of logic - delegated to a standalone pure function.
     // Skip if a critical error was already logged: the data may be incomplete
     // enough to cause misleading secondary errors.
     //
@@ -2110,7 +2111,7 @@ export let DataManager = function () {
 
     /**
      * Returns true if the spreadsheet contains a non-empty DwC archive table.
-     * Safe to call immediately after loadData() — does NOT require
+     * Safe to call immediately after loadData() - does NOT require
      * getCompiledChecklist() to have been called first.
      * Used by ManageView for early DwC UI detection.
      */
@@ -2135,7 +2136,7 @@ export let DataManager = function () {
      *
      * Validation errors are emitted through Logger so that ManageView's normal
      * error gate (Logger.hasErrors()) blocks the UI in exactly the same way it
-     * does for checklist compilation errors — DwC issues are never silently
+     * does for checklist compilation errors - DwC issues are never silently
      * swallowed and the user cannot proceed to publish until they are fixed.
      *
      * If the DwC archive table is absent or empty this is a no-op; getDwcArchive()
@@ -2147,43 +2148,110 @@ export let DataManager = function () {
       const defaultLangCode = data.common.languages.defaultLanguageCode;
       const dwcTableRows = data.sheets.content.tables.dwcArchive?.data?.[defaultLangCode];
       if (!dwcTableRows || dwcTableRows.length === 0) {
-        return; // DwC table absent or empty — nothing to compile, no errors to log
+        return; // DwC table absent or empty - nothing to compile, no errors to log
       }
 
       const cddRows = data.sheets.content.tables.customDataDefinition.data[defaultLangCode];
 
-      /**
-       * Build a per-column Handlebars template cache so we compile each template
-       * string only once across all rows.
-       */
       const templateCache = new Map();
-      function getCompiledTemplate(columnName) {
-        if (templateCache.has(columnName)) return templateCache.get(columnName);
-        const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === columnName.toLowerCase());
-        const templateStr = cddDef?.template?.trim();
+
+      /**
+       * Resolve the CDD definition row for a column name, with automatic fallback
+       * to the "#" array-item pattern used for numbered columns.
+       *
+       * Lookup order (all comparisons lowercase):
+       *   1. Exact match              "lifePhotos1"       (if explicitly in CDD)
+       *   2. Trailing-digit strip     "lifePhotos1" → "lifePhotos#"
+       *   3. Dot-path last-segment    "mediacluster.images1" → "mediacluster.images#"
+       *
+       * This mirrors the getMediaNlFormatting() logic in DwcArchiveCompiler so
+       * that both the type lookup and the template lookup resolve consistently for
+       * every column expanded by the media: directive.
+       *
+       * @param {string} colName  - The column name to look up (case-insensitive).
+       * @returns {Object|undefined}  The CDD row object, or undefined if not found.
+       */
+      function resolveCddDef(colName) {
+        const lo = colName.toLowerCase();
+
+        // 1. Exact match
+        const exact = cddRows?.find(r => (r.columnName || "").toLowerCase() === lo);
+        if (exact) return exact;
+
+        // 2. Strip trailing digits and try "#" pattern
+        //    "lifePhotos1" → "lifePhotos#"
+        const hashLo = lo.replace(/\d+$/, "#");
+        if (hashLo !== lo) {
+          const hashMatch = cddRows?.find(r => (r.columnName || "").toLowerCase() === hashLo);
+          if (hashMatch) return hashMatch;
+        }
+
+        // 3. Dot-path last-segment strip
+        //    "mediacluster.images1" → "mediacluster.images#"
+        const dotHashLo = lo.replace(/(\.[^.]+?)\d+$/, "$1#");
+        if (dotHashLo !== lo && dotHashLo !== hashLo) {
+          const dotHashMatch = cddRows?.find(r => (r.columnName || "").toLowerCase() === dotHashLo);
+          if (dotHashMatch) return dotHashMatch;
+        }
+
+        return undefined;
+      }
+
+      /**
+       * Build a per-CDD-entry Handlebars template cache so each template string
+       * is compiled only once regardless of how many numbered columns share it.
+       *
+       * The cache key is the CANONICAL CDD column name (e.g. "lifePhotos#"),
+       * NOT the expanded column name (e.g. "lifePhotos1").  This prevents
+       * redundant compilations when lifePhotos1, lifePhotos2, lifePhotos3 are
+       * all processed in a loop - they all resolve to the same CDD entry and
+       * reuse the single cached compiled function.
+       *
+       * @param {Object|undefined} cddDef  - The resolved CDD row from resolveCddDef().
+       *                                     If undefined, returns null (no template).
+       * @returns {Function|null}  Compiled Handlebars function, or null.
+       */
+      function getCompiledTemplate(cddDef) {
+        if (!cddDef) return null;
+
+        // Use the CDD's own columnName as the cache key
+        const cacheKey = (cddDef.columnName || "").toLowerCase();
+        if (templateCache.has(cacheKey)) return templateCache.get(cacheKey);
+
+        const templateStr = cddDef.template?.trim();
         let compiled = null;
         if (templateStr) {
-          try { compiled = Handlebars.compile(templateStr); } catch (ex) {
-            Logger.warning(`DwC Archive: Failed to compile Handlebars template for column "${columnName}": ${ex.message}`, "DwC Archive");
+          try {
+            compiled = Handlebars.compile(templateStr);
+          } catch (ex) {
+            Logger.warning(
+              `DwC Archive: Failed to compile Handlebars template for column "${cddDef.columnName}": ${ex.message}`,
+              "DwC Archive"
+            );
           }
         }
-        templateCache.set(columnName, compiled);
+        templateCache.set(cacheKey, compiled);
         return compiled;
       }
 
       /**
-       * resolveMediaSource — implements the same pipeline as helpers.processSource()
+       * resolveMediaSource - implements the same pipeline as helpers.processSource()
        * for use inside DwcArchiveCompiler without introducing a dependency on the
        * customTypes layer from within the compiler.
        *
+       * This updated version adds the "#" CDD fallback so that array-item columns
+       * expanded by the media: directive (e.g. "lifePhotos1", "lifePhotos2") correctly
+       * inherit the Handlebars template defined on "lifePhotos#" in the CDD.
+       *
        * @param {string} rawSource  - Raw .source string from the data row
-       * @param {string} columnName - Root column name (e.g. "Photo")
+       * @param {string} columnName - Actual expanded column name (e.g. "lifePhotos1")
        * @param {any[]}  rawRow     - Current raw checklist row (for template context)
        * @returns {string} Fully resolved source URL
        */
       const resolveMediaSource = (rawSource, columnName, rawRow) => {
-        const compiledTemplate = getCompiledTemplate(columnName);
-        const cddDef = cddRows?.find(r => (r.columnName || "").toLowerCase() === columnName.toLowerCase());
+        // Resolve the CDD entry with array "#" fallback
+        const cddDef = resolveCddDef(columnName);
+        const compiledTemplate = getCompiledTemplate(cddDef);
 
         // Build the uiContext expected by helpers.processSource / helpers.processTemplate
         const uiContext = {
@@ -2285,8 +2353,7 @@ function fetchFDirectiveContent(directive, allowedExtensions, runSpecificCache, 
     return null;
   }
 
-  let fileUrl = relativeToUsercontent(filePath);
-  if (!/^https:\/\//i.test(fileUrl)) fileUrl = new URL(fileUrl, window.location.origin).href;
+  let fileUrl = absoluteUsercontent(relativeToUsercontent(filePath));
   if (!allowedExtensions.some(e => fileUrl.toLowerCase().endsWith(`.${e}`))) fileUrl += "." + allowedExtensions[0];
 
   if (!isValidHttpUrl(fileUrl) || !isSameOriginAsCurrent(fileUrl)) {
@@ -2422,7 +2489,7 @@ function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
 
 // =============================================================================
 // PURE MODULE-SCOPE INTEGRITY FUNCTIONS
-// (no closure over DataManager state — receive everything they need as args)
+// (no closure over DataManager state - receive everything they need as args)
 // =============================================================================
 
 /**
@@ -2692,7 +2759,7 @@ function runManualIntegrityChecks(data) {
 
     const cddColumns = data.sheets.content.tables.customDataDefinition.columns;
 
-    // 6-pre. "Belongs to" column presence — CDD is optional as a whole, but
+    // 6-pre. "Belongs to" column presence - CDD is optional as a whole, but
     //        when it is present every declared column must exist.  A missing
     //        "Belongs to" column causes silent wrong defaults rather than
     //        obvious load failures, so we flag it explicitly once per table.
@@ -2795,7 +2862,7 @@ function runManualIntegrityChecks(data) {
         row.belongsTo = ""; // reset to avoid misleading downstream, mirrors 6f pattern
       }
 
-      // 6i. "Belongs to" may only be set on root or simple columns — child columns
+      // 6i. "Belongs to" may only be set on root or simple columns - child columns
       //     inherit it automatically.  This mirrors the 6a rule for "Placement".
       if (belongsToRaw !== "" && !(colPosition.isSimpleItem || colPosition.isRoot)) {
         Logger.error(

@@ -68,7 +68,7 @@ export const dwcTermInventory = {
         namespace: "dwc",
         tier: 1,
         required: false,
-        acceptedNlTypes: ["taxon"],     // NOT "text" — authority should live in a taxon-typed column
+        acceptedNlTypes: ["taxon"],     // NOT "text" - authority should live in a taxon-typed column
         outputFormat: "string",
         vocabulary: null,
         compound: {
@@ -110,7 +110,7 @@ export const dwcTermInventory = {
         compound: null,
         autoGenerate: "taxonrank_from_column", // Strategy: inferred from which Taxa Definition column contains the row's name
         tier2Trigger: false,
-        notes: "Always auto-inferred from the taxa column name position in the hierarchy. The user references it with 'taxa:ColumnName' in the Source column to make it visible in the table. Vocabulary values trigger a warning (not error) if non-matching — non-standard ranks pass through.",
+        notes: "Always auto-inferred from the taxa column name position in the hierarchy. The user references it with 'taxa:ColumnName' in the Source column to make it visible in the table. Vocabulary values trigger a warning (not error) if non-matching - non-standard ranks pass through.",
     },
 
     parentNameUsageID: {
@@ -134,7 +134,7 @@ export const dwcTermInventory = {
         required: true,
         acceptedNlTypes: null,          // constant only
         outputFormat: "string",
-        vocabulary: null,               // ISO 639-1 — validated by regex /^[a-z]{2}$/ not a closed list
+        vocabulary: null,               // ISO 639-1 - validated by regex /^[a-z]{2}$/ not a closed list
         compound: null,
         autoGenerate: null,
         tier2Trigger: false,
@@ -848,22 +848,79 @@ export const dwcTermInventory = {
         vocabulary: null, compound: null, autoGenerate: null, tier2Trigger: false, notes: null,
     },
 
-    associatedMedia: {
+associatedMedia: {
         uri: "http://rs.tdwg.org/dwc/terms/associatedMedia",
         namespace: "dwc",
         tier: 2,
         required: false,
-        acceptedNlTypes: ["image", "sound", "map"],
-        outputFormat: "string",
+ 
+        // null = accept any NL type in the Source column.
+        //
+        // associatedMedia MUST use the dedicated `media:` directive (see notes),
+        // which performs its own type enforcement.  Setting acceptedNlTypes to null
+        // prevents a false "incompatible NL type" error in Step 5 while still
+        // allowing the case "media": validation branch to check each individual
+        // path for image / sound / map formatting.
+        acceptedNlTypes: null,
+ 
+        outputFormat: "string",  // pipe-joined URL string, e.g. "https://…/a.jpg | https://…/b.mp3"
         vocabulary: null,
-        compound: {
-            image: "source",  // extract .source URL from customTypeImage result
-            sound: "source",  // extract .source URL from customTypeSound result
-            map: "source",    // extract .source URL from customTypeMap result
-        },
+        compound: null,          // source extraction is handled inside resolveAssociatedMedia(); not via extractCompoundValue()
         autoGenerate: null,
         tier2Trigger: false,
-        notes: "Multiple values from array columns are joined with a space separator as GBIF recommends.",
+ 
+        notes:
+            "Use the `media:` directive in the Source column to collect and resolve media\n" +
+            "URLs from one or more NaturaList image, sound, or map columns - including\n" +
+            "array columns.  Multiple URLs are joined with ' | ' (space–pipe–space), the\n" +
+            "separator recommended by GBIF for multi-value free-text DwC fields.\n" +
+            "\n" +
+            "SYNTAX:\n" +
+            "  media:<path1>, <path2>, …\n" +
+            "\n" +
+            "PATH TYPES:\n" +
+            "  Plain column:     media:specimenPhoto\n" +
+            "    A single image/sound/map column.  The column must exist in the checklist\n" +
+            "    sheet and be defined in the Custom data definition table with formatting\n" +
+            "    'image', 'sound', or 'map'.\n" +
+            "\n" +
+            "  Array column:     media:lifePhotos#\n" +
+            "    Expands to all numbered columns in the checklist sheet whose name matches\n" +
+            "    the base followed by digits (lifePhotos1, lifePhotos2, …), sorted\n" +
+            "    numerically.  The formatting type is looked up from the 'lifePhotos#'\n" +
+            "    CDD entry (the item-level row, not the container row).\n" +
+            "    If no numbered columns exist the path is silently skipped with a\n" +
+            "    Logger.info (not an error - the array may simply be empty for this row).\n" +
+            "\n" +
+            "  Nested array:     media:mediacluster.images#\n" +
+            "    Same as above; dot-notation for grouped sub-columns is supported.\n" +
+            "    The type is looked up from 'mediacluster.images#' in the CDD.\n" +
+            "\n" +
+            "  Mixed list:       media:specimenPhoto, lifePhotos#, mediacluster.sounds#\n" +
+            "    Any combination of the above, comma-separated.  All resolved URLs from\n" +
+            "    all paths are concatenated into a single pipe-separated string.\n" +
+            "\n" +
+            "URL RESOLUTION:\n" +
+            "  Every source URL goes through the full NL media pipeline:\n" +
+            "    1. Handlebars template substitution (honours the CDD 'Template' column),\n" +
+            "       e.g. a template of 'images/{{name}}.jpg' becomes an absolute URL.\n" +
+            "    2. relativeToUsercontent() - converts relative paths to absolute URLs\n" +
+            "       based on the app's deployment root.\n" +
+            "  This guarantees that the URLs in the DwC archive exactly match those\n" +
+            "  displayed in the NaturaList viewer.\n" +
+            "\n" +
+            "EXAMPLES:\n" +
+            "  DwC term          Source column\n" +
+            "  associatedMedia   media:specimenPhoto\n" +
+            "  associatedMedia   media:lifePhotos#\n" +
+            "  associatedMedia   media:specimenPhoto, lifePhotos#, callsRecs#\n" +
+            "  associatedMedia   media:photos#, soundsRef#\n" +
+            "\n" +
+            "TIER NOTES:\n" +
+            "  This term applies to both Tier 1 (taxon) and Tier 2 (occurrence) exports.\n" +
+            "  For Tier 1, URLs come from the representative row of each taxon.\n" +
+            "  For Tier 2, URLs come from the individual occurrence row - recommended\n" +
+            "  when each specimen has its own photographs.",
     },
 
     /*
@@ -878,7 +935,7 @@ export const dwcTermInventory = {
         compound: null,
         autoGenerate: null,
         tier2Trigger: false,
-        notes: "TIER 3 (Sampling Event) — not implemented in v1. Compiler emits Logger.warning that this term is recognised but ignored.",
+        notes: "TIER 3 (Sampling Event) - not implemented in v1. Compiler emits Logger.warning that this term is recognised but ignored.",
     },
 
     eventID: {
@@ -892,7 +949,7 @@ export const dwcTermInventory = {
         compound: null,
         autoGenerate: null,
         tier2Trigger: false,
-        notes: "TIER 3 (Sampling Event) — not implemented in v1. Recognized but ignored with Logger.warning.",
+        notes: "TIER 3 (Sampling Event) - not implemented in v1. Recognized but ignored with Logger.warning.",
     },
     */
 

@@ -3,8 +3,8 @@
  *
  * Produces Darwin Core Archive (DwC-A) ZIP files from a compiled NaturaList
  * checklist. Generates:
- *   - taxa_dwca.zip         — Tier 1: taxa.csv + meta.xml + eml.xml
- *   - occurrences_dwca.zip  — Tier 2 (when `basisOfRecord` row present):
+ *   - taxa_dwca.zip         - Tier 1: taxa.csv + meta.xml + eml.xml
+ *   - occurrences_dwca.zip  - Tier 2 (when `basisOfRecord` row present):
  *                             occurrences.csv + meta.xml + eml.xml
  *
  * ─── Taxon column name resolution (.name sub-column pattern) ─────────────────
@@ -21,12 +21,12 @@
  * ─── Rank guard for taxa: directives ─────────────────────────────────────────
  *
  * When a `taxa:Column.component` directive is processed for a taxon at a
- * HIGHER rank than Column, the result is always "" — a genus row should not
+ * HIGHER rank than Column, the result is always "" - a genus row should not
  * inherit the species epithet just because its representative raw row happens
  * to be a species row.  The guard compares the referenced column's position in
  * the taxa hierarchy against the current taxon's rank index.
  *
- * ─── Compound extraction — explicit component keys ───────────────────────────
+ * ─── Compound extraction - explicit component keys ───────────────────────────
  *
  *   location.lat              → decimalLatitude
  *   location.long             → decimalLongitude
@@ -43,7 +43,7 @@
  * the full dotted path is NOT an existing header AND the suffix is a known
  * compound key for the root column's NL type.
  *
- * ─── EML — Option C Hybrid ───────────────────────────────────────────────────
+ * ─── EML - Option C Hybrid ───────────────────────────────────────────────────
  *
  * Priority:
  *   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
@@ -77,10 +77,10 @@ import { extractCompoundValue, isKnownCompoundKey } from "./dwcCompoundExtractor
 import { getAvailableDataTypeNames, loadDataByType } from "../customTypes/index.js";
 import { Logger } from "../../components/Logger.js";
 import { OCCURRENCE_IDENTIFIER } from "../nlDataStructureSheets.js";
-import { relativeToUsercontent } from "../../components/Utils.js";
+import { relativeToUsercontent, absoluteUsercontent } from "../../components/Utils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// UUID v5 — self-contained, no external dependency (RFC 4122 §4.3)
+// UUID v5 - self-contained, no external dependency (RFC 4122 §4.3)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UUID_NS_TAXON = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -146,7 +146,7 @@ ${fields}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EML fetch helper — Option C hybrid
+// EML fetch helper - Option C hybrid
 //
 // Tries to load an eml.xml file from the usercontent folder.
 // Returns the file contents as a string, or null if not found/failed.
@@ -190,7 +190,7 @@ async function tryFetchEml(relativePath) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// eml.xml generation — minimal GBIF-valid EML 2.1.1
+// eml.xml generation - minimal GBIF-valid EML 2.1.1
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildEmlXml(opts) {
@@ -308,6 +308,8 @@ function parseSourceDirective(raw) {
     return { type: "taxa", value: rest, component: null };
   }
 
+  if (lo.startsWith("media:")) return { type: "media", value: s.slice(6).trim(), component: null };
+
   if (s.includes("{")) return { type: "template", value: s, component: null };
   return { type: "column", value: s, component: null };
 }
@@ -415,6 +417,114 @@ function columnNameToRankVocab(columnName) {
   return lo;
 }
 
+/**
+ * Expand a single NL media data-path specification into a sorted list of actual
+ * checklist header strings.
+ *
+ * NaturaList represents array columns by appending sequential integers to a base
+ * name (e.g. the data-path "lifePhotos#" maps to actual spreadsheet columns
+ * "lifePhotos1", "lifePhotos2", …).  The `media:` directive accepts both plain
+ * column names and these "#" array paths; this function performs the expansion.
+ *
+ * Two cases:
+ *
+ *   Plain path  "specimenPhoto"
+ *     → returns ["specimenphoto"] if that header exists, or [] if absent.
+ *       The caller emits a warning for the missing-header case.
+ *
+ *   Array path  "lifePhotos#"  or  "mediacluster.images#"
+ *     → strips the trailing "#", scans checklistHeadersLo for every header
+ *       whose name equals the base followed only by digits, and returns them
+ *       sorted numerically by that suffix.
+ *       Returns [] when no numbered columns are found (dataset may be empty
+ *       for those items; caller emits a Logger.info, not a warning).
+ *
+ * All comparisons are case-insensitive; the returned strings are the
+ * lowercased header names exactly as they appear in checklistHeadersLo.
+ *
+ * @param {string}   path                 - A single data path, already trimmed.
+ *                                          e.g. "specimenPhoto" or "lifePhotos#"
+ * @param {string[]} checklistHeadersLo   - Lowercased checklist headers array.
+ * @returns {string[]}  Matched column names, sorted numerically for arrays.
+ */
+function expandMediaPath(path, checklistHeadersLo) {
+  const lo = path.toLowerCase();
+
+  if (lo.endsWith("#")) {
+    // ── Array path ─────────────────────────────────────────────────────────
+    // Extract the base (everything before the "#") and find all headers of
+    // the form <base><integer>.  Sort them numerically so URLs appear in the
+    // same order as the columns in the spreadsheet (lifePhotos1 before
+    // lifePhotos2, etc.), which gives predictable DwC output regardless of
+    // the order columns were inserted into the sheet.
+    const base = lo.slice(0, -1); // e.g. "lifephotos"
+    const matched = checklistHeadersLo.filter(h =>
+      h.startsWith(base) && /^\d+$/.test(h.slice(base.length))
+    );
+    matched.sort((a, b) =>
+      parseInt(a.slice(base.length), 10) - parseInt(b.slice(base.length), 10)
+    );
+    return matched;
+  }
+
+  // ── Plain path ─────────────────────────────────────────────────────────
+  return checklistHeadersLo.includes(lo) ? [lo] : [];
+}
+
+/**
+ * Determine the NL formatting type for a media column, with automatic fallback
+ * to the "#" array-item CDD pattern for numbered columns.
+ *
+ * Standard getNlFormatting() only performs an exact match against CDD row
+ * names, which means a numbered array column like "lifePhotos1" would not be
+ * found (the CDD entry is "lifePhotos#", not "lifePhotos1").  This function
+ * adds the necessary array-item lookup so that the `media:` directive can
+ * correctly identify the NL type of every expanded column.
+ *
+ * Lookup order:
+ *   1. Exact match in CDD       "lifePhotos1"   (if explicitly defined)
+ *   2. Trailing-digit strip     "lifePhotos1" → "lifePhotos#"
+ *   3. Dot-path last-segment    "mediacluster.images1" → "mediacluster.images#"
+ *
+ * Returns "text" if no match is found, which will cause the caller to skip
+ * the column with a warning (non-media text columns carry no URL).
+ *
+ * @param {string}   columnNameLo  - Lowercased column name (already expanded
+ *                                   by expandMediaPath).
+ * @param {Object[]} cddRows       - Custom Data Definition rows:
+ *                                   { columnName: string, formatting: string, … }
+ * @returns {string}  NL formatting type, e.g. "image", "sound", "map", "text".
+ */
+function getMediaNlFormatting(columnNameLo, cddRows) {
+  if (!Array.isArray(cddRows)) return "text";
+
+  // 1. Exact match - covers explicitly defined single columns and plain paths
+  const exact = cddRows.find(r => (r.columnName || "").toLowerCase() === columnNameLo);
+  if (exact) return (exact.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+
+  // 2. Strip trailing digits and append "#"
+  //    "lifePhotos1" → "lifePhotos#"
+  //    "callsRecs12" → "callsRecs#"
+  const hashPath = columnNameLo.replace(/\d+$/, "#");
+  if (hashPath !== columnNameLo) {
+    const hashMatch = cddRows.find(r => (r.columnName || "").toLowerCase() === hashPath);
+    if (hashMatch) return (hashMatch.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+  }
+
+  // 3. Dot-notated path: strip digits from the last dot-segment and append "#"
+  //    "mediacluster.images1" → "mediacluster.images#"
+  //    "data.photos3"         → "data.photos#"
+  //    Only fires when the path contains at least one dot (hasPath !== lo
+  //    already checked so we just guard against producing the same string again).
+  const dotHashPath = columnNameLo.replace(/(\.[^.]+?)\d+$/, "$1#");
+  if (dotHashPath !== columnNameLo && dotHashPath !== hashPath) {
+    const dotHashMatch = cddRows.find(r => (r.columnName || "").toLowerCase() === dotHashPath);
+    if (dotHashMatch) return (dotHashMatch.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+  }
+
+  return "text";
+}
+
 const KNOWN_KEYS_BY_TYPE = {
   geopoint: "lat, long, verbatim",
   interval: "from, to",
@@ -425,7 +535,7 @@ const KNOWN_KEYS_BY_TYPE = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Known directive value sets — used for validation
+// Known directive value sets - used for validation
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // All valid auto: keys (lowercase, whitespace stripped)
@@ -443,7 +553,7 @@ const KNOWN_EML_PATHS = new Set([
   "geographicdescription", "taxonomicdescription", "temporaldescription",
 ]);
 
-// EML creator fields — at least one of these must be present when using eml: rows
+// EML creator fields - at least one of these must be present when using eml: rows
 const EML_REQUIRED_CREATOR_FIELDS = ["creator.organizationname", "creator.surname", "creator.givenname"];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -498,7 +608,7 @@ export async function compileDwcArchive(params) {
   if (!Array.isArray(dwcTableRows) || dwcTableRows.length === 0) return NULL_RESULT;
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 1 — Parse rows
+  // Step 1 - Parse rows
   //
   // eml: rows → rawEmlMappings (for EML building)
   // all other rows → parsedMappings (for CSV)
@@ -532,7 +642,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 2 — Export language
+  // Step 2 - Export language
   // ───────────────────────────────────────────────────────────────────────────
 
   const langMapping = mappingByTerm.get("language");
@@ -551,7 +661,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 3 — Tier 1 validation
+  // Step 3 - Tier 1 validation
   // ───────────────────────────────────────────────────────────────────────────
 
   const instCodeMapping = mappingByTerm.get("institutionCode");
@@ -587,7 +697,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 4 — Tier 2 detection
+  // Step 4 - Tier 2 detection
   // ───────────────────────────────────────────────────────────────────────────
 
   const borMapping = mappingByTerm.get("basisOfRecord");
@@ -620,7 +730,7 @@ export async function compileDwcArchive(params) {
 
   for (const t3 of ["samplingProtocol", "eventID"]) {
     if (mappingByTerm.has(t3)) {
-      Logger.warning(`DwC Archive: Term <b>${t3}</b> (Tier 3 — Sampling Event) is not yet supported and will be skipped.`, "DwC Archive");
+      Logger.warning(`DwC Archive: Term <b>${t3}</b> (Tier 3 - Sampling Event) is not yet supported and will be skipped.`, "DwC Archive");
       mappingByTerm.delete(t3);
       const i = parsedMappings.findIndex(m => m.term === t3);
       if (i >= 0) parsedMappings.splice(i, 1);
@@ -628,7 +738,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 5 — Per-row type compatibility AND directive value validation
+  // Step 5 - Per-row type compatibility AND directive value validation
   //
   // Validates:
   //   - `taxa:ColumnName` references an existing taxa column
@@ -707,6 +817,79 @@ export async function compileDwcArchive(params) {
         break;
       }
 
+      case "media": {
+        // Validate each comma-separated path listed in the media: directive value.
+        //
+        // Validation strategy (lenient by design):
+        //   - Plain paths that do not exist in the checklist are errors.
+        //   - "#" array paths are validated against the CDD rather than the headers,
+        //     because numbered columns only exist for taxa that actually have media;
+        //     an empty-but-valid dataset should not cause an export error.
+        //   - For each resolvable path, the NL type must be image, sound, or map.
+        //
+        // We deliberately do NOT error on the term name itself: associatedMedia is
+        // the canonical use of this directive, but users could theoretically use it
+        // for any other free-text term.
+        const mediaPaths = directive.value.split(",").map(p => p.trim()).filter(Boolean);
+        if (mediaPaths.length === 0) {
+          Logger.error(
+            `DwC Archive: <b>${term}</b> uses a <b>media:</b> directive but no paths are listed. ` +
+            `Syntax: media:columnName, arrayCol#, ...`,
+            "DwC Archive"
+          );
+          break;
+        }
+
+        for (const mPath of mediaPaths) {
+          if (mPath.endsWith("#")) {
+            // Array path: validate via CDD "#" entry
+            const hashLo = mPath.toLowerCase();
+            const cddEntry = Array.isArray(cddRows)
+              ? cddRows.find(r => (r.columnName || "").toLowerCase() === hashLo)
+              : null;
+            if (!cddEntry) {
+              Logger.warning(
+                `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" has no entry in the ` +
+                `Custom data definition table.  Add a row for "<b>${mPath}</b>" with formatting ` +
+                `"image", "sound", or "map" so the type can be resolved during export.`,
+                "DwC Archive"
+              );
+            } else {
+              const fmt = (cddEntry.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+              if (!["image", "sound", "map"].includes(fmt)) {
+                Logger.error(
+                  `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" resolves to NL type ` +
+                  `"<b>${fmt}</b>". Only image, sound, and map columns carry a source URL. ` +
+                  `Update the formatting column in your Custom data definition table.`,
+                  "DwC Archive"
+                );
+              }
+            }
+          } else {
+            // Plain path: must exist as a header and be a media type
+            const plainLo = mPath.toLowerCase();
+            if (!checklistHeaders.includes(plainLo)) {
+              Logger.error(
+                `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" was not found as a ` +
+                `column header in the checklist sheet. Check spelling.`,
+                "DwC Archive"
+              );
+            } else {
+              const fmt = getNlFormatting(mPath, cddRows, taxaColumnDefs);
+              if (!["image", "sound", "map"].includes(fmt)) {
+                Logger.error(
+                  `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" resolves to NL type ` +
+                  `"<b>${fmt}</b>". Only image, sound, and map columns carry a source URL. ` +
+                  `Update the formatting column in your Custom data definition table.`,
+                  "DwC Archive"
+                );
+              }
+            }
+          }
+        }
+        break;
+      }
+
       default: break;
     }
   }
@@ -761,12 +944,12 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 6 — Unknown DwC terms
+  // Step 6 - Unknown DwC terms
   // ───────────────────────────────────────────────────────────────────────────
 
   for (const m of parsedMappings) {
     if (m.term === "language") continue;
-    if (!getDwcTerm(m.term)) Logger.info(`DwC Archive: Term "<b>${m.term}</b>" not in inventory — output without guardrails.`, "DwC Archive");
+    if (!getDwcTerm(m.term)) Logger.info(`DwC Archive: Term "<b>${m.term}</b>" not in inventory - output without guardrails.`, "DwC Archive");
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -825,6 +1008,19 @@ export async function compileDwcArchive(params) {
       try { raw = loadDataByType(buildContext(rawRow), columnName, { formatting: nlFmt }); }
       catch (ex) { Logger.warning(`DwC Archive: Error reading "<b>${columnName}</b>": ${ex.message}`, "DwC Archive"); return ""; }
       if (raw === null || raw === undefined) return "";
+      // For media types, extract .source and apply the full NL source pipeline.
+      // Without this, coerceOutputFormat would call String(raw) → "[object Object]".
+      if (["image", "sound", "map"].includes(nlFmt)) {
+        if (!raw?.source) return "";
+        let url = raw.source.toString().trim();
+        if (!url) return "";
+        if (typeof resolveMediaSource === "function") {
+          url = resolveMediaSource(url, columnName, rawRow);
+        } else {
+          url = relativeToUsercontent(url);
+        }
+        return absoluteUsercontent(url) || "";
+      }
       const te = getDwcTerm(termName);
       return coerceOutputFormat(raw, te?.outputFormat || "string", termName, nlFmt, te?.validationRange);
     }
@@ -862,9 +1058,9 @@ export async function compileDwcArchive(params) {
         // Apply the full NL media-source pipeline to image/sound .source values.
         //
         // The pipeline is:
-        //   1. Handlebars template substitution (CDD "Template" column) — lets
+        //   1. Handlebars template substitution (CDD "Template" column) - lets
         //      users build dynamic paths like "images/{{name}}.jpg".
-        //   2. relativeToUsercontent() — makes the path absolute relative to
+        //   2. relativeToUsercontent() - makes the path absolute relative to
         //      the app root so DwC consumers get a usable URL.
         //
         // This is delegated to the `resolveMediaSource` callback supplied by
@@ -877,6 +1073,7 @@ export async function compileDwcArchive(params) {
           } else {
             extracted = relativeToUsercontent(String(extracted));
           }
+          extracted = absoluteUsercontent(String(extracted));
         }
 
         const te = getDwcTerm(termName);
@@ -886,6 +1083,141 @@ export async function compileDwcArchive(params) {
 
     Logger.warning(`DwC Archive: Column "<b>${columnName}</b>" not found in checklist headers.`, "DwC Archive");
     return "";
+  };
+
+  /**
+   * Resolve a `media:` directive value into a pipe-separated string of fully
+   * resolved media source URLs, ready for the dwc:associatedMedia CSV field.
+   *
+   * The directive value is the raw string after "media:", e.g.:
+   *   "specimenPhoto, lifePhotos#, callsRecs#"
+   *   "mediacluster.images#"
+   *   "coverPhoto"
+   *
+   * For each comma-separated path the function:
+   *   1. Calls expandMediaPath() to resolve "#" array paths into actual numbered
+   *      column names present in the checklist sheet.
+   *   2. Calls getMediaNlFormatting() to determine the NL type, using the
+   *      "lifePhotos#" CDD fallback for numbered columns.
+   *   3. Skips any column whose NL type is not image, sound, or map.
+   *   4. Calls loadDataByType() to obtain the { source, title } object for the
+   *      current row.
+   *   5. Applies the full NL media source pipeline via the resolveMediaSource
+   *      callback (Handlebars template substitution + usercontent resolution),
+   *      exactly replicating what CustomTypeImage/Sound/Map.render() does so
+   *      the URLs in the DwC archive are identical to those displayed in the viewer.
+   *   6. Falls back to relativeToUsercontent() if no callback is provided
+   *      (no template expansion - legacy compatibility).
+   *
+   * Resolved URLs are joined with " | " (space–pipe–space), the separator
+   * recommended by GBIF for multi-value free-text DwC fields.
+   *
+   * Empty or null sources, columns not found, and read errors are silently
+   * skipped (with a Logger.warning for unexpected cases); this ensures that a
+   * taxon with only some photos still produces a valid, non-empty output rather
+   * than failing the entire export.
+   *
+   * @param {string}  mediaSpec  - Raw "media:" value, e.g.
+   *                               "specimenPhoto, lifePhotos#, callsRecs#"
+   * @param {any[]}   rawRow     - The checklist raw data row for the current record.
+   * @returns {string}  Pipe-separated resolved URL string, or "" if none found.
+   */
+  const resolveAssociatedMedia = (mediaSpec, rawRow) => {
+    // Split on commas; trim each path; discard blanks
+    const rawPaths = mediaSpec.split(",").map(p => p.trim()).filter(Boolean);
+
+    const resolvedUrls = [];
+
+    for (const path of rawPaths) {
+
+      // ── Step 1: expand "#" array paths to real column names ──────────────
+      const expandedCols = expandMediaPath(path, checklistHeaders);
+
+      if (expandedCols.length === 0) {
+        // No matching headers found for this path specification.
+        if (path.endsWith("#")) {
+          // Array path with no numbered columns present in the sheet.
+          // This is expected for an empty dataset or when no photos have been
+          // added yet; emit info rather than a warning to avoid noise.
+          Logger.info(
+            `DwC Archive: <b>associatedMedia</b> - media: path "<b>${path}</b>" matched no ` +
+            `numbered columns in the checklist (e.g. no "${path.slice(0, -1)}1" header found). ` +
+            `If this column is intentional, add at least one numbered column to the data sheet.`,
+            "DwC Archive"
+          );
+        } else {
+          // Plain column path that simply does not exist - likely a typo.
+          Logger.warning(
+            `DwC Archive: <b>associatedMedia</b> - media: path "<b>${path}</b>" was not found ` +
+            `as a column header in the checklist sheet. Check spelling.`,
+            "DwC Archive"
+          );
+        }
+        continue;
+      }
+
+      // ── Step 2–5: read and resolve each expanded column ──────────────────
+      for (const col of expandedCols) {
+
+        // Determine NL type, using the "#"-item CDD fallback for numbered cols
+        const nlFmt = getMediaNlFormatting(col, cddRows);
+
+        // Only image, sound, and map columns carry a source URL
+        if (!["image", "sound", "map"].includes(nlFmt)) {
+          Logger.warning(
+            `DwC Archive: <b>associatedMedia</b> - media: column "<b>${col}</b>" has NL type ` +
+            `"<b>${nlFmt}</b>", which is not a media type (expected: image, sound, or map). ` +
+            `Skipped. Check the formatting column in your Custom data definition table.`,
+            "DwC Archive"
+          );
+          continue;
+        }
+
+        // Read { source, title } for this row via the standard NL data pipeline
+        let raw;
+        try {
+          raw = loadDataByType(buildContext(rawRow), col, { formatting: nlFmt });
+        } catch (ex) {
+          Logger.warning(
+            `DwC Archive: <b>associatedMedia</b> - error reading column "<b>${col}</b>": ${ex.message}`,
+            "DwC Archive"
+          );
+          continue;
+        }
+
+        // A null result means this row simply has no value for this column (normal)
+        if (raw === null || raw === undefined || !raw.source) continue;
+
+        let url = raw.source.toString().trim();
+        if (!url) continue;
+
+        // ── Step 5: apply the full NL media source pipeline ──────────────────
+        //
+        // This mirrors what CustomTypeImage/Sound/Map.render() does via
+        // helpers.processSource():
+        //   1. Handlebars template substitution - lets users write dynamic
+        //      paths like "images/{{name}}.jpg" in the CDD Template column.
+        //   2. relativeToUsercontent() - converts a relative path like
+        //      "usercontent/images/frog.jpg" to an absolute URL usable by
+        //      external consumers of the DwC archive.
+        //
+        // The resolveMediaSource callback is constructed by DataManager and
+        // has access to Handlebars and the compiled Checklist context.  If it
+        // is not provided (legacy mode) we fall back to plain usercontent resolution
+        // with no template expansion.
+        if (typeof resolveMediaSource === "function") {
+          url = resolveMediaSource(url, col, rawRow);
+        } else {
+          url = relativeToUsercontent(url);
+        }
+
+        url = absoluteUsercontent(url);
+        if (url) resolvedUrls.push(url);
+      }
+    }
+
+    // Join with " | " - the GBIF-recommended multi-value separator for free-text DwC fields
+    return resolvedUrls.join(" | ");
   };
 
   const checkVocabulary = (termName, value) => {
@@ -898,7 +1230,7 @@ export async function compileDwcArchive(params) {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 7 — Unique taxon paths + taxonID pre-computation
+  // Step 7 - Unique taxon paths + taxonID pre-computation
   //
   // With the taxaColHeaderIndices fix, columns like "Species" that use a
   // ".name" sub-column pattern (actual header: "species.name") are now
@@ -1012,7 +1344,7 @@ export async function compileDwcArchive(params) {
 
         // Component path: taxa:ColumnName.component
         // Rank guard: if the referenced column is deeper than the current taxon's rank,
-        // return "" — a Family-level taxon should not inherit specificEpithet even if
+        // return "" - a Family-level taxon should not inherit specificEpithet even if
         // its representative raw row is a species row.
         const refRankIdx = taxaColumnRankIndex.get(colName.toLowerCase()) ?? -1;
         if (refRankIdx > taxon.rankIndex) return "";
@@ -1059,11 +1391,11 @@ export async function compileDwcArchive(params) {
           }
 
           case "occurrenceid":
-            Logger.warning("DwC Archive: <b>auto:occurrenceID</b> is only valid in occurrence rows.", "DwC Archive");
+            // occurrenceID has no meaning on taxon rows; return "" silently.
             return "";
 
           default:
-            // Already validated in Step 5 — this branch should not be reached
+            // Already validated in Step 5 - this branch should not be reached
             return "";
         }
       }
@@ -1073,6 +1405,21 @@ export async function compileDwcArchive(params) {
 
       case "column":
         return checkVocabulary(term, resolveColumnValue(term, directive.value, rawRow));
+
+      case "media":
+        // Collect, resolve, and pipe-join all media source URLs for this taxon.
+        //
+        // For taxon-level records the "representative raw row" is the single
+        // checklist row that was chosen to represent the taxon.  The media:
+        // directive simply reads media columns from that row; all URLs present
+        // in those columns for that row are included.
+        //
+        // This means associatedMedia on a genus-level taxon will contain the
+        // photos of the first species row encountered for that genus - which is
+        // the same behaviour used for all other data columns on taxon rows.
+        // If only species-level photos are needed, the DwC export should be
+        // configured as occurrence-based (Tier 2) rather than taxon-based.
+        return resolveAssociatedMedia(directive.value, rawRow);
 
       default: return "";
     }
@@ -1114,13 +1461,13 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 8 — Build occurrence CSV rows (Tier 2)
+  // Step 8 - Build occurrence CSV rows (Tier 2)
   //
   // Taxonomy fields use uniform inheritance:
   //   1. Try reading the mapped column from the occurrence raw row.
   //   2. If empty, fall back to the same column on the parent taxon's
   //      representative raw row.
-  // The rank guard applies here too — taxa: component directives for columns
+  // The rank guard applies here too - taxa: component directives for columns
   // deeper than the parent taxon's rank return "".
   // ───────────────────────────────────────────────────────────────────────────
 
@@ -1164,7 +1511,10 @@ export async function compileDwcArchive(params) {
           ? `${institutionCode}:${collectionCode}:${catNum}`
           : `${institutionCode}:${catNum}`;
       }
-      if (!occurrenceId) {
+      if (needsAutoId && !occurrenceId) {
+        // No catalogNumber produced an ID above — fall back to a UUID v5 derived
+        // from the taxon name, occurrence cell, date, and coordinates so that the
+        // ID is at least stable across re-exports of the same data.
         const sciName = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
         const edMap = mappingByTerm.get("eventDate");
         const edVal = edMap?.directive.type === "column" ? (resolveColumnValue("eventDate", edMap.directive.value, rawRow) || "") : "";
@@ -1177,7 +1527,20 @@ export async function compileDwcArchive(params) {
         // the same date at the same location produce identical UUIDs.
         const occCellStr = String(occCell).trim();
         occurrenceId = await uuidV5(UUID_NS_OCCURRENCE, `${sciName}:${occCellStr}:${edVal}:${latVal}:${lonVal}`);
-        Logger.warning("DwC Archive: No catalogNumber available — UUID v5 fallback used for <b>occurrenceID</b>.", "DwC Archive");
+        Logger.warning("DwC Archive: No catalogNumber available - UUID v5 fallback used for <b>occurrenceID</b>.", "DwC Archive");
+      } else if (!occurrenceId) {
+        // User provided an explicit occurrenceID mapping (e.g. auto:occurrenceID).
+        // Pre-compute the UUID so the auto:occurrenceID directive can use it in the
+        // term loop.  No warning — the user knowingly chose auto-generation.
+        const sciName = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
+        const edMap = mappingByTerm.get("eventDate");
+        const edVal = edMap?.directive.type === "column" ? (resolveColumnValue("eventDate", edMap.directive.value, rawRow) || "") : "";
+        const latMap = mappingByTerm.get("decimalLatitude");
+        const latVal = latMap?.directive.type === "column" ? (resolveColumnValue("decimalLatitude", latMap.directive.value, rawRow) || "") : "";
+        const lonMap = mappingByTerm.get("decimalLongitude");
+        const lonVal = lonMap?.directive.type === "column" ? (resolveColumnValue("decimalLongitude", lonMap.directive.value, rawRow) || "") : "";
+        const occCellStr = String(occCell).trim();
+        occurrenceId = await uuidV5(UUID_NS_OCCURRENCE, `${sciName}:${occCellStr}:${edVal}:${latVal}:${lonVal}`);
       }
 
       const occRow = { occurrenceID: occurrenceId };
@@ -1260,6 +1623,16 @@ export async function compileDwcArchive(params) {
           case "template":
             value = renderTemplate(directive.value, cn => resolveColumnValue("_template", cn, rawRow) || "");
             break;
+          case "media":
+            // Collect, resolve, and pipe-join all media source URLs for this
+            // occurrence record.
+            //
+            // For occurrence rows the raw row IS the full data row for that
+            // specific occurrence, so all media columns are read directly from it.
+            // This is the most useful tier for associatedMedia because each
+            // occurrence can legitimately have a different set of photographs.
+            value = resolveAssociatedMedia(directive.value, rawRow);
+            break;
           case "column":
             value = resolveColumnValue(term, directive.value, rawRow);
             break;
@@ -1281,7 +1654,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // EML — Option C Hybrid
+  // EML - Option C Hybrid
   //
   // Priority order:
   //   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
@@ -1292,7 +1665,7 @@ export async function compileDwcArchive(params) {
 
   let emlXml = null;
 
-  // Option C.1 — explicit path via Customization table
+  // Option C.1 - explicit path via Customization table
   const emlLocationConfig = resolveConfigDirective("Custom eml.xml location", customizationData);
   if (emlLocationConfig.found && emlLocationConfig.value) {
     const fetched = await tryFetchEml(emlLocationConfig.value);
@@ -1305,11 +1678,11 @@ export async function compileDwcArchive(params) {
         `but the file could not be fetched from usercontent/${emlLocationConfig.value}. Check the path and that the file exists on your server.`,
         "DwC Archive eml.xml"
       );
-      // Do not continue to fallback — the explicit path was wrong; fail loudly.
+      // Do not continue to fallback - the explicit path was wrong; fail loudly.
     }
   }
 
-  // Option C.2 — auto-discover usercontent/eml.xml (only if no explicit path was set)
+  // Option C.2 - auto-discover usercontent/eml.xml (only if no explicit path was set)
   if (!emlXml && !emlLocationConfig.found) {
     const fetched = await tryFetchEml("eml.xml");
     if (fetched) {
@@ -1322,7 +1695,7 @@ export async function compileDwcArchive(params) {
     }
   }
 
-  // Option C.3 — build from eml: rows (only if no external file found/used)
+  // Option C.3 - build from eml: rows (only if no external file found/used)
   if (!emlXml && rawEmlMappings.length > 0) {
     const emlFieldValues = {};
     for (const em of rawEmlMappings) {
@@ -1365,7 +1738,7 @@ export async function compileDwcArchive(params) {
     });
   }
 
-  // Option C.4 — no EML available
+  // Option C.4 - no EML available
   if (!emlXml) {
     Logger.error(
       "DwC Archive: No EML metadata could be generated. " +
@@ -1377,7 +1750,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 9 — meta.xml
+  // Step 9 - meta.xml
   // ───────────────────────────────────────────────────────────────────────────
 
   const termToUri = t => getDwcTerm(t)?.uri || `http://rs.tdwg.org/dwc/terms/${t}`;
@@ -1391,7 +1764,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 10 — ZIP and return
+  // Step 10 - ZIP and return
   // ───────────────────────────────────────────────────────────────────────────
 
   let checklistZip = null, occurrenceZip = null;
@@ -1403,7 +1776,7 @@ export async function compileDwcArchive(params) {
     if (emlXml) zip.file("eml.xml", emlXml);
     checklistZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(
-      `DwC Archive: Checklist archive ready — ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`,
+      `DwC Archive: Checklist archive ready - ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`,
       "DwC Archive"
     );
   } else {
@@ -1417,7 +1790,7 @@ export async function compileDwcArchive(params) {
     zip.file("meta.xml", occMetaXml);
     if (emlXml) zip.file("eml.xml", emlXml); // same EML for both archives
     occurrenceZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-    Logger.info(`DwC Archive: Occurrence archive ready — ${occurrenceCsvRows.length} occurrence record(s).`, "DwC Archive");
+    Logger.info(`DwC Archive: Occurrence archive ready - ${occurrenceCsvRows.length} occurrence record(s).`, "DwC Archive");
   }
 
   return { checklistZip, occurrenceZip };
