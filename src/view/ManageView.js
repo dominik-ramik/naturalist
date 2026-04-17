@@ -756,7 +756,7 @@ const SubViews = {
                 label: t("compile_dwc_export") || "Compile DwC Export",
                 primary: true,
                 block: true,
-                icon: "img/ui/manage/processing.svg",
+                icon: "img/ui/manage/processing_light.svg",
                 onclick: () => {
                   ManageStore.dwcJustRecompiled = false;
                   _runDwcPipeline();
@@ -826,7 +826,7 @@ const SubViews = {
     }
 
     return [
-      ManageStore.shouldShowUploadForm === true || 1 == 1
+      ManageStore.shouldShowUploadForm === true
         ? m(ManageCard, {
           title: t("data_upload_integrate_data"),
           icon: "img/ui/manage/publish.svg",
