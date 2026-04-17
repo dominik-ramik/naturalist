@@ -1392,9 +1392,9 @@ export const nlDataStructureSheets = {
                 data: [],
                 templateData: [
                     {
-                        code: "exdb",
-                        labelTemplate: "{{author}}Example DB taxon ({{id}})",
-                        urlTemplate: "https://example.com/taxa/{{id}}"
+                        code: "reptile",
+                        labelTemplate: "{{author}}The Reptile Database ({{id}})",
+                        urlTemplate: "https://reptile-database.reptarium.cz/{{id}}"
                     }
                 ]
             },
@@ -2829,7 +2829,7 @@ export const nlDataStructureSheets = {
                 "Species.authority": "Medway, 1974",
                 "redlist": "EN",
                 "status": "E",
-                "notes": ""
+                "notes": "See @reptile:Emoia/aneityumensis"
             },
             {
                 "Class": "Reptilia",
