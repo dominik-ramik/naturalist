@@ -1811,7 +1811,7 @@ export const nlDataStructureSheets = {
                     },
                     {
                         item: "About section",
-                        value: "This is a simple template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) to see how to configure this spreadsheet to create rich taxonomic checklists or full-fledged biodiversity databases with taxonomy and specimens or other occurrences.\n\nThe values in this template are there only to get you started. Feel free to modify them and add your own, neither the taxonomic ranks nor the specific custom data are set in stone."
+                        value: "This is a simple template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) for comprehensive examples how to configure this spreadsheet to create rich taxonomic checklists or full-fledged biodiversity databases with taxonomy and specimens or other occurrences.\n\nThe values in this template are there only to get you started. Feel free to modify them and add your own, neither the taxonomic ranks nor the specific custom data are set in stone."
                     },
                     {
                         item: "How to cite",

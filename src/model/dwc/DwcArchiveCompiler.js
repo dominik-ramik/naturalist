@@ -1512,7 +1512,7 @@ export async function compileDwcArchive(params) {
           : `${institutionCode}:${catNum}`;
       }
       if (needsAutoId && !occurrenceId) {
-        // No catalogNumber produced an ID above — fall back to a UUID v5 derived
+        // No catalogNumber produced an ID above - fall back to a UUID v5 derived
         // from the taxon name, occurrence cell, date, and coordinates so that the
         // ID is at least stable across re-exports of the same data.
         const sciName = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
@@ -1531,7 +1531,7 @@ export async function compileDwcArchive(params) {
       } else if (!occurrenceId) {
         // User provided an explicit occurrenceID mapping (e.g. auto:occurrenceID).
         // Pre-compute the UUID so the auto:occurrenceID directive can use it in the
-        // term loop.  No warning — the user knowingly chose auto-generation.
+        // term loop.  No warning - the user knowingly chose auto-generation.
         const sciName = parentTaxon ? (parentTaxon.path[parentTaxon.rankIndex] || "") : "";
         const edMap = mappingByTerm.get("eventDate");
         const edVal = edMap?.directive.type === "column" ? (resolveColumnValue("eventDate", edMap.directive.value, rawRow) || "") : "";

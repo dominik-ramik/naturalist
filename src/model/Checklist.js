@@ -227,7 +227,7 @@ export let Checklist = {
 
     // An empty lcaPath means the key spans multiple root-level taxa (virtual root as LCA).
     // In that case every taxon that is an ancestor of a reachable result taxon is still
-    // relevant, so we must NOT return early here — fall through to the reachableTaxa check.
+    // relevant, so we must NOT return early here - fall through to the reachableTaxa check.
     if (lcaPath.length === 0 && this.getKeyReachableTaxa(key).length === 0) return false;
 
     const lcaName = lcaPath[lcaPath.length - 1]; // The LCA taxon name (undefined when path is empty = virtual root)
@@ -941,11 +941,6 @@ export let Checklist = {
 
     function nestedPrimitives(currentData, dataPath) {
       let primitives = [];
-
-      //console.log("Data path: ", dataPath);
-      //console.log("Meta", Checklist.getMetaForDataPath(dataPath));
-
-      //TODO add feature rendering nested objects - this applies only if we have proper support of type (text/number) in complex objects
 
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "mapregions") {
         getSearchableTextByType(currentData, "mapregions", { langCode, dataPath }).forEach(

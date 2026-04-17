@@ -718,7 +718,7 @@ const SubViews = {
             icon: "img/ui/manage/clean.svg",
             background: "#7cb342",
           }),
-          // Upload shortcut — only shown here when DwC is NOT the focus
+          // Upload shortcut - only shown here when DwC is NOT the focus
           !dwcNeedsFixing
             ? m(ActionButton, {
               label: t("back_to_upload") || "Upload updated spreadsheet",
@@ -764,7 +764,7 @@ const SubViews = {
             ? m(".manage-dwc-panel", [
               m("p.manage-hint-error",
                 t("dwc_export_has_errors") ||
-                "DwC compilation completed with errors. Fix your spreadsheet and re-upload — the archive will recompile automatically."
+                "DwC compilation completed with errors. Fix your spreadsheet and re-upload - the archive will recompile automatically."
               ),
             ])
             : null,

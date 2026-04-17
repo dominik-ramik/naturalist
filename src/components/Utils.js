@@ -301,7 +301,7 @@ export function splitN(str, delimiter, n) {
 
 export function absoluteUsercontent(url) {
   if (!url) return url;
-  // Already absolute — leave unchanged
+  // Already absolute - leave unchanged
   if (url.indexOf("://") >= 0) return url;
   return new URL(url, window.location.href).href;
 }

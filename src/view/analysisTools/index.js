@@ -1,6 +1,6 @@
-import { config as taxonomicTree        } from "./TaxonomicTree.js";
-import { config as hierarchyBubbles    } from "./HierarchyBubbles.js";
-import { config as traitMatrix         } from "./TraitMatrix.js";
+import { config as taxonomicTree } from "./TaxonomicTree.js";
+import { config as hierarchyBubbles } from "./HierarchyBubbles.js";
+import { config as traitMatrix } from "./TraitMatrix.js";
 import { config as regionalDistribution } from "./RegionalDistribution.js";
 
 import { Settings } from "../../model/Settings.js";
@@ -74,7 +74,7 @@ export function validateToolConfig(config) {
   if (typeof getTaxaAlongsideOccurrences !== "boolean")
     errors.push("Missing or invalid 'getTaxaAlongsideOccurrences' (expected boolean).");
   if (!iconPath || typeof iconPath !== "object" ||
-      typeof iconPath.light !== "string" || typeof iconPath.dark !== "string")
+    typeof iconPath.light !== "string" || typeof iconPath.dark !== "string")
     errors.push("Missing or invalid 'iconPath' (expected object with 'light' and 'dark' string paths).");
 
   // 3. Required functions
@@ -127,10 +127,7 @@ export function validateToolConfig(config) {
     const errorMsg =
       `Tool validation failed for plugin '${id || "UNKNOWN"}':\n  - ${errors.join("\n  - ")}`;
     console.error(errorMsg, config);
-    console.log(
-      "TODO: uncomment the throw below to prevent loading of invalid tool configs."
-    );
-    // throw new Error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   return config;
@@ -141,11 +138,11 @@ export function validateToolConfig(config) {
  * provided checklist data.  Mutates Settings to safe defaults if invalid.
  */
 export function validateActiveToolState(checklistData) {
-  const allIntents   = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
-  let currentToolId  = Settings.viewType() || DEFAULT_TOOL;
-  let currentIntent  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
+  const allIntents = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
+  let currentToolId = Settings.viewType() || DEFAULT_TOOL;
+  let currentIntent = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
-  let activeTool    = TOOL_REGISTRY[currentToolId];
+  let activeTool = TOOL_REGISTRY[currentToolId];
 
   // Unknown tool ID → fall back to default
   if (!activeTool) {
@@ -154,13 +151,13 @@ export function validateActiveToolState(checklistData) {
     activeTool = TOOL_REGISTRY[currentToolId];
   }
 
-  let availability  = activeTool.getAvailability(allIntents, checklistData);
+  let availability = activeTool.getAvailability(allIntents, checklistData);
 
   // 1. Tool itself is dead for this dataset → fall back to default
   if (!availability.isAvailable) {
     currentToolId = DEFAULT_TOOL;
     Settings.viewType(currentToolId);
-    activeTool   = TOOL_REGISTRY[currentToolId];
+    activeTool = TOOL_REGISTRY[currentToolId];
     availability = activeTool.getAvailability(allIntents, checklistData);
   }
 
@@ -175,8 +172,8 @@ export function validateActiveToolState(checklistData) {
  * Auto-switches analytical intent if the new tool does not support the current one.
  */
 export function requestToolChange(toolId, checklistData) {
-  const allIntents     = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
-  const requestedTool  = TOOL_REGISTRY[toolId];
+  const allIntents = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
+  const requestedTool = TOOL_REGISTRY[toolId];
 
   if (!requestedTool) return; // Unknown tool - ignore
 
@@ -203,9 +200,9 @@ export function requestToolChange(toolId, checklistData) {
  * Validates that the currently active tool supports the requested intent.
  */
 export function requestIntentChange(intentId, checklistData) {
-  const allIntents   = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
+  const allIntents = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
   const currentToolId = Settings.viewType() || DEFAULT_TOOL;
-  const activeTool   = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
+  const activeTool = TOOL_REGISTRY[currentToolId] || TOOL_REGISTRY[DEFAULT_TOOL];
 
   const availability = activeTool.getAvailability(allIntents, checklistData);
 

@@ -112,7 +112,7 @@ const KeyLogic = {
 // ==========================================
 
 // Helper to check if a click landed on an interactive element (link, button,
-// or any element with an onclick handler — e.g. bibtex-toolbox citation links
+// or any element with an onclick handler - e.g. bibtex-toolbox citation links
 // which use onclick instead of href).
 const isLinkClick = (e) => {
     let el = e.target;
