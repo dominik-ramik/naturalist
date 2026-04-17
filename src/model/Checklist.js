@@ -1024,6 +1024,20 @@ export let Checklist = {
       // than the generic recursive descent (interval pairs, mapregion name mapping).
       const _fmt        = Checklist.getDataMeta()[currentPath]?.formatting;
       const _customType = _fmt ? dataCustomTypes[_fmt] : null;
+
+      // Array of typed items (e.g. specimenImages# containing [{source,title}, …]):
+      // #-suffixed paths are list containers – extract leaf values from each element.
+      if (Array.isArray(taxonData) && _customType?.extractFilterLeafValues
+          && currentPath.endsWith("#")) {
+        const _result = [];
+        taxonData.forEach(item => {
+          _result.push(..._customType.extractFilterLeafValues(item, currentPath));
+        });
+        this.getAllLeafDataCache.set(cacheKey, _result);
+        return _result;
+      }
+
+      // Single typed value (scalar image, interval, mapregions, etc.)
       if (_customType?.extractFilterLeafValues) {
         const _result = _customType.extractFilterLeafValues(taxonData, currentPath);
         this.getAllLeafDataCache.set(cacheKey, _result);
