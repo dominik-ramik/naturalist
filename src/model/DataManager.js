@@ -648,9 +648,34 @@ export let DataManager = function () {
         const row = rows[i];
 
         try {
-          const step = row.step;
+          const rawStep = row.step;
+          // If rawStep is a string that represents an integer, cast to number.
+          let step;
+          if (typeof rawStep === 'string') {
+            const _trim = rawStep.trim();
+            if (/^-?\d+$/.test(_trim)) {
+              step = parseInt(_trim, 10);
+            } else {
+              step = _trim;
+            }
+          } else {
+            step = rawStep;
+          }
           const text = row.text;
-          const target = row.target;
+
+          let rawTarget = row.target;
+          let target;
+          if (typeof rawTarget === 'string') {
+            const _trim = rawTarget.trim();
+            if (/^-?\d+$/.test(_trim)) {
+              target = parseInt(_trim, 10);
+            } else {
+              target = _trim;
+            }
+          } else {
+            target = rawTarget;
+          }
+          
           const images = row.images || "";
 
           // Validate row completeness

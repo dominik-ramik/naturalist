@@ -235,7 +235,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "dataPath",
                             supportsMultilingual: false,
                         },
-                        templateData: ["status", "redlist"],
+                        templateData: ["status", "redlist", "notes"],
                     },
                     title: {
                         name: "Title",
@@ -259,7 +259,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: true,
                         },
-                        templateData: ["Status", "Red List Category"],
+                        templateData: ["Status", "Red List Category", "Notes"],
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
@@ -292,7 +292,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: true,
                         },
-                        templateData: ["Status", "Red List Category"],
+                        templateData: ["Status", "Red List Category", ""],
                     },
                     formatting: {
                         name: "Formatting",
@@ -330,7 +330,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
-                        templateData: ["category", "category"],
+                        templateData: ["category", "category", "markdown"],
                     },
                     template: {
                         name: "Template",
@@ -408,7 +408,7 @@ export const nlDataStructureSheets = {
                             ],
                             supportsMultilingual: false,
                         },
-                        templateData: ["left", "left"],
+                        templateData: ["left", "left", "bottom"],
                     },
                     hidden: {
                         name: "Hidden",
@@ -521,6 +521,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: true,
                         },
+                        templateData: ["Search Google"],
                     },
                     icon: {
                         name: "Icon",
@@ -543,6 +544,7 @@ export const nlDataStructureSheets = {
                             allowedExtensions: [".jpg", ".png", ".webp", ".svg"],
                             supportsMultilingual: false,
                         },
+                        templateData: ["google.png"],
                     },
                     searchUrlTemplate: {
                         name: "Search URL template",
@@ -568,6 +570,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "url",
                             supportsMultilingual: true,
                         },
+                        templateData: ["https://www.google.com/search?q={{taxon.name}}"],
                     },
                     restrictToTaxon: {
                         name: "Restrict to taxon",
@@ -590,6 +593,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
+                        templateData: [""],
                     },
                 },
                 data: [],
@@ -622,7 +626,7 @@ export const nlDataStructureSheets = {
                                 label: "A minimal dichotomous key",
                                 columns: ["Step", "Text", "Target", "Images"],
                                 rows: [
-                                    ["reptiles", "Key to Reptiles of Vanuatu | Covers species recorded since 1990", "", ""],
+                                    ["reptiles", "Key to Reptiles of Vanuatu | Covers species recorded since 1990", "1", ""],
                                     ["1", "Body covered with scales, no limbs", "2", "snake_silhouette.png"],
                                     ["1", "Four limbs present", "3", "lizard_silhouette.png"],
                                     ["2", "Yellow/black banded", "Pelamis platura", ""],
@@ -637,7 +641,42 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
-                        templateData: [],
+                        //
+                        // KEY LAYOUT (one entry per row of the key):
+                        //
+                        // Row 0  - key header
+                        // Rows 1-2  - step 1: limbs present?
+                        // Rows 3-4  - step 2: shell / marine turtle?
+                        // Rows 5-6  - step 3: frog vs lizard/snake
+                        // Rows 7-8  - step 4: sea snake vs terrestrial squamate
+                        // Rows 9-10 - step 5: gecko vs skink
+                        // Rows 11-12 - step 6: Gehyra vs the two skink genera groups
+                        // Rows 13-14 - step 7: Cryptoblepharus vs Emoia / Caledoniscincus
+                        // Rows 15-16 - step 8: Caledoniscincus vs Emoia
+                        // Rows 17-18 - step 9: Emoia aneityumensis vs E. atrocostata
+                        //
+                        templateData: [
+                            /* row 0  - header */
+                            "vanuatu_herpetofauna",
+                            /* row 1  - step 1a */ "1",
+                            /* row 2  - step 1b */ "1",
+                            /* row 3  - step 2a */ "2",
+                            /* row 4  - step 2b */ "2",
+                            /* row 5  - step 3a */ "3",
+                            /* row 6  - step 3b */ "3",
+                            /* row 7  - step 4a */ "4",
+                            /* row 8  - step 4b */ "4",
+                            /* row 9  - step 5a */ "5",
+                            /* row 10 - step 5b */ "5",
+                            /* row 11 - step 6a */ "6",
+                            /* row 12 - step 6b */ "6",
+                            /* row 13 - step 7a */ "7",
+                            /* row 14 - step 7b */ "7",
+                            /* row 15 - step 8a */ "8",
+                            /* row 16 - step 8b */ "8",
+                            /* row 17 - step 9a */ "9",
+                            /* row 18 - step 9b */ "9",
+                        ],
                     },
                     text: {
                         name: "Text",
@@ -653,7 +692,28 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: true,
                         },
-                        templateData: [],
+                        templateData: [
+                            /* row 0  - header */
+                            "Key to the Amphibians and Reptiles of Vanuatu | Covers all 8 species in this checklist. Based on Zug (1993), Bauer & Vindum (1990), and Cogger (2014). Use on adult or near-adult specimens.",
+                            /* row 1  - 1a */ "**Limbs absent**; body elongate, cylindrical, covered in smooth overlapping scales",
+                            /* row 2  - 1b */ "**Limbs present** (four legs visible, or a rigid shell enclosing the body)",
+                            /* row 3  - 2a */ "Body enclosed in a **bony shell**; limbs paddle-shaped; back with 7 prominent longitudinal **leathery ridges**; no scutes",
+                            /* row 4  - 2b */ "No shell; four well-developed limbs; body covered in smooth moist skin or keeled scales",
+                            /* row 5  - 3a */ "**Skin smooth and moist**, no scales; toepads with enlarged discs; **tympanum** (eardrum) clearly visible behind eye; call audible at night",
+                            /* row 6  - 3b */ "Body covered in **scales**; no tympanum visible externally as a naked disc",
+                            /* row 7  - 4a */ "**Paddle-shaped tail**, laterally compressed; nostril valves present; scales on underside of tail undifferentiated (not enlarged)",
+                            /* row 8  - 4b */ "**Tail not paddle-shaped**; round or slightly compressed; distinct enlarged or keeled ventral scales present",
+                            /* row 9  - 5a */ "Digits with **expanded adhesive toepads**; pupils **vertical** (cat-like) in bright light; body dorsal surface granular",
+                            /* row 10 - 5b */ "Digits **without** expanded toepads; pupils **round**; body scales smooth and shiny or keeled",
+                            /* row 11 - 6a */ "Large gecko, **SVL > 60 mm** in adults; digits with undivided basal lamellae and a distinct claw notch; dorsum pale grey-brown with scattered dark spots",
+                            /* row 12 - 6b */ "Medium or small skink, **SVL < 60 mm** in adults; digits slender without expanded toepads; dorsum with distinct longitudinal pattern or uniform",
+                            /* row 13 - 7a */ "**Eyelids absent** (eye covered by a transparent spectacle, as in snakes); supranasals in contact at midline; dorsal scales in 26–28 rows at midbody",
+                            /* row 14 - 7b */ "**Eyelids present** and movable; supranasals separated at midline; dorsal scales in fewer than 26 rows at midbody",
+                            /* row 15 - 8a */ "Dorsum brown with **irregular black spots** scattered over the body; 30 or more scale rows around midbody; legs short relative to body",
+                            /* row 16 - 8b */ "Dorsum with **pale dorsolateral stripe** on each side against a dark brown or blackish ground colour; 28 or fewer scale rows",
+                            /* row 17 - 9a */ "**Dorsolateral stripe** cream to pale yellow, fading on tail; **flanks black** with no bronze iridescence; found in hill and montane forest interior; known only from Aneityum",
+                            /* row 18 - 9b */ "**Dorsolateral stripe** cream to white, continuing to tail base; **flanks black** with strong **bronze iridescence** in live specimens; coastal rocks and littoral zone throughout island chain",
+                        ],
                     },
                     target: {
                         name: "Target",
@@ -669,7 +729,27 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
-                        templateData: [],
+                        templateData: [
+                            /* row 0  - header */ "1",
+                            /* row 1  - 1a → step 4 */  "4",
+                            /* row 2  - 1b → step 2 */  "2",
+                            /* row 3  - 2a → result  */  "Dermochelys coriacea",
+                            /* row 4  - 2b → step 3 */  "3",
+                            /* row 5  - 3a → result  */  "Litoria aurea",
+                            /* row 6  - 3b → step 5 */  "5",
+                            /* row 7  - 4a → result  */  "Pelamis platura",
+                            /* row 8  - 4b → step 5 */  "5",
+                            /* row 9  - 5a → step 6 */  "6",
+                            /* row 10 - 5b → step 7 */  "7",
+                            /* row 11 - 6a → result  */  "Gehyra georgpotthasti",
+                            /* row 12 - 6b → step 7 */  "7",
+                            /* row 13 - 7a → result  */  "Cryptoblepharus novohebridicus",
+                            /* row 14 - 7b → step 8 */  "8",
+                            /* row 15 - 8a → result  */  "Caledoniscincus atropunctatus",
+                            /* row 16 - 8b → step 9 */  "9",
+                            /* row 17 - 9a → result  */  "Emoia aneityumensis",
+                            /* row 18 - 9b → result  */  "Emoia atrocostata",
+                        ],
                     },
                     images: {
                         name: "Images",
@@ -691,7 +771,27 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
-                        templateData: [],
+                        templateData: [
+                            /* row 0  - header */ "",
+                            /* row 1  - 1a */ "",
+                            /* row 2  - 1b */ "",
+                            /* row 3  - 2a */ "",
+                            /* row 4  - 2b */ "",
+                            /* row 5  - 3a */ "",
+                            /* row 6  - 3b */ "",
+                            /* row 7  - 4a */ "",
+                            /* row 8  - 4b */ "",
+                            /* row 9  - 5a */ "",
+                            /* row 10 - 5b */ "",
+                            /* row 11 - 6a */ "",
+                            /* row 12 - 6b */ "",
+                            /* row 13 - 7a */ "",
+                            /* row 14 - 7b */ "",
+                            /* row 15 - 8a */ "",
+                            /* row 16 - 8b */ "",
+                            /* row 17 - 9a */ "",
+                            /* row 18 - 9b */ "",
+                        ],
                     },
                 },
                 data: [],
@@ -740,6 +840,11 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
+                        templateData: [
+                            "@article{bauer1990, author={Bauer, Aaron M. and Vindum, Jens V.}, title={A checklist and key to the herpetofauna of New Caledonia, with remarks on biogeography}, journal={Proceedings of the California Academy of Sciences}, year={1990}, volume={47}, number={2}, pages={17--45}}",
+                            "@book{zug1993, author={Zug, George R.}, title={Herpetology: An Introductory Biology of Amphibians and Reptiles}, publisher={Academic Press}, address={San Diego}, year={1993}, isbn={978-0127826202}}",
+                            "@article{flecks2012, author={Flecks, Morris and Schmitz, Andreas and Böhme, Wolfgang and Henkel, Friedrich-Wilhelm and Ineich, Ivan}, title={A new large gecko (Squamata: Gekkonidae: {\\textit{Gehyra}}) from Vanuatu}, journal={Zootaxa}, year={2012}, volume={3425}, pages={1--20}, doi={10.11646/zootaxa.3425.1.1}}",
+                        ],
                     },
                 },
                 data: [],
@@ -781,6 +886,7 @@ export const nlDataStructureSheets = {
                             regexExplanation: "only lowercase a-z with one optional dot separator",
                             supportsMultilingual: false,
                         },
+                        templateData: ["exdb"],
                     },
                     labelTemplate: {
                         name: "Label template",
@@ -802,6 +908,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
+                        templateData: ["{{author}}Example DB taxon ({{id}})"],
                     },
                     urlTemplate: {
                         name: "URL template",
@@ -823,6 +930,7 @@ export const nlDataStructureSheets = {
                             allowedContent: "any",
                             supportsMultilingual: false,
                         },
+                        templateData: ["https://example.com/taxa/{{id}}"],
                     },
                 },
                 data: [],
@@ -834,13 +942,77 @@ export const nlDataStructureSheets = {
                 columns: {
                     term: {
                         name: "DwC term",
-                        description: "The Darwin Core term name (camelCase, e.g. 'decimalLatitude').",
+                        description: "The Darwin Core term name (camelCase, e.g. 'decimalLatitude'), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
                         integrity: { allowEmpty: false, allowDuplicates: "no", allowedContent: "any", supportsMultilingual: false },
+                        //
+                        // ROW LAYOUT - checklist-only (Tier 1) export, no occurrence rows.
+                        //
+                        // Administrative terms (constants)
+                        //   0  language            - ISO 639-1 code for the export; required
+                        //   1  institutionCode      - required; used in auto UUID generation
+                        //   2  collectionCode       - recommended
+                        //   3  license              - GBIF-accepted CC URI; required
+                        //   4  datasetName          - human-readable title for the dataset
+                        //
+                        // Taxonomic terms (source columns)
+                        //   5  taxonID              - auto:taxonID (UUID v5)
+                        //   6  parentNameUsageID    - auto:parentNameUsageID
+                        //   7  taxonRank            - auto:taxonRank (resolved from column name)
+                        //   8  scientificName       - auto:scientificName (name at own rank level)
+                        //   9  scientificNameAuthorship - taxa:Species.authority
+                        //  10  kingdom              - constant "Animalia"
+                        //  11  class                - taxa:Class
+                        //  12  order                - taxa:Order
+                        //  13  family               - taxa:Family
+                        //  14  genus                - taxa:Genus
+                        //  15  specificEpithet      - taxa:Species.lastNamePart
+                        //  16  nameAccordingTo      - constant (authoritative checklist reference)
+                        //
+                        // EML metadata fields (eml: rows)
+                        //  17  eml:title
+                        //  18  eml:abstract
+                        //  19  eml:pubDate
+                        //  20  eml:creator.organizationName
+                        //  21  eml:creator.givenName
+                        //  22  eml:creator.surName
+                        //  23  eml:creator.email
+                        //  24  eml:creator.url
+                        //  25  eml:geographicDescription
+                        //  26  eml:taxonomicDescription
+                        //
+                        templateData: [
+                            /* 0  */ "language",
+                            /* 1  */ "institutionCode",
+                            /* 2  */ "collectionCode",
+                            /* 3  */ "license",
+                            /* 4  */ "datasetName",
+                            /* 5  */ "taxonID",
+                            /* 6  */ "parentNameUsageID",
+                            /* 7  */ "taxonRank",
+                            /* 8  */ "scientificName",
+                            /* 9  */ "scientificNameAuthorship",
+                            /* 10 */ "kingdom",
+                            /* 11 */ "class",
+                            /* 12 */ "order",
+                            /* 13 */ "family",
+                            /* 14 */ "genus",
+                            /* 15 */ "specificEpithet",
+                            /* 16 */ "nameAccordingTo",
+                            /* 17 */ "eml:title",
+                            /* 18 */ "eml:abstract",
+                            /* 19 */ "eml:pubDate",
+                            /* 20 */ "eml:creator.organizationName",
+                            /* 21 */ "eml:creator.givenName",
+                            /* 22 */ "eml:creator.surName",
+                            /* 23 */ "eml:creator.email",
+                            /* 24 */ "eml:creator.url",
+                            /* 25 */ "eml:geographicDescription",
+                            /* 26 */ "eml:taxonomicDescription",
+                        ],
                     },
                     sourceColumn: {
                         name: "Source column",
-                        description:
-    "The NaturaList data path or directive that provides the value for this DwC term.\n" +
+                        description: "The NaturaList data path or directive that provides the value for this DwC term.\n" +
     "Leave empty if you are supplying a Constant value instead.\n" +
     "\n" +
     "SUPPORTED DIRECTIVE TYPES:\n" +
@@ -883,11 +1055,69 @@ export const nlDataStructureSheets = {
     "    the template pipe is a fallback selector, not a list separator.\n" +
     "    Use this directive instead.",
                         integrity: { allowEmpty: true, allowDuplicates: "yes", allowedContent: "any", supportsMultilingual: false },
+                        templateData: [
+                            /* 0  language           - constant, no source */ "",
+                            /* 1  institutionCode     - constant, no source */ "",
+                            /* 2  collectionCode      - constant, no source */ "",
+                            /* 3  license             - constant, no source */ "",
+                            /* 4  datasetName         - pulled from Customization */ "config:Checklist name",
+                            /* 5  taxonID             */ "auto:taxonID",
+                            /* 6  parentNameUsageID   */ "auto:parentNameUsageID",
+                            /* 7  taxonRank           */ "auto:taxonRank",
+                            /* 8  scientificName      */ "auto:scientificName",
+                            /* 9  scientificNameAuthorship */ "auto:scientificNameAuthorship",
+                            /* 10 kingdom             - constant, no source */ "",
+                            /* 11 class               */ "taxa:Class",
+                            /* 12 order               */ "taxa:Order",
+                            /* 13 family              */ "taxa:Family",
+                            /* 14 genus               */ "taxa:Genus",
+                            /* 15 specificEpithet     */ "taxa:Species.lastNamePart",
+                            /* 16 nameAccordingTo     - constant, no source */ "",
+                            /* 17 eml:title           - pulled from Customization */ "config:Checklist name",
+                            /* 18 eml:abstract        - pulled from Customization */ "config:About section",
+                            /* 19 eml:pubDate         - constant, no source */ "",
+                            /* 20 eml:creator.organizationName - constant, no source */ "",
+                            /* 21 eml:creator.givenName        - constant, no source */ "",
+                            /* 22 eml:creator.surName          - constant, no source */ "",
+                            /* 23 eml:creator.email            - constant, no source */ "",
+                            /* 24 eml:creator.url              - constant, no source */ "",
+                            /* 25 eml:geographicDescription    - constant, no source */ "",
+                            /* 26 eml:taxonomicDescription     - constant, no source */ "",
+                        ],
                     },
                     constantValue: {
                         name: "Constant value",
                         description: "A literal string applied to every record. Leave empty if using Source column.",
                         integrity: { allowEmpty: true, allowDuplicates: "yes", allowedContent: "any", supportsMultilingual: false },
+                        templateData: [
+                            /* 0  language            */ "en",
+                            /* 1  institutionCode     */ "VANUHERP",
+                            /* 2  collectionCode      */ "VANUATU-CHECKLIST",
+                            /* 3  license             */ "https://creativecommons.org/licenses/by/4.0/legalcode",
+                            /* 4  datasetName         - from config */ "",
+                            /* 5  taxonID             - auto */ "",
+                            /* 6  parentNameUsageID   - auto */ "",
+                            /* 7  taxonRank           - auto */ "",
+                            /* 8  scientificName      - auto */ "",
+                            /* 9  scientificNameAuthorship - from taxa column */ "",
+                            /* 10 kingdom             */ "Animalia",
+                            /* 11 class               - from taxa column */ "",
+                            /* 12 order               - from taxa column */ "",
+                            /* 13 family              - from taxa column */ "",
+                            /* 14 genus               - from taxa column */ "",
+                            /* 15 specificEpithet     - from taxa column */ "",
+                            /* 16 nameAccordingTo     */ "Flecks et al. (2012); Zug (1993)",
+                            /* 17 eml:title           - from config */ "",
+                            /* 18 eml:abstract        - from config */ "",
+                            /* 19 eml:pubDate         */ "2024-01-01",
+                            /* 20 eml:creator.organizationName */ "Example Natural History Museum",
+                            /* 21 eml:creator.givenName        */ "Jane",
+                            /* 22 eml:creator.surName          */ "Smith",
+                            /* 23 eml:creator.email            */ "j.smith@example.com",
+                            /* 24 eml:creator.url              */ "https://example.com",
+                            /* 25 eml:geographicDescription    */ "Vanuatu archipelago, southwestern Pacific Ocean",
+                            /* 26 eml:taxonomicDescription     */ "Amphibians and reptiles (Amphibia, Reptilia) recorded in Vanuatu",
+                        ],
                     },
                 },
                 data: [],
@@ -1575,6 +1805,19 @@ export const nlDataStructureSheets = {
             { "columnName": "Species.authority", "templateData": ["(Lesson, 1829)", "(Linnaeus, 1766)", "Flecks, Schmitz, Böhme, Henkel & Ineich, 2012", "(Roux, 1913)", "Mertens, 1928", "Medway, 1974", "(Lesson, 1830)", "(Vandelli, 1761)"] },
             { "columnName": "redlist", "templateData": ["NT", "LC", "VU", "LC", "LC", "EN", "LC", "VU"] },
             { "columnName": "status", "templateData": ["I", "N", "N", "N", "E", "E", "N", "N"] },
+            {
+                "columnName": "notes",
+                "templateData": [
+                    "",
+                    "A pelagic sea snake of circumtropical distribution, the sole member of *Pelamis*. Venom is potently neurotoxic but bites to humans are rare. Buoyant at the surface owing to its laterally compressed tail and low specific gravity [@zug1993, p. 428].",
+                    "*Gehyra georgpotthasti* is the largest gecko endemic to Vanuatu and was formally described from specimens collected on Efate Island. Distinguished from congeners by its large size (SVL > 70 mm in adults) and undivided basal lamellae [@flecks2012].",
+                    "",
+                    "",
+                    "",
+                    "Widespread coastal skink found throughout the Indo-Pacific littoral zone, from India to the central Pacific. Highly tolerant of salt spray and regularly forages among intertidal rocks. See @bauer1990 for regional records from the southwestern Pacific.",
+                    "",
+                ]
+            },
         ],
     },
 };

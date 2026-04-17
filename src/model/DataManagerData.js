@@ -109,8 +109,8 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
         if (len > maxLen) maxLen = len;
       }
 
-      // Always cap max width to 480 regardless of other rules
-      widths.push({ wch: Math.min(maxLen + 2, 480) });
+      // Always cap max width to 80 regardless of other rules
+      widths.push({ wch: Math.min(maxLen + 2, 80) });
     }
     return widths;
   }

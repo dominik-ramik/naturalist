@@ -29,10 +29,20 @@ const ManageStore = {
   uploadMode: Settings.manageUploadMode(),
   urlInputValue: Settings.spreadsheetUrl(),
 
+  // DwC auto-recompile: true when the last pipeline run should trigger DwC
+  // compilation automatically (set when user uploads while dwcCompiled is true)
+  dwcAutoRecompile: false,
+
+  // Freshness flag: set to true right after auto- or manual recompile so the
+  // UI can show a "freshly compiled" badge. Cleared on next upload.
+  dwcJustRecompiled: false,
+
   reset: function () {
     this.dataman = null;
     this.isProcessing = false;
     this.isDwcProcessing = false;
+    this.dwcAutoRecompile = false;
+    this.dwcJustRecompiled = false;
     this.errorDetails = "";
     this.messageCode = "";
   },
@@ -253,15 +263,23 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
   // normal checklist update.
 
   if (Logger.hasErrors()) {
+    ManageStore.dwcAutoRecompile = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
     );
   } else {
     Checklist.loadData(compiled, true);
     Checklist.getTaxaForCurrentQuery();
-    scheduleManageNavigation(
-      onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true }))
-    );
+
+    if (ManageStore.dwcAutoRecompile) {
+      ManageStore.dwcAutoRecompile = false;
+      // Run DwC immediately instead of routing to /review first
+      scheduleManageNavigation(() => _runDwcPipeline());
+    } else {
+      scheduleManageNavigation(
+        onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true }))
+      );
+    }
   }
 }
 
@@ -289,6 +307,7 @@ async function _runDwcPipeline() {
   }
 
   ManageStore.isDwcProcessing = false;
+  ManageStore.dwcJustRecompiled = true;
   scheduleManageNavigation(() =>
     m.route.set("/manage/review", null, { replace: true })
   );
@@ -314,7 +333,7 @@ function downloadCompiledData(blob, fileName) {
  * Process a local File object through the pipeline.
  */
 function processUpload(filepicker, file, checkAssetsSize) {
-  if (!file?.name) {
+  if (!(file && file.name)) {
     Logger.error(t("chose_a_file"));
     return;
   }
@@ -325,6 +344,11 @@ function processUpload(filepicker, file, checkAssetsSize) {
 
   ManageStore.reset();
   ManageStore.isProcessing = true;
+  // If DwC was previously compiled, auto-recompile after the new upload so the
+  // user doesn't need an extra manual click in their fix→upload→verify loop.
+  if (ManageStore.dataman && typeof ManageStore.dataman.isDwcCompiled === 'function' && ManageStore.dataman.isDwcCompiled()) {
+    ManageStore.dwcAutoRecompile = true;
+  }
   m.route.set("/manage/processing");
 
   const reader = new FileReader();
@@ -344,7 +368,7 @@ function processUpload(filepicker, file, checkAssetsSize) {
  * @param {Function} [onSuccess] - Override route after successful processing
  */
 async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
-  url = url?.trim();
+  url = url && url.trim();
 
   if (!url) {
     Logger.error(t("url_required"));
@@ -359,6 +383,10 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
 
   ManageStore.reset();
   ManageStore.isProcessing = true;
+  // If DwC was previously compiled, auto-recompile after the new upload.
+  if (ManageStore.dataman && typeof ManageStore.dataman.isDwcCompiled === 'function' && ManageStore.dataman.isDwcCompiled()) {
+    ManageStore.dwcAutoRecompile = true;
+  }
   m.route.set("/manage/processing");
 
   let buffer;
@@ -640,8 +668,8 @@ const SubViews = {
       return null;
     }
 
-    const hasDwc = ManageStore.dataman.hasDwcTable?.() ?? false;
-    const dwcCompiled = ManageStore.dataman.isDwcCompiled?.() ?? false;
+    const hasDwc = ManageStore.dataman && typeof ManageStore.dataman.hasDwcTable === 'function' ? ManageStore.dataman.hasDwcTable() : false;
+    const dwcCompiled = ManageStore.dataman && typeof ManageStore.dataman.isDwcCompiled === 'function' ? ManageStore.dataman.isDwcCompiled() : false;
     const dwcResult = dwcCompiled ? ManageStore.dataman.getDwcArchive() : null;
     const dwcHasErrors = dwcCompiled && Logger.getMessagesForDisplay().some(
       m => (m.level === "error" || m.level === "critical") &&
@@ -649,100 +677,143 @@ const SubViews = {
     );
     const dwcSucceeded = dwcCompiled && !dwcHasErrors;
 
-    return [
-      m(ManageCard, {
-        title: t("review_draft_heading"),
-        icon: "img/ui/manage/review.svg",
-        description: t("review_draft"),
-        children: [
-          m(".manage-actions", [
-            m(ActionButton, {
-              label: t("proceed_to_update"),
-              primary: true,
-              block: true,
-              onclick: () => m.route.set("/manage/publish"),
-              icon: "img/ui/manage/clean.svg",
-              background: "#7cb342",
-            }),
-            m(ActionButton, {
-              label: t("back_to_upload"),
+    // When DwC has errors, the fix card becomes the user's primary focus.
+    // We show it first and make the upload prominent.
+    const dwcNeedsFixing = hasDwc && dwcCompiled && dwcHasErrors;
+
+    // ── Fix / Upload card ────────────────────────────────────────────────────
+    // Shown at the top when DwC needs fixing; otherwise as a secondary option
+    // within the main checklist card.
+    const fixCard = m(ManageCard, {
+      title: dwcNeedsFixing
+        ? (t("fix_and_reupload_title") || "Fix & re-upload spreadsheet")
+        : (t("back_to_upload") || "Upload updated spreadsheet"),
+      icon: "img/ui/manage/upload.svg",
+      description: dwcNeedsFixing
+        ? (t("fix_and_reupload_description") ||
+          "Correct the issues flagged below, save your spreadsheet, then re-upload. " +
+          "The DwC archive will be re-compiled automatically.")
+        : null,
+      children: [
+        m(".manage-actions", [
+          m(ActionButton, {
+            label: t("back_to_upload") || "Upload fixed spreadsheet",
+            secondary: !dwcNeedsFixing,
+            primary: dwcNeedsFixing,
+            block: true,
+            icon: "img/ui/manage/upload.svg",
+            onclick: () => m.route.set("/manage/upload"),
+          }),
+        ]),
+      ],
+    });
+
+    // ── Proceed / Publish card ───────────────────────────────────────────────
+    const proceedCard = m(ManageCard, {
+      title: t("review_draft_heading"),
+      icon: "img/ui/manage/review.svg",
+      description: t("review_draft"),
+      children: [
+        m(".manage-actions", [
+          m(ActionButton, {
+            label: t("proceed_to_update"),
+            primary: true,
+            block: true,
+            onclick: () => m.route.set("/manage/publish"),
+            icon: "img/ui/manage/clean.svg",
+            background: "#7cb342",
+          }),
+          // Upload shortcut — only shown here when DwC is NOT the focus
+          !dwcNeedsFixing
+            ? m(ActionButton, {
+              label: t("back_to_upload") || "Upload updated spreadsheet",
               secondary: true,
               block: true,
               onclick: () => m.route.set("/manage/upload"),
               icon: "img/ui/manage/upload.svg",
-            }),
-          ]),
-        ],
-      }),
+            })
+            : null,
+        ]),
+      ],
+    });
 
-      // ── DwC Export Panel ─────────────────────────────────────────────────
-      hasDwc
-        ? m(ManageCard, {
-          title: t("dwc_section_title") || "DwC / GBIF Export",
-          icon: "img/ui/manage/download.svg",
-          children: [
-            // State A: not yet compiled
-            !dwcCompiled
-              ? m(".manage-dwc-panel", [
-                m("p", t("dwc_export_configured") || "DwC export is configured in your spreadsheet."),
-                m("p.manage-processing-hint",
-                  t("dwc_compile_invitation") ||
-                  "Click below to validate your DwC mapping and generate the archive. " +
-                  "This step is optional - you can publish the checklist without it."
-                ),
-                m(ActionButton, {
-                  label: t("compile_dwc_export") || "Compile DwC Export",
-                  primary: true,
-                  block: true,
-                  icon: "img/ui/manage/processing.svg",
-                  onclick: () => _runDwcPipeline(),
-                }),
-              ])
-              : null,
+    // ── DwC Export card ──────────────────────────────────────────────────────
+    const dwcCard = hasDwc
+      ? m(ManageCard, {
+        title: t("dwc_section_title") || "DwC / GBIF Export",
+        icon: "img/ui/manage/download.svg",
+        children: [
+          // State A: not yet compiled
+          !dwcCompiled
+            ? m(".manage-dwc-panel", [
+              m("p", t("dwc_export_configured") || "DwC export is configured in your spreadsheet."),
+              m("p.manage-processing-hint",
+                t("dwc_compile_invitation") ||
+                "Click below to validate your DwC mapping and generate the archive. " +
+                "This step is optional - you can publish the checklist without it."
+              ),
+              m(ActionButton, {
+                label: t("compile_dwc_export") || "Compile DwC Export",
+                primary: true,
+                block: true,
+                icon: "img/ui/manage/processing.svg",
+                onclick: () => {
+                  ManageStore.dwcJustRecompiled = false;
+                  _runDwcPipeline();
+                },
+              }),
+            ])
+            : null,
 
-            // State B: compiled with errors
-            dwcCompiled && dwcHasErrors
-              ? m(".manage-dwc-panel", [
-                m("p.manage-hint-error",
-                  t("dwc_export_has_errors") ||
-                  "DwC compilation completed with errors. Review the messages below and retry after fixing your spreadsheet."
-                ),
-              ])
-              : null,
+          // State B: compiled with errors
+          dwcHasErrors
+            ? m(".manage-dwc-panel", [
+              m("p.manage-hint-error",
+                t("dwc_export_has_errors") ||
+                "DwC compilation completed with errors. Fix your spreadsheet and re-upload — the archive will recompile automatically."
+              ),
+            ])
+            : null,
 
-            // State C: compiled successfully
-            dwcSucceeded
-              ? m(".manage-dwc-panel", [
+          // State C: compiled successfully
+          dwcSucceeded
+            ? m(".manage-dwc-panel", [
+              m(".manage-dwc-success-header", [
                 m("p.manage-hint-success", t("dwc_export_ready") || "DwC archive compiled successfully."),
-                m(".manage-actions", [
-                  dwcResult?.checklistZip
-                    ? m(ActionButton, {
-                      label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
-                      icon: "img/ui/manage/download.svg",
-                      block: true,
-                      onclick: () => downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip"),
-                    })
-                    : null,
-                  dwcResult?.occurrenceZip
-                    ? m(ActionButton, {
-                      label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
-                      icon: "img/ui/manage/download.svg",
-                      block: true,
-                      onclick: () => downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip"),
-                    })
-                    : null,
-                  m(ActionButton, {
-                    label: t("retry_dwc_export") || "Retry DwC Export",
-                    small: true,
-                    onclick: () => _runDwcPipeline(),
-                  }),
-                ]),
-              ])
-              : null,
-          ],
-        })
-        : null,
-    ];
+                ManageStore.dwcJustRecompiled
+                  ? m("span.manage-dwc-fresh-badge",
+                    t("dwc_freshly_compiled") || "✓ freshly compiled")
+                  : null,
+              ]),
+              m(".manage-actions", [
+                (dwcResult && dwcResult.checklistZip)
+                  ? m(ActionButton, {
+                    label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
+                    icon: "img/ui/manage/download.svg",
+                    block: true,
+                    onclick: () => downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip"),
+                  })
+                  : null,
+                (dwcResult && dwcResult.occurrenceZip)
+                  ? m(ActionButton, {
+                    label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
+                    icon: "img/ui/manage/download.svg",
+                    block: true,
+                    onclick: () => downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip"),
+                  })
+                  : null,
+              ]),
+            ])
+            : null,
+        ],
+      })
+      : null;
+
+    // Layout: when DwC errors are present, lead with the fix card so the
+    // corrective action is unmissable. Otherwise the proceed card leads.
+    return dwcNeedsFixing
+      ? [fixCard, dwcCard, proceedCard]
+      : [proceedCard, dwcCard];
   },
 
   publish: function () {
@@ -806,7 +877,7 @@ const SubViews = {
       icon: "img/ui/manage/error.svg",
       children: [
         m(".manage-error-content", [
-          ManageStore.messageCode?.length > 0 && ManageStore.messageCode != "other_upload_error"
+          (ManageStore.messageCode && ManageStore.messageCode.length > 0) && ManageStore.messageCode != "other_upload_error"
             ? m("p", t(ManageStore.messageCode))
             : m("p", ManageStore.errorDetails),
           m(ActionButton, {
@@ -964,8 +1035,8 @@ function renderServerUploadForm() {
             } else {
               let parsed;
               try { parsed = JSON.parse(request.responseText); } catch { }
-              ManageStore.errorDetails = parsed?.details ?? (request.statusText.toLowerCase() == "not found" ? t("upload_disabled") : t("network_error") + " " + request.statusText);
-              ManageStore.messageCode = parsed?.messageCode ?? "";
+              ManageStore.errorDetails = (parsed && parsed.details) ? parsed.details : (request.statusText.toLowerCase() == "not found" ? t("upload_disabled") : t("network_error") + " " + request.statusText);
+              ManageStore.messageCode = (parsed && parsed.messageCode) ? parsed.messageCode : "";
               m.redraw();
               m.route.set("/manage/error");
             }
