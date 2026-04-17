@@ -1462,6 +1462,36 @@ export const nlDataStructureSheets = {
                         constantValue: ""
                     },
                     {
+                        term: "eml:title",
+                        sourceColumn: "config:Checklist name",
+                        constantValue: ""
+                    },
+                    {
+                        term: "eml:abstract",
+                        sourceColumn: "config:About section",
+                        constantValue: ""
+                    },
+                    {
+                        term: "eml:creator.organizationName",
+                        sourceColumn: "",
+                        constantValue: "Example Natural History Museum"
+                    },
+                    {
+                        term: "eml:creator.givenName",
+                        sourceColumn: "",
+                        constantValue: "Jane"
+                    },
+                    {
+                        term: "eml:creator.surName",
+                        sourceColumn: "",
+                        constantValue: "Smith"
+                    },
+                    {
+                        term: "eml:creator.email",
+                        sourceColumn: "",
+                        constantValue: "j.smith@example.com"
+                    },
+                    {
                         term: "taxonID",
                         sourceColumn: "auto:taxonID",
                         constantValue: ""
@@ -1516,61 +1546,6 @@ export const nlDataStructureSheets = {
                         sourceColumn: "taxa:Species.lastNamePart",
                         constantValue: ""
                     },
-                    {
-                        term: "nameAccordingTo",
-                        sourceColumn: "",
-                        constantValue: "Flecks et al. (2012); Zug (1993)"
-                    },
-                    {
-                        term: "eml:title",
-                        sourceColumn: "config:Checklist name",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:abstract",
-                        sourceColumn: "config:About section",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:pubDate",
-                        sourceColumn: "",
-                        constantValue: "2024-01-01"
-                    },
-                    {
-                        term: "eml:creator.organizationName",
-                        sourceColumn: "",
-                        constantValue: "Example Natural History Museum"
-                    },
-                    {
-                        term: "eml:creator.givenName",
-                        sourceColumn: "",
-                        constantValue: "Jane"
-                    },
-                    {
-                        term: "eml:creator.surName",
-                        sourceColumn: "",
-                        constantValue: "Smith"
-                    },
-                    {
-                        term: "eml:creator.email",
-                        sourceColumn: "",
-                        constantValue: "j.smith@example.com"
-                    },
-                    {
-                        term: "eml:creator.url",
-                        sourceColumn: "",
-                        constantValue: "https://example.com"
-                    },
-                    {
-                        term: "eml:geographicDescription",
-                        sourceColumn: "",
-                        constantValue: "Vanuatu archipelago, southwestern Pacific Ocean"
-                    },
-                    {
-                        term: "eml:taxonomicDescription",
-                        sourceColumn: "",
-                        constantValue: "Amphibians and reptiles (Amphibia, Reptilia) recorded in Vanuatu"
-                    }
                 ]
             }
         }
@@ -1673,7 +1648,14 @@ export const nlDataStructureSheets = {
                             supportsMultilingual: false
                         }
                     }
-                }
+                },
+                templateData: [
+                    {
+                        code: "en",
+                        name: "English",
+                        fallback: ""
+                    },
+                ]
             },
             customization: {
                 name: "Customization",
@@ -1825,39 +1807,19 @@ export const nlDataStructureSheets = {
                     },
                     {
                         item: "Checklist name",
-                        value: "My new checklist"
+                        value: "Sample NaturaList checklist"
                     },
                     {
                         item: "About section",
-                        value: "This is a template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) to see how to configure it to create rich taxonomic checklists.\n\nThe values in this template are there only to get you started. Feel free to modify them and add your own."
+                        value: "This is a simple template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) to see how to configure this spreadsheet to create rich taxonomic checklists or full-fledged biodiversity databases with taxonomy and specimens or other occurrences.\n\nThe values in this template are there only to get you started. Feel free to modify them and add your own, neither the taxonomic ranks nor the specific custom data are set in stone."
                     },
                     {
                         item: "How to cite",
-                        value: "Your citation goes here"
+                        value: "Sample NaturaList checklist. Author: Dominik M. Ramík (2024). https://naturalist.netlify.app/"
                     },
                     {
                         item: "Data sheets names",
                         value: "checklist"
-                    },
-                    {
-                        item: "Date format",
-                        value: 1
-                    },
-                    {
-                        item: "Month names",
-                        value: "MMM D, YYYY"
-                    },
-                    {
-                        item: "Precache max file size",
-                        value: ""
-                    },
-                    {
-                        item: "Precache max total size",
-                        value: 0.5
-                    },
-                    {
-                        item: "Custom eml.xml location",
-                        value: 200
                     }
                 ]
             },
@@ -1982,16 +1944,6 @@ export const nlDataStructureSheets = {
                         columnName: "redlist",
                         code: "DD",
                         replacement: "Data Deficient"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "LR/CD",
-                        replacement: "Conservation Dependent"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "LR/lc",
-                        replacement: "Least Concern"
                     },
                     {
                         columnName: "redlist",
@@ -2766,6 +2718,43 @@ export const nlDataStructureSheets = {
                         }
                     }
                 },
+                templateData: [
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Threatened",
+                        value: "Critically Endangered",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Threatened",
+                        value: "Endangered",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Threatened",
+                        value: "Vulnerable",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Lower Risk",
+                        value: "Near Threatened",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Lower Risk",
+                        value: "Least Concern",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Unknown",
+                        value: "Data Deficient",
+                    },
+                    {
+                        columnName: "redlist",
+                        groupTitle: "Unknown",
+                        value: "Not Evaluated",
+                    },
+                ],
                 data: []
             }
         }
@@ -2781,7 +2770,7 @@ export const nlDataStructureSheets = {
                 "Order": "Anura",
                 "Family": "Pelodryadidae",
                 "Genus": "Litoria",
-                "Species": "Litoria aurea",
+                "Species.name": "Litoria aurea",
                 "Species.authority": "(Lesson, 1829)",
                 "redlist": "NT",
                 "status": "I",
@@ -2792,7 +2781,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Elapidae",
                 "Genus": "Pelamis",
-                "Species": "Pelamis platura",
+                "Species.name": "Pelamis platura",
                 "Species.authority": "(Linnaeus, 1766)",
                 "redlist": "LC",
                 "status": "N",
@@ -2803,7 +2792,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Gekkonidae",
                 "Genus": "Gehyra",
-                "Species": "Gehyra georgpotthasti",
+                "Species.name": "Gehyra georgpotthasti",
                 "Species.authority": "Flecks, Schmitz, Böhme, Henkel & Ineich, 2012",
                 "redlist": "VU",
                 "status": "N",
@@ -2814,7 +2803,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Scincidae",
                 "Genus": "Caledoniscincus",
-                "Species": "Caledoniscincus atropunctatus",
+                "Species.name": "Caledoniscincus atropunctatus",
                 "Species.authority": "(Roux, 1913)",
                 "redlist": "LC",
                 "status": "N",
@@ -2825,7 +2814,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Scincidae",
                 "Genus": "Cryptoblepharus",
-                "Species": "Cryptoblepharus novohebridicus",
+                "Species.name": "Cryptoblepharus novohebridicus",
                 "Species.authority": "Mertens, 1928",
                 "redlist": "LC",
                 "status": "E",
@@ -2836,7 +2825,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Scincidae",
                 "Genus": "Emoia",
-                "Species": "Emoia aneityumensis",
+                "Species.name": "Emoia aneityumensis",
                 "Species.authority": "Medway, 1974",
                 "redlist": "EN",
                 "status": "E",
@@ -2847,7 +2836,7 @@ export const nlDataStructureSheets = {
                 "Order": "Squamata",
                 "Family": "Scincidae",
                 "Genus": "Emoia",
-                "Species": "Emoia atrocostata",
+                "Species.name": "Emoia atrocostata",
                 "Species.authority": "(Lesson, 1830)",
                 "redlist": "LC",
                 "status": "N",
@@ -2858,7 +2847,7 @@ export const nlDataStructureSheets = {
                 "Order": "Testudines",
                 "Family": "Dermochelyidae",
                 "Genus": "Dermochelys",
-                "Species": "Dermochelys coriacea",
+                "Species.name": "Dermochelys coriacea",
                 "Species.authority": "(Vandelli, 1761)",
                 "redlist": "VU",
                 "status": "N",

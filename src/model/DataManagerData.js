@@ -84,26 +84,23 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
 
   // --- Helper: Build Checklist Sheet ---
   function buildChecklistSheet() {
-    const taxaTable = nlDataStructure.sheets.content?.tables?.taxa;
-    const customTable = nlDataStructure.sheets.content?.tables?.customDataDefinition;
-
-    // Retrieve headers directly from the new row objects
-    const getDefinedHeaders = (table) => {
-      if (table?.templateData && Array.isArray(table.templateData)) {
-        return table.templateData.map(row => row.columnName).filter(Boolean);
-      }
-      return [];
-    };
-
-    const taxaHeaders = getDefinedHeaders(taxaTable);
-    const customHeaders = getDefinedHeaders(customTable);
-    let headerKeys = [...taxaHeaders, ...customHeaders];
-
     const checklistDataConfig = nlDataStructure.sheets.checklist?.templateData || [];
 
-    // If checklist data exists but headers aren't caught above, grab keys from the first checklist row
-    if (checklistDataConfig.length > 0 && headerKeys.length === 0) {
-      headerKeys = Object.keys(checklistDataConfig[0]);
+    // Build headerKeys by scanning every checklist row's own keys,
+    // preserving first-seen order and deduplicating.
+    const headerKeys = [];
+    if (checklistDataConfig.length > 0) {
+      const seen = new Set();
+      checklistDataConfig.forEach(row => {
+        if (row && typeof row === 'object') {
+          Object.keys(row).forEach(k => {
+            if (!seen.has(k)) {
+              seen.add(k);
+              headerKeys.push(k);
+            }
+          });
+        }
+      });
     }
 
     const sheetData = [];

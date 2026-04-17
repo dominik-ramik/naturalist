@@ -33,16 +33,12 @@ const ManageStore = {
   // compilation automatically (set when user uploads while dwcCompiled is true)
   dwcAutoRecompile: false,
 
-  // Freshness flag: set to true right after auto- or manual recompile so the
-  // UI can show a "freshly compiled" badge. Cleared on next upload.
-  dwcJustRecompiled: false,
 
   reset: function () {
     this.dataman = null;
     this.isProcessing = false;
     this.isDwcProcessing = false;
     this.dwcAutoRecompile = false;
-    this.dwcJustRecompiled = false;
     this.errorDetails = "";
     this.messageCode = "";
   },
@@ -307,7 +303,6 @@ async function _runDwcPipeline() {
   }
 
   ManageStore.isDwcProcessing = false;
-  ManageStore.dwcJustRecompiled = true;
   scheduleManageNavigation(() =>
     m.route.set("/manage/review", null, { replace: true })
   );
@@ -758,7 +753,6 @@ const SubViews = {
                 block: true,
                 icon: "img/ui/manage/processing_light.svg",
                 onclick: () => {
-                  ManageStore.dwcJustRecompiled = false;
                   _runDwcPipeline();
                 },
               }),
@@ -780,10 +774,6 @@ const SubViews = {
             ? m(".manage-dwc-panel", [
               m(".manage-dwc-success-header", [
                 m("p.manage-hint-success", t("dwc_export_ready") || "DwC archive compiled successfully."),
-                ManageStore.dwcJustRecompiled
-                  ? m("span.manage-dwc-fresh-badge",
-                    t("dwc_freshly_compiled") || "✓ freshly compiled")
-                  : null,
               ]),
               m(".manage-actions", [
                 (dwcResult && dwcResult.checklistZip)
