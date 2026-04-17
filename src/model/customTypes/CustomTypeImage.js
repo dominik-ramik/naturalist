@@ -41,12 +41,16 @@ export let customTypeImage = {
    * @param {Object} uiContext - UI context (optional)
    * @returns {string[]} Array of searchable strings
    */
-  getSearchableText: function(data, uiContext) {
+  getSearchableText: function (data, uiContext) {
     if (!data || typeof data !== "object") return [];
     const result = [];
     if (data.title) result.push(data.title);
-    
+
     return result;
+  },
+  extractFilterLeafValues: function (data, _path) {
+    if (!data || typeof data !== "object") return [];
+    return data.title ? [data.title] : [];
   },
   render: function (data, uiContext) {
     //console.log("Rendering ReaderImage with data:", data, "and uiContext:", uiContext);

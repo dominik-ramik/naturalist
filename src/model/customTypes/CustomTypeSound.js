@@ -46,8 +46,12 @@ export let customTypeSound = {
     if (!data || typeof data !== "object") return [];
     const result = [];
     if (data.title) result.push(data.title);
-    
+
     return result;
+  },
+  extractFilterLeafValues: function (data, _path) {
+    if (!data || typeof data !== "object") return [];
+    return data.title ? [data.title] : [];
   },
   render: function (data, uiContext) {
     if (!data || data.source.toString().trim() === "") {
@@ -68,8 +72,8 @@ export let customTypeSound = {
           gap: "8px",
         },
       },
-      [m(MinimalAudioPlayer, { src: source }), 
-        title ? m(".title", applyHighlight(title, uiContext?.highlightRegex)) : null
+      [m(MinimalAudioPlayer, { src: source }),
+      title ? m(".title", applyHighlight(title, uiContext?.highlightRegex)) : null
       ]
     );
   },
