@@ -2,7 +2,7 @@
 
 <img src="./public/img/icon_transparent_blue.svg" alt="NaturaList logo" width="150" height="150">
 
-_The flexible taxonomic checklist app, free and open source_
+_The flexible taxonomic checklist and biodiversity data platform, free and open source_
 
 [[Website](https://naturalist.netlify.app/)] [[Demo (older v2)](https://naturalist.netlify.app/demo/)] [[Documentation (older v2, docs for v3 underway)](https://naturalist.netlify.app/)]
 
@@ -14,7 +14,7 @@ Paper: [Ramík, D.M., Plunkett, G.M. <b>NaturaList, a flexible app for creating 
 
 ## About
 
-**NaturaList** is a flexible taxonomic checklist app for publishing, exploring, and analysing biodiversity data. It supports both formal scientific and indigenous/folk taxonomies, handles everything from simple species lists to fully annotated specimen catalogues, and comes with powerful filtering, search, and data visualisation tools.
+**NaturaList** is a taxonomic checklist and biodiversity data platform app for publishing, exploring, and analysing biodiversity data. It supports both formal scientific and indigenous/folk taxonomies, handles everything from simple species lists to fully annotated specimen catalogues, and comes with powerful filtering, search, and data visualisation tools.
 
 **NaturaList** doesn't come with a pre-defined structure you would have to fit your project into. Your taxonomy, your data fields, and the way they are displayed are all defined in a single spreadsheet - making it easy to set up, update, or extend your checklist without any IT expertise or complex software. Individual occurrence or specimen records can be attached to taxa, turning the app into a lightweight collection management tool where species-level and occurrence/specimen-level data coexist and can be explored independently.
 
