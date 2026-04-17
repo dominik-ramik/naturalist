@@ -2,15 +2,19 @@
  * Shared utilities for range-type filter plugins (number, date, interval).
  *
  * Exports:
- *   buildRangeFilterLabel    – formats a filter operation as a human-readable string
- *   makeScalarRangeLifecycle – factory returning the 8 lifecycle methods shared by
- *                              number and date plugins (they differ only in type string
- *                              and the threshold formatter used in getCrumbs)
- *   sortedUniqueNumbers      – deduplicated sorted number array helper
+ *   buildRangeFilterLabel      – formats a filter operation as a human-readable string
+ *   makeScalarRangeLifecycle   – factory: 8 lifecycle methods shared by number + date
+ *   makeScalarRangeUiMethods   – factory: getCrumbs / clearCrumb / describeSerializedValue
+ *                                / isActive shared by number + date (NEW)
+ *   inputsOk                   – validates threshold state for any range dropdown (NEW)
+ *   sortedUniqueNumbers        – deduplicated sorted number array helper
+ *   numericFilters             – operator table used by number + date + interval
+ *   describeList               – formats a string array as a human-readable list
  */
 
 import { formatList } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -32,6 +36,26 @@ export function describeList(values, opts = {}) {
   const open  = opts.html ? "<strong>" : "";
   const close = opts.html ? "</strong>" : "";
   return formatList(values, t("or_list_joiner"), open, close);
+}
+
+// ── Input validation ──────────────────────────────────────────────────────────
+
+/**
+ * Returns true when all shown threshold inputs contain a valid number.
+ *
+ * Works for both the object-style state used by DropdownInterval
+ * (`state.thresholdsShown`, `state.actualThresholds`) and the
+ * flat-variable style used by DropdownDate, by accepting a plain descriptor.
+ *
+ * @param {{ thresholdsShown: number, actualThresholds: (number|null)[] }} thresholdState
+ * @returns {boolean}
+ */
+export function inputsOk(thresholdState) {
+  for (let i = 1; i <= thresholdState.thresholdsShown; i++) {
+    const v = thresholdState.actualThresholds[i];
+    if (typeof v !== "number" || isNaN(v)) return false;
+  }
+  return true;
 }
 
 // ── Human-readable label for a range filter operation ─────────────────────────
@@ -58,6 +82,68 @@ export function buildRangeFilterLabel(dataPath, operation, threshold1, threshold
   return title;
 }
 
+// ── UI methods factory for scalar range types (number + date) ─────────────────
+
+/**
+ * Returns the four UI-layer methods that are structurally identical between the
+ * number and date plugins.  Each plugin spreads these in and supplies its own
+ * `formatThreshold` function (locale number vs. dayjs date string).
+ *
+ * Covers: isActive, getCrumbs, clearCrumb, describeSerializedValue.
+ *
+ * @param {string}   type            – "number" | "date"
+ * @param {object}   comparerTable   – numericFilters
+ * @param {Function} formatThreshold – (value: number|null) => string
+ */
+export function makeScalarRangeUiMethods(type, comparerTable, formatThreshold) {
+  return {
+    isActive(fd) {
+      return fd.selected.length > 0 || fd.numeric.operation !== "";
+    },
+
+    getCrumbs(fd, ctx) {
+      const { operation, threshold1, threshold2 } = fd.numeric;
+      if (operation) {
+        return [{
+          title: buildRangeFilterLabel(
+            ctx.dataPath, operation, threshold1, threshold2,
+            formatThreshold, true, comparerTable[operation]
+          ),
+        }];
+      }
+      return fd.selected.map(v => ({
+        title:    formatThreshold(v),
+        rawValue: v,
+      }));
+    },
+
+    clearCrumb(fd, _ctx, descriptor) {
+      if (descriptor.rawValue !== undefined) {
+        const idx = fd.selected.indexOf(descriptor.rawValue);
+        if (idx > -1) fd.selected.splice(idx, 1);
+      } else {
+        fd.selected = [];
+        fd.numeric  = { operation: "", threshold1: null, threshold2: null };
+      }
+      Checklist.filter.commit();
+    },
+
+    describeSerializedValue(dataPath, serialized, opts = {}) {
+      const open  = opts.html ? "<strong>" : "";
+      const close = opts.html ? "</strong>" : "";
+      if (Array.isArray(serialized)) {
+        const cat  = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+        const vals = serialized.map(v => formatThreshold(v));
+        return cat + " " + t("is_list_joiner") + " " + describeList(vals, opts);
+      }
+      return buildRangeFilterLabel(
+        dataPath, serialized.o, serialized.a, serialized.b,
+        v => open + formatThreshold(v) + close,
+        false, comparerTable[serialized.o]
+      );
+    },
+  };
+}
 
 // ── Lifecycle method factory for scalar range types (number + date) ───────────
 
@@ -146,12 +232,14 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
   };
 }
 
+// ── Operator table ────────────────────────────────────────────────────────────
+
 export const numericFilters = {
-  equal: { operation: "equal", icon: "equal", values: 1, comparer: (v, t1) => v == t1 },
-  lesser: { operation: "lesser", icon: "lesser", values: 1, comparer: (v, t1) => v < t1 },
-  lesserequal: { operation: "lesserequal", icon: "lesserequal", values: 1, comparer: (v, t1) => v <= t1 },
-  greater: { operation: "greater", icon: "greater", values: 1, comparer: (v, t1) => v > t1 },
-  greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1) => v >= t1 },
-  between: { operation: "between", icon: "between", values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
-  around: { operation: "around", icon: "around", values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
+  equal:        { operation: "equal",        icon: "equal",        values: 1, comparer: (v, t1)     => v == t1 },
+  lesser:       { operation: "lesser",       icon: "lesser",       values: 1, comparer: (v, t1)     => v < t1 },
+  lesserequal:  { operation: "lesserequal",  icon: "lesserequal",  values: 1, comparer: (v, t1)     => v <= t1 },
+  greater:      { operation: "greater",      icon: "greater",      values: 1, comparer: (v, t1)     => v > t1 },
+  greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1)     => v >= t1 },
+  between:      { operation: "between",      icon: "between",      values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
+  around:       { operation: "around",       icon: "around",       values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
 };

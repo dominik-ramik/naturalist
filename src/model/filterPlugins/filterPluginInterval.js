@@ -7,16 +7,17 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t } from "virtual:i18n-self";
 import { getUnitFromTemplate, unitToHtml } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { drawIntervalHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
 import { buildRangeFilterLabel, describeList } from "./shared/filterUtils.js";
+import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
 import "./shared/numericDropdown.css";
 
-// ── Helpers ───────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 export const intervalFilters = {
   contains:     { operation: "contains",     icon: "contains",     values: 1, comparer: (from, to, t1)     => from <= t1 && t1 <= to },
@@ -30,28 +31,10 @@ function getIntervalOperationIcon(op) {
   return intervalFilters[op]?.icon || "equal";
 }
 
-/**
- * Returns a ghost/hint placeholder for a threshold input.
- *
- * contains     (1 threshold)  - the point inside the interval.
- *                               ghost: "min – max" of all intervals to show
- *                               the valid range at a glance.
- * overlaps     (2 thresholds) - [t1, t2] must overlap with intervals.
- *                               t1 ghost = min, t2 ghost = max.
- * fully_inside (2 thresholds) - interval must fit inside [t1, t2].
- *                               t1 ghost = min, t2 ghost = max.
- *
- * @param {number}      thresholdNumber – 1 or 2
- * @param {string}      op              – current operation key
- * @param {number|null} min
- * @param {number|null} max
- * @returns {string}
- */
 function getIntervalPlaceholder(thresholdNumber, op, min, max) {
   const fmt = v => (v != null ? v.toLocaleString() : "");
   switch (op) {
     case "contains":
-      // Single threshold: show the full possible range as orientation.
       if (thresholdNumber === 1 && min != null && max != null) {
         return min === max ? fmt(min) : fmt(min) + " \u2013 " + fmt(max);
       }
@@ -121,25 +104,20 @@ let DropdownInterval = function (initialVnode) {
   let _lastHistogramKey = "";
 
   function redrawHistogram() {
-    const fd = Checklist.filter.data[dataPath];
-    const key = JSON.stringify([
-      (fd.possible || []).length,
-      actualOperation,
-      thresholdState.actualThresholds,
-    ]);
+    const fd  = Checklist.filter.data[dataPath];
+    const key = JSON.stringify([(fd.possible || []).length, actualOperation, thresholdState.actualThresholds]);
     if (key === _lastHistogramKey) return;
     _lastHistogramKey = key;
     window.setTimeout(() => {
-      const allPairs = fd.possible || [];
-      drawIntervalHistogram(dropdownId, allPairs, getFilteredPairs());
+      drawIntervalHistogram(dropdownId, fd.possible || [], getFilteredPairs());
     }, 0);
   }
 
   return {
     oninit(vnode) {
       dataPath = vnode.attrs.dataPath;
-      const fd     = Checklist.filter.data[dataPath];
-      const saved  = fd.numeric.operation;
+      const fd    = Checklist.filter.data[dataPath];
+      const saved = fd.numeric.operation;
       thresholdState.initialThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
       thresholdState.actualThresholds  = [null, fd.numeric.threshold1, fd.numeric.threshold2];
       actualOperation = intervalFilterOperations.includes(saved) ? saved : "contains";
@@ -221,20 +199,8 @@ let DropdownInterval = function (initialVnode) {
           : t("numeric_apply_show_results", [countResults()])
         ),
 
-        // Histogram
-        m(".histogram-wrap", [
-          m(".histogram#histogram_" + dropdownId, {
-            onclick(e) {
-              this.classList.toggle("fullscreen");
-              this.getElementsByTagName("svg")[0]?.classList.toggle("clickable");
-              e.preventDefault(); e.stopPropagation();
-            },
-          }),
-          m(".legend", [
-            m(".legend-item", [m(".map-fill[style=background-color: #d3d3d3]"),                                     m(".map-legend-title", t("histogram_all_data"))]),
-            m(".legend-item", [m(".map-fill[style=background-color: " + Checklist.getThemeHsl("light") + "]"),     m(".map-legend-title", t("histogram_displayed_data"))]),
-          ]),
-        ]),
+        // Histogram (shared renderHistogramWrap replaces 12-line inline block)
+        renderHistogramWrap(dropdownId),
 
         // Stats
         m("ul.stats", [
@@ -294,7 +260,6 @@ export const filterPluginInterval = {
     );
   },
 
-  // ── Lifecycle ──────────────────────────────────────────────────────
   createFilterDef() {
     return {
       type: "interval",
