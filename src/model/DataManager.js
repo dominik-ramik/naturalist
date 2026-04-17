@@ -1,5 +1,6 @@
 import Handlebars from "handlebars";
 import { TinyBibReader } from 'bibtex-json-toolbox';
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import {
   absoluteUsercontent,

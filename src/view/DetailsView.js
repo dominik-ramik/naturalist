@@ -21,11 +21,18 @@ import { TabMedia } from "./detailsTabs/TabMedia.js";
 
 registerMessages(selfKey, {
   en: {
-    tab_title_summary: 'Summary'
+    tab_title_summary: 'Summary',
+    tab_title_media: "Media",
+    tab_title_text: "Text",
+    tab_title_externalsearch: "Search online",
+    tab_title_map: "Map",
   },
   fr: {
-    tab_title_summary: 'Sommaire'
-
+    tab_title_summary: 'Sommaire',
+    tab_title_media: "Média",
+    tab_title_text: "Texte",
+    tab_title_externalsearch: "Recherche en ligne",
+    tab_title_map: "Carte",
   }
 });
 

@@ -3,6 +3,7 @@ import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { dataCustomTypes } from "./customTypes/index.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "./nlDataStructureSheets.js";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 export let Settings = {
   // Full-text search OR separator symbol
@@ -460,7 +461,12 @@ getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
     );
   }
 
-  return formatList(names);
+  const result = formatList(names);
+  if (!result) {
+    const scope = pinnedScope || Settings.analyticalIntent();
+    return scope === ANALYTICAL_INTENT_OCCURRENCE ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
+  }
+  return result;
 },
     isCurrentSearchPinned: function () {
       return this.getAll().some(function (pinnedItem) {

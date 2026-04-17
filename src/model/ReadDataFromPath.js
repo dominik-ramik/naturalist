@@ -2,6 +2,7 @@ import { helpers } from "./customTypes/helpers.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { dataPath } from "./DataPath.js";
 import { Logger } from "../components/Logger.js";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 const data = nlDataStructure;
 

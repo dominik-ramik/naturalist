@@ -10,6 +10,25 @@ import { ConfigurationDialog } from "./ConfigurationDialog.js";
 import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    back_to_search: "Back to search",
+    menu: "Menu",
+    about_this: "About this project",
+    literature: "References",
+    documentation: "Documentation",
+    about_nl: "About NaturaList app",
+      "manage": "Manage",
+  },
+  fr: {
+    back_to_search: "Retour à la recherche",
+    menu: "Menu",
+    about_this: "À propos de ce projet",
+    literature: "Références",
+    documentation: "Documentation",
+    about_nl: "À propos de l'application NaturaList",
+  }
+});
 
 export let MenuStripView = {
   menuOpen: false,
@@ -389,12 +408,6 @@ function backButton() {
     {
       onclick: function () {
         routeTo("/checklist");
-        return;
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          routeTo("/checklist");
-        }
       },
     },
     Checklist._isDataReady

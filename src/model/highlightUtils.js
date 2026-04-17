@@ -1,5 +1,4 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 /**
  * Normalise a string for accent- and case-insensitive matching,

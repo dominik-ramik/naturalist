@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx-js-style";
 import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";
 import { Logger } from "./Logger.js";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 // =============================================================================
 // HELPER FUNCTIONS (Stateless / Pure)
