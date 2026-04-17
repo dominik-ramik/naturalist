@@ -31,60 +31,27 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
     "Bibliography": { "Value": 480 },
   };
 
-  // --- Helper: Get Data Map from various sources ---
+  // --- Helper: Get Data from new row-based templateData ---
   function getTableData(table, tableKey) {
-    const colKeys = Object.keys(table.columns);
-
+    const colKeys = Object.keys(table.columns || {});
+    
     // 1. Build Headers
     const headers = colKeys.map(k => table.columns[k].name);
 
-    // 2. Collect Data
-    const dataMap = {};
-    let maxRows = 0;
-
-    // Source A: Column Definitions (Standard)
-    colKeys.forEach((colKey) => {
-      const colDef = table.columns[colKey];
-      if (colDef.templateData && Array.isArray(colDef.templateData)) {
-        dataMap[colDef.name] = colDef.templateData;
-      }
-    });
-
-    // Source B: common.languages.templateData (Specific Override)
-    if (tableKey === 'supportedLanguages' && nlDataStructure.common?.languages?.templateData) {
-      const commonData = nlDataStructure.common.languages.templateData;
-      commonData.forEach(item => {
-        // Handle [{columnName: "X", templateData: [...]}] format
-        if (item.columnName && Array.isArray(item.templateData)) {
-          dataMap[item.columnName] = item.templateData;
-        }
-        // Handle loose format from snippet [{ "Code": "en", "Name": ["Eng"] }]
-        else {
-          Object.keys(item).forEach(key => {
-            const val = item[key];
-            // If value is scalar, wrap in array; if array, use as is
-            dataMap[key] = Array.isArray(val) ? val : [val];
-          });
-        }
-      });
-    }
-
-    // Determine max rows from the aggregated map
-    Object.values(dataMap).forEach(arr => {
-      if (arr.length > maxRows) maxRows = arr.length;
-    });
-
-    // 3. Build Rows
+    // 2. Build Rows
     const rows = [headers]; // Row 0 is headers
 
-    if (!completelyBlank) {
-      for (let i = 0; i < maxRows; i++) {
+    if (!completelyBlank && table.templateData && Array.isArray(table.templateData)) {
+      table.templateData.forEach((rowObj) => {
         const row = colKeys.map(k => {
+          // Fallback check for property key (k) or explicit column name string
           const colName = table.columns[k].name;
-          return dataMap[colName] && dataMap[colName][i] !== undefined ? dataMap[colName][i] : "";
+          if (rowObj[k] !== undefined) return rowObj[k];
+          if (rowObj[colName] !== undefined) return rowObj[colName];
+          return "";
         });
         rows.push(row);
-      }
+      });
     }
 
     return rows;
@@ -120,9 +87,10 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
     const taxaTable = nlDataStructure.sheets.content?.tables?.taxa;
     const customTable = nlDataStructure.sheets.content?.tables?.customDataDefinition;
 
+    // Retrieve headers directly from the new row objects
     const getDefinedHeaders = (table) => {
-      if (table?.columns?.columnName?.templateData) {
-        return table.columns.columnName.templateData;
+      if (table?.templateData && Array.isArray(table.templateData)) {
+        return table.templateData.map(row => row.columnName).filter(Boolean);
       }
       return [];
     };
@@ -132,19 +100,16 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
     let headerKeys = [...taxaHeaders, ...customHeaders];
 
     const checklistDataConfig = nlDataStructure.sheets.checklist?.templateData || [];
-    const dataMap = {};
 
-    checklistDataConfig.forEach(item => {
-      dataMap[item.columnName] = item.templateData;
-      if (!headerKeys.includes(item.columnName)) {
-        if (headerKeys.length === 0) headerKeys.push(item.columnName);
-      }
-    });
+    // If checklist data exists but headers aren't caught above, grab keys from the first checklist row
+    if (checklistDataConfig.length > 0 && headerKeys.length === 0) {
+      headerKeys = Object.keys(checklistDataConfig[0]);
+    }
 
     const sheetData = [];
     const blankMessageA1 = "Your data will go into this sheet";
     const blankMessageA2 = "Configure the nl_content and nl_appearance sheets following the documentation on naturalist.netlify.app";
-    const blankMessageA4 = "https://naturalist.netlify.app"
+    const blankMessageA4 = "https://naturalist.netlify.app";
 
     // When completelyBlank is requested, put a helpful placeholder into A1
     if (completelyBlank) {
@@ -158,19 +123,17 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
 
     if (!completelyBlank && headerKeys.length > 0) {
       sheetData.push(headerKeys);
-      let maxRows = 0;
-      Object.values(dataMap).forEach(arr => {
-        if (arr && arr.length > maxRows) maxRows = arr.length;
-      });
-
-      for (let i = 0; i < maxRows; i++) {
+      
+      // Iterate over the row array directly
+      checklistDataConfig.forEach((rowObj) => {
         const row = headerKeys.map(header => {
-          if (dataMap[header]) return dataMap[header][i];
-          if (header === "Species" && dataMap["Species.name"]) return dataMap["Species.name"][i];
+          if (rowObj[header] !== undefined) return rowObj[header];
+          // Legacy mapping support for "Species.name" if needed
+          if (header === "Species" && rowObj["Species.name"] !== undefined) return rowObj["Species.name"];
           return "";
         });
         sheetData.push(row);
-      }
+      });
     }
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -206,7 +169,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
 
     Object.keys(tables).forEach(tableKey => {
       const table = tables[tableKey];
-      // Pass tableKey to help identify supportedLanguages
+      // Pass tableKey to help identify (no longer needs special support but passed for consistency)
       const tableRows = getTableData(table, tableKey);
       const tableColWidths = calculateColumnWidths(table.name, tableRows);
 
