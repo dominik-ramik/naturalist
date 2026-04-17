@@ -675,7 +675,7 @@ export let DataManager = function () {
           } else {
             target = rawTarget;
           }
-          
+
           const images = row.images || "";
 
           // Validate row completeness
@@ -1334,7 +1334,12 @@ export let DataManager = function () {
     // Sort raw checklist rows by taxa columns so the spreadsheet does not need
     // to be manually ordered. Uses a stable sort so rows sharing the same full
     // taxon path keep their original relative position.
-    table = sortRawChecklistByTaxa(table, taxonColumnInfos, data.common.languages.defaultLanguageCode);
+    table = sortRawChecklistByTaxa(
+      table,
+      taxonColumnInfos,
+      data.common.languages.defaultLanguageCode,
+      data.sheets.content.tables.taxa.data[data.common.languages.defaultLanguageCode] || []
+    );
 
     data.sheets.checklist.rawHeaders = table[0].map(h => (h || "").toString().toLowerCase());
     data.sheets.checklist.rawRows = table.slice(1);
@@ -1968,7 +1973,7 @@ export let DataManager = function () {
       }
       return false;
     });
-    if(dataSheetsNames.length == 0){
+    if (dataSheetsNames.length == 0) {
       dataSheetsNames = ["checklist"]; // default value
     }
     data.sheets.checklist.sheetsNames = dataSheetsNames;
@@ -2301,12 +2306,12 @@ export let DataManager = function () {
 
       const result = await compileDwcArchive({
         dwcTableRows,
-        compiledTree:      compiledChecklistCache,
-        taxaColumnDefs:    data.sheets.content.tables.taxa.data[defaultLangCode],
+        compiledTree: compiledChecklistCache,
+        taxaColumnDefs: data.sheets.content.tables.taxa.data[defaultLangCode],
         customizationData: data.sheets.appearance.tables.customization.data[defaultLangCode],
         cddRows,
-        checklistHeaders:  data.sheets.checklist.rawHeaders,
-        checklistRawRows:  data.sheets.checklist.rawRows,
+        checklistHeaders: data.sheets.checklist.rawHeaders,
+        checklistRawRows: data.sheets.checklist.rawRows,
         defaultLangCode,
         resolveMediaSource,
       });
@@ -2427,20 +2432,25 @@ function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, ass
  * so the display layer receives rows grouped by shared ancestry regardless of
  * how the source spreadsheet was ordered.
  *
- * Rules:
- *  - Sort is performed only on data rows (index 1+); the header row is untouched.
- *  - Comparison is case-insensitive.
+ * Rules per level:
+ *  - "alphabet" (default/empty): sort alphabetically by taxon name (case-insensitive).
+ *  - "as is": sort by first-occurrence position in the *original* row order,
+ *    so whatever sequence the user laid out in the spreadsheet is respected while
+ *    still guaranteeing that all rows with the same value at this level are
+ *    contiguous (required by the view layer).
  *  - An empty taxon cell sorts BEFORE a filled one (empty = "taxon ends here").
  *  - Rows whose entire compared taxon path is equal retain their original order
  *    (JavaScript's Array.sort is stable since ES2019 / all modern engines).
  *
- * @param {any[][]} table       - Full raw table including header row at index 0.
+ * @param {any[][]}  table            - Full raw table including header row at index 0.
  * @param {Object[]} taxonColumnInfos - Taxon column infos in declaration order,
  *                                     each with a `.name` property.
- * @param {string}  defaultLangCode  - Used for language-suffixed column fallback.
+ * @param {string}   defaultLangCode  - Used for language-suffixed column fallback.
+ * @param {Object[]} taxaTableData    - Rows from data.sheets.content.tables.taxa.data[langCode],
+ *                                     each with `.columnName` and `.orderBy`.
  * @returns {any[][]} New table array with the same header row and sorted data rows.
  */
-function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
+function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode, taxaTableData) {
   if (table.length <= 2 || taxonColumnInfos.length === 0) {
     return table; // Nothing meaningful to sort
   }
@@ -2483,12 +2493,39 @@ function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
     return pipeIdx >= 0 ? s.substring(0, pipeIdx).trim() : s;
   }
 
+  // Build a lookup: columnName (lowercase) → orderBy value
+  const orderByMap = {};
+  (taxaTableData || []).forEach(function (row) {
+    if (row.columnName) {
+      orderByMap[row.columnName.toLowerCase()] = (row.orderBy || "").trim().toLowerCase();
+    }
+  });
+
   // Pre-compute header indices for all taxon columns once
   const taxonHeaderIndices = taxonColumnInfos.map(info =>
     resolveTaxonNameIndex(info.name)
   );
 
   const dataRows = table.slice(1);
+
+  // For each "as is" level, build a Map<normalised-name → first-occurrence-rank>
+  // by scanning the *original* row order.
+  const asIsRankMaps = taxonColumnInfos.map(function (info, i) {
+    const orderBy = orderByMap[info.name.toLowerCase()] || "alphabet";
+    if (orderBy !== "as is") return null; // not needed for alphabet levels
+
+    const colIdx = taxonHeaderIndices[i];
+    if (colIdx < 0) return null;
+
+    const rankMap = new Map(); // name (lowercased) → first-occurrence index
+    dataRows.forEach(function (row) {
+      const name = extractTaxonName(row[colIdx]).toLowerCase();
+      if (name !== "" && !rankMap.has(name)) {
+        rankMap.set(name, rankMap.size);
+      }
+    });
+    return rankMap;
+  });
 
   dataRows.sort((a, b) => {
     for (let i = 0; i < taxonHeaderIndices.length; i++) {
@@ -2503,8 +2540,18 @@ function sortRawChecklistByTaxa(table, taxonColumnInfos, defaultLangCode) {
       if (aName !== "" && bName === "") return 1;
       if (aName === "" && bName === "") continue; // both empty – check next column
 
-      const cmp = aName.localeCompare(bName, undefined, { sensitivity: "base" });
-      if (cmp !== 0) return cmp;
+      const orderBy = orderByMap[taxonColumnInfos[i].name.toLowerCase()] || "alphabet";
+
+      if (orderBy === "as is") {
+        const rankMap = asIsRankMaps[i];
+        const aRank = rankMap ? (rankMap.get(aName.toLowerCase()) ?? Infinity) : Infinity;
+        const bRank = rankMap ? (rankMap.get(bName.toLowerCase()) ?? Infinity) : Infinity;
+        if (aRank !== bRank) return aRank - bRank;
+      } else {
+        // Default: alphabetical
+        const cmp = aName.localeCompare(bName, undefined, { sensitivity: "base" });
+        if (cmp !== 0) return cmp;
+      }
     }
     return 0; // identical taxon path → preserve original order (stable sort)
   });
