@@ -116,7 +116,7 @@ render: function (data, uiContext) {
     ]);
   }
 
-  // Standard path — delegate to ClickableTaxonName which handles its own
+  // Standard path - delegate to ClickableTaxonName which handles its own
   // filter.text highlight via filterMatches in ClickableTaxonNameView.
   if (data && data.taxonTree && data.taxonTree.taxon) {
     return m(ClickableTaxonName, {

@@ -45,7 +45,7 @@ export const config = {
     light: './img/ui/menu/view_map-light.svg',
     dark:  './img/ui/menu/view_map.svg',
   },
-  info: 'Aggregate regional distribution across filtered records — count presences, compare categories, or compute numeric statistics per region',
+  info: 'Aggregate regional distribution across filtered records - count presences, compare categories, or compute numeric statistics per region',
   getTaxaAlongsideOccurrences: false,
 
   getAvailability: (availableIntents) => {

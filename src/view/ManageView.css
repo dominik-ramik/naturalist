@@ -508,7 +508,7 @@
    Log Group (collapsible)
    ========================================================================== */
 
-/* Outer wrapper — provides the bottom separator between groups */
+/* Outer wrapper - provides the bottom separator between groups */
 .manage-log-group {
   border-bottom: 1px solid #ddd;
 }
@@ -534,7 +534,7 @@
   filter: brightness(0.95);
 }
 
-/* Severity-tinted header backgrounds — mirrors the flat item colours */
+/* Severity-tinted header backgrounds - mirrors the flat item colours */
 .manage-log-group.critical>.manage-log-group-header {
   background-color: #ffebee;
   color: #c62828;
@@ -564,7 +564,7 @@
   opacity: 0.75;
 }
 
-/* Group title text — takes remaining width */
+/* Group title text - takes remaining width */
 .manage-log-group-title {
   flex: 1;
 }
@@ -576,7 +576,7 @@
   align-items: center;
 }
 
-/* Group body — contains the individual child log items */
+/* Group body - contains the individual child log items */
 .manage-log-group-body {
   /* Subtle left border ties the items visually to their parent group */
   border-left: 3px solid rgba(0, 0, 0, 0.08);

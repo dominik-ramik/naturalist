@@ -115,7 +115,7 @@ export function filterTerminalLeaves(nodes) {
  *
  * In "occurrence" mode: returns only rows that are actual occurrences
  * (i.e. t[occurrenceMetaIndex] is non-null). Taxa without any occurrences
- * are excluded entirely — this is intentional and should be communicated
+ * are excluded entirely - this is intentional and should be communicated
  * in the UI.
  *
  * @param {Array} nodes - The flat filtered taxa array from the filter engine.
@@ -436,10 +436,10 @@ export function indexOfCaseInsensitive(haystack, needle) {
 /**
  * Extract the unit string from a {{unit ...}} Handlebars template.
  * Handles all syntax variants:
- *   {{unit "m"}}                  — implicit
- *   {{unit myField "m"}}          — explicit
- *   {{unit "kg" "exact"}}         — implicit, exact mode
- *   {{unit myField "kg" "exact"}} — explicit, exact mode
+ *   {{unit "m"}}                  - implicit
+ *   {{unit myField "m"}}          - explicit
+ *   {{unit "kg" "exact"}}         - implicit, exact mode
+ *   {{unit myField "kg" "exact"}} - explicit, exact mode
  * Returns null if the template doesn't use the unit helper.
  */
 export function getUnitFromTemplate(meta) {
@@ -516,7 +516,7 @@ export function filterMatches(data) {
     }
   }
 
-  // Check taxa filter selections — highlight the taxon name when it is
+  // Check taxa filter selections - highlight the taxon name when it is
   // directly selected in any active taxa filter (e.g. genus "Ficus" selected).
   const taxaFilter = Checklist.filter?.taxa;
   if (taxaFilter) {

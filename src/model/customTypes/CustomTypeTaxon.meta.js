@@ -15,12 +15,12 @@ export const customTypeTaxonMeta = {
         example: { columns: ["basionym.name", "basionym.authority"], rows: [["Rana aurea", "Lesson, 1829"]] },
       },
       {
-        label:  "Single column — pipe-separated",
+        label:  "Single column - pipe-separated",
         syntax: "`Name|Authority` in one cell.",
         example: { columns: ["basionym"], rows: [["Rana aurea|Lesson, 1829"]] },
       },
       {
-        label:  "Single column — name only",
+        label:  "Single column - name only",
         syntax: "Just the taxon name, with an optional separate `<columnname>.authority` column.",
         example: { columns: ["basionym"], rows: [["Rana aurea"]] },
       },

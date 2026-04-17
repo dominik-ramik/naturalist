@@ -2,17 +2,17 @@
  * MapregionsColorEngine
  *
  * Pure, stateless functions for resolving mapregions display properties.
- * No framework or app-state dependencies — safe to import anywhere.
+ * No framework or app-state dependencies - safe to import anywhere.
  *
  * Dataset semantics (per spec §4.6):
  *   For A2/A3/A4/A5 anchors the "dataset" is the numeric values present in
- *   the CURRENT TAXON's mapregions object for the given column — not the
+ *   the CURRENT TAXON's mapregions object for the given column - not the
  *   filtered checklist.  Each taxon therefore carries its own independent
  *   colour scale, which means:
  *     - Individual map-card display:  always per-taxon stats (no filter dependency)
  *     - Filter _checkDataFilters:     also per-taxon stats (avoids circular ref)
  *     - TabSummary aggregate view:    aggregate values across the scope rows
- *     - RegionalDistribution tool:    deferred — uses its own count-based pipeline
+ *     - RegionalDistribution tool:    deferred - uses its own count-based pipeline
  */
 
 // ─── Numeric value parsing ────────────────────────────────────────────────────
@@ -43,24 +43,24 @@ export function parseAnchorNotation(str) {
   if (!str) return null;
   str = str.trim();
 
-  // A5 — must be tested before A4/A2 because it contains 's' or '%' followed by 'c'
+  // A5 - must be tested before A4/A2 because it contains 's' or '%' followed by 'c'
   // Syntax: magnitude[%|s]cCenter  e.g. "-100%c0", "2sc28", "0c28", "-5c10"
   const a5 = str.match(new RegExp(`^${_NUM}(%|s)?c${_NUM}$`));
   if (a5) return { type: 'A5', magnitude: +a5[1], modifier: a5[2] || null, center: +a5[3] };
 
-  // A4 — number followed by 's'
+  // A4 - number followed by 's'
   const a4 = str.match(new RegExp(`^${_NUM}s$`));
   if (a4) return { type: 'A4', sigmas: +a4[1] };
 
-  // A3 — number followed by 'p'
+  // A3 - number followed by 'p'
   const a3 = str.match(new RegExp(`^${_NUM}p$`));
   if (a3) return { type: 'A3', percentile: +a3[1] };
 
-  // A2 — number followed by '%'
+  // A2 - number followed by '%'
   const a2 = str.match(new RegExp(`^${_NUM}%$`));
   if (a2) return { type: 'A2', pct: +a2[1] };
 
-  // A1 — plain number (no suffix)
+  // A1 - plain number (no suffix)
   const a1 = str.match(new RegExp(`^${_NUM}$`));
   if (a1) return { type: 'A1', value: +a1[1] };
 
@@ -77,7 +77,7 @@ export function parseAnchorNotation(str) {
  *
  * Column-name scoping: rows with a matching columnName take priority over global
  * rows (empty columnName).  The compound key (columnName + statusCode) is unique
- * per spec, so there is never a real conflict — we simply include both sets.
+ * per spec, so there is never a real conflict - we simply include both sets.
  */
 export function parseLegendConfig(rows, dataPath) {
   const applicable = rows.filter(r => !r.columnName || r.columnName === dataPath);
@@ -259,7 +259,7 @@ function labToHex(L, a, b) {
 
 /**
  * Interpolate between two hex colours in CIE Lab space.
- * Produces perceptually smooth gradients — red→blue goes through pale lavender
+ * Produces perceptually smooth gradients - red→blue goes through pale lavender
  * rather than muddy brown/grey.
  */
 function interpolateColor(hex1, hex2, t) {
@@ -278,19 +278,19 @@ function interpolateColor(hex1, hex2, t) {
  *
  * Evaluation order (per spec):
  *   1. Exact categorical match
- *   2. Numeric interpolation (gradient) or binning (stepped) — requires ≥2 anchors
+ *   2. Numeric interpolation (gradient) or binning (stepped) - requires ≥2 anchors
  *   3. Fallback (empty statusCode category row)
  */
 export function resolveRegionColor(statusStr, legendConfig, datasetStats) {
   const { categoryRows, numericRows, fallbackRow, numericMode } = legendConfig;
 
-  // 1. Categorical — checked first even if the string looks numeric
+  // 1. Categorical - checked first even if the string looks numeric
   const cat = legendConfig.categoryStatusMap.get(statusStr);
   if (cat) {
     return { fill: cat.fill, legend: cat.legend, appendedLegend: cat.appendedLegend, resolvedAs: 'category' };
   }
 
-  // 2. Numeric — requires ≥2 resolved anchors and valid dataset stats
+  // 2. Numeric - requires ≥2 resolved anchors and valid dataset stats
   if (numericRows.length >= 2 && datasetStats) {
     const value = parseNumericStatus(statusStr);
     if (value !== null) {
@@ -354,7 +354,7 @@ function _legendResult(anchor) {
 /**
  * Return a CSS linear-gradient string for the gradient ramp display.
  * Stop positions are proportional to resolved anchor values.
- * Uses direct anchor colours — Lab interpolation happens in the engine for
+ * Uses direct anchor colours - Lab interpolation happens in the engine for
  * individual values; the CSS ramp uses the anchor hex stops directly.
  */
 export function gradientCSSForConfig(numericRows, datasetStats) {

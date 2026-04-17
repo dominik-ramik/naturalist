@@ -1,7 +1,7 @@
 /*
  * FilterCrumbsView.css
  *
- * Scope: FilterCrumbsView.js only — the crumb strip and individual crumb pills.
+ * Scope: FilterCrumbsView.js only - the crumb strip and individual crumb pills.
  *
  * The .crumb--status-filter modifier and .filter-value--status are used when
  * a mapregions status-filter crumb is rendered alongside normal region crumbs.
@@ -109,7 +109,7 @@
   margin-left: var(--pad-large);
 }
 
-/* Override the hide-on-hover for the reset crumb — its text stays visible. */
+/* Override the hide-on-hover for the reset crumb - its text stays visible. */
 .filter-crumbs .crumb.reset-filter:hover .crumb-text {
   visibility: visible;
 }

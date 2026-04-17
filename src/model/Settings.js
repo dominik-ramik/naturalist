@@ -143,7 +143,7 @@ export let Settings = {
     categoryChartShowEmptyColumns: function (data) {
     if (data === undefined) {
       const value = window.localStorage.getItem("categoryChartShowEmptyColumns");
-      // Default true — show all columns out of the box
+      // Default true - show all columns out of the box
       return value === null ? true : value === "true";
     } else {
       window.localStorage.setItem("categoryChartShowEmptyColumns", String(data));
@@ -402,7 +402,7 @@ getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
     itemObject = JSON.parse(Checklist.queryKey());
   }
 
-  // Strip tool/scope keys — only the filter portion matters here
+  // Strip tool/scope keys - only the filter portion matters here
   const { v: _v, s: pinnedScope, ...filterPart } = itemObject;
   itemObject = filterPart;
 

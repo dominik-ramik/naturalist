@@ -12,7 +12,7 @@
     /* clips image to card corners */
 }
 
-/* The image-wrap sits flush at the top — no padding, no gap */
+/* The image-wrap sits flush at the top - no padding, no gap */
 .media-map-card .image-wrap {
     display: block;
     border-radius: 0;
@@ -20,13 +20,13 @@
     cursor: zoom-in;
 }
 
-/* Positioning context for the expand hint — only when not fullscreen,
+/* Positioning context for the expand hint - only when not fullscreen,
    so that .fullscreenable-image.fullscreen's position:absolute is not overridden */
 .media-map-card .image-wrap:not(.fullscreen) {
     position: relative;
 }
 
-/* Expand hint icon — bottom-right corner, mirrors RegionalDistribution chrome */
+/* Expand hint icon - bottom-right corner, mirrors RegionalDistribution chrome */
 .media-map-card .image-wrap:not(.fullscreen)::after {
     content: "⛶";
     position: absolute;
@@ -55,7 +55,7 @@
 }
 
 /* ==========================================================================
-   Data Table — flush footer section of the card (no standalone chrome)
+   Data Table - flush footer section of the card (no standalone chrome)
    ========================================================================== */
 
 .map-data-table-wrap {
@@ -195,7 +195,7 @@
     box-sizing: border-box; /* prevent border from exceeding container width */
 }
 
-/* ── Tick marks — shared base ── */
+/* ── Tick marks - shared base ── */
 .map-gradient-tick {
     position: absolute;
     width: 1px;
@@ -269,7 +269,7 @@
     }
 }
 /* ==========================================================================
-   Data Table — per-cell annotation (stepped actual value)
+   Data Table - per-cell annotation (stepped actual value)
    ========================================================================== */
 
 .map-data-table-value-actual {

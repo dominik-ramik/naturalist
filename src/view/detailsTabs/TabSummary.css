@@ -1,5 +1,5 @@
 /*
- * TabSummary.css — Summary tab perspectives
+ * TabSummary.css - Summary tab perspectives
  * ~480 px wide panel, vertically scrollable.
  * Follows the app card aesthetic (ManageView / SingleAccessKeyView).
  *
@@ -154,7 +154,7 @@
   color: #555;
 }
 
-/* Descendant count (large, prominent — it is the key datum in taxonomy view) */
+/* Descendant count (large, prominent - it is the key datum in taxonomy view) */
 .sp-level-name--count {
   font-size: 0.85em;
   font-weight: 700;

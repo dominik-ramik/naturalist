@@ -1,5 +1,5 @@
 /**
- * filterPluginText — handles filter UI for "text", "category", and "taxa" filter types.
+ * filterPluginText - handles filter UI for "text", "category", and "taxa" filter types.
  *
  * All three share the same checklist UI: a searchable list of checked / unchecked /
  * inactive items.  Supports three Match Modes (Any / All / Exclude) via MatchModeToggle.
@@ -168,7 +168,7 @@ export const filterPluginText = {
   },
 
   /**
-   * Serialization — matchMode is appended as "mm" only when it deviates from
+   * Serialization - matchMode is appended as "mm" only when it deviates from
    * the default ("any"), keeping standard URLs clean and backward-compatible.
    */
   serializeToQuery(fd) {
@@ -192,7 +192,7 @@ export const filterPluginText = {
   },
 
   /**
-   * Phase 4 — core matching.
+   * Phase 4 - core matching.
    *
    * ANY (default): pass if leafValues contains ≥1 selected item.
    * ALL:           pass only if leafValues contains every selected item.

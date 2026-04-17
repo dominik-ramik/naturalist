@@ -8,7 +8,7 @@ mark.search-highlight {
 }
 
 
-/* Badge category filter hit — left-border accent since m.trust prevents
+/* Badge category filter hit - left-border accent since m.trust prevents
    vnode injection into the generated span string */
 span.category.search-highlight-field {
   border: 3px solid #e6a817 !important;

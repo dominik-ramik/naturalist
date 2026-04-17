@@ -92,7 +92,7 @@ export let Filter = {
 
     // Identify the occurrence taxa level once so per-row entity checks are O(1).
     // When occurrenceMetaIndex === -1 the dataset has no occurrences and entity
-    // separation is a no-op — all rows are taxon rows and counts are unambiguous.
+    // separation is a no-op - all rows are taxon rows and counts are unambiguous.
     const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
     const hasOccurrenceLevel  = occurrenceMetaIndex !== -1;
 
@@ -130,7 +130,7 @@ export let Filter = {
         // Entity separation for data-filter slots: accumulate each slot only
         // from rows of the matching entity type.  After the DataManager
         // cross-entity check, taxon rows carry no occurrence data and vice versa,
-        // so the null-value guard below would already silence most bleed — but
+        // so the null-value guard below would already silence most bleed - but
         // the explicit check here is faster and makes the intent unambiguous.
         if (hasOccurrenceLevel) {
           const belongsTo = Filter.data[path].belongsTo || "taxon";
@@ -154,7 +154,7 @@ export let Filter = {
     });
   },
 
-  // NOTE: one deliberate type-check remains — interval preview needs pair-aware
+  // NOTE: one deliberate type-check remains - interval preview needs pair-aware
   // accumulation. Candidate for plugin.getPreviewAccumulator() in a future pass.
   queryKey: function (excludedFilterKey = "") {
     const key = { taxa: {}, data: {} };
@@ -306,7 +306,7 @@ export let Filter = {
           if (req.filter.matchMode === "exclude") {
             // Ancestors (taxonValue === null) pass: they don't carry the excluded value.
             // Phase 6 fast-fail is not applied to taxa because null means "ancestor node",
-            // not "missing data" — ancestors are valid biological entities that should remain
+            // not "missing data" - ancestors are valid biological entities that should remain
             // visible alongside their non-excluded descendants.
             passed = taxonValue === null || !req.filter.selected.includes(taxonValue);
           } else {

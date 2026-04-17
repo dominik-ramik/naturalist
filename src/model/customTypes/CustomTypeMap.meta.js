@@ -15,7 +15,7 @@ export const customTypeMapMeta = {
         example: { columns: ["rangemap.source", "rangemap.title"], rows: [["maps/litoria_range.png", "Known range"]] },
       },
       {
-        label:  "Single column — pipe-separated",
+        label:  "Single column - pipe-separated",
         syntax: "`source|title` in one cell.",
         example: { columns: ["rangemap"], rows: [["maps/litoria_range.png|Known range"]] },
       },

@@ -1,5 +1,5 @@
 /**
- * filterPluginDate — filter UI for the "date" data type.
+ * filterPluginDate - filter UI for the "date" data type.
  *
  * Mirrors filterPluginNumber in structure (list mode + operator mode) but uses
  * native date inputs and dayjs for threshold parsing and display.
@@ -319,7 +319,7 @@ let DropdownDate = function (initialVnode) {
               : t("numeric_apply_show_results", [countResults()]))
           : null,
 
-        // Stats — always rendered, always show the preview (full possible) range.
+        // Stats - always rendered, always show the preview (full possible) range.
         // Shown in both list mode and operator mode so the date range context is
         // never hidden regardless of which mode or threshold state the user is in.
         m("ul.stats", [

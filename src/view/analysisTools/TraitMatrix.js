@@ -50,7 +50,7 @@ export const getAvailableTraits = (intent, checklistData) => {
   );
 };
 
-// Counts first — absolute numbers are universally understandable as a starting point.
+// Counts first - absolute numbers are universally understandable as a starting point.
 const displayStyles = [
   { name: t("view_cat_percentages_name"), method: "percentages" },
   { name: t("view_cat_counts_name"), method: "counts" },
@@ -775,10 +775,10 @@ function categoryChart(filteredTaxa) {
         : null,
     ]),
 
-    // Living panel — once a trait is selected ────────────────────────────────
+    // Living panel - once a trait is selected ────────────────────────────────
     categoryToView !== "" ? renderLivingPanel(rowDimLabel, colTraitName, unit) : null,
 
-    // Refine strip — once a trait is selected ────────────────────────────────
+    // Refine strip - once a trait is selected ────────────────────────────────
     categoryToView !== "" ? m(".tm-refine-strip", [
 
       m(".tm-refine-row", [
@@ -795,7 +795,7 @@ function categoryChart(filteredTaxa) {
         ),
       ]),
 
-      // "Compare within each" — always visible; disables (greyed) in counts mode
+      // "Compare within each" - always visible; disables (greyed) in counts mode
       // because in counts mode sumMethod has no effect on the numbers displayed,
       // but it still affects heatmap intensity so we grey rather than hide.
       m(".tm-refine-row", [
@@ -926,7 +926,7 @@ function categoryChart(filteredTaxa) {
           onclick: () => { currentCellVerb = verbContent; },
         }, m("span", numericDisplay(row.categories[cKey], toPctString(ratio))));
       }
-      return m("td.category-cell-empty", "—");
+      return m("td.category-cell-empty", "-");
     });
 
     return m("tr", [leftCell, ...dataCells]);

@@ -6,18 +6,18 @@ export const customTypeMarkdownMeta = {
   filterMeta: filterMetaText,
   meta: {
     summary:                  "Markdown-formatted rich text. Renders headings, bold, italic, lists, links, images, blockquotes, code, and bibliography `@citekey` references.",
-    whenToUse:                "Long descriptions, field notes, habitat descriptions, species accounts — any text requiring rich formatting or external links.",
+    whenToUse:                "Long descriptions, field notes, habitat descriptions, species accounts - any text requiring rich formatting or external links.",
     behaviorFulltextIndexing: "Markdown syntax is stripped and plain text is indexed. Link text and image alt-text are preserved; formatting markers are removed.",
     detailsPaneTab:           "Text",
     inputFormats: [
       {
-        label:  "Single cell — inline Markdown",
+        label:  "Single cell - inline Markdown",
         syntax: "Any valid Markdown string. Bibliography `@citekey` references and database shortcodes `@code:ID` are also processed.",
         example: { columns: ["description"], rows: [["A **large** green tree frog. See [@smith2020]."], ["F:species_notes/litoria.md"]] },
       },
       {
         label:  "F-directive (external file)",
-        syntax: "`F:path/to/file.md` — the file is fetched from `usercontent/` at compile time and its content is substituted.",
+        syntax: "`F:path/to/file.md` - the file is fetched from `usercontent/` at compile time and its content is substituted.",
         example: null,
       },
     ],

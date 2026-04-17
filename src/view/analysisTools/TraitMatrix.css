@@ -199,7 +199,7 @@
 
 /* ==========================================================================
    Outer wrapper
-   flex column — panel is flex-shrink:0, table takes all remaining space.
+   flex column - panel is flex-shrink:0, table takes all remaining space.
    ========================================================================== */
 .category-chart-outer-wrapper {
   display: flex;
@@ -238,7 +238,7 @@
   min-height: 0;
 }
 
-/* NO top padding — sticky header must sit flush at top:0. */
+/* NO top padding - sticky header must sit flush at top:0. */
 .table-scroll-area {
   flex: 1;
   min-width: 0;
@@ -568,7 +568,7 @@ table.category-view .header-row {
   background-color: rgba(85, 118, 155, 0.15);
 }
 
-/* Panel body — contains primary controls + living panel + refine strip */
+/* Panel body - contains primary controls + living panel + refine strip */
 .tm-panel-body {
   display: flex;
   flex-direction: column;
@@ -872,7 +872,7 @@ table.category-view .header-row {
 }
 
 /* ==========================================================================
-   Responsive — narrow screens
+   Responsive - narrow screens
    ========================================================================== */
 @media (max-width: 700px) {
   .tm-refine-strip {

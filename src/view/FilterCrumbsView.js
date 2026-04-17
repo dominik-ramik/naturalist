@@ -1,5 +1,5 @@
 /**
- * FilterCrumbsView.js — pure delegation loop.
+ * FilterCrumbsView.js - pure delegation loop.
  *
  * Iterates active filter slots, calls plugin.getCrumbs() to get descriptors,
  * renders a Crumb for each, and delegates onclick to plugin.clearCrumb().
@@ -42,7 +42,7 @@ export let FilterCrumbsView = {
       });
     });
 
-    // Free-text search crumb (not a data-type filter — handled directly)
+    // Free-text search crumb (not a data-type filter - handled directly)
     if (Checklist.filter.text.length > 0) {
       let displayTitle = Checklist.filter.text;
       if (displayTitle.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {

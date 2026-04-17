@@ -1,8 +1,8 @@
 /**
- * filterPluginMonths — filter UI for the "months" data type.
+ * filterPluginMonths - filter UI for the "months" data type.
  *
  * Months data is inherently multi-value (a taxon can be active in several months),
- * so all three Match Modes — Any, All, Exclude — are offered via MatchModeToggle.
+ * so all three Match Modes - Any, All, Exclude - are offered via MatchModeToggle.
  */
 
 import m from "mithril";
@@ -153,7 +153,7 @@ export const filterPluginMonths = {
   },
 
   /**
-   * Phase 4 — core matching.
+   * Phase 4 - core matching.
    * ANY: active in ≥1 selected month.
    * ALL: active in every selected month.
    * EXCLUDE: active in none of the selected months.

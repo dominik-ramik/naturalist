@@ -11,15 +11,15 @@ export const customTypeNumberMeta = {
     detailsPaneTab:           null,
     inputFormats: [
       {
-        label:  "Single cell — plain number",
-        syntax: "An integer or decimal number. No units or symbols — add those via the Template column.",
+        label:  "Single cell - plain number",
+        syntax: "An integer or decimal number. No units or symbols - add those via the Template column.",
         example: { columns: ["wingLength"], rows: [["12.5"], ["8.3"], ["0"]] },
       },
     ],
     notes: [
       {
         type: "warning",
-        text: "Store bare numbers in data cells — no units, no symbols. Use the **Template** column with `{{unit \"m\"}}` to add units at display time. Entering `5 m` in a cell turns the value into text and disables numeric filtering.",
+        text: "Store bare numbers in data cells - no units, no symbols. Use the **Template** column with `{{unit \"m\"}}` to add units at display time. Entering `5 m` in a cell turns the value into text and disables numeric filtering.",
       },
     ],
   },

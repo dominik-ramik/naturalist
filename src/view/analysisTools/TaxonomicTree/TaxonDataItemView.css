@@ -116,7 +116,7 @@ span.simple-value h4 {
   object-fit: cover;
   margin-top: 0.1em;
   margin-right: 0.1em;
-  background-image: url("../../public/img/ui/checklist/offline.svg");
+  background-image: url("/img/ui/checklist/offline.svg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: 2.5em;

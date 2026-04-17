@@ -965,7 +965,7 @@ export let Checklist = {
       }
 
       if (Checklist.getMetaForDataPath(dataPath)?.formatting == "interval") {
-        // interval data is [from, to] — a pair of numbers, NOT a sub-item array.
+        // interval data is [from, to] - a pair of numbers, NOT a sub-item array.
         // Delegate to the reader so "3.5 - 7.2" is indexed for full-text search.
         getSearchableTextByType(currentData, "interval", { dataPath }).forEach(
           text => primitives.push(text)
@@ -1208,7 +1208,7 @@ export let Checklist = {
       const parentVal = parentData[key];
 
       if (occurrenceVal === null || occurrenceVal === undefined) {
-        // Occurrence has absolutely nothing — keep parent value
+        // Occurrence has absolutely nothing - keep parent value
         return;
       }
 
@@ -1514,7 +1514,7 @@ export let Checklist = {
    *   List items  (#-paths):  a taxon may belong to multiple habit categories.
    *   months:                 a taxon is active in multiple months.
    *   mapregions:             a taxon occurs in multiple geographic regions.
-   *   Everything else:        single-value — "Match All" would be a logical paradox.
+   *   Everything else:        single-value - "Match All" would be a logical paradox.
    */
   isMultiValueDataPath: function (dataPath) {
     if (!this._isDataReady) return false;

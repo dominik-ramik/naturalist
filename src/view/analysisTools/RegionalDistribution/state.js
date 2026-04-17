@@ -1,5 +1,5 @@
 /**
- * RegionalDistribution — persistent state
+ * RegionalDistribution - persistent state
  *
  * Global state  (currentMap, configCollapsed) lives under 'rd:global'.
  * Per-map state (segment, operation, etc.)    lives under 'rd:<dataPath>'.

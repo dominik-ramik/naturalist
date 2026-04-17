@@ -1,5 +1,5 @@
 /**
- * RegionalDistribution — configuration panel
+ * RegionalDistribution - configuration panel
  *
  * Renders the collapsible control card (map selector, segment picker,
  * operation picker, denominator picker, group toggle) and the always-visible
@@ -66,7 +66,7 @@ export function renderConfigPanel({
     // ── Body (collapses) ──
     configCollapsed ? null : m('.rd-config-body', [
 
-      // Map selector + groups toggle — these form a logical unit
+      // Map selector + groups toggle - these form a logical unit
       m('.chart-control-group.rd-control-map', [
         m('label', t('rd_map_label')),
         m('select.chart-select', {
@@ -76,7 +76,7 @@ export function renderConfigPanel({
             if (map) onMapChange(map);
           },
         }, [
-          m('option', { value: '', disabled: true }, '— ' + t('view_map_select_map') + ' —'),
+          m('option', { value: '', disabled: true }, '- ' + t('view_map_select_map') + ' -'),
           ...availableMaps.map(map => m('option', { value: map.dataPath }, map.title)),
         ]),
         (_hasGroups && currentMap) ? m('label.rd-checkbox-label.rd-groups-checkbox', [
@@ -166,7 +166,7 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
   const opMeta = getOperationMeta(numericOperation);
   const unit   = t(mode === OCCURRENCE_IDENTIFIER ? 'rd_unit_occurrences' : 'rd_unit_taxa');
 
-  // — What is being computed —
+  // - What is being computed -
   let action;
   if (segmentTrack === 'numeric') {
     if (numericOperation === 'pct_above') {
@@ -184,7 +184,7 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
     action = t('rd_verb_presence');
   }
 
-  // — Scope / filter —
+  // - Scope / filter -
   let scope;
   if (filterIsEmpty) {
     scope = tf('rd_verb_scope_all', [unit]);
@@ -195,13 +195,13 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
     scope = tf('rd_verb_scope_filtered', [filterLabel, unit, filteredCount]);
   }
 
-  // — Denominator clause —
+  // - Denominator clause -
   let denomClause = '';
   if (!filterIsEmpty && (segmentTrack !== 'numeric' || opMeta.usesDenominator)) {
-    denomClause = ' — ' + t('rd_verb_denom_' + denominator);
+    denomClause = ' - ' + t('rd_verb_denom_' + denominator);
   }
 
-  // — Map name —
+  // - Map name -
   const mapLabel = ' (' + currentMap.title + ')';
 
   return action + ' ' + scope + denomClause + mapLabel;

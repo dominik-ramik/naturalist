@@ -39,7 +39,7 @@ const nlData = nlDataStructure;
 
 const _legendConfigCache = {};
 
-// Markdown rendering cache — processMarkdownWithBibliography is expensive
+// Markdown rendering cache - processMarkdownWithBibliography is expensive
 // (marked + DOMPurify) and the same note strings recur across renders.
 const _mdCache = new Map();
 
@@ -496,7 +496,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
       const belowTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 0) : ticksIdx;
       const aboveTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 1) : [];
 
-      // Issue 1 & 6: label renderer — first always left, last always right,
+      // Issue 1 & 6: label renderer - first always left, last always right,
       // resolved value in grey parentheses.
       const renderLabel = (t, total) => {
         const isFirst = t.idx === 0;
@@ -662,7 +662,7 @@ function renderRegionsList(data, uiContext) {
     const resolved = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
 
     // Per spec §4.6:
-    //   category → show appendedLegend from the matched row (may be empty — intentional)
+    //   category → show appendedLegend from the matched row (may be empty - intentional)
     //   stepped  → show appendedLegend from the matched bin if non-empty;
     //              fall back to the raw numeric value if appendedLegend is empty
     //   gradient → always show the raw numeric value (appendedLegend is never used)
@@ -683,7 +683,7 @@ function renderRegionsList(data, uiContext) {
       if (resolved.appendedLegend?.trim()) {
         appendedLegend = cachedMarkdown(" _(" + resolved.appendedLegend + ")_");
       }
-      // empty appendedLegend on a category row is intentional — show nothing
+      // empty appendedLegend on a category row is intentional - show nothing
     }
 
     const regionName = Checklist.nameForMapRegion(regionCode);
@@ -691,7 +691,7 @@ function renderRegionsList(data, uiContext) {
     const footnoteIndices = notesArray.map(registerNote).filter(i => i !== null);
 
     const hl = uiContext?.highlightRegex || null;
-    // For the region filter, fd.selected contains names — the hl regex covers them.
+    // For the region filter, fd.selected contains names - the hl regex covers them.
     // For the status filter, check exact match against the raw status code to avoid
     // substring false-positives (e.g. "v" matching inside "vagrant").
     const fd = uiContext?.filterDef || Checklist.filter.data[uiContext.dataPath] || null;

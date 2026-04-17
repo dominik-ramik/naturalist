@@ -47,7 +47,7 @@ export const config = {
             accessor: Settings.checklistDisplayLevel,
             // Dynamic: option keys come from runtime taxon meta, not a static list.
             // The leading "|" gives the "show all" option a value of "" while still
-            // rendering a human-readable label — the SelectParam split-on-pipe logic
+            // rendering a human-readable label - the SelectParam split-on-pipe logic
             // handles this without any accessor-side normalization.
             values: () => {
                 const taxaMeta = Checklist.getTaxaMeta() || {};

@@ -1,5 +1,5 @@
 /**
- * RegionalDistribution — aggregate table with drill-down panel
+ * RegionalDistribution - aggregate table with drill-down panel
  */
 
 import m from 'mithril';
@@ -164,7 +164,7 @@ function renderDrillPanel(key, regionData, mapState, legendConfig, datasetStats)
 
 /**
  * Sort drill-down records with a stable multi-level comparator:
- *   1. Region name (alphabetical) — meaningful in grouped mode
+ *   1. Region name (alphabetical) - meaningful in grouped mode
  *   2. Category statuses first (alphabetical), then numerics (high→low)
  *   3. Within the same status/value: record name alphabetical
  */
@@ -196,7 +196,7 @@ function sortDrillRecords(records, legendConfig) {
     } else if (b.numeric !== null) {
       return 1;
     } else {
-      // Both non-category, non-numeric — sort status alphabetically
+      // Both non-category, non-numeric - sort status alphabetically
       const cmp = (a.status ?? '').localeCompare(b.status ?? '');
       if (cmp !== 0) return cmp;
     }
@@ -245,7 +245,7 @@ function renderStatusCell(rec, legendConfig, datasetStats) {
 
   let label;
   if (numeric !== null) {
-    // Stepped legend — show the raw value AND the inferred bin label.
+    // Stepped legend - show the raw value AND the inferred bin label.
     if (datasetStats && legendConfig?.numericMode === 'stepped') {
       const stepped = resolveRegionColor(status, legendConfig, datasetStats);
       if (stepped?.resolvedAs === 'stepped') {
@@ -253,20 +253,20 @@ function renderStatusCell(rec, legendConfig, datasetStats) {
         return [
           stepped.fill ? m('span.rd-status-dot', { style: { background: stepped.fill } }) : null,
           ' ',
-          status || '—',
+          status || '-',
           binLabel ? m('span.rd-status-bin-label', ' (' + binLabel + ')') : null,
         ];
       }
     }
-    // Plain numeric value — display the raw value string, not a legend label.
-    label = status || '—';
+    // Plain numeric value - display the raw value string, not a legend label.
+    label = status || '-';
   } else if (resolved?.resolvedAs === 'category' || resolved?.resolvedAs === 'fallback') {
-    // Named category or generic presence — show the human-readable legend label.
-    label = resolved.legend || status || '—';
+    // Named category or generic presence - show the human-readable legend label.
+    label = resolved.legend || status || '-';
   } else {
     // Gradient / stepped with null stats (shouldn't normally reach here in a
     // drill row, but defend gracefully).
-    label = status || '—';
+    label = status || '-';
   }
 
   return [
@@ -277,6 +277,6 @@ function renderStatusCell(rec, legendConfig, datasetStats) {
 }
 
 function formatNumber(n) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n === null || n === undefined || isNaN(n)) return '-';
   return n % 1 === 0 ? String(n) : n.toFixed(2);
 }

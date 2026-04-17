@@ -23,7 +23,7 @@ export const customTypeMapregionsMeta = {
     notes: [
       {
         type: "tip",
-        text: "The **Template** column must specify the SVG file path for the Details pane map to appear — e.g. `maps/world.svg`. Without a template, only the inline region name list is rendered. Region codes and their display names are defined in [[ref:appearance.mapRegionsNames]].",
+        text: "The **Template** column must specify the SVG file path for the Details pane map to appear - e.g. `maps/world.svg`. Without a template, only the inline region name list is rendered. Region codes and their display names are defined in [[ref:appearance.mapRegionsNames]].",
       },
       {
         type: "tip",

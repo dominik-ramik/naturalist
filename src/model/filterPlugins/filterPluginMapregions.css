@@ -80,7 +80,7 @@
   color: #888;
 }
 
-/* Trash — clears only rangeMin/Max; never touches includeNumeric or categories. */
+/* Trash - clears only rangeMin/Max; never touches includeNumeric or categories. */
 .sf-range-clear {
   flex-shrink: 0;
   display: flex;
@@ -141,7 +141,7 @@
   color: #666;
 }
 
-/* Inactive (impossible) rows — grayed, non-interactive. */
+/* Inactive (impossible) rows - grayed, non-interactive. */
 .mapregions-status-filter .option-item.inactive {
   color: gray;
   cursor: default;
@@ -153,7 +153,7 @@
   opacity: 0.5;
 }
 
-/* Trash — clears only selectedStatuses; never touches includeNumeric/range. */
+/* Trash - clears only selectedStatuses; never touches includeNumeric/range. */
 .sf-cat-clear {
   display: flex;
   align-items: center;

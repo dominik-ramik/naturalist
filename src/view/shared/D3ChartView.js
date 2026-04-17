@@ -37,7 +37,7 @@ export let D3ChartView = function (initialVnode) {
       return true;
     },
     onupdate: function (vnode) {
-      // attrs already captured in onbeforeupdate — skip redundant assignment
+      // attrs already captured in onbeforeupdate - skip redundant assignment
       renderChart(false);
     },
     onbeforeremove: function (vnode) {

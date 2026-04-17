@@ -10,7 +10,7 @@
   overflow: hidden;
 }
 
-/* Info box — mirrors .chart-info-box from RegionalDistribution */
+/* Info box - mirrors .chart-info-box from RegionalDistribution */
 .bubbles-info-box {
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 8px;

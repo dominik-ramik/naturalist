@@ -1,5 +1,5 @@
 /**
- * RegionalDistribution — aggregate computation
+ * RegionalDistribution - aggregate computation
  *
  * Pure functions; no Mithril, no DOM, no module-level state.
  * All impure dependencies (Checklist, etc.) are referenced via closures
@@ -24,7 +24,7 @@ import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
  *   numericMode: 'gradient'|'stepped'|null,
  *   namedCategories: Array<{status,fill,legend,appendedLegend}>,
  *   hasFallback: boolean,
- *   isPresenceOnly: boolean,   // pure presence/absence — no status distinctions
+ *   isPresenceOnly: boolean,   // pure presence/absence - no status distinctions
  * }}
  */
 export function detectSegments(legendConfig) {
@@ -284,7 +284,7 @@ export function computeRegionAggregates(regionMap, segmentTrack, categoryStatus,
  */
 export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMetaIndex) {
   const counts   = { __total__: 0 };
-  const leafSets = {};   // regionCode → Set<leafName> — used by buildEffectiveAllCounts for groups
+  const leafSets = {};   // regionCode → Set<leafName> - used by buildEffectiveAllCounts for groups
   const seen     = new Set();
 
   allLeaves.forEach(leaf => {

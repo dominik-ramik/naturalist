@@ -11,29 +11,29 @@
  * ─── Param descriptor shape ──────────────────────────────────────────────────
  *
  *   {
- *     id:        string            — unique within the tool
- *     label:     string            — human-readable; shown in the non-default notice
- *     type:      "toggle"|"select" — drives automatic rendering via FormControls
- *     default:   any | () => any   — default value, or a zero-arg fn for dynamic defaults
- *     accessor:  fn                — getter/setter: accessor() reads, accessor(v) writes
+ *     id:        string            - unique within the tool
+ *     label:     string            - human-readable; shown in the non-default notice
+ *     type:      "toggle"|"select" - drives automatic rendering via FormControls
+ *     default:   any | () => any   - default value, or a zero-arg fn for dynamic defaults
+ *     accessor:  fn                - getter/setter: accessor() reads, accessor(v) writes
  *
  *     // select only:
  *     values:    (string|number)[] | () => (string|number)[]
- *                                  — supports "value|Label" split format (see SelectParam)
+ *                                  - supports "value|Label" split format (see SelectParam)
  *
  *     // optional:
  *     condition: (scope: string) => bool
- *                                  — param is only active when this returns true;
+ *                                  - param is only active when this returns true;
  *                                     undefined / absent = always active
  *
- *     notify:    boolean           — default true; set false to opt out of the non-default
+ *     notify:    boolean           - default true; set false to opt out of the non-default
  *                                     notice entirely. Use for pure rendering preferences
  *                                     (zoom levels, display depths) that don't alter *which*
  *                                     data is shown, only *how* it looks.
  *                                     The param is still rendered in the dialog and still
  *                                     resets on resetAllToDefaults().
  *
- *     render:    () => vnode       — escape hatch for custom UI;
+ *     render:    () => vnode       - escape hatch for custom UI;
  *                                     supply instead of type/values if needed
  *   }
  *
@@ -43,7 +43,7 @@
  *    so scope switches start from a guaranteed clean slate.
  *
  *  • The `default` field is the source of truth. Do not rely on a Settings
- *    initial value being correct — declare it explicitly here.
+ *    initial value being correct - declare it explicitly here.
  *
  *  • notify: false means the param never appears in the non-default notice,
  *    but is still rendered in the dialog and reset by resetAllToDefaults().
@@ -110,7 +110,7 @@ export function getNonDefaultParams(paramDefs, scope) {
 }
 
 /**
- * Resets EVERY param to its declared default — including conditional and
+ * Resets EVERY param to its declared default - including conditional and
  * notify:false params. Scope switches should never leave stale state behind.
  */
 export function resetAllToDefaults(paramDefs) {

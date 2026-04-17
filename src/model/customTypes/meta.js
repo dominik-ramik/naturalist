@@ -1,6 +1,6 @@
 // src/model/customTypes/meta.js
 //
-// Dependency-free barrel — aggregates meta from all CustomType sidecar files.
+// Dependency-free barrel - aggregates meta from all CustomType sidecar files.
 //
 // Imported by docs/.vitepress/loaders/data-types.data.js via a path like:
 //   import { dataTypesMeta } from "../../../../naturalist/src/model/customTypes/meta.js";
@@ -9,7 +9,7 @@
 // The runtime CustomType*.js files import Mithril, Checklist, Logger and other
 // browser-only modules. VitePress runs in Node.js SSR and cannot load those.
 // This barrel and its *.meta.js sidecars contain only plain JS objects with
-// no imports except filterMeta.js — which is itself dependency-free.
+// no imports except filterMeta.js - which is itself dependency-free.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { customTypeTextMeta }       from "./CustomTypeText.meta.js";

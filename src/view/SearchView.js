@@ -22,7 +22,7 @@ export let SearchView = {
         let taxaFilterDropdown = [];
         Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
             // In taxon mode there are no occurrences, so the occurrence taxa-level
-            // slot would always be empty — hide it.  In occurrence mode every taxa
+            // slot would always be empty - hide it.  In occurrence mode every taxa
             // slot is relevant: higher ranks filter occurrences through their
             // taxonomy, and the occurrence slot filters by occurrence identity.
             if (inTaxonMode && occurrenceMetaIndex !== -1 && index === occurrenceMetaIndex) return;
@@ -123,8 +123,8 @@ let SearchBox = {
                         Checklist.filter.text = "";
                         Checklist.filter.commit();
                     } else {
-                        // Debounce all non-empty input uniformly — including the very
-                        // first character — to avoid a route commit mid-keystroke.
+                        // Debounce all non-empty input uniformly - including the very
+                        // first character - to avoid a route commit mid-keystroke.
                         SearchBox.typingTimer = setTimeout(function () {
                             SearchBox.ghostText = null;
                             Checklist.filter.text = newText;

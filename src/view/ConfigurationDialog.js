@@ -1,7 +1,7 @@
 /**
  * ConfigurationDialog.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Thin dialog shell. It knows nothing about individual analysis tools — it only
+ * Thin dialog shell. It knows nothing about individual analysis tools - it only
  * iterates over TOOL_LIST entries and renders whatever each tool declares.
  *
  * Tool behaviour, parameters, labels and icons live in each tool's own file.
@@ -132,7 +132,7 @@ export const ConfigurationDialog = {
         // Only rendered when the active tool declares parameters AND at least
         // one is visible for the current scope.
         hasRenderedParams && m(".configuration-section", [
-          m(".configuration-section-label", `${activeTool.label} — Parameters`),
+          m(".configuration-section-label", `${activeTool.label} - Parameters`),
           m(".configuration-params-card", renderedParams),
         ]),
 

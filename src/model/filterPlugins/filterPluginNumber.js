@@ -1,5 +1,5 @@
 /**
- * filterPluginNumber — filter UI for the "number" data type.
+ * filterPluginNumber - filter UI for the "number" data type.
  *
  * Supports two modes:
  *   list     – selectable checklist of distinct numeric values
@@ -63,11 +63,11 @@ function getNumberOperationIcon(op) {
  * Returns a ghost/hint placeholder string for a threshold input.
  *
  * Per-operation logic:
- *   lesser / lesserequal  — user specifies the upper bound → ghost = max
- *   greater / greaterequal — user specifies the lower bound → ghost = min
- *   equal                  — any point; show "min – max" range as hint
- *   between                — t1 = lower bound (min), t2 = upper bound (max)
- *   around                 — t1 = center point (midpoint), t2 = radius (no obvious default → empty)
+ *   lesser / lesserequal  - user specifies the upper bound → ghost = max
+ *   greater / greaterequal - user specifies the lower bound → ghost = min
+ *   equal                  - any point; show "min – max" range as hint
+ *   between                - t1 = lower bound (min), t2 = upper bound (max)
+ *   around                 - t1 = center point (midpoint), t2 = radius (no obvious default → empty)
  *
  * All returned strings are locale-formatted numbers so they match the locale
  * the user expects in the input field.
@@ -112,7 +112,7 @@ let DropdownNumber = function (initialVnode) {
   const dropdownId = initialVnode.attrs.dropdownId;
   let dataPath = "";
 
-  // Threshold state — shared with the numericInput builder via the `state` reference
+  // Threshold state - shared with the numericInput builder via the `state` reference
   const thresholdState = {
     initialThresholds: [null, null, null],
     actualThresholds: [null, null, null],
@@ -186,7 +186,7 @@ let DropdownNumber = function (initialVnode) {
 
   // Input builder.
   // getPlaceholder is a closure so it always reads the current preview bounds
-  // and actualOperation at render time — no stale captures.
+  // and actualOperation at render time - no stale captures.
   const numericInput = makeNumericInputFn({
     state:        thresholdState,
     dropdownId,

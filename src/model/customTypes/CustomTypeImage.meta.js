@@ -16,7 +16,7 @@ export const customTypeImageMeta = {
         example: { columns: ["photo.source", "photo.title"], rows: [["images/litoria.jpg", "Green tree frog"], ["https://example.org/pic.jpg", "External photo"]] },
       },
       {
-        label:  "Single column — pipe-separated",
+        label:  "Single column - pipe-separated",
         syntax: "`source|title` in one cell.",
         example: { columns: ["photo"], rows: [["images/litoria.jpg|Green tree frog"]] },
       },
@@ -24,7 +24,7 @@ export const customTypeImageMeta = {
     notes: [
       {
         type: "tip",
-        text: "Arrays of images work with numbered columns: `photo1.source`, `photo1.title`, `photo2.source`, referenced as `photo#` in the meta sheet. Use a **Template** to avoid repeating a shared directory path — e.g. `images/{{value}}.jpg` lets you enter just the base filename in each cell.",
+        text: "Arrays of images work with numbered columns: `photo1.source`, `photo1.title`, `photo2.source`, referenced as `photo#` in the meta sheet. Use a **Template** to avoid repeating a shared directory path - e.g. `images/{{value}}.jpg` lets you enter just the base filename in each cell.",
       },
     ],
   },

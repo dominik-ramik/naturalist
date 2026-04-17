@@ -13,7 +13,7 @@
  *    b) Numeric   – 1-based month numbers, same separators
  *       e.g. "1", "2-4", "1|3-10|12", "1, 3-10, 12"
  *
- * readData returns: number[] — sorted, unique, 1-based month numbers (jan=1 … dec=12)
+ * readData returns: number[] - sorted, unique, 1-based month numbers (jan=1 … dec=12)
  *                   or null when no months found.
  *
  * render produces a compact i18n text with Dec-Jan continuity, e.g.
@@ -54,7 +54,7 @@ function parseMonthToken(token, uiContext = {}) {
       return num;
     }
     Logger.error(
-      `Invalid month number "${token}" — expected 1..12`,
+      `Invalid month number "${token}" - expected 1..12`,
       "Invalid months syntax"
     );
     return null;
@@ -84,7 +84,7 @@ function expandSegment(token, uiContext = {}) {
   }
 
   if (dashIdx === 0) {
-    Logger.error(`Malformed month segment "${trimmed}" — missing start`, "Invalid months syntax");
+    Logger.error(`Malformed month segment "${trimmed}" - missing start`, "Invalid months syntax");
     return [];
   }
 
@@ -241,7 +241,7 @@ function renderRanges(ranges, uiContext = {}, highlightRegex = null, filterSelec
       ]);
     }
 
-    // Has highlights: build a compact "spine" — only the outermost label of each
+    // Has highlights: build a compact "spine" - only the outermost label of each
     // non-highlighted run is shown, with highlighted months as pivots connected by "-".
     // e.g. Feb–Dec with Apr highlighted → Feb-[Apr]-Dec
     //      Jan–May with Jan highlighted → [Jan]-May
@@ -361,7 +361,7 @@ export let customTypeMonths = {
   /**
    * Returns one searchable string per active month (its localized label).
    *
-   * Indexing individual labels — rather than the collapsed range string — is
+   * Indexing individual labels - rather than the collapsed range string - is
    * required because renderRangesString only emits the two *endpoints* of each
    * range (e.g. "Janvier-Avril"), so intermediate months like "Mars" would
    * never appear in the indexed text and plain-text search would silently miss

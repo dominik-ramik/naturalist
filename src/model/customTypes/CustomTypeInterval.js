@@ -1,7 +1,7 @@
 /*
  * INTERVAL DATA FORMAT
  *
- * Reads a numeric range [from, to] — both ends inclusive — from one of three input modes:
+ * Reads a numeric range [from, to] - both ends inclusive - from one of three input modes:
  *
  * 1. COLUMN-BASED FORMAT
  *    Headers: [columnname].from  and  [columnname].to
@@ -35,9 +35,9 @@
  *   Without a template the reader falls back to its own "from – to" formatting.
  *
  * readData returns:
- *   null          — invalid input (already logged)
- *   []            — both sides empty / column not found
- *   [from, to]    — valid interval as numbers
+ *   null          - invalid input (already logged)
+ *   []            - both sides empty / column not found
+ *   [from, to]    - valid interval as numbers
  */
 
 import m from "mithril";
@@ -63,13 +63,13 @@ function parseIntervalNumber(raw) {
 
   if (hasPeriod && hasComma) {
     Logger.error(
-      `interval: ambiguous decimal separator in "${s}" — contains both "." and ","`
+      `interval: ambiguous decimal separator in "${s}" - contains both "." and ","`
     );
     return NaN;
   }
 
   const n = parseFloat(hasComma ? s.replace(",", ".") : s);
-  if (isNaN(n)) Logger.warning(`interval: non-numeric value "${s}" — skipped`);
+  if (isNaN(n)) Logger.warning(`interval: non-numeric value "${s}" - skipped`);
   return n;
 }
 
@@ -108,9 +108,9 @@ function buildInterval(fromRaw, toRaw, source) {
  *
  * Priority:
  *  1. Pipe "|"
- *  2. Whitespace-surrounded dash — handles leading-minus on either side
- *  3. Digit-adjacent dash        — e.g. "10-20", "-10--5"
- *  4. No separator               — single value, both ends equal
+ *  2. Whitespace-surrounded dash - handles leading-minus on either side
+ *  3. Digit-adjacent dash        - e.g. "10-20", "-10--5"
+ *  4. No separator               - single value, both ends equal
  */
 function splitCell(cell) {
   const pipeIdx = cell.indexOf("|");

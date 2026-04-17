@@ -13,7 +13,7 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTI
 // ─── Tool config export ────────────────────────────────────────────────────
 
 //
-// NOTE: Only the `config` export is shown here — the rest of HierarchyBubbles.js
+// NOTE: Only the `config` export is shown here - the rest of HierarchyBubbles.js
 // (circlePacking, circlePackingView, etc.) is unchanged.  Splice this config
 // block in place of the original `export const config = { ... }` declaration.
 
@@ -50,7 +50,7 @@ export const config = {
       default: 3,
       accessor: Settings.circlePackingMaxLevels,
       values:  [3, 4, 5, 6, 7],
-      // notify: false — this is a pure rendering preference (how many bubble
+      // notify: false - this is a pure rendering preference (how many bubble
       // rings are drawn), not a data filter.  Changing it never hides records
       // from the user, so there's nothing to call attention to.
       notify:  false,
@@ -1023,7 +1023,7 @@ function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
   const isFilterEmpty = Checklist.filter.isEmpty();
   const mapChartMode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : "taxa";
 
-  // Use the raw array lengths as leaf counts — these correspond 1-to-1 with
+  // Use the raw array lengths as leaf counts - these correspond 1-to-1 with
   // terminal nodes in the hierarchy (each taxa/occurrence row → one leaf).
   const totalCount = allTaxa.length;
   const matchingCount = matchingTaxa.length;

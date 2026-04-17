@@ -72,7 +72,7 @@
 /* ==========================================================================
    Notices
    All notices share the same card-strip base: white background with a
-   coloured left border — consistent with .chart-info-box and .tm-living-panel
+   coloured left border - consistent with .chart-info-box and .tm-living-panel
    elsewhere in the app. Semantic meaning is carried by the border colour only,
    not by the whole background, keeping the UI calm and unobtrusive.
    ========================================================================== */
@@ -87,7 +87,7 @@
   align-items: center;
   gap: 0.6em;
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  /* Default accent: nlblue — used for the mobile filter notice */
+  /* Default accent: nlblue - used for the mobile filter notice */
   border-left: 3px solid var(--nlblue, #55769b);
   flex-shrink: 0;
 }
@@ -99,7 +99,7 @@
   line-height: 1.4;
 }
 
-/* Action button — pill style matching .category-nav-up-btn and .tm-living-flip */
+/* Action button - pill style matching .category-nav-up-btn and .tm-living-flip */
 .temporary-notice button.show-all {
   flex-shrink: 0;
   display: inline-flex;
@@ -127,7 +127,7 @@
   opacity: 0.75;
 }
 
-/* ── Draft notice: amber — warns about unpublished dataset state ── */
+/* ── Draft notice: amber - warns about unpublished dataset state ── */
 .temporary-notice.draft-notice {
   border-left-color: #e09b25;
   background-color: rgba(254, 243, 199, 0.92);
@@ -152,7 +152,7 @@
 }
 
 /* ── Params modified notice: blue-info ────────────────────────────────────────
-   Communicates "you customised this view" — not a warning, just a reminder.
+   Communicates "you customised this view" - not a warning, just a reminder.
    Uses the same nlblue accent as the base .temporary-notice; distinguished
    from the filter notice by its content and the Reset button.
    ─────────────────────────────────────────────────────────────────────────── */

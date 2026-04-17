@@ -1,5 +1,5 @@
 /**
- * filterPluginInterval — filter UI for the "interval" data type.
+ * filterPluginInterval - filter UI for the "interval" data type.
  *
  * Interval filters always use an operator (contains / overlaps / fully_inside)
  * with one or two numeric thresholds, previewed via a coverage histogram.
@@ -32,12 +32,12 @@ function getIntervalOperationIcon(op) {
 /**
  * Returns a ghost/hint placeholder for a threshold input.
  *
- * contains     (1 threshold)  — the point inside the interval.
+ * contains     (1 threshold)  - the point inside the interval.
  *                               ghost: "min – max" of all intervals to show
  *                               the valid range at a glance.
- * overlaps     (2 thresholds) — [t1, t2] must overlap with intervals.
+ * overlaps     (2 thresholds) - [t1, t2] must overlap with intervals.
  *                               t1 ghost = min, t2 ghost = max.
- * fully_inside (2 thresholds) — interval must fit inside [t1, t2].
+ * fully_inside (2 thresholds) - interval must fit inside [t1, t2].
  *                               t1 ghost = min, t2 ghost = max.
  *
  * @param {number}      thresholdNumber – 1 or 2

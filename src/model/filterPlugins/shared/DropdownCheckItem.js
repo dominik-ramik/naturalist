@@ -177,7 +177,7 @@ export function buildCheckItems({ type, dataPath, filter, itemsOverflowLimit }) 
   let showImpossible = false;
   const impossible = buildSection(
     // In exclude mode, selected items already appear in the checked section
-    // above — filter them out here to avoid duplicates.
+    // above - filter them out here to avoid duplicates.
     (fd.all || []).filter(item => !possibleKeys.includes(item) && !(isExclude && fd.selected.includes(item))),
     "inactive",
     () => totalItems <= itemsOverflowLimit,

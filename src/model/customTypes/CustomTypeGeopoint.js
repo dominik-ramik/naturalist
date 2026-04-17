@@ -281,7 +281,7 @@ export let customTypeGeopoint = {
       const lon = parseOneCoord(lonStr);
       if (lat === null || lon === null) {
         Logger.warning(
-          "Unparseable multi-column coordinates for path <strong>" + computedPath + "</strong> — values were: " + latStr + " and " + lonStr, "Cannot parse coordinates"
+          "Unparseable multi-column coordinates for path <strong>" + computedPath + "</strong> - values were: " + latStr + " and " + lonStr, "Cannot parse coordinates"
         );
         return null;
       }
@@ -311,7 +311,7 @@ export let customTypeGeopoint = {
         console.log("Failed to parse pipe-separated coordinates:", { latStr, lonStr }, "with string value:", cellValue, lat, lon);
 
         Logger.warning(
-          "Unparseable pipe-separated coordinates for path <strong>" + computedPath + "</strong> — value was: " + cellValue, "Cannot parse coordinates"
+          "Unparseable pipe-separated coordinates for path <strong>" + computedPath + "</strong> - value was: " + cellValue, "Cannot parse coordinates"
         );
         return null;
       }
@@ -321,7 +321,7 @@ export let customTypeGeopoint = {
     const parsed = parseSingleCell(cellValue);
     if (!parsed) {
       Logger.warning(
-        "Unparseable single-cell coordinate for path <strong>" + computedPath + "</strong> — value was: " + cellValue, "Cannot parse coordinates"
+        "Unparseable single-cell coordinate for path <strong>" + computedPath + "</strong> - value was: " + cellValue, "Cannot parse coordinates"
       );
       return null;
     }

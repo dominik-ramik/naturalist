@@ -17,7 +17,7 @@ export function isProgrammaticRouteChange() { return _programmaticRouteChange; }
 export function clearProgrammaticRouteChange() { _programmaticRouteChange = false; }
 
 /**
- * Ordered list of tool configs — controls display order in
+ * Ordered list of tool configs - controls display order in
  * ConfigurationDialog and MenuStripView.
  */
 export const TOOL_LIST = [
@@ -35,7 +35,7 @@ export function getCurrentTool() {
 }
 
 /**
- * Keyed map of tool configs — O(1) lookup by Settings.viewType().
+ * Keyed map of tool configs - O(1) lookup by Settings.viewType().
  */
 export const TOOL_REGISTRY = Object.fromEntries(
   TOOL_LIST.map(cfg => [cfg.id, cfg])
@@ -83,7 +83,7 @@ export function validateToolConfig(config) {
   if (typeof getAvailability !== "function")
     errors.push("Missing or invalid 'getAvailability' (expected function).");
 
-  // 4. Optional parameters — must be an array of descriptor objects when present.
+  // 4. Optional parameters - must be an array of descriptor objects when present.
   //    Each descriptor is validated for the fields the ToolParams framework depends on.
   if (parameters !== undefined) {
     if (!Array.isArray(parameters)) {
@@ -101,14 +101,14 @@ export function validateToolConfig(config) {
         if (typeof p.label !== "string" || !p.label.trim())
           errors.push(`${prefix}: missing or invalid 'label' (expected non-empty string).`);
         if (p.default === undefined)
-          errors.push(`${prefix}: missing 'default' — every param must declare an explicit default value.`);
+          errors.push(`${prefix}: missing 'default' - every param must declare an explicit default value.`);
         if (typeof p.accessor !== "function")
           errors.push(`${prefix}: missing or invalid 'accessor' (expected getter/setter function).`);
 
         // Params without a custom render must declare a known type
         if (typeof p.render !== "function") {
           if (!["toggle", "select"].includes(p.type))
-            errors.push(`${prefix}: invalid 'type' "${p.type}" — expected "toggle" or "select", or provide a custom 'render' function.`);
+            errors.push(`${prefix}: invalid 'type' "${p.type}" - expected "toggle" or "select", or provide a custom 'render' function.`);
           if (p.type === "select" && p.values === undefined)
             errors.push(`${prefix}: 'values' is required for select params (array or factory function).`);
         }
@@ -178,7 +178,7 @@ export function requestToolChange(toolId, checklistData) {
   const allIntents     = Checklist.hasOccurrences() ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
   const requestedTool  = TOOL_REGISTRY[toolId];
 
-  if (!requestedTool) return; // Unknown tool — ignore
+  if (!requestedTool) return; // Unknown tool - ignore
 
   const availability = requestedTool.getAvailability(allIntents, checklistData);
 

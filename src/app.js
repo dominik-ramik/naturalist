@@ -296,7 +296,7 @@ Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
 });
 
 Handlebars.registerHelper("unit", function (...args) {
-  // Last arg is always Handlebars options hash — strip it
+  // Last arg is always Handlebars options hash - strip it
   const params = args.slice(0, -1);
   let value, unitStr, exact = false;
   if (params.length === 1) {

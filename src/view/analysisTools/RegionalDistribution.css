@@ -114,7 +114,7 @@
   flex-wrap: nowrap;
   /* On desktop the parent constrains height and children's accumulated
      bottom spacing (paddings + margins) spills a few pixels past the
-     boundary — not real content, just whitespace. overflow: hidden absorbs
+     boundary - not real content, just whitespace. overflow: hidden absorbs
      those stray pixels without clipping anything meaningful.
      On mobile the same constraint requires real vertical scrolling, so
      the media query below switches to overflow: auto.               */
@@ -129,7 +129,7 @@
 }
 
 /* ==========================================================================
-   Map image wrapper — single definition, responsive
+   Map image wrapper - single definition, responsive
    ========================================================================== */
 
 /*
@@ -140,7 +140,7 @@
 .map-chart-image-wrap-outer {
   flex: 1 1 400px;
   border-radius: 8px;
-  overflow: hidden;          /* clip, not scroll — the inner wrap handles overflow */
+  overflow: hidden;          /* clip, not scroll - the inner wrap handles overflow */
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background: rgba(255, 255, 255, 0.5);
   margin: 0;
@@ -152,7 +152,7 @@
  * Inner wrapper: the element that toggles `.fullscreen`.
  *
  * Normal state:
- *   - No hardcoded min-width (was 40em — the main cause of mobile clipping)
+ *   - No hardcoded min-width (was 40em - the main cause of mobile clipping)
  *   - Height capped at a fraction of the viewport so it never dominates the page
  *   - overflow-x: auto so that SVGs wider than the container scroll instead of clip
  *   - cursor: zoom-in as a UX affordance that the map is tap-to-fullscreen
@@ -206,7 +206,7 @@
  *
  * Fixes:
  *   1. align-items + justify-content center the SVG in both axes (was missing
- *      — the cause of the off-center rendering).
+ *      - the cause of the off-center rendering).
  *   2. The <object> is sized with max-* rather than hard 100vw/100vh so that
  *      the browser keeps the aspect ratio instead of stretching it.
  *   3. cursor: zoom-out signals the tap-to-close affordance.
@@ -235,7 +235,7 @@
 
 .map-chart-image-wrap.fullscreen object {
   /* Let the SVG fill as much of the screen as possible while keeping its
-     aspect ratio. Do NOT set both width and height to 100* — that stretches
+     aspect ratio. Do NOT set both width and height to 100* - that stretches
      it. Set one to auto and cap the other.                    */
   width: auto !important;
   height: auto !important;
@@ -377,7 +377,7 @@ table.results-table td.region-color {
 }
 
 /* ============================================================
-   RegionalDistribution — CSS additions
+   RegionalDistribution - CSS additions
    Append to or replace RegionalDistribution_additions.css
    ============================================================ */
 
@@ -434,7 +434,7 @@ table.results-table td.region-color {
   min-width: 0;
 }
 
-/* Verb sentence — always visible, bottom of card */
+/* Verb sentence - always visible, bottom of card */
 .rd-verb-box {
   padding: 8px 15px 10px;
   font-size: 0.85em;
@@ -460,7 +460,7 @@ table.results-table td.region-color {
    fills the space freed when the config card collapses.
    overflow:visible on .map-chart lets natural height work (parent context
    determines actual height; the original overflow:hidden was mainly to prevent
-   scroll — we can keep it but change to auto so it only appears when needed).
+   scroll - we can keep it but change to auto so it only appears when needed).
    ───────────────────────────────────────────────────────────────────────── */
 
 .map-chart {
@@ -472,9 +472,9 @@ table.results-table td.region-color {
   min-height: 0;
 }
 
-/* ── Table wrapper — width cap ───────────────────────────────────────────────
+/* ── Table wrapper - width cap ───────────────────────────────────────────────
    Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
-   smaller). Contents that overflow are hidden — no stray horizontal scroll bar
+   smaller). Contents that overflow are hidden - no stray horizontal scroll bar
    on the wrapper on wide screens.
    On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
    ───────────────────────────────────────────────────────────────────────── */
@@ -675,7 +675,7 @@ table.rd-drill-table tr:last-child td { border-bottom: none; }
 }
 
 /* ============================================================
-   RegionalDistribution — CSS additions
+   RegionalDistribution - CSS additions
    Append to or replace RegionalDistribution_additions.css
    ============================================================ */
 
@@ -732,7 +732,7 @@ table.rd-drill-table tr:last-child td { border-bottom: none; }
   min-width: 0;
 }
 
-/* Verb sentence — always visible, bottom of card */
+/* Verb sentence - always visible, bottom of card */
 .rd-verb-box {
   padding: 8px 15px 10px;
   font-size: 0.85em;
@@ -756,7 +756,7 @@ table.rd-drill-table tr:last-child td { border-bottom: none; }
 /* ── Map + table layout ──────────────────────────────────────────────────────
    .map-chart is a flex column; .map-and-table-container sits inside it.
    We use flex: 0 0 auto (content-sized) rather than flex: 1 1 auto (greedy)
-   because the map and table have a max-height: 65 vh cap — if the container
+   because the map and table have a max-height: 65 vh cap - if the container
    grew to fill all remaining height when the config card collapses, the space
    below the children would be blank. Content-sizing avoids that gap entirely.
    .map-chart keeps overflow: auto so content can scroll when the viewport is
@@ -782,9 +782,9 @@ table.rd-drill-table tr:last-child td { border-bottom: none; }
   font-size: 0.85em;
 }
 
-/* ── Table wrapper — width cap ───────────────────────────────────────────────
+/* ── Table wrapper - width cap ───────────────────────────────────────────────
    Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
-   smaller). Contents that overflow are hidden — no stray horizontal scroll bar
+   smaller). Contents that overflow are hidden - no stray horizontal scroll bar
    on the wrapper on wide screens.
    On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
    ───────────────────────────────────────────────────────────────────────── */

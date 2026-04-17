@@ -16,7 +16,7 @@ export const customTypeSoundMeta = {
         example: { columns: ["call.source", "call.title"], rows: [["sounds/litoria_call.mp3", "Advertisement call"]] },
       },
       {
-        label:  "Single column — pipe-separated",
+        label:  "Single column - pipe-separated",
         syntax: "`source|title` in one cell.",
         example: { columns: ["call"], rows: [["sounds/litoria_call.mp3|Advertisement call"]] },
       },
@@ -24,7 +24,7 @@ export const customTypeSoundMeta = {
     notes: [
       {
         type: "tip",
-        text: "Supported formats are whatever the user's browser supports natively — typically MP3, OGG, WAV, AAC. Use a **Template** such as `sounds/{{value}}.mp3` to enter only the base filename in each cell.",
+        text: "Supported formats are whatever the user's browser supports natively - typically MP3, OGG, WAV, AAC. Use a **Template** such as `sounds/{{value}}.mp3` to enter only the base filename in each cell.",
       },
     ],
   },

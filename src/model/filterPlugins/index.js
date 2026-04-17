@@ -1,5 +1,5 @@
 /**
- * filterPlugins/index.js — plugin registry + interface validator.
+ * filterPlugins/index.js - plugin registry + interface validator.
  *
  * Resolves the correct filter plugin for a given filterDef by looking up the
  * `filterPlugin` property that each CustomType declares on itself.
@@ -18,7 +18,7 @@ import { dataCustomTypes } from "../customTypes/index.js";
 
 /**
  * Every filterPlugin object must implement ALL of these methods.
- * `finalizeAccumulation` is optional — only range types that maintain
+ * `finalizeAccumulation` is optional - only range types that maintain
  * globalMin/Max need it; Filter.js calls it with optional chaining.
  */
 const REQUIRED_METHODS = [
@@ -30,9 +30,9 @@ const REQUIRED_METHODS = [
   "getCrumbs",              // (fd, ctx) → CrumbDescriptor[]
   "clearCrumb",             // (fd, ctx, descriptor) → void
   // Filter lifecycle layer
-  "createFilterDef",        // (type?) → object   — initial filterDef shape
-  "clearFilter",            // (fd) → void        — reset to no-selection
-  "clearPossible",          // (fd) → void        — reset possible values
+  "createFilterDef",        // (type?) → object   - initial filterDef shape
+  "clearFilter",            // (fd) → void        - reset to no-selection
+  "clearPossible",          // (fd) → void        - reset possible values
   "accumulatePossible",     // (fd, rawValue, leafValues) → void
   "serializeToQuery",       // (fd) → object|null
   "deserializeFromQuery",   // (fd, queryValue) → void
@@ -46,7 +46,7 @@ function validateFilterPlugins() {
   Object.entries(dataCustomTypes).forEach(([dataType, customType]) => {
     const plugin = customType.filterPlugin;
 
-    // null / undefined = intentionally no filter UI — valid
+    // null / undefined = intentionally no filter UI - valid
     if (!plugin) return;
 
     // Must be a plain object, not a primitive

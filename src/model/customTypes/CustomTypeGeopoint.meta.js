@@ -5,7 +5,7 @@ export const customTypeGeopointMeta = {
   filterMeta: null,
   meta: {
     summary:                  "A geographic point coordinate (latitude/longitude). Rendered as a clickable badge showing the original coordinate text; clicking opens a configurable online map URL at those coordinates.",
-    whenToUse:                "Collection localities, observation coordinates, occurrence origins — any geographic point coordinate that users should open on an online map.",
+    whenToUse:                "Collection localities, observation coordinates, occurrence origins - any geographic point coordinate that users should open on an online map.",
     behaviorFulltextIndexing: "Geographic coordinates are not indexed for full-text search.",
     detailsPaneTab:           null,
     inputFormats: [
@@ -15,12 +15,12 @@ export const customTypeGeopointMeta = {
         example: { columns: ["location.lat", "location.long"], rows: [["48.8566", "2.3522"], ["51°30'N", "0°7'W"]] },
       },
       {
-        label:  "Format 2: Single column — pipe-separated",
+        label:  "Format 2: Single column - pipe-separated",
         syntax: "`lat|long` in one cell.",
         example: { columns: ["location"], rows: [["48.8566|2.3522"]] },
       },
       {
-        label:  "Format 3: Single cell — auto-parsed",
+        label:  "Format 3: Single cell - auto-parsed",
         syntax: "DD, DDM, DMS, ISO 6709, hemisphere letters, French decimal commas.",
         example: { columns: ["location"], rows: [["48.8566, 2.3522"], ["N 48°51'23.76\" E 2°21'7.92\""]] },
       },
@@ -28,7 +28,7 @@ export const customTypeGeopointMeta = {
     notes: [
       {
         type: "tip",
-        text: "The **Template** column must specify the map URL using `{{lat}}` and `{{long}}` — e.g. `https://www.google.com/maps?q={{lat}},{{long}}`. Without a template the field falls back to a Google Maps URL.",
+        text: "The **Template** column must specify the map URL using `{{lat}}` and `{{long}}` - e.g. `https://www.google.com/maps?q={{lat}},{{long}}`. Without a template the field falls back to a Google Maps URL.",
       },
     ],
   },

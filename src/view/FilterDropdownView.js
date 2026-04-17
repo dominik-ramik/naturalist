@@ -1,5 +1,5 @@
 /**
- * FilterDropdownView.js — shell only.
+ * FilterDropdownView.js - shell only.
  *
  * FilterDropdown  renders the label pill + opens/closes the positioned panel.
  * DropdownShell   positions the panel and delegates all inner content to the

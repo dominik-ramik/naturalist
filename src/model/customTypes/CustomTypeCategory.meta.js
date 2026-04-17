@@ -6,7 +6,7 @@ export const customTypeCategoryMeta = {
   filterMeta: filterMetaText,
   meta: {
     summary:                  "Categorical text value rendered as a coloured pill/badge. Data reading is identical to `text` but the value is looked up in the [[ref:appearance.categories]] table for visual styling.",
-    whenToUse:                "Any column with a small, fixed set of categorical values that benefit from colour coding — Red List categories, presence/origin status, life-form codes, etc.",
+    whenToUse:                "Any column with a small, fixed set of categorical values that benefit from colour coding - Red List categories, presence/origin status, life-form codes, etc.",
     behaviorFulltextIndexing: "The string value (after Data Code replacement) is indexed.",
     detailsPaneTab:           "Text",
     inputFormats: [

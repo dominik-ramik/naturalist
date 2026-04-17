@@ -1,5 +1,5 @@
 /**
- * MatchModeToggle.js — progressive-disclosure Boolean-mode picker.
+ * MatchModeToggle.js - progressive-disclosure Boolean-mode picker.
  */
 
 import m from "mithril";

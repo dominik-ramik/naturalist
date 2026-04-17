@@ -15,7 +15,7 @@
   padding: 1rem;
 }
 
-/* ── Dialog box — mirrors .manage-card / .sak-card ───────────────────────
+/* ── Dialog box - mirrors .manage-card / .sak-card ───────────────────────
    #eceff2 bg, white border, the characteristic shadow, large border-radius  */
 .configuration-dialog {
   width: min(880px, 100%);
@@ -29,7 +29,7 @@
   padding-bottom: 0.5rem;
 }
 
-/* ── Header — mirrors .manage-card-header ────────────────────────────────── */
+/* ── Header - mirrors .manage-card-header ────────────────────────────────── */
 .configuration-dialog-header {
   display: flex;
   align-items: center;
@@ -51,7 +51,7 @@
   margin: 0.75em 1em 0 1em;
 }
 
-/* Small caps section label — mirrors CategoryChart .chart-control-group label */
+/* Small caps section label - mirrors CategoryChart .chart-control-group label */
 .configuration-section-label {
   font-size: 0.75em;
   font-weight: bold;
@@ -68,7 +68,7 @@
   gap: 0.5em;
 }
 
-/* Individual tool card — inert glass look, active gets nlblue tint */
+/* Individual tool card - inert glass look, active gets nlblue tint */
 .configuration-tool-card {
   display: flex;
   align-items: flex-start;
@@ -138,7 +138,7 @@
   min-width: 0;
 }
 
-/* ── Scope — segmented control, mirrors .chart-segmented-control ──────────── */
+/* ── Scope - segmented control, mirrors .chart-segmented-control ──────────── */
 .configuration-scope-segmented {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -342,7 +342,7 @@
   box-sizing: border-box;
 }
 
-/* Confirm / Done button — mirrors .manage-btn-primary */
+/* Confirm / Done button - mirrors .manage-btn-primary */
 .configuration-confirm-btn {
   width: 100%;
   padding: 0.8em 1em;

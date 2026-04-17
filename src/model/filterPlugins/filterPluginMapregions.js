@@ -1,5 +1,5 @@
 /**
- * filterPluginMapregions — filter UI for the "mapregions" data type.
+ * filterPluginMapregions - filter UI for the "mapregions" data type.
  *
  * ── Phase 5 overhaul summary ──────────────────────────────────────────────────
  *
@@ -10,7 +10,7 @@
  *
  *   • Category checkboxes now start empty/unchecked (additive), matching the
  *     behaviour of standard text checklists.  selectedStatuses: []  means "no
- *     category filter — all categorical regions pass".
+ *     category filter - all categorical regions pass".
  *
  *   • Status evaluations are strictly correlated: when regions are explicitly
  *     selected, the status filter is evaluated only against those regions.
@@ -163,7 +163,7 @@ function _renderStatusRangeSection(sf, globalMin, globalMax, type, dataPath) {
 }
 
 /**
- * Category checklist — additive model (Phase 5).
+ * Category checklist - additive model (Phase 5).
  *
  * selectedStatuses: []    → no filter; all boxes start unchecked.
  * selectedStatuses: [...] → only listed statuses pass; checked boxes show selection.
@@ -181,7 +181,7 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath
     const idx = sf.selectedStatuses.indexOf(status);
     if (idx > -1) {
       sf.selectedStatuses.splice(idx, 1);
-      // [] means no filter — intentional; nothing to collapse further
+      // [] means no filter - intentional; nothing to collapse further
     } else {
       sf.selectedStatuses.push(status);
     }
@@ -252,7 +252,7 @@ let DropdownMapregions = function () {
       const showStatusFilter = hasNumericMode || allCatRows.length > 0;
 
       return m(".inner-dropdown-area.mapregions", [
-        // Match Mode toggle — mapregions is always multi-value
+        // Match Mode toggle - mapregions is always multi-value
         m(MatchModeToggle, {
           filterDef,
           supportsMatchAll: true,
@@ -584,7 +584,7 @@ export const filterPluginMapregions = {
         : [];
       fd.statusFilter.rangeMin = val.sf.min ?? null;
       fd.statusFilter.rangeMax = val.sf.max ?? null;
-      // val.sf.inc deliberately not read — concept removed
+      // val.sf.inc deliberately not read - concept removed
     }
   },
 };

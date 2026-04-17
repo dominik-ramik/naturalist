@@ -15,7 +15,7 @@
  *      of continental Europe).
  *
  *   2. Intermediate input states.  While the user is typing "1.5" the field
- *      briefly contains "1." — a valid intermediate state.  type=number inputs
+ *      briefly contains "1." - a valid intermediate state.  type=number inputs
  *      fire a change event with an empty value for such states, making it
  *      impossible to distinguish "user cleared the field" from "user is mid-
  *      typing".  type=text lets us inspect the raw string and defer parsing.
@@ -25,8 +25,8 @@
  *
  * @param {object} opts
  * @param {object}   opts.state                       – mutable component state object
- * @param {number[]} opts.state.initialThresholds     – [null, t1, t2] — pre-filled from saved filter
- * @param {number[]} opts.state.actualThresholds      – [null, t1, t2] — live values from inputs
+ * @param {number[]} opts.state.initialThresholds     – [null, t1, t2] - pre-filled from saved filter
+ * @param {number[]} opts.state.actualThresholds      – [null, t1, t2] - live values from inputs
  * @param {string}   opts.dropdownId                  – used to build stable element ids
  * @param {function} [opts.getPlaceholder]            – (thresholdNumber) → string
  *                                                      returns the ghost/hint text shown when the

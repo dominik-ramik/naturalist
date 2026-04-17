@@ -20,7 +20,7 @@ import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.
 
 export function TabSummary(taxon) {
   const ctx = buildContext(taxon);
-  if (!ctx) return m("p.sp-empty", "—");
+  if (!ctx) return m("p.sp-empty", "-");
 
   const perspectives = [
     buildTaxonomyPerspective(ctx),
@@ -30,7 +30,7 @@ export function TabSummary(taxon) {
     ...buildMonthsPerspectives(ctx),
   ].filter(Boolean);
 
-  if (!perspectives.length) return m("p.sp-empty", "—");
+  if (!perspectives.length) return m("p.sp-empty", "-");
 
   // Wrap in a stateful component so the nav index tracks the active tab
   return m(SummaryView, { perspectives });
@@ -91,7 +91,7 @@ const SummaryView = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Context factory — computed once, shared by all builders
+// Context factory - computed once, shared by all builders
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildContext(taxon) {
@@ -465,8 +465,8 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
   const lc = getLegendConfig(mapPath);
 
   // byRegion: regionCode → {
-  //   _grad?: { min, max, count, rawValues }  — gradient numeric accumulator
-  //   [binLabel]: { fill, count, resolvedAs, rawValues }  — stepped / category bins
+  //   _grad?: { min, max, count, rawValues }  - gradient numeric accumulator
+  //   [binLabel]: { fill, count, resolvedAs, rawValues }  - stepped / category bins
   // }
   const byRegion = {};
 
@@ -496,7 +496,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
         byRegion[code]._grad.rawValues.push({ value: n, fill: resolved.fill });
       } else {
         // Categorical, stepped, and fallback: group by the resolved legend label.
-        // Colour is captured now from the actual resolved status — not re-derived
+        // Colour is captured now from the actual resolved status - not re-derived
         // from the label string later, which would fail to find a match.
         const binLabel = resolved.legend || status;
         if (!byRegion[code][binLabel]) {
@@ -624,7 +624,7 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
         levelName, name, months: monthsUnion,
       });
     } else {
-      // Include all rows at or below this level — union naturally deduplicates
+      // Include all rows at or below this level - union naturally deduplicates
       const e = eligible(subtreeRows).filter(r => r.t[li] != null);
       if (e.length === 0) return;
       const monthsUnion = new Set();
@@ -704,7 +704,7 @@ function renderLevelData(row, p) {
 // ── Occurrences ─────────────────────────────────────────────────────────────────
 
 function renderOccurrencesData(row) {
-  // Two explicit labeled columns. Labels are always visible — no tooltip needed.
+  // Two explicit labeled columns. Labels are always visible - no tooltip needed.
   // "Own" = occurrences whose deepest identification is exactly this taxonomic level.
   // "Total" = all occurrences in this branch, regardless of further sub-level IDs.
   return m(".sp-spec-cols", [
@@ -801,10 +801,10 @@ function computeWeightedStats(weightedPoints) {
  *
  * Returns { type: "categorical" | "numeric" | "mixed", categorical, numeric }
  *
- * categorical.entries — [ { fill, legend, count, pct } ]
- * categorical.stats   — computeWeightedStats result from actual raw values when
+ * categorical.entries - [ { fill, legend, count, pct } ]
+ * categorical.stats   - computeWeightedStats result from actual raw values when
  *                        stepped/numeric data is present, else null
- * numeric             — computeWeightedStats result for pure gradient columns
+ * numeric             - computeWeightedStats result for pure gradient columns
  */
 function buildRegionLevelSummary(breakdown) {
   if (!breakdown?.length) return null;
@@ -979,7 +979,7 @@ function renderNumericSummary(numeric) {
   return m(".sp-region-num-summary", [header, ...rows]);
 }
 
-/** The original per-region detail rows — now rendered inside <details>. */
+/** The original per-region detail rows - now rendered inside <details>. */
 function renderRegionsDetailRows(breakdown) {
   if (!breakdown?.length) return null;
 

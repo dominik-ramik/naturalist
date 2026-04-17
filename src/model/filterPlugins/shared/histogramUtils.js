@@ -1,5 +1,5 @@
 /**
- * Shared histogram rendering — used by filterPluginNumber and filterPluginInterval.
+ * Shared histogram rendering - used by filterPluginNumber and filterPluginInterval.
  *
  * drawHistogram        – bins individual scalar values (Number)
  * drawIntervalHistogram – coverage bins for [from, to] pairs (Interval)

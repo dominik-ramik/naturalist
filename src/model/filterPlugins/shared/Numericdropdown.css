@@ -1,7 +1,7 @@
 /*
  * filterPlugins/shared/numericDropdown.css
  *
- * Scope: all plugins that render .inner-dropdown-area.numeric — that is,
+ * Scope: all plugins that render .inner-dropdown-area.numeric - that is,
  * filterPluginNumber, filterPluginDate, and filterPluginInterval.
  *
  * There is no numericDropdown.js; each of the three plugins above must
