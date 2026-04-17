@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./LiteratureView.css";
 import { marked } from "marked";
 

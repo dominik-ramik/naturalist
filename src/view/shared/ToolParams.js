@@ -51,6 +51,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { SelectParam, ToggleParam } from "./FormControls.js";
 
 // ─── Internal helpers ────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./MenuStripView.css";
 
 import { copyToClipboard, routeTo } from "../components/Utils.js";
@@ -8,6 +9,7 @@ import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
 import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../model/nlDataStructureSheets.js";
+
 
 export let MenuStripView = {
   menuOpen: false,

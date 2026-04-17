@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./SingleAccessKeyView.css";
 import { Checklist } from "../model/Checklist.js";
 import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";

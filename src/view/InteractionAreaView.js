@@ -1,8 +1,10 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./InteractionAreaView.css";
 
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
+
 // DELETE: import { AppLayoutView } from "./AppLayoutView.js";
 
 export let InteractionAreaView = {

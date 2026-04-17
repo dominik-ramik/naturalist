@@ -7,6 +7,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton, buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";

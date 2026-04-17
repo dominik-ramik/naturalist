@@ -3,6 +3,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./MatchModeToggle.css";
 
 // ── Public mode constants (imported by every opt-in plugin) ───────────────────

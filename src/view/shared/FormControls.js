@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 /**
  * A labelled <select> backed by an accessor function.

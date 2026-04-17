@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 import { applyHighlight } from "../highlightUtils.js";

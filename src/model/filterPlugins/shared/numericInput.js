@@ -39,6 +39,7 @@
  * @returns {function} numericInput(thresholdNumber, min, max) → Mithril vnode
  */
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 export function makeNumericInputFn({ state, dropdownId, getPlaceholder, getExtraError, getOperation }) {
   return function numericInput(thresholdNumber, min, max) {

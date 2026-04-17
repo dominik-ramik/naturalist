@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import * as d3 from "d3";
 
 import { Checklist } from "../../model/Checklist.js";

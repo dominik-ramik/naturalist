@@ -8,6 +8,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { sortByCustomOrder, textLowerCaseAccentless } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
 import { MATCH_MODES } from "./MatchModeToggle.js";

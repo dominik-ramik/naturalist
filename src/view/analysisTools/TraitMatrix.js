@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import dayjs from "dayjs";
 
 import "./TraitMatrix.css";
@@ -10,6 +11,7 @@ import {
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+
 
 // ─── Tool config ──────────────────────────────────────────────────────────────
 

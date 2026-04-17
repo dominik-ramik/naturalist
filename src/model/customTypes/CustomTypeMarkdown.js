@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers } from "./helpers.js";
 import { htmlToPlainText, processMarkdownWithBibliography } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";

@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./DetailsView.css";
 
 import {
@@ -17,6 +18,16 @@ import { TabMap } from "./detailsTabs/TabMap.js";
 import { TabText } from "./detailsTabs/TabText.js";
 import { TabExternalSearch } from "./detailsTabs/TabExternalSearch.js";
 import { TabMedia } from "./detailsTabs/TabMedia.js";
+
+registerMessages(selfKey, {
+  en: {
+    tab_title_summary: 'Summary'
+  },
+  fr: {
+    tab_title_summary: 'Sommaire'
+
+  }
+});
 
 export let DetailsView = {
   taxonName: "",

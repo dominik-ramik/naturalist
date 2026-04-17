@@ -41,6 +41,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { Logger } from "../../components/Logger.js";
 import { helpers } from "./helpers.js";
 import { filterPluginInterval, intervalFilters } from "../filterPlugins/filterPluginInterval.js";

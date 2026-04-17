@@ -10,12 +10,14 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { copyToClipboard, getUnitFromTemplate, unitToHtml } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { getFilterPlugin } from "../model/filterPlugins/index.js";
 
 import "./FilterDropdownView.css";
+
 
 // ── FilterDropdown ─────────────────────────────────────────────────────────────
 

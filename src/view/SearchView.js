@@ -1,5 +1,6 @@
 // SearchView.js
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./SearchView.css";
 
 import { FilterDropdown } from "../view/FilterDropdownView.js";
@@ -8,6 +9,7 @@ import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
 import { ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
+
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
 

@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 export let D3ChartView = function (initialVnode) {
   const uid = initialVnode.attrs.id;

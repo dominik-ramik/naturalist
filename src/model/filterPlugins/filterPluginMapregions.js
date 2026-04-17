@@ -35,6 +35,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./filterPluginMapregions.css";
 import { Checklist } from "../Checklist.js";
 import { parseLegendConfig, parseNumericStatus } from "../../components/MapregionsColorEngine.js";

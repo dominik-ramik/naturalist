@@ -1,8 +1,10 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
 import { Checklist } from "../../../model/Checklist.js";
 import { copyToClipboard } from "../../../components/Utils.js";
+
 
 export let TaxonNameView = {
   view: function (vnode) {

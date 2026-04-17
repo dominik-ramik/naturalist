@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 

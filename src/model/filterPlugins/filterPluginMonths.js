@@ -6,6 +6,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../Checklist.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../customTypes/CustomTypeMonths.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";

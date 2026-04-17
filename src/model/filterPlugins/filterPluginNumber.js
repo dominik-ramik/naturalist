@@ -7,6 +7,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { getUnitFromTemplate, unitToHtml, roundWithPrecision, textLowerCaseAccentless } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";

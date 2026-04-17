@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { Checklist } from "../../model/Checklist";
 import { Settings } from "../../model/Settings";
@@ -13,6 +14,7 @@ import {
 } from "../../components/MapregionsColorEngine.js";
 import { MONTH_KEYS } from "../../model/MonthNames.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Public entry point

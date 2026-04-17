@@ -8,6 +8,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./FilterCrumbsView.css";
 
 import { getGradedColor, getUnitFromTemplate, unitToHtml } from "../components/Utils.js";

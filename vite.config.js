@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { readFileSync, existsSync } from 'fs';
 import serveStatic from 'serve-static';
+import i18nSelfPlugin from './src/i18n/vite-plugin-i18n-self';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
@@ -21,6 +22,11 @@ export default defineConfig({
         host: true
     },
     plugins: [
+        i18nSelfPlugin({
+            // Path to your i18n index.js, relative to the project root
+            // (i.e. relative to the directory that contains vite.config.js).
+            i18nEntry: 'src/i18n/index.js',
+        }),
         VitePWA({
             strategies: 'injectManifest',
             srcDir: 'src',
@@ -33,21 +39,15 @@ export default defineConfig({
                     'img/**/*.{svg,png}'
                 ]
             },
-            manifest: false // We use existing manifest.json in public/
+            manifest: false
         }),
         {
             name: 'serve-dev-public-fallback',
-            // apply: 'serve' ensures this plugin ONLY runs during `npm run dev`
-            // It will be completely ignored during `npm run build`
-            apply: 'serve', 
+            apply: 'serve',
             configureServer(server) {
-                // Check if the directory exists so the dev server doesn't crash 
-                // if a teammate pulls the repo without the dev-public folder
                 if (existsSync('dev-public')) {
-                    // This middleware runs automatically. If a requested file (like /usercontent/data/checklist.json) 
-                    // is found in dev-public, it serves it. Otherwise, it naturally falls back to /public
-                    server.middlewares.use(serveStatic('dev-public', { 
-                        index: false // Prevent serving index.html from this folder
+                    server.middlewares.use(serveStatic('dev-public', {
+                        index: false
                     }));
                 }
             }

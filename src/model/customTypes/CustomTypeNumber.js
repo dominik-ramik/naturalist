@@ -1,4 +1,5 @@
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers } from "./helpers.js";
 import { filterPluginNumber } from "../filterPlugins/filterPluginNumber.js";
 import { numericFilters } from "../filterPlugins/shared/filterUtils.js";

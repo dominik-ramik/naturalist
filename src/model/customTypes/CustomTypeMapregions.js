@@ -11,6 +11,7 @@
  */
 
 import m from "mithril";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
