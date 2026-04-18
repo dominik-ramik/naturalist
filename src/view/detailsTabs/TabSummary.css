@@ -517,3 +517,37 @@
 .sp-level--descendant .sp-level-rank {
   color: #7e7e7e;
 }
+/* ─── Loading spinners ────────────────────────────────────────────────────── */
+/*
+ * .sp-spinner      – centred full-area spinner while the first perspective loads
+ * .sp-spinner-inline – tiny spinner shown beside the dropdown while background
+ *                     perspectives are still computing
+ */
+
+@keyframes sp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sp-spinner {
+  display: block;
+  width: 1.6em;
+  height: 1.6em;
+  margin: 2.5em auto;
+  border: 3px solid rgba(85, 118, 155, 0.2);
+  border-top-color: var(--nlblue, #55769b);
+  border-radius: 50%;
+  animation: sp-spin 0.75s linear infinite;
+}
+
+.sp-spinner-inline {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.5em;
+  border: 2px solid rgba(85, 118, 155, 0.25);
+  border-top-color: var(--nlblue, #55769b);
+  border-radius: 50%;
+  animation: sp-spin 0.75s linear infinite;
+  flex-shrink: 0;
+  align-self: center;
+}

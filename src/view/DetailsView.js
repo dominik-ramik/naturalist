@@ -40,6 +40,7 @@ export let DetailsView = {
   taxonName: "",
   taxonAuthority: "",
   taxonData: {},
+  taxon: null,
 
   oninit: function (vnode) {
     DetailsView._updateTaxonState();
@@ -54,6 +55,7 @@ export let DetailsView = {
     if (name === DetailsView.taxonName) return; // skip if unchanged
     DetailsView.taxonName = name;
     const taxon = Checklist.getTaxonByName(name);
+    DetailsView.taxon = taxon; // stable reference reused across redraws
     if (taxon.isInChecklist) {
       DetailsView.taxonAuthority = taxon.t[taxon.t.length - 1].a;
       DetailsView.taxonData = taxon.d;
@@ -75,7 +77,7 @@ export let DetailsView = {
       tab = Settings.currentDetailsTab();
     }
 
-    let taxon = Checklist.getTaxonByName(DetailsView.taxonName);
+    const taxon = DetailsView.taxon ?? Checklist.getTaxonByName(DetailsView.taxonName);
 
     const tabs = TabsForDetails(
       Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),

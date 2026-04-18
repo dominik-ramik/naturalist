@@ -40,6 +40,7 @@ registerMessages(selfKey, {
     sp_region_stat_median: "Median",
     sp_region_stat_min: "Min",
     sp_region_stat_value: "Value",
+    sp_calculating: "Calculating…",
   },
   fr: {
     sp_view: "Vue",
@@ -64,82 +65,151 @@ registerMessages(selfKey, {
     sp_region_stat_avg: "Moyenne",
     sp_region_stat_median: "Médiane",
     sp_region_stat_min: "Min",
-    sp_region_stat_value: "Valeur",    
+    sp_region_stat_value: "Valeur",
+    sp_calculating: "Calcul en cours…",
   }
 });
+
+// ─── postTask polyfill ────────────────────────────────────────────────────────
+// scheduler.postTask() is available in Chromium 94+ and Firefox 115+.
+// For environments that don't support it yet we fall back to a simple
+// Promise-wrapped setTimeout so the rest of the code is identical.
+const _postTask = (typeof scheduler !== "undefined" && typeof scheduler.postTask === "function")
+  ? (fn, opts) => scheduler.postTask(fn, opts)
+  : (fn) => new Promise(resolve => setTimeout(() => resolve(fn()), 0));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Public entry point
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Memoize ctx and firstPerspective by taxon identity so that repeated Mithril
+// redraws for the SAME taxon reuse the same object references.  Without this,
+// buildContext() returns a fresh object on every redraw, causing onbeforeupdate
+// in SummaryView to treat every redraw as a taxon change → infinite reset loop
+// → endless spinner + select dropdown being destroyed on every redraw.
+let _memoTaxon = null;
+let _memoCtx = null;
+let _memoSpecs = null;
+let _lastPerspectiveId = null;
+
 export function TabSummary(taxon) {
-  const ctx = buildContext(taxon);
+  if (taxon !== _memoTaxon) {
+    _memoTaxon = taxon;
+    _memoCtx = buildContext(taxon);
+    if (_memoCtx) {
+      _memoSpecs = buildPerspectiveSpecs(_memoCtx);
+      // Pre-fill the first (taxonomy) perspective synchronously so the tab
+      // renders immediately without a spinner on first open.
+      if (_memoSpecs.length > 0) _memoSpecs[0].result = buildTaxonomyPerspective(_memoCtx);
+    } else {
+      _memoSpecs = null;
+    }
+  }
+
+  const ctx = _memoCtx;
+  const specs = _memoSpecs;
+
   if (!ctx) return m("p.sp-empty", "-");
 
-  const perspectives = [
-    buildTaxonomyPerspective(ctx),
-    ...(ctx.showOccurrences ? [buildOccurrencesPerspective(ctx)] : []),
-    ...buildCategoryPerspectives(ctx),
-    ...buildMapRegionsPerspectives(ctx),
-    ...buildMonthsPerspectives(ctx),
-  ].filter(Boolean);
-
-  if (!perspectives.length) return m("p.sp-empty", "-");
-
-  // Wrap in a stateful component so the nav index tracks the active tab
-  return m(SummaryView, { perspectives });
+  return m(SummaryView, { ctx, specs });
 }
 
-// ─── Stateful nav wrapper ─────────────────────────────────────────────────────
-// Defined once at module level so Mithril always sees the same component
-// reference and preserves instance state (activeIdx) across redraws.
+// ─── Lazy per-perspective loader ─────────────────────────────────────────────
+
+// Triggers an async build of specs[idx] the first time it is selected.
+// Sets spec.loading = true immediately (visible in the current render) and
+// then fills spec.result when the background task finishes.
+function _ensurePerspectiveBuilt(vnode, idx) {
+  const spec = vnode.attrs.specs?.[idx];
+  if (!spec || spec.result !== undefined || spec.loading) return;
+
+  const expectedCtx = vnode.attrs.ctx;
+  spec.loading = true;
+  _postTask(() => spec.buildFn(), { priority: "background" })
+    .then(result => {
+      if (vnode.attrs.ctx !== expectedCtx) return; // taxon changed, discard
+      spec.result = result;
+      spec.loading = false;
+      m.redraw();
+    })
+    .catch(() => {
+      if (vnode.attrs.ctx !== expectedCtx) return;
+      spec.loading = false;
+      m.redraw();
+    });
+}
 
 const SummaryView = {
   oninit(vnode) {
     vnode.state.activeIdx = 0;
   },
-  onbeforeupdate(vnode) {
-    // Clamp the index when the perspectives array shrinks (e.g. taxon switch).
-    // Done here rather than in view() so state is never mutated while Mithril
-    // is building the vnode tree.
-    if (vnode.state.activeIdx >= vnode.attrs.perspectives.length) {
-      vnode.state.activeIdx = 0;
+
+  onbeforeupdate(vnode, old) {
+    // Taxon changed: try to restore the last selected perspective.
+    if (vnode.attrs.ctx !== old.attrs.ctx) {
+      const specs = vnode.attrs.specs;
+      const matchIdx = _lastPerspectiveId != null
+        ? specs?.findIndex(s => s.id === _lastPerspectiveId)
+        : -1;
+      vnode.state.activeIdx = matchIdx > 0 ? matchIdx : 0;
     }
   },
+
   view(vnode) {
-    const { perspectives } = vnode.attrs;
+    const { activeIdx } = vnode.state;
+    const specs = vnode.attrs.specs;
+
+    if (!specs?.length) return m("p.sp-empty", "-");
+
+    const clampedIdx = Math.min(activeIdx, specs.length - 1);
+    const activeSpec = specs[clampedIdx];
+
+    // Trigger lazy build on first access (sets loading=true synchronously so
+    // the spinner is visible in this very render).
+    _ensurePerspectiveBuilt(vnode, clampedIdx);
+
     const selectAttrs = {
-      value: vnode.state.activeIdx,
-      onchange(e) { vnode.state.activeIdx = +e.target.value; },
+      value: clampedIdx,
+      onchange(e) {
+        const idx = +e.target.value;
+        vnode.state.activeIdx = idx;
+        _lastPerspectiveId = vnode.attrs.specs?.[idx]?.id ?? null;
+        _ensurePerspectiveBuilt(vnode, idx);
+      },
     };
-    const toOption = (p, i) => m("option", { value: i }, p.title);
+    const toOption = (spec, i) => m("option", { value: i }, spec.title);
 
     let nav = null;
-    if (perspectives.length > 1) {
-      const hasSpec = perspectives.some(p => p.forOccurrence);
-      const hasNonSpec = perspectives.some(p => !p.forOccurrence);
+    if (specs.length > 1) {
+      const hasSpec = specs.some(p => p.forOccurrence);
+      const hasNonSpec = specs.some(p => !p.forOccurrence);
       if (hasSpec && hasNonSpec) {
         nav = m("select.sp-nav-select", selectAttrs, [
           m("optgroup", { label: t("sp_general") },
-            perspectives.map((p, i) => !p.forOccurrence ? toOption(p, i) : null)
+            specs.map((p, i) => !p.forOccurrence ? toOption(p, i) : null)
           ),
           m("optgroup", { label: t("sp_occurrences") },
-            perspectives.map((p, i) => p.forOccurrence ? toOption(p, i) : null)
+            specs.map((p, i) => p.forOccurrence ? toOption(p, i) : null)
           ),
         ]);
       } else {
-        nav = m("select.sp-nav-select", selectAttrs,
-          perspectives.map(toOption)
-        );
+        nav = m("select.sp-nav-select", selectAttrs, specs.map(toOption));
       }
     }
+
+    const content = activeSpec.loading
+      ? m(".sp-spinner-wrapper", [
+        m(".sp-spinner"),
+        m(".sp-spinner-text", t("sp_calculating")),
+      ])
+      : activeSpec.result ? renderPerspective(activeSpec.result) : null;
 
     return m(".sp-wrapper", [
       m(".sp-dropdown-wrapper", [
         m(".dropdown-title", t("sp_view")),
-        nav
+        nav,
       ]),
-      renderPerspective(perspectives[vnode.state.activeIdx]),
+      content,
     ]);
   },
 };
@@ -173,24 +243,92 @@ function buildContext(taxon) {
     ancestry[i] = taxon.t[i].name;
   }
 
+  // Pre-compute entries once so the per-row filter avoids repeated
+  // Object.entries() allocation and string-to-number coercion.
+  const ancestryEntries = Object.entries(ancestry).map(([i, name]) => [+i, name]);
+
   // Checklist rows in the full subtree rooted at the current taxon
   const subtreeRows = checklist.filter(row =>
-    Object.entries(ancestry).every(([i, name]) => row.t[+i]?.name === name)
+    ancestryEntries.every(([i, name]) => row.t[i]?.name === name)
   );
 
+  // ── Pre-partition rows by occurrence/non-occurrence once ──────────────────
+  // Avoids re-running isOccurrenceRow() in every per-perspective filter loop.
+  const subtreeOccurrenceRows = occurrenceMetaIndex === -1
+    ? []
+    : subtreeRows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex));
+  const subtreeTaxonRows = occurrenceMetaIndex === -1
+    ? subtreeRows
+    : subtreeRows.filter(r => !isOccurrenceRow(r, occurrenceMetaIndex));
+
+  // ── Per-row deepest-level cache ───────────────────────────────────────────
+  // deepestTaxonLevelOf() is O(row.t.length) and called thousands of times
+  // across all builders. A WeakMap keyed by the row object avoids the repeat.
+  const _deepestCache = new Map();
+  const cachedDeepest = (row) => {
+    if (!_deepestCache.has(row)) {
+      _deepestCache.set(row, deepestTaxonLevelOf(row, occurrenceMetaIndex));
+    }
+    return _deepestCache.get(row);
+  };
+
+  // ── countTaxaAtLevel cache ────────────────────────────────────────────────
+  const _taxaAtLevelCache = {};
+  const cachedCountTaxaAtLevel = (li) => {
+    if (_taxaAtLevelCache[li] === undefined) {
+      _taxaAtLevelCache[li] = countTaxaAtLevel(subtreeRows, li);
+    }
+    return _taxaAtLevelCache[li];
+  };
+
+  // ── getScopeForLevel cache ─────────────────────────────────────────────────
   const _scopeCache = {};
+  // Pre-partitioned scope caches (avoids re-filtering inside builders)
+  const _scopeTaxonCache = {};
+  const _scopeOccCache = {};
+
   const ctx = {
     taxon, checklist, subtreeRows, taxaMeta, taxaKeys,
     occurrenceDataPath, occurrenceMetaIndex, currentLevelIndex,
     ancestry, showOccurrences,
     dataMeta: Checklist.getDataMeta(),
+    subtreeOccurrenceRows,
+    subtreeTaxonRows,
+    cachedDeepest,
+    cachedCountTaxaAtLevel,
   };
+
   ctx.getScopeForLevel = (li) => {
+    // Short-circuit: scope at currentLevelIndex is exactly subtreeRows
+    if (li === currentLevelIndex) return subtreeRows;
     if (!_scopeCache[li]) {
       _scopeCache[li] = getScopeForLevel(checklist, ancestry, li);
     }
     return _scopeCache[li];
   };
+
+  // Scoped rows pre-partitioned for non-occurrence builders
+  ctx.getScopeTaxonRows = (li) => {
+    if (!_scopeTaxonCache[li]) {
+      const scope = ctx.getScopeForLevel(li);
+      _scopeTaxonCache[li] = occurrenceMetaIndex === -1
+        ? scope
+        : scope.filter(r => !isOccurrenceRow(r, occurrenceMetaIndex));
+    }
+    return _scopeTaxonCache[li];
+  };
+
+  // Scoped rows pre-partitioned for occurrence builders
+  ctx.getScopeOccRows = (li) => {
+    if (!_scopeOccCache[li]) {
+      const scope = ctx.getScopeForLevel(li);
+      _scopeOccCache[li] = occurrenceMetaIndex === -1
+        ? []
+        : scope.filter(r => isOccurrenceRow(r, occurrenceMetaIndex));
+    }
+    return _scopeOccCache[li];
+  };
+
   return ctx;
 }
 
@@ -255,6 +393,136 @@ function countTaxaAtLevel(rows, li) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Perspective spec builder
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Returns an array of spec objects – one per perspective eligible for ctx.
+// Each spec has: { title, forOccurrence, result, loading, buildFn }.
+// result starts as `undefined` (not yet built); null means built but empty.
+// The caller pre-fills specs[0].result with the taxonomy perspective.
+function buildPerspectiveSpecs(ctx) {
+  const { dataMeta, showOccurrences, subtreeTaxonRows, subtreeOccurrenceRows } = ctx;
+  const specs = [];
+
+  // 1. Taxonomy — always present; result pre-filled by TabSummary
+  specs.push({
+    id: "taxonomy",
+    title: t("sp_taxonomy"),
+    forOccurrence: false,
+    result: undefined,
+    loading: false,
+    buildFn: () => buildTaxonomyPerspective(ctx),
+  });
+
+  // 2. Occurrences
+  if (showOccurrences && subtreeOccurrenceRows.length > 0) {
+    specs.push({
+      id: "occurrences",
+      title: t("sp_occurrences"),
+      forOccurrence: true,
+      result: undefined,
+      loading: false,
+      buildFn: () => buildOccurrencesPerspective(ctx),
+    });
+  }
+
+  // 3. Categories
+  const catPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "category");
+  catPaths.forEach(catPath => {
+    const meta = dataMeta[catPath];
+    const base = meta.title || meta.searchCategory || catPath;
+    const hasVal = r => {
+      const v = Checklist.getDataFromDataPath(r.d, catPath);
+      return v != null && v.toString().trim() !== "";
+    };
+    if (subtreeTaxonRows.some(hasVal)) {
+      specs.push({
+        id: `cat:${catPath}`,
+        title: base,
+        forOccurrence: false,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildCategoryPerspective(ctx, catPath, meta, false),
+      });
+    }
+    if (showOccurrences && subtreeOccurrenceRows.some(hasVal)) {
+      specs.push({
+        id: `cat_occ:${catPath}`,
+        title: tf("sp_title_for_occurrences", [base], true),
+        forOccurrence: true,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildCategoryPerspective(ctx, catPath, meta, true),
+      });
+    }
+  });
+
+  // 4. Map regions
+  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "mapregions");
+  mapPaths.forEach(mapPath => {
+    const meta = dataMeta[mapPath];
+    const base = meta.title || meta.searchCategory || mapPath;
+    const hasData = r => {
+      const v = Checklist.getDataFromDataPath(r.d, mapPath);
+      return v && typeof v === "object" && Object.keys(v).length > 0;
+    };
+    if (subtreeTaxonRows.some(hasData)) {
+      specs.push({
+        id: `map:${mapPath}`,
+        title: base,
+        forOccurrence: false,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildMapRegionsPerspective(ctx, mapPath, meta, false),
+      });
+    }
+    if (showOccurrences && subtreeOccurrenceRows.some(hasData)) {
+      specs.push({
+        id: `map_occ:${mapPath}`,
+        title: tf("sp_title_for_occurrences", [base], true),
+        forOccurrence: true,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildMapRegionsPerspective(ctx, mapPath, meta, true),
+      });
+    }
+  });
+
+  // 5. Months
+  const monthPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "months");
+  monthPaths.forEach(monthsPath => {
+    const meta = dataMeta[monthsPath];
+    const base = meta.title || meta.searchCategory || monthsPath;
+    const hasData = r => {
+      const v = Checklist.getDataFromDataPath(r.d, monthsPath);
+      return Array.isArray(v) && v.length > 0;
+    };
+    if (subtreeTaxonRows.some(hasData)) {
+      specs.push({
+        id: `months:${monthsPath}`,
+        title: base,
+        forOccurrence: false,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildMonthsPerspective(ctx, monthsPath, meta, false),
+      });
+    }
+    if (showOccurrences && subtreeOccurrenceRows.some(hasData)) {
+      specs.push({
+        id: `months_occ:${monthsPath}`,
+        title: tf("sp_title_for_occurrences", [base], true),
+        forOccurrence: true,
+        result: undefined,
+        loading: false,
+        buildFn: () => buildMonthsPerspective(ctx, monthsPath, meta, true),
+      });
+    }
+  });
+
+  return specs;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Perspective builders
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -262,7 +530,7 @@ function countTaxaAtLevel(rows, li) {
 
 function buildTaxonomyPerspective(ctx) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, currentLevelIndex,
-    ancestry, checklist, subtreeRows } = ctx;
+    ancestry, checklist, subtreeRows, cachedCountTaxaAtLevel } = ctx;
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
@@ -273,11 +541,12 @@ function buildTaxonomyPerspective(ctx) {
       const name = ancestry[li];
       if (name == null) return; // taxonomy gap
 
+      // Use the cached narrower scope instead of scanning all checklist rows.
+      // For li=0 there is no parent constraint so we need all rows;
+      // for li>0 getScopeForLevel(li-1) is already the right parent scope.
+      const siblingScope = li === 0 ? checklist : ctx.getScopeForLevel(li - 1);
       const siblingsSet = new Set();
-      checklist.forEach(row => {
-        for (let i = 0; i < li; i++) {
-          if (ancestry[i] !== undefined && row.t[i]?.name !== ancestry[i]) return;
-        }
+      siblingScope.forEach(row => {
         if (row.t[li] != null) siblingsSet.add(row.t[li].name);
       });
 
@@ -286,7 +555,7 @@ function buildTaxonomyPerspective(ctx) {
         levelName, name, siblingCount: siblingsSet.size,
       });
     } else {
-      const n = countTaxaAtLevel(subtreeRows, li);
+      const n = cachedCountTaxaAtLevel(li);
       if (n === 0) return;
       rows.push({ kind: "descendant", levelName, count: n });
     }
@@ -299,11 +568,9 @@ function buildTaxonomyPerspective(ctx) {
 
 function buildOccurrencesPerspective(ctx) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, subtreeRows, cachedDeepest,
+    cachedCountTaxaAtLevel } = ctx;
   const rows = [];
-
-  // No early guard: getScopeForLevel includes sibling branches, so ancestor-
-  // level rows populate even when the current taxon's own subtree has no occurrences.
 
   taxaKeys.forEach((levelKey, li) => {
     if (levelKey === occurrenceDataPath) return;
@@ -313,13 +580,15 @@ function buildOccurrencesPerspective(ctx) {
       const name = ancestry[li];
       if (name == null) return;
 
-      const scope = ctx.getScopeForLevel(li);
-      let direct = 0, cumulative = 0;
-      scope.forEach(row => {
-        if (!isOccurrenceRow(row, occurrenceMetaIndex)) return;
-        cumulative++;
-        if (deepestTaxonLevelOf(row, occurrenceMetaIndex) === li) direct++;
+      // Use the pre-partitioned occurrence scope
+      const e = ctx.getScopeOccRows(li);
+      if (e.length === 0) return;
+
+      let direct = 0;
+      e.forEach(row => {
+        if (cachedDeepest(row) === li) direct++;
       });
+      const cumulative = e.length;
       if (direct === 0 && cumulative === 0) return;
 
       rows.push({
@@ -327,14 +596,14 @@ function buildOccurrencesPerspective(ctx) {
         levelName, name, direct, cumulative,
       });
     } else {
-      let direct = 0, cumulative = 0;
-      subtreeRows.forEach(row => {
-        if (!isOccurrenceRow(row, occurrenceMetaIndex) || row.t[li] == null) return;
-        cumulative++;
-        if (deepestTaxonLevelOf(row, occurrenceMetaIndex) === li) direct++;
-      });
+      // subtreeOccurrenceRows is already filtered for isOccurrenceRow
+      const e = ctx.subtreeOccurrenceRows.filter(row => row.t[li] != null);
+      if (e.length === 0) return;
+      let direct = 0;
+      e.forEach(row => { if (cachedDeepest(row) === li) direct++; });
+      const cumulative = e.length;
       if (direct === 0 && cumulative === 0) return;
-      const n = countTaxaAtLevel(subtreeRows, li);
+      const n = cachedCountTaxaAtLevel(li);
       rows.push({ kind: "descendant", levelName, count: n, direct, cumulative });
     }
   });
@@ -344,44 +613,29 @@ function buildOccurrencesPerspective(ctx) {
 
 // ── 3. Categories ─────────────────────────────────────────────────────────────
 
-function buildCategoryPerspectives(ctx) {
-  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
-  const catPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "category");
-
-  return catPaths.flatMap(catPath => {
-    const meta = dataMeta[catPath];
-    const results = [];
-    const hasVal = r => {
-      const v = Checklist.getDataFromDataPath(r.d, catPath);
-      return v != null && v.toString().trim() !== "";
-    };
-
-    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasVal(r))) {
-      const p = buildCategoryPerspective(ctx, catPath, meta, false);
-      if (p) results.push(p);
-    }
-    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasVal(r))) {
-      const p = buildCategoryPerspective(ctx, catPath, meta, true);
-      if (p) results.push(p);
-    }
-    return results;
-  });
-}
-
 function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, subtreeRows, cachedDeepest,
+    cachedCountTaxaAtLevel } = ctx;
 
-  // Use getAllLeafData so that multi-valued lists (e.g. "list comma"
-  // with category subitems) are expanded into individual values.
+  // Memoize per row: getDataFromDataPath + getAllLeafData are expensive and
+  // each row is queried at least twice (once in the eligibility filter, once
+  // in the flatMap extraction).
+  const _valsCache = new Map();
   const getVals = row => {
+    if (_valsCache.has(row)) return _valsCache.get(row);
     const v = Checklist.getDataFromDataPath(row.d, catPath);
-    if (v == null) return [];
-    return Checklist.getAllLeafData(v, false, catPath)
+    const result = v == null ? [] : Checklist.getAllLeafData(v, false, catPath)
       .filter(x => x != null && String(x).trim() !== "");
+    _valsCache.set(row, result);
+    return result;
   };
-  const eligible = rows =>
-    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && getVals(r).length > 0);
+
+  // Use pre-partitioned scope rows to avoid re-checking isOccurrenceRow per row
+  const getScopedEligible = (li) => {
+    const scopeRows = forOccurrence ? ctx.getScopeOccRows(li) : ctx.getScopeTaxonRows(li);
+    return scopeRows.filter(r => getVals(r).length > 0);
+  };
 
   const rows = [];
 
@@ -392,7 +646,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(ctx.getScopeForLevel(li));
+      const e = getScopedEligible(li);
       if (e.length === 0) return;
       rows.push({
         kind: li === currentLevelIndex ? "current" : "ancestor",
@@ -401,13 +655,13 @@ function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
         total: e.length,
       });
     } else {
-      // Filter to deepest-level rows to avoid double-counting genus + species
-      const e = eligible(subtreeRows)
-        .filter(r => deepestTaxonLevelOf(r, occurrenceMetaIndex) === li);
+      // Use pre-partitioned subtree rows; filter to deepest-level only to avoid double-counting
+      const pool = forOccurrence ? ctx.subtreeOccurrenceRows : ctx.subtreeTaxonRows;
+      const e = pool.filter(r => r.t[li] != null && cachedDeepest(r) === li && getVals(r).length > 0);
       if (e.length === 0) return;
       rows.push({
         kind: "descendant", levelName,
-        count: countTaxaAtLevel(subtreeRows, li),
+        count: cachedCountTaxaAtLevel(li),
         breakdown: toBreakdown(tally(e.flatMap(getVals)), e.length),
         total: e.length,
       });
@@ -422,45 +676,33 @@ function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
 
 // ── 4. Map regions ────────────────────────────────────────────────────────────
 
-function buildMapRegionsPerspectives(ctx) {
-  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
-  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "mapregions");
-
-  return mapPaths.flatMap(mapPath => {
-    const meta = dataMeta[mapPath];
-    const results = [];
-    const hasData = r => {
-      const v = Checklist.getDataFromDataPath(r.d, mapPath);
-      return v && typeof v === "object" && Object.keys(v).length > 0;
-    };
-
-    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
-      const p = buildMapRegionsPerspective(ctx, mapPath, meta, false);
-      if (p) results.push(p);
-    }
-    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
-      const p = buildMapRegionsPerspective(ctx, mapPath, meta, true);
-      if (p) results.push(p);
-    }
-    return results;
-  });
-}
-
 function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, subtreeRows, cachedDeepest,
+    cachedCountTaxaAtLevel } = ctx;
 
-  const hasData = r => {
-    const v = Checklist.getDataFromDataPath(r.d, mapPath);
-    return v && typeof v === "object" && Object.keys(v).length > 0;
+  // Cache getDataFromDataPath per row: it is called inside hasData checks and
+  // then again immediately to retrieve the actual data object — easily 3-4×
+  // per row across the aggregate pass and each per-level filter.
+  const _mapDataCache = new Map();
+  const getMapData = row => {
+    if (_mapDataCache.has(row)) return _mapDataCache.get(row);
+    const v = Checklist.getDataFromDataPath(row.d, mapPath);
+    const result = (v && typeof v === "object" && Object.keys(v).length > 0) ? v : null;
+    _mapDataCache.set(row, result);
+    return result;
   };
-  const eligible = rows =>
-    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && hasData(r));
+  const hasData = r => getMapData(r) !== null;
+
+  // Use pre-partitioned pools
+  const subtreePool = forOccurrence ? ctx.subtreeOccurrenceRows : ctx.subtreeTaxonRows;
 
   const lc = getLegendConfig(mapPath);
+
+  // Collect numeric values for aggregate stats once from the full subtree pool
   const allNumericValues = [];
-  eligible(subtreeRows).forEach(row => {
-    const data = Checklist.getDataFromDataPath(row.d, mapPath);
+  subtreePool.forEach(row => {
+    const data = getMapData(row);
     if (data) collectNumericValues(data, lc).forEach(n => allNumericValues.push(n));
   });
   const aggregateStats = getCachedAggregateStats(allNumericValues, mapPath);
@@ -474,24 +716,26 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(ctx.getScopeForLevel(li));
+      const scopePool = forOccurrence ? ctx.getScopeOccRows(li) : ctx.getScopeTaxonRows(li);
+      const e = scopePool.filter(hasData);
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData);
       if (!breakdown.length) return;
+      const levelSummary = buildRegionLevelSummary(breakdown);
       rows.push({
         kind: li === currentLevelIndex ? "current" : "ancestor",
-        levelName, name, breakdown, total: e.length,
+        levelName, name, breakdown, total: e.length, levelSummary,
       });
     } else {
-      const e = eligible(subtreeRows)
-        .filter(r => deepestTaxonLevelOf(r, occurrenceMetaIndex) === li);
+      const e = subtreePool.filter(r => r.t[li] != null && cachedDeepest(r) === li && hasData(r));
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData);
       if (!breakdown.length) return;
+      const levelSummary = buildRegionLevelSummary(breakdown);
       rows.push({
         kind: "descendant", levelName,
-        count: countTaxaAtLevel(subtreeRows, li),
-        breakdown, total: e.length,
+        count: cachedCountTaxaAtLevel(li),
+        breakdown, total: e.length, levelSummary,
       });
     }
   });
@@ -515,7 +759,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
  * together.  The colour and label are captured at accumulation time, avoiding
  * the mistake of later trying to resolve a legend string as a status code.
  */
-function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
+function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapData) {
   const lc = getLegendConfig(mapPath);
 
   // byRegion: regionCode → {
@@ -525,7 +769,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
   const byRegion = {};
 
   rows.forEach(row => {
-    const data = Checklist.getDataFromDataPath(row.d, mapPath);
+    const data = getMapData ? getMapData(row) : Checklist.getDataFromDataPath(row.d, mapPath);
     if (!data) return;
 
     Object.entries(data).forEach(([code, info]) => {
@@ -620,44 +864,22 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
 
 // ── 5. Months ─────────────────────────────────────────────────────────────────
 
-function buildMonthsPerspectives(ctx) {
-  const { dataMeta, showOccurrences, subtreeRows, occurrenceMetaIndex } = ctx;
-  const monthPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "months");
-
-  return monthPaths.flatMap(monthsPath => {
-    const meta = dataMeta[monthsPath];
-    const results = [];
-    const hasData = r => {
-      const v = Checklist.getDataFromDataPath(r.d, monthsPath);
-      return Array.isArray(v) && v.length > 0;
-    };
-
-    if (subtreeRows.some(r => !isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
-      const p = buildMonthsPerspective(ctx, monthsPath, meta, false);
-      if (p) results.push(p);
-    }
-    if (showOccurrences && subtreeRows.some(r => isOccurrenceRow(r, occurrenceMetaIndex) && hasData(r))) {
-      const p = buildMonthsPerspective(ctx, monthsPath, meta, true);
-      if (p) results.push(p);
-    }
-    return results;
-  });
-}
-
 function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, cachedCountTaxaAtLevel } = ctx;
 
-  const hasData = r => {
-    const v = Checklist.getDataFromDataPath(r.d, monthsPath);
-    return Array.isArray(v) && v.length > 0;
-  };
-  const eligible = rows =>
-    rows.filter(r => isOccurrenceRow(r, occurrenceMetaIndex) === forOccurrence && hasData(r));
+  // Combined cache: one getDataFromDataPath call per row serves both the
+  // hasData guard and the getMonths extraction (each row is touched twice
+  // per level otherwise).
+  const _monthsCache = new Map();
   const getMonths = row => {
+    if (_monthsCache.has(row)) return _monthsCache.get(row);
     const v = Checklist.getDataFromDataPath(row.d, monthsPath);
-    return Array.isArray(v) ? v : [];
+    const result = Array.isArray(v) && v.length > 0 ? v : null;
+    _monthsCache.set(row, result);
+    return result;
   };
+  const hasData = r => getMonths(r) !== null;
 
   const rows = [];
 
@@ -668,7 +890,9 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
     if (li <= currentLevelIndex) {
       const name = ancestry[li];
       if (name == null) return;
-      const e = eligible(ctx.getScopeForLevel(li));
+      // Use pre-partitioned scoped rows
+      const scopeRows = forOccurrence ? ctx.getScopeOccRows(li) : ctx.getScopeTaxonRows(li);
+      const e = scopeRows.filter(hasData);
       if (e.length === 0) return;
       // Union of months across all eligible rows in scope (cumulative upward)
       const monthsUnion = new Set();
@@ -679,13 +903,14 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
       });
     } else {
       // Include all rows at or below this level - union naturally deduplicates
-      const e = eligible(subtreeRows).filter(r => r.t[li] != null);
+      const pool = forOccurrence ? ctx.subtreeOccurrenceRows : ctx.subtreeTaxonRows;
+      const e = pool.filter(r => r.t[li] != null && hasData(r));
       if (e.length === 0) return;
       const monthsUnion = new Set();
       e.forEach(r => getMonths(r).forEach(m => monthsUnion.add(m)));
       rows.push({
         kind: "descendant", levelName,
-        count: countTaxaAtLevel(subtreeRows, li),
+        count: cachedCountTaxaAtLevel(li),
         months: monthsUnion,
       });
     }
@@ -749,7 +974,7 @@ function renderLevelData(row, p) {
     case "taxonomy": return null;
     case "occurrences": return renderOccurrencesData(row);
     case "category": return renderCategoryData(row.breakdown, p.meta);
-    case "mapregions": return renderRegionsLevelContent(row.breakdown);
+    case "mapregions": return renderRegionsLevelContent(row.breakdown, row.levelSummary);
     case "months": return renderMonthsGrid(row.months);
     default: return null;
   }
@@ -950,10 +1175,8 @@ function buildRegionLevelSummary(breakdown) {
  * Render the collapsed-by-default level summary for mapregions.
  * Summary is always visible; the per-region detail table is inside <details>.
  */
-function renderRegionsLevelContent(breakdown) {
+function renderRegionsLevelContent(breakdown, summary) {
   if (!breakdown?.length) return null;
-
-  const summary = buildRegionLevelSummary(breakdown);
   if (!summary) return null;
 
   const summaryNode = m(".sp-region-level-summary", [
