@@ -77,7 +77,7 @@ registerMessages(selfKey, {
     view_cat_cell_verb_row_pct_taxa: "{0} ({1} {2}) de {3} ont {4}",
     view_cat_cell_verb_row_pct_custom: "{0} ({1} {2}) avec {3} ont aussi {4}",
     view_cat_cell_verb_col_pct_taxa: "{0} ({1} {2}) avec {4} appartiennent à {3}",
-    view_cat_cell_verb_col_pct_custom: "{0} ({1} {2}) avec {4} ont aussi {3}",    
+    view_cat_cell_verb_col_pct_custom: "{0} ({1} {2}) avec {4} ont aussi {3}",
     tm_trait_label: "Analyser le trait",
     tm_trait_placeholder: "- Choisissez un trait pour commencer -",
     tm_rows_label: "Grouper les lignes par",
@@ -110,7 +110,7 @@ registerMessages(selfKey, {
     tm_living_flip_to_col: "↔ Basculer : comparer au sein de chaque valeur de {2}",
     tm_living_flip_to_row: "↔ Basculer : comparer au sein de chaque {1}",
     tm_living_filtered: "En comptant seulement {0}",
-    tm_no_data_for_selection: "Aucune donnée trouvée pour cette combinaison. Essayez un trait différent ou ajustez les filtres.",    
+    tm_no_data_for_selection: "Aucune donnée trouvée pour cette combinaison. Essayez un trait différent ou ajustez les filtres.",
     view_cat_cell_verb_category_filtered: "(en comptant seulement ceux où {0})",
   }
 });
@@ -328,15 +328,18 @@ function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verb
     ? (isCustomMode ? "view_cat_cell_verb_row_pct_custom" : "view_cat_cell_verb_row_pct_taxa")
     : (isCustomMode ? "view_cat_cell_verb_col_pct_custom" : "view_cat_cell_verb_col_pct_taxa");
 
-  let verb = tf(key, [percentage, matchingCount, unit, rowLabel, colLabel]);
-
+  let verb = tf(key, [percentage, matchingCount, unit, rowLabel, colLabel], true);
+  
   if (!Checklist.filter.isEmpty()) {
     verb += " " + tf(
       "view_cat_cell_verb_category_filtered",
-      [Settings.pinnedSearches.getHumanNameForSearch(JSON.parse(Checklist.queryKey()))],
+      [
+        Settings.pinnedSearches.getHumanNameForSearch(JSON.parse(Checklist.queryKey()))
+      ],
       true
     );
   }
+
   return m.trust(verb);
 }
 
@@ -1022,12 +1025,13 @@ function categoryChart(filteredTaxa) {
     const dataCells = visibleCategories.map(cKey => {
       if (Object.prototype.hasOwnProperty.call(row.categories, cKey)) {
         const ratio = getRatio(row, cKey);
-        const verbContent = cellVerb(
-          toPctString(ratio), cKey, rowKey, row.categories[cKey], sumMethod, verbCtx
-        );
         return m("td.category-cell-filled", {
           style: heatmapStyle(ratio),
-          onclick: () => { currentCellVerb = verbContent; },
+          onclick: () => {
+            currentCellVerb = cellVerb(
+              toPctString(ratio), cKey, rowKey, row.categories[cKey], sumMethod, verbCtx
+            );
+          },
         }, m("span", numericDisplay(row.categories[cKey], toPctString(ratio))));
       }
       return m("td.category-cell-empty", "-");
