@@ -2635,10 +2635,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const formattingBase = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
 
     if (!isColumnPresentInHeaders(formattingBase, colName, headers)) {
-      Logger.critical(
-        `Column "${row.columnName}" (formatting: "${row.formatting}") is declared ` +
-        `in Custom data definition but no matching column was found in the checklist data sheet.`
-      );
+      Logger.critical(tf("dm_cdd_missing_column", [row.columnName, row.formatting]), "Missing column");
     }
   });
 }
