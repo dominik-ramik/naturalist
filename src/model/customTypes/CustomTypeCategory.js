@@ -6,6 +6,7 @@ import { applyHighlight, textMatchesHighlight } from "../highlightUtils.js";
 
 export let customTypeCategory = {
   dataType: "category",
+  expectedColumns: (basePath) => [basePath],
 
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

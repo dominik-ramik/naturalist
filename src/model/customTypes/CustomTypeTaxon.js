@@ -6,7 +6,8 @@ import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeTaxon = {
   dataType: "taxon",
-   
+  expectedColumns: (basePath) => [basePath, `${basePath}.name`, `${basePath}.authority`],
+
   filterPlugin: filterPluginText,
 
   readData: function (context, computedPath) {
@@ -105,27 +106,27 @@ export let customTypeTaxon = {
     return result;
   },
 
-render: function (data, uiContext) {
-  // Highlighted inline render for data-cell taxon fields (embedded taxon
-  // references within a taxon's data, not the tree taxon name itself).
-  if (uiContext?.highlightRegex && data && typeof data === "object" && data.name) {
-    return m("span.taxon-inline", [
-      m("i.taxon-name", applyHighlight(data.name, uiContext.highlightRegex)),
-      data.authority
-        ? m("span.taxon-authority", applyHighlight(" " + data.authority, uiContext.highlightRegex))
-        : null,
-    ]);
-  }
+  render: function (data, uiContext) {
+    // Highlighted inline render for data-cell taxon fields (embedded taxon
+    // references within a taxon's data, not the tree taxon name itself).
+    if (uiContext?.highlightRegex && data && typeof data === "object" && data.name) {
+      return m("span.taxon-inline", [
+        m("i.taxon-name", applyHighlight(data.name, uiContext.highlightRegex)),
+        data.authority
+          ? m("span.taxon-authority", applyHighlight(" " + data.authority, uiContext.highlightRegex))
+          : null,
+      ]);
+    }
 
-  // Standard path - delegate to ClickableTaxonName which handles its own
-  // filter.text highlight via filterMatches in ClickableTaxonNameView.
-  if (data && data.taxonTree && data.taxonTree.taxon) {
+    // Standard path - delegate to ClickableTaxonName which handles its own
+    // filter.text highlight via filterMatches in ClickableTaxonNameView.
+    if (data && data.taxonTree && data.taxonTree.taxon) {
+      return m(ClickableTaxonName, {
+        taxonTree: { taxon: data.taxonTree.taxon, data: {}, children: {} },
+      });
+    }
     return m(ClickableTaxonName, {
-      taxonTree: { taxon: data.taxonTree.taxon, data: {}, children: {} },
+      taxonTree: { taxon: data, data: {}, children: {} },
     });
-  }
-  return m(ClickableTaxonName, {
-    taxonTree: { taxon: data, data: {}, children: {} },
-  });
-},
+  },
 };

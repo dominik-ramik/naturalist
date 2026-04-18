@@ -8,6 +8,8 @@ import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeSound = {
   dataType: "sound",
+  expectedColumns: (basePath) => [basePath, `${basePath}.source`, `${basePath}.title`],
+
 
   filterPlugin: filterPluginText,
 

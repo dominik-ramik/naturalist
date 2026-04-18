@@ -138,6 +138,8 @@ function splitCell(cell) {
 
 export let customTypeInterval = {
   dataType: "interval",
+  expectedColumns: (basePath) => [basePath, `${basePath}.from`, `${basePath}.to`],
+
 
   readData(context, computedPath) {
     const { headers, row, langCode } = context;

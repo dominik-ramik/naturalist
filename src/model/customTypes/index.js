@@ -24,6 +24,7 @@ import { customTypeMap } from "./CustomTypeMap.js";
 import { customTypeMonths } from "./CustomTypeMonths.js";
 import { customTypeGeopoint } from "./CustomTypeGeopoint.js";
 import { customTypeInterval } from "./CustomTypeInterval.js";
+import { dataPath } from "../DataPath.js";
 
 const dataCustomTypes = buildReaders(
   customTypeText,
@@ -61,6 +62,14 @@ function verifyReaders() {
     ) {
       console.error(
         `CustomType at ${readerDataType} is missing required 'dataType' property or it's not a string`
+      );
+    }
+    if (
+      !reader.hasOwnProperty("expectedColumns") ||
+      typeof reader.expectedColumns !== "function"
+    ) {
+      console.error(
+        `CustomType at ${readerDataType} is missing required 'expectedColumns' property or it's not a function`
       );
     }
 
@@ -125,6 +134,32 @@ function verifyReaders() {
 
 // Run verification
 verifyReaders();
+
+/**
+ * Returns true if at least one of the type's expected columns is present
+ * in the checklist headers for the given base path.
+ *
+ * @param {string}   formatting - The formatting type string from CDD
+ * @param {string}   basePath   - The column name as declared in CDD (lowercased)
+ * @param {string[]} headers    - Lowercased checklist sheet headers
+ * @returns {boolean}
+ */
+export function isColumnPresentInHeaders(formatting, basePath, headers) {
+  const reader = dataCustomTypes[formatting];
+
+  // Normalise headers once: replace digit runs with # to match CDD notation
+  const normalisedHeaders = headers.map(h => dataPath.modify.itemNumbersToHash(h));
+
+  const candidates = (reader && typeof reader.expectedColumns === "function")
+    ? reader.expectedColumns(basePath)
+    : [basePath, basePath + "."];  // fallback: bare column or any dotted child
+
+  // Also normalise candidates for the same reason (though CDD paths already use #)
+  return candidates.some(col => {
+    const normCol = dataPath.modify.itemNumbersToHash(col);
+    return normalisedHeaders.some(h => h === normCol || h.startsWith(normCol + "."));
+  });
+}
 
 // Cache management function
 export function clearDataCodesCache() {

@@ -43,6 +43,7 @@ function matchesDateFilter(value, filterDef) {
 
 export let customTypeDate = {
   dataType: "date",
+  expectedColumns: (basePath) => [basePath],
 
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

@@ -165,6 +165,7 @@ export function getLegendConfig(dataPath) {
 
 export let customTypeMapregions = {
   dataType: "mapregions",
+  expectedColumns: (basePath) => [basePath], // source comes from template, base column only
 
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

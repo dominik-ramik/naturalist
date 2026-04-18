@@ -47,6 +47,7 @@ function renderDisplayString(displayString, highlightRegex, highlightWholeField)
 
 export let customTypeNumber = {
   dataType: "number",
+  expectedColumns: (basePath) => [basePath],
 
 
   readData: function (context, computedPath) {

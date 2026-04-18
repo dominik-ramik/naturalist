@@ -31,7 +31,7 @@ import { textMatchesHighlight } from "../highlightUtils.js";
 
 registerMessages(selfKey, {
   en: {
-   months_and: "and", 
+    months_and: "and",
   },
   fr: {
     months_and: "et",
@@ -320,6 +320,10 @@ function renderRanges(ranges, uiContext = {}, highlightRegex = null, filterSelec
 
 export let customTypeMonths = {
   dataType: "months",
+  expectedColumns: (basePath) => [
+    basePath,
+    ...MONTH_KEYS.map(k => `${basePath}.${k}`)
+  ],
 
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

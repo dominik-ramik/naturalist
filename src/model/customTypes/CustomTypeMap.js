@@ -7,6 +7,8 @@ import { applyHighlight } from "../highlightUtils.js";
 
 export let customTypeMap = {
   dataType: "map",
+  expectedColumns: (basePath) => [basePath, `${basePath}.source`, `${basePath}.title`],
+
 
   filterPlugin: filterPluginText,
   readData: function (context, computedPath) {

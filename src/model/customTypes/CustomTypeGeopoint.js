@@ -260,6 +260,7 @@ function buildMapUrl(template, lat, long) {
 
 export let customTypeGeopoint = {
   dataType: "geopoint",
+  expectedColumns: (basePath) => [basePath, `${basePath}.lat`, `${basePath}.long`],
 
   filterPlugin: null, // No full-text search plugin for geopoints (proximity search would be more appropriate but is deferred)
 

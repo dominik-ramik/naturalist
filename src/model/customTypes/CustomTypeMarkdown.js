@@ -6,6 +6,7 @@ import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMarkdown = {
   dataType: "markdown",
+  expectedColumns: (basePath) => [basePath],
     
   filterPlugin: filterPluginText,
 
