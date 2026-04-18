@@ -1,0 +1,40 @@
+/* ─── Base copiable / taxon-name ───────────────────────────────────────────── */
+
+/*
+ * Default .taxon-name weight is set globally in TaxonView.css.
+ * Only variant overrides live here.
+ */
+
+/* ─── Variant icon ─────────────────────────────────────────────────────────── */
+
+.taxon-name-icon {
+  height: 1.1em;
+  width: auto;
+  flex-shrink: 0;
+  margin-right: 0.4em;
+}
+
+/* ─── occurrence variant ───────────────────────────────────────────────────── */
+
+.copiable.taxon-name-variant-occurrence {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--nlblue);
+  color: white;
+  padding: 0.0em 0.6em;
+  border-radius: var(--pad-small);
+  font-family: var(--font-light);
+  letter-spacing: 0.05em;
+  font-size: 85% !important;
+  box-shadow: 0.05em 0.05em 0.1em rgba(0, 0, 0, 0.2);
+}
+
+.copiable.taxon-name-variant-occurrence .taxon-name {
+  font-family: var(--font-light);
+  background-color: transparent;
+  color: inherit;
+  padding: 0.4em 0;
+  border-radius: 0;
+  font-size: 100% !important;
+  letter-spacing: 0.05em;
+}

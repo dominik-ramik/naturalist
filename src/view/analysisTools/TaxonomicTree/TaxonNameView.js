@@ -5,6 +5,8 @@ import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
 import { Checklist } from "../../../model/Checklist.js";
 import { copyToClipboard } from "../../../components/Utils.js";
 
+import "./TaxonNameView.css";
+
 registerMessages(selfKey, {
   en: {
     in_taxon_group: "{0} {1}",
@@ -64,6 +66,7 @@ export let TaxonNameView = {
         taxonTree: vnode.attrs.taxonTree,
         fontSize: fontSize,
         currentTaxonLevel: vnode.attrs.currentTaxonLevel,
+        variant: vnode.attrs.variant,  // passed through opaquely — no logic here
       }),
       inverseTaxonLevel >= 1
         ? m(".copy-to-clipboard-section[style=display: flex;]", [
@@ -80,7 +83,6 @@ export let TaxonNameView = {
                 );
               },
               oncontextmenu: function (e) {
-                // Prevent the default context menu from appearing
                 e.preventDefault();
 
                 let textToCopy = "";
@@ -100,7 +102,7 @@ export let TaxonNameView = {
 
                 copyToClipboard(textToCopy, t("taxon"));
 
-                return false; // Prevent default and stop propagation
+                return false;
               },
             },
             m("img[src=img/ui/checklist/copy.svg]")

@@ -19,19 +19,15 @@ export let TaxonView = {
     }
 
     /**
-     * Recursively checks if this taxon node or any of its children 
-     * contain a occurrence record.
+     * Recursively checks if this taxon node or any of its children
+     * contain an occurrence record.
      */
     const branchHasOccurrences = (node) => {
-      // If this node is a occurrence, the branch has occurrences.
       if (node.taxonMetaIndex === occurrenceMetaIndex) return true;
-      // If it's a taxon, check if any of its children have occurrences.
       if (!node.children) return false;
       return Object.values(node.children).some(branchHasOccurrences);
     };
 
-    // If the setting "Show taxa without occurrences" is FALSE,
-    // and this branch contains no occurrences, prune it.
     if (!Settings.checklistPruneEmpty() && !branchHasOccurrences(vnode.attrs.taxonTree)) {
       return null;
     }
@@ -52,7 +48,6 @@ export let TaxonView = {
           icon = "text";
           tabName = "text";
           break;
-
         default:
           break;
       }
@@ -104,6 +99,7 @@ export let TaxonView = {
       (key) => vnode.attrs.taxonTree.children[key].taxonMetaIndex !== occurrenceMetaIndex
     );
     const isTerminalNode = nonOccurrenceChildKeys.length === 0;
+
     if (vnode.attrs.terminalOnly && !isTerminalNode) {
       return sortedChildKeys.map(function (currentTaxonKey) {
         const childNode = vnode.attrs.taxonTree.children[currentTaxonKey];
@@ -141,7 +137,8 @@ export let TaxonView = {
           m(TaxonNameView, {
             taxonTree: vnode.attrs.taxonTree,
             currentTaxonLevel: vnode.attrs.currentTaxonLevel,
-            parents: vnode.attrs.parents
+            parents: vnode.attrs.parents,
+            variant: isOccurrenceLevel ? "occurrence" : null,
           }),
           m(".spacer"),
           m(".details-icons-wrapper", [
@@ -216,8 +213,6 @@ export let TaxonView = {
               : [...vnode.attrs.parents, vnode.attrs.taxonTree.taxon],
           taxonKey: currentTaxonKey,
           taxonTree: vnode.attrs.taxonTree.children[currentTaxonKey],
-          // used to be currentTaxonLevel: vnode.attrs.currentTaxonLevel + 1, but this was wrong because of missing taxonomic levels
-          // in the checklist tree, so we need to get the taxon level from the taxon meta index of the taxon tree node
           currentTaxonLevel: vnode.attrs.taxonTree.children[currentTaxonKey].taxonMetaIndex,
           displayMode: vnode.attrs.displayMode,
           showTaxonMeta: vnode.attrs.showTaxonMeta,
