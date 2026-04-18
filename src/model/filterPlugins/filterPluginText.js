@@ -5,14 +5,16 @@
 import m from "mithril";
 import { t } from "virtual:i18n-self";
 import { Checklist } from "../Checklist.js";
-import { DropdownCheckItemSkeleton, buildCheckItems } from "./shared/DropdownCheckItem.js";
+import { buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";
+import {
+  renderSearchInput, renderOptionsSections,
+  renderApplyButton, renderCheckAllShown,
+} from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 import {
   matchModeVerbKey,
-  serializeListWithMode,
-  deserializeListWithMode,
-  matchesListWithMode,
+  makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
 // ── Dropdown component ────────────────────────────────────────────────────────
@@ -47,39 +49,21 @@ let DropdownText = function () {
           onCommit()       { Checklist.filter.commit(); },
         }),
 
-        m(".search-filter",
-          m("input.options-search[type=search][placeholder=" + t("search") + "][id=" + dropdownId + "_text]", {
-            oninput() {
-              filter = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            },
-          })
+        renderSearchInput(dropdownId, val => { filter = val; }),
+
+        renderOptionsSections(
+          { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
+          () => { itemsOverflowLimit += INITIAL_LIMIT; },
+          INITIAL_LIMIT
         ),
 
-        m(".options", [
-          showSelected   ? m(".options-section", selected)   : null,
-          showPossible   ? m(".options-section", possible)   : null,
-          showImpossible ? m(".options-section", impossible) : null,
-          itemsOverflowing
-            ? m(".show-next-items", {
-                onclick() { itemsOverflowLimit += INITIAL_LIMIT; },
-              }, t("next_items_dropdown", [INITIAL_LIMIT]))
-            : null,
-          !showSelected && !showPossible && !showImpossible
-            ? m(".no-items-filter", t("no_items_filter"))
-            : null,
-        ]),
+        renderCheckAllShown(filter, totalPossibleUnchecked, () => {
+          fd.selected = fd.selected.concat(filteredPossible);
+          Checklist.filter.commit();
+          openHandler(false);
+        }),
 
-        filter.length > 0 && totalPossibleUnchecked > 1
-          ? m(".apply", {
-              onclick() {
-                fd.selected = fd.selected.concat(filteredPossible);
-                Checklist.filter.commit();
-                openHandler(false);
-              },
-            }, t("check_all_shown"))
-          : null,
-
-        m(".apply", { onclick() { openHandler(false); } }, t("apply_selection")),
+        renderApplyButton(openHandler),
       ]);
     },
   };
@@ -126,44 +110,7 @@ export const filterPluginText = {
     return cat + " " + t(matchModeVerbKey(mode)) + " " + describeList(raw.map(String), opts);
   },
 
-  createFilterDef(type = "text") {
-    return {
-      type,
-      all:       [],
-      possible:  {},
-      selected:  [],
-      numeric:   null,
-      matchMode: MATCH_MODES.ANY,
-    };
-  },
-
-  clearFilter(fd) {
-    fd.selected  = [];
-    fd.matchMode = MATCH_MODES.ANY;
-  },
-
-  clearPossible(fd) { fd.possible = {}; },
-
-  accumulatePossible(fd, _rawValue, leafValues) {
-    leafValues.forEach(v => {
-      if (typeof v === "string" && v.trim() === "") return;
-      if (!Object.prototype.hasOwnProperty.call(fd.possible, v)) fd.possible[v] = 0;
-      fd.possible[v]++;
-    });
-  },
-
-  // serializeToQuery / deserializeFromQuery: identical shape to Months; use shared helpers
-  serializeToQuery(fd) {
-    return serializeListWithMode(fd.selected, fd.matchMode);
-  },
-
-  deserializeFromQuery(fd, val) {
-    const { selected, matchMode } = deserializeListWithMode(val);
-    fd.selected  = selected;
-    fd.matchMode = matchMode;
-  },
-
-  matches(fd, _rawValue, leafValues) {
-    return matchesListWithMode(fd.selected, leafValues, fd.matchMode);
-  },
+  ...makeListPluginLifecycle("text", {
+    skipValue: v => typeof v === "string" && v.trim() === "",
+  }),
 };

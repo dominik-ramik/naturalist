@@ -101,3 +101,60 @@ export function matchesListWithMode(selected, leafValues, matchMode) {
   // ANY (default)
   return leafValues.some(v => selected.includes(v));
 }
+
+// ── Lifecycle factory for list-type plugins (Text, Months) ────────────────────
+
+/**
+ * Returns the 7 lifecycle methods shared by simple list-type plugins
+ * (Text, Months).  Spreads into the plugin object alongside type-specific
+ * UI methods (renderDropdown, getCrumbs, etc.).
+ *
+ * @param {string} defaultType            – "text" | "months"
+ * @param {object} [opts]
+ * @param {Function} [opts.skipValue]        – (v) => boolean; skip this leaf value in accumulatePossible
+ * @param {Function} [opts.deserializeValue] – (v) => transformed; map each value in deserializeFromQuery
+ */
+export function makeListPluginLifecycle(defaultType, opts = {}) {
+  const { skipValue, deserializeValue } = opts;
+  return {
+    createFilterDef(type) {
+      return {
+        type:      type || defaultType,
+        all:       [],
+        possible:  {},
+        selected:  [],
+        numeric:   null,
+        matchMode: MATCH_MODES.ANY,
+      };
+    },
+
+    clearFilter(fd) {
+      fd.selected  = [];
+      fd.matchMode = MATCH_MODES.ANY;
+    },
+
+    clearPossible(fd) { fd.possible = {}; },
+
+    accumulatePossible(fd, _rawValue, leafValues) {
+      leafValues.forEach(v => {
+        if (skipValue && skipValue(v)) return;
+        if (!Object.prototype.hasOwnProperty.call(fd.possible, v)) fd.possible[v] = 0;
+        fd.possible[v]++;
+      });
+    },
+
+    serializeToQuery(fd) {
+      return serializeListWithMode(fd.selected, fd.matchMode);
+    },
+
+    deserializeFromQuery(fd, val) {
+      const { selected, matchMode } = deserializeListWithMode(val);
+      fd.selected  = deserializeValue ? selected.map(deserializeValue) : selected;
+      fd.matchMode = matchMode;
+    },
+
+    matches(fd, _rawValue, leafValues) {
+      return matchesListWithMode(fd.selected, leafValues, fd.matchMode);
+    },
+  };
+}

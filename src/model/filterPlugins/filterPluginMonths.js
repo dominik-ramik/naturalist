@@ -10,12 +10,11 @@ import { Checklist } from "../Checklist.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../customTypes/CustomTypeMonths.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";
+import { renderApplyButton } from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 import {
   matchModeVerbKey,
-  serializeListWithMode,
-  deserializeListWithMode,
-  matchesListWithMode,
+  makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
 // ── Dropdown component ────────────────────────────────────────────────────────
@@ -59,7 +58,7 @@ let DropdownMonths = function () {
         }),
 
         m(".options", m(".options-section", items)),
-        m(".apply", { onclick: () => openHandler(false) }, t("apply_selection")),
+        renderApplyButton(openHandler),
       ]);
     },
   };
@@ -107,43 +106,7 @@ export const filterPluginMonths = {
     return cat + " " + t(matchModeVerbKey(mode)) + " " + describeList(vals, opts);
   },
 
-  createFilterDef() {
-    return {
-      type:      "months",
-      all:       [],
-      possible:  {},
-      selected:  [],
-      numeric:   null,
-      matchMode: MATCH_MODES.ANY,
-    };
-  },
-
-  clearFilter(fd) {
-    fd.selected  = [];
-    fd.matchMode = MATCH_MODES.ANY;
-  },
-
-  clearPossible(fd) { fd.possible = {}; },
-
-  accumulatePossible(fd, _rawValue, leafValues) {
-    leafValues.forEach(v => {
-      if (!Object.prototype.hasOwnProperty.call(fd.possible, v)) fd.possible[v] = 0;
-      fd.possible[v]++;
-    });
-  },
-
-  // serializeToQuery / deserializeFromQuery: same shape as Text; use shared helpers
-  serializeToQuery(fd) {
-    return serializeListWithMode(fd.selected, fd.matchMode);
-  },
-
-  deserializeFromQuery(fd, val) {
-    const { selected, matchMode } = deserializeListWithMode(val);
-    fd.selected  = selected.map(v => parseInt(v, 10));
-    fd.matchMode = matchMode;
-  },
-
-  matches(fd, _rawValue, leafValues) {
-    return matchesListWithMode(fd.selected, leafValues, fd.matchMode);
-  },
+  ...makeListPluginLifecycle("months", {
+    deserializeValue: v => parseInt(v, 10),
+  }),
 };

@@ -8,8 +8,9 @@
  */
 
 import m from "mithril";
-import { t } from "virtual:i18n-self";
 import { Checklist } from "../../Checklist.js";
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+
 
 // ── Value-set helpers ─────────────────────────────────────────────────────────
 
@@ -160,9 +161,10 @@ export function renderSearchInput(dropdownId, onFilterChange) {
  *           showImpossible, impossible, itemsOverflowing }} sections
  * @param {Function} onShowMore – () => void  (called when "show next N" is clicked)
  * @param {number}   pageSize
+ * @param {string}   [extraClass] – optional extra CSS class(es) appended to ".options"
  * @returns {Vnode}
  */
-export function renderOptionsSections(sections, onShowMore, pageSize) {
+export function renderOptionsSections(sections, onShowMore, pageSize, extraClass) {
   const {
     showSelected, selected,
     showPossible, possible,
@@ -170,7 +172,7 @@ export function renderOptionsSections(sections, onShowMore, pageSize) {
     itemsOverflowing,
   } = sections;
 
-  return m(".options", [
+  return m(".options" + (extraClass || ""), [
     showSelected   ? m(".options-section", selected)   : null,
     showPossible   ? m(".options-section", possible)   : null,
     showImpossible ? m(".options-section", impossible) : null,
@@ -181,4 +183,38 @@ export function renderOptionsSections(sections, onShowMore, pageSize) {
       ? m(".no-items-filter", t("no_items_filter"))
       : null,
   ]);
+}
+
+// ── Apply / close button ──────────────────────────────────────────────────────
+
+/**
+ * Renders the "Apply selection" / close button used at the bottom of every dropdown.
+ *
+ * @param {Function} openHandler    – (open: boolean) => void
+ * @param {Function} [onBeforeClose] – optional callback invoked before closing
+ * @returns {Vnode}
+ */
+export function renderApplyButton(openHandler, onBeforeClose) {
+  return m(".apply", {
+    onclick() {
+      if (onBeforeClose) onBeforeClose();
+      openHandler(false);
+    },
+  }, t("apply_selection"));
+}
+
+// ── Check-all-shown button ────────────────────────────────────────────────────
+
+/**
+ * Conditionally renders the "Check all shown" button.
+ * Returns null when the filter is empty or too few items are unchecked.
+ *
+ * @param {string}   filter                  – current normalised search string
+ * @param {number}   totalPossibleUnchecked   – unchecked items matching filter
+ * @param {Function} onApply                  – called on click
+ * @returns {Vnode|null}
+ */
+export function renderCheckAllShown(filter, totalPossibleUnchecked, onApply) {
+  if (!(filter.length > 0 && totalPossibleUnchecked > 1)) return null;
+  return m(".apply", { onclick: onApply }, t("check_all_shown"));
 }

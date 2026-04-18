@@ -20,6 +20,7 @@ import {
   countValues, getOperationIcon, isListMode,
   makeOperationNormalizer, makePreviewDataCache,
   commitListSelection, renderSearchInput, renderOptionsSections,
+  renderApplyButton, renderCheckAllShown,
 } from "./shared/listModeUtils.js";
 
 import "./filterPluginDate.css";
@@ -322,25 +323,20 @@ let DropdownDate = function (initialVnode) {
           : null,
 
         // List mode: check all shown
-        isListMode(actualOperation) && filter.length > 0 && totalPossibleUnchecked > 1
-          ? m(".apply", {
-              onclick() {
-                commitSelectedDates(sel => [...sel, ...filteredPossible]);
-                vnode.attrs.openHandler(false);
-              },
-            }, t("check_all_shown"))
+        isListMode(actualOperation)
+          ? renderCheckAllShown(filter, totalPossibleUnchecked, () => {
+              commitSelectedDates(sel => [...sel, ...filteredPossible]);
+              vnode.attrs.openHandler(false);
+            })
           : null,
 
         // List mode: apply / close
         isListMode(actualOperation)
-          ? m(".apply", {
-              onclick() {
-                if (fd.numeric.operation !== "") {
-                  commitSelectedDates(sel => sel);
-                }
-                vnode.attrs.openHandler(false);
-              },
-            }, t("apply_selection"))
+          ? renderApplyButton(vnode.attrs.openHandler, () => {
+              if (fd.numeric.operation !== "") {
+                commitSelectedDates(sel => sel);
+              }
+            })
           : null,
       ]);
     },

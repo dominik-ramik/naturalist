@@ -41,6 +41,10 @@ import { Checklist } from "../Checklist.js";
 import { parseLegendConfig, parseNumericStatus } from "../../components/MapregionsColorEngine.js";
 import { buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";
+import {
+  renderSearchInput, renderOptionsSections,
+  renderApplyButton, renderCheckAllShown,
+} from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
@@ -260,13 +264,7 @@ let DropdownMapregions = function () {
           onCommit()        { Checklist.filter.commit(); },
         }),
 
-        m(".search-filter",
-          m("input.options-search[type=search][placeholder=" + t("search") + "][id=" + dropdownId + "_text]", {
-            oninput(e) {
-              filter = e.target.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            },
-          })
-        ),
+        renderSearchInput(dropdownId, val => { filter = val; }),
 
         showStatusFilter
           ? m(".mapregions-status-filter", [
@@ -285,30 +283,20 @@ let DropdownMapregions = function () {
             ])
           : null,
 
-        m(".options.mapregions-regions", [
-          showSelected   ? m(".options-section", selectedItems)   : null,
-          showPossible   ? m(".options-section", possibleItems)   : null,
-          showImpossible ? m(".options-section", impossibleItems) : null,
-          itemsOverflowing
-            ? m(".show-next-items", { onclick() { itemsOverflowLimit += INITIAL_LIMIT; } },
-                t("next_items_dropdown", [INITIAL_LIMIT]))
-            : null,
-          !showSelected && !showPossible && !showImpossible
-            ? m(".no-items-filter", t("no_items_filter"))
-            : null,
-        ]),
+        renderOptionsSections(
+          { showSelected, selected: selectedItems, showPossible, possible: possibleItems, showImpossible, impossible: impossibleItems, itemsOverflowing },
+          () => { itemsOverflowLimit += INITIAL_LIMIT; },
+          INITIAL_LIMIT,
+          ".mapregions-regions"
+        ),
 
-        filter.length > 0 && totalPossibleUnchecked > 1
-          ? m(".apply", {
-              onclick() {
-                filterDef.selected = [...new Set([...filterDef.selected, ...filteredPossible])];
-                Checklist.filter.commit();
-                openHandler(false);
-              },
-            }, t("check_all_shown"))
-          : null,
+        renderCheckAllShown(filter, totalPossibleUnchecked, () => {
+          filterDef.selected = [...new Set([...filterDef.selected, ...filteredPossible])];
+          Checklist.filter.commit();
+          openHandler(false);
+        }),
 
-        m(".apply", { onclick() { openHandler(false); } }, t("apply_selection")),
+        renderApplyButton(openHandler),
       ]);
     },
   };

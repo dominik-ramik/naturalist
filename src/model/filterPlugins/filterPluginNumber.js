@@ -22,6 +22,7 @@ import {
   countValues, getOperationIcon, isListMode,
   makeOperationNormalizer, makePreviewDataCache,
   commitListSelection, renderSearchInput, renderOptionsSections,
+  renderApplyButton, renderCheckAllShown,
 } from "./shared/listModeUtils.js";
 import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
@@ -328,13 +329,11 @@ let DropdownNumber = function (initialVnode) {
           : null,
 
         // List mode: check-all-shown
-        isListMode(actualOperation) && filter.length > 0 && totalPossibleUnchecked > 1
-          ? m(".apply", {
-              onclick() {
-                commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
-                vnode.attrs.openHandler(false);
-              },
-            }, t("check_all_shown"))
+        isListMode(actualOperation)
+          ? renderCheckAllShown(filter, totalPossibleUnchecked, () => {
+              commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
+              vnode.attrs.openHandler(false);
+            })
           : null,
 
         // Distribution toggle (list mode only)
@@ -365,14 +364,11 @@ let DropdownNumber = function (initialVnode) {
 
         // List mode: apply / close
         isListMode(actualOperation)
-          ? m(".apply", {
-              onclick() {
-                if (fd.numeric.operation !== "") {
-                  commitSelectedNumbers(sel => sel);
-                }
-                vnode.attrs.openHandler(false);
-              },
-            }, t("apply_selection"))
+          ? renderApplyButton(vnode.attrs.openHandler, () => {
+              if (fd.numeric.operation !== "") {
+                commitSelectedNumbers(sel => sel);
+              }
+            })
           : null,
       ]);
     },
