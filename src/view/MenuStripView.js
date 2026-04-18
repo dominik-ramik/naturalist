@@ -62,7 +62,7 @@ export let MenuStripView = {
 
 function menuPanel() {
   return m(".menu-panel-wrapper", [
-    m(".menu-panel", [
+    m(".menu-panel-outer-wrapper", [m(".menu-panel", [
       m(
         ".menu-hide-panel.clickable",
         {
@@ -204,7 +204,7 @@ function menuPanel() {
             : null,
         ]
       )
-    ]),
+    ])]),
     m(".menu-background", {
       onclick: function () {
         MenuStripView.menuOpen = !MenuStripView.menuOpen;

@@ -48,13 +48,47 @@
   flex-direction: row;
 }
 
-.menu-panel {
+.menu-panel-outer-wrapper{
   background-color: white;
   width: 25em;
   max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.menu-panel {
+  flex-grow: 1;
   box-shadow: 0 0 2em black;
   display: flex;
   flex-direction: column;
+
+  background-image: url("/img/icon_transparent_blue.svg");
+  background-repeat: no-repeat, no-repeat;
+  background-position: bottom 2em right 0.25em;
+  background-size: 10em;
+  background-blend-mode: lighten;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Make menu items area transparent so the panel background shows through */
+.menu-items {
+  overflow-y: auto;
+  opacity: 0.7;
+  font-weight: bold;
+  flex-grow: 1;
+  background-color: transparent;
+  /* was implicitly white */
+}
+
+/* Same for version info strip at the bottom */
+.version-info {
+  font-size: 70%;
+  color: gray;
+  margin-left: 0.5em;
+  margin-bottom: 0.25em;
+  text-align: left;
+  background-color: transparent;
 }
 
 .menu-background {
@@ -373,6 +407,6 @@
   .mobile-only-title {
     display: inline;
     font-weight: normal;
-  margin-right: 0.5em;
+    margin-right: 0.5em;
   }
 }
