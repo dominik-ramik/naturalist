@@ -225,11 +225,14 @@ function aggregateRegion(data, segmentTrack, categoryStatus, numericOperation, t
     const excluded = data.statuses.length - data.numerics.length;
 
     if (numericOperation === 'count') {
-      // For groups a leaf can appear in multiple member regions; count unique leaves.
+      // Count only records that have a numeric value (consistent with every other
+      // numeric operation which operates exclusively on data.numerics).
+      // For groups a leaf can appear in multiple member regions; deduplicate by name.
+      if (!data.numerics.length) return null;
       const count = data._isGroup
-        ? new Set(data.records.map(r => r.name)).size
-        : data.statuses.length;
-      return { value: count, count, recordCount: count, excluded: 0 };
+        ? new Set(data.records.filter(r => r.numeric !== null).map(r => r.name)).size
+        : data.numerics.length;
+      return { value: count, count, recordCount: data.statuses.length, excluded };
     }
     if (numericOperation === 'pct_above') {
       if (!data.numerics.length) return null;
@@ -343,7 +346,10 @@ function fadeToWhite(hex, t) {
 
 export function computeRatio(value, key, denominator, filteredCount, effectiveAllCounts) {
   switch (denominator) {
-    case 'region': return (effectiveAllCounts[key] || value) > 0 ? value / (effectiveAllCounts[key] || value) : 0;
+    case 'region': {
+      const regionTotal = effectiveAllCounts[key] ?? 0;
+      return regionTotal > 0 ? value / regionTotal : 0;
+    }
     case 'total': return effectiveAllCounts.__total__ > 0 ? value / effectiveAllCounts.__total__ : 0;
     default: return filteredCount > 0 ? value / filteredCount : 0;  // 'filter'
   }

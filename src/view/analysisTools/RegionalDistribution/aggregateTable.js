@@ -130,7 +130,7 @@ export function renderAggregateTable({
 
     const drillRow = isActive
       ? m('tr.rd-drill-row', m('td[colspan=5]',
-        renderDrillPanel(key, regionData, mapState, legendConfig, datasetStats)
+        renderDrillPanel(key, regionData, regionAggregates, mapState, legendConfig, datasetStats)
       ))
       : null;
 
@@ -155,15 +155,17 @@ export function renderAggregateTable({
   ]);
 }
 
-function renderDrillPanel(key, regionData, mapState, legendConfig, datasetStats) {
+function renderDrillPanel(key, regionData, regionAggregates, mapState, legendConfig, datasetStats) {
   const data = regionData[key];
   if (!data) return null;
 
   const { segmentTrack, categoryStatus } = mapState;
 
-  const filtered = segmentTrack === 'category' && categoryStatus
-    ? data.records.filter(r => r.status === categoryStatus)
-    : data.records;
+  const filtered = segmentTrack === 'numeric'
+    ? data.records.filter(r => r.numeric !== null)
+    : categoryStatus
+      ? data.records.filter(r => r.status === categoryStatus)
+      : data.records;
 
   if (!filtered.length) return m('.rd-drill-empty', t('rd_drill_empty'));
 
@@ -171,6 +173,7 @@ function renderDrillPanel(key, regionData, mapState, legendConfig, datasetStats)
   const numerics = records.map(r => r.numeric).filter(n => n !== null);
   const isGroup = !!data._isGroup;
   const colSpan = isGroup ? 3 : 2;
+  const excluded = regionAggregates[key]?.excluded ?? 0;
 
   return m('.rd-drill-panel', [
     segmentTrack === 'numeric' && numerics.length > 0 ? renderNumericStats(numerics) : null,
@@ -185,8 +188,8 @@ function renderDrillPanel(key, regionData, mapState, legendConfig, datasetStats)
       )
       : null,
 
-    data.excluded > 0
-      ? m('.rd-drill-excluded', tf('rd_drill_excluded', [data.excluded]))
+    excluded > 0
+      ? m('.rd-drill-excluded', m.trust(tf('rd_drill_excluded', [excluded])))
       : null,
 
     m('table.rd-drill-table', [
