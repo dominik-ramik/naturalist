@@ -211,6 +211,14 @@ const ManageStore = {
     this.dwcAutoRecompile = false;
     this.errorDetails = "";
     this.messageCode = "";
+    // Ensure all UI log groups are collapsed when resetting/recompiling
+    try {
+      if (LogsPanel && LogsPanel.expandedGroups && typeof LogsPanel.expandedGroups.clear === 'function') {
+        LogsPanel.expandedGroups.clear();
+      }
+    } catch (e) {
+      // noop
+    }
   },
 
   setUploadMode: function (mode) {
