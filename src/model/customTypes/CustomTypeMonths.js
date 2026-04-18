@@ -29,6 +29,15 @@ import { Logger } from "../../components/Logger.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
 import { textMatchesHighlight } from "../highlightUtils.js";
 
+registerMessages(selfKey, {
+  en: {
+   months_and: "and", 
+  },
+  fr: {
+    months_and: "et",
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Parsing helpers
 // ---------------------------------------------------------------------------

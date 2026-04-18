@@ -132,3 +132,9 @@ export function createLocalT(namespace) {
 // ---------------------------------------------------------------------------
 
 export const { t, tf } = createLocalT(null);
+
+// Returns true when a translation key exists (flat or namespace-prefixed).
+// Use this to decide whether to prefer a server-supplied English fallback.
+export function te(tag, namespace) {
+  return resolveKey(tag, namespace) !== null;
+}

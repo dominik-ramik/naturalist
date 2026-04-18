@@ -8,9 +8,64 @@
 
 import m from 'mithril';
 import { Checklist } from '../../../model/Checklist.js';
-import { Settings }  from '../../../model/Settings.js';
+import { Settings } from '../../../model/Settings.js';
 import { NUMERIC_OPERATIONS, getOperationMeta } from './aggregate.js';
 import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+
+registerMessages(selfKey, {
+  en: {
+    view_map_sum_by_filter: "Filter",
+    view_map_sum_by_region: "Region",
+    view_map_sum_by_total: "Total",
+    view_map_select_map: "Select a map above",
+    rd_config_title: "Map configuration",
+    rd_map_label: "Map",
+    rd_segment_label: "Analyse",
+    rd_segment_any: "Any presence",
+    rd_segment_numeric: "Numeric values",
+    rd_operation_label: "Operation",
+    rd_threshold_label: "Threshold",
+    rd_denominator_label: "Show as % of",
+    rd_group_toggle: "Group regions for statistics",
+    rd_unit_taxa: "taxa",
+    rd_unit_occurrences: "occurrences",
+    rd_verb_presence: "Presence of",
+    rd_verb_category: "Records with status {0}",
+    rd_verb_numeric_op: "{0} of numeric values",
+    rd_verb_pct_above: "% of records above {0}",
+    rd_verb_pct_below: "% of records below {0}",
+    rd_verb_scope_all: "across all {0}",
+    rd_verb_scope_filtered: "for {0} ({2} {1})",
+  },
+  fr: {
+    view_map_sum_by_filter: "Filtre",
+    view_map_sum_by_region: "Région",
+    view_map_sum_by_total: "Total",
+    view_map_select_map: "Sélectionnez une carte ci-dessus",
+    rd_config_title: "Configuration de la carte",
+    rd_map_label: "Carte",
+    rd_segment_label: "Analyse",
+    rd_segment_any: "Présence any",
+    rd_segment_numeric: "Valeurs numériques",
+    rd_operation_label: "Opération",
+    rd_threshold_label: "Seuil",
+    rd_denominator_label: "Afficher en % de",
+    rd_group_toggle: "Grouper les régions pour les statistiques",
+    rd_unit_taxa: "taxons",
+    rd_unit_occurrences: "occurrences",
+    rd_verb_presence: "Présence de",
+    rd_verb_category: "Enregistrements avec le statut {0}",
+    rd_verb_numeric_op: "{0} des valeurs numériques",
+    rd_verb_pct_above: "% des enregistrements au-dessus de {0}",
+    rd_verb_pct_below: "% des enregistrements en dessous de {0}",
+    rd_verb_scope_all: "pour tous les {0}",
+    rd_verb_scope_filtered: "pour {0} ({2} {1})",
+
+  }
+});
+
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,20 +95,20 @@ export function renderConfigPanel({
   filteredCount,
 }) {
   const filterIsEmpty = Checklist.filter.isEmpty();
-  const mode          = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
+  const mode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
 
   const {
     segmentTrack, categoryStatus, numericOperation,
     threshold, denominator, useGroups, _hasGroups, _groupTitles,
   } = mapState;
 
-  const opMeta     = getOperationMeta(numericOperation);
-  const isMixed    = segments?.hasNumeric && segments?.namedCategories.length > 0;
+  const opMeta = getOperationMeta(numericOperation);
+  const isMixed = segments?.hasNumeric && segments?.namedCategories.length > 0;
   // Show segment picker when the user has a real choice to make
-  const showSeg    = segments && !segments.isPresenceOnly && (isMixed || segments.namedCategories.length > 1);
-  const showOp     = segmentTrack === 'numeric';
+  const showSeg = segments && !segments.isPresenceOnly && (isMixed || segments.namedCategories.length > 1);
+  const showOp = segmentTrack === 'numeric';
   const showThresh = showOp && opMeta.usesThreshold;
-  const showDenom  = !filterIsEmpty && (segmentTrack !== 'numeric' || opMeta.usesDenominator);
+  const showDenom = !filterIsEmpty && (segmentTrack !== 'numeric' || opMeta.usesDenominator);
 
   return m('.rd-config-card', [
 
@@ -81,7 +136,7 @@ export function renderConfigPanel({
         ]),
         (_hasGroups && currentMap) ? m('label.rd-checkbox-label.rd-groups-checkbox', [
           m('input[type=checkbox]', {
-            checked:  useGroups,
+            checked: useGroups,
             onchange: e => onStateChange({ useGroups: e.target.checked }),
           }),
           ' ',
@@ -109,7 +164,7 @@ export function renderConfigPanel({
             isMixed ? segBtn(t('rd_segment_numeric'),
               segmentTrack === 'numeric',
               () => onStateChange({ segmentTrack: 'numeric', categoryStatus: null }))
-            : null,
+              : null,
           ]),
         ]) : null,
 
@@ -140,7 +195,7 @@ export function renderConfigPanel({
           m('.chart-segmented-control', [
             segBtn(t('view_map_sum_by_filter'), denominator === 'filter', () => onStateChange({ denominator: 'filter' })),
             segBtn(t('view_map_sum_by_region'), denominator === 'region', () => onStateChange({ denominator: 'region' })),
-            segBtn(t('view_map_sum_by_total'),  denominator === 'total',  () => onStateChange({ denominator: 'total' })),
+            segBtn(t('view_map_sum_by_total'), denominator === 'total', () => onStateChange({ denominator: 'total' })),
           ]),
         ]) : null,
 
@@ -164,7 +219,7 @@ export function renderConfigPanel({
 function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filterIsEmpty }) {
   const { segmentTrack, categoryStatus, numericOperation, threshold, denominator } = mapState;
   const opMeta = getOperationMeta(numericOperation);
-  const unit   = t(mode === OCCURRENCE_IDENTIFIER ? 'rd_unit_occurrences' : 'rd_unit_taxa');
+  const unit = t(mode === OCCURRENCE_IDENTIFIER ? 'rd_unit_occurrences' : 'rd_unit_taxa');
 
   // - What is being computed -
   let action;
@@ -178,7 +233,7 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
     }
   } else if (categoryStatus && segments) {
     const catMeta = segments.namedCategories.find(c => c.status === categoryStatus);
-    const label   = catMeta?.legend || categoryStatus;
+    const label = catMeta?.legend || categoryStatus;
     action = tf('rd_verb_category', ['<strong>' + label + '</strong>']);
   } else {
     action = t('rd_verb_presence');

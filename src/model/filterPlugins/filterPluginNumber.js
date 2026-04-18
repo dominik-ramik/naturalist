@@ -7,14 +7,15 @@
  */
 
 import m from "mithril";
-import { t } from "virtual:i18n-self";
+import { t, registerMessages, selfKey } from "virtual:i18n-self";
 import { getUnitFromTemplate, unitToHtml, roundWithPrecision, textLowerCaseAccentless } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { drawHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
 import {
-  buildRangeFilterLabel, numericFilters, describeList,
+  buildRangeFilterLabel, buildOperatorInputUi, formatResultCount, renderStats,
+  numericFilters, describeList,
   makeScalarRangeLifecycle, makeScalarRangeUiMethods,
   sortedUniqueNumbers,
 } from "./shared/filterUtils.js";
@@ -28,6 +29,19 @@ import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
 import "./filterPluginNumber.css";
 import "./shared/numericDropdown.css";
+
+registerMessages(selfKey, {
+  en: {
+    histogram_toggle_show: "Show distribution",
+    histogram_toggle_hide: "Hide distribution",
+  },
+  fr: {
+    histogram_toggle_show: "Afficher la distribution",
+    histogram_toggle_hide: "Masquer la distribution",
+  }
+});
+
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -95,11 +109,11 @@ let DropdownNumber = function (initialVnode) {
 
   const thresholdState = {
     initialThresholds: [null, null, null],
-    actualThresholds:  [null, null, null],
-    thresholdsShown:   0,
+    actualThresholds: [null, null, null],
+    thresholdsShown: 0,
   };
 
-  let actualOperation  = "list";
+  let actualOperation = "list";
   let showDistribution = false;
 
   const INITIAL_LIMIT = 100;
@@ -108,7 +122,7 @@ let DropdownNumber = function (initialVnode) {
 
   // Lazy preview-data cache (replaces inline cache in original)
   const previewCache = makePreviewDataCache();
-  const getPreviewData        = () => previewCache.get(dataPath);
+  const getPreviewData = () => previewCache.get(dataPath);
   const getOperatorPreviewValues = () => getPreviewData().possible;
 
   function getDisplayedOperatorValues() {
@@ -141,15 +155,15 @@ let DropdownNumber = function (initialVnode) {
       Checklist.filter.data[dataPath], dataPath,
       getSortedUniqueNumericValues, mutator,
       {
-        setOperation:         op  => { actualOperation = op; showDistribution = false; },
+        setOperation: op => { actualOperation = op; showDistribution = false; },
         setInitialThresholds: arr => { thresholdState.initialThresholds = arr; },
-        setActualThresholds:  arr => { thresholdState.actualThresholds  = arr; },
+        setActualThresholds: arr => { thresholdState.actualThresholds = arr; },
       }
     );
   }
 
   const numericInput = makeNumericInputFn({
-    state:        thresholdState,
+    state: thresholdState,
     dropdownId,
     getOperation: () => actualOperation,
     getPlaceholder(thresholdNumber) {
@@ -160,8 +174,8 @@ let DropdownNumber = function (initialVnode) {
     },
     getExtraError(thresholdNumber, thresholds, op) {
       if (op === "between" && thresholdNumber === 2 &&
-          thresholds[2] !== null && thresholds[1] !== null &&
-          thresholds[2] < thresholds[1]) return true;
+        thresholds[2] !== null && thresholds[1] !== null &&
+        thresholds[2] < thresholds[1]) return true;
       return false;
     },
   });
@@ -179,11 +193,11 @@ let DropdownNumber = function (initialVnode) {
   return {
     oninit(vnode) {
       dataPath = vnode.attrs.dataPath;
-      const fd   = Checklist.filter.data[dataPath];
+      const fd = Checklist.filter.data[dataPath];
       const saved = fd.numeric.operation;
       thresholdState.initialThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
-      thresholdState.actualThresholds  = [null, fd.numeric.threshold1, fd.numeric.threshold2];
-      actualOperation  = normalizeNumberOperation(saved);
+      thresholdState.actualThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
+      actualOperation = normalizeNumberOperation(saved);
       showDistribution = !isListMode(actualOperation);
     },
     oncreate: redrawHistogram,
@@ -196,13 +210,13 @@ let DropdownNumber = function (initialVnode) {
       const fd = Checklist.filter.data[dataPath];
       const preview = getPreviewData();
       const { min, max, avg, distinct } = getNumericSummary(preview.possible);
-      const unit    = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
+      const unit = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
       const unitTag = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
 
       // Build list-mode check items
-      const allValues       = getSortedUniqueNumericValues(preview.possible);
-      const possibleCounts  = getNumericValueCounts(preview.possible);
-      const selectedValues  = fd.selected || [];
+      const allValues = getSortedUniqueNumericValues(preview.possible);
+      const possibleCounts = getNumericValueCounts(preview.possible);
+      const selectedValues = fd.selected || [];
 
       let showSelected = false, showPossible = false, showImpossible = false;
       let totalItems = 0, totalPossibleUnchecked = 0;
@@ -242,20 +256,7 @@ let DropdownNumber = function (initialVnode) {
 
       const itemsOverflowing = totalItems > itemsOverflowLimit;
 
-      let inputUi;
-      switch (actualOperation) {
-        case "lesser": case "lesserequal":
-          inputUi = [m(".label1", t("numeric_filter_" + actualOperation)), numericInput(1, min, max)]; break;
-        case "greater": case "greaterequal":
-          inputUi = [m(".label1", t("numeric_filter_" + actualOperation)), numericInput(1, min, max)]; break;
-        case "equal":
-          inputUi = [m(".label1", t("numeric_filter_equal")), numericInput(1, min, max)]; break;
-        case "between":
-          inputUi = [m(".label1", t("numeric_filter_between")), numericInput(1, min, max), m(".label2", t("numeric_filter_and")), numericInput(2, min, max)]; break;
-        case "around":
-          inputUi = [m(".label1", t("numeric_filter_around")), numericInput(1, min, max), m(".label2", t("numeric_filter_plusminus")), numericInput(2, min, max)]; break;
-        default: inputUi = null;
-      }
+      let inputUi = buildOperatorInputUi(actualOperation, numericInput, min, max, numericFilters);
       if (unit && inputUi) inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];
 
       return m(".inner-dropdown-area.numeric", [
@@ -279,39 +280,37 @@ let DropdownNumber = function (initialVnode) {
         // Operator input row
         !isListMode(actualOperation)
           ? m(".input-ui", [
-              inputUi,
-              m(".clear-button.clickable", {
-                onclick() {
-                  actualOperation  = "list";
-                  showDistribution = false;
-                  fd.selected = [];
-                  fd.numeric  = { operation: "", threshold1: null, threshold2: null };
-                  thresholdState.initialThresholds = [null, null, null];
-                  thresholdState.actualThresholds  = [null, null, null];
-                  Checklist.filter.commit();
-                },
-              }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
-            ])
+            inputUi,
+            m(".clear-button.clickable", {
+              onclick() {
+                actualOperation = "list";
+                showDistribution = false;
+                fd.selected = [];
+                fd.numeric = { operation: "", threshold1: null, threshold2: null };
+                thresholdState.initialThresholds = [null, null, null];
+                thresholdState.actualThresholds = [null, null, null];
+                Checklist.filter.commit();
+              },
+            }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
+          ])
           : null,
 
         // Operator apply
         !isListMode(actualOperation)
           ? m(".apply.clickable" + (canApply() ? "" : ".inactive"), {
-              onclick() {
-                if (!canApply()) return;
-                const comparer = numericFilters[actualOperation].comparer;
-                const t1 = thresholdState.actualThresholds[1];
-                const t2 = thresholdState.actualThresholds[2];
-                fd.selected = getSortedUniqueNumericValues(
-                  getOperatorPreviewValues().filter(v => comparer(v, t1, t2))
-                );
-                fd.numeric = { operation: actualOperation, threshold1: t1, threshold2: t2 };
-                vnode.attrs.openHandler(false);
-                Checklist.filter.commit();
-              },
-            }, countResults() === 0
-              ? t("numeric_apply_show_results_no_results")
-              : t("numeric_apply_show_results", [countResults()]))
+            onclick() {
+              if (!canApply()) return;
+              const comparer = numericFilters[actualOperation].comparer;
+              const t1 = thresholdState.actualThresholds[1];
+              const t2 = thresholdState.actualThresholds[2];
+              fd.selected = getSortedUniqueNumericValues(
+                getOperatorPreviewValues().filter(v => comparer(v, t1, t2))
+              );
+              fd.numeric = { operation: actualOperation, threshold1: t1, threshold2: t2 };
+              vnode.attrs.openHandler(false);
+              Checklist.filter.commit();
+            },
+          }, formatResultCount(countResults()))
           : null,
 
         // List mode: search box (shared renderSearchInput)
@@ -322,29 +321,29 @@ let DropdownNumber = function (initialVnode) {
         // List mode: item list (shared renderOptionsSections)
         isListMode(actualOperation)
           ? renderOptionsSections(
-              { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
-              () => { itemsOverflowLimit += INITIAL_LIMIT; },
-              INITIAL_LIMIT
-            )
+            { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
+            () => { itemsOverflowLimit += INITIAL_LIMIT; },
+            INITIAL_LIMIT
+          )
           : null,
 
         // List mode: check-all-shown
         isListMode(actualOperation)
           ? renderCheckAllShown(filter, totalPossibleUnchecked, () => {
-              commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
-              vnode.attrs.openHandler(false);
-            })
+            commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
+            vnode.attrs.openHandler(false);
+          })
           : null,
 
         // Distribution toggle (list mode only)
         isListMode(actualOperation)
           ? m(".distribution-toggle.clickable" + (showDistribution ? ".expanded" : ""), {
-              onclick() { showDistribution = !showDistribution; },
-            }, [
-              m("img.distribution-toggle-icon[src=img/ui/search/expand.svg]"),
-              m(".distribution-toggle-label",
-                showDistribution ? t("histogram_toggle_show") : t("histogram_toggle_hide")),
-            ])
+            onclick() { showDistribution = !showDistribution; },
+          }, [
+            m("img.distribution-toggle-icon[src=img/ui/search/expand.svg]"),
+            m(".distribution-toggle-label",
+              showDistribution ? t("histogram_toggle_show") : t("histogram_toggle_hide")),
+          ])
           : null,
 
         // Histogram (shared renderHistogramWrap)
@@ -354,21 +353,21 @@ let DropdownNumber = function (initialVnode) {
 
         // Stats
         (!isListMode(actualOperation) || showDistribution)
-          ? m("ul.stats", [
-              min !== null ? m("li", [t("stats_min") + ": " + min.toLocaleString(), unitTag]) : null,
-              max !== null ? m("li", [t("stats_max") + ": " + max.toLocaleString(), unitTag]) : null,
-              m("li", [t("stats_avg") + ": " + avg.toLocaleString(), unitTag]),
-              m("li", t("stats_distinct") + ": " + distinct.toLocaleString()),
-            ])
+          ? renderStats([
+            { key: "stats_min", value: min !== null ? min.toLocaleString() : null, suffix: unitTag },
+            { key: "stats_max", value: max !== null ? max.toLocaleString() : null, suffix: unitTag },
+            { key: "stats_avg", value: avg.toLocaleString(), suffix: unitTag },
+            { key: "stats_distinct", value: distinct.toLocaleString() },
+          ])
           : null,
 
         // List mode: apply / close
         isListMode(actualOperation)
           ? renderApplyButton(vnode.attrs.openHandler, () => {
-              if (fd.numeric.operation !== "") {
-                commitSelectedNumbers(sel => sel);
-              }
-            })
+            if (fd.numeric.operation !== "") {
+              commitSelectedNumbers(sel => sel);
+            }
+          })
           : null,
       ]);
     },
@@ -398,7 +397,7 @@ export const filterPluginNumber = {
       if (idx > -1) fd.selected.splice(idx, 1);
     } else {
       fd.selected = [];
-      fd.numeric  = { operation: "", threshold1: null, threshold2: null };
+      fd.numeric = { operation: "", threshold1: null, threshold2: null };
     }
     Checklist.filter.commit();
   },

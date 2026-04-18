@@ -1,5 +1,4 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
@@ -14,14 +13,7 @@ export let customTypeMap = {
     let mapData = readDataFromPath(
       context,
       computedPath,
-      {
-        errorMessageTemplate: (columnNames) =>
-          tf("dm_generic_column_names", [
-            "map",
-            computedPath,
-            String.join(", ", columnNames),
-          ]),
-      },
+      "map",
       ["source", "title"]
     );
 

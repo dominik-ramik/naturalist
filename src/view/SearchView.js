@@ -10,6 +10,18 @@ import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
 import { ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    reset_filter_mobile: "Clear",
+    filters: "Filters",
+    free_text_search: "Full-text search; use {0} between terms to find either one",
+  },
+  fr: {
+    reset_filter_mobile: "Effacer",
+    filters: "Filtres",
+    free_text_search: "Recherche en texte intégral ; utilisez {0} entre les termes pour trouver l'un ou l'autre",
+  }
+});
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
 

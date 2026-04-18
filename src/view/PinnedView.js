@@ -6,6 +6,17 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { validateActiveToolState } from "./analysisTools/index.js";
 
+registerMessages(selfKey, {
+  en: {
+    pin_this_search: "Pin this search",
+    pined_searches: "Pinned searches",
+  },
+  fr: {
+    pin_this_search: "Épingler cette recherche",
+    pined_searches: "Recherches épinglées",
+  }
+});
+
 export let PinnedView = {
   view: function (vnode) {
     let items = [].concat(
@@ -13,15 +24,15 @@ export let PinnedView = {
         Settings.pinnedSearches.isCurrentSearchPinned()
           ? null
           : {
-              type: "button",
-              state: "",
-              icon: "ui/menu/push_pin",
-              title: t("pin_this_search"),
-              action: function () {
-                Settings.pinnedSearches.addCurrent();
-              },
+            type: "button",
+            state: "",
+            icon: "ui/menu/push_pin",
+            title: t("pin_this_search"),
+            action: function () {
+              Settings.pinnedSearches.addCurrent();
             },
-      ],      
+          },
+      ],
       [
         Settings.pinnedSearches.getAll().length == 0
           ? null
@@ -92,15 +103,15 @@ export let PinnedView = {
               ]),
               item.altActionIcon
                 ? m(
-                    ".menu-item.alt-action-item",
-                    {
-                      onclick: function (e) {
-                        item.altAction();
-                        e.stopPropagation();
-                      },
+                  ".menu-item.alt-action-item",
+                  {
+                    onclick: function (e) {
+                      item.altAction();
+                      e.stopPropagation();
                     },
-                    m("img[src=" + item.altActionIcon + "]")
-                  )
+                  },
+                  m("img[src=" + item.altActionIcon + "]")
+                )
                 : null,
             ]
           );

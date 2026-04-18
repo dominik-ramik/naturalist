@@ -47,6 +47,33 @@ import {
 } from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 
+registerMessages(selfKey, {
+  en: {
+    sf_range_from: "From",
+    sf_range_to: "To",
+    sf_range_min_placeholder: "Min ({0})",
+    sf_range_max_placeholder: "Max ({0})",
+    sf_range_clear: "Clear numeric range filter",
+    sf_cat_clear: "Clear category selection",
+    mapregions_status_filter: "Filter by status",
+    is_all_list_joiner: "is all of",
+    is_not_list_joiner: "is not",
+    is_list_joiner: "is",
+  },
+  fr: {
+    sf_range_from: "De",
+    sf_range_to: "À",
+    sf_range_min_placeholder: "Min ({0})",
+    sf_range_max_placeholder: "Max ({0})",
+    sf_range_clear: "Effacer le filtre de plage numérique",
+    sf_cat_clear: "Effacer la sélection de catégories",
+    mapregions_status_filter: "Filtrer par statut",
+    is_all_list_joiner: "est tout de",
+    is_not_list_joiner: "n'est pas",
+    is_list_joiner: "est",
+  }
+});
+
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
 /**
@@ -57,14 +84,14 @@ import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
  *   Categorical: [] = no filter (all pass); [...] = only listed statuses pass.
  */
 function statusMatchesSF(status, sf) {
-  const n         = parseNumericStatus(status);
+  const n = parseNumericStatus(status);
   const isNumeric = n !== null;
 
   if (isNumeric) {
     // Purely additive: a numeric region participates only when a range constraint exists.
     if (sf.rangeMin === null && sf.rangeMax === null) return false;
     return (sf.rangeMin === null || n >= sf.rangeMin) &&
-           (sf.rangeMax === null || n <= sf.rangeMax);
+      (sf.rangeMax === null || n <= sf.rangeMax);
   }
 
   // Categorical: empty array = no filter
@@ -79,8 +106,8 @@ function statusMatchesSF(status, sf) {
  */
 function isStatusFilterActive(sf) {
   return !!sf && (
-    (sf.rangeMin  != null) ||
-    (sf.rangeMax  != null) ||
+    (sf.rangeMin != null) ||
+    (sf.rangeMax != null) ||
     (sf.selectedStatuses?.length > 0)
   );
 }
@@ -125,8 +152,8 @@ function statusFilterTitle(sf, categoryRows) {
  */
 function _renderStatusRangeSection(sf, globalMin, globalMax, type, dataPath) {
   function setRange(field, rawValue) {
-    const n      = rawValue === "" ? null : parseFloat(rawValue);
-    sf[field]    = (n == null || isNaN(n)) ? null : n;
+    const n = rawValue === "" ? null : parseFloat(rawValue);
+    sf[field] = (n == null || isNaN(n)) ? null : n;
     Checklist.filter.delayCommitDataPath = type + "." + dataPath;
     Checklist.filter.commit();
   }
@@ -141,27 +168,27 @@ function _renderStatusRangeSection(sf, globalMin, globalMax, type, dataPath) {
   return m(".sf-range", [
     m(".sf-range-row", [
       m("input.sf-range-input[type=number]", {
-        value:       sf.rangeMin ?? "",
+        value: sf.rangeMin ?? "",
         placeholder: fromPlaceholder,
-        oninput(e)   { setRange("rangeMin", e.target.value); },
+        oninput(e) { setRange("rangeMin", e.target.value); },
       }),
       m("span.sf-range-sep", "\u2013"),
       m("input.sf-range-input[type=number]", {
-        value:       sf.rangeMax ?? "",
+        value: sf.rangeMax ?? "",
         placeholder: toPlaceholder,
-        oninput(e)   { setRange("rangeMax", e.target.value); },
+        oninput(e) { setRange("rangeMax", e.target.value); },
       }),
       isRangeFilterActive(sf)
         ? m("button.sf-range-clear.clickable", {
-            title:   t("sf_range_clear"),
-            onclick(e) {
-              e.stopPropagation();
-              sf.rangeMin = null;
-              sf.rangeMax = null;
-              Checklist.filter.delayCommitDataPath = type + "." + dataPath;
-              Checklist.filter.commit();
-            },
-          }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+          title: t("sf_range_clear"),
+          onclick(e) {
+            e.stopPropagation();
+            sf.rangeMin = null;
+            sf.rangeMax = null;
+            Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+            Checklist.filter.commit();
+          },
+        }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
         : null,
     ]),
   ]);
@@ -198,7 +225,7 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath
     allCatRows.map(row => {
       const isPossible = Object.prototype.hasOwnProperty.call(possibleSt, row.status);
       // Additive: a box is checked only when explicitly in selectedStatuses
-      const isChecked  = isPossible && sf.selectedStatuses.includes(row.status);
+      const isChecked = isPossible && sf.selectedStatuses.includes(row.status);
       const isInactive = !isPossible;
 
       return m(".option-item" + (isInactive ? ".inactive" : ""), {
@@ -213,14 +240,14 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath
 
     isCategoryFilterActive(sf)
       ? m("button.sf-cat-clear.clickable", {
-          title:   t("sf_cat_clear"),
-          onclick(e) {
-            e.stopPropagation();
-            sf.selectedStatuses = [];        // reset to "no filter"
-            Checklist.filter.delayCommitDataPath = type + "." + dataPath;
-            Checklist.filter.commit();
-          },
-        }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+        title: t("sf_cat_clear"),
+        onclick(e) {
+          e.stopPropagation();
+          sf.selectedStatuses = [];        // reset to "no filter"
+          Checklist.filter.delayCommitDataPath = type + "." + dataPath;
+          Checklist.filter.commit();
+        },
+      }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
       : null,
   ]);
 }
@@ -234,15 +261,15 @@ let DropdownMapregions = function () {
 
   return {
     oninit() {
-      filter            = "";
+      filter = "";
       itemsOverflowLimit = INITIAL_LIMIT;
     },
 
     view(vnode) {
       const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
-      const filterDef  = Checklist.filter[type][dataPath];
-      const sf         = filterDef.statusFilter;
-      const lc         = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
+      const filterDef = Checklist.filter[type][dataPath];
+      const sf = filterDef.statusFilter;
+      const lc = parseLegendConfig(Checklist.getMapRegionsLegendRows(), dataPath);
       const possibleSt = filterDef.possibleStatuses || {};
 
       const {
@@ -252,8 +279,8 @@ let DropdownMapregions = function () {
         itemsOverflowing, filteredPossible, totalPossibleUnchecked,
       } = buildCheckItems({ type, dataPath, filter, itemsOverflowLimit });
 
-      const hasNumericMode  = lc.numericMode !== null;
-      const allCatRows      = lc.categoryRows;
+      const hasNumericMode = lc.numericMode !== null;
+      const allCatRows = lc.categoryRows;
       const showStatusFilter = hasNumericMode || allCatRows.length > 0;
 
       return m(".inner-dropdown-area.mapregions", [
@@ -261,26 +288,26 @@ let DropdownMapregions = function () {
         m(MatchModeToggle, {
           filterDef,
           supportsMatchAll: true,
-          onCommit()        { Checklist.filter.commit(); },
+          onCommit() { Checklist.filter.commit(); },
         }),
 
         renderSearchInput(dropdownId, val => { filter = val; }),
 
         showStatusFilter
           ? m(".mapregions-status-filter", [
-              m(".mapregions-status-filter-title", t("mapregions_status_filter")),
-              hasNumericMode
-                ? _renderStatusRangeSection(
-                    sf,
-                    filterDef.globalStatusMin ?? null,
-                    filterDef.globalStatusMax ?? null,
-                    type, dataPath
-                  )
-                : null,
-              allCatRows.length > 0
-                ? _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath)
-                : null,
-            ])
+            m(".mapregions-status-filter-title", t("mapregions_status_filter")),
+            hasNumericMode
+              ? _renderStatusRangeSection(
+                sf,
+                filterDef.globalStatusMin ?? null,
+                filterDef.globalStatusMax ?? null,
+                type, dataPath
+              )
+              : null,
+            allCatRows.length > 0
+              ? _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath)
+              : null,
+          ])
           : null,
 
         renderOptionsSections(
@@ -310,8 +337,8 @@ export const filterPluginMapregions = {
 
   isActive(filterDef) {
     return filterDef.selected.length > 0 ||
-           isStatusFilterActive(filterDef.statusFilter) ||
-           (filterDef.matchMode && filterDef.matchMode !== MATCH_MODES.ANY && filterDef.selected.length > 0);
+      isStatusFilterActive(filterDef.statusFilter) ||
+      (filterDef.matchMode && filterDef.matchMode !== MATCH_MODES.ANY && filterDef.selected.length > 0);
   },
 
   getCount(filterDef) {
@@ -325,7 +352,7 @@ export const filterPluginMapregions = {
   },
 
   getCrumbs(filterDef, ctx) {
-    const mode   = filterDef.matchMode || MATCH_MODES.ANY;
+    const mode = filterDef.matchMode || MATCH_MODES.ANY;
     const crumbs = filterDef.selected
       // In exclude mode selected items are deliberately absent from fd.possible
       // (they were filtered out), so skip the possible-set check.
@@ -335,7 +362,7 @@ export const filterPluginMapregions = {
     if (isStatusFilterActive(filterDef.statusFilter)) {
       const categoryRows = parseLegendConfig(Checklist.getMapRegionsLegendRows(), ctx.dataPath).categoryRows;
       crumbs.push({
-        title:          statusFilterTitle(filterDef.statusFilter, categoryRows),
+        title: statusFilterTitle(filterDef.statusFilter, categoryRows),
         isStatusFilter: true,
       });
     }
@@ -346,8 +373,8 @@ export const filterPluginMapregions = {
   clearCrumb(filterDef, _ctx, descriptor) {
     if (descriptor.isStatusFilter) {
       filterDef.statusFilter.selectedStatuses = [];
-      filterDef.statusFilter.rangeMin         = null;
-      filterDef.statusFilter.rangeMax         = null;
+      filterDef.statusFilter.rangeMin = null;
+      filterDef.statusFilter.rangeMax = null;
     } else {
       const idx = filterDef.selected.indexOf(descriptor.title);
       if (idx > -1) filterDef.selected.splice(idx, 1);
@@ -356,14 +383,14 @@ export const filterPluginMapregions = {
   },
 
   describeSerializedValue(dataPath, serialized, opts = {}) {
-    const cat     = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+    const cat = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
     const regions = Array.isArray(serialized) ? serialized : (serialized?.regions ?? []);
-    const mode    = serialized?.mm || MATCH_MODES.ANY;
-    const sf      = serialized?.sf;
+    const mode = serialized?.mm || MATCH_MODES.ANY;
+    const sf = serialized?.sf;
 
-    const verbKey = mode === MATCH_MODES.ALL     ? "is_all_list_joiner"
-                  : mode === MATCH_MODES.EXCLUDE ? "is_not_list_joiner"
-                  : "is_list_joiner";
+    const verbKey = mode === MATCH_MODES.ALL ? "is_all_list_joiner"
+      : mode === MATCH_MODES.EXCLUDE ? "is_not_list_joiner"
+        : "is_list_joiner";
 
     let desc = regions.length > 0
       ? cat + " " + t(verbKey) + " " + describeList(regions, opts)
@@ -374,14 +401,14 @@ export const filterPluginMapregions = {
       if (sf.min != null || sf.max != null) {
         sfParts.push(
           sf.min != null && sf.max != null ? `${sf.min}\u2013${sf.max}`
-          : sf.min != null ? `\u2265${sf.min}` : `\u2264${sf.max}`
+            : sf.min != null ? `\u2265${sf.min}` : `\u2264${sf.max}`
         );
       }
       if (sf.s?.length > 0) sfParts.push(sf.s.join(", "));
 
       if (sfParts.length > 0) {
         const sfLabel = t("mapregions_status_filter");
-        const sfDesc  = sfParts.join("; ");
+        const sfDesc = sfParts.join("; ");
         desc = desc
           ? `${desc} (${sfLabel}: ${sfDesc})`
           : `${cat} \u2013 ${sfLabel}: ${sfDesc}`;
@@ -395,31 +422,31 @@ export const filterPluginMapregions = {
 
   createFilterDef() {
     return {
-      type:      "mapregions",
-      all:       [],
-      possible:  {},
-      selected:  [],
-      numeric:   null,
+      type: "mapregions",
+      all: [],
+      possible: {},
+      selected: [],
+      numeric: null,
       matchMode: MATCH_MODES.ANY,
       statusFilter: {
         selectedStatuses: [],    // Phase 5: [] = no filter (additive default)
-        rangeMin:         null,
-        rangeMax:         null,
+        rangeMin: null,
+        rangeMax: null,
         // includeNumeric REMOVED (Phase 5)
       },
       possibleStatuses: {},
-      globalStatusMin:  null,
-      globalStatusMax:  null,
+      globalStatusMin: null,
+      globalStatusMax: null,
     };
   },
 
   clearFilter(fd) {
-    fd.selected   = [];
-    fd.matchMode  = MATCH_MODES.ANY;
+    fd.selected = [];
+    fd.matchMode = MATCH_MODES.ANY;
     fd.statusFilter = {
       selectedStatuses: [],
-      rangeMin:         null,
-      rangeMax:         null,
+      rangeMin: null,
+      rangeMax: null,
     };
     // NOTE: possibleStatuses is a computed value, not a selection.
     // It must only be cleared in clearPossible() (which is gated by
@@ -427,19 +454,19 @@ export const filterPluginMapregions = {
   },
 
   clearPossible(fd) {
-    fd.possible         = {};
+    fd.possible = {};
     fd.possibleStatuses = {};
   },
 
   accumulatePossible(fd, rawValue, _leafValues) {
     if (!rawValue || typeof rawValue !== "object") return;
 
-    const sf       = fd.statusFilter;
+    const sf = fd.statusFilter;
     const sfActive = isStatusFilterActive(sf);
     const statusesForThisTaxon = new Set();
 
     Object.entries(rawValue).forEach(([code, regionData]) => {
-      const name   = Checklist.nameForMapRegion(code);
+      const name = Checklist.nameForMapRegion(code);
       const status = regionData?.status ?? "";
 
       // Global numeric bounds (unscoped, never cleared)
@@ -488,8 +515,8 @@ export const filterPluginMapregions = {
     }
 
     const regionCodes = Object.keys(rawValue);
-    const mode        = fd.matchMode || MATCH_MODES.ANY;
-    const sfActive    = isStatusFilterActive(fd.statusFilter);
+    const mode = fd.matchMode || MATCH_MODES.ANY;
+    const sfActive = isStatusFilterActive(fd.statusFilter);
 
     // ── Region match ─────────────────────────────────────────────────────────
     if (fd.selected.length > 0) {
@@ -524,9 +551,9 @@ export const filterPluginMapregions = {
 
     const codesInScope = fd.selected.length > 0
       ? regionCodes.filter(code => {
-          const name = Checklist.nameForMapRegion(code);
-          return fd.selected.includes(name) || fd.selected.includes(code);
-        })
+        const name = Checklist.nameForMapRegion(code);
+        return fd.selected.includes(name) || fd.selected.includes(code);
+      })
       : regionCodes;
 
     return codesInScope.some(code =>
@@ -541,7 +568,7 @@ export const filterPluginMapregions = {
    */
   serializeToQuery(fd) {
     const sfActive = isStatusFilterActive(fd.statusFilter);
-    const hasMode  = fd.matchMode && fd.matchMode !== MATCH_MODES.ANY;
+    const hasMode = fd.matchMode && fd.matchMode !== MATCH_MODES.ANY;
     if (!fd.selected.length && !sfActive && !hasMode) return null;
 
     const obj = { regions: fd.selected };
@@ -549,9 +576,9 @@ export const filterPluginMapregions = {
 
     if (sfActive) {
       obj.sf = {};
-      if (isCategoryFilterActive(fd.statusFilter)) obj.sf.s  = fd.statusFilter.selectedStatuses;
-      if (fd.statusFilter.rangeMin !== null)        obj.sf.min = fd.statusFilter.rangeMin;
-      if (fd.statusFilter.rangeMax !== null)        obj.sf.max = fd.statusFilter.rangeMax;
+      if (isCategoryFilterActive(fd.statusFilter)) obj.sf.s = fd.statusFilter.selectedStatuses;
+      if (fd.statusFilter.rangeMin !== null) obj.sf.min = fd.statusFilter.rangeMin;
+      if (fd.statusFilter.rangeMax !== null) obj.sf.max = fd.statusFilter.rangeMax;
     }
 
     return obj;
@@ -564,7 +591,7 @@ export const filterPluginMapregions = {
    *   Old plain array     → treated as region list with Any mode.
    */
   deserializeFromQuery(fd, val) {
-    fd.selected  = Array.isArray(val) ? val : Array.isArray(val?.regions) ? val.regions : [];
+    fd.selected = Array.isArray(val) ? val : Array.isArray(val?.regions) ? val.regions : [];
     fd.matchMode = val?.mm || MATCH_MODES.ANY;
 
     if (val?.sf) {

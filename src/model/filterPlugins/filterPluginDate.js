@@ -12,7 +12,8 @@ import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
 import { textLowerCaseAccentless } from "../../components/Utils.js";
 import {
-  describeList, buildRangeFilterLabel, numericFilters,
+  describeList, buildRangeFilterLabel, buildOperatorInputUi, formatResultCount, renderStats,
+  numericFilters,
   makeScalarRangeLifecycle, makeScalarRangeUiMethods,
   sortedUniqueNumbers,
 } from "./shared/filterUtils.js";
@@ -237,14 +238,7 @@ let DropdownDate = function (initialVnode) {
       );
       const itemsOverflowing = totalItems > itemsOverflowLimit;
 
-      let inputUi = null;
-      switch (actualOperation) {
-        case "equal":        inputUi = [m(".label1", t("numeric_filter_equal")),        dateInput(1, inputMin, inputMax)]; break;
-        case "lesserequal":  inputUi = [m(".label1", t("numeric_filter_lesserequal")),  dateInput(1, inputMin, inputMax)]; break;
-        case "greaterequal": inputUi = [m(".label1", t("numeric_filter_greaterequal")), dateInput(1, inputMin, inputMax)]; break;
-        case "between":      inputUi = [m(".label1", t("numeric_filter_between")), dateInput(1, inputMin, inputMax), m(".label2", t("numeric_filter_and")), dateInput(2, inputMin, inputMax)]; break;
-        default: break;
-      }
+      const inputUi = buildOperatorInputUi(actualOperation, dateInput, inputMin, inputMax, numericFilters);
 
       const areaClass = ".inner-dropdown-area.numeric" + (isListMode(actualOperation) ? "" : ".operator-mode");
 
@@ -297,15 +291,13 @@ let DropdownDate = function (initialVnode) {
                 vnode.attrs.openHandler(false);
                 Checklist.filter.commit();
               },
-            }, countResults() === 0
-              ? t("numeric_apply_show_results_no_results")
-              : t("numeric_apply_show_results", [countResults()]))
+            }, formatResultCount(countResults()))
           : null,
 
         // Stats (always visible)
-        m("ul.stats", [
-          statsMin !== null ? m("li", t("stats_min") + ": " + dayjs(statsMin).format(dateFormat)) : null,
-          statsMax !== null ? m("li", t("stats_max") + ": " + dayjs(statsMax).format(dateFormat)) : null,
+        renderStats([
+          { key: "stats_min", value: statsMin !== null ? dayjs(statsMin).format(dateFormat) : null },
+          { key: "stats_max", value: statsMax !== null ? dayjs(statsMax).format(dateFormat) : null },
         ]),
 
         // List mode: search box (shared)

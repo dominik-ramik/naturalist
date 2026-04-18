@@ -12,9 +12,85 @@
  *   describeList               – formats a string array as a human-readable list
  */
 
+import m from "mithril";
 import { formatList } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+
+registerMessages(selfKey, {
+  en: {
+    or_list_joiner: "or",
+    numeric_filter_equal: "Equals",
+    numeric_filter_equal_short: "=",
+    numeric_filter_lesser: "Less than",
+    numeric_filter_lesser_short: "<",
+    numeric_filter_lesserequal: "Less or equal than",
+    numeric_filter_lesserequal_short: "<=",
+    numeric_filter_greater: "More than",
+    numeric_filter_greater_short: ">",
+    numeric_filter_greaterequal: "More or equal than",
+    numeric_filter_greaterequal_short: ">=",
+    numeric_filter_between: "Between",
+    numeric_filter_between_short: "between",
+    numeric_filter_contains_short: "contains",
+    numeric_filter_fully_inside_short: "fully inside",
+    numeric_filter_overlaps_short: "overlaps",
+    numeric_filter_and: "and",
+    numeric_filter_around: "Falls into",
+    numeric_filter_around_short: "falls into",
+    numeric_filter_plusminus: "±",
+    numeric_filter_select: "Select one of the operations above",
+    numeric_apply_show_results_no_results: "No matching results",
+    numeric_apply_show_results: "Show {0} results",
+    stats_min: "Minimum",
+    stats_max: "Maximum",
+    stats_avg: "Average",
+    stats_distinct: "Distinct values",
+    interval_filter_contains: "Contains",
+    interval_filter_overlaps: "Overlaps with",
+    interval_filter_fully_inside: "Fully inside",
+    interval_filter_contains_short: "contains",
+    interval_filter_overlaps_short: "overlaps with",
+    interval_filter_fully_inside_short: "fully inside",
+    is_list_joiner: "is",
+  },
+  fr: {
+    or_list_joiner: "ou",
+    numeric_filter_equal: "Égale à",
+    numeric_filter_equal_short: "=",
+    numeric_filter_lesser: "Inférieur à",
+    numeric_filter_lesser_short: "<",
+    numeric_filter_lesserequal: "Inférieur ou égal à",
+    numeric_filter_lesserequal_short: "≤",
+    numeric_filter_greater: "Supérieur à",
+    numeric_filter_greater_short: ">",
+    numeric_filter_greaterequal: "Supérieur ou égal à",
+    numeric_filter_greaterequal_short: "≥",
+    numeric_filter_between: "Entre",
+    numeric_filter_between_short: "entre",
+    numeric_filter_contains_short: "contient",
+    numeric_filter_fully_inside_short: "entièrement à l'intérieur",
+    numeric_filter_overlaps_short: "chevauche",
+    numeric_filter_and: "et",
+    numeric_filter_around: "Tombe dans",
+    numeric_filter_around_short: "tombe dans",
+    numeric_filter_plusminus: "±",
+    numeric_filter_select: "Sélectionnez une des opérations ci-dessus",
+    numeric_apply_show_results_no_results: "Aucun résultat correspondant",
+    numeric_apply_show_results: "Afficher {0} résultats",
+    stats_min: "Minimum",
+    stats_max: "Maximum",
+    stats_avg: "Moyenne",
+    stats_distinct: "Valeurs distinctes",
+    interval_filter_contains: "Contient",
+    interval_filter_overlaps: "Chevauche",
+    interval_filter_fully_inside: "Entièrement à l'intérieur",
+    interval_filter_contains_short: "contient",
+    interval_filter_overlaps_short: "chevauche",
+    interval_filter_fully_inside_short: "entièrement à l'intérieur",
+    is_list_joiner: "est",
+  }
+});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,7 +109,7 @@ export function sortedUniqueNumbers(values) {
  */
 export function describeList(values, opts = {}) {
   if (!values?.length) return "";
-  const open  = opts.html ? "<strong>" : "";
+  const open = opts.html ? "<strong>" : "";
   const close = opts.html ? "</strong>" : "";
   return formatList(values, t("or_list_joiner"), open, close);
 }
@@ -82,6 +158,67 @@ export function buildRangeFilterLabel(dataPath, operation, threshold1, threshold
   return title;
 }
 
+// ── Stats section ─────────────────────────────────────────────────────────────
+
+/**
+ * Renders the `ul.stats` block shared by number, date and interval dropdowns.
+ *
+ * Each entry is `{ key, value, suffix? }` where:
+ *   - key      – translation key (e.g. "stats_min").
+ *   - value    – pre-formatted display string, or null to skip the row.
+ *   - suffix   – optional Vnode (e.g. unitTag) appended after the value.
+ *
+ * @param {{ key: string, value: string|null, suffix?: Vnode }[]} entries
+ * @returns {Vnode}
+ */
+export function renderStats(entries) {
+  return m("ul.stats", entries.map(({ key, value, suffix }) =>
+    value !== null
+      ? m("li", suffix ? [t(key) + ": " + value, suffix] : t(key) + ": " + value)
+      : null
+  ));
+}
+
+// ── Result-count label ────────────────────────────────────────────────────────
+
+/**
+ * Returns the human-readable label for an operator apply button.
+ *
+ * @param {number} count – number of matching results
+ * @returns {string}
+ */
+export function formatResultCount(count) {
+  return count === 0
+    ? t("numeric_apply_show_results_no_results")
+    : t("numeric_apply_show_results", [count]);
+}
+
+// ── Operator-mode input UI builder ────────────────────────────────────────────
+
+/**
+ * Builds the operator-mode input row (label + threshold inputs) shared by
+ * the number, date and interval dropdowns.
+ *
+ * @param {string}   operation     – current operation key
+ * @param {Function} inputFn       – (thresholdNumber, min, max) => Vnode
+ * @param {*}        min           – minimum bound
+ * @param {*}        max           – maximum bound
+ * @param {object}   filterTable   – operator table (numericFilters or intervalFilters)
+ * @param {string}   [labelPrefix="numeric_filter_"] – translation key prefix for the label
+ * @returns {Vnode[]|null}
+ */
+export function buildOperatorInputUi(operation, inputFn, min, max, filterTable, labelPrefix = "numeric_filter_") {
+  const opDef = filterTable[operation];
+  if (!opDef) return null;
+
+  const ui = [m(".label1", t(labelPrefix + operation)), inputFn(1, min, max)];
+  if (opDef.values > 1) {
+    const separator = operation === "around" ? "numeric_filter_plusminus" : "numeric_filter_and";
+    ui.push(m(".label2", t(separator)), inputFn(2, min, max));
+  }
+  return ui;
+}
+
 // ── UI methods factory for scalar range types (number + date) ─────────────────
 
 /**
@@ -112,7 +249,7 @@ export function makeScalarRangeUiMethods(type, comparerTable, formatThreshold) {
         }];
       }
       return fd.selected.map(v => ({
-        title:    formatThreshold(v),
+        title: formatThreshold(v),
         rawValue: v,
       }));
     },
@@ -123,16 +260,16 @@ export function makeScalarRangeUiMethods(type, comparerTable, formatThreshold) {
         if (idx > -1) fd.selected.splice(idx, 1);
       } else {
         fd.selected = [];
-        fd.numeric  = { operation: "", threshold1: null, threshold2: null };
+        fd.numeric = { operation: "", threshold1: null, threshold2: null };
       }
       Checklist.filter.commit();
     },
 
     describeSerializedValue(dataPath, serialized, opts = {}) {
-      const open  = opts.html ? "<strong>" : "";
+      const open = opts.html ? "<strong>" : "";
       const close = opts.html ? "</strong>" : "";
       if (Array.isArray(serialized)) {
-        const cat  = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+        const cat = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
         const vals = serialized.map(v => formatThreshold(v));
         return cat + " " + t("is_list_joiner") + " " + describeList(vals, opts);
       }
@@ -160,10 +297,10 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
     createFilterDef() {
       return {
         type,
-        all:      [],
+        all: [],
         possible: [],
         selected: [],
-        numeric:  { threshold1: null, threshold2: null, operation: "" },
+        numeric: { threshold1: null, threshold2: null, operation: "" },
         globalMin: null,
         globalMax: null,
       };
@@ -171,13 +308,13 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
 
     clearFilter(fd) {
       fd.selected = [];
-      fd.numeric  = { threshold1: null, threshold2: null, operation: "" };
+      fd.numeric = { threshold1: null, threshold2: null, operation: "" };
     },
 
     clearPossible(fd) {
       fd.possible = [];
-      fd.min      = null;
-      fd.max      = null;
+      fd.min = null;
+      fd.max = null;
     },
 
     accumulatePossible(fd, _rawValue, leafValues) {
@@ -205,7 +342,7 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
     serializeToQuery(fd) {
       if (fd.numeric.operation) {
         const opDef = comparerTable[fd.numeric.operation];
-        const obj   = { o: fd.numeric.operation, a: fd.numeric.threshold1 };
+        const obj = { o: fd.numeric.operation, a: fd.numeric.threshold1 };
         if (opDef?.values > 1) obj.b = fd.numeric.threshold2;
         return obj;
       }
@@ -216,7 +353,7 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
       if (Array.isArray(val)) {
         fd.selected = val;
       } else if (val && typeof val === "object") {
-        fd.numeric.operation  = val.o;
+        fd.numeric.operation = val.o;
         fd.numeric.threshold1 = val.a;
         if ("b" in val) fd.numeric.threshold2 = val.b;
       }
@@ -235,11 +372,11 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
 // ── Operator table ────────────────────────────────────────────────────────────
 
 export const numericFilters = {
-  equal:        { operation: "equal",        icon: "equal",        values: 1, comparer: (v, t1)     => v == t1 },
-  lesser:       { operation: "lesser",       icon: "lesser",       values: 1, comparer: (v, t1)     => v < t1 },
-  lesserequal:  { operation: "lesserequal",  icon: "lesserequal",  values: 1, comparer: (v, t1)     => v <= t1 },
-  greater:      { operation: "greater",      icon: "greater",      values: 1, comparer: (v, t1)     => v > t1 },
-  greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1)     => v >= t1 },
-  between:      { operation: "between",      icon: "between",      values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
-  around:       { operation: "around",       icon: "around",       values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
+  equal: { operation: "equal", icon: "equal", values: 1, comparer: (v, t1) => v == t1 },
+  lesser: { operation: "lesser", icon: "lesser", values: 1, comparer: (v, t1) => v < t1 },
+  lesserequal: { operation: "lesserequal", icon: "lesserequal", values: 1, comparer: (v, t1) => v <= t1 },
+  greater: { operation: "greater", icon: "greater", values: 1, comparer: (v, t1) => v > t1 },
+  greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1) => v >= t1 },
+  between: { operation: "between", icon: "between", values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
+  around: { operation: "around", icon: "around", values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
 };

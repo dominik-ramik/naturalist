@@ -11,6 +11,22 @@ import m from "mithril";
 import { Checklist } from "../../Checklist.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
+registerMessages(selfKey, {
+  en: {
+    search: "Search",
+    next_items_dropdown: "Show next {0} items",
+    no_items_filter: "No matching items found",
+    apply_selection: "Apply",
+    check_all_shown: "Check all shown items",
+  },
+  fr: {
+    search: "Rechercher",
+    next_items_dropdown: "Afficher les {0} éléments suivants",
+    no_items_filter: "Aucun élément correspondant trouvé",
+    apply_selection: "Appliquer",
+    check_all_shown: "Cocher tous les éléments affichés",
+  }
+});
 
 // ── Value-set helpers ─────────────────────────────────────────────────────────
 
@@ -84,20 +100,20 @@ export function isListMode(actualOperation) {
  */
 export function makePreviewDataCache() {
   let cachedData = null;
-  let cachedKey  = "";
+  let cachedKey = "";
 
   return {
     get(dataPath) {
       const key = dataPath + "|" + Checklist.filter.queryKey("data." + dataPath);
       if (!cachedData || cachedKey !== key) {
-        cachedKey  = key;
+        cachedKey = key;
         cachedData = Checklist.filter.getRangeFilterPreviewData(dataPath);
       }
       return cachedData;
     },
     invalidate() {
       cachedData = null;
-      cachedKey  = "";
+      cachedKey = "";
     },
   };
 }
@@ -120,7 +136,7 @@ export function commitListSelection(fd, dataPath, sortUnique, mutator, stateRefs
   stateRefs.setInitialThresholds([null, null, null]);
   stateRefs.setActualThresholds([null, null, null]);
   Checklist.filter.delayCommitDataPath = "data." + dataPath;
-  fd.numeric  = { operation: "", threshold1: null, threshold2: null };
+  fd.numeric = { operation: "", threshold1: null, threshold2: null };
   fd.selected = sortUnique(mutator([...(fd.selected || [])]));
   Checklist.filter.commit();
 }
@@ -173,8 +189,8 @@ export function renderOptionsSections(sections, onShowMore, pageSize, extraClass
   } = sections;
 
   return m(".options" + (extraClass || ""), [
-    showSelected   ? m(".options-section", selected)   : null,
-    showPossible   ? m(".options-section", possible)   : null,
+    showSelected ? m(".options-section", selected) : null,
+    showPossible ? m(".options-section", possible) : null,
     showImpossible ? m(".options-section", impossible) : null,
     itemsOverflowing
       ? m(".show-next-items", { onclick: onShowMore }, t("next_items_dropdown", [pageSize]))

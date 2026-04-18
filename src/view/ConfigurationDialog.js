@@ -23,6 +23,15 @@ import { renderParams } from "./shared/ToolParams.js";
 import "./ConfigurationDialog.css";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    done: "Done",
+  },
+  fr: {
+    done: "Terminé",
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,7 +150,7 @@ export const ConfigurationDialog = {
         m(".configuration-dialog-footer", [
           m("button.configuration-confirm-btn",
             { onclick: ConfigurationDialog.close },
-            "Done"
+            t("done")
           ),
         ]),
 

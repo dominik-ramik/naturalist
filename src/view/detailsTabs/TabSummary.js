@@ -15,6 +15,58 @@ import {
 import { MONTH_KEYS } from "../../model/MonthNames.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    sp_view: "View",
+    sp_occurrences: "Occurrences",
+    sp_general: "General",
+    sp_in_group: "sibling taxa",
+    sp_children_taxa: "{0} child taxa",
+    sp_title_for_occurrences: "{0} (occurrences)",
+    sp_taxonomy: "Taxonomy",
+    sp_spec_own: "Own",
+    sp_spec_total: "Total",
+    sp_cat_col_value: "Category",
+    sp_cat_col_count: "Count",
+    sp_cat_col_pct: "%",
+    sp_region_col_region: "Region",
+    sp_region_col_status: "Status",
+    sp_region_col_status_range: "Values range",
+    sp_region_col_count: "Count",
+    sp_region_col_pct: "%",
+    sp_region_details_toggle: "Per-region details",
+    sp_region_stat_max: "Max",
+    sp_region_stat_avg: "Average",
+    sp_region_stat_median: "Median",
+    sp_region_stat_min: "Min",
+    sp_region_stat_value: "Value",
+  },
+  fr: {
+    sp_view: "Vue",
+    sp_occurrences: "Occurrences",
+    sp_general: "Général",
+    sp_in_group: "taxons frères",
+    sp_children_taxa: "{0} taxons enfants",
+    sp_title_for_occurrences: "{0} (occurrences)",
+    sp_taxonomy: "Taxonomie",
+    sp_spec_own: "Directes",
+    sp_spec_total: "Totales",
+    sp_cat_col_value: "Catégorie",
+    sp_cat_col_count: "Nombre",
+    sp_cat_col_pct: "%",
+    sp_region_col_region: "Région",
+    sp_region_col_status: "Statut",
+    sp_region_col_status_range: "Plage de valeurs",
+    sp_region_col_count: "Nombre",
+    sp_region_col_pct: "%",
+    sp_region_details_toggle: "Détails par région",
+    sp_region_stat_max: "Max",
+    sp_region_stat_avg: "Moyenne",
+    sp_region_stat_median: "Médiane",
+    sp_region_stat_min: "Min",
+    sp_region_stat_value: "Valeur",    
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Public entry point
@@ -64,7 +116,7 @@ const SummaryView = {
 
     let nav = null;
     if (perspectives.length > 1) {
-      const hasSpec    = perspectives.some(p =>  p.forOccurrence);
+      const hasSpec = perspectives.some(p => p.forOccurrence);
       const hasNonSpec = perspectives.some(p => !p.forOccurrence);
       if (hasSpec && hasNonSpec) {
         nav = m("select.sp-nav-select", selectAttrs, [
@@ -72,7 +124,7 @@ const SummaryView = {
             perspectives.map((p, i) => !p.forOccurrence ? toOption(p, i) : null)
           ),
           m("optgroup", { label: t("sp_occurrences") },
-            perspectives.map((p, i) =>  p.forOccurrence ? toOption(p, i) : null)
+            perspectives.map((p, i) => p.forOccurrence ? toOption(p, i) : null)
           ),
         ]);
       } else {
@@ -85,8 +137,8 @@ const SummaryView = {
     return m(".sp-wrapper", [
       m(".sp-dropdown-wrapper", [
         m(".dropdown-title", t("sp_view")),
-         nav
-    ]),
+        nav
+      ]),
       renderPerspective(perspectives[vnode.state.activeIdx]),
     ]);
   },
@@ -97,12 +149,12 @@ const SummaryView = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildContext(taxon) {
-  const checklist         = Checklist.getEntireChecklist();
-  const taxaMeta          = Checklist.getTaxaMeta();
-  const taxaKeys          = Object.keys(taxaMeta);
-  const occurrenceDataPath  = Checklist.getOccurrenceDataPath();
+  const checklist = Checklist.getEntireChecklist();
+  const taxaMeta = Checklist.getTaxaMeta();
+  const taxaKeys = Object.keys(taxaMeta);
+  const occurrenceDataPath = Checklist.getOccurrenceDataPath();
   const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
-  const showOccurrences     = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE
+  const showOccurrences = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE
     && Checklist.hasOccurrences()
     && occurrenceMetaIndex !== -1;
 
@@ -210,7 +262,7 @@ function countTaxaAtLevel(rows, li) {
 
 function buildTaxonomyPerspective(ctx) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, currentLevelIndex,
-          ancestry, checklist, subtreeRows } = ctx;
+    ancestry, checklist, subtreeRows } = ctx;
   const rows = [];
 
   taxaKeys.forEach((levelKey, li) => {
@@ -247,7 +299,7 @@ function buildTaxonomyPerspective(ctx) {
 
 function buildOccurrencesPerspective(ctx) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-          currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
   const rows = [];
 
   // No early guard: getScopeForLevel includes sibling branches, so ancestor-
@@ -318,7 +370,7 @@ function buildCategoryPerspectives(ctx) {
 
 function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-          currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   // Use getAllLeafData so that multi-valued lists (e.g. "list comma"
   // with category subitems) are expanded into individual values.
@@ -396,7 +448,7 @@ function buildMapRegionsPerspectives(ctx) {
 
 function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-          currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   const hasData = r => {
     const v = Checklist.getDataFromDataPath(r.d, mapPath);
@@ -478,7 +530,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
 
     Object.entries(data).forEach(([code, info]) => {
       if (!code || !info) return;
-      const status   = info.status ?? "";
+      const status = info.status ?? "";
       const resolved = getCachedRegionColor(status, lc, aggregateStats, mapPath)
         ?? { fill: "#ccc", legend: status, appendedLegend: "", resolvedAs: "fallback" };
 
@@ -519,21 +571,21 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
 
       // ── Gradient range entry ─────────────────────────────────────────────
       if (bins._grad) {
-        const g   = bins._grad;
+        const g = bins._grad;
         // Sample the colour at the midpoint of the observed range.
         const mid = (g.min + g.max) / 2;
         const midResolved = getCachedRegionColor(String(mid), lc, aggregateStats, mapPath);
-        const rangeLabel  = g.min === g.max
+        const rangeLabel = g.min === g.max
           ? g.min.toLocaleString()
           : `${g.min.toLocaleString()} – ${g.max.toLocaleString()}`;
         statuses.push({
-          status:     rangeLabel,
-          count:      g.count,
-          pct:        Math.round(g.count / totalRows * 100),
-          fill:       midResolved?.fill ?? "#ccc",
-          legend:     rangeLabel,
+          status: rangeLabel,
+          count: g.count,
+          pct: Math.round(g.count / totalRows * 100),
+          fill: midResolved?.fill ?? "#ccc",
+          legend: rangeLabel,
           resolvedAs: "gradient",
-          rawValues:  g.rawValues,
+          rawValues: g.rawValues,
         });
         totalCount += g.count;
       }
@@ -542,13 +594,13 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
       Object.entries(bins).forEach(([binLabel, bin]) => {
         if (binLabel === "_grad") return;
         statuses.push({
-          status:     binLabel,
-          count:      bin.count,
-          pct:        Math.round(bin.count / totalRows * 100),
-          fill:       bin.fill,
-          legend:     binLabel,
+          status: binLabel,
+          count: bin.count,
+          pct: Math.round(bin.count / totalRows * 100),
+          fill: bin.fill,
+          legend: binLabel,
           resolvedAs: bin.resolvedAs,
-          rawValues:  bin.rawValues,
+          rawValues: bin.rawValues,
         });
         totalCount += bin.count;
       });
@@ -559,7 +611,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats) {
         regionCode: code,
         regionName: Checklist.nameForMapRegion(code),
         totalCount,
-        totalPct:   Math.round(totalCount / totalRows * 100),
+        totalPct: Math.round(totalCount / totalRows * 100),
         statuses,
       };
     })
@@ -594,7 +646,7 @@ function buildMonthsPerspectives(ctx) {
 
 function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
   const { taxaKeys, taxaMeta, occurrenceDataPath, occurrenceMetaIndex,
-          currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
+    currentLevelIndex, ancestry, checklist, subtreeRows } = ctx;
 
   const hasData = r => {
     const v = Checklist.getDataFromDataPath(r.d, monthsPath);
@@ -680,7 +732,7 @@ function renderLevelHeader(row, p) {
     && row.kind !== "descendant"
     && row.siblingCount > 1)
     ? m("span.sp-level-aside",
-        "+" + (row.siblingCount - 1) + "\u00a0" + t("sp_in_group"))
+      "+" + (row.siblingCount - 1) + "\u00a0" + t("sp_in_group"))
     : null;
 
   return m(".sp-level-header", [
@@ -694,12 +746,12 @@ function renderLevelHeader(row, p) {
 
 function renderLevelData(row, p) {
   switch (p.type) {
-    case "taxonomy":  return null;
+    case "taxonomy": return null;
     case "occurrences": return renderOccurrencesData(row);
-    case "category":  return renderCategoryData(row.breakdown, p.meta);
+    case "category": return renderCategoryData(row.breakdown, p.meta);
     case "mapregions": return renderRegionsLevelContent(row.breakdown);
-    case "months":    return renderMonthsGrid(row.months);
-    default:          return null;
+    case "months": return renderMonthsGrid(row.months);
+    default: return null;
   }
 }
 
@@ -775,12 +827,12 @@ function computeWeightedStats(weightedPoints) {
   });
   expanded.sort((a, b) => a.value - b.value);
 
-  const vals   = expanded.map(x => x.value);
-  const min    = vals[0];
-  const max    = vals[vals.length - 1];
-  const sum    = vals.reduce((s, v) => s + v, 0);
-  const avg    = sum / vals.length;
-  const n      = vals.length;
+  const vals = expanded.map(x => x.value);
+  const min = vals[0];
+  const max = vals[vals.length - 1];
+  const sum = vals.reduce((s, v) => s + v, 0);
+  const avg = sum / vals.length;
+  const n = vals.length;
   const median = n % 2 === 0
     ? (vals[n / 2 - 1] + vals[n / 2]) / 2
     : vals[Math.floor(n / 2)];
@@ -791,10 +843,10 @@ function computeWeightedStats(weightedPoints) {
     ).fill;
 
   return {
-    min,    fill_min:    nearest(min),
-    max,    fill_max:    nearest(max),
-    avg:    Math.round(avg    * 100) / 100,  fill_avg:    nearest(avg),
-    median: Math.round(median * 100) / 100,  fill_median: nearest(median),
+    min, fill_min: nearest(min),
+    max, fill_max: nearest(max),
+    avg: Math.round(avg * 100) / 100, fill_avg: nearest(avg),
+    median: Math.round(median * 100) / 100, fill_median: nearest(median),
   };
 }
 
@@ -812,7 +864,7 @@ function buildRegionLevelSummary(breakdown) {
   if (!breakdown?.length) return null;
 
   // legend → { fill, count, rawValues: number[] }
-  const catTotals  = {};
+  const catTotals = {};
   // All individual raw numeric values from gradient entries → { value, fill, count:1 }
   const gradPoints = [];
 
@@ -835,7 +887,7 @@ function buildRegionLevelSummary(breakdown) {
     });
   });
 
-  const hasCat  = Object.keys(catTotals).length > 0;
+  const hasCat = Object.keys(catTotals).length > 0;
   const hasGrad = gradPoints.length > 0;
 
   // ── Categorical block ──────────────────────────────────────────────────────
@@ -874,12 +926,12 @@ function buildRegionLevelSummary(breakdown) {
           ? a.sortKey - b.sortKey        // stepped bins: ascending by value
           : (a.sortKey !== null ? -1      // numeric entries before text
             : b.sortKey !== null ? 1
-            : b.count - a.count)          // pure text: most frequent first
+              : b.count - a.count)          // pure text: most frequent first
       );
 
     categorical = {
       entries,
-      stats:          catStats,
+      stats: catStats,
       hasSteppedNums,
     };
   }
@@ -906,7 +958,7 @@ function renderRegionsLevelContent(breakdown) {
 
   const summaryNode = m(".sp-region-level-summary", [
     summary.categorical ? renderCategoricalSummary(summary.categorical) : null,
-    summary.numeric     ? renderNumericSummary(summary.numeric)         : null,
+    summary.numeric ? renderNumericSummary(summary.numeric) : null,
   ]);
 
   const detailsNode = m("details.sp-region-details", [
@@ -924,9 +976,9 @@ function renderCategoricalSummary(categorical) {
   const header = m(".sp-region-summary-row.sp-region-summary-header", [
     m("span.sp-region-summary-swatch-col"),
     m("span.sp-region-summary-label-col", t("sp_region_col_status")),
-    m("span.sp-stat-count",               t("sp_region_col_count")),
-    m("span.sp-stat-sep",                 "/"),
-    m("span.sp-stat-pct",                 t("sp_region_col_pct")),
+    m("span.sp-stat-count", t("sp_region_col_count")),
+    m("span.sp-stat-sep", "/"),
+    m("span.sp-stat-pct", t("sp_region_col_pct")),
   ]);
 
   const rows = entries.map(({ fill, legend, count, pct }) =>
@@ -936,8 +988,8 @@ function renderCategoricalSummary(categorical) {
       ),
       m("span.sp-region-summary-label-col", legend),
       m("span.sp-stat-count", String(count)),
-      m("span.sp-stat-sep",   "/"),
-      m("span.sp-stat-pct",   pct + "%"),
+      m("span.sp-stat-sep", "/"),
+      m("span.sp-stat-pct", pct + "%"),
     ])
   );
 
@@ -956,16 +1008,16 @@ function renderNumericSummary(numeric) {
   const fmt = v => (Number.isInteger(v) ? String(v) : v.toLocaleString());
 
   const statDefs = [
-    { label: t("sp_region_stat_max"),    value: fmt(max),    fill: fill_max    },
-    { label: t("sp_region_stat_avg"),    value: fmt(avg),    fill: fill_avg    },
+    { label: t("sp_region_stat_max"), value: fmt(max), fill: fill_max },
+    { label: t("sp_region_stat_avg"), value: fmt(avg), fill: fill_avg },
     { label: t("sp_region_stat_median"), value: fmt(median), fill: fill_median },
-    { label: t("sp_region_stat_min"),    value: fmt(min),    fill: fill_min    },
+    { label: t("sp_region_stat_min"), value: fmt(min), fill: fill_min },
   ];
 
   const header = m(".sp-region-summary-row.sp-region-summary-header", [
     m("span.sp-region-summary-swatch-col"),
     m("span.sp-region-summary-label-col", t("sp_region_col_status_range")),
-    m("span.sp-stat-count",               t("sp_region_stat_value")),
+    m("span.sp-stat-count", t("sp_region_stat_value")),
   ]);
 
   const rows = statDefs.map(({ label, value, fill }) =>
@@ -1011,22 +1063,22 @@ function renderRegionsDetailRows(breakdown) {
       m(".sp-region-stats",
         multiStatus
           ? region.statuses.map(s =>
-              m(".sp-region-status", [
-                m("span.sp-region-swatch", { style: { background: s.fill } }),
-                m("span.sp-region-status-label", s.legend || s.status),
-                m("span.sp-stat-count", String(s.count)),
-                m("span.sp-stat-sep", "/"),
-                m("span.sp-stat-pct", s.pct + "%"),
-              ])
-            )
-          : m(".sp-region-status", [
-              m("span.sp-region-status-label",
-                region.statuses[0]?.legend || region.statuses[0]?.status || ""
-              ),
-              m("span.sp-stat-count", String(region.totalCount)),
+            m(".sp-region-status", [
+              m("span.sp-region-swatch", { style: { background: s.fill } }),
+              m("span.sp-region-status-label", s.legend || s.status),
+              m("span.sp-stat-count", String(s.count)),
               m("span.sp-stat-sep", "/"),
-              m("span.sp-stat-pct", region.totalPct + "%"),
+              m("span.sp-stat-pct", s.pct + "%"),
             ])
+          )
+          : m(".sp-region-status", [
+            m("span.sp-region-status-label",
+              region.statuses[0]?.legend || region.statuses[0]?.status || ""
+            ),
+            m("span.sp-stat-count", String(region.totalCount)),
+            m("span.sp-stat-sep", "/"),
+            m("span.sp-stat-pct", region.totalPct + "%"),
+          ])
       ),
     ]);
   })];
@@ -1036,7 +1088,7 @@ function renderRegionsDetailRows(breakdown) {
 
 function renderMonthsGrid(months) {
   // months: Set<number>, values are 1-based (1 = Jan, 12 = Dec)
-  
+
   let currentMonths = Checklist.getMonthNames(Checklist.getCurrentLanguage());
 
   return m(".sp-months-grid",

@@ -5,6 +5,16 @@ import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
 import { Checklist } from "../../../model/Checklist.js";
 import { copyToClipboard } from "../../../components/Utils.js";
 
+registerMessages(selfKey, {
+  en: {
+    in_taxon_group: "{0} {1}",
+    item: "Item",
+  },
+  fr: {
+    in_taxon_group: "{0} {1}",
+    item: "Élément",
+  }
+});
 
 export let TaxonNameView = {
   view: function (vnode) {
@@ -66,7 +76,7 @@ export let TaxonNameView = {
                   (vnode.attrs.taxonTree.taxon.authority
                     ? " " + vnode.attrs.taxonTree.taxon.authority
                     : ""),
-                  t("taxon")
+                  t("item")
                 );
               },
               oncontextmenu: function (e) {

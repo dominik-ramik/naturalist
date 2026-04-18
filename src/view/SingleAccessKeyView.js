@@ -5,6 +5,15 @@ import { Checklist } from "../model/Checklist.js";
 import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";
 
+registerMessages(selfKey, {
+  en: {
+   key_or: "or", 
+  },
+  fr: {
+    key_or: "ou"
+  }
+});
+
 // ==========================================
 // 1. DATA & LOGIC HELPERS
 // ==========================================

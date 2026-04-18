@@ -3,6 +3,36 @@ import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";
 import { Logger } from "./Logger.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
+registerMessages(selfKey, {
+  en: {
+    dm_cannot_have_language_indicators: "Column {0} in table {1} cannot have language indicators ({2})",
+    dm_verify_doc: "Verify the documentation to be on the same page with the latest format of the configuration sheets.",
+    dm_required_sheet_missing: "Required sheet '{0}' is missing from the spreadsheet. The project cannot be compiled without it.",
+    dm_optional_sheet_missing: "Optional sheet '{0}' was not found. All its tables will be treated as empty.",
+    dm_required_table_missing_in_sheet: "Required table '{0}' was not found in sheet '{1}'.",
+    dm_optional_table_missing: "Optional table '{0}' was not found in sheet '{1}'. It will be treated as empty.",
+    dm_required_table_columns_missing: "Required table '{0}' is missing mandatory columns: {1}.",
+    dm_optional_table_columns_missing: "Table '{0}' is present in the spreadsheet but is missing expected columns: {1}. Add the missing columns or remove the table entirely.",
+    dm_column_not_found: "Could not find column {0} in table {1}",
+    dm_empty_row_in_data: "Empty row detected in sheet '{0}' at line {1}.",
+    dm_data_after_empty_row_ignored: "Data found after the empty row will be ignored.",
+  },
+  fr: {
+    dm_cannot_have_language_indicators: "La colonne {0} dans le tableau {1} ne peut pas avoir d'indicateurs de langue ({2})",
+    dm_verify_doc: "Vérifiez la documentation pour être sûr d'être à jour avec le dernier format des feuilles de configuration.",
+    dm_required_sheet_missing: "La feuille requise '{0}' est manquante du classeur. Le projet ne peut pas être compilé sans elle.",
+    dm_optional_sheet_missing: "La feuille optionnelle '{0}' est manquante du classeur. Toutes ses tables seront traitées comme vides.",
+    dm_required_table_missing_in_sheet: "La table requise '{0}' est manquante de la feuille '{1}'.",
+    dm_optional_table_missing: "La table optionnelle '{0}' est manquante de la feuille '{1}'. Elle sera traitée comme vide.",
+    dm_required_table_columns_missing: "La table requise '{0}' est manquante de colonnes obligatoires : {1}.",
+    dm_optional_table_columns_missing: "La table '{0}' est présente dans le classeur mais manque des colonnes attendues : {1}. Ajoutez les colonnes manquantes ou supprimez la table entièrement.",
+    dm_column_not_found: "Impossible de trouver la colonne {0} dans le tableau {1}",
+    dm_empty_row_in_data: "Ligne vide détectée dans la feuille '{0}' à la ligne {1}.",
+    dm_data_after_empty_row_ignored: "Les données trouvées après la ligne vide seront ignorées.",
+  }
+});
+
+
 // =============================================================================
 // HELPER FUNCTIONS (Stateless / Pure)
 // =============================================================================

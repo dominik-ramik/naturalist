@@ -13,10 +13,10 @@
 import m from 'mithril';
 import './RegionalDistribution.css';
 
-import { Settings }  from '../../model/Settings.js';
+import { Settings } from '../../model/Settings.js';
 import { Checklist } from '../../model/Checklist.js';
 import { filterTerminalLeavesForMode, relativeToUsercontent } from '../../components/Utils.js';
-import { colorSVGMap }    from '../../components/ColorSVGMap.js';
+import { colorSVGMap } from '../../components/ColorSVGMap.js';
 import { getLegendConfig } from '../../model/customTypes/CustomTypeMapregions.js';
 
 import {
@@ -34,16 +34,26 @@ import {
 import { getMapState, setMapState, getGlobalState, setGlobalState } from './RegionalDistribution/state.js';
 import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
 import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
-import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
+
+registerMessages(selfKey, {
+  en: {
+    rd_no_data_message: "No data for the current selection. Try changing the filter, segment, or operation.",
+  },
+  fr: {
+    rd_no_data_message: "Aucune donnée pour la sélection actuelle. Essayez de changer le filtre, le segment ou l'opération.",
+  }
+});
+
 
 // ─── Tool registration config ─────────────────────────────────────────────────
 
 export const config = {
-  id:    'tool_regional_distribution',
+  id: 'tool_regional_distribution',
   label: 'Regional Distribution',
   iconPath: {
     light: './img/ui/menu/view_map-light.svg',
-    dark:  './img/ui/menu/view_map.svg',
+    dark: './img/ui/menu/view_map.svg',
   },
   info: 'Aggregate regional distribution across filtered records - count presences, compare categories, or compute numeric statistics per region',
   getTaxaAlongsideOccurrences: false,
@@ -67,17 +77,17 @@ export const config = {
 
 // ─── Module-level cache ───────────────────────────────────────────────────────
 
-let _rev              = -1;
-let _mapsCache        = {};   // mode → map[]
-let _countsCache      = {};   // `${dataPath}|${mode}` → allRegionCounts
-let _svgColorsJSON    = '';   // guards redundant DOM colorSVGMap calls
+let _rev = -1;
+let _mapsCache = {};   // mode → map[]
+let _countsCache = {};   // `${dataPath}|${mode}` → allRegionCounts
+let _svgColorsJSON = '';   // guards redundant DOM colorSVGMap calls
 let _pendingColorTimer = null;
 
 function invalidateCaches(newRev) {
-  _rev              = newRev;
-  _mapsCache        = {};
-  _countsCache      = {};
-  _svgColorsJSON    = '';
+  _rev = newRev;
+  _mapsCache = {};
+  _countsCache = {};
+  _svgColorsJSON = '';
   clearTimeout(_pendingColorTimer);
   _pendingColorTimer = null;
 }
@@ -91,9 +101,9 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
   if (_mapsCache[mode]) return _mapsCache[mode];
 
   const occurrenceIdx = Checklist.getOccurrenceMetaIndex();
-  const checklist   = Checklist.getEntireChecklist();
-  const dataMeta    = Checklist.getDataMeta();
-  const maps        = [];
+  const checklist = Checklist.getEntireChecklist();
+  const dataMeta = Checklist.getDataMeta();
+  const maps = [];
 
   Object.entries(dataMeta).forEach(([dataPath, meta]) => {
     if (meta.formatting !== 'mapregions' || !meta.template?.trim()) return;
@@ -109,16 +119,16 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
 
     const hasData = checklist.some(row => {
       const isOccurrence = occurrenceIdx !== -1 && row.t[occurrenceIdx] != null;
-      if (mode === 'taxa'     &&  isOccurrence) return false;
+      if (mode === 'taxa' && isOccurrence) return false;
       if (mode === OCCURRENCE_IDENTIFIER && !isOccurrence) return false;
       const d = Checklist.getDataFromDataPath(row.d, dataPath);
       return d && typeof d === 'object' && Object.keys(d).length > 0;
     });
 
     if (hasData) maps.push({
-      title:      meta.title || dataPath,
+      title: meta.title || dataPath,
       dataPath,
-      source:     relativeToUsercontent(source),
+      source: relativeToUsercontent(source),
       isWorldMap: source.toLowerCase().endsWith('world.svg'),
     });
   });
@@ -132,23 +142,23 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
 function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   if (datasetRevision !== _rev) invalidateCaches(datasetRevision);
 
-  const mode         = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
-  const occurrenceIdx  = Checklist.getOccurrenceMetaIndex();
-  const filterEmpty  = Checklist.filter.isEmpty();
+  const mode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
+  const occurrenceIdx = Checklist.getOccurrenceMetaIndex();
+  const filterEmpty = Checklist.filter.isEmpty();
   const availableMaps = getAvailableMaps();
 
   // ── Resolve current map ──
   let globalState = getGlobalState();
-  let currentMap  = availableMaps.find(m => m.dataPath === globalState.currentMapDataPath) ?? null;
+  let currentMap = availableMaps.find(m => m.dataPath === globalState.currentMapDataPath) ?? null;
   if (!currentMap && availableMaps.length) {
     currentMap = availableMaps[0];
     globalState = setGlobalState({ currentMapDataPath: currentMap.dataPath });
   }
 
   // ── Per-map state with auto-detection and guard rails ──
-  let mapState     = currentMap ? getMapState(currentMap.dataPath) : {};
+  let mapState = currentMap ? getMapState(currentMap.dataPath) : {};
   let legendConfig = currentMap ? getLegendConfig(currentMap.dataPath) : null;
-  let segments     = legendConfig ? detectSegments(legendConfig) : null;
+  let segments = legendConfig ? detectSegments(legendConfig) : null;
 
   if (currentMap && segments) {
     let { segmentTrack } = mapState;
@@ -190,7 +200,7 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   if (currentMap) {
     const cKey = currentMap.dataPath + '|' + mode;
     if (!_countsCache[cKey]) {
-      const allLeaves  = filterTerminalLeavesForMode(allTaxa, mode, occurrenceIdx);
+      const allLeaves = filterTerminalLeavesForMode(allTaxa, mode, occurrenceIdx);
       _countsCache[cKey] = computeAllRegionCounts(allLeaves, currentMap.dataPath, mode, occurrenceIdx);
     }
     allRegionCounts = _countsCache[cKey];
@@ -198,9 +208,9 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
 
   // ── Data pipeline ──
   const regionGroups = currentMap ? getRegionGroups(currentMap.dataPath) : [];
-  let regionData     = {};
+  let regionData = {};
   let regionAggregates = {};
-  let colors         = {};
+  let colors = {};
   let effectiveAllCounts = {};
 
   let groupIndex = {};   // groupTitle → [region codes]
@@ -263,7 +273,8 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
       availableMaps,
       currentMap,
       segments,
-      mapState: { ...mapState,
+      mapState: {
+        ...mapState,
         _hasGroups: regionGroups.length > 0,
         _groupTitles: regionGroups.map(g => g.title),
       },
@@ -282,14 +293,14 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
         Object.keys(regionAggregates).length === 0
           ? m('.rd-no-data', m('.chart-info-item', t('rd_no_data_message')))
           : renderAggregateTable({
-              regionAggregates,
-              colors,
-              regionData,
-              mapState,
-              filteredCount,
-              effectiveAllCounts,
-              legendConfig,
-            })
+            regionAggregates,
+            colors,
+            regionData,
+            mapState,
+            filteredCount,
+            effectiveAllCounts,
+            legendConfig,
+          })
       ),
     ]),
 
@@ -321,7 +332,7 @@ function expandGroupColors(colors, groupIndex) {
 
 function renderSVGMap(map, colors) {
   const displayColors = map.isWorldMap ? remapForWorldMap(colors) : colors;
-  const newJSON       = JSON.stringify(displayColors);
+  const newJSON = JSON.stringify(displayColors);
 
   if (newJSON !== _svgColorsJSON) {
     _svgColorsJSON = newJSON;
@@ -341,13 +352,13 @@ function renderSVGMap(map, colors) {
         e.stopPropagation();
       },
     },
-    m('object#rd-map[type=image/svg+xml][style=pointer-events: none;][data=' + map.source + ']', {
-      oncreate: function (vnode) {
-        // Native listener avoids a Mithril auto-redraw on SVG load.
-        vnode.dom.addEventListener("load", function () {
-          colorSVGMap(vnode.dom, displayColors);
-        });
-      },
-    })
-  ));
+      m('object#rd-map[type=image/svg+xml][style=pointer-events: none;][data=' + map.source + ']', {
+        oncreate: function (vnode) {
+          // Native listener avoids a Mithril auto-redraw on SVG load.
+          vnode.dom.addEventListener("load", function () {
+            colorSVGMap(vnode.dom, displayColors);
+          });
+        },
+      })
+    ));
 }

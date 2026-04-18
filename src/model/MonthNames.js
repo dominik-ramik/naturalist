@@ -1,4 +1,4 @@
-import en from "../i18n/locales/en.json";
+import { t } from 'virtual:i18n-self';
 import { textLowerCaseAccentless } from "../components/Utils.js";
 
 export const MONTH_KEYS = [
@@ -17,7 +17,6 @@ export const MONTH_KEYS = [
 ];
 
 const MONTH_COUNT = MONTH_KEYS.length;
-const FALLBACK_MONTH_NAMES = MONTH_KEYS.map((key) => en.months?.[key] || key);
 
 function isUsableMonthName(value) {
   return typeof value === "string" && value.trim() !== "";
@@ -47,8 +46,17 @@ export function getMonthNumbers() {
   return Array.from({ length: MONTH_COUNT }, (_, index) => index + 1);
 }
 
+let _fallbackCache = null;
+let _fallbackCacheCanary = null;
+
 export function getFallbackMonthNames() {
-  return [...FALLBACK_MONTH_NAMES];
+  const canary = t('months.jan');
+  if (_fallbackCache !== null && _fallbackCacheCanary === canary) {
+    return [..._fallbackCache];
+  }
+  _fallbackCache = MONTH_KEYS.map(key => t(`months.${key}`));
+  _fallbackCacheCanary = canary;
+  return [..._fallbackCache];
 }
 
 export function validateConfiguredMonthNames(rawValue) {
@@ -108,7 +116,18 @@ function normalizedPrefix(name, length) {
   return normalizeMonthAlias(prefix) || normalizeMonthAlias(trimmed);
 }
 
+const _shortNamesCache = new Map();
+
 export function deriveShortMonthNames(monthNamesOrRawValue) {
+  const canary = t('months.jan');
+  const inputKey = Array.isArray(monthNamesOrRawValue)
+    ? monthNamesOrRawValue.join('\0')
+    : String(monthNamesOrRawValue ?? '');
+  const cacheKey = `${inputKey}|${canary}`;
+  if (_shortNamesCache.has(cacheKey)) {
+    return _shortNamesCache.get(cacheKey);
+  }
+
   const fullNames = resolveMonthNames(monthNamesOrRawValue);
   const prefixLengths = fullNames.map((name) => Math.min(3, name.trim().length));
 
@@ -142,7 +161,9 @@ export function deriveShortMonthNames(monthNamesOrRawValue) {
     });
   }
 
-  return fullNames.map((name, index) => name.trim().slice(0, prefixLengths[index]));
+  const result = fullNames.map((name, index) => name.trim().slice(0, prefixLengths[index]));
+  _shortNamesCache.set(cacheKey, result);
+  return result;
 }
 
 export function getMonthLabel(monthNumber, monthNamesOrRawValue) {

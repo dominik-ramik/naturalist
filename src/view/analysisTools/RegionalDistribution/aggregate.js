@@ -14,6 +14,31 @@ import {
 } from '../../../components/MapregionsColorEngine.js';
 import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
 
+registerMessages(selfKey, {
+  en: {
+    rd_op_count: "Count",
+    rd_op_sum: "Sum",
+    rd_op_mean: "Mean",
+    rd_op_median: "Median",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Std. deviation",
+    rd_op_pct_above: "% above threshold",
+    rd_op_pct_below: "% below threshold",
+  },
+  fr: {
+    rd_op_count: "Nombre",
+    rd_op_sum: "Somme",
+    rd_op_mean: "Moyenne",
+    rd_op_median: "Médiane",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Écart-type",
+    rd_op_pct_above: "% au-dessus du seuil",
+    rd_op_pct_below: "% en-dessous du seuil",
+  }
+});
+
 // ─── Segment detection ────────────────────────────────────────────────────────
 
 /**
@@ -51,15 +76,15 @@ export function detectSegments(legendConfig) {
  * usesThreshold    – true when an extra threshold input is required.
  */
 export const NUMERIC_OPERATIONS = [
-  { id: 'count',     labelKey: 'rd_op_count',     usesLegendScale: false, usesDenominator: true,  usesThreshold: false, resultIsPercent: false },
-  { id: 'sum',       labelKey: 'rd_op_sum',        usesLegendScale: false, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'mean',      labelKey: 'rd_op_mean',       usesLegendScale: true,  usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'median',    labelKey: 'rd_op_median',     usesLegendScale: true,  usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'min',       labelKey: 'rd_op_min',        usesLegendScale: true,  usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'max',       labelKey: 'rd_op_max',        usesLegendScale: true,  usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'stddev',    labelKey: 'rd_op_stddev',     usesLegendScale: false, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
-  { id: 'pct_above', labelKey: 'rd_op_pct_above',  usesLegendScale: false, usesDenominator: false, usesThreshold: true,  resultIsPercent: true  },
-  { id: 'pct_below', labelKey: 'rd_op_pct_below',  usesLegendScale: false, usesDenominator: false, usesThreshold: true,  resultIsPercent: true  },
+  { id: 'count', labelKey: 'rd_op_count', usesLegendScale: false, usesDenominator: true, usesThreshold: false, resultIsPercent: false },
+  { id: 'sum', labelKey: 'rd_op_sum', usesLegendScale: false, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'mean', labelKey: 'rd_op_mean', usesLegendScale: true, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'median', labelKey: 'rd_op_median', usesLegendScale: true, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'min', labelKey: 'rd_op_min', usesLegendScale: true, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'max', labelKey: 'rd_op_max', usesLegendScale: true, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'stddev', labelKey: 'rd_op_stddev', usesLegendScale: false, usesDenominator: false, usesThreshold: false, resultIsPercent: false },
+  { id: 'pct_above', labelKey: 'rd_op_pct_above', usesLegendScale: false, usesDenominator: false, usesThreshold: true, resultIsPercent: true },
+  { id: 'pct_below', labelKey: 'rd_op_pct_below', usesLegendScale: false, usesDenominator: false, usesThreshold: true, resultIsPercent: true },
 ];
 
 export function getOperationMeta(id) {
@@ -89,7 +114,7 @@ export function collectRegionData(leaves, dataPath, mode, occurrenceMetaIndex) {
 
     const name = leafDisplayName(leaf);
     Object.entries(mapData).forEach(([code, regionData]) => {
-      const status  = regionData?.status ?? '';
+      const status = regionData?.status ?? '';
       const numeric = parseNumericStatus(status);
       if (!map[code]) map[code] = { statuses: [], numerics: [], records: [] };
       map[code].statuses.push(status);
@@ -167,8 +192,8 @@ export function mergeToGroups(regionMap, groups) {
     return nameToCode[item.toLowerCase()] ?? null;             // name lookup
   };
 
-  const used     = new Set();
-  const grouped  = {};
+  const used = new Set();
+  const grouped = {};
   const groupIdx = {};
 
   groups.forEach(g => {
@@ -185,7 +210,7 @@ export function mergeToGroups(regionMap, groups) {
       merged.records.push(...regionMap[code].records);
       used.add(code);
     });
-    grouped[g.title]  = merged;
+    grouped[g.title] = merged;
     groupIdx[g.title] = memberCodes;
   });
 
@@ -200,12 +225,12 @@ export function mergeToGroups(regionMap, groups) {
 // ─── Aggregate computation ────────────────────────────────────────────────────
 
 const NUMERIC_FNS = {
-  sum:    nums => nums.reduce((a, b) => a + b, 0),
-  mean:   nums => nums.reduce((a, b) => a + b, 0) / nums.length,
-  median: nums => { const s = [...nums].sort((a,b)=>a-b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; },
-  min:    nums => Math.min(...nums),
-  max:    nums => Math.max(...nums),
-  stddev: nums => { const avg = nums.reduce((a,b)=>a+b,0)/nums.length; return Math.sqrt(nums.reduce((a,v)=>a+(v-avg)**2,0)/nums.length); },
+  sum: nums => nums.reduce((a, b) => a + b, 0),
+  mean: nums => nums.reduce((a, b) => a + b, 0) / nums.length,
+  median: nums => { const s = [...nums].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; },
+  min: nums => Math.min(...nums),
+  max: nums => Math.max(...nums),
+  stddev: nums => { const avg = nums.reduce((a, b) => a + b, 0) / nums.length; return Math.sqrt(nums.reduce((a, v) => a + (v - avg) ** 2, 0) / nums.length); },
 };
 
 /**
@@ -283,9 +308,9 @@ export function computeRegionAggregates(regionMap, segmentTrack, categoryStatus,
  *   __total__ = leaves that have at least one region entry in this map column.
  */
 export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMetaIndex) {
-  const counts   = { __total__: 0 };
+  const counts = { __total__: 0 };
   const leafSets = {};   // regionCode → Set<leafName> - used by buildEffectiveAllCounts for groups
-  const seen     = new Set();
+  const seen = new Set();
 
   allLeaves.forEach(leaf => {
     const effectiveD = mode === OCCURRENCE_IDENTIFIER
@@ -312,7 +337,7 @@ export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMeta
  * The `__total__` key is preserved unchanged (it refers to all leaves, not regions).
  */
 export function buildEffectiveAllCounts(allRegionCounts, regionData) {
-  const result   = { __total__: allRegionCounts.__total__ };
+  const result = { __total__: allRegionCounts.__total__ };
   const leafSets = allRegionCounts.__leafSets__ ?? {};
   Object.entries(regionData).forEach(([key, data]) => {
     if (data._isGroup && data.memberCodes) {
@@ -330,8 +355,8 @@ export function buildEffectiveAllCounts(allRegionCounts, regionData) {
 
 // ─── Colour computation ───────────────────────────────────────────────────────
 
-const DEFAULT_COLOR  = '#55769b';  // --nlblue
-const MIN_INTENSITY  = 0.12;       // lightest shade is never pure white
+const DEFAULT_COLOR = '#55769b';  // --nlblue
+const MIN_INTENSITY = 0.12;       // lightest shade is never pure white
 
 function fadeToWhite(hex, t) {
   const h = hex.replace('#', '').padStart(6, '0');
@@ -343,8 +368,8 @@ function fadeToWhite(hex, t) {
 export function computeRatio(value, key, denominator, filteredCount, effectiveAllCounts) {
   switch (denominator) {
     case 'region': return (effectiveAllCounts[key] || value) > 0 ? value / (effectiveAllCounts[key] || value) : 0;
-    case 'total':  return effectiveAllCounts.__total__ > 0 ? value / effectiveAllCounts.__total__ : 0;
-    default:       return filteredCount > 0 ? value / filteredCount : 0;  // 'filter'
+    case 'total': return effectiveAllCounts.__total__ > 0 ? value / effectiveAllCounts.__total__ : 0;
+    default: return filteredCount > 0 ? value / filteredCount : 0;  // 'filter'
   }
 }
 
@@ -377,7 +402,7 @@ export function computeColorMapping(
   // ── Legend-scale path ──
   if (segmentTrack === 'numeric' && opMeta.usesLegendScale) {
     const allValues = Object.values(regionAggregates).map(r => r.value);
-    const aggStats  = computeDatasetStats(allValues);
+    const aggStats = computeDatasetStats(allValues);
 
     return Object.fromEntries(
       Object.entries(regionAggregates).map(([key, data]) => {

@@ -16,6 +16,19 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { getFilterPlugin } from "../model/filterPlugins/index.js";
 
+registerMessages(selfKey, {
+  en: {
+    reset_filter: "Clear filter",
+    crumb_or: "or",
+    filter_cat_text: "Contains text",
+  },
+  fr: {
+    reset_filter: "Effacer le filtre",
+    crumb_or: "ou",
+    filter_cat_text: "Contient du texte",
+  }
+});
+
 export let FilterCrumbsView = {
   view() {
     const crumbs = [];

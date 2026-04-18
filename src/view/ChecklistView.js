@@ -9,6 +9,23 @@ import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    nothing_found_oops: "Oops!",
+    nothing_found_checklist: "We searched the world for you, but found nothing that matches your query",
+    mobile_filter_notice: "Showing only taxa where {0}",
+    temporary_draft_goto_manage: "Manage",
+    draft_notice: "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
+  },
+  fr: {
+    nothing_found_oops: "Oups !",
+    nothing_found_checklist: "Nous avons cherché dans le monde pour vous, mais nous n'avons trouvé aucun résultat correspondant à votre requête",
+    mobile_filter_notice: "Affichage uniquement des taxons où {0}",
+    temporary_draft_goto_manage: "Gérer",
+    draft_notice: "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
+  }
+});
+
 export let ChecklistView = {
   oninit: function () {
     if (!Checklist.hasOccurrences() && Settings.analyticalIntent() !== ANALYTICAL_INTENT_TAXA) {
@@ -55,40 +72,40 @@ export let ChecklistView = {
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
-    const filteredTaxa    = filterOutOccurrenceTaxa(allFilteredTaxa);
-    const allTaxa         = filterOutOccurrenceTaxa(Checklist.getData().checklist);
+    const filteredTaxa = filterOutOccurrenceTaxa(allFilteredTaxa);
+    const allTaxa = filterOutOccurrenceTaxa(Checklist.getData().checklist);
     const datasetRevision = Checklist.getDataRevision();
 
     const tool = getCurrentTool();
     const specificView = tool
       ? tool.render({
-          filteredTaxa,
-          allTaxa,
-          queryKey: ChecklistView.lastQuery,
-          datasetRevision,
-        })
+        filteredTaxa,
+        allTaxa,
+        queryKey: ChecklistView.lastQuery,
+        datasetRevision,
+      })
       : null;
 
     return m(
       ".checklist[style=background: linear-gradient(45deg, " +
-        Checklist.getThemeHsl("dark") + ", " +
-        Checklist.getThemeHsl("light") + ");]",
+      Checklist.getThemeHsl("dark") + ", " +
+      Checklist.getThemeHsl("light") + ");]",
       m(".checklist-inner-wrapper", [
         allFilteredTaxa.length === 0
           ? m(".nothing-found-wrapper", [
-              m("h2", t("nothing_found_oops")),
-              m("img.search-world[src=img/ui/checklist/search_world.svg]"),
-              m(".nothing-found-message", t("nothing_found_checklist")),
-              m(".query", m.trust(Settings.pinnedSearches.getHumanNameForSearch())),
-            ])
+            m("h2", t("nothing_found_oops")),
+            m("img.search-world[src=img/ui/checklist/search_world.svg]"),
+            m(".nothing-found-message", t("nothing_found_checklist")),
+            m(".query", m.trust(Settings.pinnedSearches.getHumanNameForSearch())),
+          ])
           : m(".checklist-inner-wrapper", [
-              Checklist._isDraft ? draftNotice() : null,
-              !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
-              // Show the non-default params notice whenever the active tool has
-              // params that deviate from their declared defaults.
-              tool ? modifiedParamsNotice(tool) : null,
-              specificView,
-            ]),
+            Checklist._isDraft ? draftNotice() : null,
+            !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
+            // Show the non-default params notice whenever the active tool has
+            // params that deviate from their declared defaults.
+            tool ? modifiedParamsNotice(tool) : null,
+            specificView,
+          ]),
       ])
     );
   },
@@ -148,7 +165,7 @@ function filterOutOccurrenceTaxa(taxa) {
 function modifiedParamsNotice(tool) {
   if (!tool.parameters?.length) return null;
 
-  const scope       = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
+  const scope = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
   const descriptions = describeNonDefaultParams(tool.parameters, scope);
 
   if (descriptions.length === 0) return null;
@@ -175,21 +192,21 @@ let Notice = {
   view: function (vnode) {
     return m(
       ".temporary-notice" +
-        (vnode.attrs.additionalClasses === undefined
-          ? ""
-          : "." + vnode.attrs.additionalClasses),
+      (vnode.attrs.additionalClasses === undefined
+        ? ""
+        : "." + vnode.attrs.additionalClasses),
       { onclick: vnode.attrs.action },
       [
         m(".notice", vnode.attrs.notice),
         vnode.attrs.additionalButton === undefined
           ? null
           : m("button.show-all", { onclick: vnode.attrs.additionalButton.action }, [
-              m(
-                "img.notice-icon[src=img/ui/menu/" +
-                  vnode.attrs.additionalButton.icon + ".svg]"
-              ),
-              vnode.attrs.additionalButton.text,
-            ]),
+            m(
+              "img.notice-icon[src=img/ui/menu/" +
+              vnode.attrs.additionalButton.icon + ".svg]"
+            ),
+            vnode.attrs.additionalButton.text,
+          ]),
       ]
     );
   },
@@ -212,8 +229,8 @@ function draftNotice() {
     notice: t("draft_notice"),
     additionalButton: {
       action: function () { routeTo("/manage/review"); },
-      icon:   "manage",
-      text:   t("temporary_draft_goto_manage"),
+      icon: "manage",
+      text: t("temporary_draft_goto_manage"),
     },
   });
 }

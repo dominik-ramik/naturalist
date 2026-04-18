@@ -5,6 +5,17 @@ import { Settings } from "../../model/Settings.js";
 import { TaxonView } from "./TaxonomicTree/TaxonView.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    next_items_checklist: "Show next {0} search results",
+    display_all_taxa: "All taxa",
+  },
+  fr: {
+    next_items_checklist: "Afficher les {0} résultats de recherche suivants",
+    display_all_taxa: "Tous les taxons",
+  }
+});
+
 export const config = {
     id: "tool_taxonomic_tree",
     label: "Taxonomic tree",

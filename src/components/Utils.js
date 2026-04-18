@@ -11,6 +11,15 @@ import { ianaLocaleSubtags } from "./IanaLocaleSubtags.js";
 import { materialColors } from "./MaterialColors.js";
 import { highlightHtml } from "../model/highlightUtils.js";
 
+registerMessages(selfKey, {
+  en: {
+    and_list_joiner: "and",
+  },
+  fr: {
+    and_list_joiner: "et",
+  }
+});
+
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 

@@ -18,7 +18,15 @@ registerMessages(selfKey, {
     literature: "References",
     documentation: "Documentation",
     about_nl: "About NaturaList app",
-      "manage": "Manage",
+    manage: "Manage",
+    languages: "Other languages",
+    how_to_cite: "How to cite",
+    pin_search: "Pinned searches",
+    share_url: "Share this search",
+    keys: "Single-access keys",
+    storage_persistent: "Media available offline",
+    storage_not_persistent: "Media online only",
+    configure_view: "Current view",
   },
   fr: {
     back_to_search: "Retour à la recherche",
@@ -27,6 +35,15 @@ registerMessages(selfKey, {
     literature: "Références",
     documentation: "Documentation",
     about_nl: "À propos de l'application NaturaList",
+    manage: "Gérer",
+    languages: "Autres langues",
+    how_to_cite: "Comment citer",
+    pin_search: "Recherches épinglées",
+    share_url: "Partager cette recherche",
+    keys: "Clés d'identification",
+    storage_persistent: "Médias disponibles hors ligne",
+    storage_not_persistent: "Médias disponibles uniquement en ligne",
+    configure_view: "Vue actuelle",
   }
 });
 
@@ -72,32 +89,32 @@ function menuPanel() {
           !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == ""
             ? null
             : m(MenuItem, {
-                onclick: function () {
-                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                  routeTo("/about/cite");
-                },
-                icon: "cite",
-                title: t("how_to_cite"),
-              }),
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/about/cite");
+              },
+              icon: "cite",
+              title: t("how_to_cite"),
+            }),
           Checklist.getSingleAccessTaxonomicKeys().length > 0
             ? m(MenuItem, {
-                onclick: function () {
-                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                  routeTo("/single-access-keys");
-                },
-                icon: "single_access_key",
-                title: t("keys"),
-              })
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/single-access-keys");
+              },
+              icon: "single_access_key",
+              title: t("keys"),
+            })
             : null,
           Checklist.getBibliographyKeys().length > 0
             ? m(MenuItem, {
-                onclick: function () {
-                  MenuStripView.menuOpen = !MenuStripView.menuOpen;
-                  routeTo("/references");
-                },
-                icon: "literature",
-                title: t("literature"),
-              })
+              onclick: function () {
+                MenuStripView.menuOpen = !MenuStripView.menuOpen;
+                routeTo("/references");
+              },
+              icon: "literature",
+              title: t("literature"),
+            })
             : null,
           m(MenuDivider),
           m(MenuItem, {
@@ -130,22 +147,22 @@ function menuPanel() {
           m(MenuDivider),
           Checklist.getAllLanguages().length > 1
             ? m(MenuExpandable, { title: t("languages") }, [
-                Checklist.getAllLanguages().map(function (lang) {
-                  if (lang.code == Checklist.getCurrentLanguage()) {
-                    return null;
-                  } else {
-                    return m(MenuItem, {
-                      onclick: function () {
-                        Settings.language(lang.code);
-                        routeTo("/checklist", "", lang.code);
-                        MenuStripView.menuOpen = false;
-                        location.reload(true);
-                      },
-                      title: lang.name,
-                    });
-                  }
-                }),
-              ])
+              Checklist.getAllLanguages().map(function (lang) {
+                if (lang.code == Checklist.getCurrentLanguage()) {
+                  return null;
+                } else {
+                  return m(MenuItem, {
+                    onclick: function () {
+                      Settings.language(lang.code);
+                      routeTo("/checklist", "", lang.code);
+                      MenuStripView.menuOpen = false;
+                      location.reload(true);
+                    },
+                    title: lang.name,
+                  });
+                }
+              }),
+            ])
             : null,
           m(MenuItem, {
             onclick: function () {
@@ -177,13 +194,13 @@ function menuPanel() {
           m("div", "Naturalist v" + import.meta.env.VITE_APP_VERSION),
           Checklist.getLastUpdatedTimestamp()
             ? m("div",
-                "Checklist " + Checklist.getLastUpdatedTimestamp() + " · " +
-                (Settings._storagePersistent === true
-                  ? t("storage_persistent")
-                  : Settings._storagePersistent === false
-                    ? t("storage_not_persistent")
-                    : "")
-              )
+              "Checklist " + Checklist.getLastUpdatedTimestamp() + " · " +
+              (Settings._storagePersistent === true
+                ? t("storage_persistent")
+                : Settings._storagePersistent === false
+                  ? t("storage_not_persistent")
+                  : "")
+            )
             : null,
         ]
       )
@@ -240,7 +257,7 @@ let MenuExpandable = function (initialVnode) {
         m(".menu-expandable-wrapper", [
           m(
             ".menu-item.expandable-main-button",
-            { onclick: function () {} },
+            { onclick: function () { } },
             [
               m("img.menu-item-img[src=img/ui/menu/language.svg]"),
               m(".menu-expandable-title", vnode.attrs.title),
@@ -260,13 +277,13 @@ let MenuExpandable = function (initialVnode) {
  */
 function menuTopBar() {
   const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
-  const activeTool    = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
-  const currentScope  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
+  const activeTool = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
+  const currentScope = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
   // Dynamic scope lookup from ViewRegistry.
-  const activeScope   = SCOPE_CHOICES.find(s => s.id === currentScope) 
-                     || SCOPE_CHOICES.find(s => s.id === ANALYTICAL_INTENT_OCCURRENCE) 
-                     || SCOPE_CHOICES[0];
+  const activeScope = SCOPE_CHOICES.find(s => s.id === currentScope)
+    || SCOPE_CHOICES.find(s => s.id === ANALYTICAL_INTENT_OCCURRENCE)
+    || SCOPE_CHOICES[0];
 
   return [
     m(
@@ -283,9 +300,9 @@ function menuTopBar() {
 
     m(
       "button.global-indicator-btn",
-      { 
+      {
         onclick: () => ConfigurationDialog.open(),
-        title: "Configure View" 
+        title: "Configure View"
       },
       [
         m("span.mobile-only-title", t("configure_view")),
@@ -355,7 +372,7 @@ let ActionButtonWithMenu = function (initialVnode) {
               vnode.attrs.items.map(function (item) {
                 if (!item) return null;
                 if (item.type == "divider") return m(MenuDivider);
-                if (item.type == "label")   return m(MenuLabel, { title: item.title });
+                if (item.type == "label") return m(MenuLabel, { title: item.title });
                 if (item.type == "button") {
                   return m(
                     ".multi-item-menu-button" + (item.selected ? ".selected" : ""),

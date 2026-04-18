@@ -1,5 +1,4 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
@@ -16,14 +15,7 @@ export let customTypeSound = {
     let soundData = readDataFromPath(
       context,
       computedPath,
-      {
-        errorMessageTemplate: (columnNames) =>
-          tf("dm_generic_column_names", [
-            "sound",
-            computedPath,
-            String.join(", ", columnNames),
-          ]),
-      },
+      "sound",
       ["source", "title"]
     );
 

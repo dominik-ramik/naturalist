@@ -5,7 +5,16 @@ import "./InteractionAreaView.css";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 
-// DELETE: import { AppLayoutView } from "./AppLayoutView.js";
+registerMessages(selfKey, {
+  en: {
+    how_to_cite: "How to cite",
+    powered_by_nl: "Powered by NaturaList",
+  },
+  fr: {
+    how_to_cite: "Comment citer",
+    powered_by_nl: "Crée avec NaturaList",
+  }
+});
 
 export let InteractionAreaView = {
   isExpanded: Settings.mobileFiltersPaneCollapsed(),

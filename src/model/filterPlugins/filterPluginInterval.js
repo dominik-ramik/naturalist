@@ -7,12 +7,11 @@
  */
 
 import m from "mithril";
-import { t } from "virtual:i18n-self";
 import { getUnitFromTemplate, unitToHtml } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { drawIntervalHistogram } from "./shared/histogramUtils.js";
 import { makeNumericInputFn } from "./shared/numericInput.js";
-import { buildRangeFilterLabel, describeList } from "./shared/filterUtils.js";
+import { buildRangeFilterLabel, buildOperatorInputUi, formatResultCount, renderStats, describeList } from "./shared/filterUtils.js";
 import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
 import "./shared/numericDropdown.css";
@@ -135,21 +134,7 @@ let DropdownInterval = function (initialVnode) {
       const unit     = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
       const unitTag  = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
 
-      let inputUi;
-      switch (actualOperation) {
-        case "contains":
-          inputUi = [m(".label1", t("interval_filter_contains")), numericInput(1, bounds.min, bounds.max)];
-          break;
-        case "overlaps":
-        case "fully_inside":
-          inputUi = [
-            m(".label1",  t("interval_filter_" + actualOperation)),
-            numericInput(1, bounds.min, bounds.max),
-            m(".label2",  t("numeric_filter_and")),
-            numericInput(2, bounds.min, bounds.max),
-          ];
-          break;
-      }
+      let inputUi = buildOperatorInputUi(actualOperation, numericInput, bounds.min, bounds.max, intervalFilters, "interval_filter_");
       if (unit && inputUi) inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];
 
       return m(".inner-dropdown-area.numeric", [
@@ -194,19 +179,16 @@ let DropdownInterval = function (initialVnode) {
             vnode.attrs.openHandler(false);
             Checklist.filter.commit();
           },
-        }, countResults() === 0
-          ? t("numeric_apply_show_results_no_results")
-          : t("numeric_apply_show_results", [countResults()])
-        ),
+        }, formatResultCount(countResults())),
 
         // Histogram (shared renderHistogramWrap replaces 12-line inline block)
         renderHistogramWrap(dropdownId),
 
         // Stats
-        m("ul.stats", [
-          bounds.min !== null ? m("li", [t("stats_min") + ": " + bounds.min.toLocaleString(), unitTag]) : null,
-          bounds.max !== null ? m("li", [t("stats_max") + ": " + bounds.max.toLocaleString(), unitTag]) : null,
-                                m("li",  t("stats_distinct") + ": " + allPairs.length.toLocaleString()),
+        renderStats([
+          { key: "stats_min", value: bounds.min !== null ? bounds.min.toLocaleString() : null, suffix: unitTag },
+          { key: "stats_max", value: bounds.max !== null ? bounds.max.toLocaleString() : null, suffix: unitTag },
+          { key: "stats_distinct", value: allPairs.length.toLocaleString() },
         ]),
       ]);
     },

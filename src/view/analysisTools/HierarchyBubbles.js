@@ -11,6 +11,27 @@ import { SelectParam } from "../shared/FormControls.js";
 import "./HierarchyBubbles.css";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
+registerMessages(selfKey, {
+  en: {
+    taxon_occurrences: "Occurrences of {0}",
+    iew_bubbles_no_filter_tip: "Tip: Use the filter to highlight how matching results are distributed across the hierarchy - circles will be colored by their proportion of matches. Use mouse wheel or pinch to zoom in and out.",
+    view_bubbles_filter_info_taxa : "Color shows the proportion of matching taxa in each group - {0} of {1} taxa match the current filter",
+    view_bubbles_filter_info_occurrence : "Color shows the proportion of matching occurrences in each group - {0} of {1} occurrences match the current filter",
+    view_bubbles_color_scale_no_match: "no match",
+    view_bubbles_color_scale_1_match: "1% match",
+    view_bubbles_color_scale_full_match: "100% match",
+  },
+  fr: {
+    taxon_occurrences: "Occurrences de {0}",
+    iew_bubbles_no_filter_tip: "Astuce : Utilisez le filtre pour voir comment les résultats correspondants sont répartis dans la hiérarchie - les cercles seront colorés en fonction de leur proportion de correspondances. Utilisez la molette de la souris ou le pincement pour zoomer avant et arrière.",
+    view_bubbles_filter_info_taxa : "La couleur montre la proportion de taxons correspondants dans chaque groupe - {0} de {1} taxons correspondent au filtre actuel",
+    view_bubbles_filter_info_occurrence : "La couleur montre la proportion d'occurrences correspondantes dans chaque groupe - {0} de {1} occurrences correspondent au filtre actuel",
+    view_bubbles_color_scale_no_match: "aucune correspondance",
+    view_bubbles_color_scale_1_match: "1% de correspondance",
+    view_bubbles_color_scale_full_match: "100% de correspondance",    
+  }
+});
+
 // ─── Tool config export ────────────────────────────────────────────────────
 
 //
@@ -23,7 +44,7 @@ export const config = {
   label: "Hierarchy bubbles",
   iconPath: {
     light: "./img/ui/menu/view_circle_pack-light.svg",
-    dark:  "./img/ui/menu/view_circle_pack.svg",
+    dark: "./img/ui/menu/view_circle_pack.svg",
   },
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
   getTaxaAlongsideOccurrences: false,
@@ -45,16 +66,16 @@ export const config = {
 
   parameters: [
     {
-      id:      "maxLevels",
-      label:   "Maximum depth of levels displayed",
-      type:    "select",
+      id: "maxLevels",
+      label: "Maximum depth of levels displayed",
+      type: "select",
       default: 3,
       accessor: Settings.circlePackingMaxLevels,
-      values:  [3, 4, 5, 6, 7],
+      values: [3, 4, 5, 6, 7],
       // notify: false - this is a pure rendering preference (how many bubble
       // rings are drawn), not a data filter.  Changing it never hides records
       // from the user, so there's nothing to call attention to.
-      notify:  false,
+      notify: false,
     },
   ],
 

@@ -13,6 +13,20 @@
 import { t } from "virtual:i18n-self";
 import { MATCH_MODES } from "./MatchModeToggle.js";
 
+registerMessages(selfKey, {
+  en: {
+    is_all_list_joiner: "is all of",
+    is_not_list_joiner: "is not",
+    is_list_joiner: "is",
+  },
+  fr: {
+    is_all_list_joiner: "est tout de",
+    is_not_list_joiner: "n'est pas",
+    is_list_joiner: "est",
+  }
+});
+
+
 // ── Verb-key for describeSerializedValue ──────────────────────────────────────
 
 /**
@@ -26,7 +40,7 @@ import { MATCH_MODES } from "./MatchModeToggle.js";
  * @returns {string}
  */
 export function matchModeVerbKey(mode) {
-  if (mode === MATCH_MODES.ALL)     return "is_all_list_joiner";
+  if (mode === MATCH_MODES.ALL) return "is_all_list_joiner";
   if (mode === MATCH_MODES.EXCLUDE) return "is_not_list_joiner";
   return "is_list_joiner";
 }
@@ -119,17 +133,17 @@ export function makeListPluginLifecycle(defaultType, opts = {}) {
   return {
     createFilterDef(type) {
       return {
-        type:      type || defaultType,
-        all:       [],
-        possible:  {},
-        selected:  [],
-        numeric:   null,
+        type: type || defaultType,
+        all: [],
+        possible: {},
+        selected: [],
+        numeric: null,
         matchMode: MATCH_MODES.ANY,
       };
     },
 
     clearFilter(fd) {
-      fd.selected  = [];
+      fd.selected = [];
       fd.matchMode = MATCH_MODES.ANY;
     },
 
@@ -149,7 +163,7 @@ export function makeListPluginLifecycle(defaultType, opts = {}) {
 
     deserializeFromQuery(fd, val) {
       const { selected, matchMode } = deserializeListWithMode(val);
-      fd.selected  = deserializeValue ? selected.map(deserializeValue) : selected;
+      fd.selected = deserializeValue ? selected.map(deserializeValue) : selected;
       fd.matchMode = matchMode;
     },
 
