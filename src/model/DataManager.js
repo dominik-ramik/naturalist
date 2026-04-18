@@ -1426,9 +1426,10 @@ export let DataManager = function () {
                 else {
                   Logger.error(
                     tf("dm_incomplete_taxa_info_row", [
-                      rowIndex, //used to use checklistHeadersStartRow
+                      (row._sourceSheet ? row._sourceSheet + " " : ""),
+                      (row._sourceRow ?? rowIndex + 1),
                       info.name,
-                    ])
+                    ]), "Unexpected taxon data"
                   );
                 }
               }
@@ -1450,7 +1451,8 @@ export let DataManager = function () {
                 hasAnyDataForRootColumn(headers, row, info.name)) {
                 Logger.error(
                   tf("dm_wrong_belongs_to", [
-                    rowIndex, //used to use checklistHeadersStartRow
+                    (row._sourceSheet ? row._sourceSheet + " " : ""),
+                    (row._sourceRow ?? rowIndex + 1),
                     info.name,
                     resolvedBelongsTo,
                     actualEntity,
@@ -1491,7 +1493,7 @@ export let DataManager = function () {
 
         if (pathKey === "") return; // skip empty rows
 
-        const rowNumber = arrayIndex + 1; //used to use checklistHeadersStartRow
+        const rowNumber = arrayIndex + 2; // +1 for 1-based index, +1 for the header row
 
         if (seenPaths.has(pathKey)) {
           Logger.error(
@@ -1528,7 +1530,7 @@ export let DataManager = function () {
           if (!occurrenceEntry || occurrenceEntry.name.trim() === "") return;
 
           const occurrenceName = occurrenceEntry.name.trim();
-          const rowNumber = arrayIndex + 1; //used to use checklistHeadersStartRow
+          const rowNumber = arrayIndex + 2; // +1 for 1-based index, +1 for the header row
 
           if (seenOccurrenceIds.has(occurrenceName)) {
             Logger.error(

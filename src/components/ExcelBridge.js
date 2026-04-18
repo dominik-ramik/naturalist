@@ -565,11 +565,19 @@ function mergeChecklistSheetTables(sheetTables) {
         srcIdx >= 0 ? sourceRow[srcIdx] : ""
       );
 
-      // Attach a lightweight, invisible meta flag for Logger attribution.
-      // defineProperty keeps _sourceSheet out of for..in and JSON.stringify,
-      // so it is invisible to all existing row-processing code.
+      // Attach lightweight, invisible meta flags for Logger attribution.
+      // defineProperty keeps these out of for..in and JSON.stringify,
+      // so they are invisible to all existing row-processing code.
+      // _sourceRow is the 1-based spreadsheet row number within the source
+      // sheet (r=1 → row 2 in Excel because row 1 is the header).
       Object.defineProperty(alignedRow, "_sourceSheet", {
         value: sheetName,
+        enumerable: false,
+        writable: false,
+        configurable: false,
+      });
+      Object.defineProperty(alignedRow, "_sourceRow", {
+        value: r + 1, // r is 1-based over data rows; +1 accounts for the header row
         enumerable: false,
         writable: false,
         configurable: false,
