@@ -611,7 +611,7 @@ function runApp() {
           Settings.viewType(toolParam);
         }
         if (scopeParam && (scopeParam === "T" || scopeParam === "S")) {
-          Settings.analyticalIntent("#" + scopeParam);
+          Settings.analyticalIntent(scopeParam);
         }
 
         if (Checklist._isDataReady) {
