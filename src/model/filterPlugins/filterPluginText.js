@@ -3,7 +3,7 @@
  */
 
 import m from "mithril";
-import { t } from "virtual:i18n-self";
+import { t, registerMessages, selfKey } from "virtual:i18n-self";
 import { Checklist } from "../Checklist.js";
 import { buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";
@@ -17,6 +17,15 @@ import {
   makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
+registerMessages(selfKey, {
+  en: {
+    is_list_joiner: "is",
+  },
+  fr: {
+    is_list_joiner: "est",
+  }
+});
+
 // ── Dropdown component ────────────────────────────────────────────────────────
 
 let DropdownText = function () {
@@ -26,13 +35,13 @@ let DropdownText = function () {
 
   return {
     oninit() {
-      filter             = "";
+      filter = "";
       itemsOverflowLimit = INITIAL_LIMIT;
     },
 
     view(vnode) {
       const { type, dataPath, openHandler, dropdownId } = vnode.attrs;
-      const fd               = Checklist.filter[type][dataPath];
+      const fd = Checklist.filter[type][dataPath];
       const supportsMatchAll = Checklist.isMultiValueDataPath(dataPath);
 
       const {
@@ -44,9 +53,9 @@ let DropdownText = function () {
 
       return m(".inner-dropdown-area", [
         m(MatchModeToggle, {
-          filterDef:       fd,
+          filterDef: fd,
           supportsMatchAll,
-          onCommit()       { Checklist.filter.commit(); },
+          onCommit() { Checklist.filter.commit(); },
         }),
 
         renderSearchInput(dropdownId, val => { filter = val; }),
@@ -102,10 +111,10 @@ export const filterPluginText = {
   },
 
   describeSerializedValue(dataPath, serialized, opts = {}) {
-    const cat  = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
-    const raw  = Array.isArray(serialized) ? serialized
-               : Array.isArray(serialized?.items) ? serialized.items
-               : [String(serialized)];
+    const cat = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+    const raw = Array.isArray(serialized) ? serialized
+      : Array.isArray(serialized?.items) ? serialized.items
+        : [String(serialized)];
     const mode = serialized?.mm || MATCH_MODES.ANY;
     return cat + " " + t(matchModeVerbKey(mode)) + " " + describeList(raw.map(String), opts);
   },

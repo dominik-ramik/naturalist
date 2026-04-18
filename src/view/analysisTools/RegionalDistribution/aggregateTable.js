@@ -27,6 +27,15 @@ registerMessages(selfKey, {
     rd_drill_overflow: "… and {0} more records not shown.",
     rd_drill_show_all: "Show all {0} records",
     rd_drill_show_less: "Show less",
+    rd_op_count: "Count",
+    rd_op_sum: "Sum",
+    rd_op_mean: "Mean",
+    rd_op_median: "Median",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Std. deviation",
+    rd_op_pct_above: "% above threshold",
+    rd_op_pct_below: "% below threshold",
   },
   fr: {
     rd_col_region: "Région",
@@ -46,7 +55,15 @@ registerMessages(selfKey, {
     rd_drill_overflow: "… et {0} enregistrements supplémentaires non affichés.",
     rd_drill_show_all: "Afficher les {0} enregistrements",
     rd_drill_show_less: "Afficher moins",
-
+    rd_op_count: "Nombre",
+    rd_op_sum: "Somme",
+    rd_op_mean: "Moyenne",
+    rd_op_median: "Médiane",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Écart-type",
+    rd_op_pct_above: "% au-dessus du seuil",
+    rd_op_pct_below: "% en-dessous du seuil",
   }
 });
 

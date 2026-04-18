@@ -61,6 +61,7 @@ registerMessages(selfKey, {
     tm_living_flip_to_row: "↔ Switch: compare within each {1}",
     tm_living_filtered: "Counting only {0}",
     tm_no_data_for_selection: "No data found for this combination. Try a different trait or adjust the filters.",
+    view_cat_cell_verb_category_filtered: "(counting only those where {0})",
   },
   fr: {
     view_cat_click_on_cell: "Cliquez sur une cellule colorée pour voir ses statistiques précises.",
@@ -76,7 +77,7 @@ registerMessages(selfKey, {
     view_cat_cell_verb_row_pct_taxa: "{0} ({1} {2}) de {3} ont {4}",
     view_cat_cell_verb_row_pct_custom: "{0} ({1} {2}) avec {3} ont aussi {4}",
     view_cat_cell_verb_col_pct_taxa: "{0} ({1} {2}) avec {4} appartiennent à {3}",
-    view_cat_cell_verb_col_pct_custom: "{0} ({1} {2}) avec {4} ont aussi {3}",
+    view_cat_cell_verb_col_pct_custom: "{0} ({1} {2}) avec {4} ont aussi {3}",    
     tm_trait_label: "Analyser le trait",
     tm_trait_placeholder: "- Choisissez un trait pour commencer -",
     tm_rows_label: "Grouper les lignes par",
@@ -110,6 +111,7 @@ registerMessages(selfKey, {
     tm_living_flip_to_row: "↔ Basculer : comparer au sein de chaque {1}",
     tm_living_filtered: "En comptant seulement {0}",
     tm_no_data_for_selection: "Aucune donnée trouvée pour cette combinaison. Essayez un trait différent ou ajustez les filtres.",    
+    view_cat_cell_verb_category_filtered: "(en comptant seulement ceux où {0})",
   }
 });
 
@@ -603,7 +605,7 @@ function renderLivingPanel(rowDimLabel, colTraitName, unit) {
     }, m.trust(flipLabel)) : null,
     !Checklist.filter.isEmpty()
       ? m("span.tm-living-filter",
-        m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch()])))
+        m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch(undefined, true)])))
       : null,
   ]);
 }

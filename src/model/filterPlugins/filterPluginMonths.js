@@ -5,7 +5,7 @@
  */
 
 import m from "mithril";
-import { t } from "virtual:i18n-self";
+import { t, selfKey, registerMessages } from "virtual:i18n-self";
 import { Checklist } from "../Checklist.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../customTypes/CustomTypeMonths.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
@@ -17,6 +17,16 @@ import {
   makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
+registerMessages(selfKey, {
+  en: {
+    is_list_joiner: "is",
+  },
+  fr: {
+    is_list_joiner: "est",
+  }
+});
+
+
 // ── Dropdown component ────────────────────────────────────────────────────────
 
 let DropdownMonths = function () {
@@ -27,13 +37,13 @@ let DropdownMonths = function () {
 
       const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(monthNum => {
         const isSelected = filterDef.selected.some(s => Number(s) === monthNum);
-        const count      = filterDef.possible[monthNum] || 0;
+        const count = filterDef.possible[monthNum] || 0;
         const isPossible = count > 0;
-        const state      = isSelected ? "checked" : isPossible ? "unchecked" : "inactive";
+        const state = isSelected ? "checked" : isPossible ? "unchecked" : "inactive";
 
         return m(DropdownCheckItemSkeleton, {
-          key:   monthNum,
-          item:  Checklist.getMonthLabel(monthNum),
+          key: monthNum,
+          item: Checklist.getMonthLabel(monthNum),
           state,
           count: count || "",
           action: state === "inactive" ? undefined : function () {
@@ -54,7 +64,7 @@ let DropdownMonths = function () {
         m(MatchModeToggle, {
           filterDef,
           supportsMatchAll: true,
-          onCommit()        { Checklist.filter.commit(); },
+          onCommit() { Checklist.filter.commit(); },
         }),
 
         m(".options", m(".options-section", items)),
@@ -86,7 +96,7 @@ export const filterPluginMonths = {
   getCrumbs(filterDef, _ctx) {
     if (filterDef.selected.length === 0) return [];
     return [{
-      title:     renderRangesString(groupMonthsIntoRanges(filterDef.selected)),
+      title: renderRangesString(groupMonthsIntoRanges(filterDef.selected)),
       matchMode: filterDef.matchMode || MATCH_MODES.ANY,
     }];
   },
@@ -97,10 +107,10 @@ export const filterPluginMonths = {
   },
 
   describeSerializedValue(dataPath, serialized, opts = {}) {
-    const cat  = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
-    const raw  = Array.isArray(serialized) ? serialized
-               : Array.isArray(serialized?.items) ? serialized.items
-               : [serialized];
+    const cat = opts.categoryName ?? Checklist.getMetaForDataPath(dataPath)?.searchCategory ?? "";
+    const raw = Array.isArray(serialized) ? serialized
+      : Array.isArray(serialized?.items) ? serialized.items
+        : [serialized];
     const mode = serialized?.mm || MATCH_MODES.ANY;
     const vals = raw.map(v => Checklist.getMonthLabel(parseInt(v, 10)));
     return cat + " " + t(matchModeVerbKey(mode)) + " " + describeList(vals, opts);

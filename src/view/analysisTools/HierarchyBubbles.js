@@ -14,7 +14,7 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTI
 registerMessages(selfKey, {
   en: {
     taxon_occurrences: "Occurrences of {0}",
-    iew_bubbles_no_filter_tip: "Tip: Use the filter to highlight how matching results are distributed across the hierarchy - circles will be colored by their proportion of matches. Use mouse wheel or pinch to zoom in and out.",
+    view_bubbles_no_filter_tip: "Tip: Use the filter to highlight how matching results are distributed across the hierarchy - circles will be colored by their proportion of matches. Use mouse wheel or pinch to zoom in and out.",
     view_bubbles_filter_info_taxa : "Color shows the proportion of matching taxa in each group - {0} of {1} taxa match the current filter",
     view_bubbles_filter_info_occurrence : "Color shows the proportion of matching occurrences in each group - {0} of {1} occurrences match the current filter",
     view_bubbles_color_scale_no_match: "no match",

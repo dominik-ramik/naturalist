@@ -37,6 +37,18 @@ registerMessages(selfKey, {
     rd_verb_pct_below: "% of records below {0}",
     rd_verb_scope_all: "across all {0}",
     rd_verb_scope_filtered: "for {0} ({2} {1})",
+    rd_verb_denom_filter: "relative to filtered set",
+    rd_verb_denom_region: "relative to all records per region",
+    rd_verb_denom_total: "relative to full dataset",
+    rd_op_count: "Count",
+    rd_op_sum: "Sum",
+    rd_op_mean: "Mean",
+    rd_op_median: "Median",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Std. deviation",
+    rd_op_pct_above: "% above threshold",
+    rd_op_pct_below: "% below threshold",
   },
   fr: {
     view_map_sum_by_filter: "Filtre",
@@ -61,7 +73,18 @@ registerMessages(selfKey, {
     rd_verb_pct_below: "% des enregistrements en dessous de {0}",
     rd_verb_scope_all: "pour tous les {0}",
     rd_verb_scope_filtered: "pour {0} ({2} {1})",
-
+    rd_verb_denom_filter: "par rapport à l'ensemble filtré",
+    rd_verb_denom_region: "par rapport à tous les enregistrements par région",
+    rd_verb_denom_total: "par rapport à l'ensemble du dataset",
+    rd_op_count: "Nombre",
+    rd_op_sum: "Somme",
+    rd_op_mean: "Moyenne",
+    rd_op_median: "Médiane",
+    rd_op_min: "Min",
+    rd_op_max: "Max",
+    rd_op_stddev: "Écart-type",
+    rd_op_pct_above: "% au-dessus du seuil",
+    rd_op_pct_below: "% en-dessous du seuil",
   }
 });
 
@@ -245,7 +268,7 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
     scope = tf('rd_verb_scope_all', [unit]);
   } else {
     const filterLabel = Settings.pinnedSearches.getHumanNameForSearch(
-      JSON.parse(Checklist.queryKey()), false
+      JSON.parse(Checklist.queryKey()), true
     );
     scope = tf('rd_verb_scope_filtered', [filterLabel, unit, filteredCount]);
   }

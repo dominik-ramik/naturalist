@@ -13,31 +13,7 @@ import {
   parseNumericStatus,
 } from '../../../components/MapregionsColorEngine.js';
 import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
-
-registerMessages(selfKey, {
-  en: {
-    rd_op_count: "Count",
-    rd_op_sum: "Sum",
-    rd_op_mean: "Mean",
-    rd_op_median: "Median",
-    rd_op_min: "Min",
-    rd_op_max: "Max",
-    rd_op_stddev: "Std. deviation",
-    rd_op_pct_above: "% above threshold",
-    rd_op_pct_below: "% below threshold",
-  },
-  fr: {
-    rd_op_count: "Nombre",
-    rd_op_sum: "Somme",
-    rd_op_mean: "Moyenne",
-    rd_op_median: "Médiane",
-    rd_op_min: "Min",
-    rd_op_max: "Max",
-    rd_op_stddev: "Écart-type",
-    rd_op_pct_above: "% au-dessus du seuil",
-    rd_op_pct_below: "% en-dessous du seuil",
-  }
-});
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 // ─── Segment detection ────────────────────────────────────────────────────────
 

@@ -12,6 +12,7 @@
 
 import m from 'mithril';
 import './RegionalDistribution.css';
+import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { Settings } from '../../model/Settings.js';
 import { Checklist } from '../../model/Checklist.js';

@@ -10,7 +10,7 @@
  *     and cannot use the flat variant directly, but can use matchModeVerb)
  */
 
-import { t } from "virtual:i18n-self";
+import { t, selfKey, registerMessages } from "virtual:i18n-self";
 import { MATCH_MODES } from "./MatchModeToggle.js";
 
 registerMessages(selfKey, {
