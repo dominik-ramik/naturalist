@@ -176,7 +176,7 @@ registerMessages(selfKey, {
     dwc_export_ready: "Archive DwC compilée avec succès.",
     dwc_export_has_errors: "La compilation DwC s'est terminée avec des erreurs. Consultez les messages ci-dessous et réessayez après avoir corrigé votre tableur.",
     download_dwc_checklist: "Télécharger l'archive DwC de la checklist",
-    download_dwc_occurrences: "Télécharger l'archive DwC des occurrences",      
+    download_dwc_occurrences: "Télécharger l'archive DwC des occurrences",
   }
 });
 
@@ -574,8 +574,12 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
       Logger.warning(t("url_fetching_direct"));
       res = await fetch(url, { mode: "cors" });
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      console.log("ERROR Fetch response:", res);
+      throw new Error(`HTTP ${res.status}`);
+    }
     buffer = await res.arrayBuffer();
+    console.log("Fetched file buffer:", res);
   } catch (ex) {
     Logger.error(t("url_fetch_failed") + (ex.message ? ` (${ex.message})` : ""));
     ManageStore.isProcessing = false;
@@ -589,12 +593,18 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   const sig = new Uint8Array(buffer, 0, 4);
   if (sig[0] !== 0x50 || sig[1] !== 0x4B) {
     Logger.error(t("wrong_filetype"));
+    
+    console.log("ERROR Invalid file signature:", sig);
+    console.log(buffer);
+
     ManageStore.isProcessing = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
     );
     return;
   }
+
+  console.log("File buffer looks valid, starting processing pipeline");
 
   setTimeout(() => _runPipeline(buffer, checkAssetsSize, onSuccess), 50);
 }
@@ -1109,8 +1119,9 @@ export let ManageView = {
     ManageStore.urlInputValue = xlsxUrl;
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);
-    fetchAndProcessUrl(xlsxUrl, true, () =>
+    fetchAndProcessUrl(xlsxUrl, true, () => {
       m.route.set("/checklist", null, { replace: true })
+    }
     );
   },
 

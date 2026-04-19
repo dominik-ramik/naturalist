@@ -317,12 +317,9 @@ export function absoluteUsercontent(url) {
 }
 
 export function relativeToUsercontent(url) {
-  //Add an initial period to relative URLs
   if (url.length > 1 && url[0] == "/" && url[1] != "/") {
     url = "." + url;
   }
-
-  //Don't change absolute URLs
   if (url.indexOf("://") >= 0) {
     return url;
   }
@@ -332,9 +329,9 @@ export function relativeToUsercontent(url) {
     window.location.origin + window.location.pathname + "usercontent/"
   ).href;
 
-  processed = "." + processed.substring(window.location.origin.length);
-
-  //console.log(processed);
+  // Strip origin AND the directory portion of the pathname (i.e. everything up to the last '/')
+  const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/") + 1);
+  processed = "." + processed.substring(base.length - 1); // -1 to keep the leading '/'
 
   return processed;
 }
