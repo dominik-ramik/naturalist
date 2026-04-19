@@ -10,7 +10,6 @@ import { Checklist } from "./model/Checklist.js";
 import { SearchView } from "./view/SearchView.js";
 import { DetailsView } from "./view/DetailsView.js";
 import { AboutView } from "./view/AboutView.js";
-import { ManageView } from "./view/ManageView.js";
 import { LiteratureView } from "./view/LiteratureView.js";
 import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
@@ -18,6 +17,7 @@ import { Settings } from "./model/Settings.js";
 import { checklistURL, unitToHtml } from "./components/Utils.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
 import { compressor } from "./components/LZString.js";
+import { ManageView, deepLinkProcessing, DEEP_LINK_STORAGE_KEY } from "./view/ManageView.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
@@ -74,6 +74,18 @@ if (SHOULD_TRACE) {
 
 function componentRender(component) {
   return SHOULD_TRACE ? m(RenderTracker, component) : component;
+}
+
+function hasDeepLinkParam() {
+  // Hash-based routing: #!/manage/upload?xlsxUrl=...
+  // Also check sessionStorage for the post-reload pass where the hash may have
+  // been rewritten by the browser or Mithril and no longer contains xlsxUrl=.
+  const hash = window.location.hash;
+  const inHash = hash.includes("xlsxUrl=");
+  const inStorage = !!sessionStorage.getItem("xlsxDeepLinkUrl");
+  const result = inHash || inStorage;
+  console.log("[hasDeepLinkParam] hash=", hash, "| inHash=", inHash, "| inStorage=", inStorage, "→ result=", result);
+  return result;
 }
 
 const messageChannel = new MessageChannel();
@@ -134,9 +146,24 @@ window.addEventListener("load", (event) => {
       openComChannel(registration.active);
       checkForChecklistUpdate(registration.active);
 
-      // Extra safety: If the controller changes (update applied), reload the page
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
+        if (DOCS_URL.includes(window.location.hostname) || window.location.href.includes("localhost")) {
+          const deepLinkHref = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY + "_href");
+          const deepLinkUrl = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY);
+
+          if (deepLinkHref && deepLinkUrl) {
+            // Pipeline has not started yet — reload to original href so oninit can pick it up.
+            window.location.href = deepLinkHref;
+          } else if (deepLinkHref && !deepLinkUrl) {
+            // oninit already consumed the URL — pipeline ran (or is running) — do NOT reload.
+            sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY + "_href"); // clean up the stale _href
+          }
+        }
+        else {
+          // Not on docs page — normal SW activation reload.
+          console.log("[controllerchange] No deep-link pending. Normal reload.");
+          window.location.reload();
+        }
       });
     });
   }
@@ -153,7 +180,9 @@ function makeStoragePersistent() {
       } else {
         console.log("No persistency for storage granted by UA");
       }
-      m.redraw();
+      // No m.redraw() here: this resolves before m.route() is called, so there
+      // is no root mounted yet. Views that display this setting read it during
+      // their own render cycle, which is always triggered after mount.
     });
   } else {
     Settings._storagePersistent = false;
@@ -282,7 +311,7 @@ export function checkForChecklistUpdate(sw) {
   var checkDataUpdate = new XMLHttpRequest();
   checkDataUpdate.open("HEAD", checklistURL, true);
   checkDataUpdate.onreadystatechange = function () {
-    if (checkDataUpdate.readyState === 2) {
+    if (checkDataUpdate.readyState === 4) {
       if (checkDataUpdate.status === 200) {
 
         let lastModifiedString = checkDataUpdate.getResponseHeader("Last-Modified");
@@ -620,9 +649,21 @@ function runApp() {
       }
 
       function onMatchGuard() {
+        console.log(
+          "[onMatchGuard] Fired. currentRoute=", m.route.get(),
+          "| Checklist._isDataReady=", Checklist._isDataReady,
+          "| deepLinkProcessing=", deepLinkProcessing
+        );
         updateLanguage();
         updateToolAndScope();
-        if (!isDataReady()) m.route.set("/manage");
+        if (!Checklist._isDataReady && !deepLinkProcessing) {
+          console.warn("[onMatchGuard] Data NOT ready and no deep-link in progress → redirecting to /manage.");
+          m.route.set("/manage");
+        } else if (!Checklist._isDataReady && deepLinkProcessing) {
+          console.log("[onMatchGuard] Data not ready BUT deepLinkProcessing=true → standing by, not redirecting.");
+        } else {
+          console.log("[onMatchGuard] Data ready → allowing route.");
+        }
         if (
           !Settings.alreadyViewedAboutSection() &&
           Checklist.getProjectAbout()?.trim() != ""
@@ -639,7 +680,8 @@ function runApp() {
         Settings.alreadyViewedAboutSection(true);
       }
 
-      m.route(document.body, "/checklist", {
+      const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
+      m.route(document.body, initialRoute, {
         "/checklist": {
           render: function () {
             // AppLayoutView.display = "checklist"; // DELETE display setting
@@ -752,10 +794,6 @@ function runApp() {
       });
     }, 50);
   });
-}
-
-function isDataReady() {
-  return Checklist._isDataReady;
 }
 
 function readyPreloadableAssets() {

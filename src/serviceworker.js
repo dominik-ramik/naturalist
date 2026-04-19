@@ -73,20 +73,9 @@ self.addEventListener('fetch', function (e) {
     if (e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
         e.respondWith((async function () {
             const dataCache = await caches.open(dataCacheName);
-            let cachedResponse = await dataCache.match(e.request);
+            const cachedResponse = await dataCache.match(e.request);
 
-            // 1. SAFETY NET: If new cache is empty, check legacy caches
-            if (!cachedResponse) {
-                const userCache = await caches.open(userCacheName); // Check old 'user' cache
-                cachedResponse = await userCache.match(e.request);
-
-                if (cachedResponse) {
-                    // Copy to new cache so we don't have to check legacy next time
-                    dataCache.put(e.request, cachedResponse.clone());
-                }
-            }
-
-            // 2. NETWORK UPDATE: Always try to update in the background
+            // NETWORK UPDATE: Always try to update in the background
             const networkPromise = fetch(e.request).then(networkResponse => {
                 if (networkResponse && networkResponse.status === 200) {
                     dataCache.put(e.request, networkResponse.clone());
@@ -94,8 +83,7 @@ self.addEventListener('fetch', function (e) {
                 return networkResponse;
             });
 
-            // 3. RETURN STRATEGY: 
-            // If we have data (new or old), return it fast & update in background.
+            // If we have cached data, return it fast & update in background.
             if (cachedResponse) {
                 e.waitUntil(networkPromise.catch(() => { }));
                 return cachedResponse;
@@ -143,22 +131,17 @@ self.addEventListener('fetch', function (e) {
     })());
 });
 
-// Update function now uses the dedicated cache
-function refreshCachedChecklistData() {
-    let dataRequest = new Request(checklistURL, {
+// Update function — fetches fresh checklist data and saves it to the dedicated cache.
+// Returns a Promise that resolves when the cache write is complete (or rejects on failure),
+// so callers can wait before notifying the app that new data is ready.
+async function refreshCachedChecklistData() {
+    const dataRequest = new Request(checklistURL, {
         method: 'GET',
         cache: "reload"
     });
-    fetch(dataRequest)
-        .then(function (response) {
-            // FIX: Save to dedicated data cache
-            caches.open(dataCacheName).then(function (cache) {
-                cache.put(dataRequest.clone(), response.clone());
-            });
-        })
-        .catch(function (err) {
-            console.log("Could not update the data. Fetch failed.", err);
-        });
+    const response = await fetch(dataRequest);
+    const cache = await caches.open(dataCacheName);
+    await cache.put(dataRequest.clone(), response.clone());
 }
 
 self.addEventListener('message', function (message) {
@@ -175,7 +158,13 @@ self.addEventListener('message', function (message) {
 
 async function handleAppMessage(message) {
     if (message.type == "UPDATE_CHECKLIST_DATA") {
-        refreshCachedChecklistData();
+        try {
+            await refreshCachedChecklistData();
+        } catch (err) {
+            console.log("[SW] Could not update checklist data. Fetch or cache write failed.", err);
+            // Do not notify the app — the cache was not updated, so a reload would serve stale data.
+            return;
+        }
         if (communicationPort) {
             communicationPort.postMessage({
                 type: 'CHECKLIST_UPDATED',
@@ -219,12 +208,6 @@ async function handleAppMessage(message) {
 
                 const cachedRequests = await cache.keys();
                 for (const request of cachedRequests) {
-                    // Safety check: though checklist.json should be in dataCacheName now,
-                    // we keep this check just in case a migration happens weirdly.
-                    if (request.url.toLowerCase().endsWith("/" + checklistFileName)) {
-                        continue;
-                    }
-
                     if (!assetMap.has(request.url)) {
                         await cache.delete(request);
                     }

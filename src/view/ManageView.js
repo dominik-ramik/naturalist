@@ -252,6 +252,11 @@ const STEPS = [
 
 // --- UI COMPONENTS ---
 
+// Deep-link guard flag. Set to true as soon as oninit detects a deep-link and
+// the pipeline starts. MUST be cleared to false before m.route.set("/checklist")
+// is called at the end of onSuccess so the guard does not stay suppressed forever.
+export let deepLinkProcessing = false;
+
 const ManageCard = {
   view: function (vnode) {
     const { title, icon, description, children, headerAction } = vnode.attrs;
@@ -428,9 +433,11 @@ const LogsPanel = {
  * @param {Function} onSuccess - Called instead of default "/manage/review" redirect on success
  */
 async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
+  console.log("[_runPipeline] Starting. deepLinkProcessing=", deepLinkProcessing, "hasOnSuccess=", !!onSuccess);
   ManageStore.dataman = new DataManager();
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
+  console.log("[_runPipeline] DataManager finished. Logger.hasErrors()=", Logger.hasErrors());
 
   // DwC compilation is NOT run here. It is decoupled and triggered on-demand
   // from the Review screen so that DwC configuration errors never block a
@@ -438,21 +445,30 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
 
   if (Logger.hasErrors()) {
     ManageStore.dwcAutoRecompile = false;
+    console.log("[_runPipeline] Pipeline has errors. Routing back to /manage/upload. deepLinkProcessing=", deepLinkProcessing);
+    // If the deep-link pipeline fails, clear the flag so the guard works normally.
+    deepLinkProcessing = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
     );
   } else {
+    console.log("[_runPipeline] No errors. Loading compiled data into Checklist. Checklist._isDataReady before=", Checklist._isDataReady);
     Checklist.loadData(compiled, true);
     Checklist.getTaxaForCurrentQuery();
+    console.log("[_runPipeline] Checklist.loadData done. Checklist._isDataReady after=", Checklist._isDataReady);
 
     if (ManageStore.dwcAutoRecompile) {
       ManageStore.dwcAutoRecompile = false;
+      console.log("[_runPipeline] dwcAutoRecompile=true, scheduling _runDwcPipeline.");
       // Run DwC immediately instead of routing to /review first
       scheduleManageNavigation(() => _runDwcPipeline());
     } else {
-      scheduleManageNavigation(
-        onSuccess ?? (() => m.route.set("/manage/review", null, { replace: true }))
-      );
+      const navFn = onSuccess ?? (() => {
+        console.log("[_runPipeline] No onSuccess — routing to /manage/review.");
+        m.route.set("/manage/review", null, { replace: true });
+      });
+      console.log("[_runPipeline] Scheduling navigation. Using onSuccess=", !!onSuccess, " deepLinkProcessing=", deepLinkProcessing);
+      scheduleManageNavigation(navFn);
     }
   }
 }
@@ -541,6 +557,7 @@ function processUpload(filepicker, file, checkAssetsSize) {
  */
 async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   url = url && url.trim();
+  console.log("[fetchAndProcessUrl] Called with url=", url, "checkAssetsSize=", checkAssetsSize, "hasOnSuccess=", !!onSuccess);
 
   if (!url) {
     Logger.error(t("url_required"));
@@ -559,6 +576,7 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   if (ManageStore.dataman && typeof ManageStore.dataman.isDwcCompiled === 'function' && ManageStore.dataman.isDwcCompiled()) {
     ManageStore.dwcAutoRecompile = true;
   }
+  console.log("[fetchAndProcessUrl] Routing to /manage/processing. deepLinkProcessing=", deepLinkProcessing);
   m.route.set("/manage/processing");
 
   let buffer;
@@ -567,21 +585,24 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     if (ManageStore.shouldShowUploadForm) {
       // PHP available: server-side proxy sidesteps CORS entirely
       Logger.info(t("url_fetching_via_proxy"));
+      console.log("[fetchAndProcessUrl] Fetching via PHP proxy.");
       const body = new FormData();
       body.append("url", url);
       res = await fetch("../update.php?proxy", { method: "POST", body });
     } else {
       // Static hosting: direct fetch - CORS restrictions may apply
       Logger.warning(t("url_fetching_direct"));
+      console.log("[fetchAndProcessUrl] Fetching directly (static hosting / CORS).");
       res = await fetch(url, { mode: "cors" });
     }
     if (!res.ok) {
-      console.log("ERROR Fetch response:", res);
+      console.log("[fetchAndProcessUrl] ERROR: Fetch response not OK:", res.status, res.statusText);
       throw new Error(`HTTP ${res.status}`);
     }
     buffer = await res.arrayBuffer();
-    console.log("Fetched file buffer:", res);
+    console.log("[fetchAndProcessUrl] Fetch succeeded. Buffer byteLength=", buffer.byteLength);
   } catch (ex) {
+    console.log("[fetchAndProcessUrl] ERROR during fetch:", ex.message, " | deepLinkProcessing=", deepLinkProcessing);
     Logger.error(t("url_fetch_failed") + (ex.message ? ` (${ex.message})` : ""));
     ManageStore.isProcessing = false;
     scheduleManageNavigation(() =>
@@ -594,10 +615,8 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   const sig = new Uint8Array(buffer, 0, 4);
   if (sig[0] !== 0x50 || sig[1] !== 0x4B) {
     Logger.error(t("wrong_filetype"));
-    
-    console.log("ERROR Invalid file signature:", sig);
+    console.log("[fetchAndProcessUrl] ERROR: Invalid file signature (not a zip/xlsx):", sig);
     console.log(buffer);
-
     ManageStore.isProcessing = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
@@ -605,8 +624,7 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     return;
   }
 
-  console.log("File buffer looks valid, starting processing pipeline");
-
+  console.log("[fetchAndProcessUrl] File signature valid. Scheduling _runPipeline in 50ms. deepLinkProcessing=", deepLinkProcessing);
   setTimeout(() => _runPipeline(buffer, checkAssetsSize, onSuccess), 50);
 }
 
@@ -1094,37 +1112,115 @@ const SubViews = {
 };
 
 // --- MAIN COMPONENT ---
+
+// Key used to preserve the xlsxUrl across the SW-activation reload.
+// Exported so app.js can reference the same key in the controllerchange handler.
+export const DEEP_LINK_STORAGE_KEY = "xlsxDeepLinkUrl";
+
+/**
+ * Called once at module load time (before m.route is set up).
+ *
+ * Strategy:
+ *   - Always capture xlsxUrl from the raw hash into sessionStorage immediately,
+ *     before Mithril or the browser can rewrite the hash.
+ *   - Only trigger our OWN reload if the SW is already controlling the page
+ *     (i.e. navigator.serviceWorker.controller is non-null). In that case there
+ *     will be no automatic controllerchange reload, so we must do it ourselves.
+ *   - If the SW is NOT yet controlling (first-ever install), we do NOT reload:
+ *     the SW's own controllerchange event will trigger a reload in app.js, and
+ *     that handler (now deep-link-aware) will reload to the full original href
+ *     so the hash is preserved.
+ *   - If sessionStorage already has the key, we are on the post-reload pass —
+ *     do nothing, let oninit pick up the stored URL.
+ */
+function captureDeepLinkAndReloadIfNeeded() {
+  
+  // Post-reload pass: URL already stored, nothing to do here.
+  if (sessionStorage.getItem(DEEP_LINK_STORAGE_KEY)) {
+    return false;
+  }
+
+  // Parse xlsxUrl from the raw hash before anything else can touch it.
+  const hash = window.location.hash; // e.g. #!/manage/upload?xlsxUrl=https://...
+  const match = hash.match(/[?&]xlsxUrl=([^&]*)/);
+  if (!match) {
+    return false;
+  }
+
+  const rawUrl = decodeURIComponent(match[1]);
+  
+  // Store the full original href so the controllerchange handler can reload
+  // to it exactly, preserving the hash.
+  sessionStorage.setItem(DEEP_LINK_STORAGE_KEY, rawUrl);
+  sessionStorage.setItem(DEEP_LINK_STORAGE_KEY + "_href", window.location.href);
+  
+  const swAlreadyControlling = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
+  
+  if (swAlreadyControlling) {
+    // SW is active — no controllerchange will fire. We reload ourselves.
+    // Use location.href (not reload()) to guarantee the full URL including hash
+    // is re-requested, bypassing any SW cache normalisation.
+    window.location.href = window.location.href;
+    return true;
+  }
+
+  // SW not yet controlling — controllerchange will fire and app.js will reload
+  // to the stored href. Do not reload here; just let it happen.
+  return false;
+}
+
+// Run immediately at module load, before anything else.
+captureDeepLinkAndReloadIfNeeded();
+
 export let ManageView = {
   /**
-   * Deep-link handler: if ?xlsxUrl=<url> is present, reload once for a clean
-   * SW/cache state, then auto-fetch and route directly to /checklist on success.
+   * Deep-link handler: if a xlsxUrl was stored in sessionStorage by
+   * captureDeepLinkAndReloadIfNeeded(), pick it up here, run the pipeline,
+   * and route directly to /checklist on success.
    *
    * URL format: #!/manage/upload?xlsxUrl=https://example.com/file.xlsx
    * (URL-encode the value if it contains & or ? characters)
    */
   oninit: function (vnode) {
-    const xlsxUrl = m.route.param("xlsxUrl");
-    if (!xlsxUrl || vnode.attrs.step !== "upload") return;
-
-    const RELOAD_FLAG = "xlsxUrlReloading";
-
-    if (!sessionStorage.getItem(RELOAD_FLAG)) {
-      // First visit: reload to flush SW caches, then process on the clean load.
-      sessionStorage.setItem(RELOAD_FLAG, "1");
-      window.location.reload();
+    
+    // Only act on the upload step.
+    if (vnode.attrs.step !== "upload") {
       return;
     }
 
-    // Second visit (post-reload): process the URL and go straight to checklist.
-    sessionStorage.removeItem(RELOAD_FLAG);
+    // Try to get the URL from sessionStorage (post-reload pass) first,
+    // then fall back to the live route param (manual URL entry / direct nav).
+    const storedUrl = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY);
+    const routeParamUrl = m.route.param("xlsxUrl");
+
+    const xlsxUrl = storedUrl || routeParamUrl;
+
+    if (!xlsxUrl) {
+      return;
+    }
+
+    // If we got here via the stored URL, clear both keys now so they don't fire again.
+    if (storedUrl) {
+      sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY);
+      sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY + "_href");
+    }
+
+    // CRITICAL: set the flag BEFORE any async work so onMatchGuard never
+    // sees _isDataReady=false and redirects back to /manage during the pipeline.
+    deepLinkProcessing = true;
+    
     ManageStore.urlInputValue = xlsxUrl;
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);
+
     fetchAndProcessUrl(xlsxUrl, true, () => {
+      // CRITICAL: clear the flag BEFORE m.route.set so that when onMatchGuard
+      // fires for the new /checklist route, deepLinkProcessing is already false
+      // and the guard correctly falls through to Checklist._isDataReady (true).
+      deepLinkProcessing = false;
       Settings.viewType(DEFAULT_TOOL);
-      m.route.set("/checklist?v=" + DEFAULT_TOOL, null, { replace: true })
-    }
-    );
+      m.route.set("/checklist?v=" + DEFAULT_TOOL, null, { replace: true });
+    });
   },
 
   oncreate: function () {
