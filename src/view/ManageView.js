@@ -1020,7 +1020,7 @@ const SubViews = {
     }
 
     return [
-      ManageStore.shouldShowUploadForm === true ||1 == 1
+      ManageStore.shouldShowUploadForm === true
         ? m(ManageCard, {
           title: t("data_upload_integrate_data"),
           icon: "img/ui/manage/publish.svg",
