@@ -861,7 +861,7 @@ export const nlDataStructureSheets = {
                                         "google.png"
                                     ],
                                     [
-                                        "wikipedia.svg"
+                                        "wikipedia.png"
                                     ]
                                 ]
                             }
