@@ -889,7 +889,7 @@ export let Checklist = {
 
 
   getProjectAbout: function () {
-    let text = Checklist._data.versions[Checklist.getCurrentLanguage()].about;
+    let text = Checklist._data?.versions[Checklist.getCurrentLanguage()]?.about;
     return text;
   },
 
