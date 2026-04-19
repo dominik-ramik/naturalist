@@ -64,7 +64,10 @@ export let ClickableTaxonName = {
     return m(
       `span.copiable.clickable${variantClass}`,
       {
-        onclick: function () {
+        onclick: function (e) {
+          // m.route.set (inside routeTo) already schedules its own redraw.
+          // Suppressing the event auto-redraw avoids a redundant second render.
+          e.redraw = false;
           routeTo(
             "/details/" + taxonTree.taxon.name + "/" + Settings.currentDetailsTab()
           );

@@ -167,21 +167,29 @@ const KeyCard = {
         const hasSteps = vnode.attrs.isActive && vnode.attrs.currentPath && vnode.attrs.currentPath.length > 1;
         vnode.state.isDetailsExpanded = hasSteps;
         vnode.state.isTaxaExpanded = vnode.attrs.isActive;
-        KeyCard._syncFilter(vnode.attrs);
+        KeyCard._syncFilter(vnode);
     },
 
     onbeforeupdate: (vnode) => {
-        KeyCard._syncFilter(vnode.attrs);
+        KeyCard._syncFilter(vnode);
     },
 
     // Synchronise the checklist text-filter to the taxa reachable from the
-    // current key step.  Called from oninit and onbeforeupdate so that the
-    // mutation never happens while Mithril is building the vnode tree.
-    _syncFilter: ({ keyData, isActive, currentPath }) => {
-        if (!isActive) return;
+    // current key step, and cache allTaxa/reachableTaxa on state so view()
+    // can reuse them without extra traversals.
+    // Called from oninit and onbeforeupdate so that the mutation never
+    // happens while Mithril is building the vnode tree.
+    _syncFilter: (vnode) => {
+        const { keyData, isActive, currentPath } = vnode.attrs;
+        const state = vnode.state;
+        state.cachedAllTaxa = KeyLogic.getRecursiveTaxa(keyData, 1);
+        if (!isActive) {
+            state.cachedReachableTaxa = state.cachedAllTaxa;
+            return;
+        }
         const currentStepId = currentPath[currentPath.length - 1];
-        const reachableTaxa = KeyLogic.getRecursiveTaxa(keyData, currentStepId);
-        Checklist.setFilterForPossibleTaxa(reachableTaxa);
+        state.cachedReachableTaxa = KeyLogic.getRecursiveTaxa(keyData, currentStepId);
+        Checklist.setFilterForPossibleTaxa(state.cachedReachableTaxa);
     },
 
     view: (vnode) => {
@@ -194,12 +202,10 @@ const KeyCard = {
         const stepsPassed = isActive && currentPath.length > 1;
 
         // --- CALCULATION: Reachable Taxa ---
-        // We calculate this here so we can use it for the Footer rendering.
-        // The filter sync itself is handled in oninit/onbeforeupdate (_syncFilter).
-        const allTaxa = KeyLogic.getRecursiveTaxa(keyData, 1);
-        const reachableTaxa = isActive
-            ? KeyLogic.getRecursiveTaxa(keyData, currentStepId)
-            : allTaxa;
+        // Computed once in _syncFilter (oninit/onbeforeupdate) and cached on
+        // state; reused here and passed implicitly to renderFooter() via closure.
+        const allTaxa = state.cachedAllTaxa;
+        const reachableTaxa = state.cachedReachableTaxa;
 
         // --- 1. Header Logic ---
 
@@ -230,19 +236,20 @@ const KeyCard = {
 
                 // List View: Clicking header selects key
                 if (isListView && onSelect) {
-                    onSelect();
+                    onSelect(e);
                 }
                 // Single View: Clicking header toggles expansion
                 else if (isActive && showActiveExpander) {
                     state.isDetailsExpanded = !state.isDetailsExpanded;
                 }
+                e.redraw = false;
             }
         }, [
             (!isListView && onBack) ? m("img.sak-icon.sak-icon-left", {
                 src: "img/ui/menu/arrow_circle_left.svg",
                 onclick: (e) => {
                     e.stopPropagation();
-                    onBack();
+                    onBack(e);
                 }
             }) : null,
             m("h3.sak-title", m.trust(processMarkdownWithBibliography(keyData.title))),
@@ -263,12 +270,13 @@ const KeyCard = {
 
                     // List View: Clicking header selects key
                     if (isListView && onSelect) {
-                        onSelect();
+                        onSelect(e);
                     }
                     // Single View: Clicking header toggles expansion
                     else if (isActive && showActiveExpander) {
                         state.isDetailsExpanded = !state.isDetailsExpanded;
                     }
+                    e.redraw = false;
                 }
             }, m.trust(processMarkdownWithBibliography(keyData.description)));
         };
@@ -314,7 +322,7 @@ const KeyCard = {
                     m(".sak-option.sak-history-item", {
                         onclick: (e) => {
                             if (isLinkClick(e)) return;
-                            onStepClick(hItem.pathSubset);
+                            onStepClick(e, hItem.pathSubset);
                         }
                     }, [
                         m("span.sak-option-text", m.trust(processMarkdownWithBibliography(hItem.text))),
@@ -337,7 +345,11 @@ const KeyCard = {
                             // [NEW] The button that links to the next key
                             linkedKey
                                 ? m("button", {
-                                    onclick: () => m.route.set("/single-access-keys/:key", { key: linkedKey.id })
+                                    onclick: (e) => {
+                                        e.stopPropagation();
+                                        e.redraw = false;
+                                        m.route.set("/single-access-keys/:key", { key: linkedKey.id });
+                                    }
                                 }, m.trust("Continue to " + processMarkdownWithBibliography(linkedKey.title)))
                                 : null,
                         ])
@@ -349,7 +361,7 @@ const KeyCard = {
                                 if (isLinkClick(e)) return;
                                 const nextVal = opt.type === 'external' ? opt.target : opt.target;
                                 const newPath = currentPath.join('-') + '-' + nextVal;
-                                onStepClick(newPath);
+                                onStepClick(e, newPath);
                             }
                         }, [
                             m("span.sak-option-text", m.trust(processMarkdownWithBibliography(opt.text))),
@@ -362,13 +374,6 @@ const KeyCard = {
         };
 
         const renderFooter = () => {
-            // Pre-calculated variables (derived in the main view scope)
-            const allTaxa = KeyLogic.getRecursiveTaxa(keyData, 1);
-            const currentStepId = isActive ? currentPath[currentPath.length - 1] : 1;
-            const reachableTaxa = isActive
-                ? KeyLogic.getRecursiveTaxa(keyData, currentStepId)
-                : allTaxa;
-
             return m(".sak-footer", {
                 class: isActive ? "sak-footer-noborder" : ""
             }, [
@@ -407,9 +412,10 @@ const KeyCard = {
 
                             if (isActive) {
                                 // Already in the key: just update the steps
-                                onStepClick(pathStr);
+                                onStepClick(e, pathStr);
                             } else {
                                 // Not in the key: Route to the specific Key + Path
+                                e.redraw = false;
                                 m.route.set("/single-access-keys/:key/:steps", {
                                     key: keyData.id,
                                     steps: pathStr
@@ -456,7 +462,10 @@ export const SingleAccessKeyView = {
                     ? m(".sak-filter-header", [
                         m("span.sak-filter-title", `Keys including ${filterTaxon} (${displayedKeys.length})`),
                         m("button.sak-clear-filter", {
-                            onclick: () => routeTo("/single-access-keys")
+                            onclick: (e) => {
+                                e.redraw = false;
+                                routeTo("/single-access-keys");
+                            }
                         }, "✕ Clear Filter")
                     ])
                     : null,
@@ -466,7 +475,7 @@ export const SingleAccessKeyView = {
                     ? displayedKeys.map(k => m(KeyCard, {
                         keyData: k,
                         isActive: false,
-                        onSelect: () => m.route.set("/single-access-keys/:key", { key: k.id })
+                        onSelect: (e) => { e.redraw = false; m.route.set("/single-access-keys/:key", { key: k.id }); }
                     }))
                     : m(".sak-empty", `No keys found for ${filterTaxon}.`)
             ]);
@@ -486,9 +495,9 @@ export const SingleAccessKeyView = {
                 isActive: true,
                 currentPath: pathArray,
                 history: historyData,
-                onStepClick: (newPathStr) => m.route.set("/single-access-keys/:key/:steps", { key: activeKey.id, steps: newPathStr }),
-                onRestart: () => m.route.set("/single-access-keys/:key", { key: activeKey.id }),
-                onBack: () => m.route.set("/single-access-keys")
+                onStepClick: (e, newPathStr) => { e.redraw = false; m.route.set("/single-access-keys/:key/:steps", { key: activeKey.id, steps: newPathStr }); },
+                onRestart: (e) => { e.redraw = false; m.route.set("/single-access-keys/:key", { key: activeKey.id }); },
+                onBack: (e) => { e.redraw = false; m.route.set("/single-access-keys"); }
             })
         ]);
     }

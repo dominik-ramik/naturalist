@@ -41,6 +41,11 @@ export let DetailsView = {
   taxonAuthority: "",
   taxonData: {},
   taxon: null,
+  // Cache the raw tab DATA returned by Checklist (safe to cache — it is plain data,
+  // not vnodes).  This avoids re-running the Checklist lookup on every redraw while
+  // still producing fresh vnode trees each render, which Mithril requires.
+  // Invalidated whenever the taxon changes.
+  _cachedDetailsTabs: null,
 
   oninit: function (vnode) {
     DetailsView._updateTaxonState();
@@ -55,19 +60,33 @@ export let DetailsView = {
     if (name === DetailsView.taxonName) return; // skip if unchanged
     DetailsView.taxonName = name;
     const taxon = Checklist.getTaxonByName(name);
-    DetailsView.taxon = taxon; // stable reference reused across redraws
+    DetailsView.taxon = taxon;
     if (taxon.isInChecklist) {
       DetailsView.taxonAuthority = taxon.t[taxon.t.length - 1].a;
       DetailsView.taxonData = taxon.d;
     }
+    // Pre-fetch the raw tab data once per taxon so view() doesn't have to.
+    // This is data only — vnode construction still happens inside view().
+    DetailsView._cachedDetailsTabs = Checklist.getDetailsTabsForTaxon(name);
   },
 
   view: function (vnode) {
-    const taxonName = DetailsView.taxonName;
+    const taxon = DetailsView.taxon ?? Checklist.getTaxonByName(DetailsView.taxonName);
 
+    // Vnode trees MUST be built fresh on every render — Mithril mutates them
+    // in-place during the diff/patch cycle, so cached vnodes cause stale DOM
+    // references and dead event handlers.  Only the upstream data is cached.
+    const tabs = TabsForDetails(
+      DetailsView._cachedDetailsTabs ?? Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
+      taxon,
+      DetailsView.taxonName
+    );
+
+    // Resolve the active tab from the URL on every render: the user can switch
+    // tabs without changing the taxon, so this cannot live behind the taxon-
+    // change guard in _updateTaxonState.
     let path = location.hash;
     let tab;
-
     if (path.indexOf("/details/") >= 0) {
       if (path.indexOf("?") > 0) {
         path = path.substring(0, path.indexOf("?"));
@@ -76,14 +95,6 @@ export let DetailsView = {
     } else {
       tab = Settings.currentDetailsTab();
     }
-
-    const taxon = DetailsView.taxon ?? Checklist.getTaxonByName(DetailsView.taxonName);
-
-    const tabs = TabsForDetails(
-      Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
-      taxon,
-      DetailsView.taxonName
-    );
 
     if (!Object.keys(tabs).includes(tab)) {
       console.log("fallback to default tab, because requested tab '" + tab + "' is not available for this taxon");
@@ -178,4 +189,3 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
 
   return tabs;
 }
-

@@ -84,9 +84,10 @@ export const ConfigurationDialog = {
                 (currentViewId === tool.id ? ".active" : "") +
                 (isDisabled ? ".disabled" : ""),
                 {
-                  onclick: () => {
+                  onclick: (e) => {
                     if (isDisabled) return;
                     requestToolChange(tool.id, checklistData);
+                    e.redraw = false;
                   },
                 },
                 [
@@ -117,9 +118,10 @@ export const ConfigurationDialog = {
                 (selectedScope === scope.id ? ".active" : "") +
                 (isScopeDisabled ? ".disabled" : ""),
                 {
-                  onclick: () => {
+                  onclick: (e) => {
                     if (isScopeDisabled) return;
                     requestIntentChange(scope.id, checklistData);
+                    e.redraw = false
                   },
                 },
                 [

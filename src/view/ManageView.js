@@ -358,7 +358,6 @@ const LogsPanel = {
           {
             onclick: () => {
               LogsPanel.toggleGroup(group.id);
-              m.redraw();
             },
             title: group.title,
           },
@@ -469,7 +468,6 @@ async function _runDwcPipeline() {
   // Clear only DwC-tagged messages so prior checklist messages are preserved
   Logger.clearGroup(/$DwC Archive/);
   m.route.set("/manage/processing");
-  m.redraw();
 
   // Small delay so the processing screen renders before the async work begins
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -678,7 +676,6 @@ function renderUrlInput() {
         label: t("static_hosting_cors_acknowledge"),
         onclick: () => {
           ManageStore.corsWarningAcknowledged = true;
-          m.redraw();
         },
       }),
     ]);

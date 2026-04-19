@@ -268,6 +268,40 @@ function interpolateColor(hex1, hex2, t) {
   return labToHex(L1 + t * (L2 - L1), a1 + t * (a2 - a1), b1 + t * (b2 - b1));
 }
 
+// ─── Sorted-anchors cache ─────────────────────────────────────────────────────
+
+// WeakMap<datasetStats → WeakMap<legendConfig → sortedAnchors[]>>
+//
+// Both keys are stable object references for the lifetime of a perspective
+// build, so using object identity avoids any string serialisation cost.
+// WeakMap entries are collected automatically when the stats or config objects
+// are no longer referenced — no manual invalidation required.
+const _sortedAnchorsCache = new WeakMap();
+
+/**
+ * Return the resolved, sorted anchor list for a (legendConfig, datasetStats)
+ * pair, computing it at most once per unique combination.
+ *
+ * Each anchor is extended with a `resolved` field — the concrete numeric
+ * threshold derived from the dataset statistics — and the list is sorted
+ * ascending by that value so that _resolveGradient / _resolveStepped can
+ * binary-search / linear-scan without re-sorting.
+ */
+function getSortedAnchors(legendConfig, datasetStats) {
+  if (!_sortedAnchorsCache.has(datasetStats)) {
+    _sortedAnchorsCache.set(datasetStats, new WeakMap());
+  }
+  const byStats = _sortedAnchorsCache.get(datasetStats);
+  if (!byStats.has(legendConfig)) {
+    byStats.set(legendConfig,
+      legendConfig.numericRows
+        .map(r => ({ ...r, resolved: datasetStats.resolveAnchor(r.anchor) }))
+        .sort((a, b) => a.resolved - b.resolved)
+    );
+  }
+  return byStats.get(legendConfig);
+}
+
 // ─── Color resolution ─────────────────────────────────────────────────────────
 
 /**
@@ -282,7 +316,7 @@ function interpolateColor(hex1, hex2, t) {
  *   3. Fallback (empty statusCode category row)
  */
 export function resolveRegionColor(statusStr, legendConfig, datasetStats) {
-  const { categoryRows, numericRows, fallbackRow, numericMode } = legendConfig;
+  const { numericRows, fallbackRow, numericMode } = legendConfig;
 
   // 1. Categorical - checked first even if the string looks numeric
   const cat = legendConfig.categoryStatusMap.get(statusStr);
@@ -294,9 +328,10 @@ export function resolveRegionColor(statusStr, legendConfig, datasetStats) {
   if (numericRows.length >= 2 && datasetStats) {
     const value = parseNumericStatus(statusStr);
     if (value !== null) {
-      const sorted = numericRows
-        .map(r => ({ ...r, resolved: datasetStats.resolveAnchor(r.anchor) }))
-        .sort((a, b) => a.resolved - b.resolved);
+      // getSortedAnchors() is memoised by (datasetStats, legendConfig) object
+      // identity - the sort and resolveAnchor calls happen at most once per
+      // unique pair, not once per status value.
+      const sorted = getSortedAnchors(legendConfig, datasetStats);
 
       const result = numericMode === 'gradient'
         ? _resolveGradient(value, sorted)

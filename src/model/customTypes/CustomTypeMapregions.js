@@ -89,22 +89,42 @@ function cachedMarkdown(text) {
   return _mdCache.get(text);
 }
 
-const _resolvedColorCache = new Map();
+// ─── Resolved color cache ─────────────────────────────────────────────────────
+//
+// Previous structure: Map<dataPath → Map<`${status}::${statsKey}` → result>>
+//   where statsKey was built as:
+//     `${stats.min}|${stats.max}|${stats.mean}|${stats.sd}|${stats.sorted.join(",")}`
+//   This forced an O(n) string serialisation of the entire sorted numeric array
+//   on EVERY call, even when the result was already cached — the dominant cost
+//   for large numeric-gradient perspectives.
+//
+// New structure: Map<dataPath → Map<statsRef | "no-stats" → Map<status → result>>>
+//   The datasetStats object is used as a key by reference (object identity).
+//   This is O(1) per lookup with zero string construction.
+//   clearLegendConfigCache() still wipes the entire outer Map, so invalidation
+//   semantics are unchanged.
+
+const _resolvedColorCache = new Map(); // Map<dataPath, Map<statsRef|"no-stats", Map<status, result>>>
 
 export function getCachedRegionColor(status, legendConfig, datasetStats, dataPath) {
   if (!_resolvedColorCache.has(dataPath)) {
     _resolvedColorCache.set(dataPath, new Map());
   }
-  const sub = _resolvedColorCache.get(dataPath);
-  const statsKey = datasetStats
-    ? `${datasetStats.min}|${datasetStats.max}|${datasetStats.mean}|${datasetStats.sd}|${datasetStats.sorted.join(",")}`
-    : "no-stats";
-  const cacheKey = `${status}::${statsKey}`;
+  const byPath = _resolvedColorCache.get(dataPath);
 
-  if (!sub.has(cacheKey)) {
-    sub.set(cacheKey, resolveRegionColor(status, legendConfig, datasetStats));
+  // Use the stats object reference directly as the second-level key.
+  // "no-stats" is a string constant — always the same identity — and serves
+  // as a safe sentinel for the null case.
+  const statsRef = datasetStats ?? "no-stats";
+  if (!byPath.has(statsRef)) {
+    byPath.set(statsRef, new Map());
   }
-  return sub.get(cacheKey);
+  const byStats = byPath.get(statsRef);
+
+  if (!byStats.has(status)) {
+    byStats.set(status, resolveRegionColor(status, legendConfig, datasetStats));
+  }
+  return byStats.get(status);
 }
 
 const _datasetStatsCache = new Map();

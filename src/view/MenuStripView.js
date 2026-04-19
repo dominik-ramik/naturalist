@@ -79,8 +79,10 @@ function menuPanel() {
         ? null
         : m(".menu-items", [
           m(MenuItem, {
-            onclick: function () {
+            onclick: function (e) {
+              e.redraw = false;
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
+              e.redraw = false;
               routeTo("/about/checklist");
             },
             icon: "about",
@@ -89,7 +91,8 @@ function menuPanel() {
           !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == ""
             ? null
             : m(MenuItem, {
-              onclick: function () {
+              onclick: function (e) {
+                e.redraw = false;
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/about/cite");
               },
@@ -98,7 +101,8 @@ function menuPanel() {
             }),
           Checklist.getSingleAccessTaxonomicKeys().length > 0
             ? m(MenuItem, {
-              onclick: function () {
+              onclick: function (e) {
+                e.redraw = false;
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/single-access-keys");
               },
@@ -108,7 +112,8 @@ function menuPanel() {
             : null,
           Checklist.getBibliographyKeys().length > 0
             ? m(MenuItem, {
-              onclick: function () {
+              onclick: function (e) {
+                e.redraw = false;
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/references");
               },
@@ -137,7 +142,8 @@ function menuPanel() {
             title: t("share_url"),
           }),
           m(MenuItem, {
-            onclick: function () {
+            onclick: function (e) {
+              e.redraw = false;
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/pinned");
             },
@@ -152,7 +158,8 @@ function menuPanel() {
                   return null;
                 } else {
                   return m(MenuItem, {
-                    onclick: function () {
+                    onclick: function (e) {
+                      e.redraw = false;
                       Settings.language(lang.code);
                       routeTo("/checklist", "", lang.code);
                       MenuStripView.menuOpen = false;
@@ -165,7 +172,8 @@ function menuPanel() {
             ])
             : null,
           m(MenuItem, {
-            onclick: function () {
+            onclick: function (e) {
+              e.redraw = false;
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/manage");
             },
@@ -181,7 +189,8 @@ function menuPanel() {
             title: t("documentation"),
           }),
           m(MenuItem, {
-            onclick: function () {
+            onclick: function (e) {
+              e.redraw = false;
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/about/app");
             },
@@ -423,7 +432,8 @@ function backButton() {
   return m(
     ".menu-button.clickable",
     {
-      onclick: function () {
+      onclick: function (e) {
+        e.redraw = false;
         routeTo("/checklist");
       },
     },

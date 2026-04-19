@@ -719,7 +719,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
       const scopePool = forOccurrence ? ctx.getScopeOccRows(li) : ctx.getScopeTaxonRows(li);
       const e = scopePool.filter(hasData);
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData, lc);
       if (!breakdown.length) return;
       const levelSummary = buildRegionLevelSummary(breakdown);
       rows.push({
@@ -729,7 +729,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
     } else {
       const e = subtreePool.filter(r => r.t[li] != null && cachedDeepest(r) === li && hasData(r));
       if (e.length === 0) return;
-      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData);
+      const breakdown = buildRegionBreakdown(e, mapPath, e.length, aggregateStats, getMapData, lc);
       if (!breakdown.length) return;
       const levelSummary = buildRegionLevelSummary(breakdown);
       rows.push({
@@ -759,9 +759,9 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
  * together.  The colour and label are captured at accumulation time, avoiding
  * the mistake of later trying to resolve a legend string as a status code.
  */
-function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapData) {
-  const lc = getLegendConfig(mapPath);
-
+// lc (legendConfig) is passed in from buildMapRegionsPerspective, which already
+// holds the cached reference — no need to call getLegendConfig() again here.
+function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapData, lc) {
   // byRegion: regionCode → {
   //   _grad?: { min, max, count, rawValues }  - gradient numeric accumulator
   //   [binLabel]: { fill, count, resolvedAs, rawValues }  - stepped / category bins
@@ -780,9 +780,11 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapDa
 
       if (!byRegion[code]) byRegion[code] = {};
 
-      if (resolved.resolvedAs === "gradient" && parseNumericStatus(status) !== null) {
+      // Parse once; result is used in both branches.
+      const n = parseNumericStatus(status);
+
+      if (resolved.resolvedAs === "gradient" && n !== null) {
         // Accumulate numeric gradient values as a range per region.
-        const n = parseNumericStatus(status);
         if (!byRegion[code]._grad) {
           byRegion[code]._grad = { min: n, max: n, count: 0, rawValues: [] };
         } else {
@@ -802,8 +804,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapDa
         }
         byRegion[code][binLabel].count++;
         // Capture the raw numeric value with its individually-resolved fill
-        const rawNum = parseNumericStatus(status);
-        if (rawNum !== null) byRegion[code][binLabel].rawValues.push({ value: rawNum, fill: resolved.fill });
+        if (n !== null) byRegion[code][binLabel].rawValues.push({ value: n, fill: resolved.fill });
       }
     });
   });
