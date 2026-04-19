@@ -34,7 +34,7 @@ registerMessages(selfKey, {
     update_checklist_title: "Update this project",
     upload_spreadsheet_title: "Upload spreadsheet",
     data_upload_import_dirty: "Some problems with your spreadsheet to be addressed before you can proceed:",
-    data_upload_integrate_data: "Publish the update directly",
+    data_upload_integrate_data: "Immediate publication",
     click_to_upload: "Click to upload a project data spreadsheet",
     or_drag_it: "or drag and drop it here",
     fresh_install_welcome: "Welcome!",
@@ -47,8 +47,8 @@ registerMessages(selfKey, {
     user_name: "User name",
     password: "Password",
     publish_checklist: "Publish project data file",
-    download_data: "Download the data",
-    download_for_manual_update: "You can download the project data file and use it for a manual update if you use a static web hosting, or keep it for archivation purposes. No change will be done to the currently published project unless you upload the data file to the **usercontent/data** folder on your site. See the [documentation](https://naturalist.netlify.app/) for more information.",
+    download_data: "Manual publication",
+    download_for_manual_update: "To make the update public, download the project data file and upload it into the **usercontent/data** folder on your server.\n\nSee the [publishing documentation](https://naturalist.netlify.app/author-guide/publishing) for more information.",
     download_checklist: "Download project data file",
     chose_a_file: "You need to chose a file",
     wrong_filetype: "Wrong file type. You need to upload an Excel spreadsheet (extension .xlsx)",
@@ -115,7 +115,7 @@ registerMessages(selfKey, {
     update_checklist_title: "Mettre à jour ce projet",
     upload_spreadsheet_title: "Télécharger le tableur",
     data_upload_import_dirty: "Certains problèmes avec votre tableur doivent être résolus avant de pouvoir continuer :",
-    data_upload_integrate_data: "Publier la mise à jour directement",
+    data_upload_integrate_data: "Publication immédiate",
     click_to_upload: "Cliquez pour télécharger un tableur de données de projet",
     or_drag_it: "ou glissez-déposez-le ici",
     fresh_install_welcome: "Bienvenue !",
@@ -128,8 +128,8 @@ registerMessages(selfKey, {
     user_name: "Nom d'utilisateur",
     password: "Mot de passe",
     publish_checklist: "Publier le fichier de données du projet",
-    download_data: "Télécharger les données",
-    download_for_manual_update: "Vous pouvez télécharger le fichier de données du projet et l'utiliser pour une mise à jour manuelle si vous utilisez un hébergement web statique, ou le garder à des fins d'archivage. Aucun changement ne sera apporté au projet actuellement publié à moins que vous ne téléchargiez le fichier de données dans le dossier **usercontent/data** de votre site. Voir la [documentation](https://naturalist.netlify.app/) pour plus d'informations.",
+    download_data: "Publication manuelle",
+    download_for_manual_update: "Pour rendre la mise à jour publique, téléchargez le fichier de données du projet et téléchargez-le dans le dossier **usercontent/data** de votre serveur.\n\nVoir la [documentation de publication](https://naturalist.netlify.app/author-guide/publishing) pour plus d'informations.",
     download_checklist: "Télécharger le fichier de données du projet",
     chose_a_file: "Vous devez choisir un fichier",
     wrong_filetype: "Mauvais type de fichier. Vous devez charger un tableur Excel (extension .xlsx)",
@@ -1020,7 +1020,7 @@ const SubViews = {
     }
 
     return [
-      ManageStore.shouldShowUploadForm === true
+      ManageStore.shouldShowUploadForm === true ||1 == 1
         ? m(ManageCard, {
           title: t("data_upload_integrate_data"),
           icon: "img/ui/manage/publish.svg",
