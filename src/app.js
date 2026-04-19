@@ -649,20 +649,10 @@ function runApp() {
       }
 
       function onMatchGuard() {
-        console.log(
-          "[onMatchGuard] Fired. currentRoute=", m.route.get(),
-          "| Checklist._isDataReady=", Checklist._isDataReady,
-          "| deepLinkProcessing=", deepLinkProcessing
-        );
         updateLanguage();
         updateToolAndScope();
         if (!Checklist._isDataReady && !deepLinkProcessing) {
-          console.warn("[onMatchGuard] Data NOT ready and no deep-link in progress → redirecting to /manage.");
           m.route.set("/manage");
-        } else if (!Checklist._isDataReady && deepLinkProcessing) {
-          console.log("[onMatchGuard] Data not ready BUT deepLinkProcessing=true → standing by, not redirecting.");
-        } else {
-          console.log("[onMatchGuard] Data ready → allowing route.");
         }
         if (
           !Settings.alreadyViewedAboutSection() &&

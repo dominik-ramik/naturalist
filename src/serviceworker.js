@@ -226,9 +226,18 @@ async function handleAppMessage(message) {
                 if (missingAssets.length > 0) {
                     await Promise.all(missingAssets.map(async (url) => {
                         try {
-                            const req = new Request(url);
+                            const req = new Request(url, {
+                                mode: 'same-origin',      // not a navigation
+                                credentials: 'same-origin'
+                            });
                             const res = await fetch(req);
+
                             if (res.ok) {
+                                const contentType = res.headers.get('content-type') || '';
+                                if (contentType.includes('text/html') && !url.endsWith('.html')) {
+                                    console.warn(`[SW] Soft 404 for ${url}, skipping.`);
+                                    return;
+                                }
                                 await cache.put(req, res);
                             }
                         } catch (error) {
