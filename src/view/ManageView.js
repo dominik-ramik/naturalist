@@ -13,6 +13,7 @@ import { Settings } from "../model/Settings.js";
 import { Logger } from "../components/Logger.js";
 import { exportTemplateSpreadsheetEmpty, exportTemplateSpreadsheetFilled } from "../model/DataManagerData.js";
 import { compressor } from "../components/LZString.js";
+import { DEFAULT_TOOL } from "./analysisTools/index.js";
 
 // Some message keys may be coming from update.php in jsonState
 registerMessages(selfKey, {
@@ -1120,7 +1121,8 @@ export let ManageView = {
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);
     fetchAndProcessUrl(xlsxUrl, true, () => {
-      m.route.set("/checklist", null, { replace: true })
+      Settings.viewType(DEFAULT_TOOL);
+      m.route.set("/checklist?v=" + DEFAULT_TOOL, null, { replace: true })
     }
     );
   },

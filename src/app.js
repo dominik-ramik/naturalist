@@ -622,7 +622,7 @@ function runApp() {
       function onMatchGuard() {
         updateLanguage();
         updateToolAndScope();
-        if (!isDataReady(checklistData)) m.route.set("/manage");
+        if (!isDataReady()) m.route.set("/manage");
         if (
           !Settings.alreadyViewedAboutSection() &&
           Checklist.getProjectAbout()?.trim() != ""
@@ -754,8 +754,8 @@ function runApp() {
   });
 }
 
-function isDataReady(checklistData) {
-  return checklistData || Checklist._isDataReady;
+function isDataReady() {
+  return Checklist._isDataReady;
 }
 
 function readyPreloadableAssets() {
