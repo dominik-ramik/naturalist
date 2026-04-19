@@ -44,7 +44,7 @@ registerMessages(selfKey, {
 });
 
 let RenderTracker;
-const TRACE_RENDERING = true; // Set to true to enable render tracking in development mode
+const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
 const SHOULD_TRACE = import.meta.env.DEV && TRACE_RENDERING;
 if (SHOULD_TRACE) {
   let burstCount = 0;
@@ -84,7 +84,6 @@ function hasDeepLinkParam() {
   const inHash = hash.includes("xlsxUrl=");
   const inStorage = !!sessionStorage.getItem("xlsxDeepLinkUrl");
   const result = inHash || inStorage;
-  console.log("[hasDeepLinkParam] hash=", hash, "| inHash=", inHash, "| inStorage=", inStorage, "→ result=", result);
   return result;
 }
 

@@ -433,11 +433,9 @@ const LogsPanel = {
  * @param {Function} onSuccess - Called instead of default "/manage/review" redirect on success
  */
 async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
-  console.log("[_runPipeline] Starting. deepLinkProcessing=", deepLinkProcessing, "hasOnSuccess=", !!onSuccess);
   ManageStore.dataman = new DataManager();
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
-  console.log("[_runPipeline] DataManager finished. Logger.hasErrors()=", Logger.hasErrors());
 
   // DwC compilation is NOT run here. It is decoupled and triggered on-demand
   // from the Review screen so that DwC configuration errors never block a
@@ -445,29 +443,23 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
 
   if (Logger.hasErrors()) {
     ManageStore.dwcAutoRecompile = false;
-    console.log("[_runPipeline] Pipeline has errors. Routing back to /manage/upload. deepLinkProcessing=", deepLinkProcessing);
     // If the deep-link pipeline fails, clear the flag so the guard works normally.
     deepLinkProcessing = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
     );
   } else {
-    console.log("[_runPipeline] No errors. Loading compiled data into Checklist. Checklist._isDataReady before=", Checklist._isDataReady);
     Checklist.loadData(compiled, true);
     Checklist.getTaxaForCurrentQuery();
-    console.log("[_runPipeline] Checklist.loadData done. Checklist._isDataReady after=", Checklist._isDataReady);
 
     if (ManageStore.dwcAutoRecompile) {
       ManageStore.dwcAutoRecompile = false;
-      console.log("[_runPipeline] dwcAutoRecompile=true, scheduling _runDwcPipeline.");
       // Run DwC immediately instead of routing to /review first
       scheduleManageNavigation(() => _runDwcPipeline());
     } else {
       const navFn = onSuccess ?? (() => {
-        console.log("[_runPipeline] No onSuccess — routing to /manage/review.");
         m.route.set("/manage/review", null, { replace: true });
       });
-      console.log("[_runPipeline] Scheduling navigation. Using onSuccess=", !!onSuccess, " deepLinkProcessing=", deepLinkProcessing);
       scheduleManageNavigation(navFn);
     }
   }
@@ -557,7 +549,6 @@ function processUpload(filepicker, file, checkAssetsSize) {
  */
 async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   url = url && url.trim();
-  console.log("[fetchAndProcessUrl] Called with url=", url, "checkAssetsSize=", checkAssetsSize, "hasOnSuccess=", !!onSuccess);
 
   if (!url) {
     Logger.error(t("url_required"));
@@ -576,7 +567,6 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   if (ManageStore.dataman && typeof ManageStore.dataman.isDwcCompiled === 'function' && ManageStore.dataman.isDwcCompiled()) {
     ManageStore.dwcAutoRecompile = true;
   }
-  console.log("[fetchAndProcessUrl] Routing to /manage/processing. deepLinkProcessing=", deepLinkProcessing);
   m.route.set("/manage/processing");
 
   let buffer;
@@ -585,24 +575,19 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     if (ManageStore.shouldShowUploadForm) {
       // PHP available: server-side proxy sidesteps CORS entirely
       Logger.info(t("url_fetching_via_proxy"));
-      console.log("[fetchAndProcessUrl] Fetching via PHP proxy.");
       const body = new FormData();
       body.append("url", url);
       res = await fetch("../update.php?proxy", { method: "POST", body });
     } else {
       // Static hosting: direct fetch - CORS restrictions may apply
       Logger.warning(t("url_fetching_direct"));
-      console.log("[fetchAndProcessUrl] Fetching directly (static hosting / CORS).");
       res = await fetch(url, { mode: "cors" });
     }
     if (!res.ok) {
-      console.log("[fetchAndProcessUrl] ERROR: Fetch response not OK:", res.status, res.statusText);
       throw new Error(`HTTP ${res.status}`);
     }
     buffer = await res.arrayBuffer();
-    console.log("[fetchAndProcessUrl] Fetch succeeded. Buffer byteLength=", buffer.byteLength);
   } catch (ex) {
-    console.log("[fetchAndProcessUrl] ERROR during fetch:", ex.message, " | deepLinkProcessing=", deepLinkProcessing);
     Logger.error(t("url_fetch_failed") + (ex.message ? ` (${ex.message})` : ""));
     ManageStore.isProcessing = false;
     scheduleManageNavigation(() =>
@@ -615,8 +600,6 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
   const sig = new Uint8Array(buffer, 0, 4);
   if (sig[0] !== 0x50 || sig[1] !== 0x4B) {
     Logger.error(t("wrong_filetype"));
-    console.log("[fetchAndProcessUrl] ERROR: Invalid file signature (not a zip/xlsx):", sig);
-    console.log(buffer);
     ManageStore.isProcessing = false;
     scheduleManageNavigation(() =>
       m.route.set("/manage/upload", null, { replace: true })
@@ -624,7 +607,6 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     return;
   }
 
-  console.log("[fetchAndProcessUrl] File signature valid. Scheduling _runPipeline in 50ms. deepLinkProcessing=", deepLinkProcessing);
   setTimeout(() => _runPipeline(buffer, checkAssetsSize, onSuccess), 50);
 }
 
