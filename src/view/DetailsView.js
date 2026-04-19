@@ -56,17 +56,22 @@ export let DetailsView = {
   },
 
   _updateTaxonState: function () {
-    const name = m.route.param("taxon") ?? "";
-    if (name === DetailsView.taxonName) return; // skip if unchanged
+    const raw = decodeURIComponent(m.route.param("taxon") ?? "");
+    const separatorIndex = raw.indexOf("\x00");
+    const name = separatorIndex >= 0 ? raw.slice(0, separatorIndex) : raw;
+    const authority = separatorIndex >= 0 ? raw.slice(separatorIndex + 1) : "";
+
+    // Guard must compare BEFORE writing — currently it writes taxonName first,
+    // making the comparison always true
+    if (name === DetailsView.taxonName && authority === DetailsView.taxonAuthority) return;
+
     DetailsView.taxonName = name;
-    const taxon = Checklist.getTaxonByName(name);
+    DetailsView.taxonAuthority = authority;
+    const taxon = Checklist.getTaxonByNameAndAuthority(name, authority);
     DetailsView.taxon = taxon;
     if (taxon.isInChecklist) {
-      DetailsView.taxonAuthority = taxon.t[taxon.t.length - 1].a;
       DetailsView.taxonData = taxon.d;
     }
-    // Pre-fetch the raw tab data once per taxon so view() doesn't have to.
-    // This is data only — vnode construction still happens inside view().
     DetailsView._cachedDetailsTabs = Checklist.getDetailsTabsForTaxon(name);
   },
 
@@ -109,7 +114,11 @@ export let DetailsView = {
 
     return m(".details", [
       m(".details-taxon-crumbs-zone", taxonomyCrumbs(DetailsView.taxonName)),
-      m(".details-taxon-zone", DetailsView.taxonName),
+      m(".details-taxon-zone",
+        [
+          m(".details-taxon-zone-name", DetailsView.taxonName),
+          DetailsView.taxonAuthority ? m(".details-taxon-zone-authority", DetailsView.taxonAuthority) : null
+        ]),
       m(TabsContainer, {
         tabs: tabs,
         activeTab: tab,
@@ -139,16 +148,18 @@ function taxonomyCrumbs(taxonName) {
 
 function TabsForDetails(detailsTabs, taxon, taxonName) {
   let tabs = {};
-  const taxonLeafName = taxon.t[taxon.t.length - 1].name;
+  const taxonLeaf = taxon.t[taxon.t.length - 1];
+  const taxonRouteParam = encodeURIComponent(
+    taxonLeaf.name + "\x00" + (taxonLeaf.authority ?? taxonLeaf.a ?? "")
+  );
 
-  // Summary tab is always present
   tabs["summary"] = new TabsContainerTab(
     TabSummary(taxon, taxonName),
     "./img/ui/tabs/summary.svg",
     t("tab_title_summary"),
     function () {
       Settings.currentDetailsTab("summary");
-      routeTo("/details/" + taxonLeafName + "/summary");
+      routeTo("/details/" + taxonRouteParam + "/summary");
     }
   );
 
@@ -182,7 +193,7 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
       t("tab_title_" + key),
       function () {
         Settings.currentDetailsTab(key);
-        routeTo("/details/" + taxonLeafName + "/" + Settings.currentDetailsTab());
+        routeTo("/details/" + taxonRouteParam + "/" + Settings.currentDetailsTab());
       }
     );
   });

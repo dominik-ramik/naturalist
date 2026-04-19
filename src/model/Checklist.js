@@ -293,6 +293,27 @@ export let Checklist = {
     return this._bibFormatterCache[lang];
   },
 
+  _taxonKey: function (name, authority) {
+    const a = (authority ?? "").trim();
+    return a ? `${name}\x00${a}` : name;
+  },
+
+  getTaxonByNameAndAuthority: function (name, authority) {
+    // Try the composite cache key first (fast path)
+    const compositeKey = Checklist._taxonKey(name, authority);
+    if (this._taxonCache && this._taxonCache.has(compositeKey)) {
+      return Object.assign({ isInChecklist: true }, this._taxonCache.get(compositeKey));
+    }
+
+    // Authority might be empty (legacy URL, non-leaf lookup) — fall back to name-only cache
+    if (this._taxonCache && this._taxonCache.has(name)) {
+      return Object.assign({ isInChecklist: true }, this._taxonCache.get(name));
+    }
+
+    // Full scan fallback for non-leaf taxa (ancestors, reconstructed taxonomy)
+    return this.getTaxonByName(name);
+  },
+
   getCustomOrderGroupItemsCache: new Map(),
   getCustomOrderGroupItems: function (type, dataPath, groupTitle) {
     let key = type + "|" + dataPath + "|" + groupTitle + "|";
@@ -449,7 +470,7 @@ export let Checklist = {
 
     this._isDraft = isDraft;
     this._bibFormatter = null;
-    
+
     Checklist._dataFulltextIndex = {};
     Checklist._metaForDataPathCache = {};
 
@@ -586,8 +607,11 @@ export let Checklist = {
 
     this.getData().checklist.forEach(t => {
       if (t.t && t.t.length > 0) {
-        // Map the leaf name (last item in t) to the taxon object
-        Checklist._taxonCache.set(t.t[t.t.length - 1].name, t);
+        const leaf = t.t[t.t.length - 1];
+        Checklist._taxonCache.set(
+          Checklist._taxonKey(leaf.name, leaf.authority ?? leaf.a),
+          t
+        );
       }
     });
 
@@ -614,7 +638,7 @@ export let Checklist = {
           let leafData = Checklist.getAllLeafData(value, false, dataPath);
 
           const _customType = dataCustomTypes[Checklist.filter[dataType][dataPath].type];
-          const _allValues  = _customType?.extractAllValues
+          const _allValues = _customType?.extractAllValues
             ? _customType.extractAllValues(value, leafData)
             : leafData;  // default: dedup string/number leaf values (text, category, months, mapregions)
           _allValues.forEach(function (v) {
@@ -1019,13 +1043,13 @@ export let Checklist = {
 
       // Let the CustomType extract its own atomic leaf values when it knows better
       // than the generic recursive descent (interval pairs, mapregion name mapping).
-      const _fmt        = Checklist.getDataMeta()[currentPath]?.formatting;
+      const _fmt = Checklist.getDataMeta()[currentPath]?.formatting;
       const _customType = _fmt ? dataCustomTypes[_fmt] : null;
 
       // Array of typed items (e.g. specimenImages# containing [{source,title}, …]):
       // #-suffixed paths are list containers – extract leaf values from each element.
       if (Array.isArray(taxonData) && _customType?.extractFilterLeafValues
-          && currentPath.endsWith("#")) {
+        && currentPath.endsWith("#")) {
         const _result = [];
         taxonData.forEach(item => {
           _result.push(..._customType.extractFilterLeafValues(item, currentPath));
@@ -1296,12 +1320,12 @@ export let Checklist = {
     if (legend.default) rows.push(legend.default);
     if (Array.isArray(legend.statuses)) rows.push(...legend.statuses);
     return rows.map(r => ({
-      columnName:     r.columnName || "",
-      statusCode:     r.status || "",
-      fillColor:      r.fill || "",
-      legend:         r.legend || "",
+      columnName: r.columnName || "",
+      statusCode: r.status || "",
+      fillColor: r.fill || "",
+      legend: r.legend || "",
       appendedLegend: r.appendedLegend || "",
-      legendType:     r.legendType || "",
+      legendType: r.legendType || "",
     }));
   },
 

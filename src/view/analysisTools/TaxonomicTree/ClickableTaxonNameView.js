@@ -69,7 +69,9 @@ export let ClickableTaxonName = {
           // Suppressing the event auto-redraw avoids a redundant second render.
           e.redraw = false;
           routeTo(
-            "/details/" + taxonTree.taxon.name + "/" + Settings.currentDetailsTab()
+            "/details/"
+            + encodeURIComponent(taxonTree.taxon.name + "\x00" + (taxonTree.taxon.authority ?? ""))
+            + "/" + Settings.currentDetailsTab()
           );
         },
       },
@@ -79,19 +81,19 @@ export let ClickableTaxonName = {
           : null,
         m(
           nameTag +
-            ".taxon-name[style=font-size: " +
-            vnode.attrs.fontSize +
-            "%]",
+          ".taxon-name[style=font-size: " +
+          vnode.attrs.fontSize +
+          "%]",
           applyHighlight(taxonTree.taxon.name, highlightRegex)
         ),
         taxonTree.taxon.authority == ""
           ? null
           : m(
-              "span.taxon-authority[style=font-size: " +
-                vnode.attrs.fontSize +
-                "%]",
-              applyHighlight(" " + taxonTree.taxon.authority, highlightRegex)
-            ),
+            "span.taxon-authority[style=font-size: " +
+            vnode.attrs.fontSize +
+            "%]",
+            applyHighlight(" " + taxonTree.taxon.authority, highlightRegex)
+          ),
       ]
     );
   },

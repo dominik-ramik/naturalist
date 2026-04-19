@@ -1,14 +1,20 @@
 .details-taxon-zone {
-  text-align: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: baseline;
   user-select: all;
   font-size: 120%;
   margin-bottom: 1em;
+  flex-wrap: wrap;
+  gap: 0.35em;
 }
 
 .crumb-taxon-name-wrap {
   user-select: all;
   display: flex;
   flex-direction: row;
+  align-items: baseline;
 }
 
 .search-engine {
@@ -63,6 +69,11 @@
   margin-bottom: 1em;
 }
 
+.details-taxon-zone-authority {
+  font-family: var(--font-light);
+  color: #2f2f2f;
+}
+
 .details-taxon-crumb {
   display: flex;
   flex-direction: row;
@@ -86,7 +97,9 @@
 }
 
 .crumb-taxon-authority {
-  color: white;
+  color: #2f2f2f;
+  font-family: var(--font-light);
+  margin-left: 0.35em;
 }
 
 /* UNIFIED GROUP & ITEM TITLES FOR ALL TABS */
@@ -315,6 +328,7 @@ path {
     max-width: 100%;
   }
 }
+
 /* SUMMARY TAB */
 
 .summary-table-wrap {
@@ -405,5 +419,6 @@ path {
 }
 
 .summary-row-descendant .summary-cell-rank {
-  padding-left: 1em; /* indent to show hierarchy */
+  padding-left: 1em;
+  /* indent to show hierarchy */
 }
