@@ -10,7 +10,7 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
 
 registerMessages(selfKey, {
   en: {
@@ -149,9 +149,12 @@ export const config = {
 
 export const getAvailableTraits = (intent, checklistData) => {
   if (!Checklist.filter || !Checklist.filter.data) return [];
-  return Object.keys(Checklist.filter.data).filter(f =>
-    ["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)
-  );
+  const inTaxonMode = intent === ANALYTICAL_INTENT_TAXA;
+  return Object.keys(Checklist.filter.data).filter(f => {
+    if (!["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)) return false;
+    if (inTaxonMode && (Checklist.filter.data[f].belongsTo || "taxon") === OCCURRENCE_IDENTIFIER) return false;
+    return true;
+  });
 };
 
 // Counts first - absolute numbers are universally understandable as a starting point.
@@ -329,7 +332,7 @@ function cellVerb(percentage, cKey, rowKey, matchingCount, sumMethodOption, verb
     : (isCustomMode ? "view_cat_cell_verb_col_pct_custom" : "view_cat_cell_verb_col_pct_taxa");
 
   let verb = tf(key, [percentage, matchingCount, unit, rowLabel, colLabel], true);
-  
+
   if (!Checklist.filter.isEmpty()) {
     verb += " " + tf(
       "view_cat_cell_verb_category_filtered",
@@ -627,9 +630,21 @@ function categoryChart(filteredTaxa) {
 
   // ── Derived labels & flags ────────────────────────────────────────────────
 
-  const filtersToDisplay = Object.keys(Checklist.filter.data).filter(f =>
-    ["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)
-  );
+  const inTaxonMode = chartMode !== OCCURRENCE_IDENTIFIER;
+  const filtersToDisplay = Object.keys(Checklist.filter.data).filter(f => {
+    if (!["text", "date", "months", "category"].includes(Checklist.filter.data[f].type)) return false;
+    if (inTaxonMode && (Checklist.filter.data[f].belongsTo || "taxon") === OCCURRENCE_IDENTIFIER) return false;
+    return true;
+  });
+
+  if (categoryToView && !filtersToDisplay.includes(categoryToView)) {
+    categoryToView = "";
+    Settings.categoryChartCategory("");
+  }
+  if (secondaryDimCategory && !filtersToDisplay.includes(secondaryDimCategory)) {
+    secondaryDimCategory = "";
+    localStorage.setItem(LS_SEC_CAT, "");
+  }
 
   const isDateCategory = !!categoryToView && Checklist.filter.data[categoryToView]?.type === "date";
   const isDateSecondaryDim = !!secondaryDimCategory && Checklist.filter.data[secondaryDimCategory]?.type === "date";
