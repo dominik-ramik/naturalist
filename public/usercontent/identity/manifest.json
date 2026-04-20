@@ -17,14 +17,14 @@
     ],
     "screenshots": [
         {
-            "src": "/img/screenshot-desktop.png",
+            "src": "./screenshot-desktop.png",
             "sizes": "1444x902",
             "type": "image/png",
             "form_factor": "wide",
             "label": "NaturaList on desktop"
         },
         {
-            "src": "/img/screenshot-mobile.png",
+            "src": "./screenshot-mobile.png",
             "sizes": "412x736",
             "type": "image/png",
             "form_factor": "narrow",
