@@ -7,60 +7,72 @@ export const nlDataStructureSheets = {
     content: {
         name: "nl_content",
         required: true,
-        description: "The [[ref:content]] sheet tells the app what each column in your [[ref:data]] sheet represents. It contains the following configuration tables. Only the [[ref:content.taxa]] table is strictly required; all others are optional.\n\nAll columns from the **[[ref:data]] sheet** that you want to display must appear either in [[ref:content.taxa]] (for taxa columns) or in [[ref:content.customDataDefinition]] (for your additional data). Columns not referenced here are silently ignored and can serve as helper or curator-notes columns.",
+        description: "The [[ref:content]] sheet tells the app what each column in your [[ref:data]] sheet represents. All columns from the [[ref:data]] sheet that you want to display must appear either in [[ref:content.taxa]] (for taxa columns) or in [[ref:content.customDataDefinition]] (for your additional data). Columns not referenced here are silently ignored and can serve as helper or curator-notes columns.",
         notes: [
             {
                 type: "tip",
+                title: "Start with the taxonomy",
                 text: "Start with the **Taxa definition** table alone to confirm your taxonomy tree renders correctly, then add custom data, filters, and advanced features iteratively."
-            }
+            },
         ],
-        seeAlso: [],
         type: "meta",
         tables: {
             taxa: {
                 name: "Taxa definition",
                 required: true,
-                description: "Declares the taxonomic hierarchy. The order of rows defines the tree structure: the first row is the highest rank, the last row is the leaf level. You have complete freedom in what units you choose — formal Linnaean ranks, informal categories, or folk taxa are all valid. At least one row is required.",
+                description: "Declares the taxonomic hierarchy. The order of rows defines the tree structure: the first row is the highest rank, the last row is the leaf level. You have complete freedom in what units you choose - formal Linnaean ranks, informal categories, or folk taxa are all valid. At least one row is required.",
                 notes: [
                     {
                         type: "warning",
+                        title: "Occurrence records",
                         text: "If you use occurrence records, the taxon level whose **Taxon name** is exactly `Occurrence` (case insensitive) must be the **last row** in this table, below all other ranks. See [Occurrence and Collection Mode](/author-guide/occurrence-collection-mode)."
                     }
                 ],
-                seeAlso: [],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The header of the [[ref:data]] sheet column that holds taxon names for this rank. Must match a column header in the [[ref:data]] sheet (case-insensitive). In the [[ref:data]] sheet the column can be plain (`genus`) or split into `genus.name` and `genus.authority` sub-columns to store the authority separately. See [[ref:type.taxon]].",
-                        howToUse: "Use the plain column name here. In the [[ref:data]] sheet, add `.name` and `.authority` sub-columns only when you want to record and display the taxonomic authority alongside the name.",
+                        description: "The header of the [[ref:data]] sheet column that holds taxon names for this rank. Must match a column header in the [[ref:data]] sheet (case-insensitive). In the [[ref:data]] sheet the column can be plain (`genus`) or split into `genus.name` and `genus.authority` columns to store the authority separately.",
+                        howToUse: "Use the plain column name here. In the [[ref:data]] sheet, follow the way [[ref:type.taxon]] data are entered.",
                         notes: [],
                         examples: [
                             {
-                                label: "Five-rank hierarchy",
+                                label: "Four-rank hierarchy",
+                                text: "If needed, you could have `.authority` for the `class` and `family` too, or ommit it in the `genus`.\n\nIn your [[ref:content.taxa]] sheet:",
+                                fillRight: true,
                                 columns: [
-                                    "Column name", "..."
+                                    "Column name"
                                 ],
                                 rows: [
                                     [
-                                        "Class", "..."
+                                        "class"
                                     ],
                                     [
-                                        "Order", "..."
+                                        "family"
                                     ],
                                     [
-                                        "Family", "..."
+                                        "genus"
                                     ],
                                     [
-                                        "Genus", "..."
-                                    ],
-                                    [
-                                        "Species", "..."
+                                        "species"
                                     ]
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:data]] sheet:",
+                                fillRight: true,
+                                columns: [
+                                    "class", "family", "genus.name", "genus.authority", "species.name", "species.authority"
+                                ],
+                                rows: [
+                                    ["Magnoliopsida", "Rosaceae", "Rosa", "L.", "Rosa canina", "L."],
+                                    ["Magnoliopsida", "	Magnoliaceae", "Magnolia", "Herb.", "Magnolia liliifera", "(L.) Baill."],
+                                    ["Liliopsida", "Poaceae", "Triticum", "L.", "Triticum aestivum", "L."]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "Any valid spreadsheet column header, e.g. `Regnum`, `Kingdom`, `MajorGroup`. Must match a column that exists in the [[ref:data]] sheet.",
+                            description: "e.g. `Regnum`, `Kingdom`, `MajorGroup`",
                             allowDuplicates: "no",
                             allowedContent: "columnName",
                             allowEmpty: false,
@@ -69,8 +81,8 @@ export const nlDataStructureSheets = {
                     },
                     taxonName: {
                         name: "Taxon name",
-                        description: "The human-readable rank label shown in the app UI (e.g. `Order`, `Famille`, `Tribu`). This is what users see as the rank heading, not the taxon names themselves.",
-                        howToUse: "For multilingual projects, add `Taxon name:en`, `Taxon name:fr`, etc. columns to provide translated rank labels per language.",
+                        description: "The human-readable rank label shown in the app UI (e.g. `Family`, `Řád`, `Tribu`). This is what users see as the rank heading.",
+                        howToUse: "For multilingual projects, add `Taxon name:en`, `Taxon name:fr`, etc. columns to provide translated rank labels per language. `Occurrence` is a keyword value and needs to be entered as-is, not translated.",
                         notes: [
                             {
                                 type: "warning",
@@ -79,7 +91,9 @@ export const nlDataStructureSheets = {
                         ],
                         examples: [
                             {
-                                label: "Bilingual rank labels",
+                                label: "Bilingual rank labels with an occurrence rank",
+                                text: "Suppose in your [[ref:appearance.supportedLanguages]] table you have entries for English (`en`) and French (`fr`).\n\nIn your [[ref:content.taxa]] table:",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Taxon name:en",
@@ -87,20 +101,38 @@ export const nlDataStructureSheets = {
                                 ],
                                 rows: [
                                     [
-                                        "Family",
+                                        "family",
                                         "Family",
                                         "Famille"
                                     ],
                                     [
-                                        "Species",
+                                        "species",
                                         "Species",
                                         "Espèce"
+                                    ],
+                                    [
+                                        "catalogId",
+                                        "Occurrence",
+                                        "Occurrence"
                                     ]
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:data]] sheet:",
+                                fillRight: true,
+                                columns: [
+                                    "family", "species.name", "species.authority", "catalogId"
+                                ],
+                                rows: [
+                                    ["Rosaceae", "Rosa canina", "L.", "NHM-2645"],
+                                    ["Rosaceae", "Rubus idaeus", "L.", "NHM-67890"],
+                                    ["Poaceae", "Triticum aestivum", "L.", "NHM-54321"]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "Human-readable text. No duplicates.",
+                            description: "",
                             allowDuplicates: "no",
                             allowedContent: "any",
                             allowEmpty: false,
@@ -109,12 +141,14 @@ export const nlDataStructureSheets = {
                     },
                     orderBy: {
                         name: "Order by",
-                        description: "Controls how taxa at this level are sorted in the tree. `alphabet` (the default) sorts alphabetically. `as is` preserves the row order from the [[ref:data]] sheet — useful for a non-alphabetical display sequence (e.g. Ferns → Bryophytes → Dicots).",
-                        howToUse: "Leave empty for the vast majority of cases. Use `as is` only for the topmost rank when the [[ref:data]] sheet row order carries a meaningful sequence that alphabetical sorting would destroy.",
+                        description: "Controls how taxa at this level are sorted in the tree. `alphabet` (the default) sorts alphabetically. `as is` preserves the row order from the [[ref:data]] sheet - useful for a non-alphabetical display sequence.",
+                        howToUse: "Leave empty for the vast majority of cases to get the default alphabetical sorting. Use `as is` only for the topmost rank, if it is ordered in your [[ref:data]] sheet in a meaningful sequence that alphabetical sorting would destroy (e.g. Ferns → Bryophytes → Dicots).",
                         notes: [],
                         examples: [
                             {
                                 label: "Preserving custom order for the top rank",
+                                text: "Suppose you have a simple three-rank hierarchy of major groups → families → species, and you want to preserve a specific order of the major groups that is not alphabetical.\n\nIn your [[ref:content.taxa]] sheet:",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Taxon name",
@@ -122,25 +156,67 @@ export const nlDataStructureSheets = {
                                 ],
                                 rows: [
                                     [
-                                        "MajorGroup",
+                                        "majorGroup",
                                         "Group",
                                         "as is"
                                     ],
                                     [
+                                        "family",
                                         "Family",
-                                        "Family",
-                                        "alphabet"
+                                        ""
                                     ],
                                     [
+                                        "species",
                                         "Species",
-                                        "Species",
-                                        "alphabet"
+                                        ""
                                     ]
                                 ]
+                            },
+                            {
+                                label: "",
+                                text: "Data as they are entered in your [[ref:data]] sheet:",
+                                fillRight: true,
+                                columns: [
+                                    "majorGroup",
+                                    "family",
+                                    "species"
+                                ],
+                                rows: [
+                                    ["Ferns", "Polypodiaceae", "Polypodium vulgare"],
+                                    ["Ferns", "Polypodiaceae", "Drynaria heracleum"],
+                                    ["Ferns", "Aspleniaceae", "Asplenium trichomanes"],
+                                    ["Bryophytes", "Sphagnaceae", "Sphagnum magellanicum"],
+                                    ["Bryophytes", "Pleuroziaceae", "Pleurozia purpurea"],
+                                    ["Dicots", "Rosaceae", "Rosa canina"],
+                                    ["Dicots", "Apiaceae", "Anthriscus sylvestris"]
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "... will get displayed in this order when compiled (note the top-level groups order preserved, but families and species are alphabetical):",
+                                preformatted: `
+
+┌── Ferns
+│   ├── Aspleniaceae
+│   │   └── Asplenium trichomanes
+│   └── Polypodiaceae
+│       ├── Drynaria heracleum
+│       └── Polypodium vulgare
+├── Bryophytes
+│   ├── Pleuroziaceae
+│   │   └── Pleurozia purpurea
+│   └── Sphagnaceae
+│       └── Sphagnum magellanicum
+└── Dicots
+    ├── Apiaceae
+    │   └── Anthriscus sylvestris
+    └── Rosaceae
+        └── Rosa canina
+`,
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter one of the accepted values.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "alphabet",
@@ -155,12 +231,19 @@ export const nlDataStructureSheets = {
                     },
                     parentTaxonIndication: {
                         name: "Parent taxon indication",
-                        description: "Controls what is shown in parentheses next to each taxon name in lists. Empty (default) shows the immediate parent taxon name. `none` hides the parent indication entirely — useful for species where the genus is already embedded in the full name. A column name from the taxa table (e.g. `Family`) shows that specific ancestor instead of the immediate parent.",
+                        description: "Controls what is shown in parentheses next to each taxon name in lists. Empty (default) shows the immediate parent taxon name. `none` hides the parent indication entirely - useful for species where the genus is already embedded in the full name. A column name from the taxa table (e.g. `Family`) shows that specific ancestor instead of the immediate parent.",
                         howToUse: "Set to `none` for species if the genus is part of the full species name. Set to a higher rank column name (e.g. `Family`) when you want to skip an intermediate rank in the parenthetical.",
-                        notes: [],
+                        notes: [
+                            {
+                                type: "tip",
+                                title: "For occurrence records",
+                                text: "Keep the Parent taxon indication column empty for the `occurrence` rank level to show the taxon to which the occurrence is identified."
+                            }
+                        ],
                         examples: [
                             {
                                 label: "Species showing Family as parent (skipping Genus)",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Taxon name",
@@ -168,25 +251,79 @@ export const nlDataStructureSheets = {
                                 ],
                                 rows: [
                                     [
-                                        "Family",
+                                        "cls",
+                                        "Class",
+                                        ""
+                                    ],
+                                    [
+                                        "fam",
                                         "Family",
                                         ""
                                     ],
                                     [
-                                        "Genus",
+                                        "gen",
                                         "Genus",
                                         "Family"
                                     ],
                                     [
-                                        "Species",
+                                        "spec",
                                         "Species",
                                         "Family"
+                                    ],
+                                    [
+                                        "catalogId",
+                                        "Occurrence",
+                                        ""
                                     ]
                                 ]
-                            }
-                        ],
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:data]] sheet:",
+                                fillRight: true,
+                                columns: [
+                                    "cls",
+                                    "fam",
+                                    "gen",
+                                    "spec",
+                                    "catalogId"
+                                ],
+                                rows: [
+                                    ["Magnoliopsida", "Rosaceae", "", "", "NHM-1"],
+                                    ["Magnoliopsida", "Rosaceae", "Rosa", "", "NHM-2"],
+                                    ["Magnoliopsida", "Rosaceae", "Rosa", "Rosa canina", "NHM-3"],
+                                    ["Magnoliopsida", "Rosaceae", "Rosa", "Rosa rubiginosa", "NHM-4"],
+                                    ["Magnoliopsida", "Rosaceae", "Rubus", "Rubus idaeus", "NHM-5"],
+                                    ["Liliopsida", "", "", "", "NHM-6"],
+                                    ["Liliopsida", "Poaceae", "Triticum", "Triticum aestivum", "NHM-7"]
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "... will get displayed like this (note that both Rosa canina and Rosa rubiginosa show Rosaceae as the parent, skipping the genus; all occurrences reference their identified-to taxon):",
+                                preformatted: `
+┌── Magnoliopsida
+│   │    ╚══ NHM-1 (class: Magnoliopsida)
+│   └── Rosaceae (class: Magnoliopsida)
+│       ├── Rosa
+│       │   │   ╚══ NHM-2 (genus: Rosa)
+│       │   ├── Rosa canina (family: Rosaceae)
+│       │   │      ╚══ NHM-3 (species: Rosa canina)
+│       │   └── Rosa rubiginosa (family: Rosaceae)
+│       │          ╚══ NHM-4 (species: Rosa rubiginosa)
+│       └── Rubus
+│           └── Rubus idaeus (family: Rosaceae)
+│                  ╚══ NHM-5 (species: Rubus idaeus)
+└── Liliopsida
+    │   ╚══ NHM-6 (class: Liliopsida)
+    └── Poaceae (class: Liliopsida)
+        └── Triticum (family: Poaceae)
+            └── Triticum aestivum (family: Poaceae)
+                   ╚══ NHM-7 (species: Triticum aestivum)
+`
+                            }],
                         integrity: {
-                            description: "Leave empty (immediate parent), enter `none` (no parent shown), or enter the column name of an ancestor taxon level.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "",
@@ -196,12 +333,13 @@ export const nlDataStructureSheets = {
                     },
                     italicize: {
                         name: "Italicize",
-                        description: "Whether taxon names at this rank are rendered in italics. Conventionally used for genus and species in Linnaean nomenclature.",
+                        description: "Whether taxon names at this rank are rendered in italics. Conventionally used for genus and species.",
                         howToUse: "Set to `yes` for genus and species ranks. Leave empty or `no` for higher ranks.",
                         notes: [],
                         examples: [
                             {
                                 label: "Italicizing genus and species",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Taxon name",
@@ -227,7 +365,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter one of the accepted values.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "",
@@ -278,40 +416,18 @@ export const nlDataStructureSheets = {
             customDataDefinition: {
                 name: "Custom data definition",
                 required: false,
-                description: "Declares every non-taxon column you want to display or use in filters. Each row corresponds to one data path from the [[ref:data]] sheet and controls the column's display title, data type, Handlebars template, placement in the taxon card, and visibility rules.\n\nData paths support dot notation for structured sub-fields (`origPub.author`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control independently.",
+                description: "Declares every non-taxon column you want to use for additional data. Rows corresponds to columns in [[ref:data]] sheet and controls the column's display title, data type, template rendering, placement in the taxon card, and visibility rules.\n\nData paths support dot notation for structured sub-fields (`redListEvaluation.year`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control them independently.",
                 notes: [
                     {
                         type: "tip",
                         text: "Read about the [data path](/author-guide/data-sheet#22-column-naming-rules-and-data-paths) concept to understand how arrays (`#`) and structured sub-fields (`.`) let you represent complex data using plain spreadsheet columns."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Custom Data Definition - authoring walkthrough",
-                        path: "/author-guide/nl-content#32-table-custom-data-definition"
-                    },
-                    {
-                        label: "Data Types reference",
-                        path: "/reference/data-types"
-                    },
-                    {
-                        label: "Placement and Visibility",
-                        path: "/author-guide/placement-visibility"
-                    },
-                    {
-                        label: "Dynamic Content with Templates",
-                        path: "/author-guide/templates"
-                    },
-                    {
-                        label: "Filters and Search Categories",
-                        path: "/author-guide/filters-search-categories"
-                    }
-                ],
                 columns: {
                     columnName: {
                         name: "Column name",
                         description: "The data path of the column this row configures. Simple column names (`redlist`), dotted sub-fields (`origPub.author`), and array paths (`habitat#`) are all valid. For array data, include one row for the root path (e.g. `habitat`) and one row for each item path (e.g. `habitat#`).",
-                        howToUse: "Every column you want to display, filter, or use in a template must have a row here. Columns used only as template inputs can be listed with `hidden = yes`.",
+                        howToUse: "Every column from [[ref:data]] sheet that you want to appear as data point in your project must have a row here. Columns used only as template inputs can be listed with `hidden = yes`.",
                         notes: [],
                         examples: [
                             {
@@ -319,7 +435,7 @@ export const nlDataStructureSheets = {
                                 columns: [
                                     "Column name",
                                     "Title",
-                                    "Formatting"
+                                    "Data type"
                                 ],
                                 rows: [
                                     [
@@ -341,7 +457,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the [[ref:data]] sheet. For arrays, include both the root path and the `#` item path. Duplicates are not allowed.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "dataPath",
@@ -350,8 +466,8 @@ export const nlDataStructureSheets = {
                     },
                     title: {
                         name: "Title",
-                        description: "The label shown before the data value in the taxon card. Supports Markdown inline formatting. Append `| Tooltip text` after the title to show a small info icon with a tooltip on hover — e.g. `Total length | Average head-to-tail length in cm`.\n\nLeave blank when no label is desired, which is common for child items in a list where the parent row already provides the heading.",
-                        howToUse: "Provide a title for all top-level fields. Omit for sub-items within arrays or structured objects where the parent row's title serves as the heading.",
+                        description: "The label shown before the data value in the taxon card. `| Tooltip text` after the title to show a small info icon with a tooltip on hover - e.g. `Total length | Average head-to-tail length in cm`.",
+                        howToUse: "Provide a title typically for all top-level fields. Omit where no title is desired, commonly for sub-items within arrays or structured objects where the parent row's title serves as the heading.",
                         notes: [],
                         examples: [
                             {
@@ -364,12 +480,41 @@ export const nlDataStructureSheets = {
                                     [
                                         "wingLength",
                                         "Wing length | Average head-to-tail length measured in cm"
-                                    ]
+                                    ],
+                                ]
+                            },
+                            {
+                                label: "Structured and array sub-items without titles",
+                                columns: [
+                                    "Column name",
+                                    "Title"
+                                ],
+                                rows: [
+                                    [
+                                        "redList",
+                                        "RedList category | The IUCN Red List category and latest evaluation year"
+                                    ],
+                                    [
+                                        "redList.code",
+                                        ""
+                                    ],
+                                    [
+                                        "redList.lastEvaluationYear",
+                                        ""
+                                    ],
+                                    [
+                                        "habitat",
+                                        "Usual habitats"
+                                    ],
+                                    [
+                                        "habitat#",
+                                        ""
+                                    ],
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "Any text, optionally followed by `| tooltip text`. Leave empty for no label. Supports multilingual variants (`Title:en`, `Title:fr`).",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "",
@@ -379,12 +524,12 @@ export const nlDataStructureSheets = {
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
-                        description: "If non-empty, a filter button appears in the sidebar with this label. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the **Formatting** value.\n\nAdd a pipe-separated prefix to group the filter under a section heading — e.g. `Ecology | Habitat` and `Ecology | Life form` both appear under an **Ecology** section.",
-                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Group | Label` pattern to organise related filters into named sections.",
+                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated prefix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
+                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Label | Group` sparingly pattern to organise logically related filters into named sections.",
                         notes: [
                             {
                                 type: "tip",
-                                text: "Not all formatting types support filters. `taxon`, `image`, `sound`, `map`, `geopoint`, and `markdown` columns are not eligible. See [Filters and Search Categories](/author-guide/filters-search-categories) for the full eligibility table."
+                                text: "Most data types support filters, see [Filters and Search Categories](./filters-search-categories) for the full eligibility table."
                             }
                         ],
                         examples: [
@@ -397,21 +542,21 @@ export const nlDataStructureSheets = {
                                 rows: [
                                     [
                                         "habitat",
-                                        "Ecology | Habitat"
+                                        "Habitat | Ecology"
                                     ],
                                     [
                                         "lifeform",
-                                        "Ecology | Life form"
+                                        "Life form | Ecology"
                                     ],
                                     [
                                         "redlist",
-                                        "Status | Red List"
+                                        "Red List"
                                     ]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "A short descriptive label, or empty to suppress filtering. Use `Group | Label` syntax to nest the filter under a named section. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "empty-only",
                             defaultValue: "",
@@ -420,9 +565,9 @@ export const nlDataStructureSheets = {
                         }
                     },
                     formatting: {
-                        name: "Formatting",
+                        name: "Data type",
                         description: "The data type for this column. Determines how the app reads the raw cell value, renders it, and (if **Search category title** is set) which filter type to show.\n\nFor array or object root entries (paths using `#` or `.` children), use `list` to control how sub-items are joined for display. Append an optional separator keyword after a space:\n\n| Value | Result |\n|---|---|\n| `list` or `list bullets` | Unordered bullet list (default) |\n| `list numbered` | Ordered list starting at 1 |\n| `list unmarked` | List with no bullets or numbers |\n| `list space` | Items on one line, separated by a space |\n| `list comma` | Items on one line, separated by `, ` |\n| `list <any string>` | Items on one line, separated by that string |\n\nSee [Data Types](/reference/data-types) for the full type reference.",
-                        howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data — the right type enables the correct filter, renderer, and search indexing.",
+                        howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
                         notes: [
                             {
                                 type: "tip",
@@ -431,10 +576,10 @@ export const nlDataStructureSheets = {
                         ],
                         examples: [
                             {
-                                label: "Common formatting values",
+                                label: "Common data type values",
                                 columns: [
                                     "Column name",
-                                    "Formatting",
+                                    "Data type",
                                     "Effect"
                                 ],
                                 rows: [
@@ -482,7 +627,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A recognised type keyword, or empty for `text`. `list` may be followed by a separator keyword.",
+                            description: "`list` may be followed by a separator keyword (e.g. `list comma`, `list bullets`, `list space`).",
                             allowEmpty: true,
                             defaultValue: "text",
                             allowDuplicates: "yes",
@@ -532,7 +677,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A Handlebars expression string, or empty if no transformation is needed. Supports multilingual variants (`Template:en`, `Template:fr`).",
+                            description: "",
                             allowEmpty: true,
                             defaultValue: "",
                             allowDuplicates: "yes",
@@ -542,7 +687,7 @@ export const nlDataStructureSheets = {
                     },
                     placement: {
                         name: "Placement",
-                        description: "Where the data field appears in the taxon card. Combine with `details` using a pipe to show the field both in the list view and in the Details pane — e.g. `left | details`.\n\nWhen `details` is included, the field appears in a tab determined by its formatting type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](/reference/placement-options) for the layout diagram and guidance table.",
+                        description: "Where the data field appears in the taxon card. Combine with `details` using a pipe to show the field both in the list view and in the Details pane - e.g. `left | details`.\n\nWhen `details` is included, the field appears in a tab determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](/reference/placement-options) for the layout diagram and guidance table.",
                         howToUse: "Use `left`, `middle`, or `right` for compact single-value fields (status badges, dates, short measurements). Use `top` or `bottom` for longer content (descriptions, distribution lists). Use `details` for rich content (large images, full maps, long notes) that users seek out by clicking a taxon.",
                         notes: [],
                         examples: [
@@ -550,7 +695,7 @@ export const nlDataStructureSheets = {
                                 label: "Typical placement choices",
                                 columns: [
                                     "Column name",
-                                    "Formatting",
+                                    "Data type",
                                     "Placement"
                                 ],
                                 rows: [
@@ -583,7 +728,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "One placement keyword, or two pipe-separated keywords where the second is `details`. Empty defaults to `top`.",
+                            description: "When combining with `|`, the second keyword must always be `details` (e.g. `bottom|details`).",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "top",
@@ -647,7 +792,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter `no` to always show. Enter `yes` to always hide. Enter `data` to hide from display but show as filter. Enter a conditional expression referencing a filter column name.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -657,7 +802,7 @@ export const nlDataStructureSheets = {
                     },
                     belongsTo: {
                         name: "Belongs to",
-                        description: "Declares whether this data column belongs to taxon rows or occurrence rows.\n\n- Empty (default) or `taxon`: the column belongs to taxon rows. Data found on an occurrence row raises a compiler error and is excluded from the compiled output.\n- `occurrence`: the column belongs to occurrence rows only. Data found on a taxon row raises a compiler error and is excluded from the compiled output.\n\nEvery column must belong to one entity or the other — there is no shared option.\n\nOnly set this on root or simple columns; child columns (`.subfield`, `#`) inherit the value automatically.",
+                        description: "Declares whether this data column belongs to taxon rows or occurrence rows.\n\n- Empty (default) or `taxon`: the column belongs to taxon rows. Data found on an occurrence row raises a compiler error and is excluded from the compiled output.\n- `occurrence`: the column belongs to occurrence rows only. Data found on a taxon row raises a compiler error and is excluded from the compiled output.\n\nEvery column must belong to one entity or the other - there is no shared option.\n\nOnly set this on root or simple columns; child columns (`.subfield`, `#`) inherit the value automatically.",
                         howToUse: "Leave empty for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality). If a column applies to occurrences it must be declared `occurrence`; taxon columns may be left blank.",
                         notes: [
                             {
@@ -666,7 +811,7 @@ export const nlDataStructureSheets = {
                             },
                             {
                                 type: "warning",
-                                text: "Only set **Belongs to** on the root row of a column group. For example, set it on `origPub`, not on `origPub.author` or `origPub.year` — the value cascades to all child paths automatically."
+                                text: "Only set **Belongs to** on the root row of a column group. For example, set it on `origPub`, not on `origPub.author` or `origPub.year` - the value cascades to all child paths automatically."
                             }
                         ],
                         examples: [
@@ -712,7 +857,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter one of the accepted values. Only valid on root or simple columns.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "list",
@@ -758,17 +903,7 @@ export const nlDataStructureSheets = {
                 notes: [
                     {
                         type: "tip",
-                        text: "For standard biological databases, consider the built-in [Database Shortcodes](/author-guide/nl-content#36-table-database-shortcodes) (`@gbif:ID`, `@inat:ID`, etc.) as an alternative — shortcodes embed links inline in Markdown fields rather than as sidebar buttons."
-                    }
-                ],
-                seeAlso: [
-                    {
-                        label: "Search Online - authoring walkthrough",
-                        path: "/author-guide/nl-content#33-table-search-online"
-                    },
-                    {
-                        label: "Media and Files - icon folder",
-                        path: "/author-guide/media-and-files#special-folders"
+                        text: "For standard biological databases, consider the built-in [Database Shortcodes](/author-guide/nl-content#36-table-database-shortcodes) (`@gbif:ID`, `@inat:ID`, etc.) as an alternative - shortcodes embed links inline in Markdown fields rather than as sidebar buttons."
                     }
                 ],
                 columns: {
@@ -797,7 +932,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A short title describing the search engine. Must not be empty. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "any",
@@ -829,7 +964,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Filename only (no path), including the extension. File must exist in `usercontent/online_search_icons/`.",
+                            description: "File must exist in `usercontent/online_search_icons/`.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "filename",
@@ -871,7 +1006,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A full URL with `{{taxon.name}}` (or other template variables) substituted for the search term. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "url",
@@ -881,7 +1016,7 @@ export const nlDataStructureSheets = {
                     restrictToTaxon: {
                         name: "Restrict to taxon",
                         description: "If non-empty, the search link is shown only for taxa that are descendants of the named taxon (or the taxon itself). Multiple taxa can be listed comma-separated: `Aceropyga, Baeturia` restricts the link to descendants of either genus. Leave empty to show the link for every taxon.",
-                        howToUse: "Use when the linked database covers only a subset of your project's taxa — for example, a beetle database link on a vertebrate checklist should be restricted to `Coleoptera`.",
+                        howToUse: "Use when the linked database covers only a subset of your project's taxa - for example, a beetle database link on a vertebrate checklist should be restricted to `Coleoptera`.",
                         notes: [],
                         examples: [
                             {
@@ -901,7 +1036,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A taxon name (excluding authority), or a comma-separated list of taxon names. Case-insensitive. Leave empty for no restriction.",
+                            description: "Taxon name(s) excluding authority, comma-separated. Matching is case-insensitive.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -935,20 +1070,10 @@ export const nlDataStructureSheets = {
                         text: "Use `**bold**` in Text cells to highlight the diagnostic character being contrasted, and `*italics*` for taxon names. Images for key steps go in `usercontent/keys/`."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Single-Access Keys - authoring walkthrough",
-                        path: "/author-guide/nl-content#34-table-single-access-keys"
-                    },
-                    {
-                        label: "Key images folder",
-                        path: "/author-guide/media-and-files#special-folders"
-                    }
-                ],
                 columns: {
                     step: {
                         name: "Step",
-                        description: "A text code starts a new key (e.g. `beetles`, or a taxon name such as `Turdus`). An integer starts or continues a question step within the current key. All rows sharing the same integer are the choices for that one question. Step integers must be strictly ascending within a key, and a Target integer must always be higher than the current Step integer.\n\nIf a key result is a taxon name that matches the Step header of another key, the app automatically offers that second key as a continuation — enabling multi-level key chains.",
+                        description: "A text code starts a new key (e.g. `beetles`, or a taxon name such as `Turdus`). An integer starts or continues a question step within the current key. All rows sharing the same integer are the choices for that one question. Step integers must be strictly ascending within a key, and a Target integer must always be higher than the current Step integer.\n\nIf a key result is a taxon name that matches the Step header of another key, the app automatically offers that second key as a continuation - enabling multi-level key chains.",
                         howToUse: "Use a unique text code for each key header, then ascending integers (1, 2, 3…) for question steps within that key.",
                         notes: [],
                         examples: [
@@ -995,7 +1120,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A text string (key header ID) or a plain integer (step number). Step numbers must be sequential and strictly ascending within a key.",
+                            description: "Step integers must be strictly ascending within a key.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1004,12 +1129,12 @@ export const nlDataStructureSheets = {
                     },
                     text: {
                         name: "Text",
-                        description: "For a **key header row**: the title and optional description in `Title | Description` format (pipe-separated). For a **question step row**: the text describing this choice. Markdown is supported — use `**bold**` for diagnostic characters and `*italics*` for taxon names.",
-                        howToUse: "Required for all rows. Header rows use `Title | Description`; step rows describe the diagnostic character or choice.",
+                        description: "For a **key header row**: the title and optional description in `Title | Description` format (pipe-separated). For a **question step row**: the text describing this choice. Markdown is supported - use `**bold**` for diagnostic characters and `*italics*` for taxon names.",
+                        howToUse: "Header rows use `Title | Description` format; step rows describe the diagnostic character or choice.",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Free text. For key headers, use `Title | Description` format. Markdown is supported. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1023,7 +1148,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "An integer (higher than the current step), a taxon name string, or a key Step ID string. Leave empty for key header rows.",
+                            description: "Integer target must be strictly higher than the current Step number.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1049,7 +1174,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Filename(s) from `usercontent/keys/`, pipe-separated. Optionally append `| Caption` after each filename.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1189,16 +1314,6 @@ export const nlDataStructureSheets = {
                         text: "The `@citekey` citation syntax is distinct from database shortcodes (see [Database Shortcodes](/author-guide/nl-content#36-table-database-shortcodes)), which use a similar `@code:ID` notation but link to external occurrence records."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Bibliography - authoring walkthrough",
-                        path: "/author-guide/nl-content#35-table-bibliography"
-                    },
-                    {
-                        label: "External Markdown Files (F: directive)",
-                        path: "/author-guide/external-markdown"
-                    }
-                ],
                 columns: {
                     bibtex: {
                         name: "BibTeX entries",
@@ -1222,7 +1337,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A complete BibTeX entry string, or an F-directive (`F:filename.bib` or `F:filename.txt`) pointing to a file inside `usercontent/`.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1246,17 +1361,11 @@ export const nlDataStructureSheets = {
             databaseShortcodes: {
                 name: "Database shortcodes",
                 required: false,
-                description: "Defines custom shortcodes for embedding clickable links to external biological databases or any URL-based resource in Markdown fields. The app ships with several built-in shortcodes that are always available without any table entries:\n\n| Code | Target |\n|---|---|\n| `@gbif:ID` | GBIF occurrence record |\n| `@gbif.s:ID` | GBIF species/taxon page |\n| `@inat:ID` | iNaturalist observation |\n| `@ebird:ID` | eBird checklist |\n| `@clml:ID` | Macaulay Library asset |\n| `@obse:ID` | Observation.org record |\n\nThis table is optional. Omit it entirely if the built-in shortcodes are sufficient.\n\nShortcodes are used in data fields with `markdown` formatting using the syntax `@code:ID` or `@code:Author Name:ID`.",
+                description: "Defines custom shortcodes for embedding clickable links to external biological databases or any URL-based resource in Markdown fields. The app ships with several built-in shortcodes that are always available without any table entries:\n\n| Code | Target |\n|---|---|\n| `@gbif:ID` | GBIF occurrence record |\n| `@gbif.s:ID` | GBIF species/taxon page |\n| `@inat:ID` | iNaturalist observation |\n| `@ebird:ID` | eBird checklist |\n| `@clml:ID` | Macaulay Library asset |\n| `@obse:ID` | Observation.org record |\n\nThis table is optional. Omit it entirely if the built-in shortcodes are sufficient.\n\nShortcodes are used in data fields with `markdown` data type using the syntax `@code:ID` or `@code:Author Name:ID`.",
                 notes: [
                     {
                         type: "warning",
                         text: "Database shortcodes (`@code:ID`) are distinct from bibliography citations (`@citekey`). Shortcodes link to external occurrence records; citations link to bibliography entries. Do not confuse the two syntaxes."
-                    }
-                ],
-                seeAlso: [
-                    {
-                        label: "Database Shortcodes - authoring walkthrough",
-                        path: "/author-guide/nl-content#36-table-database-shortcodes"
                     }
                 ],
                 columns: {
@@ -1285,7 +1394,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "No digits, spaces, underscores, or hyphens. No duplicates.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "regex",
@@ -1296,7 +1405,7 @@ export const nlDataStructureSheets = {
                     },
                     labelTemplate: {
                         name: "Label template",
-                        description: "The text shown as the hyperlink label. Use `{{id}}` where the record ID should appear and optionally `{{author}}` for author attribution. The `{{author}}` placeholder is replaced by the author string followed by a space, or by an empty string if no author was provided — design the template so it reads naturally either way.\n\nMust contain `{{id}}`.",
+                        description: "The text shown as the hyperlink label. Use `{{id}}` where the record ID should appear and optionally `{{author}}` for author attribution. The `{{author}}` placeholder is replaced by the author string followed by a space, or by an empty string if no author was provided - design the template so it reads naturally either way.\n\nMust contain `{{id}}`.",
                         howToUse: "Place `{{author}}` before a noun so the label reads naturally with or without an author: `{{author}}Herbarium record ({{id}})`.",
                         notes: [],
                         examples: [
@@ -1315,7 +1424,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Any text string containing `{{id}}`. May also contain `{{author}}`.",
+                            description: "Must contain `{{id}}`. May also contain `{{author}}`.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1343,7 +1452,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A full URL containing `{{id}}` where the record identifier should be substituted.",
+                            description: "Must contain `{{id}}` where the record identifier should be substituted.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1519,13 +1628,7 @@ export const nlDataStructureSheets = {
         notes: [
             {
                 type: "tip",
-                text: "Start from the full blank template (downloadable from the Manage screen), which has all table headers pre-filled. Keeping the full structure — even with empty tables — makes it easy to add appearance settings later without restructuring the workbook."
-            }
-        ],
-        seeAlso: [
-            {
-                label: "Appearance & Branding - authoring walkthrough",
-                path: "/author-guide/nl-appearance"
+                text: "Start from the full blank template (downloadable from the Manage screen), which has all table headers pre-filled. Keeping the full structure - even with empty tables - makes it easy to add appearance settings later without restructuring the workbook."
             }
         ],
         type: "meta",
@@ -1540,17 +1643,11 @@ export const nlDataStructureSheets = {
                         text: "The active language is reflected in the URL via the `?l=` query parameter, so a specific language version can be linked or bookmarked directly."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Multilingual Projects - full workflow",
-                        path: "/author-guide/multilingual"
-                    }
-                ],
                 columns: {
                     code: {
                         name: "Code",
                         description: "The ISO 639-1 two-letter language code in lowercase (e.g. `en`, `fr`, `de`). The first row's code is the default language.",
-                        howToUse: "For languages without a NaturaList UI translation, set the **Fallback language** column to a language that does have one.",
+                        howToUse: "Use the standard two-letter ISO 639-1 code. Place the default language in the first row. For languages without a NaturaList UI translation, set the **Fallback language** column to a language that does have one.",
                         notes: [],
                         examples: [
                             {
@@ -1575,7 +1672,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "A two-letter ISO 639-1 language code in lowercase. See [Wikipedia ISO 639-1 list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes). Must be unique.",
+                            description: "See [ISO 639-1 language code list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
                             allowDuplicates: "no",
                             allowEmpty: false,
                             allowedContent: "any",
@@ -1585,11 +1682,11 @@ export const nlDataStructureSheets = {
                     name: {
                         name: "Name of language",
                         description: "The language's name as displayed in the app's language switcher. Use the name as written in that language (e.g. `Français` not `French`, `Česky` not `Czech`).",
-                        howToUse: "Prefer the native spelling of the language name.",
+                        howToUse: "",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Language name, preferably in that language's own script. No duplicates.",
+                            description: "",
                             allowDuplicates: "no",
                             allowEmpty: false,
                             allowedContent: "any",
@@ -1603,7 +1700,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Two-letter ISO 639-1 code of the desired fallback UI language, or empty to default to English.",
+                            description: "",
                             allowDuplicates: "yes",
                             allowEmpty: true,
                             allowedContent: "any",
@@ -1624,20 +1721,10 @@ export const nlDataStructureSheets = {
                 required: false,
                 description: "A fixed set of named configuration items. The **Item** column contains predefined names; you only edit the **Value** column (or `Value:en`, `Value:fr`, etc. for multilingual values). Skip any items you are happy with at their default. Typically you will want to fill in at least **About section** and **Checklist name**.",
                 notes: [],
-                seeAlso: [
-                    {
-                        label: "Customization - authoring walkthrough",
-                        path: "/author-guide/nl-appearance#42-table-customization"
-                    },
-                    {
-                        label: "day.js date format tokens",
-                        path: "https://day.js.org/docs/en/display/format"
-                    }
-                ],
                 columns: {
                     item: {
                         name: "Item",
-                        description: "Pre-filled item names that control specific app behaviours. Do not edit the values in this column — they are fixed keywords recognised by the app.",
+                        description: "Pre-filled item names that control specific app behaviours. Do not edit the values in this column - they are fixed keywords recognised by the app.",
                         howToUse: "Never edit. Add only the items you need to configure by filling in the corresponding **Value** cell.",
                         notes: [],
                         examples: [
@@ -1703,7 +1790,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Fixed predefined keyword. Do not modify.",
+                            description: "",
                             allowDuplicates: "no",
                             allowEmpty: false,
                             allowedContent: "any",
@@ -1712,7 +1799,7 @@ export const nlDataStructureSheets = {
                     },
                     value: {
                         name: "Value",
-                        description: "The configured value for each item. Supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) — useful for **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **[[ref:data]] sheets names**: comma-separated list of [[ref:data]] sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
+                        description: "The configured value for each item. Supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) - useful for **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **[[ref:data]] sheets names**: comma-separated list of [[ref:data]] sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
                         howToUse: "Fill in only the items you need to change from their defaults. Leave the Value cell empty for items you are happy with at their default.",
                         notes: [
                             {
@@ -1753,7 +1840,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "The configured value for the corresponding item. Type and constraints vary per item — see description above. Supports multilingual variants.",
+                            description: "",
                             allowDuplicates: "yes",
                             allowEmpty: true,
                             allowedContent: "any",
@@ -1795,12 +1882,6 @@ export const nlDataStructureSheets = {
                         text: "If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app logs a warning and displays the raw value unchanged. Codes are matched exactly and case-sensitively."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Data Codes - authoring walkthrough",
-                        path: "/author-guide/nl-appearance#43-table-data-codes"
-                    }
-                ],
                 columns: {
                     columnName: {
                         name: "Column name",
@@ -1839,7 +1920,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the [[ref:data]] sheet.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
@@ -1853,7 +1934,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "The exact raw string value from the [[ref:data]] sheet. Matched case-sensitively.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1863,11 +1944,11 @@ export const nlDataStructureSheets = {
                     replacement: {
                         name: "Replacement",
                         description: "The human-readable text to display instead of the raw code. For multilingual projects, add one `Replacement:langcode` column per language.",
-                        howToUse: "Enter the full label you want users to see.",
+                        howToUse: "",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any text string. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -1947,28 +2028,22 @@ export const nlDataStructureSheets = {
             categories: {
                 name: "Colored categories",
                 required: false,
-                description: "Gives categorical data values a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields.\n\nThe **Formatting** column in Custom Data Definition must be set to `category` for this table to take effect. Category matching is a case-insensitive substring match against the data value after any Data Code replacement.\n\nThis table can be left completely empty — it is valid to use `category` formatting without any entries here; the data will display as plain text but still use the categorical filter.",
+                description: "Gives categorical data values a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields.\n\nThe **Data type** column in Custom Data Definition must be set to `category` for this table to take effect. Category matching is a case-insensitive substring match against the data value after any Data Code replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
                 notes: [
                     {
                         type: "warning",
-                        text: "Setting the formatting to `category` alone does nothing visual — you must also populate this table with colour definitions for each value."
+                        text: "Setting the data type to `category` alone does nothing visual - you must also populate this table with colour definitions for each value."
                     },
                     {
                         type: "tip",
                         text: "The **Contains text** match is a substring/regex search: `Endemic` will match both `Endemic` and `Near-endemic`. Be specific enough to avoid unintended matches."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Colored Categories - authoring walkthrough",
-                        path: "/author-guide/nl-appearance#44-table-colored-categories"
-                    }
-                ],
                 columns: {
                     columnName: {
                         name: "Column name",
                         description: "The data path of the column whose values should be styled as coloured categories. Each distinct value (or group of values matched by **Contains text**) requires its own row, all sharing the same **Column name**.",
-                        howToUse: "Enter the same column name as used in Custom Data Definition (with `category` formatting).",
+                        howToUse: "Enter the same column name as used in Custom Data Definition (with `category` data type).",
                         notes: [],
                         examples: [
                             {
@@ -2014,7 +2089,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path with `category` formatting in Custom data definition.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
@@ -2028,7 +2103,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "A case-insensitive substring match string. E.g. `Endemic` matches `Endemic`, `Near-endemic`, and `Endemic?`. Must not be empty.",
+                            description: "Case-insensitive substring/regex match - e.g. `Endemic` also matches `Near-endemic`.",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "any",
@@ -2042,7 +2117,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any valid CSS colour value, or empty for transparent.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "transparent",
@@ -2057,7 +2132,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any valid CSS colour value, or empty to default to black.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "black",
@@ -2072,7 +2147,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any valid CSS colour value, or empty for the default border.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "black",
@@ -2182,19 +2257,13 @@ export const nlDataStructureSheets = {
                 notes: [
                     {
                         type: "warning",
-                        text: "Region codes must be all-lowercase letters (`a-z`) only — no digits, hyphens, or underscores. Every code that appears in any `mapregions` data column must have a row here."
-                    }
-                ],
-                seeAlso: [
-                    {
-                        label: "Map Regions Information - authoring walkthrough",
-                        path: "/author-guide/nl-appearance#45-table-map-regions-information"
+                        text: "Region codes must be all-lowercase letters (`a-z`) only - no digits, hyphens, or underscores. Every code that appears in any `mapregions` data column must have a row here."
                     }
                 ],
                 columns: {
                     code: {
                         name: "Region code",
-                        description: "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a-z`) only — no digits, hyphens, or spaces.",
+                        description: "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a-z`) only - no digits, hyphens, or spaces.",
                         howToUse: "Use the same codes as in your [[ref:data]] sheet `mapregions` cells. Conventional ISO 3166-1 alpha-2 country codes (e.g. `fr`, `de`, `gb`) work well for country-level maps.",
                         notes: [],
                         examples: [
@@ -2225,7 +2294,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "No digits, hyphens, spaces, or underscores. No duplicates.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             defaultValue: "",
@@ -2238,11 +2307,11 @@ export const nlDataStructureSheets = {
                     name: {
                         name: "Region name",
                         description: "The human-readable name for this region, shown in the UI and in the inline text list on taxon cards. Supports multilingual variants (`Region name:en`, `Region name:fr`).",
-                        howToUse: "Enter the full place name as you want it displayed to users. Add multilingual variants for translated place names.",
+                        howToUse: "Add multilingual variants (`Region name:en`, `Region name:fr`) for translated place names.",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any text string. Must not be empty. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -2254,23 +2323,17 @@ export const nlDataStructureSheets = {
             mapRegionsLegend: {
                 name: "Map regions legend",
                 required: false,
-                description: "Configures the colour, legend label, and scale behaviour for every status value or numeric anchor used in `mapregions` data columns. Three modes are supported and can be combined freely within the same column:\n\n- **Category** (default): one row per distinct status string. Each maps to a fixed colour.\n- **Gradient**: two or more anchor rows with `gradient` legend type. Colours are smoothly interpolated between anchors based on numeric data values.\n- **Stepped**: like gradient but colour assignment is discrete — each value snaps to the colour of the highest anchor it does not exceed.\n\nModes can coexist in the same column: add categorical override rows alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\nBy default, rows without a **Column name** apply to every `mapregions` column in the project. Fill **Column name** to restrict a row to one specific map column, enabling different colour schemes per map.\n\nFor dynamic anchor notations (A2-A5), the 'dataset' is the set of all numeric status values present in the *current taxon's* mapregions data for the given column — so each taxon has its own independent colour scale.\n\nThis table can be left completely empty if you do not use region maps.",
+                description: "Configures the colour, legend label, and scale behaviour for every status value or numeric anchor used in `mapregions` data columns. Three modes are supported and can be combined freely within the same column:\n\n- **Category** (default): one row per distinct status string. Each maps to a fixed colour.\n- **Gradient**: two or more anchor rows with `gradient` legend type. Colours are smoothly interpolated between anchors based on numeric data values.\n- **Stepped**: like gradient but colour assignment is discrete - each value snaps to the colour of the highest anchor it does not exceed.\n\nModes can coexist in the same column: add categorical override rows alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\nBy default, rows without a **Column name** apply to every `mapregions` column in the project. Fill **Column name** to restrict a row to one specific map column, enabling different colour schemes per map.\n\nFor dynamic anchor notations (A2-A5), the 'dataset' is the set of all numeric status values present in the *current taxon's* mapregions data for the given column - so each taxon has its own independent colour scale.\n\nThis table can be left completely empty if you do not use region maps.",
                 notes: [
                     {
                         type: "tip",
                         text: "See [Appearance & Branding → Map Regions Legend](/author-guide/nl-appearance#46-table-map-regions-legend) for the full anchor notation reference (A1-A5) and eleven configuration examples covering every mode and combination."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Map Regions Legend - full reference with examples",
-                        path: "/author-guide/nl-appearance#46-table-map-regions-legend"
-                    }
-                ],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "Restricts this legend row to a specific `mapregions` data column. Enter the exact data path as declared in the Custom data definition table (e.g. `map`, `map.europe`, `distribution`). Leave empty to apply the row globally to every `mapregions` column. The compound pair of **Column name** and **Status code** must be unique across the table — the same Status code may appear on multiple rows provided each row names a different column.",
+                        description: "Restricts this legend row to a specific `mapregions` data column. Enter the exact data path as declared in the Custom data definition table (e.g. `map`, `map.europe`, `distribution`). Leave empty to apply the row globally to every `mapregions` column. The compound pair of **Column name** and **Status code** must be unique across the table - the same Status code may appear on multiple rows provided each row names a different column.",
                         howToUse: "Leave empty for projects with a single map or with several maps sharing the same colour logic. Fill in when different map columns require different colour schemes or gradient definitions.",
                         notes: [],
                         examples: [
@@ -2316,7 +2379,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the Custom data definition table with `mapregions` formatting, or empty to apply globally.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "",
@@ -2326,7 +2389,7 @@ export const nlDataStructureSheets = {
                     },
                     status: {
                         name: "Status code",
-                        description: "The status value or anchor position for this row. Interpretation depends on **Legend type**.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`). Leave empty to define the **global fallback** — any region whose value matches no other row receives this colour.\n\n**For `gradient` and `stepped` rows**: an anchor position in one of five notations (A1-A5). All data cells for the column must contain parseable numbers.\n\n- **A1 - Raw value**: a plain integer or decimal (e.g. `7.6`, `0`, `-5`). Anchor sits at that absolute value. Use for data with meaningful fixed thresholds (pH, temperature, concentration).\n- **A2 - Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves linearly between dataset minimum (0%) and maximum (100%). Use when relative position matters more than absolute value.\n- **A3 - Percentile**: a number followed by `p` (e.g. `25p`, `75p`, `2.5p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **A4 - Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many standard deviations from the dataset mean. Use to visualise statistical outliers.\n- **A5 - Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]`. Creates a scale diverging from a declared center point. Modifier is `%` (percentage of max distance from center), `s` (σ units), or absent (raw units). Examples: `-100%c0`, `50%c14`, `-2sc28`. Use for diverging colour schemes anchored to an ecologically meaningful midpoint.\n\nA1-A5 may be mixed freely. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's colour.",
+                        description: "The status value or anchor position for this row. Interpretation depends on **Legend type**.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`). Leave empty to define the **global fallback** - any region whose value matches no other row receives this colour.\n\n**For `gradient` and `stepped` rows**: an anchor position in one of five notations (A1-A5). All data cells for the column must contain parseable numbers.\n\n- **A1 - Raw value**: a plain integer or decimal (e.g. `7.6`, `0`, `-5`). Anchor sits at that absolute value. Use for data with meaningful fixed thresholds (pH, temperature, concentration).\n- **A2 - Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves linearly between dataset minimum (0%) and maximum (100%). Use when relative position matters more than absolute value.\n- **A3 - Percentile**: a number followed by `p` (e.g. `25p`, `75p`, `2.5p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **A4 - Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many standard deviations from the dataset mean. Use to visualise statistical outliers.\n- **A5 - Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]`. Creates a scale diverging from a declared center point. Modifier is `%` (percentage of max distance from center), `s` (σ units), or absent (raw units). Examples: `-100%c0`, `50%c14`, `-2sc28`. Use for diverging colour schemes anchored to an ecologically meaningful midpoint.\n\nA1-A5 may be mixed freely. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's colour.",
                         howToUse: "For simple categorical maps, enter the status strings used in your data. For numeric data, choose the anchor notation that best matches the data's nature and the intended visual communication.",
                         notes: [],
                         examples: [
@@ -2390,7 +2453,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "For category rows: any text string, or empty for the global fallback. For gradient/stepped rows: an anchor notation (A1 plain number; A2 `number%`; A3 `numberp`; A4 `numbers`; A5 `number[%|s]cCenter`). The compound pair (Column name, Status code) must be unique.",
+                            description: "The compound pair (Column name, Status code) must be unique across the table.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "",
@@ -2406,7 +2469,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any valid CSS colour value: named colour (e.g. `green`), hex (`#2ecc71`), `rgb()`, `hsl()`, etc. Must not be empty.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "cssColor",
@@ -2415,12 +2478,12 @@ export const nlDataStructureSheets = {
                     },
                     legend: {
                         name: "Legend",
-                        description: "Label shown for this row in the map legend. For `category` rows this label is always displayed. For `gradient` and `stepped` rows, only rows with a non-empty Legend value appear in the legend — you can define intermediate anchor rows without cluttering the legend by leaving their Legend cells empty.\n\nSupports multilingual variants: `Legend:en`, `Legend:fr`, etc.",
+                        description: "Label shown for this row in the map legend. For `category` rows this label is always displayed. For `gradient` and `stepped` rows, only rows with a non-empty Legend value appear in the legend - you can define intermediate anchor rows without cluttering the legend by leaving their Legend cells empty.\n\nSupports multilingual variants: `Legend:en`, `Legend:fr`, etc.",
                         howToUse: "Label the outermost anchors and any semantically important midpoints (e.g. `Low`, `Median`, `High`). Leave intermediate gradient anchors unlabelled to keep the legend clean.",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "A short word or phrase. For gradient/stepped rows, leave empty for intermediate anchors you do not want in the legend. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -2429,7 +2492,7 @@ export const nlDataStructureSheets = {
                     },
                     appendedLegend: {
                         name: "Appended legend",
-                        description: "Text appended directly after the region name in the inline text list on the taxon card (visible when placement is not `details`). For example, a status `introduced` with Appended legend `introduced` produces `Germany *(introduced)*`. Supports Markdown.\n\nOnly meaningful for `category` rows — for `gradient` and `stepped` rows this field is ignored, as the raw data value is shown instead of a dynamically computed label.\n\nSupports multilingual variants.",
+                        description: "Text appended directly after the region name in the inline text list on the taxon card (visible when placement is not `details`). For example, a status `introduced` with Appended legend `introduced` produces `Germany *(introduced)*`. Supports Markdown.\n\nOnly meaningful for `category` rows - for `gradient` and `stepped` rows this field is ignored, as the raw data value is shown instead of a dynamically computed label.\n\nSupports multilingual variants.",
                         howToUse: "Use for categorical status values where the status name adds meaningful context to the region name in the inline list. Leave empty when the region name alone is sufficient.",
                         notes: [],
                         examples: [
@@ -2468,7 +2531,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Any text or Markdown. Leave empty if no appended annotation is needed, or for gradient/stepped anchor rows.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -2477,7 +2540,7 @@ export const nlDataStructureSheets = {
                     },
                     legendType: {
                         name: "Legend type",
-                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (A1-A5 notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (A1-A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value — equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
+                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (A1-A5 notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (A1-A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
                         howToUse: "Use `category` (or empty) for named status values. Use `gradient` for continuous numeric data. Use `stepped` for numeric data best communicated as discrete bins.",
                         notes: [],
                         examples: [
@@ -2523,7 +2586,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter one of the accepted values.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "category",
@@ -2544,16 +2607,6 @@ export const nlDataStructureSheets = {
                 required: false,
                 description: "Overrides the default alphabetical ordering of filter values in the sidebar filter dropdowns. Items appear in the filter in the order they appear in this table. Any data value not listed here is appended alphabetically after the explicitly ordered values.\n\nA typical use case is the Red List category, where severity order (Critically Endangered → Endangered → Vulnerable…) is more meaningful than alphabetical. Another is a topmost taxonomic group where you want prominent categories to appear first.\n\nThis table can be left completely empty if alphabetical ordering is acceptable for all your filters.",
                 notes: [],
-                seeAlso: [
-                    {
-                        label: "Custom Filter Ordering - authoring walkthrough",
-                        path: "/author-guide/filters-search-categories#custom-filter-ordering"
-                    },
-                    {
-                        label: "Search Category Custom Order - column reference",
-                        path: "/reference/nl-appearance#47-table-search-category-custom-order"
-                    }
-                ],
                 columns: {
                     columnName: {
                         name: "Column name",
@@ -2608,7 +2661,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the [[ref:data]] sheet with a Search category title set.",
+                            description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
@@ -2618,7 +2671,7 @@ export const nlDataStructureSheets = {
                     groupTitle: {
                         name: "Group title",
                         description: "Assigns multiple filter values under a shared collapsible group heading with a collective tick/untick button. All rows sharing the same **Group title** value (for the same **Column name**) are displayed together under that heading. Individual values within the group can still be ticked and unticked independently.",
-                        howToUse: "Use to group related filter values that users would often select together — e.g. `Endemic`, `Near-endemic`, `Endemic?` under a group titled `Endemites`.",
+                        howToUse: "Use to group related filter values that users would often select together - e.g. `Endemic`, `Near-endemic`, `Endemic?` under a group titled `Endemites`.",
                         notes: [],
                         examples: [
                             {
@@ -2658,7 +2711,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Any text string, or empty for no grouping. Supports multilingual variants.",
+                            description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -2672,7 +2725,7 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Any value from the given column (after Data Code replacement). Duplicates within the same column are not allowed. Supports multilingual variants.",
+                            description: "Duplicate values within the same **Column name** group are not allowed.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
