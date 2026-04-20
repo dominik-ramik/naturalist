@@ -7,23 +7,14 @@ export const nlDataStructureSheets = {
     content: {
         name: "nl_content",
         required: true,
-        description: "The `nl_content` sheet tells the app what each column in your data sheet represents. It contains up to six configuration tables. Only the **Taxa definition** table is strictly required; all others are optional and can be left empty.\n\nAll columns from the data sheet that you want to display must appear in one of the tables on this sheet. Columns not referenced here may still be kept in the data sheet - they are silently ignored by the app and can serve as helper or curator-notes columns.",
+        description: "The [[ref:content]] sheet tells the app what each column in your [[ref:data]] sheet represents. It contains the following configuration tables. Only the [[ref:content.taxa]] table is strictly required; all others are optional and can be left empty, although in all but the most simple projects you will probably make good use of them.\n\nAll columns from the **[[ref:data]] sheet** that you want to display must appear either in [[ref:content.taxa]] (for taxa columns) or in [[ref:content.customDataDefinition]] (for your additional data). Columns not referenced here may still be kept in the [[ref:data]] sheet - they are silently ignored by the app and can serve as helper or curator-notes columns.",
         notes: [
             {
                 type: "tip",
                 text: "Start with the **Taxa definition** table alone to confirm your taxonomy tree renders correctly, then add custom data, filters, and advanced features iteratively."
             }
         ],
-        seeAlso: [
-            {
-                label: "Defining Your Content",
-                path: "/author-guide/nl-content"
-            },
-            {
-                label: "The Data Sheet",
-                path: "/author-guide/data-sheet"
-            }
-        ],
+        seeAlso: [],
         type: "meta",
         tables: {
             taxa: {
@@ -33,72 +24,43 @@ export const nlDataStructureSheets = {
                 notes: [
                     {
                         type: "warning",
-                        text: "If you use occurrence records, the taxon level whose **Taxon name** is exactly `Occurrence` must be the **last row** in this table, below all other ranks. See [Occurrence and Collection Mode](/author-guide/occurrence-collection-mode)."
-                    },
-                    {
-                        type: "tip",
-                        text: "Taxon names can include the authority string. Use either a pipe separator in a single column (`Litoria aurea|(Lesson, 1829)`) or dedicated `.name` and `.authority` sub-columns. See [The Data Sheet → Taxon Columns](/author-guide/data-sheet#24-taxon-columns)."
+                        text: "If you use occurrence records, the taxon level whose **Taxon name** is exactly `Occurrence` (case insensitive) must be the **last row** in this table, below all other ranks. See [Occurrence and Collection Mode](/author-guide/occurrence-collection-mode)."
                     }
                 ],
-                seeAlso: [
-                    {
-                        label: "Taxa Definition - authoring walkthrough",
-                        path: "/author-guide/nl-content#31-table-taxa-definition"
-                    },
-                    {
-                        label: "Taxon Columns in the data sheet",
-                        path: "/author-guide/data-sheet#24-taxon-columns"
-                    },
-                    {
-                        label: "Occurrence and Collection Mode",
-                        path: "/author-guide/occurrence-collection-mode"
-                    }
-                ],
+                seeAlso: [],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The header of the data sheet column that holds the taxon names for this rank. Must match a column header in the data sheet (case-insensitive). The column can be a plain column (`genus`), or the app will also recognise `genus.name` and `genus.authority` sub-columns if you want to store the authority separately.",
-                        whenToUse: "Use the plain column name when you only need to store the taxon name. Add `.name` and `.authority` sub-columns when you want to record and display the taxonomic authority alongside the name.",
+                        description: "The header of the [[ref:data]] sheet column that holds the taxon names for this rank. Must match a column header in the [[ref:data]] sheet (case-insensitive). The column can be a plain column (`genus`), or `genus.name` and `genus.authority` sub-columns if you want to store the authority separately. See Taxa in your [[ref:data]] sheet can include the name and the taxonomic authority. See [[ref:type.taxon]] data type.",
+                        whenToUse: "Use the plain column name in this table. In [[ref:data]] sheet, either use the plain column or add `.name` and `.authority` sub-columns when you want to record and display the taxonomic authority alongside the name.",
                         notes: [],
                         examples: [
                             {
                                 label: "Five-rank hierarchy",
                                 columns: [
-                                    "Column name"
+                                    "Column name", "..."
                                 ],
                                 rows: [
                                     [
-                                        "Class"
+                                        "Class", "..."
                                     ],
                                     [
-                                        "Order"
+                                        "Order", "..."
                                     ],
                                     [
-                                        "Family"
+                                        "Family", "..."
                                     ],
                                     [
-                                        "Genus"
+                                        "Genus", "..."
                                     ],
                                     [
-                                        "Species"
-                                    ]
-                                ]
-                            },
-                            {
-                                label: "Species with authority stored in sub-columns",
-                                note: "Both `Species` and `Species.authority` are then present in the data sheet.",
-                                columns: [
-                                    "Column name"
-                                ],
-                                rows: [
-                                    [
-                                        "Species"
+                                        "Species", "..."
                                     ]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "Any valid spreadsheet column header, e.g. `Regnum`, `Kingdom`, `MajorGroup`. Must match a column that exists in the data sheet. Duplicates are not allowed.",
+                            description: "Any valid spreadsheet column header, e.g. `Regnum`, `Kingdom`, `MajorGroup`. Must match a column that exists in the [[ref:data]] sheet. Duplicates are not allowed.",
                             allowDuplicates: "no",
                             allowedContent: "columnName",
                             allowEmpty: false,
@@ -147,8 +109,8 @@ export const nlDataStructureSheets = {
                     },
                     orderBy: {
                         name: "Order by",
-                        description: "Controls how taxa at this level are sorted in the tree. `alphabet` (the default) sorts taxa alphabetically. `as is` preserves the order of rows as they appear in the data sheet - useful when you want a non-alphabetical display order (e.g. Ferns → Bryophytes → Dicots).",
-                        whenToUse: "Leave empty or use `alphabet` for the vast majority of cases. Use `as is` only for the topmost rank when the data sheet row order carries a meaningful sequence that alphabetical sorting would destroy.",
+                        description: "Controls how taxa at this level are sorted in the tree. `alphabet` (the default) sorts taxa alphabetically. `as is` preserves the order of rows as they appear in the [[ref:data]] sheet - useful when you want a non-alphabetical display order (e.g. Ferns → Bryophytes → Dicots).",
+                        whenToUse: "Leave empty or use `alphabet` for the vast majority of cases. Use `as is` only for the topmost rank when the [[ref:data]] sheet row order carries a meaningful sequence that alphabetical sorting would destroy.",
                         notes: [],
                         examples: [
                             {
@@ -178,7 +140,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "Leave empty or enter `alphabet` for alphabetical ordering. Enter `as is` to preserve data sheet row order.",
+                            description: "Leave empty or enter `alphabet` for alphabetical ordering. Enter `as is` to preserve [[ref:data]] sheet row order.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
                             defaultValue: "alphabet",
@@ -316,7 +278,7 @@ export const nlDataStructureSheets = {
             customDataDefinition: {
                 name: "Custom data definition",
                 required: false,
-                description: "Declares every non-taxon column you want to display or use in filters. Each row corresponds to one data path from the data sheet, and controls the column's display title, data type, Handlebars template, placement in the taxon card, and visibility rules.\n\nData paths support dot notation for structured sub-fields (`origPub.author`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control independently.",
+                description: "Declares every non-taxon column you want to display or use in filters. Each row corresponds to one data path from the [[ref:data]] sheet, and controls the column's display title, data type, Handlebars template, placement in the taxon card, and visibility rules.\n\nData paths support dot notation for structured sub-fields (`origPub.author`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control independently.",
                 notes: [
                     {
                         type: "tip",
@@ -379,7 +341,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the data sheet. For arrays, include both the root path and the `#` item path. Duplicates are not allowed.",
+                            description: "An existing data path from the [[ref:data]] sheet. For arrays, include both the root path and the `#` item path. Duplicates are not allowed.",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "dataPath",
@@ -1708,9 +1670,9 @@ export const nlDataStructureSheets = {
                                         "Citation text shown to users"
                                     ],
                                     [
-                                        "Data sheets names",
+                                        "[[ref:data]] sheets names",
                                         "checklist",
-                                        "Data sheet tab name if renamed"
+                                        "[[ref:data]] sheet tab name if renamed"
                                     ],
                                     [
                                         "Date format",
@@ -1750,7 +1712,7 @@ export const nlDataStructureSheets = {
                     },
                     value: {
                         name: "Value",
-                        description: "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) - useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **Data sheets names**: comma-separated list of data sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
+                        description: "The configured value for each item. The **Value** column supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) - useful for items like **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **[[ref:data]] sheets names**: comma-separated list of [[ref:data]] sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
                         whenToUse: "Fill in only the items you need to change from their defaults. Leave the Value cell empty for any item you are happy with at its default.",
                         notes: [
                             {
@@ -1783,7 +1745,7 @@ export const nlDataStructureSheets = {
                                         "45"
                                     ],
                                     [
-                                        "Data sheets names",
+                                        "[[ref:data]] sheets names",
                                         "checklist",
                                         "checklist"
                                     ]
@@ -1818,7 +1780,7 @@ export const nlDataStructureSheets = {
                         value: "Sample NaturaList checklist. Author: Dominik M. Ramík (2024). https://naturalist.netlify.app/"
                     },
                     {
-                        item: "Data sheets names",
+                        item: "[[ref:data]] sheets names",
                         value: "checklist"
                     }
                 ]
@@ -1826,11 +1788,11 @@ export const nlDataStructureSheets = {
             dataCodes: {
                 name: "Data codes",
                 required: false,
-                description: "Translates short codes stored in the data sheet into human-readable labels, per language. When the app reads a value from a coded column, it replaces it with the full label before displaying it. Category matching (Colored Categories table) then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your data sheet already contains the display labels you want to show.",
+                description: "Translates short codes stored in the [[ref:data]] sheet into human-readable labels, per language. When the app reads a value from a coded column, it replaces it with the full label before displaying it. Category matching (Colored Categories table) then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show.",
                 notes: [
                     {
                         type: "warning",
-                        text: "If a value appears in the data sheet column but has no matching row in the Data Codes table, the app logs a warning and displays the raw value unchanged. Codes are matched exactly and case-sensitively."
+                        text: "If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app logs a warning and displays the raw value unchanged. Codes are matched exactly and case-sensitively."
                     }
                 ],
                 seeAlso: [
@@ -1843,7 +1805,7 @@ export const nlDataStructureSheets = {
                     columnName: {
                         name: "Column name",
                         description: "The data path of the column whose values should be translated. Each distinct value in that column needs its own row, all sharing the same **Column name** entry.",
-                        whenToUse: "Use whenever your data sheet stores compact codes (like `LC`, `EN`, `N`, `E`) and you want to display full labels instead.",
+                        whenToUse: "Use whenever your [[ref:data]] sheet stores compact codes (like `LC`, `EN`, `N`, `E`) and you want to display full labels instead.",
                         notes: [],
                         examples: [
                             {
@@ -1877,7 +1839,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the data sheet. Each value needing translation requires its own row, all with the same Column name.",
+                            description: "An existing data path from the [[ref:data]] sheet. Each value needing translation requires its own row, all with the same Column name.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
@@ -1886,12 +1848,12 @@ export const nlDataStructureSheets = {
                     },
                     code: {
                         name: "Code",
-                        description: "The raw value as it appears in the data sheet. Matched exactly and case-sensitively against data cell content.",
-                        whenToUse: "Enter the value exactly as it appears in your data sheet cells, including any capitalisation.",
+                        description: "The raw value as it appears in the [[ref:data]] sheet. Matched exactly and case-sensitively against data cell content.",
+                        whenToUse: "Enter the value exactly as it appears in your [[ref:data]] sheet cells, including any capitalisation.",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "The exact raw string value from the data sheet. Matched case-sensitively.",
+                            description: "The exact raw string value from the [[ref:data]] sheet. Matched case-sensitively.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
@@ -2052,7 +2014,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the data sheet, matching the column name used in Custom Data Definition with `category` formatting.",
+                            description: "An existing data path from the [[ref:data]] sheet, matching the column name used in Custom Data Definition with `category` formatting.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
@@ -2233,7 +2195,7 @@ export const nlDataStructureSheets = {
                     code: {
                         name: "Region code",
                         description: "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a-z`) only - no digits, hyphens, or spaces.",
-                        whenToUse: "Use the same codes as in your data sheet `mapregions` cells. Conventional ISO 3166-1 alpha-2 country codes (e.g. `fr`, `de`, `gb`) work well for country-level maps.",
+                        whenToUse: "Use the same codes as in your [[ref:data]] sheet `mapregions` cells. Conventional ISO 3166-1 alpha-2 country codes (e.g. `fr`, `de`, `gb`) work well for country-level maps.",
                         notes: [],
                         examples: [
                             {
@@ -2646,7 +2608,7 @@ export const nlDataStructureSheets = {
                             }
                         ],
                         integrity: {
-                            description: "An existing data path from the data sheet. The column must have a Search category title set in the Custom data definition table.",
+                            description: "An existing data path from the [[ref:data]] sheet. The column must have a Search category title set in the Custom data definition table.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "dataPath",
