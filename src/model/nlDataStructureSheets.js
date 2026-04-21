@@ -1,3 +1,5 @@
+import { text } from "d3";
+
 export const OCCURRENCE_IDENTIFIER = "occurrence";
 
 export const ANALYTICAL_INTENT_TAXA = "T";
@@ -416,22 +418,24 @@ export const nlDataStructureSheets = {
             customDataDefinition: {
                 name: "Custom data definition",
                 required: false,
-                description: "Declares every non-taxon column you want to use for additional data. Rows corresponds to columns in [[ref:data]] sheet and controls the column's display title, data type, template rendering, placement in the taxon card, and visibility rules.\n\nData paths support dot notation for structured sub-fields (`redListEvaluation.year`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control them independently.",
+                description: "Declares every non-taxon column you want to use for additional data. Rows corresponds to columns in [[ref:data]] sheet and controls the column's display title, data type, template rendering, placement in the taxon card and more.\n\nData paths support dot notation for structured sub-fields (`redListEvaluation.year`) and `#` notation for arrays (`habitat#`). Include one row for the root path and one row for each sub-path you want to control them independently.\n\nThis is by far the most complex configuration table in the entire system. Once you are familiar with how it works, the other tables will be a breeze. Take your time to understand the concepts of data paths, data types, templates and other features as they are the key to unlocking the full potential of your project.",
                 notes: [
                     {
                         type: "tip",
-                        text: "Read about the [data path](/author-guide/data-sheet#22-column-naming-rules-and-data-paths) concept to understand how arrays (`#`) and structured sub-fields (`.`) let you represent complex data using plain spreadsheet columns."
+                        text: "Read about the [data path](./data-sheet#column-naming-and-data-paths) concept to understand how arrays (`#`) and structured sub-fields (`.`) let you represent complex data using plain spreadsheet columns."
                     }
                 ],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The data path of the column this row configures. Simple column names (`redlist`), dotted sub-fields (`origPub.author`), and array paths (`habitat#`) are all valid. For array data, include one row for the root path (e.g. `habitat`) and one row for each item path (e.g. `habitat#`).",
-                        howToUse: "Every column from [[ref:data]] sheet that you want to appear as data point in your project must have a row here. Columns used only as template inputs can be listed with `hidden = yes`.",
+                        description: "The data path of the column this row configures. Simple column names (`redlist`), dotted sub-fields (`origPub.author`), and array paths (`habitat#`) are all valid. For structured and array data, include one row for the root path (e.g. `habitat`) and one row for each item path (e.g. `habitat#`).",
+                        howToUse: "Every column from [[ref:data]] sheet that you want to appear as data point in your project must have a row here. Columns from the [[ref:data]] sheet used only as template inputs for other columns can be listed with `hidden = yes` to avoid displaying them.",
                         notes: [],
                         examples: [
                             {
-                                label: "Simple column and array column",
+                                label: "Simple column, array column and a structured column with sub-fields",
+                                text: "Here we have a simple column (`redlist`), several habitats with an array column (`habitat#`) with its root path (`habitat` and a title applied once for all its items), and a structured column (`dimmensions`) with two sub-fields (`dimmensions.beakToTail` with its title and `dimmensions.wingspan` with its title).",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Title",
@@ -452,7 +456,41 @@ export const nlDataStructureSheets = {
                                         "habitat#",
                                         "",
                                         "text"
-                                    ]
+                                    ],
+                                    [
+                                        "dimmensions",
+                                        "",
+                                        "list"
+                                    ],
+                                    [
+                                        "dimmensions.beakToTail",
+                                        "Beak to tail length",
+                                        "number"
+                                    ],
+                                    [
+                                        "dimmensions.wingspan",
+                                        "Wingspan",
+                                        "number"
+                                    ],
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:data]] sheet, the `habitat#` column becomes multiple columns (e.g., `habitat1`, `habitat2`) containing individual habitats per taxon (you could also opt for a single `habitat` column with pipe-separated values), and the `dimmensions.beakToTail` and `dimmensions.wingspan` columns contain measurements that belong together under a common `dimmensions` root path. Note that there is no need to enter the intermediate data path items (no `habitat` column before `habitat1` and `habitat2`, no `dimmensions` column before `dimmensions.beakToTail` and `dimmensions.wingspan`) as they do not carry any data. It is only your terminal ('leaf') data paths that matter as columns. The example leaves out most of the taxonomic structure for brevity\n\nNote: in this example we write-out the `redlist` category verbatim for simplicity. For this and similar controlled vocabularies your data entry will be simpler, if you enter the RedList codes ('EN', 'VU') and set up the [[ref:appearance.dataCodes]] for them.",
+                                fillRight: true,
+                                fillLeft: true,
+                                columns: [
+                                    "species",
+                                    "redlist",
+                                    "habitat1",
+                                    "habitat2",
+                                    "dimmensions.beakToTail",
+                                    "dimmensions.wingspan"
+                                ],
+                                rows: [
+                                    ["Aquilla chrysaetos", "Vulnerable", "Forests", "", "150", "120"],
+                                    ["Buteo buteo", "Least Concern", "Forest", "Farmland", "60", "110"],
+                                    ["Falco peregrinus", "Least Concern", "Mountains", "Urban", "55", "100"]
                                 ]
                             }
                         ],
@@ -485,6 +523,7 @@ export const nlDataStructureSheets = {
                             },
                             {
                                 label: "Structured and array sub-items without titles",
+                                text: "Note that contrary to the example in [[ref:content.customDataDefinition.columnName]], the `redList` here is not a simple field, but a structured one with sub-properties. Just to show you that your data depend completely on your needs and nothing is pre-defined.",
                                 columns: [
                                     "Column name",
                                     "Title"
@@ -524,8 +563,8 @@ export const nlDataStructureSheets = {
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
-                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated prefix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
-                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Label | Group` sparingly pattern to organise logically related filters into named sections.",
+                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.formatting]] value.\n\nAdd a pipe-separated suffix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
+                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Label | Group` pattern to organise multiple logically related filters into named sections.",
                         notes: [
                             {
                                 type: "tip",
@@ -566,17 +605,19 @@ export const nlDataStructureSheets = {
                     },
                     formatting: {
                         name: "Data type",
-                        description: "The data type for this column. Determines how the app reads the raw cell value, renders it, and (if **Search category title** is set) which filter type to show.\n\nFor array or object root entries (paths using `#` or `.` children), use `list` to control how sub-items are joined for display. Append an optional separator keyword after a space:\n\n| Value | Result |\n|---|---|\n| `list` or `list bullets` | Unordered bullet list (default) |\n| `list numbered` | Ordered list starting at 1 |\n| `list unmarked` | List with no bullets or numbers |\n| `list space` | Items on one line, separated by a space |\n| `list comma` | Items on one line, separated by `, ` |\n| `list <any string>` | Items on one line, separated by that string |\n\nSee [Data Types](/reference/data-types) for the full type reference.",
-                        howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
+                        description: "The data type for this column. Determines how the app reads and render the raw cell value (or its sub-columns) You have already seen this in the case of [[ref:type.taxon]] data type when filling-in the [[ref:content.taxa]] table), where the **taxon** data type allowed you to use its `[column].name` and `[column].authority` properties to enter the taxonomic name and authority.\n\nFor array or object root entries (paths using `#` or `.` children), use the special `list` data type to indicate a compound value. Append an optional separator keyword after a space:\n\n| Value | Result |\n|---|---|\n| `list` or `list bullets` | Unordered bullet list (default) |\n| `list numbered` | Ordered list starting at 1 |\n| `list unmarked` | List with no bullets or numbers |\n| `list space` | Items on one line, separated by a space |\n| `list comma` | Items on one line, separated by `, ` |\n| `list [any string]` | Items on one line, separated by that string |\n\nSee [Data Types](./data-types) for the full type reference.",
+                        howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate data type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
                         notes: [
                             {
                                 type: "tip",
-                                text: "Store bare numbers in your data cells and use the **Template** column to add units at display time (e.g. `{{unit \"m\"}}`). Entering `5 m` in a cell instead of `5` turns the value into text and disables numeric filtering."
+                                title: "Numbers and units",
+                                text: "Store bare numbers in your data cells and use the **Template** column to add units at display time (e.g. `{{unit \"m\"}}`). Entering `5 m` in a cell instead of `5` turns the value into text and disables numeric filtering. Read more about the [unit template](./templates#unit-automatic-unit-scaling)."
                             }
                         ],
                         examples: [
                             {
                                 label: "Common data type values",
+                                text: "The below is a non-normative list of suggestions for common data types and their effects. Explore the [Data Types reference](./data-types) for the full list of types and their capabilities. As always, nothing is set in stone and the best choice depends on your specific data and how you want to use it - experiment with different types to find the best fit for your project.",
                                 columns: [
                                     "Column name",
                                     "Data type",
@@ -591,17 +632,22 @@ export const nlDataStructureSheets = {
                                     [
                                         "wingLength",
                                         "number",
-                                        "Numeric value; range filter"
+                                        "Numeric value of exact measurement; numeric filter"
+                                    ],
+                                    [
+                                        "wingspan",
+                                        "interval",
+                                        "Numeric value of the typical range; numeric filter"
                                     ],
                                     [
                                         "collectionDate",
                                         "date",
-                                        "Parsed and formatted date; date range filter"
+                                        "Parsed and formatted date; date filter"
                                     ],
                                     [
                                         "distribution",
                                         "mapregions",
-                                        "SVG map + inline region list"
+                                        "SVG distribution choropleth map + inline region list"
                                     ],
                                     [
                                         "flowering",
@@ -611,23 +657,23 @@ export const nlDataStructureSheets = {
                                     [
                                         "photo",
                                         "image",
-                                        "Clickable thumbnail; not filterable"
+                                        "Clickable thumbnail; filterable by title"
                                     ],
                                     [
                                         "basionym",
                                         "taxon",
-                                        "Clickable taxon link; text-searchable"
+                                        "Clickable taxon link; filtrable by taxon name"
                                     ],
                                     [
-                                        "notes",
+                                        "fieldIdentification",
                                         "markdown",
-                                        "Rendered Markdown; not filterable"
+                                        "Rendered formatted text through Markdown; not filterable but searchable in full-text"
                                     ]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "`list` may be followed by a separator keyword (e.g. `list comma`, `list bullets`, `list space`).",
+                            description: "`list` may be followed by a separator keyword (e.g. `list comma`, `list bullets`, `list space`) or any data type name.",
                             allowEmpty: true,
                             defaultValue: "text",
                             allowDuplicates: "yes",
@@ -638,7 +684,7 @@ export const nlDataStructureSheets = {
                     template: {
                         name: "Template",
                         description: "A [Handlebars](https://handlebarsjs.com/) expression applied to the raw data value before the type-specific renderer runs. Use `{{value}}` for the current field's value, `{{taxon.name}}` for the taxon name, `{{taxon.authority}}`, `{{taxon.fullName}}`, and `{{data.columnname}}` for any other field on the same row.\n\nFor `image`, `sound`, and `map` types, the template produces the **source URL**. For `mapregions`, it produces the **SVG file path**. For `geopoint`, it is the **map link URL** (use `{{lat}}` and `{{long}}`).\n\nSupports multilingual variants: `Template:en`, `Template:fr`.",
-                        howToUse: "Use when you need to append a unit, build a URL, select a file path dynamically, or transform the raw value before display. See [Dynamic Content with Templates](/author-guide/templates) for worked examples.",
+                        howToUse: "Use when you need to modify the spreadsheet value in display to append a unit, build a URL, select a file path dynamically, or transform the raw value before display. See [Dynamic content with templates](./templates) for worked examples.",
                         notes: [
                             {
                                 type: "tip",
@@ -654,10 +700,6 @@ export const nlDataStructureSheets = {
                                 ],
                                 rows: [
                                     [
-                                        "Append a unit",
-                                        "`{{value}} cm`"
-                                    ],
-                                    [
                                         "Auto-scale a unit",
                                         "`{{unit \"m\"}}`"
                                     ],
@@ -666,12 +708,100 @@ export const nlDataStructureSheets = {
                                         "`[{{taxon.name}}](https://www.gbif.org/search?q={{value}})`"
                                     ],
                                     [
-                                        "Dynamic SVG map path",
-                                        "`maps/{{data.region}}.svg`"
+                                        "Simplify referencing media files in `usercontent/`",
+                                        "`usercontent/img/{{value}}.jpg`"
+                                    ],
+                                    [
+                                        "SVG map path",
+                                        "`maps/southeast-asia.svg`"
                                     ],
                                     [
                                         "Google Maps geopoint",
                                         "`https://www.google.com/maps?q={{lat}},{{long}}`"
+                                    ]
+                                ]
+                            },
+                            {
+                                label: "Custom data definition settings",
+                                fillRight: true,
+                                text: "Simplified table with one row per each previous example, with comments",
+                                columns: [
+                                    "Column name",
+                                    "Title",
+                                    "Data type",
+                                    "Template",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "wingspan",
+                                        "Wingspan",
+                                        "interval",
+                                        "`{{\"unit\" \"cm\"}}`",
+                                        "Typical interval (use `interval` data type instead of single-value `number`) of wingspan in cm; the `{{unit}}` helper auto-scales the value to the most readable unit in the same category (e.g. `5` → `5 cm`, `150` → `1.5 m`)"
+                                    ],
+                                    [
+                                        "gbifTaxonNumber",
+                                        "GBIF taxon",
+                                        "number",
+                                        "`[{{taxon.name}}](https://www.gbif.org/species/{{value}})`",
+                                        "Use Markdown notation to render a link to the corresponding GBIF species page using the cell value"
+                                    ],
+                                    [
+                                        "referenceImage",
+                                        "",
+                                        "image",
+                                        "`usercontent/img/{{value}}.jpg`",
+                                        "No title, just a clickable image. The template builds the source URL from the cell value - e.g. a cell value of `rose` looks for `usercontent/img/rose.jpg` instead of you typing the full path every time."
+                                    ],
+                                    [
+                                        "southeastAsiaRange",
+                                        "Southeast Asia Range",
+                                        "mapregions",
+                                        "`maps/southeast-asia.svg`",
+                                        "Use satatic reference for an SVG file in `usercontent/maps/` to render a custom map showing the distribution range within Southeast Asia. This would expect some additional configuration, see **mapregions** data type for full details."
+                                    ],
+                                    [
+                                        "gpsCoordinates",
+                                        "GPS coordinates",
+                                        "geopoint",
+                                        "`https://www.openstreetmap.org/?mlat={{lat}}&mlon={{long}}&zoom=5`",
+                                        "Use any URL template with `{{lat}}` and `{{long}}` placeholders to render a link to an online map centered on the coordinates.."
+                                    ]
+                                ]
+                            },
+                            {
+                                label: "",
+                                fillLeft: true,
+                                fillRight: true,
+                                text: "In your [[ref:data]] sheet your data for each of those would look like this, taxonomy mostly left out for simplicity. See [Data types](./data-types) for full details on each of these data types and their specific data entry options.",
+                                columns: [
+                                    "species",
+                                    "wingspan",
+                                    "gbifTaxonNumber",
+                                    "referenceImage",
+                                    "southeastAsiaRange",
+                                    "gpsCoordinates",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "Chrysococcyx maculatus",
+                                        "16 - 18",
+                                        "2496315",
+                                        "chrysococcyx_maculatus_1200px",
+                                        "vn | mm | th",
+                                        "15.9742, 105.8064",
+                                        "`referenceImage` needs only the actual file name without extension, not the full path thanks to our template. `southeastAsiaRange` supposes you have the region codes set up for `vn` (Vietnam), `mm` (Myanmar), and `th` (Thailand)."
+                                    ],
+                                    [
+                                        "Centropus sinensis",
+                                        "55 - 75",
+                                        "5232005",
+                                        "centropus_sinensis_1200px",
+                                        "cn | mm | th",
+                                        "22.3964, 114.1095",
+                                        "Another taxon with its own data"
                                     ]
                                 ]
                             }
@@ -687,42 +817,49 @@ export const nlDataStructureSheets = {
                     },
                     placement: {
                         name: "Placement",
-                        description: "Where the data field appears in the taxon card. Combine with `details` using a pipe to show the field both in the list view and in the Details pane - e.g. `left | details`.\n\nWhen `details` is included, the field appears in a tab determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](/reference/placement-options) for the layout diagram and guidance table.",
+                        description: "Defines where the data field appears in the taxon card.\n\nWhen `details` is used, the field won't show up in the taxon card, but will appear upon clicking that taxon in a [details tab](/user-guide/taxon-details) determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](./placement-visibility) for the layout diagram and guidance table.",
                         howToUse: "Use `left`, `middle`, or `right` for compact single-value fields (status badges, dates, short measurements). Use `top` or `bottom` for longer content (descriptions, distribution lists). Use `details` for rich content (large images, full maps, long notes) that users seek out by clicking a taxon.",
                         notes: [],
                         examples: [
                             {
-                                label: "Typical placement choices",
+                                label: "Sample placement choices",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Data type",
-                                    "Placement"
+                                    "Placement",
+                                    "[comment]"
                                 ],
                                 rows: [
                                     [
                                         "redlist",
                                         "category",
-                                        "left"
+                                        "left",
+                                        ""
                                     ],
                                     [
                                         "collectionDate",
                                         "date",
-                                        "right"
+                                        "right",
+                                        "Instead of putting `redlist` and `collectionDate` in the same column, we give them separate columns to take less vertical space."
                                     ],
                                     [
                                         "description",
                                         "markdown",
-                                        "details"
+                                        "details",
+                                        "This text may be long, so let's give it the full horizontal space."
                                     ],
                                     [
                                         "distribution",
                                         "mapregions",
-                                        "bottom | details"
+                                        "middle | details",
+                                        "`mapregions` are chameleons ... in `details` they will render an SVG choroipleth map, but in the main card they will render a simple text list of regions. Pick either or both. This way users get a quick overview in the card and can click for the full map if they want."
                                     ],
                                     [
                                         "photo",
                                         "image",
-                                        "details"
+                                        "details",
+                                        "This won't show up on the main card, but users can click the taxon name to see the image in the Media tab."
                                     ]
                                 ]
                             }
@@ -753,16 +890,14 @@ export const nlDataStructureSheets = {
                     hidden: {
                         name: "Hidden",
                         description: "Controls whether and when a data field is displayed.\n\n- Empty or `no`: field is always shown.\n- `yes`: field is completely hidden from the taxon card (data is still loaded and available in templates via `{{data.*}}`).\n- `data`: hidden from the taxon card but drives a filter button in the sidebar. Also makes the column available in the Trait Matrix analysis tool without a visible filter.\n- **Conditional expression**: show or hide the field based on the current state of a filter. The subject is the column name of any filter-enabled column.\n\n| Expression | Effect |\n|---|---|\n| `if incountry notset` | Hide if the `incountry` filter has no value selected |\n| `unless incountry isset` | Hide unless the `incountry` filter has at least one value |\n| `unless incountry is \"Czechia\", \"Vanuatu\"` | Hide unless `incountry` has Czechia or Vanuatu selected |\n| `unless incountry notsetor \"Czechia\"` | Hide unless `incountry` is unset or has Czechia selected |",
-                        howToUse: "Use `yes` for columns needed as template inputs but not for display. Use `data` for filter-only or Trait Matrix columns. Use a conditional expression for region- or scenario-specific fields that should only appear when a relevant filter is active.",
+                        howToUse: "Most of your rows will leave this empty. Use `yes` for columns needed as template inputs but not for display. Use `data` for filter-only or Trait Matrix columns that you don't want to show up on the taxon card (could be complex systems of traits you don't want to inflate your taxon card). Use a conditional expression for region- or scenario-specific fields that should only appear when a relevant filter is active. This could be used to create eg. a country filter for a regional checklist project, where you only want to show country-specific status or distribution fields when the user has selected that country in the filter - keeping the taxon card clean of irrelevant fields for users interested in other regions.",
                         notes: [
-                            {
-                                type: "tip",
-                                text: "See [End-to-End Examples → Example F](/author-guide/examples#example-f-conditional-data-display) for a complete worked illustration of conditional hiding with a country filter."
-                            }
                         ],
                         examples: [
                             {
                                 label: "Conditional visibility per country filter",
+                                fillRight: true,
+                                text: "This will show the `status_cz` column only when the user has selected `Czechia` in the `incountry` filter, and the `status_fr` column only when `France` is selected. When no country is selected, or a different country is selected, both columns are hidden. This way we can have one column per country with specific status information without cluttering the taxon card with irrelevant fields for users interested in other countries.",
                                 columns: [
                                     "Column name",
                                     "Title",
@@ -802,12 +937,12 @@ export const nlDataStructureSheets = {
                     },
                     belongsTo: {
                         name: "Belongs to",
-                        description: "Declares whether this data column belongs to taxon rows or occurrence rows.\n\n- Empty (default) or `taxon`: the column belongs to taxon rows. Data found on an occurrence row raises a compiler error and is excluded from the compiled output.\n- `occurrence`: the column belongs to occurrence rows only. Data found on a taxon row raises a compiler error and is excluded from the compiled output.\n\nEvery column must belong to one entity or the other - there is no shared option.\n\nOnly set this on root or simple columns; child columns (`.subfield`, `#`) inherit the value automatically.",
-                        howToUse: "Leave empty for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality). If a column applies to occurrences it must be declared `occurrence`; taxon columns may be left blank.",
+                        description: "If your dataset includes **occurrences**, this column controls whether it belongs to taxon or occurrence rows.\n\n- Empty (default) or `taxon`: the column belongs to taxon rows.\n- `occurrence`: the column belongs to occurrence rows only.\n\nEvery column must belong to one entity or the other - there is no shared option.\n\nOnly set this on root or simple columns; child columns (`.subfield`, `#`) inherit the value automatically. See [Occurrence and collection mode](./occurrence-collection-mode) for more information.",
+                        howToUse: "Leave empty for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality).",
                         notes: [
                             {
                                 type: "tip",
-                                text: "In the filter sidebar, `taxon` columns are hidden when the user switches to Occurrence mode, and `occurrence` columns are hidden in Taxon mode. This keeps the filter panel uncluttered regardless of which view is active."
+                                text: "In the filter sidebar, `taxon` filters are always visible, but when the user switches to Occurrence mode, `occurrence` filters become visible."
                             },
                             {
                                 type: "warning",
@@ -817,6 +952,7 @@ export const nlDataStructureSheets = {
                         examples: [
                             {
                                 label: "Mixed taxon and occurrence columns",
+                                fillRight: true,
                                 columns: [
                                     "Column name",
                                     "Title",
@@ -826,34 +962,93 @@ export const nlDataStructureSheets = {
                                     [
                                         "redlist",
                                         "Red List",
-                                        "taxon"
+                                        ""
                                     ],
                                     [
                                         "description",
                                         "Description",
-                                        "taxon"
+                                        ""
                                     ],
                                     [
                                         "collector",
                                         "Collector",
                                         "occurrence"
                                     ],
-                                    [
-                                        "collectionDate",
-                                        "Collection date",
-                                        "occurrence"
-                                    ],
-                                    [
-                                        "catalogNumber",
-                                        "Catalog number",
-                                        "occurrence"
-                                    ],
-                                    [
-                                        "distribution",
-                                        "Distribution",
-                                        "taxon"
-                                    ]
                                 ]
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:data]] sheet, the `collector` and `catalogNumber` columns would only have values in occurrence rows, while `redlist`, `description`, and `distribution` would have values in taxon rows. Taxonomy is simplified for this example and the `catalogNumber` column is the `occurrence` level taxon from [[ref:content.taxa]] table.\n\nUsing this pattern you can define separate rows for taxa-related data and others for occurrence-related data.",
+                                fillRight: true,
+                                columns: [
+                                    "family",
+                                    "species",
+                                    "catalogNumber",
+                                    "redlist",
+                                    "description",
+                                    "collector",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "Accipiteridae",
+                                        "",
+                                        "",
+                                        "",
+                                        "Medium-large raptors with a robust body...",
+                                        "",
+                                        "This is a **taxon** row (it has no catalogNumber), here we enter the family-level information that will show up on the family-level taxon card, no Red List information (this is a family), but a family-level description."
+                                    ],
+                                    [
+                                        "Accipiteridae",
+                                        "",
+                                        "NHM-1",
+                                        "",
+                                        "",
+                                        "John Doe",
+                                        "This is an **occurrence** row (it has a catalogNumber), this occurrence is identified only to the `family`-level and carries the name of the collector."
+                                    ],
+                                    [
+                                        "Accipiteridae",
+                                        "Accipiter gentilis",
+                                        "",
+                                        "Least Concern",
+                                        "The northern goshawk is ...",
+                                        "",
+                                        "This is a **taxon** row (it has no catalogNumber), here we enter the species-level information that will show up on the species-level taxon card."
+                                    ],
+                                    [
+                                        "Accipiteridae",
+                                        "Accipiter gentilis",
+                                        "NHM-2",
+                                        "",
+                                        "",
+                                        "Jane Smith",
+                                        "This is an **occurrence** row (it has a catalogNumber), this occurrence is identified to species level and carries the name of the collector."
+                                    ],
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "In the checklist view, this will render to something like this:",
+                                preformatted: `
+┌────────────────────────────────────────────────────────┐
+│ Accipiteridae                                          │
+│ Description: Medium-large raptors with a robust body...│
+├────────────────────────────────────────────────────────┤
+│  │ NHM-1 (family: Accipiteridae)                       │
+│  │ Collector: John Doe                                 │
+├────────────────────────────────────────────────────────┤
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ Accipiter gentilis (family: Accipiteridae)         │ │
+│ │ Red List: Least Concern                            │ │
+│ │ Description: The northern goshawk is ...           │ │
+│ ├────────────────────────────────────────────────────┤ │
+│ │  │ NHM-2 (species: Accipiter gentilis)             │ │
+│ │  │ Collector: Jane Smith                           │ │               
+│ └────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────┘
+`
                             }
                         ],
                         integrity: {
@@ -866,7 +1061,7 @@ export const nlDataStructureSheets = {
                                 "taxon",
                                 "occurrence"
                             ],
-                            defaultValue: "",
+                            defaultValue: "taxon",
                             supportsMultilingual: false
                         }
                     }
@@ -899,11 +1094,12 @@ export const nlDataStructureSheets = {
             searchOnline: {
                 name: "Search online",
                 required: false,
-                description: "Defines external search engine links that appear in the Details pane for each taxon, allowing users to look up taxa in online databases, herbaria, encyclopaedias, and other resources. Each row is one link.\n\nThis table can be left completely empty if you do not want to provide external search links.",
+                description: "Defines external search engine links that appear in the [Details pane](/user-guide/taxon-details) for each taxon, allowing users to look up taxa in online databases, herbaria, encyclopaedias, and other resources. Each row is one link.\n\nThis table can be left completely empty if you do not want to provide external search links, but it is a great way to enhance the user to easily look up the taxa in relevant third party online resources.",
                 notes: [
                     {
                         type: "tip",
-                        text: "For standard biological databases, consider the built-in [Database Shortcodes](/author-guide/nl-content#36-table-database-shortcodes) (`@gbif:ID`, `@inat:ID`, etc.) as an alternative - shortcodes embed links inline in Markdown fields rather than as sidebar buttons."
+                        title: "Search links vs. shortcodes",
+                        text: "A similar functionality is provided by [[ref:content.databaseShortcodes]]. These two features both link to external resources but serve distinct purposes. **Search Online links** are universal buttons in the Details pane that query an external site - GBIF, Google Images, a herbarium portal - by taxon name, configured once and applied to every taxon automatically. **Database Shortcodes** are inline links embedded in individual `markdown` fields using `@code:ID` syntax to point at a *specific known record* - for example `@inat:193429759` for a particular iNaturalist observation. In short: use **Search Online** for universal, name-based discovery; use **Database Shortcodes** when curating specific, citable external records for individual data entries."
                     }
                 ],
                 columns: {
@@ -915,14 +1111,15 @@ export const nlDataStructureSheets = {
                         examples: [
                             {
                                 label: "Bilingual search link titles",
+                                fillRight: true,
                                 columns: [
                                     "Title:en",
                                     "Title:fr"
                                 ],
                                 rows: [
                                     [
-                                        "GBIF occurrence",
-                                        "Occurrence GBIF"
+                                        "NYBG Virtual Herbarium",
+                                        "Herbier virtuel NYBG"
                                     ],
                                     [
                                         "Google Images",
@@ -941,24 +1138,29 @@ export const nlDataStructureSheets = {
                     },
                     icon: {
                         name: "Icon",
-                        description: "Filename (including extension) of the icon image located in `usercontent/online_search_icons/`. The icon should be square, at least 200 × 200 px, with a white or transparent background. Accepted formats: `.jpg`, `.png`, `.webp`, `.svg`.",
+                        description: "Filename (including extension) of the icon image located in `usercontent/online_search_icons/`. The icon should be square, at preferrably at least 200 × 200 px, with a white or transparent background. Accepted formats: `.jpg`, `.png`, `.webp`, `.svg`.\n\nNaturaList comes with icons shipped for GBIF (`gbif.png`), iNaturalist (`inat.png`), and Google (`google.png`), but you can add your own icons for any other search engines or online databases you want to link to.",
                         howToUse: "Prepare one icon per search engine and upload it to `usercontent/online_search_icons/` before compiling.",
                         notes: [],
                         examples: [
                             {
                                 label: "Icon filenames",
+                                fillRight: true,
                                 columns: [
+                                    "Title",
                                     "Icon"
                                 ],
                                 rows: [
                                     [
+                                        "GBIF",
                                         "gbif.png"
                                     ],
                                     [
+                                        "Google Images",
                                         "google.png"
                                     ],
                                     [
-                                        "wikipedia.png"
+                                        "eBird",
+                                        "ebird.png"
                                     ]
                                 ]
                             }
@@ -979,12 +1181,13 @@ export const nlDataStructureSheets = {
                     },
                     searchUrlTemplate: {
                         name: "Search URL template",
-                        description: "The URL users are taken to when clicking the link, with Handlebars placeholders for dynamic values. The most common variable is `{{taxon.name}}`; `{{taxon.authority}}`, `{{data.columnname}}`, etc. are also available.\n\nTo construct the URL, search for a known taxon on the target site, copy the results URL, strip unnecessary parameters, and replace the taxon name portion with `{{taxon.name}}`.",
+                        description: "The URL users are taken to when clicking the link, with Handlebars placeholders for dynamic values. The most common variable is `{{taxon.name}}`; `{{taxon.authority}}`, `{{data.columnname}}`, etc. are also available.\n\nTo construct the URL, search for a known taxon on the target site, copy the results URL, strip unnecessary parameters, and replace the taxon name portion with `{{taxon.name}}`. Some sites use complex search forms which send data as a POST request instead of a URL query - in that case, you can often use your browsers Dev Tools to see the format of the form submission and deduct the name of parameter used to pass the taxon name and then construct the URL with the appropriate placeholders.\n\nFor multilingual projects, you can provide language-specific URL templates if the target site has language-specific URL patterns - for example, Google search URLs differ for `google.com` vs. `google.fr` - by using `Search URL template:en`, `Search URL template:fr`, etc.",
                         howToUse: "Supports multilingual variants if the target site has language-specific URL patterns.",
                         notes: [],
                         examples: [
                             {
                                 label: "Common search URL templates",
+                                fillRight: true,
                                 columns: [
                                     "Title",
                                     "Search URL template"
@@ -995,12 +1198,12 @@ export const nlDataStructureSheets = {
                                         "`https://www.google.com/search?q={{taxon.name}}&tbm=isch`"
                                     ],
                                     [
-                                        "GBIF species",
+                                        "GBIF Taxa",
                                         "`https://www.gbif.org/species/search?q={{taxon.name}}`"
                                     ],
                                     [
-                                        "Wikipedia",
-                                        "`https://en.wikipedia.org/wiki/{{taxon.name}}`"
+                                        "Smithsonian, US National Herbarium (US)",
+                                        "`https://collections.nmnh.si.edu/search/botany/?qn={{taxon.name}}`"
                                     ]
                                 ]
                             }
@@ -1016,21 +1219,31 @@ export const nlDataStructureSheets = {
                     restrictToTaxon: {
                         name: "Restrict to taxon",
                         description: "If non-empty, the search link is shown only for taxa that are descendants of the named taxon (or the taxon itself). Multiple taxa can be listed comma-separated: `Aceropyga, Baeturia` restricts the link to descendants of either genus. Leave empty to show the link for every taxon.",
-                        howToUse: "Use when the linked database covers only a subset of your project's taxa - for example, a beetle database link on a vertebrate checklist should be restricted to `Coleoptera`.",
+                        howToUse: "Use when the linked database covers only a subset of your project's taxa - for example, a beetle database link on a vertebrate checklist should be restricted to `Coleoptera`, as the database would likely be of limited use for e.g., mammal taxa.",
                         notes: [],
                         examples: [
                             {
                                 label: "Restricting a mammal database link",
+                                text: "Supposing your project has taxa covering different vertebrate groups, but the Mammal Diversity Database only has information on mammals, you can restrict that search link to `Mammalia` so it only appears for relevant taxa.",
+                                fillRight: true,
                                 columns: [
                                     "Title",
                                     "Search URL template",
-                                    "Restrict to taxon"
+                                    "Restrict to taxon",
+                                    "[comment]"
                                 ],
                                 rows: [
                                     [
                                         "Mammal Diversity DB",
                                         "`https://www.mammaldiversity.org/taxa.html#genus={{taxon.name}}`",
-                                        "Mammalia"
+                                        "Mammalia",
+                                        "This link will only show up for taxa that are mammals."
+                                    ],
+                                    [
+                                        "GBIF Taxa",
+                                        "`https://www.gbif.org/species/search?q={{taxon.name}}`",
+                                        "",
+                                        "This link will show up for all taxa."
                                     ]
                                 ]
                             }
@@ -1063,17 +1276,18 @@ export const nlDataStructureSheets = {
             singleAccessKeys: {
                 name: "Single-access keys",
                 required: false,
-                description: "Embeds dichotomous or polytomous identification keys directly in the spreadsheet, navigable from within the app. Each key is a block of rows using four columns. Multiple keys can coexist in the same table.\n\nAs the user navigates a key, the main checklist filter updates in real time to show only the taxa still reachable given the choices made so far.\n\nThis table can be left completely empty if you do not use identification keys.",
+                description: "Embeds dichotomous or polytomous identification keys directly in the spreadsheet, navigable from within the app. Each key is a block of rows using four columns. Multiple keys can coexist in the same table and can be even chained (e.g. key to insect orders can automatically lead to a key for specific families).\n\nAs the user navigates a key, the main checklist filter updates in real time to show only the taxa still reachable given the choices made so far.\n\nThis table can be left completely empty if you do not use identification keys or plan to add them later once your data is ready.",
                 notes: [
                     {
                         type: "tip",
-                        text: "Use `**bold**` in Text cells to highlight the diagnostic character being contrasted, and `*italics*` for taxon names. Images for key steps go in `usercontent/keys/`."
+                        title: "Formatting key text",
+                        text: "Use Markdown `\*\***bold**\*\*` in Text cells to highlight the diagnostic character being contrasted, and `\__italics_\_` for taxon names. If needed, you can use other Markdown formatting or `@citekey` bibliography citations (see [[ref:content.bibliography]] table)."
                     }
                 ],
                 columns: {
                     step: {
                         name: "Step",
-                        description: "A text code starts a new key (e.g. `beetles`, or a taxon name such as `Turdus`). An integer starts or continues a question step within the current key. All rows sharing the same integer are the choices for that one question. Step integers must be strictly ascending within a key, and a Target integer must always be higher than the current Step integer.\n\nIf a key result is a taxon name that matches the Step header of another key, the app automatically offers that second key as a continuation - enabling multi-level key chains.",
+                        description: "A text code starts a new key. You can use any **text**, but it's recommended to use the taxon name from among your taxa which covers the key (e.g. `Coleoptera` for a key to beetles families; `beetles` will be accepted, you may use a non-taxon identifier if your key doesn't cover an entire taxon). An **integer** starts or continues a question step within the current key. All rows sharing the same integer are the choices for that one question. Step integers must be strictly ascending within a key, and a **Target** integer must always be higher than the current **Step** integer.\n\nIf a key result is a taxon name that matches the **Step** header of another key, the app automatically offers that second key as a continuation - enabling multi-level key chains, hence the interest to use names of taxa as **Step** headers.",
                         howToUse: "Use a unique text code for each key header, then ascending integers (1, 2, 3…) for question steps within that key.",
                         notes: [],
                         examples: [
@@ -1096,13 +1310,13 @@ export const nlDataStructureSheets = {
                                         "1",
                                         "Body covered with scales, no limbs",
                                         "2",
-                                        "snake_silhouette.png"
+                                        ""
                                     ],
                                     [
                                         "1",
                                         "Four limbs present",
                                         "3",
-                                        "lizard_silhouette.png"
+                                        ""
                                     ],
                                     [
                                         "2",
@@ -1115,9 +1329,43 @@ export const nlDataStructureSheets = {
                                         "Uniform olive",
                                         "Aipysurus laevis",
                                         ""
+                                    ],
+                                    [
+                                        "3",
+                                        "...",
+                                        "...",
+                                        ""
                                     ]
                                 ]
+                            },
+                            {
+                                label: "Three chained keys: European beetle families and two family-level keys",
+                                text: "The Target values `Carabidae` and `Coccinellidae` in the first key match the Step header codes of the two lower keys exactly, so the app automatically chains into them. This supposes you have all those taxa in your [[ref:data]] sheet.",
+                                columns: ["Step", "Text", "Target", "Images"],
+                                rows: [
+                                    // Higher-taxon key: to family
+                                    ["beetles_europe", "Key to Selected European Beetle Families | Following @beetles2018, covers Carabidae, Coccinellidae, and Cerambycidae...", "1", ""],
+                                    ["1", "Body **flattened and elongate**; hind angles of pronotum acute...", "Carabidae", ""],
+                                    ["1", "Body **strongly convex** (hemispherical) or elongate-cylindrical...", "2", ""],
+                                    ["2", "Body **hemispherical**; elytra smooth, brightly coloured with discrete spots...", "Coccinellidae", ""],
+                                    ["2", "Body **elongate-cylindrical**; antennae at least half body length...", "Cerambycidae", ""],
+
+                                    // Lower key 1: Carabidae — chains from "Carabidae" above
+                                    ["Carabidae", "Key to Selected *Carabidae* | Covers *Carabus*, *Cicindela*, and *Pterostichus*...", "1", ""],
+                                    ["1", "Elytra with **metallic violet or blue iridescence**; surface with fused chain-like ridges...", "Carabus violaceus", ""],
+                                    ["1", "Elytra **not iridescent**; surface finely striate or nearly smooth...", "2", ""],
+                                    ["2", "Eyes **very large and prominent**; elytra dark metallic with pale spots...", "Cicindela campestris", ""],
+                                    ["2", "Eyes moderate; elytra **uniformly black**, finely striate...", "Pterostichus melanarius", ""],
+
+                                    // Lower key 2: Coccinellidae — chains from "Coccinellidae" above
+                                    ["Coccinellidae", "Key to Selected *Coccinellidae* | Covers *Coccinella*, *Harmonia*, and *Adalia*...", "1", ""],
+                                    ["1", "Elytra **red with 7 black spots** (3+3+1 scutellar); pronotum white...", "Coccinella septempunctata", ""],
+                                    ["1", "Elytral pattern variable or with fewer than 7 spots...", "2", ""],
+                                    ["2", "Elytra orange to red, pattern **highly variable** (melanic to pale)...", "Harmonia axyridis", ""],
+                                    ["2", "Elytra red with **2 black spots** or black with 2 red spots...", "Adalia bipunctata", ""]
+                                ]
                             }
+
                         ],
                         integrity: {
                             description: "Step integers must be strictly ascending within a key.",
@@ -1157,27 +1405,50 @@ export const nlDataStructureSheets = {
                     },
                     images: {
                         name: "Images",
-                        description: "Optional image(s) from `usercontent/keys/` to display alongside this step choice. Separate multiple filenames with a pipe `|`. Append a caption after a pipe following the filename: `wing.jpg | Dorsal wing view`.",
-                        howToUse: "Provide images for steps where visual comparison aids identification.",
-                        notes: [],
+                        description: "Optional image(s) from `usercontent/keys/` folder to display alongside this step choice. Each entry is a filename optionally followed by a `#`-led caption: `wing.jpg #Dorsal view`. Separate multiple entries with a pipe `|`. The caption is displayed below the image in fullscreen view.",
+                        howToUse: "One or several images can illustrate the precise feature being described.",
+                        notes: [
+                            {
+                                type: "warning",
+                                text: "Images are only permitted on numeric step rows, not on key header rows."
+                            }
+                        ],
                         examples: [
                             {
-                                label: "Multiple images with captions",
+                                label: "Single image without caption, two images with captions",
                                 columns: [
+                                    "Step",
+                                    "Text",
+                                    "Target",
                                     "Images"
                                 ],
                                 rows: [
                                     [
-                                        "wing_dorsal.jpg | Dorsal view | wing_ventral.jpg | Ventral view"
+                                        "1",
+                                        "**Elytra metallic**, surface with fused chain-like ridges...",
+                                        "Carabus violaceus",
+                                        "carabus_habitus.jpg"
+                                    ],
+                                    [
+                                        "1",
+                                        "Elytra **not metallic**; surface smooth or finely striate...",
+                                        "2",
+                                        "wing_dorsal.jpg #Dorsal view | wing_ventral.jpg #Ventral view"
                                     ]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "",
+                            description: "Each pipe-separated token must be a filename with a valid extension, optionally followed by ` #Caption`. A `#`-only token with no preceding filename is invalid and will be skipped with a compiler error.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            allowedContent: "any",
+                            allowedContent: "filenameList",
+                            allowedExtensions: [
+                                ".jpg",
+                                ".jpeg",
+                                ".png",
+                                ".webp"
+                            ],
                             supportsMultilingual: false
                         }
                     }
@@ -1303,21 +1574,18 @@ export const nlDataStructureSheets = {
             bibliography: {
                 name: "Bibliography",
                 required: false,
-                description: "Stores BibTeX entries that can be cited using `@citekey` notation in any Markdown field throughout the project. Each row contains one complete BibTeX entry.\n\nCitations are rendered in APA style. The `@citekey` syntax supports narrative (`@smith2020`), parenthetical (`[@smith2020]`), multiple citations (`[@smith2020; @doe2021]`), suffixes (`@smith2020[p. 12]`), and year-only (`[-@smith2020]`) forms.\n\nThis table can be left completely empty if you do not use bibliographic references.",
+                description: "Stores BibTeX entries that can be cited using `@citekey` notation in any Markdown field throughout the project. Each row contains one or several complete BibTeX entries.\n\nCitations are rendered in APA style. The `@citekey` syntax supports narrative `@smith2020`, parenthetical `[@smith2020]` and several other forms (for a complete reference, see [github.com/dominik-ramik/bibtex-json-toolbox](https://github.com/dominik-ramik/bibtex-json-toolbox)).\n\nThis table can be left completely empty if you do not use bibliographic references.",
                 notes: [
                     {
-                        type: "tip",
-                        text: "Instead of pasting BibTeX entries into cells, you can maintain a `.bib` file in `usercontent/` and reference it with an F-directive: enter `F:references.bib` in the BibTeX entries column. The file is fetched and baked in at compile time."
-                    },
-                    {
                         type: "warning",
+                        title: "Citations vs. database shortcodes",
                         text: "The `@citekey` citation syntax is distinct from database shortcodes (see [Database Shortcodes](/author-guide/nl-content#36-table-database-shortcodes)), which use a similar `@code:ID` notation but link to external occurrence records."
                     }
                 ],
                 columns: {
                     bibtex: {
                         name: "BibTeX entries",
-                        description: "One complete BibTeX entry per row, copied directly from a reference manager. Alternatively, enter an F-directive (`F:references.bib` or `F:references.txt`) to load entries from a file in `usercontent/` at compile time.",
+                        description: "One complete BibTeX entry per row, copied directly from a reference manager. Alternatively, enter an [F-directive](./external-text-files) (`F:references.bib` or `F:bibtex/literature.bib`) to load entries from a file in `usercontent/` at compile time. Those entries will be baked-in and if you update the BibTeX file, simply recompile to update the bibliography in the app.\n\nAll bibliographic entries will be displayed as a list in *References* in the *Side panel*. Clicking on individual citations in the text will display the corresponding full reference.",
                         howToUse: "Use direct BibTeX entries for small bibliographies. Use F-directives for larger reference lists maintained in a dedicated `.bib` file or sourced from a reference manager export.",
                         notes: [],
                         examples: [
@@ -1334,12 +1602,27 @@ export const nlDataStructureSheets = {
                                         "F:references.bib"
                                     ]
                                 ]
+                            },
+                            {
+                                text: "In your [[ref:data]] sheet, you can then cite these references with `@smith2020` or any other citekey defined in your BibTeX entries. Supposing `description` is a `markdown` field, the citation will be rendered as a clickable link.",
+                                fillLeft: true,
+                                fillRight: true,
+                                columns: [
+                                    "species",
+                                    "description"
+                                ],
+                                rows: [
+                                    [
+                                        "Pilophorus smithii",
+                                        "Recently split from P. examplei based on the findings of @smith2020."
+                                    ]
+                                ]
                             }
                         ],
                         integrity: {
                             description: "",
                             allowEmpty: false,
-                            allowDuplicates: "yes",
+                            allowDuplicates: "no",
                             allowedContent: "any",
                             supportsMultilingual: false
                         }
