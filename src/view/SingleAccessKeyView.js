@@ -139,9 +139,11 @@ const isLinkClick = (e) => {
 
 const ImageToggler = {
     view: ({ attrs, state }) => {
-        return m("span", [
+        const { src, caption } = attrs;
+        return m("span.sak-image-wrap", [
             m("img.sak-thumb", {
-                src: attrs.src,
+                src,
+                alt: caption || "",
                 onclick: (e) => {
                     e.stopPropagation();
                     state.isFullscreen = true;
@@ -152,7 +154,10 @@ const ImageToggler = {
                     e.stopPropagation();
                     state.isFullscreen = false;
                 }
-            }, m("img.sak-fullscreen-img", { src: attrs.src })) : null
+            }, [
+                m("img.sak-fullscreen-img", { src, alt: caption || "" }),
+                caption ? m(".sak-image-caption", caption) : null
+            ]) : null
         ]);
     }
 };
@@ -327,7 +332,7 @@ const KeyCard = {
                     }, [
                         m("span.sak-option-text", m.trust(processMarkdownWithBibliography(hItem.text))),
                         hItem.images && hItem.images.length > 0
-                            ? m(".sak-option-images", hItem.images.map(img => m(ImageToggler, { src: img })))
+                            ? m(".sak-option-images", hItem.images.map(img => m(ImageToggler, img)))
                             : null
                     ])
                 ])) : null,
@@ -366,7 +371,7 @@ const KeyCard = {
                         }, [
                             m("span.sak-option-text", m.trust(processMarkdownWithBibliography(opt.text))),
                             opt.images && opt.images.length > 0
-                                ? m(".sak-option-images", opt.images.map(img => m(ImageToggler, { src: img })))
+                                ? m(".sak-option-images", opt.images.map(img => m(ImageToggler, img)))
                                 : null
                         ])
                     ]))

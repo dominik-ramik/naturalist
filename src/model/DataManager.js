@@ -600,45 +600,57 @@ export let DataManager = function () {
       let currentKey = null;
       const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
 
-      // Helper: Normalize and track image paths
+      // Helper: Parse a single pipe-separated token into { src, caption }.
+      // Format: "filename.jpg" or "filename.jpg #Caption text"
+      // Returns null and logs if the token has no valid filename.
+      function parseImageToken(token, rowIndex) {
+        const hashIdx = token.indexOf('#');
+        const filename = (hashIdx === -1 ? token : token.slice(0, hashIdx)).trim();
+        const caption = (hashIdx === -1 || hashIdx === token.length - 1)
+          ? null
+          : token.slice(hashIdx + 1).trim() || null;
+
+        if (!filename) {
+          Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image entry '#" + (caption || '') + "' has no filename - skipped");
+          return null;
+        }
+
+        const hasValidExtension = allowedExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+        if (!hasValidExtension) {
+          Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image '" + filename + "' has invalid extension (allowed: .jpg, .jpeg, .png, .webp)");
+          return null;
+        }
+
+        let normalizedPath = filename.startsWith('/') ? filename.slice(1) : filename;
+        normalizedPath = ('./usercontent/keys/' + normalizedPath).replace(/\/+/g, '/');
+
+        if (!additionalKeysAssets.includes(normalizedPath)) {
+          additionalKeysAssets.push(normalizedPath);
+        }
+
+        return { src: normalizedPath, caption };
+      }
+
+      // Helper: Normalize and track image paths.
+      // Returns array of { src, caption } objects; caption is null when absent.
       function processImageCell(imageCell, rowIndex) {
         if (!imageCell || typeof imageCell !== 'string' || imageCell.trim() === '') {
           return [];
         }
 
-        const filenames = imageCell.split('|').map(f => f.trim()).filter(f => f);
-        const normalized = [];
-
-        for (const filename of filenames) {
-          if (!filename) continue;
-
-          try {
-            // Validate file extension
-            const lowerFilename = filename.toLowerCase();
-            const hasValidExtension = allowedExtensions.some(ext => lowerFilename.endsWith(ext));
-
-            if (!hasValidExtension) {
-              Logger.error("Taxonomic key row " + (rowIndex + 1) + ": Image '" + filename + "' has invalid extension (allowed: .jpg, .jpeg, .png, .webp)");
-              continue;
+        return imageCell
+          .split('|')
+          .map(token => token.trim())
+          .filter(token => token)
+          .reduce((acc, token) => {
+            try {
+              const parsed = parseImageToken(token, rowIndex);
+              if (parsed) acc.push(parsed);
+            } catch (e) {
+              Logger.error("Error processing image token '" + token + "' at row " + (rowIndex + 1) + ": " + e);
             }
-
-            // Normalize path: ensure no double slashes, handle edge cases
-            let normalizedPath = filename.startsWith('/') ? filename.slice(1) : filename;
-            normalizedPath = './usercontent/keys/' + normalizedPath;
-            normalizedPath = normalizedPath.replace(/\/+/g, '/'); // Remove duplicate slashes
-
-            normalized.push(normalizedPath);
-
-            // Track asset if not already present
-            if (!additionalKeysAssets.includes(normalizedPath)) {
-              additionalKeysAssets.push(normalizedPath);
-            }
-          } catch (e) {
-            Logger.error("Error normalizing image path '" + filename + "' at row " + (rowIndex + 1) + ": " + e);
-          }
-        }
-
-        return normalized;
+            return acc;
+          }, []);
       }
 
       // Process rows
