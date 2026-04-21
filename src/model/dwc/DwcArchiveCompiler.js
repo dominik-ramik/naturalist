@@ -1666,7 +1666,7 @@ export async function compileDwcArchive(params) {
   let emlXml = null;
 
   // Option C.1 - explicit path via Customization table
-  const emlLocationConfig = resolveConfigDirective("Custom eml.xml location", customizationData);
+  const emlLocationConfig = resolveConfigDirective("Eml.xml location", customizationData);
   if (emlLocationConfig.found && emlLocationConfig.value) {
     const fetched = await tryFetchEml(emlLocationConfig.value);
     if (fetched) {

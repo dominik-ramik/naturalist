@@ -9,7 +9,7 @@ export const nlDataStructureSheets = {
     content: {
         name: "nl_content",
         required: true,
-        description: "The [[ref:content]] sheet tells the app what each column in your [[ref:data]] sheet represents. All columns from the [[ref:data]] sheet that you want to display must appear either in [[ref:content.taxa]] (for taxa columns) or in [[ref:content.customDataDefinition]] (for your additional data). Columns not referenced here are silently ignored and can serve as helper or curator-notes columns.",
+        description: "The `nl_content` sheet tells the app what each column in your [[ref:data]] sheet represents. All columns from the [[ref:data]] sheet that you want to display must appear either in [[ref:content.taxa]] (for taxa columns) or in [[ref:content.customDataDefinition]] (for your additional data). Columns not referenced here are silently ignored and can serve as helper or curator-notes columns.",
         notes: [
             {
                 type: "tip",
@@ -1776,317 +1776,230 @@ export const nlDataStructureSheets = {
                     }
                 ]
             },
-dwcArchive: {
-    name: "DwC archive",
-    required: false,
-    description: "Configures export in Darwin Core Archive (DwC-A) format for submission to [GBIF](https://www.gbif.org/) and other biodiversity aggregators. Each row maps one DwC term to a value source. The compiler produces a checklist archive (`taxa_dwca.zip`) and, when `basisOfRecord` is configured, an additional occurrence archive (`occurrences_dwca.zip`). See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide, required and recommended terms, EML metadata configuration, and a worked example.",
-    notes: [
-        {
-            type: "warning",
-            title: "Experiment on living material in progress",
-            text: "The DwC-A export feature is currently experimental and in early testing. It has been succesfully tested to be compliant with GBIF's DwC-A requirements on simple datasets, but we encourage you to verify the exported data against your database to ensure there are no surprises. Contact the developers on [GitHub](https://github.com/dominik-ramik/naturalist/) if you encounter any issues."
-        }
-    ],
-    columns: {
-        term: {
-            name: "DwC term",
-            description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
-            howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](/author-guide/dwc#eml-metadata) for the full list of supported `eml:` terms.",
-            notes: [],
-            examples: [],
-            integrity: {
-                allowEmpty: false,
-                allowDuplicates: "no",
-                allowedContent: "any",
-                supportsMultilingual: false
-            }
-        },
-        sourceColumn: {
-            name: "Source column",
-            description: "A directive that tells the compiler where to read the value for this DwC term. Leave empty if supplying a **Constant value** instead.\n\nAccepted directive types:\n\n- **Plain column name** (e.g. `recordedBy`) - reads that column's value for each row. For compound data types, append a component key: `collectionDate.ymd`, `location.lat`, `altitude.from`, `specimenPhoto.source`\n- **`{col}` template** (e.g. `{collector} leg. | {observer} obs.`) - constructs a string from column values; `|` separates fallback alternatives, the first segment where all placeholders are non-empty is used\n- **`config:Item Name`** - reads a value from the [[ref:appearance.customization]] table (e.g. `config:Checklist name`)\n- **`taxa:ColumnName`** or **`taxa:ColumnName.component`** - reads from the taxon hierarchy (e.g. `taxa:Species`, `taxa:Species.authority`, `taxa:Species.lastNamePart`)\n- **`auto:termName`** - instructs the compiler to generate the value; see [Source column directives](/author-guide/dwc#source-column-directives) for all supported keys including `auto:taxonID`, `auto:taxonRank`, `auto:scientificName`, and others\n- **`media:path1, path2, …`** - for `associatedMedia` only; collects fully resolved URLs from image, sound, or map columns and joins them with ` | `; append `#` to expand array columns automatically (e.g. `lifePhotos#`)\n\nFor the full directive reference with all options and examples, see [Source column directives](/author-guide/dwc#source-column-directives).",
-            howToUse: "Leave empty when supplying a Constant value. For taxonomy, prefer `auto:` directives. For dataset-wide metadata already in the [[ref:appearance.customization]], use `config:`. For occurrence-specific data columns, use plain column names or component keys.",
-            notes: [],
-            examples: [
-                {
-                    label: "Common directive patterns",
-                    fillRight: true,
-                    columns: [
-                        "DwC term",
-                        "Source column",
-                        "[comment]"
-                    ],
-                    rows: [
-                        ["datasetName", "config:Checklist name", "config: directive"],
-                        ["scientificName", "auto:scientificName", "auto: directive"],
-                        ["taxonRank", "auto:taxonRank", "auto: directive"],
-                        ["family", "taxa:Family", "taxa: directive"],
-                        ["specificEpithet", "taxa:Species.lastNamePart", "taxa: directive with component"],
-                        ["recordedBy", "collector", "plain column name"],
-                        ["decimalLatitude", "location.lat", "plain column name with component"],
-                        ["eventDate", "collectionDate.ymd", "plain column name with component"],
-                        ["recordedBy", "{collector} leg. | {observer} obs.", "{} template with fallback"],
-                        ["associatedMedia", "media:specimenPhoto, lifePhotos#", "media: directive"]
-                    ]
-                }
-            ],
-            integrity: {
-                allowEmpty: true,
-                allowDuplicates: "yes",
-                allowedContent: "any",
-                supportsMultilingual: false
-            }
-        },
-        constantValue: {
-            name: "Constant value",
-            description: "A literal string applied to every record. Leave empty if using Source column.",
-            howToUse: "Use for dataset-wide values that do not vary per row: `language`, `institutionCode`, `license`, `basisOfRecord`, `kingdom`, etc. The `license` field accepts common aliases (`cc0`, `cc by 4.0`, `cc by-nc 4.0`) which are normalised to the canonical GBIF-accepted URI.",
-            notes: [],
-            examples: [
-                {
-                    label: "Common constant value rows",
-                    fillRight: true,
-                    columns: [
-                        "DwC term",
-                        "Constant value"
-                    ],
-                    rows: [
-                        ["language", "en"],
-                        ["institutionCode", "MNHN"],
-                        ["license", "cc by 4.0"],
-                        ["basisOfRecord", "PreservedSpecimen"],
-                        ["kingdom", "Plantae"]
-                    ]
-                }
-            ],
-            integrity: {
-                allowEmpty: true,
-                allowDuplicates: "yes",
-                allowedContent: "any",
-                supportsMultilingual: false
-            }
-        }
-    },
-    data: [],
-    templateData: [
-        {
-            term: "language",
-            sourceColumn: "",
-            constantValue: "en"
-        },
-        {
-            term: "institutionCode",
-            sourceColumn: "",
-            constantValue: "VANUHERP"
-        },
-        {
-            term: "collectionCode",
-            sourceColumn: "",
-            constantValue: "VANUATU-CHECKLIST"
-        },
-        {
-            term: "license",
-            sourceColumn: "",
-            constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
-        },
-        {
-            term: "datasetName",
-            sourceColumn: "config:Checklist name",
-            constantValue: ""
-        },
-        {
-            term: "eml:title",
-            sourceColumn: "config:Checklist name",
-            constantValue: ""
-        },
-        {
-            term: "eml:abstract",
-            sourceColumn: "config:About section",
-            constantValue: ""
-        },
-        {
-            term: "eml:creator.organizationName",
-            sourceColumn: "",
-            constantValue: "Example Natural History Museum"
-        },
-        {
-            term: "eml:creator.givenName",
-            sourceColumn: "",
-            constantValue: "Jane"
-        },
-        {
-            term: "eml:creator.surName",
-            sourceColumn: "",
-            constantValue: "Smith"
-        },
-        {
-            term: "eml:creator.email",
-            sourceColumn: "",
-            constantValue: "j.smith@example.com"
-        },
-        {
-            term: "taxonID",
-            sourceColumn: "auto:taxonID",
-            constantValue: ""
-        },
-        {
-            term: "parentNameUsageID",
-            sourceColumn: "auto:parentNameUsageID",
-            constantValue: ""
-        },
-        {
-            term: "taxonRank",
-            sourceColumn: "auto:taxonRank",
-            constantValue: ""
-        },
-        {
-            term: "scientificName",
-            sourceColumn: "auto:scientificName",
-            constantValue: ""
-        },
-        {
-            term: "scientificNameAuthorship",
-            sourceColumn: "auto:scientificNameAuthorship",
-            constantValue: ""
-        },
-        {
-            term: "kingdom",
-            sourceColumn: "",
-            constantValue: "Animalia"
-        },
-        {
-            term: "class",
-            sourceColumn: "taxa:Class",
-            constantValue: ""
-        },
-        {
-            term: "order",
-            sourceColumn: "taxa:Order",
-            constantValue: ""
-        },
-        {
-            term: "family",
-            sourceColumn: "taxa:Family",
-            constantValue: ""
-        },
-        {
-            term: "genus",
-            sourceColumn: "taxa:Genus",
-            constantValue: ""
-        },
-        {
-            term: "specificEpithet",
-            sourceColumn: "taxa:Species.lastNamePart",
-            constantValue: ""
-        },
-    ]
-}
-        }
-    },
-    appearance: {
-        name: "nl_appearance",
-        required: false,
-        description: "The `nl_appearance` sheet controls global appearance, language settings, category colours, map region colours, filter ordering, and other visual configuration. The entire sheet is optional. In practice you will want to fill in at least the **Customization** table to set the project name and About text.",
-        notes: [
-            {
-                type: "tip",
-                text: "Start from the full blank template (downloadable from the Manage screen), which has all table headers pre-filled. Keeping the full structure - even with empty tables - makes it easy to add appearance settings later without restructuring the workbook."
-            }
-        ],
-        type: "meta",
-        tables: {
-            supportedLanguages: {
-                name: "Supported languages",
+            dwcArchive: {
+                name: "DwC archive",
                 required: false,
-                description: "Declares all languages the project is available in. The first row is the default language. Any column with no language suffix (`:code`) is treated as belonging to this default language.\n\nIf your project is monolingual, you can omit this table entirely. When more than one language is defined, users see a language switcher in the Side Menu.",
+                description: "Configures export in Darwin Core Archive (DwC-A) format for submission to [GBIF](https://www.gbif.org/) and other biodiversity aggregators. Each row maps one DwC term to a value source. The compiler produces a checklist archive (`taxa_dwca.zip`) and, when `basisOfRecord` is configured, an additional occurrence archive (`occurrences_dwca.zip`). See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide, required and recommended terms, EML metadata configuration, and a worked example.",
                 notes: [
                     {
-                        type: "tip",
-                        text: "The active language is reflected in the URL via the `?l=` query parameter, so a specific language version can be linked or bookmarked directly."
+                        type: "warning",
+                        title: "Experiment on living material in progress",
+                        text: "The DwC-A export feature is currently experimental and in early testing. It has been succesfully tested to be compliant with GBIF's DwC-A requirements on simple datasets, but we encourage you to verify the exported data against your database to ensure there are no surprises. Contact the developers on [GitHub](https://github.com/dominik-ramik/naturalist/) if you encounter any issues."
                     }
                 ],
                 columns: {
-                    code: {
-                        name: "Code",
-                        description: "The ISO 639-1 two-letter language code in lowercase (e.g. `en`, `fr`, `de`). The first row's code is the default language.",
-                        howToUse: "Use the standard two-letter ISO 639-1 code. Place the default language in the first row. For languages without a NaturaList UI translation, set the **Fallback language** column to a language that does have one.",
+                    term: {
+                        name: "DwC term",
+                        description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
+                        howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](/author-guide/dwc#eml-metadata) for the full list of supported `eml:` terms.",
+                        notes: [],
+                        examples: [],
+                        integrity: {
+                            allowEmpty: false,
+                            allowDuplicates: "no",
+                            allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    },
+                    sourceColumn: {
+                        name: "Source column",
+                        description: "A directive that tells the compiler where to read the value for this DwC term. Leave empty if supplying a **Constant value** instead.\n\nAccepted directive types:\n\n- **Plain column name** (e.g. `recordedBy`) - reads that column's value for each row. For compound data types, append a component key: `collectionDate.ymd`, `location.lat`, `altitude.from`, `specimenPhoto.source`\n- **`{col}` template** (e.g. `{collector} leg. | {observer} obs.`) - constructs a string from column values; `|` separates fallback alternatives, the first segment where all placeholders are non-empty is used\n- **`config:Item Name`** - reads a value from the [[ref:appearance.customization]] table (e.g. `config:Checklist name`)\n- **`taxa:ColumnName`** or **`taxa:ColumnName.component`** - reads from the taxon hierarchy (e.g. `taxa:Species`, `taxa:Species.authority`, `taxa:Species.lastNamePart`)\n- **`auto:termName`** - instructs the compiler to generate the value; see [Source column directives](/author-guide/dwc#source-column-directives) for all supported keys including `auto:taxonID`, `auto:taxonRank`, `auto:scientificName`, and others\n- **`media:path1, path2, …`** - for `associatedMedia` only; collects fully resolved URLs from image, sound, or map columns and joins them with ` | `; append `#` to expand array columns automatically (e.g. `lifePhotos#`)\n\nFor the full directive reference with all options and examples, see [Source column directives](/author-guide/dwc#source-column-directives).",
+                        howToUse: "Leave empty when supplying a Constant value. For taxonomy, prefer `auto:` directives. For dataset-wide metadata already in the [[ref:appearance.customization]], use `config:`. For occurrence-specific data columns, use plain column names or component keys.",
                         notes: [],
                         examples: [
                             {
-                                label: "Bilingual English/French project",
+                                label: "Common directive patterns",
+                                fillRight: true,
                                 columns: [
-                                    "Code",
-                                    "Name of language",
-                                    "Fallback language"
+                                    "DwC term",
+                                    "Source column",
+                                    "[comment]"
                                 ],
                                 rows: [
-                                    [
-                                        "en",
-                                        "English",
-                                        ""
-                                    ],
-                                    [
-                                        "fr",
-                                        "Français",
-                                        ""
-                                    ]
+                                    ["datasetName", "config:Checklist name", "config: directive"],
+                                    ["scientificName", "auto:scientificName", "auto: directive"],
+                                    ["taxonRank", "auto:taxonRank", "auto: directive"],
+                                    ["family", "taxa:Family", "taxa: directive"],
+                                    ["specificEpithet", "taxa:Species.lastNamePart", "taxa: directive with component"],
+                                    ["recordedBy", "collector", "plain column name"],
+                                    ["decimalLatitude", "location.lat", "plain column name with component"],
+                                    ["eventDate", "collectionDate.ymd", "plain column name with component"],
+                                    ["recordedBy", "{collector} leg. | {observer} obs.", "{} template with fallback"],
+                                    ["associatedMedia", "media:specimenPhoto, lifePhotos#", "media: directive"]
                                 ]
                             }
                         ],
                         integrity: {
-                            description: "See [ISO 639-1 language code list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
-                            allowDuplicates: "no",
-                            allowEmpty: false,
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
-                    },
-                    name: {
-                        name: "Name of language",
-                        description: "The language's name as displayed in the app's language switcher. Use the name as written in that language (e.g. `Français` not `French`, `Česky` not `Czech`).",
-                        howToUse: "",
-                        notes: [],
-                        examples: [],
-                        integrity: {
-                            description: "",
-                            allowDuplicates: "no",
-                            allowEmpty: false,
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
-                    },
-                    fallback: {
-                        name: "Fallback language",
-                        description: "If your language code has no matching NaturaList UI translation (e.g. `iu` for Inuktitut), specify here the code of a language to use for the UI instead (e.g. `fr`). If left empty, English is used as the UI fallback.",
-                        howToUse: "Set only when using a language code for which NaturaList has no UI translation and you prefer a specific fallback other than English.",
-                        notes: [],
-                        examples: [],
-                        integrity: {
-                            description: "",
-                            allowDuplicates: "yes",
                             allowEmpty: true,
+                            allowDuplicates: "yes",
+                            allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    },
+                    constantValue: {
+                        name: "Constant value",
+                        description: "A literal string applied to every record. Leave empty if using Source column.",
+                        howToUse: "Use for dataset-wide values that do not vary per row: `language`, `institutionCode`, `license`, `basisOfRecord`, `kingdom`, etc. The `license` field accepts common aliases (`cc0`, `cc by 4.0`, `cc by-nc 4.0`) which are normalised to the canonical GBIF-accepted URI.",
+                        notes: [],
+                        examples: [
+                            {
+                                label: "Common constant value rows",
+                                fillRight: true,
+                                columns: [
+                                    "DwC term",
+                                    "Constant value"
+                                ],
+                                rows: [
+                                    ["language", "en"],
+                                    ["institutionCode", "MNHN"],
+                                    ["license", "cc by 4.0"],
+                                    ["basisOfRecord", "PreservedSpecimen"],
+                                    ["kingdom", "Plantae"]
+                                ]
+                            }
+                        ],
+                        integrity: {
+                            allowEmpty: true,
+                            allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: false
                         }
                     }
                 },
+                data: [],
                 templateData: [
                     {
-                        code: "en",
-                        name: "English",
-                        fallback: ""
+                        term: "language",
+                        sourceColumn: "",
+                        constantValue: "en"
+                    },
+                    {
+                        term: "institutionCode",
+                        sourceColumn: "",
+                        constantValue: "VANUHERP"
+                    },
+                    {
+                        term: "collectionCode",
+                        sourceColumn: "",
+                        constantValue: "VANUATU-CHECKLIST"
+                    },
+                    {
+                        term: "license",
+                        sourceColumn: "",
+                        constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
+                    },
+                    {
+                        term: "datasetName",
+                        sourceColumn: "config:Checklist name",
+                        constantValue: ""
+                    },
+                    {
+                        term: "eml:title",
+                        sourceColumn: "config:Checklist name",
+                        constantValue: ""
+                    },
+                    {
+                        term: "eml:abstract",
+                        sourceColumn: "config:About section",
+                        constantValue: ""
+                    },
+                    {
+                        term: "eml:creator.organizationName",
+                        sourceColumn: "",
+                        constantValue: "Example Natural History Museum"
+                    },
+                    {
+                        term: "eml:creator.givenName",
+                        sourceColumn: "",
+                        constantValue: "Jane"
+                    },
+                    {
+                        term: "eml:creator.surName",
+                        sourceColumn: "",
+                        constantValue: "Smith"
+                    },
+                    {
+                        term: "eml:creator.email",
+                        sourceColumn: "",
+                        constantValue: "j.smith@example.com"
+                    },
+                    {
+                        term: "taxonID",
+                        sourceColumn: "auto:taxonID",
+                        constantValue: ""
+                    },
+                    {
+                        term: "parentNameUsageID",
+                        sourceColumn: "auto:parentNameUsageID",
+                        constantValue: ""
+                    },
+                    {
+                        term: "taxonRank",
+                        sourceColumn: "auto:taxonRank",
+                        constantValue: ""
+                    },
+                    {
+                        term: "scientificName",
+                        sourceColumn: "auto:scientificName",
+                        constantValue: ""
+                    },
+                    {
+                        term: "scientificNameAuthorship",
+                        sourceColumn: "auto:scientificNameAuthorship",
+                        constantValue: ""
+                    },
+                    {
+                        term: "kingdom",
+                        sourceColumn: "",
+                        constantValue: "Animalia"
+                    },
+                    {
+                        term: "class",
+                        sourceColumn: "taxa:Class",
+                        constantValue: ""
+                    },
+                    {
+                        term: "order",
+                        sourceColumn: "taxa:Order",
+                        constantValue: ""
+                    },
+                    {
+                        term: "family",
+                        sourceColumn: "taxa:Family",
+                        constantValue: ""
+                    },
+                    {
+                        term: "genus",
+                        sourceColumn: "taxa:Genus",
+                        constantValue: ""
+                    },
+                    {
+                        term: "specificEpithet",
+                        sourceColumn: "taxa:Species.lastNamePart",
+                        constantValue: ""
                     },
                 ]
-            },
+            }
+        }
+    },
+    appearance: {
+        name: "nl_appearance",
+        required: false,
+        description: "The `nl_appearance` sheet controls global appearance, language settings, and other visual configuration as well as your project's identity.",
+        notes: [
+        ],
+        type: "meta",
+        tables: {
             customization: {
                 name: "Customization",
                 required: false,
-                description: "A fixed set of named configuration items. The **Item** column contains predefined names; you only edit the **Value** column (or `Value:en`, `Value:fr`, etc. for multilingual values). Skip any items you are happy with at their default. Typically you will want to fill in at least **About section** and **Checklist name**.",
+                description: "A fixed set of named configuration items. The **Item** column contains predefined keywords, case-sensitive; you only edit the **Value** column (or `Value:en`, `Value:fr`, etc. for per-language overrides in multilingual projects). Skip any items you are happy with at their default. Typically you will want to fill in at least **Checklist name** and **About section**.",
                 notes: [],
                 columns: {
                     item: {
                         name: "Item",
-                        description: "Pre-filled item names that control specific app behaviours. Do not edit the values in this column - they are fixed keywords recognised by the app.",
-                        howToUse: "Never edit. Add only the items you need to configure by filling in the corresponding **Value** cell.",
+                        description: "Predefined keywords, each controlling one aspect of the app. See the overview table below for the full list, defaults, and expected value format.",
+                        howToUse: "Enter only the rows you want to change from their defaults. Copy the item name exactly as shown - item names are case-sensitive.",
                         notes: [],
                         examples: [
                             {
@@ -2094,58 +2007,58 @@ dwcArchive: {
                                 columns: [
                                     "Item",
                                     "Default",
-                                    "What it controls"
+                                    "Value format"
                                 ],
                                 rows: [
                                     [
-                                        "Color theme hue",
-                                        "212",
-                                        "Hue (0-360) of the app colour theme"
-                                    ],
-                                    [
                                         "Checklist name",
-                                        "(empty)",
-                                        "Short name shown in the app header"
+                                        "New project",
+                                        "Short project name shown in the app header."
                                     ],
                                     [
                                         "About section",
-                                        "(empty)",
-                                        "About page text; supports Markdown and F-directives"
+                                        "(generic placeholder text)",
+                                        "Markdown text for the About page, or for longer texts an F-directive (`F:about.md`) pointing to a file in `usercontent/`. Supports `Value:en`, `Value:fr`, etc. See [External text files](./external-text-files)."
                                     ],
                                     [
                                         "How to cite",
                                         "(empty)",
-                                        "Citation text shown to users"
+                                        "Plain text or Markdown citation string shown to users in the About page."
                                     ],
                                     [
-                                        "[[ref:data]] sheets names",
+                                        "Data sheets names",
                                         "checklist",
-                                        "[[ref:data]] sheet tab name if renamed"
+                                        "Comma-separated list of [[ref:data]] sheets names, only needed if you have renamed the tab away from the default `checklist` or if you have multiple data sheets."
+                                    ],
+                                    [
+                                        "Color theme hue",
+                                        "212",
+                                        "Integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue."
                                     ],
                                     [
                                         "Date format",
                                         "YYYY-MM-DD",
-                                        "day.js format string for date display"
-                                    ],
-                                    [
-                                        "Precache max file size",
-                                        "0.5",
-                                        "Maximum individual file size (MB) to precache"
-                                    ],
-                                    [
-                                        "Precache max total size",
-                                        "200",
-                                        "Maximum total precache size (MB)"
+                                        "[day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY` or `DD/MM/YYYY` etc."
                                     ],
                                     [
                                         "Month names",
                                         "English months",
-                                        "Comma-separated list of 12 month names"
+                                        "Comma-separated list of exactly 12 month names starting with January, e.g. `Janvier, Février, Mars, ...`."
                                     ],
                                     [
-                                        "Custom eml.xml location",
+                                        "Precache max file size",
+                                        "0.5",
+                                        "Maximum size in MB of a single media file to cache for offline use."
+                                    ],
+                                    [
+                                        "Precache max total size",
+                                        "200",
+                                        "Maximum total size in MB of all precached media assets."
+                                    ],
+                                    [
+                                        "Eml.xml location",
                                         "(empty)",
-                                        "Path to a custom DwC-A EML file in the usercontent folder (including the filename, e.g. `dwc/eml.xml`)"
+                                        "Path to a custom DwC-A EML metadata file inside `usercontent/`, including filename (e.g. `dwc/eml.xml`)."
                                     ]
                                 ]
                             }
@@ -2154,20 +2067,27 @@ dwcArchive: {
                             description: "",
                             allowDuplicates: "no",
                             allowEmpty: false,
-                            allowedContent: "any",
+                            allowedContent: "list",
+                            listItems: [
+                                "Checklist name",
+                                "About section",
+                                "How to cite",
+                                "[[ref:data]] sheets names",
+                                "Color theme hue",
+                                "Date format",
+                                "Month names",
+                                "Precache max file size",
+                                "Precache max total size",
+                                "Eml.xml location"
+                            ],
                             supportsMultilingual: false
                         }
                     },
                     value: {
                         name: "Value",
-                        description: "The configured value for each item. Supports multilingual suffixes (`Value:en`, `Value:fr`, etc.) - useful for **Date format**, **About section**, and **Checklist name** that may differ per language.\n\n- **Color theme hue**: integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue value.\n- **Checklist name**: short project name shown in the app header.\n- **About section**: Markdown text for the About page, or an F-directive (`F:about.md`) pointing to a file in `usercontent/`.\n- **How to cite**: citation text shown to users.\n- **[[ref:data]] sheets names**: comma-separated list of [[ref:data]] sheet tab names, if different from the default `checklist`.\n- **Date format**: [day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY`, `DD/MM/YYYY`. Default is `YYYY-MM-DD`.\n- **Precache max file size**: maximum size in MB of individual files to precache for offline use. Default `0.5`.\n- **Precache max total size**: maximum total size in MB of all precached assets. Default `200`.\n- **Month names**: comma-separated list of 12 month names (January through December) for the active language. Used for display and search labels only.",
-                        howToUse: "Fill in only the items you need to change from their defaults. Leave the Value cell empty for items you are happy with at their default.",
-                        notes: [
-                            {
-                                type: "tip",
-                                text: "For lengthy About section text, use an F-directive (`F:about.md`) to maintain the content in a separate file in `usercontent/`. See [External Markdown Files](/author-guide/external-markdown)."
-                            }
-                        ],
+                        description: "The configured value for the item on the same row. See the **Item** overview table for the expected format and default of each item. Supports multilingual column suffixes for settings that are per-language (`Value:en`, `Value:fr`, etc.).",
+                        howToUse: "Fill in only the items you need to change from their defaults. Leave the **Value** cell empty for items you are happy with at their default.",
+                        notes: [],
                         examples: [
                             {
                                 label: "Bilingual customization values",
@@ -2179,8 +2099,18 @@ dwcArchive: {
                                 rows: [
                                     [
                                         "Checklist name",
-                                        "Birds of Vanuatu",
-                                        "Oiseaux du Vanuatu"
+                                        "Birds of Lamèque Island",
+                                        "Oiseaux de l'Île-de-Lamèque"
+                                    ],
+                                    [
+                                        "About section",
+                                        "This checklist is a collaborative effort of ...",
+                                        "Cette liste de contrôle est un effort collaboratif de ..."
+                                    ],
+                                    [
+                                        "How to cite",
+                                        "Birds of Lamèque Island checklist. Author: Anicet Paulin (2024). https://example.com/lameque-checklist",
+                                        "Liste des oiseaux de l'Île-de-Lamèque. Auteur : Anicet Paulin (2024). https://example.com/lameque-checklist"
                                     ],
                                     [
                                         "Date format",
@@ -2189,13 +2119,18 @@ dwcArchive: {
                                     ],
                                     [
                                         "Color theme hue",
-                                        "45",
-                                        "45"
+                                        "200",
+                                        "97"
                                     ],
                                     [
-                                        "[[ref:data]] sheets names",
-                                        "checklist",
-                                        "checklist"
+                                        "Data sheets names",
+                                        "landbirds, seabirds",
+                                        "landbirds, seabirds"
+                                    ],
+                                    [
+                                        "Month names",
+                                        "January, February, March, April, May, June, July, August, September, October, November, December",
+                                        "Janvier, Février, Mars, Avril, Mai, Juin, Juillet, Août, Septembre, Octobre, Novembre, Décembre"
                                     ]
                                 ]
                             }
@@ -2212,10 +2147,6 @@ dwcArchive: {
                 data: [],
                 templateData: [
                     {
-                        item: "Color theme hue",
-                        value: 212
-                    },
-                    {
                         item: "Checklist name",
                         value: "Sample NaturaList checklist"
                     },
@@ -2226,32 +2157,29 @@ dwcArchive: {
                     {
                         item: "How to cite",
                         value: "Sample NaturaList checklist. Author: Dominik M. Ramík (2024). https://naturalist.netlify.app/"
-                    },
-                    {
-                        item: "[[ref:data]] sheets names",
-                        value: "checklist"
                     }
                 ]
             },
             dataCodes: {
                 name: "Data codes",
                 required: false,
-                description: "Translates short codes stored in the [[ref:data]] sheet into human-readable labels, per language. When the app reads a value from a coded column, it replaces it with the full label before displaying. Category matching (Colored Categories table) then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show.",
+                description: "Translates short codes or controlled vocabulary items entered in the [[ref:data]] sheet into human-readable labels. When the app reads a value from a coded column, it replaces it with the full label before displaying. Category matching ([[ref:appearance.categories]] table)  then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show, but is useful when you want to simplify data entry of e.g. Red List codes, habitat codes, Darwin Core or any other standard vocabulary.",
                 notes: [
                     {
                         type: "warning",
-                        text: "If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app logs a warning and displays the raw value unchanged. Codes are matched exactly and case-sensitively."
+                        text: "If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app displays the raw value unchanged. Codes are matched exactly and case-sensitively."
                     }
                 ],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The data path of the column whose values should be translated. Each distinct value in that column needs its own row, all sharing the same **Column name** entry.",
-                        howToUse: "Use whenever your [[ref:data]] sheet stores compact codes (like `LC`, `EN`, `N`, `E`) and you want to display full labels instead.",
+                        description: "The [data path](./data-sheet#column-naming-and-data-paths) of the column whose values should be translated. Each distinct value in that column needs its own row, all sharing the same **Column name** entry.",
+                        howToUse: "Use whenever your [[ref:data]] sheet stores compact codes (like `LC`, `EN`, `N`, `E`) and you want to display full labels instead. If you plan to export your data into [DwC-A format](./dwc) (also see [[ref:content.dwcArchive]]), enter the controlled vocabularies of DwC terms into your data and use this table to translate them for displaying their human-readable labels.",
                         notes: [],
                         examples: [
                             {
                                 label: "Red List code translations",
+                                text: "A multilingual example. If you only have one language, just use the **Replacement** column without any language suffix.",
                                 columns: [
                                     "Column name",
                                     "Code",
@@ -2276,7 +2204,19 @@ dwcArchive: {
                                         "CR",
                                         "Critically Endangered",
                                         "En danger critique"
-                                    ]
+                                    ],
+                                    [
+                                        "presenceStatus",
+                                        "E",
+                                        "Endemic",
+                                        "Endémique"
+                                    ],
+                                    [
+                                        "presenceStatus",
+                                        "N",
+                                        "Native",
+                                        "indigène"
+                                    ],
                                 ]
                             }
                         ],
@@ -2291,7 +2231,7 @@ dwcArchive: {
                     code: {
                         name: "Code",
                         description: "The raw value as it appears in the [[ref:data]] sheet. Matched exactly and case-sensitively against data cell content.",
-                        howToUse: "Enter the value exactly as it appears in your [[ref:data]] sheet cells, including any capitalisation.",
+                        howToUse: "",
                         notes: [],
                         examples: [],
                         integrity: {
@@ -2389,62 +2329,58 @@ dwcArchive: {
             categories: {
                 name: "Colored categories",
                 required: false,
-                description: "Gives categorical data values a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields.\n\nThe **Data type** column in Custom Data Definition must be set to `category` for this table to take effect. Category matching is a case-insensitive substring match against the data value after any Data Code replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
+                description: "Gives categorical data values (see [[ref:type.category]]) a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields that are better scanned visually by color than being read as text.\n\nThe [[ref:content.customDataDefinition.formatting]] column in [[ref:content.customDataDefinition]] table must be set to `category` for this table to take effect. Category matching is case-insensitive and is controlled by the **Contains text** pattern (see that column for full syntax). Matching is applied after any [[ref:appearance.dataCodes]] replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
                 notes: [
                     {
                         type: "warning",
-                        text: "Setting the data type to `category` alone does nothing visual - you must also populate this table with colour definitions for each value."
-                    },
-                    {
-                        type: "tip",
-                        text: "The **Contains text** match is a substring/regex search: `Endemic` will match both `Endemic` and `Near-endemic`. Be specific enough to avoid unintended matches."
+                        text: "Setting the data type to `category` in [[ref:content.customDataDefinition]] alone does nothing visual - you must also populate this table with colour definitions for each value."
                     }
                 ],
                 columns: {
                     columnName: {
                         name: "Column name",
                         description: "The data path of the column whose values should be styled as coloured categories. Each distinct value (or group of values matched by **Contains text**) requires its own row, all sharing the same **Column name**.",
-                        howToUse: "Enter the same column name as used in Custom Data Definition (with `category` data type).",
+                        howToUse: "Enter the same column name as used in [[ref:content.customDataDefinition]] table (with `category` data type).",
                         notes: [],
                         examples: [
                             {
-                                label: "Status and Red List categories",
+                                label: "Habit and Red List categories",
+                                text: "Suppose you have multiple habits (`habit#` ... would be `habit1`, `habit2`, etc. in [[ref:data]] sheet) and Red List status (`redlist`) columns in your data. Both `habit#` and `redlist` would have `category` data type in [[ref:content.customDataDefinition]].",
                                 columns: [
                                     "Column name",
                                     "Contains text",
                                     "Background color",
-                                    "Text color"
+                                    "Text color",
+                                    "[comment]"
                                 ],
                                 rows: [
                                     [
-                                        "status",
-                                        "Native",
+                                        "habit#",
+                                        "*tree*",
                                         "#668dbb",
-                                        "white"
+                                        "white",
+                                        "Matches any value starting with 'tree', e.g. 'tree', 'treelet', 'epiphytic tree'"
                                     ],
                                     [
-                                        "status",
-                                        "Endemic",
+                                        "habit#",
+                                        "shrub",
                                         "#5e9f5c",
-                                        "white"
-                                    ],
-                                    [
-                                        "status",
-                                        "Introduced",
-                                        "#ed665b",
-                                        "white"
+                                        "white",
+                                        "¨Matches 'shrub' exactly"
                                     ],
                                     [
                                         "redlist",
                                         "Endangered",
                                         "#cd6630",
-                                        "#ffcd9a"
+                                        "#ffcd9a",
+                                        "Matches 'Endangered' exactly, if you use [[ref:appearance.dataCodes]] to translate 'EN' to 'Endangered' in the data, the category matcher operates on the translated value 'Endangered' not the original code 'EN'"
                                     ],
                                     [
                                         "redlist",
                                         "Least Concern",
                                         "#006666",
-                                        "white"
+                                        "white",
+                                        "Matches 'Least Concern' exactly"
                                     ]
                                 ]
                             }
@@ -2459,12 +2395,12 @@ dwcArchive: {
                     },
                     containsText: {
                         name: "Contains text",
-                        description: "The text to match against the data value (after any Data Code replacement). The match is case-insensitive and works as a substring/regex search.",
-                        howToUse: "Enter a string distinctive enough to match the intended values without accidentally matching others.",
+                        description: "The pattern to match against the data value (after any [[ref:appearance.dataCodes]] replacement). Matching is always case-insensitive. The `*` character is the only wildcard and matches any sequence of characters (including none). A pattern with no `*` must match the entire cell value exactly. Rows are tested in order and the first match wins.",
+                        howToUse: "Use a plain string for an exact match (`Endemic` matches only `Endemic`). Prefix and/or suffix with `*` to allow partial matches (`*Endemic*` matches `Near-endemic` and `Endemic`; `Endemic*` matches `Endemic` and `Endemically`). Place a bare `*` as the last row in a column's entries to provide a catch-all fallback that styles any value not matched by earlier rows.",
                         notes: [],
                         examples: [],
                         integrity: {
-                            description: "Case-insensitive substring/regex match - e.g. `Endemic` also matches `Near-endemic`.",
+                            description: "Case-insensitive match. No `*`: full equality (`Endemic` matches only `Endemic`). With `*`: wildcard match (`*Endemic*` also matches `Near-endemic`; `*` matches anything).",
                             allowEmpty: false,
                             allowDuplicates: "no",
                             allowedContent: "any",
@@ -2489,7 +2425,7 @@ dwcArchive: {
                     textColor: {
                         name: "Text color",
                         description: "CSS colour for the category badge text. Leave empty to default to black.",
-                        howToUse: "Use `white` for dark backgrounds and `black` (or leave empty) for light backgrounds.",
+                        howToUse: "Use `white` or bright colors for dark backgrounds and `black` or dark colors for light backgrounds.",
                         notes: [],
                         examples: [],
                         integrity: {
@@ -3132,7 +3068,90 @@ dwcArchive: {
                     },
                 ],
                 data: []
-            }
+            },
+            supportedLanguages: {
+                name: "Supported languages",
+                required: false,
+                description: "Declares all languages the project is available in. The first row is the default language. Any column with no language suffix (`:code`) is treated as belonging to this default language.\n\nIf your project is monolingual, you can omit this table entirely. When more than one language is defined, users see a language switcher in the Side Menu.",
+                notes: [
+                    {
+                        type: "tip",
+                        text: "The active language is reflected in the URL via the `?l=` query parameter, so a specific language version can be linked or bookmarked directly."
+                    }
+                ],
+                columns: {
+                    code: {
+                        name: "Code",
+                        description: "The ISO 639-1 two-letter language code in lowercase (e.g. `en`, `fr`, `de`). The first row's code is the default language.",
+                        howToUse: "Use the standard two-letter ISO 639-1 code. Place the default language in the first row. For languages without a NaturaList UI translation, set the **Fallback language** column to a language that does have one.",
+                        notes: [],
+                        examples: [
+                            {
+                                label: "Bilingual English/French project",
+                                columns: [
+                                    "Code",
+                                    "Name of language",
+                                    "Fallback language"
+                                ],
+                                rows: [
+                                    [
+                                        "en",
+                                        "English",
+                                        ""
+                                    ],
+                                    [
+                                        "fr",
+                                        "Français",
+                                        ""
+                                    ]
+                                ]
+                            }
+                        ],
+                        integrity: {
+                            description: "See [ISO 639-1 language code list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
+                            allowDuplicates: "no",
+                            allowEmpty: false,
+                            allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    },
+                    name: {
+                        name: "Name of language",
+                        description: "The language's name as displayed in the app's language switcher. Use the name as written in that language (e.g. `Français` not `French`, `Česky` not `Czech`).",
+                        howToUse: "",
+                        notes: [],
+                        examples: [],
+                        integrity: {
+                            description: "",
+                            allowDuplicates: "no",
+                            allowEmpty: false,
+                            allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    },
+                    fallback: {
+                        name: "Fallback language",
+                        description: "If your language code has no matching NaturaList UI translation (e.g. `iu` for Inuktitut), specify here the code of a language to use for the UI instead (e.g. `fr`). If left empty, English is used as the UI fallback.",
+                        howToUse: "Set only when using a language code for which NaturaList has no UI translation and you prefer a specific fallback other than English.",
+                        notes: [],
+                        examples: [],
+                        integrity: {
+                            description: "",
+                            allowDuplicates: "yes",
+                            allowEmpty: true,
+                            allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    }
+                },
+                templateData: [
+                    {
+                        code: "en",
+                        name: "English",
+                        fallback: ""
+                    },
+                ]
+            },
         }
     },
     checklist: {

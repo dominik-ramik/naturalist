@@ -516,9 +516,9 @@ export let DataManager = function () {
       );
       let name = getItem(
         data.sheets.appearance.tables.customization.data,
-        "Checklist name",
+        "Project name",
         lang.code,
-        "My checklist"
+        "New project"
       );
       let about = getItem(
         data.sheets.appearance.tables.customization.data,
@@ -560,9 +560,7 @@ export let DataManager = function () {
         ""
       )
         ?.toLowerCase();
-      let precachedImageMaxSize = getItem(
-        data.sheets.appearance.tables.customization.data,
-        "Precached image max size",
+      let precachedImageMaxSize = getItem(data.sheets.appearance.tables.customization.data, "Precached image max size",
         lang.code,
         0.5
       );
