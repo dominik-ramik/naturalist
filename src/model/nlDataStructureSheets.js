@@ -1,4 +1,4 @@
-import { text } from "d3";
+import { lab, text } from "d3";
 
 export const OCCURRENCE_IDENTIFIER = "occurrence";
 
@@ -1350,14 +1350,14 @@ export const nlDataStructureSheets = {
                                     ["2", "Body **hemispherical**; elytra smooth, brightly coloured with discrete spots...", "Coccinellidae", ""],
                                     ["2", "Body **elongate-cylindrical**; antennae at least half body length...", "Cerambycidae", ""],
 
-                                    // Lower key 1: Carabidae — chains from "Carabidae" above
+                                    // Lower key 1: Carabidae - chains from "Carabidae" above
                                     ["Carabidae", "Key to Selected *Carabidae* | Covers *Carabus*, *Cicindela*, and *Pterostichus*...", "1", ""],
                                     ["1", "Elytra with **metallic violet or blue iridescence**; surface with fused chain-like ridges...", "Carabus violaceus", ""],
                                     ["1", "Elytra **not iridescent**; surface finely striate or nearly smooth...", "2", ""],
                                     ["2", "Eyes **very large and prominent**; elytra dark metallic with pale spots...", "Cicindela campestris", ""],
                                     ["2", "Eyes moderate; elytra **uniformly black**, finely striate...", "Pterostichus melanarius", ""],
 
-                                    // Lower key 2: Coccinellidae — chains from "Coccinellidae" above
+                                    // Lower key 2: Coccinellidae - chains from "Coccinellidae" above
                                     ["Coccinellidae", "Key to Selected *Coccinellidae* | Covers *Coccinella*, *Harmonia*, and *Adalia*...", "1", ""],
                                     ["1", "Elytra **red with 7 black spots** (3+3+1 scutellar); pronotum white...", "Coccinella septempunctata", ""],
                                     ["1", "Elytral pattern variable or with fewer than 7 spots...", "2", ""],
@@ -1660,18 +1660,19 @@ export const nlDataStructureSheets = {
                         examples: [
                             {
                                 label: "Custom shortcode codes",
+                                fillRight: true,
                                 columns: [
                                     "Code"
                                 ],
                                 rows: [
                                     [
-                                        "myherb"
+                                        "pvnh"
                                     ],
                                     [
-                                        "myherb.type"
+                                        "pvnh.type"
                                     ],
                                     [
-                                        "col"
+                                        "gbif.s"
                                     ]
                                 ]
                             }
@@ -1688,20 +1689,21 @@ export const nlDataStructureSheets = {
                     },
                     labelTemplate: {
                         name: "Label template",
-                        description: "The text shown as the hyperlink label. Use `{{id}}` where the record ID should appear and optionally `{{author}}` for author attribution. The `{{author}}` placeholder is replaced by the author string followed by a space, or by an empty string if no author was provided - design the template so it reads naturally either way.\n\nMust contain `{{id}}`.",
-                        howToUse: "Place `{{author}}` before a noun so the label reads naturally with or without an author: `{{author}}Herbarium record ({{id}})`.",
+                        description: "The text shown as the hyperlink label. Use `{{id}}` where the record ID should appear and optionally `{{author}}` for author attribution. The `{{author}}` placeholder is replaced by the author string followed by a space, or by an empty string if no author was provided - design the template so it reads naturally either way.",
+                        howToUse: "Place `{{author}}` before a noun so the label reads naturally with or without an author: `{{author}}Herbarium record ({{id}})` or inside the parentheses: `Herbarium record ({{author}}{{id}})`.",
                         notes: [],
                         examples: [
                             {
                                 label: "Label template with optional author",
+                                fillRight: true,
                                 columns: [
                                     "Code",
                                     "Label template"
                                 ],
                                 rows: [
                                     [
-                                        "myherb",
-                                        "{{author}}Herbarium ({{id}})"
+                                        "pvnh",
+                                        "{{author}}PVNH ({{id}})"
                                     ]
                                 ]
                             }
@@ -1724,14 +1726,36 @@ export const nlDataStructureSheets = {
                                 label: "URL template for a herbarium",
                                 columns: [
                                     "Code",
+                                    "Label template",
                                     "URL template"
                                 ],
                                 rows: [
                                     [
-                                        "myherb",
-                                        "https://herbarium.example.org/occurrences/{{id}}"
+                                        "pvnh",
+                                        "{{author}}PVNH ({{id}})",
+                                        "https://symbiota.pvnh.net/collections/individual/index.php?occid={{id}}&clid=0"
                                     ]
                                 ]
+                            },
+                            {
+                                text: "In your [[ref:data]] sheet, suppose `voucherNotes` is a `markdown` field.",
+                                fillLeft: true,
+                                fillRight: true,
+                                columns: [
+                                    "species",
+                                    "voucherNotes",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "Ficus wassa",
+                                        "See atypical leaf form on @pvnh:Chanel Sam:00005183 and @pvnh:Pat Curry:00005190.",
+                                        "Both @pvnh shortcodes link to specific herbarium records in the Port Vila Herbarium collection, with collector attribution for each record."
+                                    ]
+                                ]
+                            },
+                            {
+                                text: "The above example would render in the app as two clickable links opening the corresponding specimen pages in the Port Vila Herbarium collection.\n\n**Displayed:** See atypical leaf form on [Chanel Sam PVNH (00005183)](https://symbiota.pvnh.net/collections/individual/index.php?occid=00005183&clid=0) and [Pat Curry PVNH (00005190)](https://symbiota.pvnh.net/collections/individual/index.php?occid=00005190&clid=0).",
                             }
                         ],
                         integrity: {
@@ -1746,162 +1770,216 @@ export const nlDataStructureSheets = {
                 data: [],
                 templateData: [
                     {
-                        code: "reptile",
-                        labelTemplate: "{{author}}The Reptile Database ({{id}})",
-                        urlTemplate: "https://reptile-database.reptarium.cz/{{id}}"
+                        code: "pvnh",
+                        labelTemplate: "{{author}}PVNH ({{id}})",
+                        urlTemplate: "https://symbiota.pvnh.net/collections/individual/index.php?occid={{id}}&clid=0"
                     }
                 ]
             },
-            dwcArchive: {
-                name: "DwC archive",
-                required: false,
-                description: "Configures Darwin Core Archive (DwC-A) export for GBIF submission.",
-                columns: {
-                    term: {
-                        name: "DwC term",
-                        description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
-                        integrity: {
-                            allowEmpty: false,
-                            allowDuplicates: "no",
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
-                    },
-                    sourceColumn: {
-                        name: "Source column",
-                        description: "The NaturaList data path or directive that provides the value for this DwC term.\nLeave empty if you are supplying a Constant value instead.\n\nSUPPORTED DIRECTIVE TYPES:\n\n  Plain column name\n    e.g.  recordedBy\n    Reads the value of that column from the checklist for each row.\n    For compound types (geopoint, interval, date, image, sound, map) append\n    the component key: location.lat · altitude.from · collectionDate.ymd\n    · specimenPhoto.source\n\n  {col1} text {col2} template\n    e.g.  {collector} leg. | {identifier} det.\n    Constructs a string from column values.  Pipe '|' separates fallback\n    alternatives - the first segment where all placeholders are non-empty\n    is used.\n\n  config:Item Name\n    e.g.  config:Checklist name\n    Reads a value from the Customization table.\n\n  taxa:ColumnName  or  taxa:ColumnName.component\n    e.g.  taxa:Species · taxa:Species.authority · taxa:Species.lastNamePart\n    Reads a value from the taxon hierarchy.  Append a component key for\n    compound taxon fields.\n\n  auto:termName\n    e.g.  auto:taxonID · auto:taxonRank · auto:scientificName\n    Uses a value automatically generated by the compiler.\n\n  media:path1, path2, …   ← FOR dwc:associatedMedia\n    e.g.  media:specimenPhoto\n          media:lifePhotos#\n          media:specimenPhoto, lifePhotos#, callsRecs#\n    Collects fully resolved source URLs from one or more NaturaList image,\n    sound, or map columns.  Paths ending in '#' are automatically expanded\n    to all matching numbered columns (lifePhotos# → lifePhotos1, lifePhotos2 …).\n    All URLs are joined with ' | ' in the output.\n    NOTE: do NOT use the template pipe '|' syntax for associatedMedia -\n    the template pipe is a fallback selector, not a list separator.\n    Use this directive instead.",
-                        integrity: {
-                            allowEmpty: true,
-                            allowDuplicates: "yes",
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
-                    },
-                    constantValue: {
-                        name: "Constant value",
-                        description: "A literal string applied to every record. Leave empty if using Source column.",
-                        integrity: {
-                            allowEmpty: true,
-                            allowDuplicates: "yes",
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
-                    }
-                },
-                data: [],
-                templateData: [
-                    {
-                        term: "language",
-                        sourceColumn: "",
-                        constantValue: "en"
-                    },
-                    {
-                        term: "institutionCode",
-                        sourceColumn: "",
-                        constantValue: "VANUHERP"
-                    },
-                    {
-                        term: "collectionCode",
-                        sourceColumn: "",
-                        constantValue: "VANUATU-CHECKLIST"
-                    },
-                    {
-                        term: "license",
-                        sourceColumn: "",
-                        constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
-                    },
-                    {
-                        term: "datasetName",
-                        sourceColumn: "config:Checklist name",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:title",
-                        sourceColumn: "config:Checklist name",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:abstract",
-                        sourceColumn: "config:About section",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:creator.organizationName",
-                        sourceColumn: "",
-                        constantValue: "Example Natural History Museum"
-                    },
-                    {
-                        term: "eml:creator.givenName",
-                        sourceColumn: "",
-                        constantValue: "Jane"
-                    },
-                    {
-                        term: "eml:creator.surName",
-                        sourceColumn: "",
-                        constantValue: "Smith"
-                    },
-                    {
-                        term: "eml:creator.email",
-                        sourceColumn: "",
-                        constantValue: "j.smith@example.com"
-                    },
-                    {
-                        term: "taxonID",
-                        sourceColumn: "auto:taxonID",
-                        constantValue: ""
-                    },
-                    {
-                        term: "parentNameUsageID",
-                        sourceColumn: "auto:parentNameUsageID",
-                        constantValue: ""
-                    },
-                    {
-                        term: "taxonRank",
-                        sourceColumn: "auto:taxonRank",
-                        constantValue: ""
-                    },
-                    {
-                        term: "scientificName",
-                        sourceColumn: "auto:scientificName",
-                        constantValue: ""
-                    },
-                    {
-                        term: "scientificNameAuthorship",
-                        sourceColumn: "auto:scientificNameAuthorship",
-                        constantValue: ""
-                    },
-                    {
-                        term: "kingdom",
-                        sourceColumn: "",
-                        constantValue: "Animalia"
-                    },
-                    {
-                        term: "class",
-                        sourceColumn: "taxa:Class",
-                        constantValue: ""
-                    },
-                    {
-                        term: "order",
-                        sourceColumn: "taxa:Order",
-                        constantValue: ""
-                    },
-                    {
-                        term: "family",
-                        sourceColumn: "taxa:Family",
-                        constantValue: ""
-                    },
-                    {
-                        term: "genus",
-                        sourceColumn: "taxa:Genus",
-                        constantValue: ""
-                    },
-                    {
-                        term: "specificEpithet",
-                        sourceColumn: "taxa:Species.lastNamePart",
-                        constantValue: ""
-                    },
-                ]
+dwcArchive: {
+    name: "DwC archive",
+    required: false,
+    description: "Configures export in Darwin Core Archive (DwC-A) format for submission to [GBIF](https://www.gbif.org/) and other biodiversity aggregators. Each row maps one DwC term to a value source. The compiler produces a checklist archive (`taxa_dwca.zip`) and, when `basisOfRecord` is configured, an additional occurrence archive (`occurrences_dwca.zip`). See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide, required and recommended terms, EML metadata configuration, and a worked example.",
+    notes: [
+        {
+            type: "warning",
+            title: "Experiment on living material in progress",
+            text: "The DwC-A export feature is currently experimental and in early testing. It has been succesfully tested to be compliant with GBIF's DwC-A requirements on simple datasets, but we encourage you to verify the exported data against your database to ensure there are no surprises. Contact the developers on [GitHub](https://github.com/dominik-ramik/naturalist/) if you encounter any issues."
+        }
+    ],
+    columns: {
+        term: {
+            name: "DwC term",
+            description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
+            howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](/author-guide/dwc#eml-metadata) for the full list of supported `eml:` terms.",
+            notes: [],
+            examples: [],
+            integrity: {
+                allowEmpty: false,
+                allowDuplicates: "no",
+                allowedContent: "any",
+                supportsMultilingual: false
             }
+        },
+        sourceColumn: {
+            name: "Source column",
+            description: "A directive that tells the compiler where to read the value for this DwC term. Leave empty if supplying a **Constant value** instead.\n\nAccepted directive types:\n\n- **Plain column name** (e.g. `recordedBy`) - reads that column's value for each row. For compound data types, append a component key: `collectionDate.ymd`, `location.lat`, `altitude.from`, `specimenPhoto.source`\n- **`{col}` template** (e.g. `{collector} leg. | {observer} obs.`) - constructs a string from column values; `|` separates fallback alternatives, the first segment where all placeholders are non-empty is used\n- **`config:Item Name`** - reads a value from the [[ref:appearance.customization]] table (e.g. `config:Checklist name`)\n- **`taxa:ColumnName`** or **`taxa:ColumnName.component`** - reads from the taxon hierarchy (e.g. `taxa:Species`, `taxa:Species.authority`, `taxa:Species.lastNamePart`)\n- **`auto:termName`** - instructs the compiler to generate the value; see [Source column directives](/author-guide/dwc#source-column-directives) for all supported keys including `auto:taxonID`, `auto:taxonRank`, `auto:scientificName`, and others\n- **`media:path1, path2, …`** - for `associatedMedia` only; collects fully resolved URLs from image, sound, or map columns and joins them with ` | `; append `#` to expand array columns automatically (e.g. `lifePhotos#`)\n\nFor the full directive reference with all options and examples, see [Source column directives](/author-guide/dwc#source-column-directives).",
+            howToUse: "Leave empty when supplying a Constant value. For taxonomy, prefer `auto:` directives. For dataset-wide metadata already in the [[ref:appearance.customization]], use `config:`. For occurrence-specific data columns, use plain column names or component keys.",
+            notes: [],
+            examples: [
+                {
+                    label: "Common directive patterns",
+                    fillRight: true,
+                    columns: [
+                        "DwC term",
+                        "Source column",
+                        "[comment]"
+                    ],
+                    rows: [
+                        ["datasetName", "config:Checklist name", "config: directive"],
+                        ["scientificName", "auto:scientificName", "auto: directive"],
+                        ["taxonRank", "auto:taxonRank", "auto: directive"],
+                        ["family", "taxa:Family", "taxa: directive"],
+                        ["specificEpithet", "taxa:Species.lastNamePart", "taxa: directive with component"],
+                        ["recordedBy", "collector", "plain column name"],
+                        ["decimalLatitude", "location.lat", "plain column name with component"],
+                        ["eventDate", "collectionDate.ymd", "plain column name with component"],
+                        ["recordedBy", "{collector} leg. | {observer} obs.", "{} template with fallback"],
+                        ["associatedMedia", "media:specimenPhoto, lifePhotos#", "media: directive"]
+                    ]
+                }
+            ],
+            integrity: {
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false
+            }
+        },
+        constantValue: {
+            name: "Constant value",
+            description: "A literal string applied to every record. Leave empty if using Source column.",
+            howToUse: "Use for dataset-wide values that do not vary per row: `language`, `institutionCode`, `license`, `basisOfRecord`, `kingdom`, etc. The `license` field accepts common aliases (`cc0`, `cc by 4.0`, `cc by-nc 4.0`) which are normalised to the canonical GBIF-accepted URI.",
+            notes: [],
+            examples: [
+                {
+                    label: "Common constant value rows",
+                    fillRight: true,
+                    columns: [
+                        "DwC term",
+                        "Constant value"
+                    ],
+                    rows: [
+                        ["language", "en"],
+                        ["institutionCode", "MNHN"],
+                        ["license", "cc by 4.0"],
+                        ["basisOfRecord", "PreservedSpecimen"],
+                        ["kingdom", "Plantae"]
+                    ]
+                }
+            ],
+            integrity: {
+                allowEmpty: true,
+                allowDuplicates: "yes",
+                allowedContent: "any",
+                supportsMultilingual: false
+            }
+        }
+    },
+    data: [],
+    templateData: [
+        {
+            term: "language",
+            sourceColumn: "",
+            constantValue: "en"
+        },
+        {
+            term: "institutionCode",
+            sourceColumn: "",
+            constantValue: "VANUHERP"
+        },
+        {
+            term: "collectionCode",
+            sourceColumn: "",
+            constantValue: "VANUATU-CHECKLIST"
+        },
+        {
+            term: "license",
+            sourceColumn: "",
+            constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
+        },
+        {
+            term: "datasetName",
+            sourceColumn: "config:Checklist name",
+            constantValue: ""
+        },
+        {
+            term: "eml:title",
+            sourceColumn: "config:Checklist name",
+            constantValue: ""
+        },
+        {
+            term: "eml:abstract",
+            sourceColumn: "config:About section",
+            constantValue: ""
+        },
+        {
+            term: "eml:creator.organizationName",
+            sourceColumn: "",
+            constantValue: "Example Natural History Museum"
+        },
+        {
+            term: "eml:creator.givenName",
+            sourceColumn: "",
+            constantValue: "Jane"
+        },
+        {
+            term: "eml:creator.surName",
+            sourceColumn: "",
+            constantValue: "Smith"
+        },
+        {
+            term: "eml:creator.email",
+            sourceColumn: "",
+            constantValue: "j.smith@example.com"
+        },
+        {
+            term: "taxonID",
+            sourceColumn: "auto:taxonID",
+            constantValue: ""
+        },
+        {
+            term: "parentNameUsageID",
+            sourceColumn: "auto:parentNameUsageID",
+            constantValue: ""
+        },
+        {
+            term: "taxonRank",
+            sourceColumn: "auto:taxonRank",
+            constantValue: ""
+        },
+        {
+            term: "scientificName",
+            sourceColumn: "auto:scientificName",
+            constantValue: ""
+        },
+        {
+            term: "scientificNameAuthorship",
+            sourceColumn: "auto:scientificNameAuthorship",
+            constantValue: ""
+        },
+        {
+            term: "kingdom",
+            sourceColumn: "",
+            constantValue: "Animalia"
+        },
+        {
+            term: "class",
+            sourceColumn: "taxa:Class",
+            constantValue: ""
+        },
+        {
+            term: "order",
+            sourceColumn: "taxa:Order",
+            constantValue: ""
+        },
+        {
+            term: "family",
+            sourceColumn: "taxa:Family",
+            constantValue: ""
+        },
+        {
+            term: "genus",
+            sourceColumn: "taxa:Genus",
+            constantValue: ""
+        },
+        {
+            term: "specificEpithet",
+            sourceColumn: "taxa:Species.lastNamePart",
+            constantValue: ""
+        },
+    ]
+}
         }
     },
     appearance: {
