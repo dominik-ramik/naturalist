@@ -151,15 +151,15 @@ window.addEventListener("load", (event) => {
           const deepLinkUrl = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY);
 
           if (deepLinkHref && deepLinkUrl) {
-            // Pipeline has not started yet — reload to original href so oninit can pick it up.
+            // Pipeline has not started yet - reload to original href so oninit can pick it up.
             window.location.href = deepLinkHref;
           } else if (deepLinkHref && !deepLinkUrl) {
-            // oninit already consumed the URL — pipeline ran (or is running) — do NOT reload.
+            // oninit already consumed the URL - pipeline ran (or is running) - do NOT reload.
             sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY + "_href"); // clean up the stale _href
           }
         }
         else {
-          // Not on docs page — normal SW activation reload.
+          // Not on docs page - normal SW activation reload.
           console.log("[controllerchange] No deep-link pending. Normal reload.");
           window.location.reload();
         }

@@ -29,10 +29,10 @@ function getTaxonHighlightRegex() {
 }
 
 /**
- * Variant config table — all presentation decisions for named variants live here.
+ * Variant config table - all presentation decisions for named variants live here.
  * Callers only need to pass variant="…"; no presentation logic leaks upward.
  * To add a new variant: add an entry below and a matching CSS block in
- * ClickableTaxonNameView.css — no other file needs to change.
+ * ClickableTaxonNameView.css - no other file needs to change.
  */
 const VARIANT_CONFIG = {
   occurrence: {
@@ -55,7 +55,7 @@ export let ClickableTaxonName = {
 
     const highlightRegex = getTaxonHighlightRegex();
 
-    // Resolve variant — icon and CSS modifier class are derived here.
+    // Resolve variant - icon and CSS modifier class are derived here.
     const variant = vnode.attrs.variant || null;
     const variantConfig = variant ? (VARIANT_CONFIG[variant] ?? {}) : {};
     const iconSrc = variantConfig.icon ?? null;

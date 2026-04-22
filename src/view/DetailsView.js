@@ -41,7 +41,7 @@ export let DetailsView = {
   taxonAuthority: "",
   taxonData: {},
   taxon: null,
-  // Cache the raw tab DATA returned by Checklist (safe to cache — it is plain data,
+  // Cache the raw tab DATA returned by Checklist (safe to cache - it is plain data,
   // not vnodes).  This avoids re-running the Checklist lookup on every redraw while
   // still producing fresh vnode trees each render, which Mithril requires.
   // Invalidated whenever the taxon changes.
@@ -61,7 +61,7 @@ export let DetailsView = {
     const name = separatorIndex >= 0 ? raw.slice(0, separatorIndex) : raw;
     const authority = separatorIndex >= 0 ? raw.slice(separatorIndex + 1) : "";
 
-    // Guard must compare BEFORE writing — currently it writes taxonName first,
+    // Guard must compare BEFORE writing - currently it writes taxonName first,
     // making the comparison always true
     if (name === DetailsView.taxonName && authority === DetailsView.taxonAuthority) return;
 
@@ -78,7 +78,7 @@ export let DetailsView = {
   view: function (vnode) {
     const taxon = DetailsView.taxon ?? Checklist.getTaxonByName(DetailsView.taxonName);
 
-    // Vnode trees MUST be built fresh on every render — Mithril mutates them
+    // Vnode trees MUST be built fresh on every render - Mithril mutates them
     // in-place during the diff/patch cycle, so cached vnodes cause stale DOM
     // references and dead event handlers.  Only the upstream data is cached.
     const tabs = TabsForDetails(

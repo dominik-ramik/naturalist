@@ -1112,7 +1112,7 @@ export const DEEP_LINK_STORAGE_KEY = "xlsxDeepLinkUrl";
  *     the SW's own controllerchange event will trigger a reload in app.js, and
  *     that handler (now deep-link-aware) will reload to the full original href
  *     so the hash is preserved.
- *   - If sessionStorage already has the key, we are on the post-reload pass —
+ *   - If sessionStorage already has the key, we are on the post-reload pass -
  *     do nothing, let oninit pick up the stored URL.
  */
 function captureDeepLinkAndReloadIfNeeded() {
@@ -1139,14 +1139,14 @@ function captureDeepLinkAndReloadIfNeeded() {
   const swAlreadyControlling = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
   
   if (swAlreadyControlling) {
-    // SW is active — no controllerchange will fire. We reload ourselves.
+    // SW is active - no controllerchange will fire. We reload ourselves.
     // Use location.href (not reload()) to guarantee the full URL including hash
     // is re-requested, bypassing any SW cache normalisation.
     window.location.href = window.location.href;
     return true;
   }
 
-  // SW not yet controlling — controllerchange will fire and app.js will reload
+  // SW not yet controlling - controllerchange will fire and app.js will reload
   // to the stored href. Do not reload here; just let it happen.
   return false;
 }

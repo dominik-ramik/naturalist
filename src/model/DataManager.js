@@ -2639,7 +2639,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
 
-    // Only check leaf paths — intermediate paths (e.g. "image" when "image.source"
+    // Only check leaf paths - intermediate paths (e.g. "image" when "image.source"
     // also exists) have no direct header of their own and would false-positive
     const position = dataPath.analyse.position(allCDDColumnNames, colName);
     if (!position.isLeaf) return;

@@ -95,7 +95,7 @@ function cachedMarkdown(text) {
 //   where statsKey was built as:
 //     `${stats.min}|${stats.max}|${stats.mean}|${stats.sd}|${stats.sorted.join(",")}`
 //   This forced an O(n) string serialisation of the entire sorted numeric array
-//   on EVERY call, even when the result was already cached — the dominant cost
+//   on EVERY call, even when the result was already cached - the dominant cost
 //   for large numeric-gradient perspectives.
 //
 // New structure: Map<dataPath → Map<statsRef | "no-stats" → Map<status → result>>>
@@ -113,7 +113,7 @@ export function getCachedRegionColor(status, legendConfig, datasetStats, dataPat
   const byPath = _resolvedColorCache.get(dataPath);
 
   // Use the stats object reference directly as the second-level key.
-  // "no-stats" is a string constant — always the same identity — and serves
+  // "no-stats" is a string constant - always the same identity - and serves
   // as a safe sentinel for the null case.
   const statsRef = datasetStats ?? "no-stats";
   if (!byPath.has(statsRef)) {

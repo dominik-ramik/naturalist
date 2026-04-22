@@ -275,15 +275,15 @@ function interpolateColor(hex1, hex2, t) {
 // Both keys are stable object references for the lifetime of a perspective
 // build, so using object identity avoids any string serialisation cost.
 // WeakMap entries are collected automatically when the stats or config objects
-// are no longer referenced — no manual invalidation required.
+// are no longer referenced - no manual invalidation required.
 const _sortedAnchorsCache = new WeakMap();
 
 /**
  * Return the resolved, sorted anchor list for a (legendConfig, datasetStats)
  * pair, computing it at most once per unique combination.
  *
- * Each anchor is extended with a `resolved` field — the concrete numeric
- * threshold derived from the dataset statistics — and the list is sorted
+ * Each anchor is extended with a `resolved` field - the concrete numeric
+ * threshold derived from the dataset statistics - and the list is sorted
  * ascending by that value so that _resolveGradient / _resolveStepped can
  * binary-search / linear-scan without re-sorting.
  */

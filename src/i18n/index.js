@@ -73,7 +73,7 @@ function escapeHtml(value) {
 }
 
 // ---------------------------------------------------------------------------
-// Key resolution — flat key first, then namespace-prefixed.
+// Key resolution - flat key first, then namespace-prefixed.
 // ---------------------------------------------------------------------------
 
 function resolveKey(tag, namespace) {
@@ -94,7 +94,7 @@ function resolveKey(tag, namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// createLocalT — factory used by the Vite plugin.
+// createLocalT - factory used by the Vite plugin.
 // Returns a { t, tf } pair bound to a namespace so components use flat keys.
 // ---------------------------------------------------------------------------
 
@@ -128,7 +128,7 @@ export function createLocalT(namespace) {
 
 // ---------------------------------------------------------------------------
 // Named global t/tf for modules that import directly from the i18n index
-// (no namespace — flat keys from shared JSON only).
+// (no namespace - flat keys from shared JSON only).
 // ---------------------------------------------------------------------------
 
 export const { t, tf } = createLocalT(null);

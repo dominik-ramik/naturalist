@@ -24,7 +24,7 @@ function purifyCssString(css) {
 //     (including the empty string).
 //   • A pattern with NO "*" must match the entire cell value (equality).
 //   • A pattern that is exactly "*" matches everything.
-//   • Multiple "*" are safe: the algorithm is a sequential indexOf scan —
+//   • Multiple "*" are safe: the algorithm is a sequential indexOf scan -
 //     O(n·k) where n = data length and k = number of literal segments.
 //     There is NO regex backtracking risk regardless of wildcard count.
 //

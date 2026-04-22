@@ -66,7 +66,7 @@ export let TaxonNameView = {
         taxonTree: vnode.attrs.taxonTree,
         fontSize: fontSize,
         currentTaxonLevel: vnode.attrs.currentTaxonLevel,
-        variant: vnode.attrs.variant,  // passed through opaquely — no logic here
+        variant: vnode.attrs.variant,  // passed through opaquely - no logic here
       }),
       inverseTaxonLevel >= 1
         ? m(".copy-to-clipboard-section[style=display: flex;]", [

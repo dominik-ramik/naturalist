@@ -131,7 +131,7 @@ self.addEventListener('fetch', function (e) {
     })());
 });
 
-// Update function — fetches fresh checklist data and saves it to the dedicated cache.
+// Update function - fetches fresh checklist data and saves it to the dedicated cache.
 // Returns a Promise that resolves when the cache write is complete (or rejects on failure),
 // so callers can wait before notifying the app that new data is ready.
 async function refreshCachedChecklistData() {
@@ -162,7 +162,7 @@ async function handleAppMessage(message) {
             await refreshCachedChecklistData();
         } catch (err) {
             console.log("[SW] Could not update checklist data. Fetch or cache write failed.", err);
-            // Do not notify the app — the cache was not updated, so a reload would serve stale data.
+            // Do not notify the app - the cache was not updated, so a reload would serve stale data.
             return;
         }
         if (communicationPort) {

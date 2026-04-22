@@ -1535,7 +1535,7 @@ export const nlDataStructureSheets = {
                     },
                     {
                         step: "7",
-                        text: "**Eyelids absent** (eye covered by a transparent spectacle, as in snakes); supranasals in contact at midline; dorsal scales in 26–28 rows at midbody",
+                        text: "**Eyelids absent** (eye covered by a transparent spectacle, as in snakes); supranasals in contact at midline; dorsal scales in 26-28 rows at midbody",
                         target: "Cryptoblepharus novohebridicus",
                         images: ""
                     },
@@ -2351,6 +2351,7 @@ export const nlDataStructureSheets = {
                                     "Contains text",
                                     "Background color",
                                     "Text color",
+                                    "Border color",
                                     "[comment]"
                                 ],
                                 rows: [
@@ -2359,6 +2360,7 @@ export const nlDataStructureSheets = {
                                         "*tree*",
                                         "#668dbb",
                                         "white",
+                                        "",
                                         "Matches any value starting with 'tree', e.g. 'tree', 'treelet', 'epiphytic tree'"
                                     ],
                                     [
@@ -2366,13 +2368,15 @@ export const nlDataStructureSheets = {
                                         "shrub",
                                         "#5e9f5c",
                                         "white",
-                                        "¨Matches 'shrub' exactly"
+                                        "",
+                                        "Matches 'shrub' exactly"
                                     ],
                                     [
                                         "redlist",
                                         "Endangered",
                                         "#cd6630",
                                         "#ffcd9a",
+                                        "",
                                         "Matches 'Endangered' exactly, if you use [[ref:appearance.dataCodes]] to translate 'EN' to 'Endangered' in the data, the category matcher operates on the translated value 'Endangered' not the original code 'EN'"
                                     ],
                                     [
@@ -2380,6 +2384,7 @@ export const nlDataStructureSheets = {
                                         "Least Concern",
                                         "#006666",
                                         "white",
+                                        "",
                                         "Matches 'Least Concern' exactly"
                                     ]
                                 ]
@@ -2550,43 +2555,63 @@ export const nlDataStructureSheets = {
             mapRegionsNames: {
                 name: "Map regions information",
                 required: false,
-                description: "Defines the human-readable name for each geographic region code used in `mapregions` data columns. Every region code that appears in your data must have a matching entry here, or a compile-time error is logged.\n\nThis table can be left completely empty if you do not use region maps.",
+                description: "Defines the human-readable name for each geographic region code used in [[ref:type.mapregions]] data columns. Every region code that appears in your data must have a matching entry here - missing codes are logged as errors and displayed as raw codes in the UI.\n\nLeave this table empty if you do not use `mapregions` data columns.",
                 notes: [
-                    {
-                        type: "warning",
-                        text: "Region codes must be all-lowercase letters (`a-z`) only - no digits, hyphens, or underscores. Every code that appears in any `mapregions` data column must have a row here."
-                    }
                 ],
                 columns: {
                     code: {
                         name: "Region code",
-                        description: "The short code identifying this geographic region, matching the codes used in `mapregions` data columns. Must be all-lowercase letters (`a-z`) only - no digits, hyphens, or spaces.",
-                        howToUse: "Use the same codes as in your [[ref:data]] sheet `mapregions` cells. Conventional ISO 3166-1 alpha-2 country codes (e.g. `fr`, `de`, `gb`) work well for country-level maps.",
+                        description: "The short code identifying this geographic region, matching the codes used in [[ref:type.mapregions]] data columns.",
+                        howToUse: "Use the same codes as in your [[ref:data]] sheet `mapregions` cells. Codes must be all-lowercase letters a-z only - no digits, no hyphens. The code must exactly match the `class` attribute of the SVG element corresponding to the map region if you use a choropleth map.",
                         notes: [],
                         examples: [
                             {
-                                label: "European region codes",
+                                label: "Region codes and names",
+                                text: "Suppose you have a `breedingRange` column in your [[ref:data]] sheet with [[ref:type.mapregions]] data type and your SVG map has regions marked with the same codes.",
                                 columns: [
                                     "Region code",
                                     "Region name"
                                 ],
                                 rows: [
                                     [
-                                        "fr",
-                                        "France"
+                                        "mos",
+                                        "Moravinan-Silesian region"
                                     ],
                                     [
-                                        "de",
-                                        "Germany"
+                                        "olo",
+                                        "Olomouc region"
                                     ],
                                     [
-                                        "gb",
-                                        "United Kingdom"
+                                        "smo",
+                                        "South Moravian Region"
+                                    ],
+                                ]
+                            },
+                            {
+                                label: "",
+                                text: "In your [[ref:content.customDataDefinition]] table, you would have the `breedingRange` column is a form similar to this (abbreviated example):",
+                                columns: [
+                                    "Column name",
+                                    "Title",
+                                    "Data type",
+                                    "Formatting",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "breedingRange",
+                                        "Breeding range in Czech Republic",
+                                        "mapregions",
+                                        "maps/czechia.svg",
+                                        "Your `maps/czechia.svg` inside `usercontent/` folder has shapes with codes `mos`, `olo`, `smo` etc. matching the Region code column in the Map regions information table"
                                     ],
                                     [
-                                        "es",
-                                        "Spain"
-                                    ]
+                                        "...",
+                                        "...",
+                                        "...",
+                                        "...",
+                                        "other config for unrelated data columns"
+                                    ],
                                 ]
                             }
                         ],
@@ -2594,10 +2619,9 @@ export const nlDataStructureSheets = {
                             description: "",
                             allowEmpty: false,
                             allowDuplicates: "no",
-                            defaultValue: "",
                             allowedContent: "regex",
                             regex: "^[a-z]+$",
-                            regexExplanation: "only lowercase letters a-z",
+                            regexExplanation: "only one or more lowercase letters a-z",
                             supportsMultilingual: false
                         }
                     },
@@ -2606,7 +2630,34 @@ export const nlDataStructureSheets = {
                         description: "The human-readable name for this region, shown in the UI and in the inline text list on taxon cards. Supports multilingual variants (`Region name:en`, `Region name:fr`).",
                         howToUse: "Add multilingual variants (`Region name:en`, `Region name:fr`) for translated place names.",
                         notes: [],
-                        examples: [],
+                        examples: [
+                            {
+                                label: "Multilingual region names",
+                                text: "If your project is multilingual, add one `Region name:langcode` column per language to provide translated region names. The app displays the appropriate translation based on the user's language preference.",
+                                columns: [
+                                    "Region code",
+                                    "Region name:en",
+                                    "Region name:cs"
+                                ],
+                                rows: [
+                                    [
+                                        "mos",
+                                        "Moravinan-Silesian region",
+                                        "Moravskoslezský kraj"
+                                    ],
+                                    [
+                                        "olo",
+                                        "Olomouc region",
+                                        "Olomoucký kraj"
+                                    ],
+                                    [
+                                        "smo",
+                                        "South Moravian Region",
+                                        "Jihomoravský kraj"
+                                    ],
+                                ]
+                            }
+                        ],
                         integrity: {
                             description: "",
                             allowEmpty: false,
@@ -2620,18 +2671,18 @@ export const nlDataStructureSheets = {
             mapRegionsLegend: {
                 name: "Map regions legend",
                 required: false,
-                description: "Configures the colour, legend label, and scale behaviour for every status value or numeric anchor used in `mapregions` data columns. Three modes are supported and can be combined freely within the same column:\n\n- **Category** (default): one row per distinct status string. Each maps to a fixed colour.\n- **Gradient**: two or more anchor rows with `gradient` legend type. Colours are smoothly interpolated between anchors based on numeric data values.\n- **Stepped**: like gradient but colour assignment is discrete - each value snaps to the colour of the highest anchor it does not exceed.\n\nModes can coexist in the same column: add categorical override rows alongside gradient or stepped anchor rows. The engine always tries an exact string match first; numeric anchor interpolation is the fallback.\n\nBy default, rows without a **Column name** apply to every `mapregions` column in the project. Fill **Column name** to restrict a row to one specific map column, enabling different colour schemes per map.\n\nFor dynamic anchor notations (A2-A5), the 'dataset' is the set of all numeric status values present in the *current taxon's* mapregions data for the given column - so each taxon has its own independent colour scale.\n\nThis table can be left completely empty if you do not use region maps.",
+                description: "Controls how [[ref:type.mapregions]] status values are translated into colours on the SVG map and what text appears in the map legend and inline region lists.\n\nThree modes are available:\n\n- **Category** (default, [[ref:appearance.mapRegionsLegend.legendType]] column empty or `category`): the Status code is matched as an exact string. One row per distinct status value, plus an optional fallback row with an empty Status code that colours any region not matched by another row.\n- **Gradient** ([[ref:appearance.mapRegionsLegend.legendType]] `gradient`): the Status code is a numeric anchor position. At least two rows required defining the gradient start and end anchors. Colours are smoothly interpolated between anchors. Use for continuous numeric data.\n- **Stepped** ([[ref:appearance.mapRegionsLegend.legendType]] `stepped`): anchor positions as above, but colour assignment is discrete - each value snaps to the bin whose anchor it exceeds. Use to visually divide the numeric data into discrete categorzed groups.\n\nYou can combine **Category** with either **Gradient** or **Stepped** mode to cover cases when distinct categories live together with numeric data (e.g. a vegetation survey with coverage percentual values per region, but some regions classified as 'no data' or 'monitoring in progress'). The engine always checks for an exact categorical match first; numeric interpolation is the fallback. This lets you mix numeric data with categorical exception codes (e.g. `ND`, `E`) in the same column.\n\nLeave this table empty if you do not use `mapregions` data columns. See [Distribution maps with mapregions](/author-guide/mapregions) for the full colour engine explanation and worked examples.",
                 notes: [
                     {
                         type: "tip",
-                        text: "See [Appearance & Branding → Map Regions Legend](/author-guide/nl-appearance#46-table-map-regions-legend) for the full anchor notation reference (A1-A5) and eleven configuration examples covering every mode and combination."
+                        text: "For the full anchor notation reference, the per-taxon colour scale behaviour, and worked examples covering every mode and combination, see [Distribution maps with mapregions → Anchor value notation](./mapregions#anchor-value-notation)."
                     }
                 ],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "Restricts this legend row to a specific `mapregions` data column. Enter the exact data path as declared in the Custom data definition table (e.g. `map`, `map.europe`, `distribution`). Leave empty to apply the row globally to every `mapregions` column. The compound pair of **Column name** and **Status code** must be unique across the table - the same Status code may appear on multiple rows provided each row names a different column.",
-                        howToUse: "Leave empty for projects with a single map or with several maps sharing the same colour logic. Fill in when different map columns require different colour schemes or gradient definitions.",
+                        description: "Restricts this legend row to a specific `mapregions` data column. Enter the exact data path as declared in the [[ref:content.customDataDefinition]] table (e.g. `map`, `maps.europe`, `distribution`). Leave empty to apply the row globally to every `mapregions` column. The compound pair of **Column name** and **Status code** must be unique across the table - the same Status code may appear on multiple rows provided each row names a different column.",
+                        howToUse: "",
                         notes: [],
                         examples: [
                             {
@@ -2686,7 +2737,7 @@ export const nlDataStructureSheets = {
                     },
                     status: {
                         name: "Status code",
-                        description: "The status value or anchor position for this row. Interpretation depends on **Legend type**.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`). Leave empty to define the **global fallback** - any region whose value matches no other row receives this colour.\n\n**For `gradient` and `stepped` rows**: an anchor position in one of five notations (A1-A5). All data cells for the column must contain parseable numbers.\n\n- **A1 - Raw value**: a plain integer or decimal (e.g. `7.6`, `0`, `-5`). Anchor sits at that absolute value. Use for data with meaningful fixed thresholds (pH, temperature, concentration).\n- **A2 - Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves linearly between dataset minimum (0%) and maximum (100%). Use when relative position matters more than absolute value.\n- **A3 - Percentile**: a number followed by `p` (e.g. `25p`, `75p`, `2.5p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **A4 - Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many standard deviations from the dataset mean. Use to visualise statistical outliers.\n- **A5 - Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]`. Creates a scale diverging from a declared center point. Modifier is `%` (percentage of max distance from center), `s` (σ units), or absent (raw units). Examples: `-100%c0`, `50%c14`, `-2sc28`. Use for diverging colour schemes anchored to an ecologically meaningful midpoint.\n\nA1-A5 may be mixed freely. Anchors outside the data range are valid; values beyond the outermost anchor clamp to that anchor's colour.",
+                        description: "The status value or anchor position for this row. Interpretation depends on the **Legend type** of this row.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`)..\n\n**For `gradient` and `stepped` rows**: a numeric anchor position in one of five notations. All data values for the column must be parseable numbers (or matched by a categorical row).\n\n- **Raw value**: a plain number (e.g. `7.6`, `0`, `-5`). Anchor at that absolute value. Use for fixed biological thresholds.\n- **Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves between dataset min and max. Use when relative position matters more than absolute value.\n- **Percentile**: a number followed by `p` (e.g. `25p`, `75p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many σ from the dataset mean. Use to visualise statistical outliers.\n- **Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]` (e.g. `-100%c0`, `0c28`, `-2sc28`). Diverges from a declared center point. Use for change maps or deviation from a target baseline.\n\nThe five numeric anchor types may be mixed freely for advanced cases, but most of the time using a single anchor type is sufficient. See [Anchor value notation](./mapregions#anchor-value-notation) for full explanations and the per-taxon dataset semantics.",
                         howToUse: "For simple categorical maps, enter the status strings used in your data. For numeric data, choose the anchor notation that best matches the data's nature and the intended visual communication.",
                         notes: [],
                         examples: [
@@ -2720,7 +2771,7 @@ export const nlDataStructureSheets = {
                                 ]
                             },
                             {
-                                label: "A2 gradient (adaptive scale)",
+                                label: "Gradient (adaptive scale)",
                                 columns: [
                                     "Status code",
                                     "Fill color",
@@ -2775,7 +2826,7 @@ export const nlDataStructureSheets = {
                     },
                     legend: {
                         name: "Legend",
-                        description: "Label shown for this row in the map legend. For `category` rows this label is always displayed. For `gradient` and `stepped` rows, only rows with a non-empty Legend value appear in the legend - you can define intermediate anchor rows without cluttering the legend by leaving their Legend cells empty.\n\nSupports multilingual variants: `Legend:en`, `Legend:fr`, etc.",
+                        description: "Label shown for this row in the map legend. For `category` rows this label is always displayed. For `gradient` and `stepped` rows, only rows with a non-empty Legend value appear in the legend - you can define intermediate anchor rows without cluttering the legend by leaving their Legend cells empty.",
                         howToUse: "Label the outermost anchors and any semantically important midpoints (e.g. `Low`, `Median`, `High`). Leave intermediate gradient anchors unlabelled to keep the legend clean.",
                         notes: [],
                         examples: [],
@@ -2789,7 +2840,7 @@ export const nlDataStructureSheets = {
                     },
                     appendedLegend: {
                         name: "Appended legend",
-                        description: "Text appended directly after the region name in the inline text list on the taxon card (visible when placement is not `details`). For example, a status `introduced` with Appended legend `introduced` produces `Germany *(introduced)*`. Supports Markdown.\n\nOnly meaningful for `category` rows - for `gradient` and `stepped` rows this field is ignored, as the raw data value is shown instead of a dynamically computed label.\n\nSupports multilingual variants.",
+                        description: "Text appended directly after the region name in the inline text list on the taxon card (visible when placement is not `details`). For example, a status `introduced` with Appended legend `introduced` produces `Germany *(introduced)*`. Supports Markdown.\n\nOnly meaningful for `category` and `stepped` rows - for `gradient` rows this field is ignored, as the raw data value is shown instead of a dynamically computed label.",
                         howToUse: "Use for categorical status values where the status name adds meaningful context to the region name in the inline list. Leave empty when the region name alone is sufficient.",
                         notes: [],
                         examples: [
@@ -2825,6 +2876,10 @@ export const nlDataStructureSheets = {
                                         ""
                                     ]
                                 ]
+                            },
+                            {
+                                text: "Depending on your data and other settings, this could render as something like:",
+                                preformatted: `Germany (confirmed breeding), Spain (vagrant), France (probable breeding)`
                             }
                         ],
                         integrity: {
@@ -2837,7 +2892,7 @@ export const nlDataStructureSheets = {
                     },
                     legendType: {
                         name: "Legend type",
-                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (A1-A5 notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (A1-A5 notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
+                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (numeric anchors notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (numeric anchors notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
                         howToUse: "Use `category` (or empty) for named status values. Use `gradient` for continuous numeric data. Use `stepped` for numeric data best communicated as discrete bins.",
                         notes: [],
                         examples: [
@@ -2869,7 +2924,7 @@ export const nlDataStructureSheets = {
                                         "ND",
                                         "#aaaaaa",
                                         "No satellite data",
-                                        "",
+                                        "no data",
                                         ""
                                     ],
                                     [
@@ -2902,13 +2957,13 @@ export const nlDataStructureSheets = {
             searchOrder: {
                 name: "Search category custom order",
                 required: false,
-                description: "Overrides the default alphabetical ordering of filter values in the sidebar filter dropdowns. Items appear in the filter in the order they appear in this table. Any data value not listed here is appended alphabetically after the explicitly ordered values.\n\nA typical use case is the Red List category, where severity order (Critically Endangered → Endangered → Vulnerable…) is more meaningful than alphabetical. Another is a topmost taxonomic group where you want prominent categories to appear first.\n\nThis table can be left completely empty if alphabetical ordering is acceptable for all your filters.",
+                description: "Overrides the default alphabetical ordering of filter values in the sidebar filter dropdowns. Items appear in the filter in the order they appear in this table. Any data value not listed here is appended alphabetically after the explicitly ordered values.\n\nA typical use case is the Red List category, where severity order (Critically Endangered → Endangered → Vulnerable…) is more meaningful than alphabetical. Another is a topmost taxonomic group where you want prominent categories to appear first.\n\nIf you use [[ref:type.mapregions]] columns, you can also control the order of region names in the filter and group them if needed. The [[ref:appearance.searchOrder.value]] containing the region name from [[ref:appearance.mapRegionsNames]], not the region code.\n\nThis table can be left completely empty if alphabetical ordering is acceptable for all your filters.",
                 notes: [],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The data path of the filtered column whose values should be reordered. Must match a column that has a **Search category title** set in the Custom data definition table.",
-                        howToUse: "Enter the column name exactly as it appears in the Custom data definition table.",
+                        description: "The data path of the filtered column whose values should be reordered. Must match a column that has a [[ref:content.customDataDefinition.searchCategoryTitle]] set in the [[ref:content.customDataDefinition]] table.",
+                        howToUse: "Enter the column name exactly as it appears in the [[ref:content.customDataDefinition]] table.",
                         notes: [],
                         examples: [
                             {
@@ -2967,12 +3022,13 @@ export const nlDataStructureSheets = {
                     },
                     groupTitle: {
                         name: "Group title",
-                        description: "Assigns multiple filter values under a shared collapsible group heading with a collective tick/untick button. All rows sharing the same **Group title** value (for the same **Column name**) are displayed together under that heading. Individual values within the group can still be ticked and unticked independently.",
+                        description: "Assigns multiple filter values under a shared group heading with a collective tick/untick button. All rows sharing the same **Group title** value (for the same **Column name**) are displayed together under that heading. Individual values within the group can still be ticked and unticked independently.",
                         howToUse: "Use to group related filter values that users would often select together - e.g. `Endemic`, `Near-endemic`, `Endemic?` under a group titled `Endemites`.",
                         notes: [],
                         examples: [
                             {
                                 label: "Grouping endemic statuses",
+                                text: "Two columns are used in this example: `redlist` with IUCN categories, and `asianDistribution` with country names. We group Endemic-like statuses under one group, leaving the `Native` and `Introduced` statuses ungrouped. For the `asianDistribution` column (expectedly a [[ref:type.mapregions]] data type with per-country distribution data), we group countries under broader geographic subregions to suit users interested in selecting all countries of a given geographic subregion at once in the filter. Individual countries can still be selected too.",
                                 columns: [
                                     "Column name",
                                     "Group title",
@@ -3003,7 +3059,32 @@ export const nlDataStructureSheets = {
                                         "status",
                                         "",
                                         "Introduced"
-                                    ]
+                                    ],
+                                    [
+                                        "asianDistribution",
+                                        "South-east Asia",
+                                        "Myanmar"
+                                    ],
+                                    [
+                                        "asianDistribution",
+                                        "South-east Asia",
+                                        "Laos"
+                                    ],
+                                    [
+                                        "asianDistribution",
+                                        "East Asia",
+                                        "South Korea"
+                                    ],
+                                    [
+                                        "asianDistribution",
+                                        "East Asia",
+                                        "China"
+                                    ],
+                                    [
+                                        "asianDistribution",
+                                        "East Asia",
+                                        "Taiwan"
+                                    ],
                                 ]
                             }
                         ],
@@ -3017,7 +3098,7 @@ export const nlDataStructureSheets = {
                     },
                     value: {
                         name: "Values ordered",
-                        description: "One filter value per row, in the desired display order. The value must match a value that actually appears in the data column (after any Data Code replacement). Supports multilingual variants for projects where filter value labels differ per language.",
+                        description: "One filter value per row, in the desired display order. The value must match a value that actually appears in the data column (after any [[ref:appearance.dataCodes]] replacement).",
                         howToUse: "List all values you want to control the position of. Values not listed will be appended alphabetically after the explicitly ordered ones.",
                         notes: [],
                         examples: [],
@@ -3072,7 +3153,7 @@ export const nlDataStructureSheets = {
             supportedLanguages: {
                 name: "Supported languages",
                 required: false,
-                description: "Declares all languages the project is available in. The first row is the default language. Any column with no language suffix (`:code`) is treated as belonging to this default language.\n\nIf your project is monolingual, you can omit this table entirely. When more than one language is defined, users see a language switcher in the Side Menu.",
+                description: "Declares all languages the project is available in. The first row is the default language. Any column with no language suffix (`:code`) is treated as belonging to this default language. If no specific language is defined for a column, then this column is used verbatim in all language variants.\n\nIf your project is monolingual, you can omit this table entirely. When more than one language is defined, users see a language switcher in the Side Menu.",
                 notes: [
                     {
                         type: "tip",
@@ -3082,12 +3163,12 @@ export const nlDataStructureSheets = {
                 columns: {
                     code: {
                         name: "Code",
-                        description: "The ISO 639-1 two-letter language code in lowercase (e.g. `en`, `fr`, `de`). The first row's code is the default language.",
-                        howToUse: "Use the standard two-letter ISO 639-1 code. Place the default language in the first row. For languages without a NaturaList UI translation, set the **Fallback language** column to a language that does have one.",
+                        description: "The language code in lowercase (e.g. `en`, `fr`, `de`) you will append to multilingual columns. The first row's code is the default language.",
+                        howToUse: "Prefer the standard two-letter ISO 639-1 codes. Place the default language in the first row. For languages without a NaturaList UI translation, set the [[ref:appearance.supportedLanguages.fallback]] column to a language that does have one.",
                         notes: [],
                         examples: [
                             {
-                                label: "Bilingual English/French project",
+                                label: "Bilingual English/Czech project",
                                 columns: [
                                     "Code",
                                     "Name of language",
@@ -3100,18 +3181,40 @@ export const nlDataStructureSheets = {
                                         ""
                                     ],
                                     [
-                                        "fr",
-                                        "Français",
-                                        ""
+                                        "cs",
+                                        "Česky",
+                                        "en"
                                     ]
                                 ]
+                            },
+                            {
+                                text: "In your [[ref:data]] sheet and the [[ref:content]] and [[ref:appearance]] configuration sheets any colum that accepts multilingual content can be then suffixed with `:en` or `:cs` to indicate the language of that column's content. Any column without a language suffix is used in all language variants.",
+                                columns: [
+                                    "species",
+                                    "description:en",
+                                    "description:cs",
+                                    "redlistCode",
+                                    "[comment]",
+                                ],
+                                rows: [
+                                    [
+                                        "Turdus merula",
+                                        "Plumage entirely black with a bright yellow eye-ring and bill.",
+                                        "Černé opeření, jasně žlutý oční kroužek a zobák.",
+                                        "LC",
+                                        "Users who selected the English version will see the English description and users who selected the Czech version will see the Czech description. Both will see the same Red List code and species name, as those columns have no language suffix.",
+                                    ]
+                                ]
+
                             }
                         ],
                         integrity: {
-                            description: "See [ISO 639-1 language code list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
+                            description: "Any letters combination is fine, for existing languages codes, see [ISO 639-1 language code list](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
                             allowDuplicates: "no",
                             allowEmpty: false,
-                            allowedContent: "any",
+                            allowedContent: "regex",
+                            regex: "^[a-z]+$",
+                            regexExplanation: "only one or more lowercase letters a-z",
                             supportsMultilingual: false
                         }
                     },
@@ -3133,7 +3236,13 @@ export const nlDataStructureSheets = {
                         name: "Fallback language",
                         description: "If your language code has no matching NaturaList UI translation (e.g. `iu` for Inuktitut), specify here the code of a language to use for the UI instead (e.g. `fr`). If left empty, English is used as the UI fallback.",
                         howToUse: "Set only when using a language code for which NaturaList has no UI translation and you prefer a specific fallback other than English.",
-                        notes: [],
+                        notes: [
+                            {
+                                type: "tip",
+                                title: "UI translations welcome",
+                                text: "**NaturaList** UI currently supports English (`en`) and French (`fr`). If you would like to see your language supported, get in touch via [NaturaList GitHub](https://github.com/dominik-ramik/naturalist/) page.",
+                            }
+                        ],
                         examples: [],
                         integrity: {
                             description: "",

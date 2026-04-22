@@ -54,7 +54,7 @@ export default function i18nSelfPlugin(options = {}) {
 
     load(id) {
       if (id !== RESOLVED_ID) return;
-      // Fallback for SSR / test harnesses — no importer context available.
+      // Fallback for SSR / test harnesses - no importer context available.
       return [
         `import { registerMessages, createLocalT } from ${JSON.stringify(i18nEntryAbs)};`,
         `const selfKey = '__unknown__';`,
@@ -78,7 +78,7 @@ export default function i18nSelfPlugin(options = {}) {
           const names = imports.split(',').map(s => s.trim()).filter(Boolean);
           const needsLocalT = names.includes('t') || names.includes('tf');
 
-          // Single import from the real module — no duplicate export statements.
+          // Single import from the real module - no duplicate export statements.
           const coreImports = ['registerMessages'];
           if (needsLocalT) coreImports.push('createLocalT');
 

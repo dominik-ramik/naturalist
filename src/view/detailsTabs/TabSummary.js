@@ -404,7 +404,7 @@ function buildPerspectiveSpecs(ctx) {
   const { dataMeta, showOccurrences, subtreeTaxonRows, subtreeOccurrenceRows } = ctx;
   const specs = [];
 
-  // 1. Taxonomy — always present; result pre-filled by TabSummary
+  // 1. Taxonomy - always present; result pre-filled by TabSummary
   specs.push({
     id: "taxonomy",
     title: t("sp_taxonomy"),
@@ -682,7 +682,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
     cachedCountTaxaAtLevel } = ctx;
 
   // Cache getDataFromDataPath per row: it is called inside hasData checks and
-  // then again immediately to retrieve the actual data object — easily 3-4×
+  // then again immediately to retrieve the actual data object - easily 3-4×
   // per row across the aggregate pass and each per-level filter.
   const _mapDataCache = new Map();
   const getMapData = row => {
@@ -760,7 +760,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
  * the mistake of later trying to resolve a legend string as a status code.
  */
 // lc (legendConfig) is passed in from buildMapRegionsPerspective, which already
-// holds the cached reference — no need to call getLegendConfig() again here.
+// holds the cached reference - no need to call getLegendConfig() again here.
 function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapData, lc) {
   // byRegion: regionCode → {
   //   _grad?: { min, max, count, rawValues }  - gradient numeric accumulator

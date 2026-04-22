@@ -305,7 +305,7 @@ export let Checklist = {
       return Object.assign({ isInChecklist: true }, this._taxonCache.get(compositeKey));
     }
 
-    // Authority might be empty (legacy URL, non-leaf lookup) — fall back to name-only cache
+    // Authority might be empty (legacy URL, non-leaf lookup) - fall back to name-only cache
     if (this._taxonCache && this._taxonCache.has(name)) {
       return Object.assign({ isInChecklist: true }, this._taxonCache.get(name));
     }
