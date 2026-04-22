@@ -32,7 +32,7 @@
  *   This lets the built-in `{{unit value "cm"}}` helper (which works on single numbers)
  *   format each endpoint independently, e.g. producing "3.5 cm – 7.2 cm".
  *   The two rendered strings are then joined with " – " (or shown once when equal).
- *   Without a template the reader falls back to its own "from – to" formatting.
+ *   Without a template the reader falls back to its own "from – to" dataType.
  *
  * readData returns:
  *   null          - invalid input (already logged)

@@ -443,12 +443,12 @@ getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
         ? Checklist.getNameOfTaxonLevel(dataPath)
         : Checklist.getDataMeta()[dataPath].searchCategory;
 
-      // For taxa the filterDef type is always "text"; for data use the column's formatting
-      const formatting = type === "taxa"
+      // For taxa the filterDef type is always "text"; for data use the column's dataType
+      const dataType = type === "taxa"
         ? "text"
-        : Checklist.getMetaForDataPath(dataPath).formatting;
+        : Checklist.getMetaForDataPath(dataPath).dataType;
 
-      const plugin = dataCustomTypes[formatting]?.filterPlugin;
+      const plugin = dataCustomTypes[dataType]?.filterPlugin;
       if (!plugin) return;
 
       const desc = plugin.describeSerializedValue(

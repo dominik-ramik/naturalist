@@ -107,7 +107,7 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
   const maps = [];
 
   Object.entries(dataMeta).forEach(([dataPath, meta]) => {
-    if (meta.formatting !== 'mapregions' || !meta.template?.trim()) return;
+    if (meta.dataType !== 'mapregions' || !meta.template?.trim()) return;
 
     let source = meta.template;
     if (Checklist.handlebarsTemplates?.[dataPath]) {

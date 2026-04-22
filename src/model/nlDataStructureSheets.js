@@ -563,7 +563,7 @@ export const nlDataStructureSheets = {
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
-                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.formatting]] value.\n\nAdd a pipe-separated suffix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
+                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated suffix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
                         howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Label | Group` pattern to organise multiple logically related filters into named sections.",
                         notes: [
                             {
@@ -603,7 +603,7 @@ export const nlDataStructureSheets = {
                             supportsMultilingual: true
                         }
                     },
-                    formatting: {
+                    dataType: {
                         name: "Data type",
                         description: "The data type for this column. Determines how the app reads and render the raw cell value (or its sub-columns) You have already seen this in the case of [[ref:type.taxon]] data type when filling-in the [[ref:content.taxa]] table), where the **taxon** data type allowed you to use its `[column].name` and `[column].authority` properties to enter the taxonomic name and authority.\n\nFor array or object root entries (paths using `#` or `.` children), use the special `list` data type to indicate a compound value. Append an optional separator keyword after a space:\n\n| Value | Result |\n|---|---|\n| `list` or `list bullets` | Unordered bullet list (default) |\n| `list numbered` | Ordered list starting at 1 |\n| `list unmarked` | List with no bullets or numbers |\n| `list space` | Items on one line, separated by a space |\n| `list comma` | Items on one line, separated by `, ` |\n| `list [any string]` | Items on one line, separated by that string |\n\nSee [Data Types](./data-types) for the full type reference.",
                         howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate data type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
@@ -1072,21 +1072,21 @@ export const nlDataStructureSheets = {
                         columnName: "status",
                         title: "Status",
                         searchCategoryTitle: "Status",
-                        formatting: "category",
+                        dataType: "category",
                         placement: "left"
                     },
                     {
                         columnName: "redlist",
                         title: "Red List Category",
                         searchCategoryTitle: "Red List Category",
-                        formatting: "category",
+                        dataType: "category",
                         placement: "left"
                     },
                     {
                         columnName: "notes",
                         title: "Notes",
                         searchCategoryTitle: "",
-                        formatting: "markdown",
+                        dataType: "markdown",
                         placement: "bottom"
                     }
                 ]
@@ -1770,9 +1770,9 @@ export const nlDataStructureSheets = {
                 data: [],
                 templateData: [
                     {
-                        code: "pvnh",
-                        labelTemplate: "{{author}}PVNH ({{id}})",
-                        urlTemplate: "https://symbiota.pvnh.net/collections/individual/index.php?occid={{id}}&clid=0"
+                        code: "reptile",
+                        labelTemplate: "{{author}}Reptile Database ({{id}})",
+                        urlTemplate: "https://reptile-database.reptarium.cz/{{id}}"
                     }
                 ]
             },
@@ -2072,7 +2072,7 @@ export const nlDataStructureSheets = {
                                 "Checklist name",
                                 "About section",
                                 "How to cite",
-                                "[[ref:data]] sheets names",
+                                "Data sheets names",
                                 "Color theme hue",
                                 "Date format",
                                 "Month names",
@@ -2329,7 +2329,7 @@ export const nlDataStructureSheets = {
             categories: {
                 name: "Colored categories",
                 required: false,
-                description: "Gives categorical data values (see [[ref:type.category]]) a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields that are better scanned visually by color than being read as text.\n\nThe [[ref:content.customDataDefinition.formatting]] column in [[ref:content.customDataDefinition]] table must be set to `category` for this table to take effect. Category matching is case-insensitive and is controlled by the **Contains text** pattern (see that column for full syntax). Matching is applied after any [[ref:appearance.dataCodes]] replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
+                description: "Gives categorical data values (see [[ref:type.category]]) a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields that are better scanned visually by color than being read as text.\n\nThe [[ref:content.customDataDefinition.dataType]] column in [[ref:content.customDataDefinition]] table must be set to `category` for this table to take effect. Category matching is case-insensitive and is controlled by the **Contains text** pattern (see that column for full syntax). Matching is applied after any [[ref:appearance.dataCodes]] replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
                 notes: [
                     {
                         type: "warning",
@@ -2594,7 +2594,7 @@ export const nlDataStructureSheets = {
                                     "Column name",
                                     "Title",
                                     "Data type",
-                                    "Formatting",
+                                    "Template",
                                     "[comment]"
                                 ],
                                 rows: [

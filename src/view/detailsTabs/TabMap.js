@@ -32,7 +32,7 @@ export function TabMap(tabData, taxon, taxonName) {
                 },
                 placement: "details",
               };
-              const reader = dataCustomTypes[meta.formatting];
+              const reader = dataCustomTypes[meta.dataType];
               let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               if (renderedItem && meta.title) {
                 return m(".media-item", [
@@ -57,7 +57,7 @@ export function TabMap(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataCustomTypes[meta.formatting];
+        const reader = dataCustomTypes[meta.dataType];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {

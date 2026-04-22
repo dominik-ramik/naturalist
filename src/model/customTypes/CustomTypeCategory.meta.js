@@ -19,7 +19,7 @@ export const customTypeCategoryMeta = {
     notes: [
       {
         type: "warning",
-        text: "The [[ref:appearance.categories]] table must be populated for this type to show coloured badges. Setting the formatting to `category` alone does nothing visual without corresponding category definitions.",
+        text: "The [[ref:appearance.categories]] table must be populated for this type to show coloured badges. Setting the dataType to `category` alone does nothing visual without corresponding category definitions.",
       },
     ],
   },

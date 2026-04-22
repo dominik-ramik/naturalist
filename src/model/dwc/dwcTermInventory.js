@@ -50,7 +50,7 @@ export const dwcTermInventory = {
         namespace: "dwc",
         tier: 1,                        // 1 = checklist required, 2 = occurrence required, 0 = optional enrichment
         required: true,                 // within its tier
-        acceptedNlTypes: ["taxon"],     // null = accept any NL formatting type; array = whitelist
+        acceptedNlTypes: ["taxon"],     // null = accept any NL dataType type; array = whitelist
         outputFormat: "string",         // "string" | "decimal" | "integer" | "iso8601date" | "uri"
         vocabulary: null,               // null = free text; array of strings = controlled vocab
         compound: {
@@ -860,7 +860,7 @@ export const dwcTermInventory = {
         // which performs its own type enforcement.  Setting acceptedNlTypes to null
         // prevents a false "incompatible NL type" error in Step 5 while still
         // allowing the case "media": validation branch to check each individual
-        // path for image / sound / map formatting.
+        // path for image / sound / map dataType.
         acceptedNlTypes: null,
 
         outputFormat: "string",  // pipe-joined URL string, e.g. "https://…/a.jpg | https://…/b.mp3"
@@ -881,13 +881,13 @@ export const dwcTermInventory = {
             "PATH TYPES:\n" +
             "  Plain column:     media:specimenPhoto\n" +
             "    A single image/sound/map column.  The column must exist in the checklist\n" +
-            "    sheet and be defined in the Custom data definition table with formatting\n" +
+            "    sheet and be defined in the Custom data definition table with dataType\n" +
             "    'image', 'sound', or 'map'.\n" +
             "\n" +
             "  Array column:     media:lifePhotos#\n" +
             "    Expands to all numbered columns in the checklist sheet whose name matches\n" +
             "    the base followed by digits (lifePhotos1, lifePhotos2, …), sorted\n" +
-            "    numerically.  The formatting type is looked up from the 'lifePhotos#'\n" +
+            "    numerically.  The dataType type is looked up from the 'lifePhotos#'\n" +
             "    CDD entry (the item-level row, not the container row).\n" +
             "    If no numbered columns exist the path is silently skipped with a\n" +
             "    Logger.info (not an error - the array may simply be empty for this row).\n" +

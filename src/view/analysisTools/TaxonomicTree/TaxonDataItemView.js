@@ -24,8 +24,8 @@ export let TaxonDataItemView = {
       return null;
     }
 
-    if (meta.formatting) {
-      const reader = dataCustomTypes[meta.formatting];
+    if (meta.dataType) {
+      const reader = dataCustomTypes[meta.dataType];
       if (reader && reader.render) {
         const readerResult = TaxonDataItemView.renderWithReader(
           data,
@@ -115,7 +115,7 @@ export let TaxonDataItemView = {
 
     if (itemType == "object") {
       // Try the reader first - let readers decide if they can handle object data
-      const reader = dataCustomTypes[meta.formatting];
+      const reader = dataCustomTypes[meta.dataType];
       if (reader && reader.render) {
         const readerResult = TaxonDataItemView.renderWithReader(
           data,
@@ -184,7 +184,7 @@ export let TaxonDataItemView = {
    * Returns null if the reader returns null (should be hidden).
    */
   renderWithReader: function (data, meta, dataPath, taxon, tailingSeparator) {
-    const reader = dataCustomTypes[meta.formatting];
+    const reader = dataCustomTypes[meta.dataType];
     if (reader && reader.render) {
       // Normalize taxon to { name, authority }
       let taxonObj = taxon;

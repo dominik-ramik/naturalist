@@ -139,13 +139,13 @@ verifyReaders();
  * Returns true if at least one of the type's expected columns is present
  * in the checklist headers for the given base path.
  *
- * @param {string}   formatting - The formatting type string from CDD
+ * @param {string}   dataType - The dataType type string from CDD
  * @param {string}   basePath   - The column name as declared in CDD (lowercased)
  * @param {string[]} headers    - Lowercased checklist sheet headers
  * @returns {boolean}
  */
-export function isColumnPresentInHeaders(formatting, basePath, headers) {
-  const reader = dataCustomTypes[formatting];
+export function isColumnPresentInHeaders(dataType, basePath, headers) {
+  const reader = dataCustomTypes[dataType];
 
   // Normalise headers once: replace digit runs with # to match CDD notation
   const normalisedHeaders = headers.map(h => dataPath.modify.itemNumbersToHash(h));
@@ -169,12 +169,12 @@ export function clearDataCodesCache() {
 /**
  * Get searchable text for a data value using the appropriate reader
  * @param {any} data - The data value
- * @param {string} formatting - The formatting type (reader dataType)
+ * @param {string} dataType - The dataType type (reader dataType)
  * @param {Object} uiContext - UI context for the reader
  * @returns {string[]} Array of searchable strings
  */
-export function getSearchableTextByType(data, formatting, uiContext) {
-  const reader = dataCustomTypes[formatting];
+export function getSearchableTextByType(data, dataType, uiContext) {
+  const reader = dataCustomTypes[dataType];
   if (!reader || !reader.getSearchableText) return [];
   return reader.getSearchableText(data, uiContext);
 }
@@ -187,13 +187,13 @@ export function getSearchableTextByType(data, formatting, uiContext) {
  * @param {string[]} context.row - Array of values for current row
  * @param {string} context.langCode - Language code for localized column resolution
  * @param {string} computedPath - Column path/name to read data from
- * @param {Object} info - Column metadata containing formatting type and table info
+ * @param {Object} info - Column metadata containing dataType type and table info
  *
- * @returns {string|number|Object|null} Processed data value based on formatting type
+ * @returns {string|number|Object|null} Processed data value based on dataType type
  */
 export function loadDataByType(context, computedPath, info) {
-  // Try to find a matching reader for the formatting type
-  const matchingReader = dataCustomTypes[info.formatting];
+  // Try to find a matching reader for the dataType type
+  const matchingReader = dataCustomTypes[info.dataType];
 
   if (matchingReader) {
     // Call the reader's readData function and return the result
@@ -202,14 +202,14 @@ export function loadDataByType(context, computedPath, info) {
     return dataRead;
   } else {
     // No matching reader found, log error with available types
-    const availableFormattings = Object.keys(dataCustomTypes).join(", ");
+    const availabledataTypes = Object.keys(dataCustomTypes).join(", ");
     Logger.error(
-      `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}`
+      `Unknown data type: ${info.dataType}. Available data types: ${availabledataTypes}`
     );
 
     if (import.meta.env.DEV) {
       console.error(
-        `Unknown formatting: ${info.formatting}. Available formattings: ${availableFormattings}. Check the reader definitions in src/model/customTypes/index.js and ensure the formatting type is correct and imported.`
+        `Unknown data type: ${info.dataType}. Available data types: ${availabledataTypes}. Check the reader definitions in src/model/customTypes/index.js and ensure the data type is correct and imported.`
       );
     }
 

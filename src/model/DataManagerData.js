@@ -268,21 +268,21 @@ export function getAllColumnInfos(nlDataStructure, langCode) {
     Object.keys(table.columns).forEach(function (columnKey) {
       if (columnKey == "columnName" && table.data[langCode]) {
         table.data[langCode].forEach(function (row) {
-          let formatting = "text";
+          let dataType = "text";
           if (tableKey == "taxa") {
-            formatting = "checklist-taxon";
+            dataType = "checklist-taxon";
           } else if (tableKey == "customDataDefinition") {
-            formatting = row["formatting"] || "text";
+            dataType = row["dataType"] || "text";
           }
           if (row[columnKey] === undefined) {
             // eslint-disable-next-line no-console
-            console.log(row, columnKey, table.name, formatting, row);
+            console.log(row, columnKey, table.name, dataType, row);
             return;
           }
           result.push({
             name: row[columnKey].toLowerCase(),
             table: table.name,
-            formatting: formatting,
+            dataType: dataType,
             fullRow: row,
           });
         });

@@ -5,7 +5,7 @@ export const customTypeTextMeta = {
   dataType:   "text",
   filterMeta: filterMetaText,
   meta: {
-    summary:                  "Plain text string. The default type when Formatting is left empty.",
+    summary:                  "Plain text string. The default type when dataType is left empty.",
     whenToUse:                "Any short categorical label, a status code, a single-word attribute, or any free-form text that does not need Markdown formatting.",
     behaviorFulltextIndexing: "The full string value is indexed as-is.",
     detailsPaneTab:           "Text",

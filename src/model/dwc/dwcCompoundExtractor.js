@@ -35,8 +35,8 @@
  *   1. Add a case inside the relevant switch branch below.
  *   2. Document it in the `compound` map in dwcTermInventory.js.
  *
- * To add support for a new NL formatting type altogether:
- *   1. Add a new top-level case in the `nlFormatting` switch.
+ * To add support for a new NL dataType type altogether:
+ *   1. Add a new top-level case in the `nldataType` switch.
  *   2. Add the compound map entry in dwcTermInventory.js.
  *   3. Document the available keys in the user documentation.
  *
@@ -60,19 +60,19 @@ import dayjs from "dayjs";
 
 /**
  * Check whether a component key is a recognised virtual sub-value for the
- * given NaturaList formatting type.
+ * given NaturaList dataType type.
  *
  * Used by the compiler to distinguish compound extraction requests from
  * references to real (but missing) sub-columns, avoiding spurious warnings.
  *
- * @param {string} nlFormatting  - NaturaList type name, e.g. "geopoint"
+ * @param {string} nldataType  - NaturaList type name, e.g. "geopoint"
  * @param {string} componentKey  - The suffix after the last dot, e.g. "lat"
  * @returns {boolean}
  */
-export function isKnownCompoundKey(nlFormatting, componentKey) {
+export function isKnownCompoundKey(nldataType, componentKey) {
     // note this is a bit dirty, but it centralises the logic for recognising compound keys in one place, 
     // and avoids a dependency on the custom type definitions.
-    switch (nlFormatting) {
+    switch (nldataType) {
         case "geopoint":
             return ["lat", "long", "verbatim"].includes(componentKey);
         case "interval":
@@ -97,7 +97,7 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
  * data path), not from the DwC term name.  The dwcTermInventory.compound map
  * documents what is available but is NOT consulted here at runtime.
  *
- * @param {string} nlFormatting  - The NaturaList formatting type of the source
+ * @param {string} nldataType  - The NaturaList dataType type of the source
  *                                 column, e.g. "geopoint", "interval", "date".
  * @param {string} componentKey  - The component to extract, e.g. "lat", "from",
  *                                 "ymd", "name", "authority", "lastNamePart".
@@ -105,7 +105,7 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
  * @param {Object} Logger        - Logger instance for emitting warnings.
  *
  * @returns {*}  The extracted component value.  Returns `rawValue` unchanged
- *               when `nlFormatting` has no compound rules (pass-through case),
+ *               when `nldataType` has no compound rules (pass-through case),
  *               or `null` when the component key is recognised but the value is
  *               missing/invalid.
  *
@@ -134,12 +134,12 @@ export function isKnownCompoundKey(nlFormatting, componentKey) {
  *  image     → source      URL/path string  (result.source)
  *  sound     → source      URL/path string  (result.source)
  */
-export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logger) {
+export function extractCompoundValue(nldataType, componentKey, rawValue, Logger) {
 
     // Types with no compound rules → pass through unchanged.
     // This is the expected path for scalar types (text, number, category, etc.).
-    const hasCompoundRules = isKnownCompoundKey(nlFormatting, componentKey)
-        || ["geopoint", "interval", "taxon", "date", "image", "sound"].includes(nlFormatting);
+    const hasCompoundRules = isKnownCompoundKey(nldataType, componentKey)
+        || ["geopoint", "interval", "taxon", "date", "image", "sound"].includes(nldataType);
 
     if (!hasCompoundRules) {
         // Not a compound type - return rawValue unchanged. Caller decides what to do.
@@ -151,7 +151,7 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
         return null;
     }
 
-    switch (nlFormatting) {
+    switch (nldataType) {
 
         // ── geopoint ─────────────────────────────────────────────────────────
         // rawValue shape: { lat: number, long: number, verbatim: string }
@@ -283,7 +283,7 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
         case "sound":
             if (typeof rawValue !== "object" || rawValue === null) {
                 Logger.warning(
-                    `DwC Archive: ${nlFormatting} compound extraction expected an object ` +
+                    `DwC Archive: ${nldataType} compound extraction expected an object ` +
                     `but received: ${JSON.stringify(rawValue)}`,
                     "DwC Archive"
                 );
@@ -294,17 +294,17 @@ export function extractCompoundValue(nlFormatting, componentKey, rawValue, Logge
                 default:
                     Logger.warning(
                         `DwC Archive: Unknown component key "<b>${componentKey}</b>" for ` +
-                        `${nlFormatting}. Known keys: source.`,
+                        `${nldataType}. Known keys: source.`,
                         "DwC Archive"
                     );
                     return rawValue;
             }
 
-        // ── Unknown formatting type ───────────────────────────────────────────
+        // ── Unknown dataType type ───────────────────────────────────────────
         default:
             // Not a compound type at all - return rawValue unchanged.
             // This is not a warning: the caller already checked isKnownCompoundKey
-            // before calling this function, so reaching here means the formatting
+            // before calling this function, so reaching here means the dataType
             // type legitimately has no compound structure.
             return rawValue;
     }

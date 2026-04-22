@@ -331,14 +331,14 @@ function resolveConfigDirective(itemName, customizationRows) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NL column formatting lookup
+// NL column dataType lookup
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function getNlFormatting(columnName, cddRows, taxaColumnDefs) {
+function getNldataType(columnName, cddRows, taxaColumnDefs) {
   const lo = columnName.toLowerCase();
   if (Array.isArray(cddRows)) {
     const r = cddRows.find(r => (r.columnName || "").toLowerCase() === lo);
-    if (r) return ((r.formatting || "text").trim().toLowerCase().split(/\s+/)[0]) || "text";
+    if (r) return ((r.dataType || "text").trim().toLowerCase().split(/\s+/)[0]) || "text";
   }
   if (Array.isArray(taxaColumnDefs)) {
     if (taxaColumnDefs.some(r => (r.columnName || "").toLowerCase() === lo)) return "taxon";
@@ -350,7 +350,7 @@ function getNlFormatting(columnName, cddRows, taxaColumnDefs) {
 // Output format coercion
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function coerceOutputFormat(value, outputFormat, termName, nlFormatting, rangeSpec) {
+function coerceOutputFormat(value, outputFormat, termName, nldataType, rangeSpec) {
   if (value === null || value === undefined || value === "") return "";
   switch (outputFormat) {
     case "integer": {
@@ -371,7 +371,7 @@ function coerceOutputFormat(value, outputFormat, termName, nlFormatting, rangeSp
     case "iso8601date": return String(value);
     case "string":
     default:
-      return nlFormatting === "markdown" ? stripMarkdown(String(value)) : String(value);
+      return nldataType === "markdown" ? stripMarkdown(String(value)) : String(value);
   }
 }
 
@@ -472,10 +472,10 @@ function expandMediaPath(path, checklistHeadersLo) {
 }
 
 /**
- * Determine the NL formatting type for a media column, with automatic fallback
+ * Determine the NL dataType type for a media column, with automatic fallback
  * to the "#" array-item CDD pattern for numbered columns.
  *
- * Standard getNlFormatting() only performs an exact match against CDD row
+ * Standard getNldataType() only performs an exact match against CDD row
  * names, which means a numbered array column like "lifePhotos1" would not be
  * found (the CDD entry is "lifePhotos#", not "lifePhotos1").  This function
  * adds the necessary array-item lookup so that the `media:` directive can
@@ -492,15 +492,15 @@ function expandMediaPath(path, checklistHeadersLo) {
  * @param {string}   columnNameLo  - Lowercased column name (already expanded
  *                                   by expandMediaPath).
  * @param {Object[]} cddRows       - Custom Data Definition rows:
- *                                   { columnName: string, formatting: string, … }
- * @returns {string}  NL formatting type, e.g. "image", "sound", "map", "text".
+ *                                   { columnName: string, dataType: string, … }
+ * @returns {string}  NL dataType type, e.g. "image", "sound", "map", "text".
  */
-function getMediaNlFormatting(columnNameLo, cddRows) {
+function getMediaNldataType(columnNameLo, cddRows) {
   if (!Array.isArray(cddRows)) return "text";
 
   // 1. Exact match - covers explicitly defined single columns and plain paths
   const exact = cddRows.find(r => (r.columnName || "").toLowerCase() === columnNameLo);
-  if (exact) return (exact.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+  if (exact) return (exact.dataType || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
 
   // 2. Strip trailing digits and append "#"
   //    "lifePhotos1" → "lifePhotos#"
@@ -508,7 +508,7 @@ function getMediaNlFormatting(columnNameLo, cddRows) {
   const hashPath = columnNameLo.replace(/\d+$/, "#");
   if (hashPath !== columnNameLo) {
     const hashMatch = cddRows.find(r => (r.columnName || "").toLowerCase() === hashPath);
-    if (hashMatch) return (hashMatch.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+    if (hashMatch) return (hashMatch.dataType || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
   }
 
   // 3. Dot-notated path: strip digits from the last dot-segment and append "#"
@@ -519,7 +519,7 @@ function getMediaNlFormatting(columnNameLo, cddRows) {
   const dotHashPath = columnNameLo.replace(/(\.[^.]+?)\d+$/, "$1#");
   if (dotHashPath !== columnNameLo && dotHashPath !== hashPath) {
     const dotHashMatch = cddRows.find(r => (r.columnName || "").toLowerCase() === dotHashPath);
-    if (dotHashMatch) return (dotHashMatch.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+    if (dotHashMatch) return (dotHashMatch.dataType || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
   }
 
   return "text";
@@ -569,7 +569,7 @@ const EML_REQUIRED_CREATOR_FIELDS = ["creator.organizationname", "creator.surnam
  * @param {Object}     params.compiledTree        Full compiled checklist (reserved for future use)
  * @param {Object[]}   params.taxaColumnDefs      Taxa Definition rows: { columnName, taxonName, … }
  * @param {Object[]}   params.customizationData   Customization table rows: { item, value }
- * @param {Object[]}   params.cddRows             Custom Data Definition rows: { columnName, formatting, … }
+ * @param {Object[]}   params.cddRows             Custom Data Definition rows: { columnName, dataType, … }
  * @param {string[]}   params.checklistHeaders    Lowercased column headers from the checklist sheet
  * @param {any[][]}    params.checklistRawRows    Raw data rows from the checklist sheet
  * @param {string}     params.defaultLangCode     Application default language code
@@ -806,7 +806,7 @@ export async function compileDwcArchive(params) {
         const rootName = exactIdx < 0 && colName.lastIndexOf(".") > 0
           ? colName.slice(0, colName.lastIndexOf("."))
           : colName;
-        const nlFmt = getNlFormatting(rootName, cddRows, taxaColumnDefs);
+        const nlFmt = getNldataType(rootName, cddRows, taxaColumnDefs);
         if (!termEntry.acceptedNlTypes.includes(nlFmt)) {
           Logger.error(
             `DwC Archive: Term <b>${term}</b> mapped to "<b>${colName}</b>" ` +
@@ -850,17 +850,17 @@ export async function compileDwcArchive(params) {
             if (!cddEntry) {
               Logger.warning(
                 `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" has no entry in the ` +
-                `Custom data definition table.  Add a row for "<b>${mPath}</b>" with formatting ` +
+                `Custom data definition table.  Add a row for "<b>${mPath}</b>" with dataType ` +
                 `"image", "sound", or "map" so the type can be resolved during export.`,
                 "DwC Archive"
               );
             } else {
-              const fmt = (cddEntry.formatting || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
+              const fmt = (cddEntry.dataType || "text").trim().toLowerCase().split(/\s+/)[0] || "text";
               if (!["image", "sound", "map"].includes(fmt)) {
                 Logger.error(
                   `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" resolves to NL type ` +
                   `"<b>${fmt}</b>". Only image, sound, and map columns carry a source URL. ` +
-                  `Update the formatting column in your Custom data definition table.`,
+                  `Update the dataType column in your Custom data definition table.`,
                   "DwC Archive"
                 );
               }
@@ -875,12 +875,12 @@ export async function compileDwcArchive(params) {
                 "DwC Archive"
               );
             } else {
-              const fmt = getNlFormatting(mPath, cddRows, taxaColumnDefs);
+              const fmt = getNldataType(mPath, cddRows, taxaColumnDefs);
               if (!["image", "sound", "map"].includes(fmt)) {
                 Logger.error(
                   `DwC Archive: <b>${term}</b> media: path "<b>${mPath}</b>" resolves to NL type ` +
                   `"<b>${fmt}</b>". Only image, sound, and map columns carry a source URL. ` +
-                  `Update the formatting column in your Custom data definition table.`,
+                  `Update the dataType column in your Custom data definition table.`,
                   "DwC Archive"
                 );
               }
@@ -999,13 +999,13 @@ export async function compileDwcArchive(params) {
     const exactIdx = checklistHeaders.indexOf(columnName.toLowerCase());
 
     if (exactIdx >= 0) {
-      const nlFmt = getNlFormatting(columnName, cddRows, taxaColumnDefs);
+      const nlFmt = getNldataType(columnName, cddRows, taxaColumnDefs);
       if (!getAvailableDataTypeNames().includes(nlFmt)) {
         Logger.warning(`DwC Archive: Column "<b>${columnName}</b>" has unsupported type "${nlFmt}". Skipped.`, "DwC Archive");
         return "";
       }
       let raw;
-      try { raw = loadDataByType(buildContext(rawRow), columnName, { formatting: nlFmt }); }
+      try { raw = loadDataByType(buildContext(rawRow), columnName, { dataType: nlFmt }); }
       catch (ex) { Logger.warning(`DwC Archive: Error reading "<b>${columnName}</b>": ${ex.message}`, "DwC Archive"); return ""; }
       if (raw === null || raw === undefined) return "";
       // For media types, extract .source and apply the full NL source pipeline.
@@ -1033,7 +1033,7 @@ export async function compileDwcArchive(params) {
       const rootIdx = checklistHeaders.indexOf(rootName.toLowerCase());
 
       if (rootIdx >= 0) {
-        const nlFmt = getNlFormatting(rootName, cddRows, taxaColumnDefs);
+        const nlFmt = getNldataType(rootName, cddRows, taxaColumnDefs);
         if (!isKnownCompoundKey(nlFmt, componentKey)) {
           Logger.warning(
             `DwC Archive: "<b>${columnName}</b>" not found as header, and ` +
@@ -1049,7 +1049,7 @@ export async function compileDwcArchive(params) {
           return "";
         }
         let raw;
-        try { raw = loadDataByType(buildContext(rawRow), rootName, { formatting: nlFmt }); }
+        try { raw = loadDataByType(buildContext(rawRow), rootName, { dataType: nlFmt }); }
         catch (ex) { Logger.warning(`DwC Archive: Error reading "<b>${rootName}</b>": ${ex.message}`, "DwC Archive"); return ""; }
         if (raw === null || raw === undefined) return "";
 
@@ -1097,7 +1097,7 @@ export async function compileDwcArchive(params) {
    * For each comma-separated path the function:
    *   1. Calls expandMediaPath() to resolve "#" array paths into actual numbered
    *      column names present in the checklist sheet.
-   *   2. Calls getMediaNlFormatting() to determine the NL type, using the
+   *   2. Calls getMediaNldataType() to determine the NL type, using the
    *      "lifePhotos#" CDD fallback for numbered columns.
    *   3. Skips any column whose NL type is not image, sound, or map.
    *   4. Calls loadDataByType() to obtain the { source, title } object for the
@@ -1160,14 +1160,14 @@ export async function compileDwcArchive(params) {
       for (const col of expandedCols) {
 
         // Determine NL type, using the "#"-item CDD fallback for numbered cols
-        const nlFmt = getMediaNlFormatting(col, cddRows);
+        const nlFmt = getMediaNlDataType(col, cddRows);
 
         // Only image, sound, and map columns carry a source URL
         if (!["image", "sound", "map"].includes(nlFmt)) {
           Logger.warning(
             `DwC Archive: <b>associatedMedia</b> - media: column "<b>${col}</b>" has NL type ` +
             `"<b>${nlFmt}</b>", which is not a media type (expected: image, sound, or map). ` +
-            `Skipped. Check the formatting column in your Custom data definition table.`,
+            `Skipped. Check the data type column in your Custom data definition table.`,
             "DwC Archive"
           );
           continue;
@@ -1176,7 +1176,7 @@ export async function compileDwcArchive(params) {
         // Read { source, title } for this row via the standard NL data pipeline
         let raw;
         try {
-          raw = loadDataByType(buildContext(rawRow), col, { formatting: nlFmt });
+          raw = loadDataByType(buildContext(rawRow), col, { dataType: nlFmt });
         } catch (ex) {
           Logger.warning(
             `DwC Archive: <b>associatedMedia</b> - error reading column "<b>${col}</b>": ${ex.message}`,
@@ -1350,7 +1350,7 @@ export async function compileDwcArchive(params) {
         if (refRankIdx > taxon.rankIndex) return "";
 
         // Load via taxon type and extract the component
-        const taxonData = loadDataByType(buildContext(rawRow), colName, { formatting: "taxon" });
+        const taxonData = loadDataByType(buildContext(rawRow), colName, { dataType: "taxon" });
         if (!taxonData) return "";
         const ext = extractCompoundValue("taxon", component, taxonData, Logger);
         if (ext === null || ext === undefined) return "";
@@ -1386,7 +1386,7 @@ export async function compileDwcArchive(params) {
             }
             // Fallback: try loading the taxon-typed column and reading .authority
             // (handles pipe-separated "Name|Authority" cells)
-            const taxonData = loadDataByType(buildContext(rawRow), taxon.rankColumnName, { formatting: "taxon" });
+            const taxonData = loadDataByType(buildContext(rawRow), taxon.rankColumnName, { dataType: "taxon" });
             return taxonData?.authority || "";
           }
 
@@ -1569,7 +1569,7 @@ export async function compileDwcArchive(params) {
               const refRankIdx = taxaColumnRankIndex.get(colName.toLowerCase()) ?? -1;
               if (refRankIdx > parentTaxon.rankIndex) return "";
             }
-            const taxonData = loadDataByType(buildContext(sourceRow), colName, { formatting: "taxon" });
+            const taxonData = loadDataByType(buildContext(sourceRow), colName, { dataType: "taxon" });
             if (!taxonData) return "";
             const ext = extractCompoundValue("taxon", component, taxonData, Logger);
             return ext ? String(ext) : "";
@@ -1601,7 +1601,7 @@ export async function compileDwcArchive(params) {
                   value = parentTaxon.representativeRawRow[authIdx].toString().trim();
                 }
                 if (!value) {
-                  const td = loadDataByType(buildContext(parentTaxon.representativeRawRow), parentTaxon.rankColumnName, { formatting: "taxon" });
+                  const td = loadDataByType(buildContext(parentTaxon.representativeRawRow), parentTaxon.rankColumnName, { dataType: "taxon" });
                   value = td?.authority || "";
                 }
               }
@@ -1615,7 +1615,7 @@ export async function compileDwcArchive(params) {
               if (ci < 0) ci = checklistHeaders.indexOf(colName.toLowerCase() + ".name");
               value = ci >= 0 && rawRow[ci] != null ? rawRow[ci].toString().trim() : "";
             } else {
-              const taxonData = loadDataByType(buildContext(rawRow), colName, { formatting: "taxon" });
+              const taxonData = loadDataByType(buildContext(rawRow), colName, { dataType: "taxon" });
               if (taxonData) { const ext = extractCompoundValue("taxon", component, taxonData, Logger); value = ext ? String(ext) : ""; }
             }
             break;

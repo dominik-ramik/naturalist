@@ -31,7 +31,7 @@ export function TabMedia(tabData, taxon, taxonName) {
                 },
                 placement: "details",
               };
-              const reader = dataCustomTypes[meta.formatting];
+              const reader = dataCustomTypes[meta.dataType];
               let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
               // Render meta.title for each item if present
               if (renderedItem && meta.title) {
@@ -58,7 +58,7 @@ export function TabMedia(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataCustomTypes[meta.formatting];
+        const reader = dataCustomTypes[meta.dataType];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {

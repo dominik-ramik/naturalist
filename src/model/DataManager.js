@@ -153,7 +153,7 @@ export let DataManager = function () {
       Object.keys(checklist.versions[lang.code].dataset.meta.data).forEach(
         function (key) {
           if (
-            checklist.versions[lang.code].dataset.meta.data[key].formatting ==
+            checklist.versions[lang.code].dataset.meta.data[key].dataType ==
             "markdown"
           ) {
             dataPathsToConsider.push(key);
@@ -315,8 +315,8 @@ export let DataManager = function () {
               return;
             }
 
-            // Skip if formatting is not media-related
-            if (!["image", "sound", "mapregions"].includes(row.formatting)) {
+            // Skip if dataType is not media-related
+            if (!["image", "sound", "mapregions"].includes(row.dataType)) {
               return;
             }
 
@@ -350,7 +350,7 @@ export let DataManager = function () {
                 let source = "";
 
                 // Different media types have different source properties
-                if (row.formatting === "mapregions") {
+                if (row.dataType === "mapregions") {
                   // For mapregions, the source comes from the template
                   let templateData = Checklist.getDataObjectForHandlebars(
                     "",
@@ -1014,7 +1014,7 @@ export let DataManager = function () {
           title: "",
           searchCategory: "",
           separator: "bullet list",
-          formatting: "text",
+          dataType: "text",
           template: "",
           placement: "bottom",
         };
@@ -1037,7 +1037,7 @@ export let DataManager = function () {
         matchingComputedDataPaths.forEach(function (computedDataPath) {
           let dataType = "custom";
 
-          if (info.formatting == "taxon") {
+          if (info.dataType == "taxon") {
             if (info.table == data.sheets.content.tables.taxa.name) {
               return;
             } else {
@@ -1187,24 +1187,24 @@ export let DataManager = function () {
               }
             }
 
-            // Parse "list <separator>" syntax: e.g. "list comma" → formatting="list", separator="comma"
-            let parsedFormatting = info.fullRow.formatting;
+            // Parse "list <separator>" syntax: e.g. "list comma" → dataType="list", separator="comma"
+            let parseddataType = info.fullRow.dataType;
             let parsedSeparator = "";
-            if (parsedFormatting.toLowerCase().startsWith("list")) {
-              const parts = parsedFormatting.trim().split(/\s+/);
-              parsedFormatting = "list";
+            if (parseddataType.toLowerCase().startsWith("list")) {
+              const parts = parseddataType.trim().split(/\s+/);
+              parseddataType = "list";
               parsedSeparator = parts.length > 1 ? parts.slice(1).join(" ") : "";
             }
 
             meta[computedDataPath].separator = parsedSeparator;
-            meta[computedDataPath].formatting = parsedFormatting;
+            meta[computedDataPath].dataType = parseddataType;
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
             // Cascade: any child path inherits the root column's belongsTo value.
             meta[computedDataPath].belongsTo = resolveBelongsTo(computedDataPath, rootBelongsToMap);
 
-            if (parsedFormatting.toLowerCase() == "category") {
+            if (parseddataType.toLowerCase() == "category") {
               meta[computedDataPath].categories = [];
               data.sheets.appearance.tables.categories.data[lang.code].forEach(
                 function (category) {
@@ -1314,7 +1314,7 @@ export let DataManager = function () {
       return item.name;
     });
 
-    const taxonColumnInfos = allColumnInfos.filter(i => i.formatting === "checklist-taxon");
+    const taxonColumnInfos = allColumnInfos.filter(i => i.dataType === "checklist-taxon");
     const occurrenceColIndex = taxonColumnInfos.findIndex(
       i => i.fullRow.taxonName.trim().toLowerCase() === OCCURRENCE_IDENTIFIER
     );
@@ -1404,10 +1404,10 @@ export let DataManager = function () {
 
           // For checklist-taxon, we need to process even if not a leaf
           // because taxon columns have .authority children but should still be read
-          if (info.formatting === "checklist-taxon") {
+          if (info.dataType === "checklist-taxon") {
             let taxon = loadDataByType(context, info.name, {
               ...info,
-              formatting: "taxon",
+              dataType: "taxon",
             });
 
             let taxonIsEmpty =
@@ -1425,7 +1425,7 @@ export let DataManager = function () {
                   // Pad t with nulls so the occurrence lands at its correct positional index,
                   // preserving the positional contract that the rest of the codebase relies on.
                   const taxonColumnInfos = allColumnInfos.filter(
-                    i => i.formatting === "checklist-taxon"
+                    i => i.dataType === "checklist-taxon"
                   );
                   const occurrenceMetaIndex = taxonColumnInfos.indexOf(info);
                   while (rowObj.t.length < occurrenceMetaIndex) {
@@ -2206,7 +2206,7 @@ export let DataManager = function () {
        *   2. Trailing-digit strip     "lifePhotos1" → "lifePhotos#"
        *   3. Dot-path last-segment    "mediacluster.images1" → "mediacluster.images#"
        *
-       * This mirrors the getMediaNlFormatting() logic in DwcArchiveCompiler so
+       * This mirrors the getMediaNlDataType() logic in DwcArchiveCompiler so
        * that both the type lookup and the template lookup resolve consistently for
        * every column expanded by the media: directive.
        *
@@ -2644,10 +2644,10 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const position = dataPath.analyse.position(allCDDColumnNames, colName);
     if (!position.isLeaf) return;
 
-    const formattingBase = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
+    const dataTypeBase = (row.dataType || "").trim().toLowerCase().split(/\s+/)[0];
 
-    if (!isColumnPresentInHeaders(formattingBase, colName, headers)) {
-      Logger.critical(tf("dm_cdd_missing_column", [row.columnName, row.formatting]), "Missing column");
+    if (!isColumnPresentInHeaders(dataTypeBase, colName, headers)) {
+      Logger.critical(tf("dm_cdd_missing_column", [row.columnName, row.dataType]), "Missing column");
     }
   });
 }
@@ -2664,7 +2664,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
  *  3. Cross-table column-name uniqueness (Maps table excluded)
  *  4. Color-theme hue range (0–360)
  *  5. Month names count / duplicate validation
- *  6. customDataDefinition positional rules (placement/template/formatting/list/hidden)
+ *  6. customDataDefinition positional rules (placement/template/dataType/list/hidden)
  *
  * @param {object} data – nlDataStructure (read-only intent; hidden-column reset
  *                        is the only mutation and is intentional side-effect)
@@ -2680,7 +2680,7 @@ function runManualIntegrityChecks(data) {
 
     const mapregionsPaths = new Set(
       (data.sheets.content.tables.customDataDefinition.data[lang.code] || [])
-        .filter((r) => (r.formatting || "").trim().toLowerCase() === "mapregions")
+        .filter((r) => (r.dataType || "").trim().toLowerCase() === "mapregions")
         .map((r) => (r.columnName || "").trim().toLowerCase())
     );
 
@@ -2911,23 +2911,23 @@ function runManualIntegrityChecks(data) {
         Logger.error(tf("dm_wrong_template", [columnName]));
       }
 
-      // 6c. "category" formatting only on leaf columns
-      if (row.formatting.toLowerCase() === "category" && !colPosition.isLeaf) {
-        Logger.error(tf("dm_wrong_category", [columnName, cddColumns.formatting.name]));
+      // 6c. "category" dataType only on leaf columns
+      if (row.dataType.toLowerCase() === "category" && !colPosition.isLeaf) {
+        Logger.error(tf("dm_wrong_category", [columnName, cddColumns.dataType.name]));
       }
 
-      // 6d. "list" formatting only on columns with children
-      if (row.formatting.toLowerCase().startsWith("list") && !colPosition.hasChildren) {
-        Logger.error(tf("dm_wrong_separator", [columnName, cddColumns.formatting.name]));
+      // 6d. "list" dataType only on columns with children
+      if (row.dataType.toLowerCase().startsWith("list") && !colPosition.hasChildren) {
+        Logger.error(tf("dm_wrong_separator", [columnName, cddColumns.dataType.name]));
       }
 
-      // 6e. "details" placement only allows certain formatting types
+      // 6e. "details" placement only allows certain dataType types
       if (row.placement && row.placement.split("|").map((x) => x.trim()).includes("details")) {
-        const allowedFormatting = ["", "text", "list", "markdown", "image", "sound", "map", "mapregions"];
-        const baseFormatting = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
-        if (!allowedFormatting.includes(baseFormatting)) {
+        const alloweddataType = ["", "text", "list", "markdown", "image", "sound", "map", "mapregions"];
+        const basedataType = (row.dataType || "").trim().toLowerCase().split(/\s+/)[0];
+        if (!alloweddataType.includes(basedataType)) {
           Logger.error(
-            tf("dm_details_formatting_invalid", [columnName, row.formatting, row.placement])
+            tf("dm_details_dataType_invalid", [columnName, row.dataType, row.placement])
           );
         }
       }
@@ -2949,18 +2949,18 @@ function runManualIntegrityChecks(data) {
         });
       }
 
-      // 6g. searchCategoryTitle set on a formatting that has no filter plugin
-      const baseFormatting6g = (row.formatting || "").trim().toLowerCase().split(/\s+/)[0];
+      // 6g. searchCategoryTitle set on a dataType that has no filter plugin
+      const basedataType6g = (row.dataType || "").trim().toLowerCase().split(/\s+/)[0];
       const searchCategoryTitle6g = (row.searchCategoryTitle || "").trim();
       if (
-        baseFormatting6g !== "" &&
-        baseFormatting6g !== "list" &&
+        basedataType6g !== "" &&
+        basedataType6g !== "list" &&
         searchCategoryTitle6g !== ""
       ) {
-        const customType6g = dataCustomTypes[baseFormatting6g];
+        const customType6g = dataCustomTypes[basedataType6g];
         if (customType6g && customType6g.filterPlugin === null) {
           Logger.error(
-            tf("dm_cdd_no_filter_plugin", [columnName, searchCategoryTitle6g, baseFormatting6g])
+            tf("dm_cdd_no_filter_plugin", [columnName, searchCategoryTitle6g, basedataType6g])
           );
         }
       }

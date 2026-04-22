@@ -427,7 +427,7 @@ function buildPerspectiveSpecs(ctx) {
   }
 
   // 3. Categories
-  const catPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "category");
+  const catPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.dataType === "category");
   catPaths.forEach(catPath => {
     const meta = dataMeta[catPath];
     const base = meta.title || meta.searchCategory || catPath;
@@ -458,7 +458,7 @@ function buildPerspectiveSpecs(ctx) {
   });
 
   // 4. Map regions
-  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "mapregions");
+  const mapPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.dataType === "mapregions");
   mapPaths.forEach(mapPath => {
     const meta = dataMeta[mapPath];
     const base = meta.title || meta.searchCategory || mapPath;
@@ -489,7 +489,7 @@ function buildPerspectiveSpecs(ctx) {
   });
 
   // 5. Months
-  const monthPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.formatting === "months");
+  const monthPaths = Object.keys(dataMeta).filter(p => dataMeta[p]?.dataType === "months");
   monthPaths.forEach(monthsPath => {
     const meta = dataMeta[monthsPath];
     const base = meta.title || meta.searchCategory || monthsPath;

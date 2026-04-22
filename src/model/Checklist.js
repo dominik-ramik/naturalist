@@ -517,8 +517,8 @@ export let Checklist = {
 
       let templateString = meta.template != null ? String(meta.template).trim() : "";
 
-      if (templateString === "" && meta.formatting) {
-        const reader = dataCustomTypes[meta.formatting];
+      if (templateString === "" && meta.dataType) {
+        const reader = dataCustomTypes[meta.dataType];
         if (reader && reader.defaultTemplate) {
           templateString = reader.defaultTemplate;
 
@@ -543,7 +543,7 @@ export let Checklist = {
       let searchCategory = meta.searchCategory;
       if (searchCategory && searchCategory.length > 0) {
         let filterPath = dataPath;
-        let filterType = meta.formatting;
+        let filterType = meta.dataType;
 
         if (filterType === "list") {
           // A "list" parent with a search category: the filter should
@@ -551,7 +551,7 @@ export let Checklist = {
           // not on the list container itself.
           filterPath = dataPath + "#";
 
-          // Derive the sub-item formatting from any numbered child
+          // Derive the sub-item dataType from any numbered child
           // (e.g. info.habitSearch1 → "category").
           const allMeta = Checklist.getDataMeta();
           const numberedKey = Object.keys(allMeta).find(k =>
@@ -560,11 +560,11 @@ export let Checklist = {
             /^\d+$/.test(k.slice(dataPath.length))
           );
           const subMeta = numberedKey ? allMeta[numberedKey] : null;
-          filterType = subMeta ? subMeta.formatting : "text";
+          filterType = subMeta ? subMeta.dataType : "text";
 
           // Create a synthetic metadata entry for the # path so that
           // SearchView, FilterDropdownView, FilterCrumbsView and
-          // TabSummary can resolve title, formatting and categories.
+          // TabSummary can resolve title, dataType and categories.
           // Inherit belongsTo from the root column's meta.
           allMeta[filterPath] = {
             ...(subMeta || {}),
@@ -808,23 +808,23 @@ export let Checklist = {
         // (e.g. interval → [from, to], months → [1,3,5]).  Delegate and move on.
         // "list" is structural (container of sub-items), so iterate children instead.
         const ownMeta = dataMeta[dataPath];
-        if (ownMeta && ownMeta.formatting && ownMeta.formatting !== "list") {
+        if (ownMeta && ownMeta.dataType && ownMeta.dataType !== "list") {
           const searchable = getSearchableTextByType(
             value,
-            ownMeta.formatting,
+            ownMeta.dataType,
             this._buildSearchUiContext(taxon, dataPath, ownMeta, langCode)
           );
           results.push(...searchable);
         } else {
-          // Sub-item array: each element has its own child formatting
+          // Sub-item array: each element has its own child dataType
           value.forEach((item, idx) => {
             const arrayPath = `${dataPath}${idx + 1}`;
             const meta = dataMeta[arrayPath] || dataMeta[dataPath.replace(/\d+$/, '#')];
 
-            if (meta && meta.formatting) {
+            if (meta && meta.dataType) {
               const searchable = getSearchableTextByType(
                 item,
-                meta.formatting,
+                meta.dataType,
                 this._buildSearchUiContext(taxon, arrayPath, meta, langCode)
               );
               results.push(...searchable);
@@ -838,10 +838,10 @@ export let Checklist = {
       } else {
         const meta = dataMeta[dataPath];
 
-        if (meta && meta.formatting && meta.formatting !== "list") {
+        if (meta && meta.dataType && meta.dataType !== "list") {
           const searchable = getSearchableTextByType(
             value,
-            meta.formatting,
+            meta.dataType,
             this._buildSearchUiContext(taxon, dataPath, meta, langCode)
           );
           results.push(...searchable);
@@ -966,14 +966,14 @@ export let Checklist = {
     function nestedPrimitives(currentData, dataPath) {
       let primitives = [];
 
-      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "mapregions") {
+      if (Checklist.getMetaForDataPath(dataPath)?.dataType == "mapregions") {
         getSearchableTextByType(currentData, "mapregions", { langCode, dataPath }).forEach(
           text => primitives.push(text)
         );
         return primitives;
       }
 
-      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "months") {
+      if (Checklist.getMetaForDataPath(dataPath)?.dataType == "months") {
         // months data is a flat number array, NOT a sub-item array.
         // Iterating it with index-based meta lookups (e.g. dataPath+"1") would
         // crash because those child paths don't exist. Instead, delegate to the
@@ -985,7 +985,7 @@ export let Checklist = {
         return primitives;
       }
 
-      if (Checklist.getMetaForDataPath(dataPath)?.formatting == "interval") {
+      if (Checklist.getMetaForDataPath(dataPath)?.dataType == "interval") {
         // interval data is [from, to] - a pair of numbers, NOT a sub-item array.
         // Delegate to the reader so "3.5 - 7.2" is indexed for full-text search.
         getSearchableTextByType(currentData, "interval", { dataPath }).forEach(
@@ -996,11 +996,11 @@ export let Checklist = {
 
       if (Array.isArray(currentData)) {
         currentData.forEach(function (arrayMember, index) {
-          if (Checklist.getMetaForDataPath(dataPath).formatting == "image") {
+          if (Checklist.getMetaForDataPath(dataPath).dataType == "image") {
             primitives.push(arrayMember.source);
             primitives.push(arrayMember.title);
           } else if (
-            Checklist.getMetaForDataPath(dataPath + (index + 1)) && Checklist.getMetaForDataPath(dataPath + (index + 1)).formatting ==
+            Checklist.getMetaForDataPath(dataPath + (index + 1)) && Checklist.getMetaForDataPath(dataPath + (index + 1)).dataType ==
             "taxon"
           ) {
             primitives.push(arrayMember.name + " " + arrayMember.authority);
@@ -1010,7 +1010,7 @@ export let Checklist = {
           }
         });
       } else if (
-        Checklist.getMetaForDataPath(dataPath)?.formatting == "taxon"
+        Checklist.getMetaForDataPath(dataPath)?.dataType == "taxon"
       ) {
         primitives.push(currentData.name);
         primitives.push(currentData.authority);
@@ -1043,7 +1043,7 @@ export let Checklist = {
 
       // Let the CustomType extract its own atomic leaf values when it knows better
       // than the generic recursive descent (interval pairs, mapregion name mapping).
-      const _fmt = Checklist.getDataMeta()[currentPath]?.formatting;
+      const _fmt = Checklist.getDataMeta()[currentPath]?.dataType;
       const _customType = _fmt ? dataCustomTypes[_fmt] : null;
 
       // Array of typed items (e.g. specimenImages# containing [{source,title}, …]):
@@ -1065,7 +1065,7 @@ export let Checklist = {
         return _result;
       }
 
-      if (Checklist.getDataMeta()[currentPath]?.formatting == "image") {
+      if (Checklist.getDataMeta()[currentPath]?.dataType == "image") {
         data = "<img src='" + "?" + "' />";
       } else if (Array.isArray(taxonData)) {
         taxonData.forEach(function (item) {
@@ -1151,9 +1151,9 @@ export let Checklist = {
    * occurrence's `.d` is returned.
    *
    * Merge semantics (see `_deepMergeDataBlobs`):
-   * - `formatting` is determined by `Checklist.getMetaForDataPath(dataPath)`;
-   *   a node is treated as "structural" when `formatting === ""` or
-   *   `formatting === "text"`.
+   * - `dataType` is determined by `Checklist.getMetaForDataPath(dataPath)`;
+   *   a node is treated as "structural" when `dataType === ""` or
+   *   `dataType === "text"`.
    * - Structural nodes:
    *   - Arrays: concatenated then deduplicated using `Set` for primitives.
    *   - Plain objects: merged recursively (occurrence values override parent
@@ -1227,7 +1227,7 @@ export let Checklist = {
   },
 
   /**
-   * Deep merges occurrence data into parent data based on schema formatting.
+   * Deep merges occurrence data into parent data based on schema dataType.
    * @param {Object} parentData - The base data (target)
    * @param {Object} occurrenceData - The incoming data to merge
    * @param {string} currentPath - The dot-notation path for fetching metadata
@@ -1250,10 +1250,10 @@ export let Checklist = {
       // 1. Build the path to fetch metadata
       const dataPath = currentPath ? `${currentPath}.${key}` : key;
       const meta = Checklist.getMetaForDataPath(dataPath);
-      const formatting = meta ? (meta.formatting || "text") : "text";
+      const dataType = meta ? (meta.dataType || "text") : "text";
 
       // 2. Determine if this node should be recursed into
-      const isStructural = formatting === "" || formatting === "text" || formatting === "list";
+      const isStructural = dataType === "" || dataType === "text" || dataType === "list";
 
       if (isStructural) {
         // --- RECURSIVE STRUCTURAL MERGE ---
@@ -1556,7 +1556,7 @@ export let Checklist = {
     // List sub-item paths are registered with a trailing "#"
     if (dataPath.endsWith("#")) return true;
     const meta = this.getMetaForDataPath(dataPath);
-    return meta?.formatting === "months" || meta?.formatting === "mapregions";
+    return meta?.dataType === "months" || meta?.dataType === "mapregions";
   },
 
   getTaxonLevelMeta(levelOrDataPath) {
@@ -1696,26 +1696,26 @@ export let Checklist = {
       children: {},
     };
 
-    // Allowed formatting types for each tab
+    // Allowed dataType types for each tab
     const allowedMedia = ["image", "sound"];
     const allowedMap = ["map", "mapregions"];
     const allowedText = ["text", "markdown"];
 
-    // Helper: add to correct tab if formatting and value are valid
-    function tryAddToTab(formatting, data, meta, dataPath, tabType, arr) {
+    // Helper: add to correct tab if dataType and value are valid
+    function tryAddToTab(dataType, data, meta, dataPath, tabType, arr) {
       // Reject empty containers that exist as placeholders on every row
       if (data === null || data === undefined) return false;
       if (Array.isArray(data) && data.length === 0) return false;
       if (typeof data === "object" && !Array.isArray(data) && Object.keys(data).length === 0) return false;
 
-      if (tabType === "media" && allowedMedia.includes(formatting)) {
+      if (tabType === "media" && allowedMedia.includes(dataType)) {
         arr.push({ data, meta, dataPath });
         return true;
-      } else if (tabType === "map" && allowedMap.includes(formatting)) {
+      } else if (tabType === "map" && allowedMap.includes(dataType)) {
         arr.push({ data, meta, dataPath });
         return true;
-      } else if (tabType === "text" && allowedText.includes(formatting)) {
-        if (formatting === "text" && typeof data !== "string") return false;
+      } else if (tabType === "text" && allowedText.includes(dataType)) {
+        if (dataType === "text" && typeof data !== "string") return false;
         if (typeof data === "string" && data.trim() === "") return false;
         arr.push({ data, meta, dataPath });
         return true;
@@ -1736,7 +1736,7 @@ export let Checklist = {
 
         // Try to add the parent item itself (root/simple)
         let rootItems = [];
-        if (tryAddToTab(meta.formatting, data, meta, key, tabType, rootItems)) {
+        if (tryAddToTab(meta.dataType, data, meta, key, tabType, rootItems)) {
           renderingItems.push({
             groupTitle: "",
             items: rootItems
@@ -1751,7 +1751,7 @@ export let Checklist = {
             let childPath = key + (idx + 1);
             let childMeta = Checklist.getMetaForDataPath(childPath);
             if (childMeta) {
-              tryAddToTab(childMeta.formatting, item, childMeta, childPath, tabType, childItems);
+              tryAddToTab(childMeta.dataType, item, childMeta, childPath, tabType, childItems);
             }
           });
         } else if (typeof data === "object" && data !== null) {
@@ -1759,7 +1759,7 @@ export let Checklist = {
             let childPath = key + "." + childKey;
             let childMeta = Checklist.getMetaForDataPath(childPath);
             if (childMeta) {
-              tryAddToTab(childMeta.formatting, data[childKey], childMeta, childPath, tabType, childItems);
+              tryAddToTab(childMeta.dataType, data[childKey], childMeta, childPath, tabType, childItems);
             }
           });
         }

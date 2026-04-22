@@ -83,12 +83,12 @@ export function TabText(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataCustomTypes[meta.formatting] || dataCustomTypes["text"];
+        const reader = dataCustomTypes[meta.dataType] || dataCustomTypes["text"];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem && meta.title) {
           return m("div", [
             m("div.details-item-title", { id: itemId }, itemNumber + " " + meta.title),
-            meta.formatting === "text" ? m("p", renderedItem) : renderedItem,
+            meta.dataType === "text" ? m("p", renderedItem) : renderedItem,
           ]);
         }
         return renderedItem;
@@ -127,7 +127,7 @@ export function TabText(tabData, taxon, taxonName) {
           },
           placement: "details",
         };
-        const reader = dataCustomTypes[meta.formatting] || dataCustomTypes["text"];
+        const reader = dataCustomTypes[meta.dataType] || dataCustomTypes["text"];
         let renderedItem = reader && reader.render ? reader.render(data, uiContext) : null;
         if (renderedItem) {
           if (meta.title) {
