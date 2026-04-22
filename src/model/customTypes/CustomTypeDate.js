@@ -66,7 +66,7 @@ export let customTypeDate = {
 
       const dateObj = dayjs(value);
       if (dateObj.isValid()) {
-        return dateObj.valueOf();
+        return dateObj.startOf('day').valueOf();
       }
     }
 
