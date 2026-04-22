@@ -28,8 +28,8 @@ export let customTypeText = {
       return null;
     }
 
-    // Apply data code transformation
-    value = helpers.processPossibleDataCode(computedPath, value, langCode);
+    // Do not apply replacement, we only do it on "category" now
+    //value = helpers.processPossibleDataCode(computedPath, value, langCode);
 
     return value;
   },

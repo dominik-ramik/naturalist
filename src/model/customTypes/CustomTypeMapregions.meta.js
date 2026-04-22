@@ -8,10 +8,7 @@ export const customTypeMapregionsMeta = {
       "Encodes geographic distribution as a set of region / status / note tuples. Renders as a colour-coded SVG choropleth map in the Details pane and as an annotated inline text list of region names in the taxon card. The two outputs can be used independently or together.",
 
     whenToUse:
-      "Any geographic distribution data where you want an interactive coloured map, a filterable region list, or both. Works equally well for simple presence/absence, named qualitative statuses (native / introduced / extirpated), and numeric data (counts, scores, measurements) rendered as a gradient or stepped colour ramp.",
-
-    howToUse:
-      "Three things are needed together: (1) region codes and status values in the data sheet, (2) a row per region code in the [[ref:appearance.mapRegionsNames]] table, and (3) colour rules in the [[ref:appearance.mapRegionsLegend]] table. The **Template** column in Custom Data Definition must hold the SVG file path (e.g. `maps/europe.svg`) for the choropleth map to appear - without it, only the inline text list renders. See [Distribution maps with mapregions](/author-guide/mapregions) for the full mental model, SVG authoring guidance, and worked examples.",
+      "Any geographic distribution data where you want an interactive coloured map, a filterable region list, or both. Works equally well for simple presence/absence, named qualitative statuses (native / introduced / extirpated), and numeric data (counts, scores, measurements) rendered as a gradient or stepped colour ramp. Three things are needed together: (1) region codes and status values in the data sheet, (2) a row per region code in the [[ref:appearance.mapRegionsNames]] table, and (3) colour rules in the [[ref:appearance.mapRegionsLegend]] table. The **Template** column in Custom Data Definition must hold the SVG file path (e.g. `maps/europe.svg`) for the choropleth map to appear - without it, only the inline text list renders. See [Distribution maps with mapregions](/author-guide/mapregions) for the full mental model, SVG authoring guidance, and worked examples.",
 
     behaviorFulltextIndexing:
       "Region names (resolved from the [[ref:appearance.mapRegionsNames]] table) are indexed for full-text search.",

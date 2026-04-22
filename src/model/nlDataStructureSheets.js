@@ -606,7 +606,7 @@ export const nlDataStructureSheets = {
                     dataType: {
                         name: "Data type",
                         description: "The data type for this column. Determines how the app reads and render the raw cell value (or its sub-columns) You have already seen this in the case of [[ref:type.taxon]] data type when filling-in the [[ref:content.taxa]] table), where the **taxon** data type allowed you to use its `[column].name` and `[column].authority` properties to enter the taxonomic name and authority.\n\nFor array or object root entries (paths using `#` or `.` children), use the special `list` data type to indicate a compound value. Append an optional separator keyword after a space:\n\n| Value | Result |\n|---|---|\n| `list` or `list bullets` | Unordered bullet list (default) |\n| `list numbered` | Ordered list starting at 1 |\n| `list unmarked` | List with no bullets or numbers |\n| `list space` | Items on one line, separated by a space |\n| `list comma` | Items on one line, separated by `, ` |\n| `list [any string]` | Items on one line, separated by that string |\n\nSee [Data Types](./data-types) for the full type reference.",
-                        howToUse: "Leave empty (defaults to `text`) for plain string data. Choose the appropriate data type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
+                        howToUse: "Choose the appropriate data type whenever the column holds numbers, dates, images, maps, months, intervals, or other structured data - the right type enables the correct filter, renderer, and search indexing.",
                         notes: [
                             {
                                 type: "tip",
@@ -674,8 +674,7 @@ export const nlDataStructureSheets = {
                         ],
                         integrity: {
                             description: "`list` may be followed by a separator keyword (e.g. `list comma`, `list bullets`, `list space`) or any data type name.",
-                            allowEmpty: true,
-                            defaultValue: "text",
+                            allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: false
@@ -2163,11 +2162,11 @@ export const nlDataStructureSheets = {
             dataCodes: {
                 name: "Data codes",
                 required: false,
-                description: "Translates short codes or controlled vocabulary items entered in the [[ref:data]] sheet into human-readable labels. When the app reads a value from a coded column, it replaces it with the full label before displaying. Category matching ([[ref:appearance.categories]] table)  then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show, but is useful when you want to simplify data entry of e.g. Red List codes, habitat codes, Darwin Core or any other standard vocabulary.",
+                description: "Translates short codes or controlled vocabulary items entered in the [[ref:data]] sheet using [[ref:type.category]] data type into human-readable labels. When the app reads a value from a coded column, it replaces it with the full label before displaying. Category matching ([[ref:appearance.categories]] table)  then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show, but is useful when you want to simplify data entry of e.g. Red List codes, habitat codes, Darwin Core or any other standard vocabulary.",
                 notes: [
                     {
                         type: "warning",
-                        text: "If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app displays the raw value unchanged. Codes are matched exactly and case-sensitively."
+                        text: "This transformation is only applied on data in columns with [[ref:type.category]] data types. If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app displays the raw value unchanged. Codes are matched exactly and case-sensitively."
                     }
                 ],
                 columns: {
