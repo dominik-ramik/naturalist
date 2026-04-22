@@ -130,17 +130,17 @@
 /*
  * Additional style rules
  *
- * The following are examples of colouring countries.
- * These can be substituted with custom styles to colour the countries on the map.
+ * The following are examples of coloring countries.
+ * These can be substituted with custom styles to color the countries on the map.
  *
- * Colour a few countries:
+ * Color a few countries:
  *
  * .gb, .au, .nc
  * {
  * 	fill: #ff0000;
  * }
  *
- * Colour a few small-country circles (along with the countries):
+ * Color a few small-country circles (along with the countries):
  *
  * .ms, .ky
  * {
