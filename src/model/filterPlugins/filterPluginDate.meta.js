@@ -4,5 +4,5 @@
 export const filterMetaDate = {
   filterType:        "date-range",
   filterLabel:       "Date range",
-  filterDescription: "Shows a date range control with the same operations as the numeric range filter. Dates are compared as timestamps so all standard operators apply.",
+  filterDescription: "Shows a date range control with a list of dates and operations equal, before date, after date, and between dates (all are inclusive). Match if year, month and day match.",
 };

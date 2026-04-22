@@ -3,7 +3,7 @@
  *
  * Aggregates mapregions data across the filtered record set and renders:
  *   1. A collapsible config panel (map, segment, operation, denominator, groups)
- *   2. A coloured SVG choropleth map
+ *   2. A colored SVG choropleth map
  *   3. A sortable aggregate table with per-region drill-down
  *
  * Supports all mapregions flavours: presence/absence, named category statuses,
@@ -308,13 +308,13 @@ function mapChart(filteredTaxa, allTaxa, datasetRevision) {
   ]);
 }
 
-// ─── Group → region colour expansion ──────────────────────────────────────────
+// ─── Group → region color expansion ──────────────────────────────────────────
 
 /**
  * When groups are active, `colors` is keyed by group title.
- * The SVG map needs colours keyed by region code.
- * Expand each group colour to every member region code so the map renders
- * uniformly coloured groups.  Non-group keys pass through unchanged.
+ * The SVG map needs colors keyed by region code.
+ * Expand each group color to every member region code so the map renders
+ * uniformly colored groups.  Non-group keys pass through unchanged.
  */
 function expandGroupColors(colors, groupIndex) {
   if (!Object.keys(groupIndex).length) return colors;

@@ -13,32 +13,32 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { customTypeTextMeta }       from "./CustomTypeText.meta.js";
-import { customTypeCategoryMeta }   from "./CustomTypeCategory.meta.js";
 import { customTypeMarkdownMeta }   from "./CustomTypeMarkdown.meta.js";
+import { customTypeCategoryMeta }   from "./CustomTypeCategory.meta.js";
 import { customTypeNumberMeta }     from "./CustomTypeNumber.meta.js";
+import { customTypeIntervalMeta }   from "./CustomTypeInterval.meta.js";
 import { customTypeDateMeta }       from "./CustomTypeDate.meta.js";
+import { customTypeMonthsMeta }     from "./CustomTypeMonths.meta.js";
 import { customTypeTaxonMeta }      from "./CustomTypeTaxon.meta.js";
 import { customTypeImageMeta }      from "./CustomTypeImage.meta.js";
 import { customTypeSoundMeta }      from "./CustomTypeSound.meta.js";
 import { customTypeMapMeta }        from "./CustomTypeMap.meta.js";
 import { customTypeMapregionsMeta } from "./CustomTypeMapregions.meta.js";
-import { customTypeMonthsMeta }     from "./CustomTypeMonths.meta.js";
 import { customTypeGeopointMeta }   from "./CustomTypeGeopoint.meta.js";
-import { customTypeIntervalMeta }   from "./CustomTypeInterval.meta.js";
 
 // Order controls display order on /reference/data-types.
 export const dataTypesMeta = [
   customTypeTextMeta,
-  customTypeCategoryMeta,
   customTypeMarkdownMeta,
+  customTypeCategoryMeta,
   customTypeNumberMeta,
+  customTypeIntervalMeta,
   customTypeDateMeta,
+  customTypeMonthsMeta,
   customTypeTaxonMeta,
   customTypeImageMeta,
   customTypeSoundMeta,
   customTypeMapMeta,
   customTypeMapregionsMeta,
-  customTypeMonthsMeta,
   customTypeGeopointMeta,
-  customTypeIntervalMeta,
 ];

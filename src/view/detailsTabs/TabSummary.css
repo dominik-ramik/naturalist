@@ -400,7 +400,7 @@
   pointer-events: none;
 }
 
-/* Fixed-width column that holds the colour swatch (keeps labels aligned) */
+/* Fixed-width column that holds the color swatch (keeps labels aligned) */
 .sp-region-summary-swatch-col {
   width: 1em;
   flex-shrink: 0;

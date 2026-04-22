@@ -8,7 +8,7 @@
  *   For A2/A3/A4/A5 anchors the "dataset" is the numeric values present in
  *   the CURRENT TAXON's mapregions object for the given column - not the
  *   filtered checklist.  Each taxon therefore carries its own independent
- *   colour scale, which means:
+ *   color scale, which means:
  *     - Individual map-card display:  always per-taxon stats (no filter dependency)
  *     - Filter _checkDataFilters:     also per-taxon stats (avoids circular ref)
  *     - TabSummary aggregate view:    aggregate values across the scope rows
@@ -258,7 +258,7 @@ function labToHex(L, a, b) {
 }
 
 /**
- * Interpolate between two hex colours in CIE Lab space.
+ * Interpolate between two hex colors in CIE Lab space.
  * Produces perceptually smooth gradients - red→blue goes through pale lavender
  * rather than muddy brown/grey.
  */
@@ -306,7 +306,7 @@ function getSortedAnchors(legendConfig, datasetStats) {
 
 /**
  * Main resolution function.
- * Returns { fill, legend, appendedLegend, resolvedAs } or null (region left uncoloured).
+ * Returns { fill, legend, appendedLegend, resolvedAs } or null (region left uncolored).
  *
  * resolvedAs: 'category' | 'gradient' | 'stepped' | 'fallback'
  *
@@ -371,7 +371,7 @@ function _resolveStepped(value, sortedAnchors) {
   for (const a of sortedAnchors) {
     if (a.resolved <= value) { match = a; } else { break; }
   }
-  // Below all anchors → use first bin colour
+  // Below all anchors → use first bin color
   return _legendResult(match ?? sortedAnchors[0]);
 }
 
@@ -389,7 +389,7 @@ function _legendResult(anchor) {
 /**
  * Return a CSS linear-gradient string for the gradient ramp display.
  * Stop positions are proportional to resolved anchor values.
- * Uses direct anchor colours - Lab interpolation happens in the engine for
+ * Uses direct anchor colors - Lab interpolation happens in the engine for
  * individual values; the CSS ramp uses the anchor hex stops directly.
  */
 export function gradientCSSForConfig(numericRows, datasetStats) {

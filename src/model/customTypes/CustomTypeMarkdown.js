@@ -8,7 +8,7 @@ export let customTypeMarkdown = {
   dataType: "markdown",
   expectedColumns: (basePath) => [basePath],
     
-  filterPlugin: filterPluginText,
+  filterPlugin: null, // No specific filter plugin for markdown; use plain text search on rendered output
 
   readData: function (context, computedPath) {
     const { headers, row, langCode } = context;

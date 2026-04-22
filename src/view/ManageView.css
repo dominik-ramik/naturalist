@@ -534,7 +534,7 @@
   filter: brightness(0.95);
 }
 
-/* Severity-tinted header backgrounds - mirrors the flat item colours */
+/* Severity-tinted header backgrounds - mirrors the flat item colors */
 .manage-log-group.critical>.manage-log-group-header {
   background-color: #ffebee;
   color: #c62828;

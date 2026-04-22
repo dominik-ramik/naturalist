@@ -15,7 +15,7 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
-import { processMarkdownWithBibliography } from "../../components/Utils.js";
+import { processMarkdownWithBibliography, htmlToPlainText } from "../../components/Utils.js";
 import { Logger } from "../../components/Logger.js";
 import { colorSVGMap } from "../../components/ColorSVGMap.js";
 import { applyHighlight, highlightHtml } from "../highlightUtils.js";
@@ -243,6 +243,14 @@ export let customTypeMapregions = {
       if (appendedLegend && !result.includes(appendedLegend)) {
         result.push(appendedLegend);
       }
+
+      const notes = data[regionCode]?.notes;
+      if (Array.isArray(notes)) {
+        notes.forEach(note => {
+          const searchable = htmlToPlainText(processMarkdownWithBibliography(note)).trim();
+          if (searchable && !result.includes(searchable)) result.push(searchable);
+        });
+      }
     });
     return result;
   },
@@ -324,7 +332,7 @@ function readSimpleData(context, path) {
   return idx >= 0 && row[idx] !== undefined ? row[idx] : null;
 }
 
-// ─── Colour helpers ───────────────────────────────────────────────────────────
+// ─── Color helpers ───────────────────────────────────────────────────────────
 
 function buildRegionColors(data, legendConfig, datasetStats, fixForWorldMap, dataPath) {
   const regionColors = {};
@@ -467,7 +475,7 @@ function sortedRegionCodes(data, legendConfig) {
 
 /**
  * Render a statistical appendix below the data table.
- * Shows category counts (with colour swatches) and/or numeric summary stats.
+ * Shows category counts (with color swatches) and/or numeric summary stats.
  */
 function renderTableStats(data, legendConfig, datasetStats) {
   const { numericMode, categoryRows, categoryStatusSet } = legendConfig;
@@ -525,12 +533,12 @@ function renderTableStats(data, legendConfig, datasetStats) {
 /**
  * Render the map legend.
  *
- * Gradient mode: continuous colour ramp with tick marks pinned at each
+ * Gradient mode: continuous color ramp with tick marks pinned at each
  * anchor's proportional position.  With ≤2 ticks all labels go below;
  * with ≥3 ticks labels alternate below/above to avoid crowding.
  * Resolved dataset values are appended in grey parentheses (issue 6).
  *
- * Stepped mode: colour swatch + label + resolved range per bin.
+ * Stepped mode: color swatch + label + resolved range per bin.
  * Category rows always follow numeric rows.
  */
 function renderMapLegend(legendConfig, datasetStats, data) {
@@ -776,7 +784,7 @@ function renderRegionsList(data, uiContext) {
     m(".region-footnote", [
       m("sup.region-footnotes-number", (index + 1).toString()),
       "\u00A0",
-      m.trust(noteHtml),
+      m.trust(highlightHtml(noteHtml, hl)),
     ])
   );
 

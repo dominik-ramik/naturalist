@@ -46,7 +46,7 @@ export function detectSegments(legendConfig) {
  * Metadata for every supported numeric aggregate operation.
  *
  * usesLegendScale  – true when the result is in the same domain as the
- *                    original data values and the legend colour ramp applies.
+ *                    original data values and the legend color ramp applies.
  * usesDenominator  – true when the result is a record count that can be
  *                    expressed as a % of filter / region / total.
  * usesThreshold    – true when an extra threshold input is required.
@@ -215,7 +215,7 @@ const NUMERIC_FNS = {
  * (e.g. no numeric data when a numeric operation is requested).
  *
  * @returns {{ value, count, recordCount, excluded } | null}
- *   value       – the aggregate scalar used for colour and display
+ *   value       – the aggregate scalar used for color and display
  *   count       – records that contributed to `value`
  *   recordCount – all records in this region (including non-contributing)
  *   excluded    – records with non-numeric status when track is numeric
@@ -332,7 +332,7 @@ export function buildEffectiveAllCounts(allRegionCounts, regionData) {
   return result;
 }
 
-// ─── Colour computation ───────────────────────────────────────────────────────
+// ─── Color computation ───────────────────────────────────────────────────────
 
 const DEFAULT_COLOR = '#55769b';  // --nlblue
 const MIN_INTENSITY = 0.12;       // lightest shade is never pure white
@@ -356,18 +356,18 @@ export function computeRatio(value, key, denominator, filteredCount, effectiveAl
 }
 
 /**
- * Compute a CSS colour string for each region key.
+ * Compute a CSS color string for each region key.
  *
  * Strategy:
  *   numeric + legend-compatible op (mean/median/min/max):
- *     → resolve through the legend colour engine using aggregate-level stats.
+ *     → resolve through the legend color engine using aggregate-level stats.
  *       Semantically correct because the result is still in the original data
  *       domain (e.g. a mean pH is still measured in pH).
  *
  *   everything else (category counts, numeric count/sum/stddev/pct_*):
- *     → relative intensity fading from white to the base colour.
+ *     → relative intensity fading from white to the base color.
  *       Ratios are scaled relative to each other so the highest-value region
- *       always appears at full colour, giving visual discrimination even when
+ *       always appears at full color, giving visual discrimination even when
  *       absolute percentages are low.
  */
 export function computeColorMapping(

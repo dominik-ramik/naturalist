@@ -750,13 +750,13 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
  * Build the per-region status breakdown for a set of checklist rows.
  *
  * Gradient columns: numeric values per region are collapsed into a single
- * range entry (min–max) with a colour sampled at the midpoint, rather than
+ * range entry (min–max) with a color sampled at the midpoint, rather than
  * emitting one row per distinct decimal value.  Categorical overrides within
  * a gradient column are still grouped as discrete entries.
  *
  * Stepped / category columns: values are grouped by their resolved bin legend
  * so that multiple raw numeric values that fall in the same bin are counted
- * together.  The colour and label are captured at accumulation time, avoiding
+ * together.  The color and label are captured at accumulation time, avoiding
  * the mistake of later trying to resolve a legend string as a status code.
  */
 // lc (legendConfig) is passed in from buildMapRegionsPerspective, which already
@@ -796,7 +796,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapDa
         byRegion[code]._grad.rawValues.push({ value: n, fill: resolved.fill });
       } else {
         // Categorical, stepped, and fallback: group by the resolved legend label.
-        // Colour is captured now from the actual resolved status - not re-derived
+        // Color is captured now from the actual resolved status - not re-derived
         // from the label string later, which would fail to find a match.
         const binLabel = resolved.legend || status;
         if (!byRegion[code][binLabel]) {
@@ -817,7 +817,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapDa
       // ── Gradient range entry ─────────────────────────────────────────────
       if (bins._grad) {
         const g = bins._grad;
-        // Sample the colour at the midpoint of the observed range.
+        // Sample the color at the midpoint of the observed range.
         const mid = (g.min + g.max) / 2;
         const midResolved = getCachedRegionColor(String(mid), lc, aggregateStats, mapPath);
         const rangeLabel = g.min === g.max

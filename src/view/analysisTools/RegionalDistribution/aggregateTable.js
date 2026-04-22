@@ -290,7 +290,7 @@ const stat = (label, value) =>
   m('span.rd-stat', [m('strong', label + ': '), String(value)]);
 
 /**
- * Render status cell with colour swatch + most human-readable label.
+ * Render status cell with color swatch + most human-readable label.
  *
  * Numeric records  → show the raw value (the number IS the meaningful data).
  *                    Never show the fallback legend ("Present") for a number.
