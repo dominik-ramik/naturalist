@@ -155,7 +155,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
   }
 
   // 2. Content & Appearance Sheets
-  ["appearance", "content"].forEach(sheetKey => {
+  ["content", "appearance"].forEach(sheetKey => {
     if (!nlDataStructure.sheets[sheetKey]) return;
     const sheetDef = nlDataStructure.sheets[sheetKey];
     const tables = sheetDef.tables;

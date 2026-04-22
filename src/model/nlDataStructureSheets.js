@@ -627,7 +627,7 @@ export const nlDataStructureSheets = {
                                     [
                                         "redlist",
                                         "category",
-                                        "Coloured badge; categorical filter"
+                                        "Colored badge; categorical filter"
                                     ],
                                     [
                                         "wingLength",
@@ -1346,7 +1346,7 @@ export const nlDataStructureSheets = {
                                     ["beetles_europe", "Key to Selected European Beetle Families | Following @beetles2018, covers Carabidae, Coccinellidae, and Cerambycidae...", "1", ""],
                                     ["1", "Body **flattened and elongate**; hind angles of pronotum acute...", "Carabidae", ""],
                                     ["1", "Body **strongly convex** (hemispherical) or elongate-cylindrical...", "2", ""],
-                                    ["2", "Body **hemispherical**; elytra smooth, brightly coloured with discrete spots...", "Coccinellidae", ""],
+                                    ["2", "Body **hemispherical**; elytra smooth, brightly colored with discrete spots...", "Coccinellidae", ""],
                                     ["2", "Body **elongate-cylindrical**; antennae at least half body length...", "Cerambycidae", ""],
 
                                     // Lower key 1: Carabidae - chains from "Carabidae" above
@@ -1552,7 +1552,7 @@ export const nlDataStructureSheets = {
                     },
                     {
                         step: "8",
-                        text: "Dorsum with **pale dorsolateral stripe** on each side against a dark brown or blackish ground colour; 28 or fewer scale rows",
+                        text: "Dorsum with **pale dorsolateral stripe** on each side against a dark brown or blackish ground color; 28 or fewer scale rows",
                         target: "9",
                         images: ""
                     },
@@ -2159,66 +2159,23 @@ export const nlDataStructureSheets = {
                     }
                 ]
             },
-            dataCodes: {
-                name: "Data codes",
+            categoryDisplay: {
+                name: "Category display",
                 required: false,
-                description: "Translates short codes or controlled vocabulary items entered in the [[ref:data]] sheet using [[ref:type.category]] data type into human-readable labels. When the app reads a value from a coded column, it replaces it with the full label before displaying. Category matching ([[ref:appearance.categories]] table)  then operates on the replacement text, not the original code.\n\nThis table can be left completely empty if your [[ref:data]] sheet already contains the display labels you want to show, but is useful when you want to simplify data entry of e.g. Red List codes, habitat codes, Darwin Core or any other standard vocabulary.",
+                description: "Defines how the raw values of a `category` column (see [[ref:content.customDataDefinition.dataType]]) are displayed - both textually (replacing stored codes with human-readable labels) and graphically (with colored badge styling). Each row targets one value, or a wildcard group of values, for a specific column.\n\nIn every row **Raw value** is matched against the cell content from the [[ref:data]] sheet, and the two optional outputs - **Label** and the color columns - are applied when it matches. Fill in **Label** to substitute a human-readable string in place of the raw value; leave it empty to keep the raw value as-is. Fill in color columns to render the value as a styled badge; leave them empty for plain text. Any combination is valid: label only, styling only, or both at once.\n\nThis means you can freely choose how you store data: use compact controlled-vocabulary codes (IUCN Red List codes, Darwin Core terms, habitat codes, etc. keeping those controlled machine-readable vocabularies for [DwC-A export](./dwc)) and translate them to human-readable labels here, or write full labels directly and skip the translation step. Styling is always optional - for large or open-ended vocabularies it is perfectly valid to use `category` without any color definitions.\n\nThis table can be left completely empty if no special display or styling is required. The categorical filter will still work as expected.",
                 notes: [
                     {
                         type: "warning",
-                        text: "This transformation is only applied on data in columns with [[ref:type.category]] data types. If a value appears in the [[ref:data]] sheet column but has no matching row in the Data Codes table, the app displays the raw value unchanged. Codes are matched exactly and case-sensitively."
+                        text: "[[ref:content.customDataDefinition.dataType]] must be set to `category` for this table to have any effect. Neither label substitution nor badge styling applies to columns with any other data type."
                     }
                 ],
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The [data path](./data-sheet#column-naming-and-data-paths) of the column whose values should be translated. Each distinct value in that column needs its own row, all sharing the same **Column name** entry.",
-                        howToUse: "Use whenever your [[ref:data]] sheet stores compact codes (like `LC`, `EN`, `N`, `E`) and you want to display full labels instead. If you plan to export your data into [DwC-A format](./dwc) (also see [[ref:content.dwcArchive]]), enter the controlled vocabularies of DwC terms into your data and use this table to translate them for displaying their human-readable labels.",
+                        description: "The [data path](./data-sheet#column-naming-and-data-paths) of the column whose values this row applies to. Multiple rows sharing the same **Column name** are evaluated in order; the first matching row wins.",
+                        howToUse: "Use the same column name as declared with `category` data type in [[ref:content.customDataDefinition]]. The `#` notation for numbered array columns is supported: a **Column name** of `habit#` applies to `habit1`, `habit2`, etc.",
                         notes: [],
-                        examples: [
-                            {
-                                label: "Red List code translations",
-                                text: "A multilingual example. If you only have one language, just use the **Replacement** column without any language suffix.",
-                                columns: [
-                                    "Column name",
-                                    "Code",
-                                    "Replacement:en",
-                                    "Replacement:fr"
-                                ],
-                                rows: [
-                                    [
-                                        "redlist",
-                                        "LC",
-                                        "Least Concern",
-                                        "Préoccupation mineure"
-                                    ],
-                                    [
-                                        "redlist",
-                                        "EN",
-                                        "Endangered",
-                                        "En danger"
-                                    ],
-                                    [
-                                        "redlist",
-                                        "CR",
-                                        "Critically Endangered",
-                                        "En danger critique"
-                                    ],
-                                    [
-                                        "presenceStatus",
-                                        "E",
-                                        "Endemic",
-                                        "Endémique"
-                                    ],
-                                    [
-                                        "presenceStatus",
-                                        "N",
-                                        "Native",
-                                        "indigène"
-                                    ],
-                                ]
-                            }
-                        ],
+                        examples: [],
                         integrity: {
                             description: "",
                             allowEmpty: false,
@@ -2227,194 +2184,79 @@ export const nlDataStructureSheets = {
                             supportsMultilingual: false
                         }
                     },
-                    code: {
-                        name: "Code",
-                        description: "The raw value as it appears in the [[ref:data]] sheet. Matched exactly and case-sensitively against data cell content.",
-                        howToUse: "",
+                    rawValue: {
+                        name: "Raw value",
+                        description: "The value (or wildcard pattern) matched against the raw cell content from the [[ref:data]] sheet. This column is required on every row - it is always the matcher.\n\nThe `*` character is the only wildcard and matches any sequence of characters (including none). A pattern with no `*` must match the entire cell value exactly (case-insensitive). A single bare `*` matches everything and can serve as a catch-all fallback placed last among a column's rows.",
+                        howToUse: "For coded vocabularies (IUCN codes, Darwin Core terms, breeding codes, etc.), enter the exact code stored in your [[ref:data]] sheet and fill in **Label** to display a human-readable replacement. For data already stored as readable values, enter the value directly - use `*` wildcards to style a whole family of values with one row (`*tree*` matches `tree`, `treelet`, `epiphytic tree`, etc.). Place a row with `*` last among a column's rows as a catch-all to style any value not matched by earlier rows.",
                         notes: [],
-                        examples: [],
+                        examples: [
+                            {
+                                label: "IUCN Red List - code translation and badge styling",
+                                text: "Each of the first rows stores a short IUCN code in the data sheet and translates it to its full label while applying a color. The `Conservation Dependent` row stores the full label directly (no translation needed) and only adds a color. The final `*` row is a catch-all that colors any unexpected value grey. A multilingual project could use translated labels (e.g. `Label:en`, `Label:fr`) columns.",
+                                columns: [
+                                    "Column name",
+                                    "Raw value",
+                                    "Label",
+                                    "Background color",
+                                    "Text color"
+                                ],
+                                rows: [
+                                    ["redlist", "LC", "Least Concern", "#006666", "white"],
+                                    ["redlist", "NT", "Near Threatened", "#006666", "#9acd9a"],
+                                    ["redlist", "VU", "Vulnerable", "#cd9a00", "#ffffcd"],
+                                    ["redlist", "EN", "Endangered", "#cd6630", "#ffcd9a"],
+                                    ["redlist", "CR", "Critically Endangered", "#cd3030", "#ffcdcd"],
+                                    ["redlist", "DD", "Data Deficient", "gray", "white"],
+                                    ["redlist", "NE", "Not Evaluated", "gray", "white"],
+                                    ["redlist", "Conservation Dependent", "", "#006666", "white"],
+                                    ["redlist", "*", "", "gray", "white"]
+                                ]
+                            },
+                            {
+                                label: "Habit - wildcard styling, no translation",
+                                text: "The data sheet already contains readable values. **Label** is left empty on every row so values are displayed as stored. `*` wildcards in **Raw value** apply one color to a whole family of values without listing each variant individually.",
+                                columns: [
+                                    "Column name",
+                                    "Raw value",
+                                    "Label",
+                                    "Background color",
+                                    "Text color",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    ["habit#", "*tree*", "", "#668dbb", "white", "Matches 'tree', 'treelet', 'epiphytic tree', etc."],
+                                    ["habit#", "shrub", "", "#5e9f5c", "white", "Exact match for 'shrub'"],
+                                    ["habit#", "*herb*", "", "#9acd9a", "white", "Matches 'herb', 'herbaceous climber', etc."],
+                                    ["habit#", "*", "", "#cccccc", "black", "Catch-all for any other value"]
+                                ]
+                            }
+                        ],
                         integrity: {
-                            description: "",
+                            description: "Case-insensitive pattern. `*` matches any sequence of characters. A pattern with no `*` requires full equality. First match among all rows for the column wins.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: false
                         }
                     },
-                    replacement: {
-                        name: "Replacement",
-                        description: "The human-readable text to display instead of the raw code. For multilingual projects, add one `Replacement:langcode` column per language.",
-                        howToUse: "",
+                    label: {
+                        name: "Label",
+                        description: "The human-readable text displayed to users in place of the raw cell value. When filled in, the raw value is replaced by this label throughout the app - in the checklist display, the detail panel, search results, and filter chips. When left empty, the raw value is displayed as-is.",
+                        howToUse: "Fill this in to translate codes into readable labels (e.g. `LC` → `Least Concern`, `N` → `Native`). Leave empty when the data already contains the labels you want to display, or when you only want to apply badge styling without renaming the value. For multilingual projects, add one `Label:langcode` column per language (e.g. `Label:en`, `Label:fr`).",
                         notes: [],
                         examples: [],
                         integrity: {
                             description: "",
-                            allowEmpty: false,
+                            allowEmpty: true,
                             allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: true
                         }
-                    }
-                },
-                data: [],
-                templateData: [
-                    {
-                        columnName: "redlist",
-                        code: "LC",
-                        replacement: "Least Concern"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "CR",
-                        replacement: "Critically Endangered"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "EN",
-                        replacement: "Endangered"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "NT",
-                        replacement: "Near Threatened"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "VU",
-                        replacement: "Vulnerable"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "DD",
-                        replacement: "Data Deficient"
-                    },
-                    {
-                        columnName: "redlist",
-                        code: "NE",
-                        replacement: "Not Evaluated"
-                    },
-                    {
-                        columnName: "status",
-                        code: "N",
-                        replacement: "Native"
-                    },
-                    {
-                        columnName: "status",
-                        code: "E",
-                        replacement: "Endemic"
-                    },
-                    {
-                        columnName: "status",
-                        code: "NE",
-                        replacement: "Near-endemic"
-                    },
-                    {
-                        columnName: "status",
-                        code: "I",
-                        replacement: "Introduced"
-                    },
-                    {
-                        columnName: "status",
-                        code: "R",
-                        replacement: "Rare / Vagrant"
-                    },
-                    {
-                        columnName: "status",
-                        code: "U",
-                        replacement: "Unknown"
-                    }
-                ]
-            },
-            categories: {
-                name: "Colored categories",
-                required: false,
-                description: "Gives categorical data values (see [[ref:type.category]]) a coloured pill/badge appearance instead of plain text. Each row defines one value-to-colour mapping for one column. Typically used for Red List categories, presence/origin status, life-form codes, and similar small fixed-vocabulary fields that are better scanned visually by color than being read as text.\n\nThe [[ref:content.customDataDefinition.dataType]] column in [[ref:content.customDataDefinition]] table must be set to `category` for this table to take effect. Category matching is case-insensitive and is controlled by the **Contains text** pattern (see that column for full syntax). Matching is applied after any [[ref:appearance.dataCodes]] replacement.\n\nThis table can be left completely empty - it is valid to use `category` data type without any entries here; the data will display as plain text but still use the categorical filter.",
-                notes: [
-                    {
-                        type: "warning",
-                        text: "Setting the data type to `category` in [[ref:content.customDataDefinition]] alone does nothing visual - you must also populate this table with colour definitions for each value."
-                    }
-                ],
-                columns: {
-                    columnName: {
-                        name: "Column name",
-                        description: "The data path of the column whose values should be styled as coloured categories. Each distinct value (or group of values matched by **Contains text**) requires its own row, all sharing the same **Column name**.",
-                        howToUse: "Enter the same column name as used in [[ref:content.customDataDefinition]] table (with `category` data type).",
-                        notes: [],
-                        examples: [
-                            {
-                                label: "Habit and Red List categories",
-                                text: "Suppose you have multiple habits (`habit#` ... would be `habit1`, `habit2`, etc. in [[ref:data]] sheet) and Red List status (`redlist`) columns in your data. Both `habit#` and `redlist` would have `category` data type in [[ref:content.customDataDefinition]].",
-                                columns: [
-                                    "Column name",
-                                    "Contains text",
-                                    "Background color",
-                                    "Text color",
-                                    "Border color",
-                                    "[comment]"
-                                ],
-                                rows: [
-                                    [
-                                        "habit#",
-                                        "*tree*",
-                                        "#668dbb",
-                                        "white",
-                                        "",
-                                        "Matches any value starting with 'tree', e.g. 'tree', 'treelet', 'epiphytic tree'"
-                                    ],
-                                    [
-                                        "habit#",
-                                        "shrub",
-                                        "#5e9f5c",
-                                        "white",
-                                        "",
-                                        "Matches 'shrub' exactly"
-                                    ],
-                                    [
-                                        "redlist",
-                                        "Endangered",
-                                        "#cd6630",
-                                        "#ffcd9a",
-                                        "",
-                                        "Matches 'Endangered' exactly, if you use [[ref:appearance.dataCodes]] to translate 'EN' to 'Endangered' in the data, the category matcher operates on the translated value 'Endangered' not the original code 'EN'"
-                                    ],
-                                    [
-                                        "redlist",
-                                        "Least Concern",
-                                        "#006666",
-                                        "white",
-                                        "",
-                                        "Matches 'Least Concern' exactly"
-                                    ]
-                                ]
-                            }
-                        ],
-                        integrity: {
-                            description: "",
-                            allowEmpty: false,
-                            allowDuplicates: "yes",
-                            allowedContent: "dataPath",
-                            supportsMultilingual: false
-                        }
-                    },
-                    containsText: {
-                        name: "Contains text",
-                        description: "The pattern to match against the data value (after any [[ref:appearance.dataCodes]] replacement). Matching is always case-insensitive. The `*` character is the only wildcard and matches any sequence of characters (including none). A pattern with no `*` must match the entire cell value exactly. Rows are tested in order and the first match wins.",
-                        howToUse: "Use a plain string for an exact match (`Endemic` matches only `Endemic`). Prefix and/or suffix with `*` to allow partial matches (`*Endemic*` matches `Near-endemic` and `Endemic`; `Endemic*` matches `Endemic` and `Endemically`). Place a bare `*` as the last row in a column's entries to provide a catch-all fallback that styles any value not matched by earlier rows.",
-                        notes: [],
-                        examples: [],
-                        integrity: {
-                            description: "Case-insensitive match. No `*`: full equality (`Endemic` matches only `Endemic`). With `*`: wildcard match (`*Endemic*` also matches `Near-endemic`; `*` matches anything).",
-                            allowEmpty: false,
-                            allowDuplicates: "no",
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
                     },
                     backgroundColor: {
                         name: "Background color",
-                        description: "CSS colour for the category badge background. Accepts any valid CSS colour notation: named colours (`green`), hex (`#5e9f5c`), RGB, HSL, etc. Leave empty for a transparent background.",
-                        howToUse: "Choose a colour that provides sufficient contrast with the text colour for readability.",
+                        description: "CSS color for the category badge background. Accepts any valid CSS color notation: named colors (`green`), hex (`#5e9f5c`), RGB, HSL, etc. Leave empty for a transparent background (value renders as plain text).",
+                        howToUse: "Choose a color that provides sufficient contrast with the **Text color** for readability. Leave empty on rows that only define a label translation with no badge styling.",
                         notes: [],
                         examples: [],
                         integrity: {
@@ -2428,7 +2270,7 @@ export const nlDataStructureSheets = {
                     },
                     textColor: {
                         name: "Text color",
-                        description: "CSS colour for the category badge text. Leave empty to default to black.",
+                        description: "CSS color for the category badge text. Leave empty to use the default text color.",
                         howToUse: "Use `white` or bright colors for dark backgrounds and `black` or dark colors for light backgrounds.",
                         notes: [],
                         examples: [],
@@ -2443,7 +2285,7 @@ export const nlDataStructureSheets = {
                     },
                     borderColor: {
                         name: "Border color",
-                        description: "CSS colour for the category badge border. Leave empty to use the default border. Set to the same colour as the background to produce a borderless badge.",
+                        description: "CSS color for the category badge border. Leave empty to use the default border. Set to the same color as the background to produce a borderless badge.",
                         howToUse: "Omit for most categories. Use to add a subtle outline when the badge background is close in hue to the surrounding page background.",
                         notes: [],
                         examples: [],
@@ -2459,96 +2301,24 @@ export const nlDataStructureSheets = {
                 },
                 data: [],
                 templateData: [
-                    {
-                        columnName: "redlist",
-                        containsText: "Least Concern",
-                        backgroundColor: "#006666",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Critically Endangered",
-                        backgroundColor: "#cd3030",
-                        textColor: "#ffcdcd"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Endangered",
-                        backgroundColor: "#cd6630",
-                        textColor: "#ffcd9a"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Near Threatened",
-                        backgroundColor: "#006666",
-                        textColor: "#9acd9a"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Vulnerable",
-                        backgroundColor: "#cd9a00",
-                        textColor: "#ffffcd"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Data Deficient",
-                        backgroundColor: "gray",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Conservation Dependent",
-                        backgroundColor: "#006666",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "Not Evaluated",
-                        backgroundColor: "gray",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "redlist",
-                        containsText: "LR/lc",
-                        backgroundColor: "#006666",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Native",
-                        backgroundColor: "#668dbb",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Endemic",
-                        backgroundColor: "#5e9f5c",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Near-endemic",
-                        backgroundColor: "#428f3f",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Introduced",
-                        backgroundColor: "#ed665b",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Rare / Vagrant",
-                        backgroundColor: "orange",
-                        textColor: "white"
-                    },
-                    {
-                        columnName: "status",
-                        containsText: "Unknown",
-                        backgroundColor: "gray",
-                        textColor: "white"
-                    }
+                    // Red List - stored as IUCN codes, translated and styled
+                    { columnName: "redlist", rawValue: "LC", label: "Least Concern", backgroundColor: "#006666", textColor: "white" },
+                    { columnName: "redlist", rawValue: "NT", label: "Near Threatened", backgroundColor: "#006666", textColor: "#9acd9a" },
+                    { columnName: "redlist", rawValue: "VU", label: "Vulnerable", backgroundColor: "#cd9a00", textColor: "#ffffcd" },
+                    { columnName: "redlist", rawValue: "EN", label: "Endangered", backgroundColor: "#cd6630", textColor: "#ffcd9a" },
+                    { columnName: "redlist", rawValue: "CR", label: "Critically Endangered", backgroundColor: "#cd3030", textColor: "#ffcdcd" },
+                    { columnName: "redlist", rawValue: "DD", label: "Data Deficient", backgroundColor: "gray", textColor: "white" },
+                    { columnName: "redlist", rawValue: "NE", label: "Not Evaluated", backgroundColor: "gray", textColor: "white" },
+                    // Red List - legacy full-text values: styling only, no translation
+                    { columnName: "redlist", rawValue: "Conservation Dependent", label: "", backgroundColor: "#006666", textColor: "white" },
+                    { columnName: "redlist", rawValue: "LR/lc", label: "", backgroundColor: "#006666", textColor: "white" },
+                    // Presence/origin status - stored as codes, translated and styled
+                    { columnName: "status", rawValue: "N", label: "Native", backgroundColor: "#668dbb", textColor: "white" },
+                    { columnName: "status", rawValue: "E", label: "Endemic", backgroundColor: "#5e9f5c", textColor: "white" },
+                    { columnName: "status", rawValue: "NE", label: "Near-endemic", backgroundColor: "#428f3f", textColor: "white" },
+                    { columnName: "status", rawValue: "I", label: "Introduced", backgroundColor: "#ed665b", textColor: "white" },
+                    { columnName: "status", rawValue: "R", label: "Rare / Vagrant", backgroundColor: "orange", textColor: "white" },
+                    { columnName: "status", rawValue: "U", label: "Unknown", backgroundColor: "gray", textColor: "white" }
                 ]
             },
             mapRegionsNames: {
@@ -2670,11 +2440,11 @@ export const nlDataStructureSheets = {
             mapRegionsLegend: {
                 name: "Map regions legend",
                 required: false,
-                description: "Controls how [[ref:type.mapregions]] status values are translated into colours on the SVG map and what text appears in the map legend and inline region lists.\n\nThree modes are available:\n\n- **Category** (default, [[ref:appearance.mapRegionsLegend.legendType]] column empty or `category`): the Status code is matched as an exact string. One row per distinct status value, plus an optional fallback row with an empty Status code that colours any region not matched by another row.\n- **Gradient** ([[ref:appearance.mapRegionsLegend.legendType]] `gradient`): the Status code is a numeric anchor position. At least two rows required defining the gradient start and end anchors. Colours are smoothly interpolated between anchors. Use for continuous numeric data.\n- **Stepped** ([[ref:appearance.mapRegionsLegend.legendType]] `stepped`): anchor positions as above, but colour assignment is discrete - each value snaps to the bin whose anchor it exceeds. Use to visually divide the numeric data into discrete categorzed groups.\n\nYou can combine **Category** with either **Gradient** or **Stepped** mode to cover cases when distinct categories live together with numeric data (e.g. a vegetation survey with coverage percentual values per region, but some regions classified as 'no data' or 'monitoring in progress'). The engine always checks for an exact categorical match first; numeric interpolation is the fallback. This lets you mix numeric data with categorical exception codes (e.g. `ND`, `E`) in the same column.\n\nLeave this table empty if you do not use `mapregions` data columns. See [Distribution maps with mapregions](/author-guide/mapregions) for the full colour engine explanation and worked examples.",
+                description: "Controls how [[ref:type.mapregions]] status values are translated into colors on the SVG map and what text appears in the map legend and inline region lists.\n\nThree modes are available:\n\n- **Category** (default, [[ref:appearance.mapRegionsLegend.legendType]] column empty or `category`): the Status code is matched as an exact string. One row per distinct status value, plus an optional fallback row with an empty Status code that colors any region not matched by another row.\n- **Gradient** ([[ref:appearance.mapRegionsLegend.legendType]] `gradient`): the Status code is a numeric anchor position. At least two rows required defining the gradient start and end anchors. Colors are smoothly interpolated between anchors. Use for continuous numeric data.\n- **Stepped** ([[ref:appearance.mapRegionsLegend.legendType]] `stepped`): anchor positions as above, but color assignment is discrete - each value snaps to the bin whose anchor it exceeds. Use to visually divide the numeric data into discrete categorzed groups.\n\nYou can combine **Category** with either **Gradient** or **Stepped** mode to cover cases when distinct categories live together with numeric data (e.g. a vegetation survey with coverage percentual values per region, but some regions classified as 'no data' or 'monitoring in progress'). The engine always checks for an exact categorical match first; numeric interpolation is the fallback. This lets you mix numeric data with categorical exception codes (e.g. `ND`, `E`) in the same column.\n\nLeave this table empty if you do not use `mapregions` data columns. See [Distribution maps with mapregions](/author-guide/mapregions) for the full color engine explanation and worked examples.",
                 notes: [
                     {
                         type: "tip",
-                        text: "For the full anchor notation reference, the per-taxon colour scale behaviour, and worked examples covering every mode and combination, see [Distribution maps with mapregions → Anchor value notation](./mapregions#anchor-value-notation)."
+                        text: "For the full anchor notation reference, the per-taxon color scale behaviour, and worked examples covering every mode and combination, see [Distribution maps with mapregions → Anchor value notation](./mapregions#anchor-value-notation)."
                     }
                 ],
                 columns: {
@@ -2811,8 +2581,8 @@ export const nlDataStructureSheets = {
                     },
                     fillColor: {
                         name: "Fill color",
-                        description: "The colour applied to matching regions on the SVG map and to the legend swatch. For `category` rows this is a fixed colour. For `gradient` rows it is the colour at this anchor point, with colours between anchors smoothly interpolated. For `stepped` rows it is the colour of the bin whose threshold begins at this anchor.",
-                        howToUse: "Choose perceptually distinct and accessible colours. For gradients, use a sequential or diverging ramp that communicates the data direction clearly.",
+                        description: "The color applied to matching regions on the SVG map and to the legend swatch. For `category` rows this is a fixed color. For `gradient` rows it is the color at this anchor point, with colors between anchors smoothly interpolated. For `stepped` rows it is the color of the bin whose threshold begins at this anchor.",
+                        howToUse: "Choose perceptually distinct and accessible colors. For gradients, use a sequential or diverging ramp that communicates the data direction clearly.",
                         notes: [],
                         examples: [],
                         integrity: {
@@ -2891,7 +2661,7 @@ export const nlDataStructureSheets = {
                     },
                     legendType: {
                         name: "Legend type",
-                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (numeric anchors notation). Colours are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (numeric anchors notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No colour blending. Use for crisp colour bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
+                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (numeric anchors notation). Colors are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (numeric anchors notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No color blending. Use for crisp color bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
                         howToUse: "Use `category` (or empty) for named status values. Use `gradient` for continuous numeric data. Use `stepped` for numeric data best communicated as discrete bins.",
                         notes: [],
                         examples: [

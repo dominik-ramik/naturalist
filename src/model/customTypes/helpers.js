@@ -2,12 +2,59 @@ import { nlDataStructure } from "../DataManagerData.js";
 import { dataPath } from "../DataPath.js";
 import { Checklist } from "../Checklist.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
+import { Logger } from "../../components/Logger.js";
 
 const data = nlDataStructure;
 
+// ---------------------------------------------------------------------------
+// Wildcard matcher - shared by getDataCodeValue (label substitution) and
+// CustomTypeCategory (badge styling). Compiled once per categoryDisplay entry
+// via MATCHER_CACHE, then reused across all reads and renders.
+// ---------------------------------------------------------------------------
+export const MATCHER_CACHE = Symbol("categoryMatcher");
+
+export function compileCategoryMatcher(pattern) {
+  const lower = pattern.toLowerCase();
+  if (lower === "*") return () => true;
+
+  const segments = lower.split("*");
+  if (segments.length === 1) {
+    const literal = segments[0];
+    return (value) => value.toLowerCase() === literal;
+  }
+
+  const first = segments[0];
+  const last = segments[segments.length - 1];
+  const mid = segments.slice(1, -1);
+
+  return function matchesWildcard(value) {
+    const v = value.toLowerCase();
+    const vLen = v.length;
+    let pos = 0;
+    if (first !== "") {
+      if (!v.startsWith(first)) return false;
+      pos = first.length;
+    }
+    if (last !== "") {
+      if (!v.endsWith(last)) return false;
+    }
+    for (let i = 0; i < mid.length; i++) {
+      const seg = mid[i];
+      if (seg === "") continue;
+      const idx = v.indexOf(seg, pos);
+      if (idx === -1) return false;
+      pos = idx + seg.length;
+    }
+    if (last !== "") {
+      if (pos > vLen - last.length) return false;
+    }
+    return true;
+  };
+}
+
 export const helpers = {
   dataCodesCache: new Map(),
-  
+
   purifyCssString: function (css) {
     if (css.indexOf('"') >= 0) {
       css = css.substring(0, css.indexOf('"'));
@@ -23,75 +70,85 @@ export const helpers = {
     }
     return css;
   },
-  
-  getDataCodeValue: function (currentDataPath, value, langCode) {
-    const dataCodes = data.sheets.appearance.tables.dataCodes.data;
 
-    // Early return for empty/null values
+  getDataCodeValue: function (currentDataPath, value, langCode) {
+    const categoryDisplay = data.sheets.appearance.tables.categoryDisplay.data;
+
     if (!value || value === "") return value;
 
-    // Create cache key
     const cacheKey = `${currentDataPath}|${value}|${langCode}`;
-    
-    // Check cache first
+
     if (this.dataCodesCache.has(cacheKey)) {
       return this.dataCodesCache.get(cacheKey);
     }
 
-    // Check if we have data codes for this language
-    if (!dataCodes[langCode]) {
+    if (!categoryDisplay[langCode]) {
       this.dataCodesCache.set(cacheKey, value);
       return value;
     }
 
-    // Normalize the data path to match the format used in data codes
     const normalizedPath = dataPath.modify.itemNumbersToHash(currentDataPath).toLowerCase();
+    const allRows = categoryDisplay[langCode];
 
-    // Find matching data code entry
-    const matchingEntry = dataCodes[langCode].find((entry) => {
-      const entryColumnName = entry.columnName.toLowerCase();
-      return entryColumnName === normalizedPath && entry.code === value;
+    // Find the first row whose rawValue pattern matches the raw cell value.
+    // All rows are now uniform - rawValue is always the matcher. Compiled
+    // matchers are cached on the entry object via a private Symbol so each
+    // pattern is compiled only once across all reads.
+    const matchingEntry = allRows.find((entry) => {
+      const entryColumnName = dataPath.modify
+        .itemNumbersToHash((entry.columnName || "").toLowerCase());
+      if (entryColumnName !== normalizedPath) return false;
+      if (!entry[MATCHER_CACHE]) {
+        entry[MATCHER_CACHE] = compileCategoryMatcher((entry.rawValue || "").toString());
+      }
+      return entry[MATCHER_CACHE](value.toString());
     });
 
     let result;
     if (matchingEntry) {
-      result = matchingEntry.replacement;
+      // Substitute with label when provided; otherwise keep the raw value as-is.
+      const label = (matchingEntry.label || "").toString().trim();
+      result = label !== "" ? label : value;
     } else {
-      // Check if we have any codes for this column at all
-      const hasCodesForColumn = dataCodes[langCode].some((entry) => {
-        const entryColumnName = entry.columnName.toLowerCase();
-        return entryColumnName === normalizedPath;
+      // Warn only when this column has entries but none matched - a genuinely
+      // uncovered vocabulary value, not an intentionally open-ended column.
+      const hasEntriesForColumn = allRows.some((entry) => {
+        return (
+          dataPath.modify.itemNumbersToHash(
+            (entry.columnName || "").toLowerCase()
+          ) === normalizedPath
+        );
       });
 
-      if (hasCodesForColumn) {
-        // Only warn if we have codes for this column but not this specific value
+      if (hasEntriesForColumn) {
         Logger.warning(
-          "Code '" +
-            value +
-            "' found in column '" +
-            currentDataPath +
-            "' but no correspondence found in sheet 'nl_appearance' in table 'Data codes'"
+          "Value '" +
+          value +
+          "' in column '" +
+          currentDataPath +
+          "' has no matching row in the '" +
+          data.sheets.appearance.tables.categoryDisplay.name +
+          "' table."
         );
       }
 
       result = value;
     }
 
-    // Cache the result before returning
     this.dataCodesCache.set(cacheKey, result);
     return result;
   },
   processPossibleDataCode: function (currentDataPath, value, langCode) {
     return this.getDataCodeValue(currentDataPath, value, langCode);
   },
-  
+
   /**
    * Process template if available for the given data and context
    * @param {any} data - The data to process with template
    * @param {Object} uiContext - UI context containing meta, dataPath, originalData, taxon
    * @returns {any} Processed data or original data if no template
    */
-  processTemplate: function(data, uiContext, additionalParams = {}) {
+  processTemplate: function (data, uiContext, additionalParams = {}) {
     const compiledTemplate =
       uiContext?.compiledTemplate || Checklist.handlebarsTemplates?.[uiContext?.dataPath];
 
@@ -118,47 +175,47 @@ export const helpers = {
    * @param {string} markdown - Markdown string
    * @returns {string} Plain text suitable for search
    */
-  extractSearchableTextFromMarkdown: function(markdown) {
+  extractSearchableTextFromMarkdown: function (markdown) {
     if (!markdown || typeof markdown !== "string") return "";
-    
+
     let text = markdown;
-    
+
     // Extract alt text from images: ![alt](url) -> alt
     text = text.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
-    
+
     // Extract link text from links: [text](url) -> text
     text = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
-    
+
     // Remove inline code: `code` -> code
     text = text.replace(/`([^`]*)`/g, '$1');
-    
+
     // Remove bold: **text** or __text__ -> text
     text = text.replace(/\*\*([^*]*)\*\*/g, '$1');
     text = text.replace(/__([^_]*)__/g, '$1');
-    
+
     // Remove italic: *text* or _text_ -> text
     text = text.replace(/\*([^*]*)\*/g, '$1');
     text = text.replace(/_([^_]*)_/g, '$1');
-    
+
     // Remove strikethrough: ~~text~~ -> text
     text = text.replace(/~~([^~]*)~~/g, '$1');
-    
+
     // Remove headers: # Header -> Header
     text = text.replace(/^#+\s*/gm, '');
-    
+
     // Remove blockquotes: > text -> text
     text = text.replace(/^>\s*/gm, '');
-    
+
     // Remove horizontal rules
     text = text.replace(/^[-*_]{3,}$/gm, '');
-    
+
     // Remove list markers: - item or * item or 1. item -> item
     text = text.replace(/^[\s]*[-*+]\s+/gm, '');
     text = text.replace(/^[\s]*\d+\.\s+/gm, '');
-    
+
     // Normalize whitespace
     text = text.replace(/\s+/g, ' ').trim();
-    
+
     return text;
   },
 

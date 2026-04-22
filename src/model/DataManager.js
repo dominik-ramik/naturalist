@@ -1206,23 +1206,35 @@ export let DataManager = function () {
 
             if (parseddataType.toLowerCase() == "category") {
               meta[computedDataPath].categories = [];
-              data.sheets.appearance.tables.categories.data[lang.code].forEach(
-                function (category) {
+              const normalizedComputedPath = dataPath.modify
+                .itemNumbersToHash(computedDataPath)
+                .toLowerCase();
+
+              (data.sheets.appearance.tables.categoryDisplay.data[lang.code] || []).forEach(
+                function (entry) {
                   if (
                     dataPath.modify
-                      .itemNumbersToHash(category.columnName)
-                      .toLowerCase() ==
-                    dataPath.modify
-                      .itemNumbersToHash(computedDataPath)
-                      .toLowerCase()
+                      .itemNumbersToHash(entry.columnName)
+                      .toLowerCase() !== normalizedComputedPath
                   ) {
-                    meta[computedDataPath].categories.push({
-                      contains: category.containsText.toLowerCase(),
-                      background: category.backgroundColor,
-                      text: category.textColor,
-                      border: category.borderColor,
-                    });
+                    return;
                   }
+
+                  // When a label is provided, the value at render time is the
+                  // translated label, so badge matching targets the label.
+                  // When there is no label, the raw value passes through
+                  // unchanged, so rawValue (which may contain wildcards) is
+                  // used as the badge match pattern directly.
+                  const badgeLabel = (entry.label || "").toString().trim();
+                  const badgePattern = badgeLabel !== ""
+                    ? badgeLabel
+                    : (entry.rawValue || "").toString();
+                  meta[computedDataPath].categories.push({
+                    contains: badgePattern.toLowerCase(),
+                    background: entry.backgroundColor,
+                    text: entry.textColor,
+                    border: entry.borderColor,
+                  });
                 }
               );
             }
@@ -2986,5 +2998,26 @@ function runManualIntegrityChecks(data) {
         row.belongsTo = ""; // reset to avoid misleading downstream
       }
     }
+  });
+
+  // ── 7. categoryDisplay integrity ──────────────────────────────────────────
+  // Every row must have a rawValue - it is the universal matcher. Warn and
+  // skip rows that have none so they don't silently match everything.
+  data.common.languages.supportedLanguages.forEach(function (lang) {
+    const rows = data.sheets.appearance.tables.categoryDisplay.data[lang.code];
+    if (!rows || rows.length === 0) return;
+
+    const tableName = data.sheets.appearance.tables.categoryDisplay.name;
+
+    rows.forEach(function (row, idx) {
+      if ((row.rawValue || "").toString().trim() === "") {
+        Logger.warning(
+          "In table \"" + tableName + "\", row " + (idx + 1) +
+          " for column \"" + (row.columnName || "") +
+          "\" has an empty \"Raw value\". Every row must have a Raw value " +
+          "to match against; this row will be ignored."
+        );
+      }
+    });
   });
 }
