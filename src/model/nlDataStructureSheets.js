@@ -1584,12 +1584,12 @@ export const nlDataStructureSheets = {
                 columns: {
                     bibtex: {
                         name: "BibTeX entries",
-                        description: "One complete BibTeX entry per row, copied directly from a reference manager. Alternatively, enter an [F-directive](./external-text-files) (`F:references.bib` or `F:bibtex/literature.bib`) to load entries from a file in `usercontent/` at compile time. Those entries will be baked-in and if you update the BibTeX file, simply recompile to update the bibliography in the app.\n\nAll bibliographic entries will be displayed as a list in **References** in the **Side panel**. Clicking on individual citations in the text will display the corresponding full reference.",
-                        howToUse: "Use direct BibTeX entries for small bibliographies. Use F-directives for larger reference lists maintained in a dedicated `.bib` file or sourced from a reference manager export.",
+                        description: "One complete BibTeX entry per row, copied directly from a reference manager. Alternatively, enter an [F: directive](./external-text-files) (`F:references.bib` or `F:bibtex/literature.bib`) to load entries from a file in `usercontent/` at compile time. Those entries will be baked-in and if you update the BibTeX file, simply recompile to update the bibliography in the app.\n\nAll bibliographic entries will be displayed as a list in **References** in the **Side panel**. Clicking on individual citations in the text will display the corresponding full reference.",
+                        howToUse: "Use direct BibTeX entries for small bibliographies. Use F: directives for larger reference lists maintained in a dedicated `.bib` file or sourced from a reference manager export.",
                         notes: [],
                         examples: [
                             {
-                                label: "Direct BibTeX entry and F-directive",
+                                label: "Direct BibTeX entry and F: directive",
                                 columns: [
                                     "BibTeX entries"
                                 ],
@@ -2017,7 +2017,7 @@ export const nlDataStructureSheets = {
                                     [
                                         "About section",
                                         "(generic placeholder text)",
-                                        "Markdown text for the About page, or for longer texts an F-directive (`F:about.md`) pointing to a file in `usercontent/`. Supports `Value:en`, `Value:fr`, etc. See [External text files](./external-text-files)."
+                                        "Markdown text for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. Supports `Value:en`, `Value:fr`, etc. See [External text files](./external-text-files)."
                                     ],
                                     [
                                         "How to cite",

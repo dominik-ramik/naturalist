@@ -20,7 +20,7 @@ export const customTypeMarkdownMeta = {
         },
       },
       {
-        label: "F-directive (external file)",
+        label: "F: directive (external file)",
         syntax: "`F:path/to/file.md` - the file is fetched from `usercontent/` at compile time and its content is substituted.",
         example: null,
       },
@@ -28,7 +28,7 @@ export const customTypeMarkdownMeta = {
     notes: [
       {
         type: "tip",
-        text: "For very long texts or content reused across many taxa, store the Markdown in a separate file in `usercontent/` and reference it with `F-directive`. Set placement to `details` for encyclopaedia-style species articles that would otherwise clutter the taxon card. See [External text files](./external-text-files).",
+        text: "For very long texts or content reused across many taxa, store the Markdown in a separate file in `usercontent/` and reference it with `F: directive`. Set placement to `details` for encyclopaedia-style species articles that would otherwise clutter the taxon card. See [External text files](./external-text-files).",
       },
     ],
   },
