@@ -46,7 +46,8 @@
  * ─── EML - Option C Hybrid ───────────────────────────────────────────────────
  *
  * Priority:
- *   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
+ *   0. eml:fromFile:<path> row (per exportTo archive) → fetch from usercontent/ (error if fails)
+ *   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)  [deprecated]
  *   2. usercontent/eml.xml auto-discovery   → Logger.info if found and used
  *   3. eml: rows in the DwC archive table   → minimal EML built from them
  *      Required when using this path: at least one creator name field must be present
@@ -279,6 +280,7 @@ function stripMarkdown(text) {
 //
 //   config:Checklist name      → { type:"config",   value:"Checklist name",  component:null }
 //   eml:creator.email          → { type:"eml",      value:"creator.email",   component:null }
+//   eml:fromFile:path/to.xml   → { type:"emlFile",  value:"path/to.xml",     component:null }
 //   auto:taxonRank             → { type:"auto",      value:"taxonRank",       component:null }
 //   taxa:Species               → { type:"taxa",      value:"Species",         component:null }
 //   taxa:Species.authority     → { type:"taxa",      value:"Species",         component:"authority" }
@@ -296,7 +298,13 @@ function parseSourceDirective(raw) {
   const lo = s.toLowerCase();
 
   if (lo.startsWith("config:")) return { type: "config", value: s.slice(7).trim(), component: null };
-  if (lo.startsWith("eml:")) return { type: "eml", value: s.slice(4).trim(), component: null };
+  if (lo.startsWith("eml:")) {
+    const emlRest = s.slice(4).trim();
+    if (emlRest.toLowerCase().startsWith("fromfile:")) {
+      return { type: "emlFile", value: emlRest.slice(9).trim(), component: null };
+    }
+    return { type: "eml", value: emlRest, component: null };
+  }
   if (lo.startsWith("auto:")) return { type: "auto", value: s.slice(5).trim(), component: null };
 
   if (lo.startsWith("taxa:")) {
@@ -616,6 +624,7 @@ export async function compileDwcArchive(params) {
 
   const parsedMappings = [];
   const rawEmlMappings = []; // { path, directive, constantValue }
+  const rawEmlFileMappings = []; // { path: string, exportTo: Set<string> }
 
   for (const row of dwcTableRows) {
     const termRaw = (row.term || "").toString().trim();
@@ -626,7 +635,18 @@ export async function compileDwcArchive(params) {
       ? String(row.constantValue).trim() : null;
 
     if (termRaw.toLowerCase().startsWith("eml:")) {
-      rawEmlMappings.push({ path: termRaw.slice(4).trim(), directive, constantValue: cv });
+      const emlTermRest = termRaw.slice(4).trim();
+      if (emlTermRest.toLowerCase().startsWith("fromfile:")) {
+        // eml:fromFile rows are handled separately; treated like emlFile directives
+        // The exportTo column determines which archive receives this eml.xml
+        const exportToRaw = (row.exportTo || "").toString().trim().toLowerCase();
+        const exportToSet = exportToRaw === "" || exportToRaw === "all"
+          ? new Set(["checklist", "occurrences"])
+          : new Set(exportToRaw.split(",").map(s => s.trim()).filter(Boolean));
+        rawEmlFileMappings.push({ path: emlTermRest.slice(9).trim(), exportTo: exportToSet });
+      } else {
+        rawEmlMappings.push({ path: emlTermRest, directive, constantValue: cv });
+      }
     } else {
       const exportToRaw = (row.exportTo || "").toString().trim().toLowerCase();
       const exportToSet = exportToRaw === "" || exportToRaw === "all"
@@ -665,7 +685,7 @@ export async function compileDwcArchive(params) {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Step 3 - Tier 1 validation
+  // Step 3 - Global required-term validation (both archives)
   // ───────────────────────────────────────────────────────────────────────────
 
   const instCodeMapping = mappingByTerm.get("institutionCode");
@@ -695,41 +715,30 @@ export async function compileDwcArchive(params) {
   if (!mappingByTerm.has("datasetName")) Logger.warning("DwC Archive: <b>datasetName</b> not configured.", "DwC Archive");
 
   const hasTaxaColumns = Array.isArray(taxaColumnDefs) && taxaColumnDefs.length > 0;
-  if (!mappingByTerm.has("scientificName") && !hasTaxaColumns) {
-    Logger.error("DwC Archive: <b>scientificName</b> cannot be resolved. Export aborted.", "DwC Archive");
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Step 4 - Archive enablement via exportTo
+  //
+  // An archive is enabled when at least one non-language term is mapped with
+  // an exportTo that covers it. basisOfRecord is no longer the trigger for
+  // occurrence export - it is simply a required term that must be present and
+  // valid when occurrence export is enabled.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const checklistExportEnabled = parsedMappings.some(
+    m => m.term !== "language" && m.exportTo.has("checklist")
+  );
+  let occurrenceExportEnabled = parsedMappings.some(
+    m => m.term !== "language" && m.exportTo.has("occurrences")
+  );
+
+  if (!checklistExportEnabled && !occurrenceExportEnabled) {
+    Logger.error(
+      "DwC Archive: No rows are mapped to any archive. Set the <b>Export to</b> column to " +
+      "<em>checklist</em>, <em>occurrences</em>, or <em>all</em> on at least one row. Export aborted.",
+      "DwC Archive"
+    );
     return NULL_RESULT;
-  }
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // Step 4 - Tier 2 detection
-  // ───────────────────────────────────────────────────────────────────────────
-
-  const borMapping = mappingByTerm.get("basisOfRecord");
-  let occurrenceExportEnabled = false;
-
-  if (borMapping) {
-    const borVal = borMapping.constantValue || "";
-    const borVocab = getDwcTerm("basisOfRecord")?.vocabulary || [];
-    if (!borVal) {
-      Logger.error(`DwC Archive: <b>basisOfRecord</b> has no Constant value. Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`, "DwC Archive");
-    } else if (!borVocab.includes(borVal)) {
-      Logger.error(`DwC Archive: <b>basisOfRecord</b> value "${borVal}" not in vocabulary. Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`, "DwC Archive");
-    } else {
-      occurrenceExportEnabled = true;
-    }
-
-    if (occurrenceExportEnabled) {
-      if (!mappingByTerm.has("eventDate")) {
-        Logger.error("DwC Archive: <b>eventDate</b> required for occurrence export. Occurrence disabled.", "DwC Archive");
-        occurrenceExportEnabled = false;
-      }
-      const hasLat = mappingByTerm.has("decimalLatitude");
-      const hasLon = mappingByTerm.has("decimalLongitude");
-      const hasDat = mappingByTerm.has("geodeticDatum");
-      if ((hasLat || hasLon || hasDat) && !(hasLat && hasLon && hasDat)) {
-        Logger.error("DwC Archive: <b>decimalLatitude</b>, <b>decimalLongitude</b>, and <b>geodeticDatum</b> must all be present or all absent.", "DwC Archive");
-      }
-    }
   }
 
   for (const t3 of ["samplingProtocol", "eventID"]) {
@@ -741,29 +750,122 @@ export async function compileDwcArchive(params) {
     }
   }
 
-  // ── Required-term presence check ──────────────────────────────────────────────
-  // Checklist required terms are either user-configured (with exportTo covering
-  // "checklist") or will be auto-added by the compiler. Warn only if a required
-  // occurrence term is missing when occurrence export is enabled.
+  // ── Per-archive required-term validation ────────────────────────────────────
+  //
+  // For each enabled archive, every term in requiredDwcTerms.<archive> must:
+  //   1. Exist as a row in the table (or be auto-generated, e.g. occurrenceID).
+  //   2. Have an exportTo that covers that archive - a term present in the table
+  //      but routed to the wrong archive is a misconfiguration worth an error.
+  //
+  // Additional occurrence-specific checks:
+  //   - basisOfRecord must be present, have a Constant value, and be in vocabulary.
+  //   - eventDate must be present and routed to occurrences.
+  //   - decimalLatitude/decimalLongitude/geodeticDatum must all be present or all absent.
+  //   - scientificName must be resolvable for the checklist archive.
 
-  if (occurrenceExportEnabled) {
-    for (const req of requiredDwcTerms.occurrences) {
+  if (checklistExportEnabled) {
+    if (!mappingByTerm.has("scientificName") && !hasTaxaColumns) {
+      Logger.error(
+        "DwC Archive: <b>scientificName</b> cannot be resolved for the checklist archive. " +
+        "Add a <em>scientificName</em> row or configure taxa columns. Checklist export disabled.",
+        "DwC Archive"
+      );
+      // Do not hard-abort - occurrence export may still be valid
+    }
+
+    for (const req of requiredDwcTerms.checklist) {
+      // taxonID, taxonRank, scientificName are auto-generated if absent from the table
+      if (["taxonID", "taxonRank", "scientificName"].includes(req)) continue;
       const m = mappingByTerm.get(req);
       if (!m) {
-        // occurrenceID is auto-generated, so missing from table is OK
-        if (req === "occurrenceID") continue;
         Logger.error(
-          `DwC Archive: GBIF-required term <b>${req}</b> is missing from the DwC archive table ` +
-          `(required for occurrence datasets). Add a row for this term.`,
+          `DwC Archive: GBIF-required term <b>${req}</b> is missing from the table ` +
+          `(required for checklist archives). Add a row for this term.`,
           "DwC Archive"
         );
-      } else if (!m.exportTo.has("occurrences")) {
-        Logger.warning(
-          `DwC Archive: Term <b>${req}</b> is GBIF-required for occurrences but its "Export to" ` +
-          `column does not include "occurrences". It will not appear in occurrences.csv.`,
+      } else if (!m.exportTo.has("checklist")) {
+        Logger.error(
+          `DwC Archive: GBIF-required term <b>${req}</b> is present but its <b>Export to</b> ` +
+          `does not include <em>checklist</em>. It will be absent from <em>taxa.csv</em>. ` +
+          `Set Export to to <em>checklist</em> or <em>all</em>.`,
           "DwC Archive"
         );
       }
+    }
+  }
+
+  if (occurrenceExportEnabled) {
+    // basisOfRecord: must be present, constant, and in vocabulary
+    const borMapping = mappingByTerm.get("basisOfRecord");
+    if (!borMapping) {
+      Logger.error(
+        "DwC Archive: <b>basisOfRecord</b> is required for occurrence export but is missing " +
+        "from the table. Add a row with a Constant value. Occurrence export disabled.",
+        "DwC Archive"
+      );
+      occurrenceExportEnabled = false;
+    } else {
+      const borVal = borMapping.constantValue || "";
+      const borVocab = getDwcTerm("basisOfRecord")?.vocabulary || [];
+      if (!borVal) {
+        Logger.error(
+          `DwC Archive: <b>basisOfRecord</b> has no Constant value. ` +
+          `Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`,
+          "DwC Archive"
+        );
+        occurrenceExportEnabled = false;
+      } else if (!borVocab.includes(borVal)) {
+        Logger.error(
+          `DwC Archive: <b>basisOfRecord</b> value "${borVal}" is not in the DwC vocabulary. ` +
+          `Allowed: ${borVocab.join(", ")}. Occurrence export disabled.`,
+          "DwC Archive"
+        );
+        occurrenceExportEnabled = false;
+      } else if (!borMapping.exportTo.has("occurrences")) {
+        Logger.error(
+          `DwC Archive: <b>basisOfRecord</b> is present but its <b>Export to</b> does not ` +
+          `include <em>occurrences</em>. It will be absent from <em>occurrences.csv</em>. ` +
+          `Set Export to to <em>occurrences</em> or <em>all</em>. Occurrence export disabled.`,
+          "DwC Archive"
+        );
+        occurrenceExportEnabled = false;
+      }
+    }
+  }
+
+  if (occurrenceExportEnabled) {
+    for (const req of requiredDwcTerms.occurrences) {
+      // occurrenceID is auto-generated if absent
+      if (req === "occurrenceID") continue;
+      // basisOfRecord already validated above
+      if (req === "basisOfRecord") continue;
+      const m = mappingByTerm.get(req);
+      if (!m) {
+        Logger.error(
+          `DwC Archive: GBIF-required term <b>${req}</b> is missing from the table ` +
+          `(required for occurrence archives). Add a row for this term.`,
+          "DwC Archive"
+        );
+      } else if (!m.exportTo.has("occurrences")) {
+        Logger.error(
+          `DwC Archive: GBIF-required term <b>${req}</b> is present but its <b>Export to</b> ` +
+          `does not include <em>occurrences</em>. It will be absent from <em>occurrences.csv</em>. ` +
+          `Set Export to to <em>occurrences</em> or <em>all</em>.`,
+          "DwC Archive"
+        );
+      }
+    }
+
+    // Coordinate triple: all three present or all absent
+    const hasLat = mappingByTerm.has("decimalLatitude");
+    const hasLon = mappingByTerm.has("decimalLongitude");
+    const hasDat = mappingByTerm.has("geodeticDatum");
+    if ((hasLat || hasLon || hasDat) && !(hasLat && hasLon && hasDat)) {
+      Logger.error(
+        "DwC Archive: <b>decimalLatitude</b>, <b>decimalLongitude</b>, and <b>geodeticDatum</b> " +
+        "must all be present or all absent.",
+        "DwC Archive"
+      );
     }
   }
 
@@ -969,6 +1071,23 @@ export async function compileDwcArchive(params) {
       Logger.warning(
         "DwC Archive: <b>eml:creator.email</b> is strongly recommended for GBIF compliance.",
         "DwC Archive"
+      );
+    }
+  }
+
+  // Validate eml:fromFile rows
+  for (const ef of rawEmlFileMappings) {
+    if (!ef.path) {
+      Logger.error(
+        "DwC Archive: <b>eml:fromFile</b> row has an empty path. " +
+        "Provide a usercontent/-relative path, e.g. <em>eml:fromFile:my-eml.xml</em>.",
+        "DwC Archive eml.xml"
+      );
+    }
+    if (ef.exportTo.size === 0) {
+      Logger.warning(
+        `DwC Archive: <b>eml:fromFile:${ef.path}</b> has an unrecognised exportTo value and will not be used.`,
+        "DwC Archive eml.xml"
       );
     }
   }
@@ -1704,12 +1823,45 @@ export async function compileDwcArchive(params) {
   // ───────────────────────────────────────────────────────────────────────────
   // EML - Option C Hybrid
   //
-  // Priority order:
-  //   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)
+  // Priority order (for the shared fallback emlXml used when no eml:fromFile applies):
+  //   1. Customization item "Custom eml.xml location" → fetch from usercontent/ (error if fails)  [deprecated]
   //   2. Auto-discover usercontent/eml.xml      → Logger.info if found
   //   3. Build from eml: rows                  → validate required fields
   //   4. None available                         → Logger.error, no eml.xml in archive
+  //
+  // eml:fromFile rows (rawEmlFileMappings) are resolved above and take precedence
+  // per-archive via emlFileByArchive.
   // ───────────────────────────────────────────────────────────────────────────
+
+  // eml:fromFile — fetch each referenced file once and key by exportTo archive name
+  const emlFileByArchive = {}; // { checklist?: string, occurrences?: string }
+  for (const ef of rawEmlFileMappings) {
+    if (!ef.path) continue;
+    const fetched = await tryFetchEml(ef.path);
+    if (fetched) {
+      for (const archive of ef.exportTo) {
+        if (emlFileByArchive[archive]) {
+          Logger.warning(
+            `DwC Archive: Multiple <b>eml:fromFile</b> rows target "<b>${archive}</b>". ` +
+            `Only the first will be used; "<em>${ef.path}</em>" was ignored.`,
+            "DwC Archive eml.xml"
+          );
+        } else {
+          emlFileByArchive[archive] = fetched;
+          Logger.info(
+            `DwC Archive: Using <em>eml:fromFile</em> "<em>${ef.path}</em>" for the <b>${archive}</b> archive.`,
+            "DwC Archive eml.xml"
+          );
+        }
+      }
+    } else {
+      Logger.error(
+        `DwC Archive: <b>eml:fromFile:${ef.path}</b> could not be fetched from usercontent/. ` +
+        `Check the path and that the file exists on your server.`,
+        "DwC Archive eml.xml"
+      );
+    }
+  }
 
   let emlXml = null;
 
@@ -1817,17 +1969,17 @@ export async function compileDwcArchive(params) {
 
   let checklistZip = null, occurrenceZip = null;
 
-  if (taxonCsvRows.length > 0) {
+  if (checklistExportEnabled && taxonCsvRows.length > 0) {
     const zip = new JSZip();
     zip.file("taxa.csv", buildCsvString(allTaxonTerms, taxonCsvRows));
     zip.file("meta.xml", taxonMetaXml);
-    if (emlXml) zip.file("eml.xml", emlXml);
+    if (emlFileByArchive["checklist"] || emlXml) zip.file("eml.xml", emlFileByArchive["checklist"] ?? emlXml);
     checklistZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(
       `DwC Archive: Checklist archive ready - ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`,
       "DwC Archive"
     );
-  } else {
+  } else if (checklistExportEnabled) {
     Logger.warning("DwC Archive: No taxon rows generated. Check checklist sheet and Taxa Definition table.", "DwC Archive");
   }
 
@@ -1836,7 +1988,7 @@ export async function compileDwcArchive(params) {
     const zip = new JSZip();
     zip.file("occurrences.csv", buildCsvString(ot, occurrenceCsvRows));
     zip.file("meta.xml", occMetaXml);
-    if (emlXml) zip.file("eml.xml", emlXml); // same EML for both archives
+    if (emlFileByArchive["occurrences"] || emlXml) zip.file("eml.xml", emlFileByArchive["occurrences"] ?? emlXml);
     occurrenceZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(`DwC Archive: Occurrence archive ready - ${occurrenceCsvRows.length} occurrence record(s).`, "DwC Archive");
   }

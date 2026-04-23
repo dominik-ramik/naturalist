@@ -854,7 +854,7 @@ const SubViews = {
     const dwcResult = dwcCompiled ? ManageStore.dataman.getDwcArchive() : null;
     const dwcHasErrors = dwcCompiled && Logger.getMessagesForDisplay().some(
       m => (m.level === "error" || m.level === "critical") &&
-        (m.groupTitle === "DwC Archive" || m.groupTitle === "DwC Archive eml.xml")
+        (m.groupTitle.startsWith("DwC Archive"))
     );
     const dwcSucceeded = dwcCompiled && !dwcHasErrors;
 
@@ -1116,7 +1116,7 @@ export const DEEP_LINK_STORAGE_KEY = "xlsxDeepLinkUrl";
  *     do nothing, let oninit pick up the stored URL.
  */
 function captureDeepLinkAndReloadIfNeeded() {
-  
+
   // Post-reload pass: URL already stored, nothing to do here.
   if (sessionStorage.getItem(DEEP_LINK_STORAGE_KEY)) {
     return false;
@@ -1130,14 +1130,14 @@ function captureDeepLinkAndReloadIfNeeded() {
   }
 
   const rawUrl = decodeURIComponent(match[1]);
-  
+
   // Store the full original href so the controllerchange handler can reload
   // to it exactly, preserving the hash.
   sessionStorage.setItem(DEEP_LINK_STORAGE_KEY, rawUrl);
   sessionStorage.setItem(DEEP_LINK_STORAGE_KEY + "_href", window.location.href);
-  
+
   const swAlreadyControlling = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
-  
+
   if (swAlreadyControlling) {
     // SW is active - no controllerchange will fire. We reload ourselves.
     // Use location.href (not reload()) to guarantee the full URL including hash
@@ -1164,7 +1164,7 @@ export let ManageView = {
    * (URL-encode the value if it contains & or ? characters)
    */
   oninit: function (vnode) {
-    
+
     // Only act on the upload step.
     if (vnode.attrs.step !== "upload") {
       return;
@@ -1190,7 +1190,7 @@ export let ManageView = {
     // CRITICAL: set the flag BEFORE any async work so onMatchGuard never
     // sees _isDataReady=false and redirects back to /manage during the pipeline.
     deepLinkProcessing = true;
-    
+
     ManageStore.urlInputValue = xlsxUrl;
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);

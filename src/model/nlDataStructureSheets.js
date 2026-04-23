@@ -1807,11 +1807,10 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [],
                         integrity: {
-                            allowEmpty: true,
-                            default: "all",
+                            allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "list",
-                            allowedValues: ["checklist", "occurrences", "all", ""],
+                            listItems: ["checklist", "occurrences", "all"],
                             supportsMultilingual: false
                         }
                     },
@@ -1885,133 +1884,133 @@ export const nlDataStructureSheets = {
                 templateData: [
                     {
                         term: "language",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "en"
                     },
                     {
                         term: "institutionCode",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "VANUHERP"
                     },
                     {
                         term: "collectionCode",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "VANUATU-CHECKLIST"
                     },
                     {
                         term: "license",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
                     },
                     {
                         term: "datasetName",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "config:Checklist name",
                         constantValue: ""
                     },
                     {
                         term: "eml:title",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "config:Checklist name",
                         constantValue: ""
                     },
                     {
                         term: "eml:abstract",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "config:About section",
                         constantValue: ""
                     },
                     {
                         term: "eml:creator.organizationName",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "Example Natural History Museum"
                     },
                     {
                         term: "eml:creator.givenName",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "Jane"
                     },
                     {
                         term: "eml:creator.surName",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "Smith"
                     },
                     {
                         term: "eml:creator.email",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "j.smith@example.com"
                     },
                     {
                         term: "taxonID",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "auto:taxonID",
                         constantValue: ""
                     },
                     {
                         term: "parentNameUsageID",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "auto:parentNameUsageID",
                         constantValue: ""
                     },
                     {
                         term: "taxonRank",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "auto:taxonRank",
                         constantValue: ""
                     },
                     {
                         term: "scientificName",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "auto:scientificName",
                         constantValue: ""
                     },
                     {
                         term: "scientificNameAuthorship",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "auto:scientificNameAuthorship",
                         constantValue: ""
                     },
                     {
                         term: "kingdom",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "",
                         constantValue: "Animalia"
                     },
                     {
                         term: "class",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "taxa:Class",
                         constantValue: ""
                     },
                     {
                         term: "order",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "taxa:Order",
                         constantValue: ""
                     },
                     {
                         term: "family",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "taxa:Family",
                         constantValue: ""
                     },
                     {
                         term: "genus",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "taxa:Genus",
                         constantValue: ""
                     },
                     {
                         term: "specificEpithet",
-                        exportTo: "",
+                        exportTo: "checklist",
                         sourceColumn: "taxa:Species.lastNamePart",
                         constantValue: ""
                     },

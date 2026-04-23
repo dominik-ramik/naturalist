@@ -1820,6 +1820,7 @@ export let DataManager = function () {
                       break;
                     case "list":
                       let found = false;
+                      console.log(integrity)
                       integrity.listItems.forEach(function (allowed) {
                         if (
                           !found &&
