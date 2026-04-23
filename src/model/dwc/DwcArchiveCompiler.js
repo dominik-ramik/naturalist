@@ -72,7 +72,7 @@
  */
 
 import JSZip from "jszip";
-import { getDwcTerm, normalizeLicense, getLicenseLabel } from "./dwcTermInventory.js";
+import { getDwcTerm, normalizeLicense, getLicenseLabel, requiredDwcTerms } from "./dwcTermInventory.js";
 import { extractCompoundValue, isKnownCompoundKey } from "./dwcCompoundExtractor.js";
 import { getAvailableDataTypeNames, loadDataByType } from "../customTypes/index.js";
 import { Logger } from "../../components/Logger.js";
@@ -628,7 +628,11 @@ export async function compileDwcArchive(params) {
     if (termRaw.toLowerCase().startsWith("eml:")) {
       rawEmlMappings.push({ path: termRaw.slice(4).trim(), directive, constantValue: cv });
     } else {
-      parsedMappings.push({ term: termRaw, directive, constantValue: cv });
+      const exportToRaw = (row.exportTo || "").toString().trim().toLowerCase();
+      const exportToSet = exportToRaw === "" || exportToRaw === "all"
+        ? new Set(["checklist", "occurrences"])
+        : new Set(exportToRaw.split(",").map(s => s.trim()).filter(Boolean));
+      parsedMappings.push({ term: termRaw, directive, constantValue: cv, exportTo: exportToSet });
     }
   }
 
@@ -734,6 +738,32 @@ export async function compileDwcArchive(params) {
       mappingByTerm.delete(t3);
       const i = parsedMappings.findIndex(m => m.term === t3);
       if (i >= 0) parsedMappings.splice(i, 1);
+    }
+  }
+
+  // ── Required-term presence check ──────────────────────────────────────────────
+  // Checklist required terms are either user-configured (with exportTo covering
+  // "checklist") or will be auto-added by the compiler. Warn only if a required
+  // occurrence term is missing when occurrence export is enabled.
+
+  if (occurrenceExportEnabled) {
+    for (const req of requiredDwcTerms.occurrences) {
+      const m = mappingByTerm.get(req);
+      if (!m) {
+        // occurrenceID is auto-generated, so missing from table is OK
+        if (req === "occurrenceID") continue;
+        Logger.error(
+          `DwC Archive: GBIF-required term <b>${req}</b> is missing from the DwC archive table ` +
+          `(required for occurrence datasets). Add a row for this term.`,
+          "DwC Archive"
+        );
+      } else if (!m.exportTo.has("occurrences")) {
+        Logger.warning(
+          `DwC Archive: Term <b>${req}</b> is GBIF-required for occurrences but its "Export to" ` +
+          `column does not include "occurrences". It will not appear in occurrences.csv.`,
+          "DwC Archive"
+        );
+      }
     }
   }
 
@@ -1271,21 +1301,36 @@ export async function compileDwcArchive(params) {
   // ───────────────────────────────────────────────────────────────────────────
 
   const seenExplicit = new Set();
+  // All user-configured terms in table order (excluding language, which is
+  // internal-only and never a CSV column)
   const orderedExplicitTerms = parsedMappings
     .map(m => m.term)
     .filter(t => t !== "language")
     .filter(t => { if (seenExplicit.has(t)) return false; seenExplicit.add(t); return true; });
 
-  const autoAddTerms = [];
-  for (const req of ["taxonID", "scientificName", "taxonRank"])
-    if (!seenExplicit.has(req)) autoAddTerms.push(req);
-  if (!seenExplicit.has("parentNameUsageID") && taxaColumns.length > 1)
-    autoAddTerms.push("parentNameUsageID");
+  // Per-archive filtered term lists (user-configured rows only)
+  const checklistExplicitTerms = parsedMappings
+    .filter(m => m.term !== "language" && m.exportTo.has("checklist"))
+    .map(m => m.term)
+    .filter((t, i, a) => a.indexOf(t) === i);  // dedupe, preserve order
+
+  const occurrenceExplicitTerms = parsedMappings
+    .filter(m => m.term !== "language" && m.exportTo.has("occurrences"))
+    .map(m => m.term)
+    .filter((t, i, a) => a.indexOf(t) === i);
+
+  // Auto-add GBIF-required taxon terms if not already user-configured in checklist scope
+  const autoAddTaxonTerms = [];
+  for (const req of requiredDwcTerms.checklist)
+    if (!checklistExplicitTerms.includes(req)) autoAddTaxonTerms.push(req);
+  // parentNameUsageID is auto-added for multi-rank datasets even though not strictly GBIF-required
+  if (!checklistExplicitTerms.includes("parentNameUsageID") && taxaColumns.length > 1)
+    autoAddTaxonTerms.push("parentNameUsageID");
 
   const allTaxonTerms = [
     "taxonID",
-    ...orderedExplicitTerms.filter(t => t !== "taxonID"),
-    ...autoAddTerms.filter(t => t !== "taxonID"),
+    ...checklistExplicitTerms.filter(t => t !== "taxonID"),
+    ...autoAddTaxonTerms.filter(t => t !== "taxonID"),
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -1482,8 +1527,11 @@ export async function compileDwcArchive(params) {
     if (occColHeaderIndex < 0)
       Logger.warning("DwC Archive: Occurrence export enabled but no 'Occurrence' level found. No occurrence archive.", "DwC Archive");
 
-    const occTerms = ["occurrenceID", ...orderedExplicitTerms.filter(t => t !== "occurrenceID")];
-    const needsAutoId = !seenExplicit.has("occurrenceID");
+    const occTerms = [
+      "occurrenceID",
+      ...occurrenceExplicitTerms.filter(t => t !== "occurrenceID"),
+    ];
+    const needsAutoId = !occurrenceExplicitTerms.includes("occurrenceID");
     const catMapping = mappingByTerm.get("catalogNumber");
 
     for (const rawRow of (checklistRawRows || [])) {
@@ -1759,7 +1807,7 @@ export async function compileDwcArchive(params) {
 
   let occMetaXml = null;
   if (occurrenceExportEnabled && occurrenceCsvRows.length > 0) {
-    const ot = ["occurrenceID", ...orderedExplicitTerms.filter(t => t !== "occurrenceID")];
+    const ot = ["occurrenceID", ...occurrenceExplicitTerms.filter(t => t !== "occurrenceID")];
     occMetaXml = buildMetaXml(ot.map(t => termToUri(t)), "http://rs.tdwg.org/dwc/terms/Occurrence", "occurrences.csv");
   }
 
@@ -1784,7 +1832,7 @@ export async function compileDwcArchive(params) {
   }
 
   if (occurrenceExportEnabled && occurrenceCsvRows.length > 0) {
-    const ot = ["occurrenceID", ...orderedExplicitTerms.filter(t => t !== "occurrenceID")];
+    const ot = ["occurrenceID", ...occurrenceExplicitTerms.filter(t => t !== "occurrenceID")];
     const zip = new JSZip();
     zip.file("occurrences.csv", buildCsvString(ot, occurrenceCsvRows));
     zip.file("meta.xml", occMetaXml);

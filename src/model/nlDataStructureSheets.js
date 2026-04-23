@@ -1789,14 +1789,29 @@ export const nlDataStructureSheets = {
                 columns: {
                     term: {
                         name: "DwC term",
-                        description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:title`) for EML metadata fields.",
-                        howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](/author-guide/dwc#eml-metadata) for the full list of supported `eml:` terms.",
+                        description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:fromFile`, `eml:title`) for EML metadata fields.",
+                        howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](./dwc#eml-metadata) for the full list of supported `eml:` terms.",
                         notes: [],
                         examples: [],
                         integrity: {
                             allowEmpty: false,
-                            allowDuplicates: "no",
+                            allowDuplicates: "yes",
                             allowedContent: "any",
+                            supportsMultilingual: false
+                        }
+                    },
+                    exportTo: {
+                        name: "Export to",
+                        description: "A comma-separated list of archive types this row is included in. Accepted keywords: `checklist`, `occurrences`, `all`. Leave empty to default to `all` (the row appears in every archive).",
+                        howToUse: "Set to `checklist` for taxon-only terms (`taxonID`, `parentNameUsageID`, `taxonRank`, `taxonRemarks`, `namePublishedIn`, `establishmentMeans`, …). Set to `occurrences` for occurrence-only terms (`basisOfRecord`, `eventDate`, `occurrenceID`, `catalogNumber`, coordinates, `recordedBy`, …). Set to `all` or leave empty for shared terms (`scientificName`, higher taxonomy, `institutionCode`, `collectionCode`, `license`, `datasetName`, `associatedMedia`, `dcterms:modified`, and all `eml:` rows).",
+                        notes: [],
+                        examples: [],
+                        integrity: {
+                            allowEmpty: true,
+                            default: "all",
+                            allowDuplicates: "yes",
+                            allowedContent: "list",
+                            allowedValues: ["checklist", "occurrences", "all", ""],
                             supportsMultilingual: false
                         }
                     },
@@ -1811,20 +1826,21 @@ export const nlDataStructureSheets = {
                                 fillRight: true,
                                 columns: [
                                     "DwC term",
+                                    "Export to",
                                     "Source column",
                                     "[comment]"
                                 ],
                                 rows: [
-                                    ["datasetName", "config:Checklist name", "config: directive"],
-                                    ["scientificName", "auto:scientificName", "auto: directive"],
-                                    ["taxonRank", "auto:taxonRank", "auto: directive"],
-                                    ["family", "taxa:Family", "taxa: directive"],
-                                    ["specificEpithet", "taxa:Species.lastNamePart", "taxa: directive with component"],
-                                    ["recordedBy", "collector", "plain column name"],
-                                    ["decimalLatitude", "location.lat", "plain column name with component"],
-                                    ["eventDate", "collectionDate.ymd", "plain column name with component"],
-                                    ["recordedBy", "{collector} leg. | {observer} obs.", "{} template with fallback"],
-                                    ["associatedMedia", "media:specimenPhoto, lifePhotos#", "media: directive"]
+                                    ["datasetName", "all", "config:Checklist name", "config: directive"],
+                                    ["scientificName", "all", "auto:scientificName", "auto: directive"],
+                                    ["taxonRank", "all", "auto:taxonRank", "auto: directive"],
+                                    ["family", "all", "taxa:Family", "taxa: directive"],
+                                    ["specificEpithet", "all", "taxa:Species.lastNamePart", "taxa: directive with component"],
+                                    ["recordedBy", "all", "collector", "plain column name"],
+                                    ["decimalLatitude", "all", "plain column name with component"],
+                                    ["eventDate", "all", "plain column name with component"],
+                                    ["recordedBy", "all", "{collector} leg. | {observer} obs.", "{} template with fallback"],
+                                    ["associatedMedia", "all", "media:specimenPhoto, lifePhotos#", "media: directive"]
                                 ]
                             }
                         ],
@@ -1869,111 +1885,133 @@ export const nlDataStructureSheets = {
                 templateData: [
                     {
                         term: "language",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "en"
                     },
                     {
                         term: "institutionCode",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "VANUHERP"
                     },
                     {
                         term: "collectionCode",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "VANUATU-CHECKLIST"
                     },
                     {
                         term: "license",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
                     },
                     {
                         term: "datasetName",
+                        exportTo: "",
                         sourceColumn: "config:Checklist name",
                         constantValue: ""
                     },
                     {
                         term: "eml:title",
+                        exportTo: "",
                         sourceColumn: "config:Checklist name",
                         constantValue: ""
                     },
                     {
                         term: "eml:abstract",
+                        exportTo: "",
                         sourceColumn: "config:About section",
                         constantValue: ""
                     },
                     {
                         term: "eml:creator.organizationName",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "Example Natural History Museum"
                     },
                     {
                         term: "eml:creator.givenName",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "Jane"
                     },
                     {
                         term: "eml:creator.surName",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "Smith"
                     },
                     {
                         term: "eml:creator.email",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "j.smith@example.com"
                     },
                     {
                         term: "taxonID",
+                        exportTo: "",
                         sourceColumn: "auto:taxonID",
                         constantValue: ""
                     },
                     {
                         term: "parentNameUsageID",
+                        exportTo: "",
                         sourceColumn: "auto:parentNameUsageID",
                         constantValue: ""
                     },
                     {
                         term: "taxonRank",
+                        exportTo: "",
                         sourceColumn: "auto:taxonRank",
                         constantValue: ""
                     },
                     {
                         term: "scientificName",
+                        exportTo: "",
                         sourceColumn: "auto:scientificName",
                         constantValue: ""
                     },
                     {
                         term: "scientificNameAuthorship",
+                        exportTo: "",
                         sourceColumn: "auto:scientificNameAuthorship",
                         constantValue: ""
                     },
                     {
                         term: "kingdom",
+                        exportTo: "",
                         sourceColumn: "",
                         constantValue: "Animalia"
                     },
                     {
                         term: "class",
+                        exportTo: "",
                         sourceColumn: "taxa:Class",
                         constantValue: ""
                     },
                     {
                         term: "order",
+                        exportTo: "",
                         sourceColumn: "taxa:Order",
                         constantValue: ""
                     },
                     {
                         term: "family",
+                        exportTo: "",
                         sourceColumn: "taxa:Family",
                         constantValue: ""
                     },
                     {
                         term: "genus",
+                        exportTo: "",
                         sourceColumn: "taxa:Genus",
                         constantValue: ""
                     },
                     {
                         term: "specificEpithet",
+                        exportTo: "",
                         sourceColumn: "taxa:Species.lastNamePart",
                         constantValue: ""
                     },
@@ -2053,11 +2091,6 @@ export const nlDataStructureSheets = {
                                         "Precache max total size",
                                         "200",
                                         "Maximum total size in MB of all precached media assets."
-                                    ],
-                                    [
-                                        "Eml.xml location",
-                                        "(empty)",
-                                        "Path to a custom DwC-A EML metadata file inside `usercontent/`, including filename (e.g. `dwc/eml.xml`)."
                                     ]
                                 ]
                             }
@@ -2077,7 +2110,6 @@ export const nlDataStructureSheets = {
                                 "Month names",
                                 "Precache max file size",
                                 "Precache max total size",
-                                "Eml.xml location"
                             ],
                             supportsMultilingual: false
                         }
