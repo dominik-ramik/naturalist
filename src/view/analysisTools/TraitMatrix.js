@@ -11,6 +11,7 @@ import {
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { getDataFromDataPath } from "../../model/DataPath.js";
 
 registerMessages(selfKey, {
   en: {
@@ -382,7 +383,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
     ? Checklist.getEffectiveDataForNode(taxon, Checklist.getOccurrenceMetaIndex(), allTaxa)
     : taxon.d;
 
-  const get = path => Checklist.getDataFromDataPath(rawData, path);
+  const get = path => getDataFromDataPath(rawData, path);
   const toArr = v => (Array.isArray(v) ? v : [v]);
 
   switch (categoryType) {
@@ -404,7 +405,7 @@ function getTaxonTraitValues(taxon, dataCategory, binMethod, mode, allTaxa) {
         })
         .filter(Boolean);
     case "mapregions": {
-      const regionData = Checklist.getDataFromDataPath(taxon.d, dataCategory);
+      const regionData = getDataFromDataPath(taxon.d, dataCategory);
       if (typeof regionData === "object" && regionData) {
         return Object.keys(regionData).map(r => Checklist.nameForMapRegion(r));
       }

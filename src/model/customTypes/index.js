@@ -100,6 +100,15 @@ function verifyReaders() {
       );
     }
 
+    if (
+      !reader.hasOwnProperty("toDwC") ||
+      typeof reader.toDwC !== "function"
+    ) {
+      console.error(
+        `CustomType at ${readerDataType} is missing required 'toDwC' property or it's not a function`
+      );
+    }
+
     // Check if object key matches reader's dataType
     if (dataType !== reader.dataType) {
       console.error(

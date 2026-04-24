@@ -128,3 +128,27 @@ export const dataPath = {
     },
   },
 };
+
+export function getDataFromDataPath(dObject, dataPath) {
+  let currentDataItem = dObject;
+
+  dataPath.split(".").forEach(function (item) {
+    if (currentDataItem == null) {
+      return;
+    }
+
+    let arrayMode = false;
+    if (item.endsWith("#")) {
+      item = item.substring(0, item.length - 1);
+      arrayMode = true;
+    }
+
+    if (!currentDataItem.hasOwnProperty(item)) {
+      currentDataItem = null;
+      return;
+    }
+    currentDataItem = currentDataItem[item];
+  });
+
+  return currentDataItem;
+}

@@ -7,7 +7,7 @@ import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
-import { dataPath } from "./DataPath.js";
+import { dataPath, getDataFromDataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
 import { MONTH_KEYS, resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
@@ -196,7 +196,7 @@ export let DataManager = function () {
         let entryData = entry.d;
 
         for (const dataPath of dataPathsToConsider) {
-          let data = Checklist.getDataFromDataPath(entryData, dataPath);
+          let data = getDataFromDataPath(entryData, dataPath);
 
           if (data && data != "") {
             // Pass assetsFromFDirectives as an argument to processFDirective
@@ -390,7 +390,7 @@ export let DataManager = function () {
 
             // Process each checklist entry to gather actual assets
             (data.sheets.checklist.data[lang.code] || []).forEach(function (entry) {
-              const mediaData = Checklist.getDataFromDataPath(
+              const mediaData = getDataFromDataPath(
                 entry.d,
                 row.columnName
               );

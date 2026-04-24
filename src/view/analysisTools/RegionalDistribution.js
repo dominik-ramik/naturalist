@@ -36,6 +36,7 @@ import { getMapState, setMapState, getGlobalState, setGlobalState } from './Regi
 import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
 import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
+import { getDataFromDataPath } from '../../model/DataPath.js';
 
 registerMessages(selfKey, {
   en: {
@@ -122,7 +123,7 @@ function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
       const isOccurrence = occurrenceIdx !== -1 && row.t[occurrenceIdx] != null;
       if (mode === 'taxa' && isOccurrence) return false;
       if (mode === OCCURRENCE_IDENTIFIER && !isOccurrence) return false;
-      const d = Checklist.getDataFromDataPath(row.d, dataPath);
+      const d = getDataFromDataPath(row.d, dataPath);
       return d && typeof d === 'object' && Object.keys(d).length > 0;
     });
 

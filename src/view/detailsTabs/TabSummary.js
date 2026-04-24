@@ -14,6 +14,7 @@ import {
 } from "../../components/MapregionsColorEngine.js";
 import { MONTH_KEYS } from "../../model/MonthNames.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
+import { getDataFromDataPath } from "../../model/DataPath.js";
 
 registerMessages(selfKey, {
   en: {
@@ -432,7 +433,7 @@ function buildPerspectiveSpecs(ctx) {
     const meta = dataMeta[catPath];
     const base = meta.title || meta.searchCategory || catPath;
     const hasVal = r => {
-      const v = Checklist.getDataFromDataPath(r.d, catPath);
+      const v = getDataFromDataPath(r.d, catPath);
       return v != null && v.toString().trim() !== "";
     };
     if (subtreeTaxonRows.some(hasVal)) {
@@ -463,7 +464,7 @@ function buildPerspectiveSpecs(ctx) {
     const meta = dataMeta[mapPath];
     const base = meta.title || meta.searchCategory || mapPath;
     const hasData = r => {
-      const v = Checklist.getDataFromDataPath(r.d, mapPath);
+      const v = getDataFromDataPath(r.d, mapPath);
       return v && typeof v === "object" && Object.keys(v).length > 0;
     };
     if (subtreeTaxonRows.some(hasData)) {
@@ -494,7 +495,7 @@ function buildPerspectiveSpecs(ctx) {
     const meta = dataMeta[monthsPath];
     const base = meta.title || meta.searchCategory || monthsPath;
     const hasData = r => {
-      const v = Checklist.getDataFromDataPath(r.d, monthsPath);
+      const v = getDataFromDataPath(r.d, monthsPath);
       return Array.isArray(v) && v.length > 0;
     };
     if (subtreeTaxonRows.some(hasData)) {
@@ -624,7 +625,7 @@ function buildCategoryPerspective(ctx, catPath, meta, forOccurrence) {
   const _valsCache = new Map();
   const getVals = row => {
     if (_valsCache.has(row)) return _valsCache.get(row);
-    const v = Checklist.getDataFromDataPath(row.d, catPath);
+    const v = getDataFromDataPath(row.d, catPath);
     const result = v == null ? [] : Checklist.getAllLeafData(v, false, catPath)
       .filter(x => x != null && String(x).trim() !== "");
     _valsCache.set(row, result);
@@ -687,7 +688,7 @@ function buildMapRegionsPerspective(ctx, mapPath, meta, forOccurrence) {
   const _mapDataCache = new Map();
   const getMapData = row => {
     if (_mapDataCache.has(row)) return _mapDataCache.get(row);
-    const v = Checklist.getDataFromDataPath(row.d, mapPath);
+    const v = getDataFromDataPath(row.d, mapPath);
     const result = (v && typeof v === "object" && Object.keys(v).length > 0) ? v : null;
     _mapDataCache.set(row, result);
     return result;
@@ -769,7 +770,7 @@ function buildRegionBreakdown(rows, mapPath, totalRows, aggregateStats, getMapDa
   const byRegion = {};
 
   rows.forEach(row => {
-    const data = getMapData ? getMapData(row) : Checklist.getDataFromDataPath(row.d, mapPath);
+    const data = getMapData ? getMapData(row) : getDataFromDataPath(row.d, mapPath);
     if (!data) return;
 
     Object.entries(data).forEach(([code, info]) => {
@@ -875,7 +876,7 @@ function buildMonthsPerspective(ctx, monthsPath, meta, forOccurrence) {
   const _monthsCache = new Map();
   const getMonths = row => {
     if (_monthsCache.has(row)) return _monthsCache.get(row);
-    const v = Checklist.getDataFromDataPath(row.d, monthsPath);
+    const v = getDataFromDataPath(row.d, monthsPath);
     const result = Array.isArray(v) && v.length > 0 ? v : null;
     _monthsCache.set(row, result);
     return result;

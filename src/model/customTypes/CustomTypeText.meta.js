@@ -8,6 +8,13 @@ export const customTypeTextMeta = {
     summary:                  "Plain text string. No formatting.",
     whenToUse:                "Any short label or any free-form text that does not need Markdown formatting (see [[ref:type.markdown]]) or category-based formatting (see [[ref:type.category]]).",
     behaviorFulltextIndexing: "The full string value is indexed as-is.",
+    dwcNotes: {
+      // TODO
+      output: "asfsadfsd",
+      subPaths: [
+        // {}
+      ]
+    },
     detailsPaneTab:           "Text",
     inputFormats: [
       {

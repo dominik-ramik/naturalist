@@ -14,6 +14,7 @@ import {
 } from '../../../components/MapregionsColorEngine.js';
 import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { getDataFromDataPath } from '../../../model/DataPath.js';
 
 // ─── Segment detection ────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ export function collectRegionData(leaves, dataPath, mode, occurrenceMetaIndex) {
     const effectiveD = mode === OCCURRENCE_IDENTIFIER
       ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, leaves)
       : leaf.d;
-    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
+    const mapData = getDataFromDataPath(effectiveD, dataPath);
     if (!mapData || typeof mapData !== 'object') return;
 
     const name = leafDisplayName(leaf);
@@ -295,7 +296,7 @@ export function computeAllRegionCounts(allLeaves, dataPath, mode, occurrenceMeta
     const effectiveD = mode === OCCURRENCE_IDENTIFIER
       ? Checklist.getEffectiveDataForNode(leaf, occurrenceMetaIndex, allLeaves)
       : leaf.d;
-    const mapData = Checklist.getDataFromDataPath(effectiveD, dataPath);
+    const mapData = getDataFromDataPath(effectiveD, dataPath);
     if (!mapData || typeof mapData !== 'object' || !Object.keys(mapData).length) return;
 
     const name = leafDisplayName(leaf);

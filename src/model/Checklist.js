@@ -22,6 +22,7 @@ import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js
 import { validateActiveToolState } from "../view/analysisTools/index.js";
 import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
 import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { getDataFromDataPath } from "./DataPath.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -628,7 +629,7 @@ export let Checklist = {
               value = taxonTentative.name;
             }
           } else if (dataType == "data") {
-            value = Checklist.getDataFromDataPath(taxon.d, dataPath);
+            value = getDataFromDataPath(taxon.d, dataPath);
           }
 
           if (value === null) {
@@ -951,7 +952,7 @@ export let Checklist = {
     });
 
     dataPathsToKeep.forEach(function (dataPath) {
-      let currentData = Checklist.getDataFromDataPath(taxon.d, dataPath);
+      let currentData = getDataFromDataPath(taxon.d, dataPath);
       if (!currentData) {
         return;
       }
@@ -1109,30 +1110,6 @@ export let Checklist = {
     }
 
     return this.getAllLeafDataCache.get(cacheKey);
-  },
-
-  getDataFromDataPath(dObject, dataPath) {
-    let currentDataItem = dObject;
-
-    dataPath.split(".").forEach(function (item) {
-      if (currentDataItem == null) {
-        return;
-      }
-
-      let arrayMode = false;
-      if (item.endsWith("#")) {
-        item = item.substring(0, item.length - 1);
-        arrayMode = true;
-      }
-
-      if (!currentDataItem.hasOwnProperty(item)) {
-        currentDataItem = null;
-        return;
-      }
-      currentDataItem = currentDataItem[item];
-    });
-
-    return currentDataItem;
   },
 
   /**

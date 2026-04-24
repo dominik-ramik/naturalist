@@ -5,6 +5,7 @@ import { Settings } from "./Settings.js";
 import { getMonthNumbers } from "./MonthNames.js";
 import { getFilterPlugin } from "./filterPlugins/index.js";
 import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { getDataFromDataPath } from "./DataPath.js";
 
 export let Filter = {
   taxa: {},
@@ -138,7 +139,7 @@ export let Filter = {
           if (belongsTo === "taxon"      &&  isOccurrenceRow) return;
         }
 
-        const rawValue = Checklist.getDataFromDataPath(taxon.d, path);
+        const rawValue = getDataFromDataPath(taxon.d, path);
         if (rawValue === null) return;
         const fd = Filter.data[path];
         const plugin = getFilterPlugin(fd);
@@ -218,7 +219,7 @@ export let Filter = {
     let possible = [], min = null, max = null;
 
     previewTaxa.forEach(function (taxon) {
-      let value = Checklist.getDataFromDataPath(taxon.d, dataPath);
+      let value = getDataFromDataPath(taxon.d, dataPath);
       if (value === null) return;
 
       let leafData = Checklist.getAllLeafData(value, false, dataPath);
@@ -433,7 +434,7 @@ export let Filter = {
 
   _checkDataFilters: function (item, dataFilters) {
     for (const { dataPath, filterDef } of dataFilters) {
-      const rawValue = Checklist.getDataFromDataPath(item.d, dataPath);
+      const rawValue = getDataFromDataPath(item.d, dataPath);
       if (rawValue === null) {
         // Phase 6 (Exclude fast-fail) + general null handling:
         // A taxon with no data cannot satisfy any categorical/numeric selection (Any/All),
