@@ -58,6 +58,7 @@ export let customTypeText = {
     if (data === null || data === undefined) {
       return null;
     }
+    return data;
   },
 
   render: function (data, uiContext) {

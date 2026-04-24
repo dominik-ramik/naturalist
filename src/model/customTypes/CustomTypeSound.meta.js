@@ -2,21 +2,28 @@
 import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeSoundMeta = {
-  dataType:   "sound",
+  dataType: "sound",
   filterMeta: filterMetaText,
   meta: {
-    summary:                  "An audio file, rendered as a minimal inline audio player with a play button and title.",
-    whenToUse:                "Bird calls, animal vocalisations, insect sounds, or any audio recording associated.",
+    summary: "An audio file, rendered as a minimal inline audio player with a play button and title.",
+    whenToUse: "Bird calls, animal vocalisations, insect sounds, or any audio recording associated.",
     behaviorFulltextIndexing: "The sound title is indexed for full-text search.",
-    detailsPaneTab:           "Media",
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
+    detailsPaneTab: "Media",
     inputFormats: [
       {
-        label:  "Two columns (source + title)",
+        label: "Two columns (source + title)",
         syntax: "`[columnname].source` and `[columnname].title` as separate columns.",
         example: { columns: ["call.source", "call.title"], rows: [["sounds/litoria_call.mp3", "Advertisement call"]] },
       },
       {
-        label:  "Single column - pipe-separated",
+        label: "Single column - pipe-separated",
         syntax: "`source|title` in one cell.",
         example: { columns: ["call"], rows: [["sounds/litoria_call.mp3|Advertisement call"]] },
       },

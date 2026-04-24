@@ -8,10 +8,10 @@ import { applyHighlight, textMatchesHighlight } from "../highlightUtils.js";
 // CSS helper
 // ---------------------------------------------------------------------------
 function purifyCssString(css) {
-  if (css.indexOf('"') >= 0)  css = css.substring(0, css.indexOf('"'));
-  if (css.indexOf("'") >= 0)  css = css.substring(0, css.indexOf("'"));
-  if (css.indexOf(";") >= 0)  css = css.substring(0, css.indexOf(";"));
-  if (css.indexOf(":") >= 0)  css = css.substring(0, css.indexOf(":"));
+  if (css.indexOf('"') >= 0) css = css.substring(0, css.indexOf('"'));
+  if (css.indexOf("'") >= 0) css = css.substring(0, css.indexOf("'"));
+  if (css.indexOf(";") >= 0) css = css.substring(0, css.indexOf(";"));
+  if (css.indexOf(":") >= 0) css = css.substring(0, css.indexOf(":"));
   return css;
 }
 
@@ -58,6 +58,13 @@ export let customTypeCategory = {
 
   filterPlugin: filterPluginText,
 
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
+  },
+
   render: function (data, uiContext) {
     if (data === null || data === undefined || data.toString().trim() === "") {
       return null;
@@ -80,18 +87,18 @@ export let customTypeCategory = {
     if (badgeFormat) {
       return m.trust(
         "<span class='category" + (textMatchesHighlight(dataString, uiContext?.highlightRegex) ? " search-highlight-field" : "") + "' style='" +
-          (badgeFormat.background
-            ? "background-color: " + purifyCssString(badgeFormat.background) + ";"
-            : "") +
-          (badgeFormat.text
-            ? "color: " + purifyCssString(badgeFormat.text) + ";"
-            : "") +
-          (badgeFormat.border
-            ? "border-color: " + purifyCssString(badgeFormat.border) + ";"
-            : "") +
-          "'>" +
-          dataString.replace(/\s/g, "&nbsp;") +
-          "</span>"
+        (badgeFormat.background
+          ? "background-color: " + purifyCssString(badgeFormat.background) + ";"
+          : "") +
+        (badgeFormat.text
+          ? "color: " + purifyCssString(badgeFormat.text) + ";"
+          : "") +
+        (badgeFormat.border
+          ? "border-color: " + purifyCssString(badgeFormat.border) + ";"
+          : "") +
+        "'>" +
+        dataString.replace(/\s/g, "&nbsp;") +
+        "</span>"
       );
     }
 

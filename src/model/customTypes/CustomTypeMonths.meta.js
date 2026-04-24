@@ -7,6 +7,13 @@ export const customTypeMonthsMeta = {
     summary: "For storing months of year regardless to the date, like phenological data - which months of the year a taxon is active, flowering, migrating, breeding, etc. Rendered compactly with December-January wraparound support.",
     whenToUse: "Flowering periods, breeding seasons, flight periods, activity windows - any phenological attribute expressed as a set of months.",
     behaviorFulltextIndexing: "Individual month names are indexed even if they are displayed compactly as a range. Text-search for `February` will match `February`, `February-March` as well as `January-April`.",
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
     detailsPaneTab: null,
     inputFormats: [
       {

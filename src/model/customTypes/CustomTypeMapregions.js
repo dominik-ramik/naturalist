@@ -262,6 +262,13 @@ export let customTypeMapregions = {
     return Object.keys(rawValue).map(code => Checklist.nameForMapRegion(code));
   },
 
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
+  },
+
   render: function (data, uiContext) {
     return uiContext.placement === "details"
       ? renderDetailsMap(data, uiContext)

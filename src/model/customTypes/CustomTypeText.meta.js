@@ -9,10 +9,10 @@ export const customTypeTextMeta = {
     whenToUse:                "Any short label or any free-form text that does not need Markdown formatting (see [[ref:type.markdown]]) or category-based formatting (see [[ref:type.category]]).",
     behaviorFulltextIndexing: "The full string value is indexed as-is.",
     dwcNotes: {
-      // TODO
-      output: "asfsadfsd",
+      output: "",
       subPaths: [
-        // {}
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
       ]
     },
     detailsPaneTab:           "Text",

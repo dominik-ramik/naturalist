@@ -7,7 +7,7 @@ import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 export let customTypeMarkdown = {
   dataType: "markdown",
   expectedColumns: (basePath) => [basePath],
-    
+
   filterPlugin: null, // No specific filter plugin for markdown; use plain text search on rendered output
 
   readData: function (context, computedPath) {
@@ -46,6 +46,13 @@ export let customTypeMarkdown = {
     const htmlContent = processMarkdownWithBibliography(String(displayData ?? ""));
     const searchable = htmlToPlainText(htmlContent).trim();
     return searchable ? [searchable] : [];
+  },
+
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
   },
 
   render: function (data, uiContext) {

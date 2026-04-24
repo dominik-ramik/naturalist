@@ -8,6 +8,13 @@ export const customTypeMarkdownMeta = {
     summary: "[Markdown](https://en.wikipedia.org/wiki/Markdown)-formatted rich text. Renders headings, bold, italic, lists, links, images, blockquotes, code, and bibliography `@citekey` references. See Markdown syntax guide at [commonmark.org](https://commonmark.org/help/).",
     whenToUse: "Long descriptions, field notes, habitat descriptions, species accounts - any text requiring rich formatting or external links.",
     behaviorFulltextIndexing: "Markdown syntax is stripped and plain text is indexed.",
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
     detailsPaneTab: "Text",
     inputFormats: [
       {
@@ -15,7 +22,7 @@ export const customTypeMarkdownMeta = {
         syntax: "Any valid Markdown string. Bibliography `@citekey` references (see [[ref:content.bibliography]]) and database shortcodes `@code:ID` (see [[ref:content.databaseShortcodes]]) are also processed.",
         example: {
           columns: ["description", "[comment]"], rows: [
-            ["A \*\*large\*\* green tree frog. See [@smith2020].", "This renders: A **large** green tree frog. See [(Smith et al. 2020)](#)."], 
+            ["A \*\*large\*\* green tree frog. See [@smith2020].", "This renders: A **large** green tree frog. See [(Smith et al. 2020)](#)."],
             ["F:species_accounts/litoria.md", "This renders the content of `usercontent/species_accounts/litoria.md` at compile time."],]
         },
       },

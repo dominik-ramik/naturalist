@@ -389,6 +389,10 @@ export let customTypeMonths = {
     return data.map(monthNum => Checklist.getMonthLabel(monthNum, uiContext.langCode));
   },
 
+  toDwC: function (data, subPath) {
+    return null; // No standard DwC term for months, and the original cell format is too free-form to reliably convert back to a standard term. Better to return null than risk lossy or incorrect conversions.
+  },
+
   render: function (data, uiContext) {
     if (!data || !Array.isArray(data) || data.length === 0) return null;
 

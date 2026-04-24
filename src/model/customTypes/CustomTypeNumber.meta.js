@@ -2,16 +2,23 @@
 import { filterMetaNumber } from "../filterPlugins/filterPluginNumber.meta.js";
 
 export const customTypeNumberMeta = {
-  dataType:   "number",
+  dataType: "number",
   filterMeta: filterMetaNumber,
   meta: {
-    summary:                  "Numeric value (integer or decimal). Non-numeric cells are skipped.",
-    whenToUse:                "Measurements, counts, scores, percentages, elevation, or any column that users may want to filter by numeric range.",
+    summary: "Numeric value (integer or decimal). Non-numeric cells are skipped.",
+    whenToUse: "Measurements, counts, scores, percentages, elevation, or any column that users may want to filter by numeric range.",
     behaviorFulltextIndexing: "The number's string representation is indexed.",
-    detailsPaneTab:           null,
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
+    detailsPaneTab: null,
     inputFormats: [
       {
-        label:  "Single cell - plain number",
+        label: "Single cell - plain number",
         syntax: "An integer or decimal number. No units or symbols - add those via the [[ref:content.customDataDefinition.template]] column.",
         example: { columns: ["wingLength"], rows: [["12.5"], ["8.3"], ["0"]] },
       },

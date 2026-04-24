@@ -7,6 +7,13 @@ export const customTypeIntervalMeta = {
     summary: "A numeric range representing minimum and maximum values, both inclusive. Rendered as `from - to` (e.g. `10 - 15`); if both endpoints are equal, shown as a single value.",
     whenToUse: "Typical ranges of physical dimensions (length, wingspan, weight), altitude limits or precision range, depth ranges, or any numeric attribute with a minimum and maximum boundary.",
     behaviorFulltextIndexing: "The rendered range string (e.g. `10 - 15`) is indexed as a single token.",
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
     detailsPaneTab: null,
     inputFormats: [
       {

@@ -106,6 +106,13 @@ export let customTypeTaxon = {
     return result;
   },
 
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
+  },
+
   render: function (data, uiContext) {
     // Highlighted inline render for data-cell taxon fields (embedded taxon
     // references within a taxon's data, not the tree taxon name itself).

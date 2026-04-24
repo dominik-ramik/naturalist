@@ -339,6 +339,13 @@ export let customTypeGeopoint = {
     return _data?.verbatim ? [_data.verbatim] : [];
   },
 
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
+  },
+
   render(data, uiContext) {
     if (!data || data.lat == null || data.long == null) return null;
 

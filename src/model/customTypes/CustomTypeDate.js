@@ -88,6 +88,26 @@ export let customTypeDate = {
     return leafData.filter(v => typeof v === "number" && !isNaN(v));
   },
 
+  toDwC: function (data, subPath) {
+    // For text, we can return the string directly, or null if it's not a valid string
+    if (data === null || data === undefined) {
+      return null;
+    }
+
+    switch (subPath) {
+      case "dmy":
+        return dayjs(data).format("YYYY-MM-DD");
+      case "year":
+        return dayjs(data).format("YYYY");
+      case "month":
+        return dayjs(data).format('M');
+      case "day":
+        return dayjs(data).format("D");
+      default:
+        return null;
+    }
+  },
+
   render: function (data, uiContext) {
     if (data === null || data === undefined) {
       return null;

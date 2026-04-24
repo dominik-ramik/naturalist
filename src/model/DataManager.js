@@ -6,12 +6,16 @@ import { absoluteUsercontent, isValidHttpUrl, pad, relativeToUsercontent, splitN
 import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
+// Register the dataCustomTypes map with the DwC compiler so it can call
+// each type's toDwC() method without a circular import.
+registerDataCustomTypes(dataCustomTypes);
+
 import { Logger } from "../components/Logger.js";
 import { dataPath, getDataFromDataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
 import { MONTH_KEYS, resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
-import { compileDwcArchive } from "./dwc/DwcArchiveCompiler.js";
+import { compileDwcArchive, registerDataCustomTypes } from "./dwc/DwcArchiveCompiler.js";
 import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
 import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { dataManagerI18n } from "./DataManager.i18n.js";
@@ -174,14 +178,14 @@ export let DataManager = function () {
     data.common.languages.supportedLanguages.forEach(function (lang) {
       checklist.versions[lang.code] = compileChecklistVersion(lang);
 
-      // process F: directives for markdown files ... only in Additional texts and markdown-enabled Custom data
+      // process F: directives for markdown and text files
       let dataPathsToConsider = [];
 
       Object.keys(checklist.versions[lang.code].dataset.meta.data).forEach(
         function (key) {
+          const keyDataType = checklist.versions[lang.code].dataset.meta.data[key].dataType;
           if (
-            checklist.versions[lang.code].dataset.meta.data[key].dataType ==
-            "markdown"
+            keyDataType == "markdown" || keyDataType == "text"
           ) {
             dataPathsToConsider.push(key);
           }
@@ -200,7 +204,7 @@ export let DataManager = function () {
 
           if (data && data != "") {
             // Pass assetsFromFDirectives as an argument to processFDirective
-            let result = processFDirective(data, runSpecificCache, dataPath, rowNumber, additionalAssets);
+            let result = processFDirective(data, runSpecificCache, dataPath, rowNumber, additionalAssets, ["md", "markdown", "txt"]);
             if (result) {
               setDataAtDataPath(entryData, dataPath, result);
             }
@@ -2213,102 +2217,49 @@ export let DataManager = function () {
         Object.prototype.hasOwnProperty.call(compiledChecklistCache, "_dwcArchive");
     },
 
-    /**
-     * Compile the DwC archive for the default language and store the result on
-     * the compiled checklist cache.  Must be called after getCompiledChecklist().
-     *
-     * Validation errors are emitted through Logger so that ManageView's normal
-     * error gate (Logger.hasErrors()) blocks the UI in exactly the same way it
-     * does for checklist compilation errors - DwC issues are never silently
-     * swallowed and the user cannot proceed to publish until they are fixed.
-     *
-     * If the DwC archive table is absent or empty this is a no-op; getDwcArchive()
-     * will continue to return null and ManageView will show the configuration tip.
-     *
-     * @returns {Promise<void>}
-     */
     async compileDwcArchiveAsync() {
       const defaultLangCode = data.common.languages.defaultLanguageCode;
       const dwcTableRows = data.sheets.content.tables.dwcArchive?.data?.[defaultLangCode];
       if (!dwcTableRows || dwcTableRows.length === 0) {
-        return; // DwC table absent or empty - nothing to compile, no errors to log
+        return; // DwC table absent or empty — nothing to compile
       }
 
+      // Build a per-CDD Handlebars template cache so templates are compiled once.
+      const templateCache = new Map();
       const cddRows = data.sheets.content.tables.customDataDefinition.data[defaultLangCode];
 
-      const templateCache = new Map();
-
       /**
-       * Resolve the CDD definition row for a column name, with automatic fallback
-       * to the "#" array-item pattern used for numbered columns.
-       *
-       * Lookup order (all comparisons lowercase):
-       *   1. Exact match              "lifePhotos1"       (if explicitly in CDD)
-       *   2. Trailing-digit strip     "lifePhotos1" → "lifePhotos#"
-       *   3. Dot-path last-segment    "mediacluster.images1" → "mediacluster.images#"
-       *
-       * This mirrors the getMediaNlDataType() logic in DwcArchiveCompiler so
-       * that both the type lookup and the template lookup resolve consistently for
-       * every column expanded by the media: directive.
-       *
-       * @param {string} colName  - The column name to look up (case-insensitive).
-       * @returns {Object|undefined}  The CDD row object, or undefined if not found.
+       * Resolve the CDD row for a column name, with "#" array-item pattern fallback.
+       * Mirrors the lookup strategy used by the old compiler.
        */
       function resolveCddDef(colName) {
         const lo = colName.toLowerCase();
-
-        // 1. Exact match
         const exact = cddRows?.find(r => (r.columnName || "").toLowerCase() === lo);
         if (exact) return exact;
-
-        // 2. Strip trailing digits and try "#" pattern
-        //    "lifePhotos1" → "lifePhotos#"
         const hashLo = lo.replace(/\d+$/, "#");
         if (hashLo !== lo) {
           const hashMatch = cddRows?.find(r => (r.columnName || "").toLowerCase() === hashLo);
           if (hashMatch) return hashMatch;
         }
-
-        // 3. Dot-path last-segment strip
-        //    "mediacluster.images1" → "mediacluster.images#"
         const dotHashLo = lo.replace(/(\.[^.]+?)\d+$/, "$1#");
         if (dotHashLo !== lo && dotHashLo !== hashLo) {
           const dotHashMatch = cddRows?.find(r => (r.columnName || "").toLowerCase() === dotHashLo);
           if (dotHashMatch) return dotHashMatch;
         }
-
         return undefined;
       }
 
-      /**
-       * Build a per-CDD-entry Handlebars template cache so each template string
-       * is compiled only once regardless of how many numbered columns share it.
-       *
-       * The cache key is the CANONICAL CDD column name (e.g. "lifePhotos#"),
-       * NOT the expanded column name (e.g. "lifePhotos1").  This prevents
-       * redundant compilations when lifePhotos1, lifePhotos2, lifePhotos3 are
-       * all processed in a loop - they all resolve to the same CDD entry and
-       * reuse the single cached compiled function.
-       *
-       * @param {Object|undefined} cddDef  - The resolved CDD row from resolveCddDef().
-       *                                     If undefined, returns null (no template).
-       * @returns {Function|null}  Compiled Handlebars function, or null.
-       */
       function getCompiledTemplate(cddDef) {
         if (!cddDef) return null;
-
-        // Use the CDD's own columnName as the cache key
         const cacheKey = (cddDef.columnName || "").toLowerCase();
         if (templateCache.has(cacheKey)) return templateCache.get(cacheKey);
-
         const templateStr = cddDef.template?.trim();
         let compiled = null;
         if (templateStr) {
-          try {
-            compiled = Handlebars.compile(templateStr);
-          } catch (ex) {
+          try { compiled = Handlebars.compile(templateStr); }
+          catch (ex) {
             Logger.warning(
-              `DwC Archive: Failed to compile Handlebars template for column "${cddDef.columnName}": ${ex.message}`,
+              `DwC Archive: Failed to compile template for "${cddDef.columnName}": ${ex.message}`,
               "DwC Archive"
             );
           }
@@ -2318,56 +2269,37 @@ export let DataManager = function () {
       }
 
       /**
-       * resolveMediaSource - implements the same pipeline as helpers.processSource()
-       * for use inside DwcArchiveCompiler without introducing a dependency on the
-       * customTypes layer from within the compiler.
+       * mediaUrlResolver — resolves a raw media source string to a fully qualified URL.
+       * Lives here in the DataManager closure because it requires window.location context
+       * and access to the Handlebars template defined in the CDD for each column.
        *
-       * This updated version adds the "#" CDD fallback so that array-item columns
-       * expanded by the media: directive (e.g. "lifePhotos1", "lifePhotos2") correctly
-       * inherit the Handlebars template defined on "lifePhotos#" in the CDD.
-       *
-       * @param {string} rawSource  - Raw .source string from the data row
-       * @param {string} columnName - Actual expanded column name (e.g. "lifePhotos1")
-       * @param {any[]}  rawRow     - Current raw checklist row (for template context)
-       * @returns {string} Fully resolved source URL
+       * @param {string} rawSource  - Raw .source property from the compiled data object
+       * @param {string} columnName - Actual column name (e.g. "fieldPhotos1")
+       * @returns {string}
        */
-      const resolveMediaSource = (rawSource, columnName, rawRow) => {
-        // Resolve the CDD entry with array "#" fallback
+      const mediaUrlResolver = (rawSource, columnName) => {
         const cddDef = resolveCddDef(columnName);
         const compiledTemplate = getCompiledTemplate(cddDef);
-
-        // Build the uiContext expected by helpers.processSource / helpers.processTemplate
         const uiContext = {
           compiledTemplate,
           dataPath: columnName,
           meta: { template: cddDef?.template?.trim() || "" },
-          // Reconstruct a minimal originalData object from the raw row so that
-          // Handlebars {{columnName}} references work the same as in the viewer.
-          originalData: (() => {
-            const obj = {};
-            const rawHeaders = data.sheets.checklist.rawHeaders || [];
-            rawRow.forEach((val, i) => {
-              if (rawHeaders[i]) obj[rawHeaders[i]] = val;
-            });
-            return obj;
-          })(),
-          taxon: { name: "", authority: "" }, // not needed for path templates
+          originalData: {},    // not needed for source resolution
+          taxon: { name: "", authority: "" },
         };
-
         return customTypeHelpers.processSource(rawSource, uiContext);
       };
 
       const result = await compileDwcArchive({
         dwcTableRows,
-        compiledTree: compiledChecklistCache,
+        compiledChecklist: compiledChecklistCache,
         taxaColumnDefs: data.sheets.content.tables.taxa.data[defaultLangCode],
         customizationData: data.sheets.appearance.tables.customization.data[defaultLangCode],
         cddRows,
-        checklistHeaders: data.sheets.checklist.rawHeaders,
-        checklistRawRows: data.sheets.checklist.rawRows,
         defaultLangCode,
-        resolveMediaSource,
+        mediaUrlResolver,
       });
+
       compiledChecklistCache._dwcArchive = result;
     },
   };
@@ -2455,11 +2387,11 @@ function fetchFDirectiveContent(directive, allowedExtensions, runSpecificCache, 
 function processFDirective(data, runSpecificCache, dataPath, rowNumber, assetsCollector, allowedExtensions) {
   if (typeof data !== "string" || !data.startsWith("F:")) return data;
 
-  const unsafeExts = allowedExtensions || ["md"];
-  const content = fetchFDirectiveContent(data, exts, runSpecificCache, dataPath, rowNumber);
+  const unsafeExts = allowedExtensions || [];
 
   //cleanup exts to allow only safe ones: ["md", "markdown", "txt", "bib", "xml"]
   const exts = unsafeExts.filter(e => ["md", "markdown", "txt", "bib", "xml"].includes(e.toLowerCase()));
+  const content = fetchFDirectiveContent(data, exts, runSpecificCache, dataPath, rowNumber);
 
   if (content === null) return null;
 

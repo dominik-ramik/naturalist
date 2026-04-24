@@ -7,6 +7,13 @@ export const customTypeTaxonMeta = {
     summary: "A taxon name, rendered as a clickable link. Shows the [Taxon details](/user-guide/taxon-details) upon click with external search engines if configured in [[ref:content.searchOnline]].",
     whenToUse: "Basionyms, synonyms, type species, host plants, common pests, ...",
     behaviorFulltextIndexing: "Both `taxon.name` and `taxon.authority` are indexed for full-text search.",
+    dwcNotes: {
+      output: "",
+      subPaths: [
+        // {subPath: "source", label: "Source URL"},
+        // {subPath: "title", label: "Title or caption"},
+      ]
+    },
     detailsPaneTab: null,
     inputFormats: [
       {

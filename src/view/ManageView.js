@@ -15,6 +15,7 @@ import { exportTemplateSpreadsheetEmpty, exportTemplateSpreadsheetFilled } from 
 import { compressor } from "../components/LZString.js";
 import { DEFAULT_TOOL } from "./analysisTools/index.js";
 import { manageViewI18n } from "./ManageView.i18n.js";
+import { DWC_ARCHIVE_TYPES } from "../model/nlDataStructureSheets.js";
 
 // Some message keys may be coming from update.php in jsonState
 registerMessages(selfKey, manageViewI18n);
@@ -798,22 +799,17 @@ const SubViews = {
                 m("p.manage-hint-success", t("dwc_export_ready") || "DwC archive compiled successfully."),
               ]),
               m(".manage-actions", [
-                (dwcResult && dwcResult.checklistZip)
-                  ? m(ActionButton, {
-                    label: t("download_dwc_checklist") || "Download DwC Checklist Archive",
-                    icon: "img/ui/manage/download.svg",
-                    block: true,
-                    onclick: () => downloadCompiledData(dwcResult.checklistZip, "taxa_dwca.zip"),
-                  })
-                  : null,
-                (dwcResult && dwcResult.occurrenceZip)
-                  ? m(ActionButton, {
-                    label: t("download_dwc_occurrences") || "Download DwC Occurrence Archive",
-                    icon: "img/ui/manage/download.svg",
-                    block: true,
-                    onclick: () => downloadCompiledData(dwcResult.occurrenceZip, "occurrences_dwca.zip"),
-                  })
-                  : null,
+                Object.entries(DWC_ARCHIVE_TYPES)
+                  .filter(([archiveType]) => dwcResult && dwcResult[archiveType])
+                  .map(([archiveType, typeConfig]) =>
+                    m(ActionButton, {
+                      key: archiveType,
+                      label: t("download_dwc_" + archiveType) || "Download DwC … Archive",
+                      icon: "img/ui/manage/download.svg",
+                      block: true,
+                      onclick: () => downloadCompiledData(dwcResult[archiveType], typeConfig.zipFileName),
+                    })
+                  )
               ]),
             ])
             : null,
