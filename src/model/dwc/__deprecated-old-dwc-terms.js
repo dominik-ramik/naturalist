@@ -43,22 +43,6 @@ export function getLicenseLabel(uri) {
     return withVersion || matchingKeys[0];
 }
 
-/**
- * GBIF-required terms per archive type.
- * Source:
- *   Checklist:   https://www.gbif.org/data-quality-requirements-checklists
- *   Occurrences: https://www.gbif.org/data-quality-requirements-occurrences
- *
- * These are the terms whose absence causes GBIF to reject the archive outright.
- * The compiler uses this to validate that required terms are either user-configured
- * in the table (with a matching exportTo that covers the archive type) or
- * auto-added by the compiler itself.
- */
-export const requiredDwcTerms = {
-    checklist: ["taxonID", "scientificName", "taxonRank"],
-    occurrences: ["occurrenceID", "basisOfRecord", "scientificName", "eventDate"],
-};
-
 export const dwcTermInventory = {
     // Each key is the bare DwC term name (camelCase as in DwC spec)
     scientificName: {

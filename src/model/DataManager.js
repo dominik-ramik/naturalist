@@ -245,7 +245,7 @@ export let DataManager = function () {
 
               const result = processFDirective(
                 rawValue,
-                {},          // fresh cache per cell — these are not bulk-batch like checklist rows
+                {},          // fresh cache per cell - these are not bulk-batch like checklist rows
                 columnKey,   // passed as dataPath for error messages
                 rowIndex + 1,
                 additionalAssets,
@@ -329,7 +329,7 @@ export let DataManager = function () {
         .map((row) => {
           const raw = row.bibtex?.trim();
           if (!raw) return null;
-          return raw;   // already resolved — no F: check needed
+          return raw;   // already resolved - no F: check needed
         })
         .filter((bibtex) => bibtex && bibtex.length > 0)
         .join("\n\n");
@@ -2134,31 +2134,6 @@ export let DataManager = function () {
     data.common.languages.supportedLanguages.forEach(function (lang) {
       checkCustomDataDefinitionDataPaths(data, lang.code, dataPath);
     });
-  }
-
-  function log(level, message) {
-    let hasCritical = false;
-
-    let index = dataManager.loggedMessages.findIndex(function (msg) {
-      if (msg.level == "critical") {
-        hasCritical = true;
-      }
-
-      if (
-        msg.level + "-" + msg.message.toLowerCase() ==
-        level + "-" + message.toLowerCase()
-      ) {
-        return true;
-      }
-    });
-
-    //only log critical errors if there is no other critical error yet
-    if (
-      level != "critical" ||
-      (level == "critical" && !hasCritical && index < 0)
-    ) {
-      dataManager.loggedMessages.push({ level: level, message: message });
-    }
   }
 
   // Object to return

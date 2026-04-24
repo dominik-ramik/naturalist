@@ -1,13 +1,85 @@
+/**
+ * DwcArchiveCompiler.js
+ *
+ * Produces Darwin Core Archive (DwC-A) ZIP files from a compiled NaturaList
+ * checklist. Generates:
+ *   - taxa_dwca.zip         - Tier 1: taxa.csv + meta.xml + eml.xml
+ *   - occurrences_dwca.zip  - Tier 2 (when `basisOfRecord` row present):
+ *                             occurrences.csv + meta.xml + eml.xml
+ *
+ * ─── Taxon column name resolution (.name sub-column pattern) ─────────────────
+ *
+ * NaturaList allows taxa columns to store the name in a `.name` sub-column
+ * (e.g. "Species" definition column → actual header "Species.name").  The
+ * compiler handles this transparently:
+ *
+ *   taxaColHeaderIndices  tries exact name first, then "columnName.name"
+ *   taxa: directive       same fallback for no-component access
+ *   taxa: component path  handled via customTypeTaxon.readData which already
+ *                         implements the .name fallback internally
+ *
+ * ─── Rank guard for taxa: directives ─────────────────────────────────────────
+ *
+ * When a `taxa:Column.component` directive is processed for a taxon at a
+ * HIGHER rank than Column, the result is always "" - a genus row should not
+ * inherit the species epithet just because its representative raw row happens
+ * to be a species row.  The guard compares the referenced column's position in
+ * the taxa hierarchy against the current taxon's rank index.
+ *
+ * ─── Compound extraction - explicit component keys ───────────────────────────
+ *
+ *   location.lat              → decimalLatitude
+ *   location.long             → decimalLongitude
+ *   location.verbatim         → verbatimCoordinates
+ *   altitude.from             → minimumElevationInMeters
+ *   altitude.to               → maximumElevationInMeters
+ *   collectionDate.ymd    → eventDate
+ *   collectionDate.year       → year
+ *   taxa:Species.authority    → scientificNameAuthorship
+ *   taxa:Species.lastNamePart → specificEpithet
+ *   taxa:Species.name         → scientificName (explicit)
+ *
+ * Disambiguation: exact header lookup wins; compound path applies only when
+ * the full dotted path is NOT an existing header AND the suffix is a known
+ * compound key for the root column's NL type.
+ *
+ * ─── EML - per-archive resolution ────────────────────────────────────────────
+ *
+ * EML is resolved independently for each enabled archive (checklist / occurrences).
+ * For a given archive the lookup is:
+ *
+ *   1. eml:fromFile:<path> row whose exportTo covers this archive
+ *      → fetch from usercontent/; Logger.error and omit eml.xml if fetch fails.
+ *   2. eml: field rows whose exportTo covers this archive
+ *      → minimal EML built from them; at least one creator name field required.
+ *   3. Neither present → Logger.warning; archive is produced without eml.xml
+ *      (GBIF will reject datasets without EML metadata).
+ *
+ * ─── Auto directives ─────────────────────────────────────────────────────────
+ *
+ *   auto:taxonID              → UUID v5 from institutionCode:collectionCode:name:rank
+ *   auto:parentNameUsageID    → taxonID of the immediate parent in the hierarchy
+ *   auto:taxonRank            → DwC rank vocabulary value from the column name
+ *   auto:scientificName       → current taxon's own name at its rank level
+ *   auto:scientificNameAuthorship → authority from the rankColumn.authority sub-column
+ *   auto:occurrenceID         → occurrence-only; warn if used in taxon rows
+ *
+ * ─── Sampling Event (Tier 3) ─────────────────────────────────────────────────
+ *
+ * samplingProtocol / eventID rows are recognised and skipped with a warning.
+ * No table changes will be needed when Tier 3 is implemented.
+ * There are currently no plans to implement Tier 3 in v1, but the term inventory and compiler are designed to allow it to be added in a future update without breaking changes.
+ *
+ * External dependency: jszip (npm install jszip)
+ */
+
+import JSZip from "jszip";
 //import { getDwcTerm, normalizeLicense, getLicenseLabel, requiredDwcTerms } from "./dwcTermInventory.js";
-import { buildZip } from "./buildZip.js";
 import { extractCompoundValue, isKnownCompoundKey } from "./dwcCompoundExtractor.js";
 import { getAvailableDataTypeNames, loadDataByType } from "../customTypes/index.js";
 import { Logger } from "../../components/Logger.js";
 import { OCCURRENCE_IDENTIFIER } from "../nlDataStructureSheets.js";
 import { relativeToUsercontent, absoluteUsercontent } from "../../components/Utils.js";
-import { csvField, buildCsvString } from "./buildCsv.js";
-import { buildMetaXml } from "./buildMeta.js";
-import { buildEmlXml } from "./buildEml.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UUID v5 - self-contained, no external dependency (RFC 4122 §4.3)
@@ -37,14 +109,43 @@ async function uuidV5(ns, name) {
   return _bytesToUuid(hash.slice(0, 16));
 }
 
-// CSV helpers moved to src/utils/buildCsv.js
+// ═══════════════════════════════════════════════════════════════════════════════
+// CSV utilities
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function _csvField(v) {
+  const s = (v === null || v === undefined) ? "" : String(v);
+  return (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r"))
+    ? '"' + s.replace(/"/g, '""') + '"'
+    : s;
+}
+function buildCsvString(columns, rows) {
+  const lines = [columns.map(_csvField).join(",")];
+  for (const row of rows) lines.push(columns.map(c => _csvField(row[c] ?? "")).join(","));
+  return lines.join("\n");
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // meta.xml generation
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// meta.xml generation moved to src/model/dwc/buildMeta.js
-// function buildMetaXml is imported from ./buildMeta.js
+function buildMetaXml(fieldUris, rowType, dataFile) {
+  const fields = fieldUris
+    .map((uri, i) => uri ? `    <field index="${i}" term="${uri}"/>` : null)
+    .filter(Boolean).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<archive xmlns="http://rs.tdwg.org/dwc/text/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://rs.tdwg.org/dwc/text/ http://rs.tdwg.org/dwc/text/tdwg_dwc_text.xsd">
+  <core encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="&#13;&#10;"
+        fieldsEnclosedBy="&quot;" ignoreHeaderLines="1"
+        rowType="${rowType}">
+    <files><location>${dataFile}</location></files>
+    <id index="0"/>
+${fields}
+  </core>
+</archive>`;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EML fetch helper
@@ -90,8 +191,72 @@ async function tryFetchEml(relativePath) {
   }
 }
 
-// EML generation moved to src/model/dwc/buildEml.js
-// function buildEmlXml is imported from ./buildEml.js
+// ═══════════════════════════════════════════════════════════════════════════════
+// eml.xml generation - minimal GBIF-valid EML 2.1.1
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function buildEmlXml(opts) {
+  const e = s => (s || "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+  const c = opts.creator || {};
+
+  const individualNameBlock = (c.givenName || c.surName)
+    ? `      <individualName>\n` +
+    (c.givenName ? `        <givenName>${e(c.givenName)}</givenName>\n` : "") +
+    (c.surName ? `        <surName>${e(c.surName)}</surName>\n` : "") +
+    `      </individualName>\n`
+    : "";
+
+  const responsiblePartyContent =
+    individualNameBlock +
+    (c.organizationName ? `      <organizationName>${e(c.organizationName)}</organizationName>\n` : "") +
+    (c.email ? `      <electronicMailAddress>${e(c.email)}</electronicMailAddress>\n` : "") +
+    (c.url ? `      <onlineUrl>${e(c.url)}</onlineUrl>\n` : "") +
+    (c.userId ? `      <userId directory="https://orcid.org/">${e(c.userId)}</userId>\n` : "");
+
+  const creatorBlock = `    <creator>\n${responsiblePartyContent}    </creator>\n`;
+  const metadataProviderBlock = `    <metadataProvider>\n${responsiblePartyContent}    </metadataProvider>\n`;
+  const contactBlock = `    <contact>\n${responsiblePartyContent}    </contact>\n`;
+
+  const geoCoverage = opts.geographicDescription
+    ? `    <coverage>\n      <geographicCoverage>\n` +
+    `        <geographicDescription>${e(opts.geographicDescription)}</geographicDescription>\n` +
+    `      </geographicCoverage>\n    </coverage>\n` : "";
+
+  const taxCoverage = opts.taxonomicDescription
+    ? `    <coverage>\n      <taxonomicCoverage>\n` +
+    `        <generalTaxonomicCoverage>${e(opts.taxonomicDescription)}</generalTaxonomicCoverage>\n` +
+    `      </taxonomicCoverage>\n    </coverage>\n` : "";
+
+  const tempCoverage = opts.temporalDescription
+    ? `    <coverage>\n      <temporalCoverage>\n` +
+    `        <singleDateTime><calendarDate>${e(opts.temporalDescription)}</calendarDate></singleDateTime>\n` +
+    `      </temporalCoverage>\n    </coverage>\n` : "";
+
+  // intellectualRights: use a human-readable label if available, else the URI
+  const licenseText = opts.licenseLabel || opts.license || "";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd"
+         packageId="${e(opts.packageId)}"
+         system="http://gbif.org"
+         scope="system"
+         xml:lang="${e(opts.language)}">
+  <dataset>
+    <title xml:lang="${e(opts.language)}">${e(opts.title)}</title>
+${creatorBlock}${metadataProviderBlock}<pubDate>${e(opts.pubDate)}</pubDate>
+    <language>${e(opts.language)}</language>
+    <abstract><para>${e(opts.abstract)}</para></abstract>
+${geoCoverage}${taxCoverage}${tempCoverage}    <intellectualRights>
+      <para><ulink url="${e(opts.license)}"><citetitle>${e(licenseText)}</citetitle></ulink></para>
+    </intellectualRights>${contactBlock}
+  </dataset>
+</eml:eml>`;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Markdown stripping
@@ -1796,12 +1961,11 @@ export async function compileDwcArchive(params) {
 
   if (checklistExportEnabled && taxonCsvRows.length > 0) {
     const emlXml = await resolveEmlForArchive("checklist");
-    const files = [
-      { fileName: "taxa.csv", fileContent: buildCsvString(allTaxonTerms, taxonCsvRows) },
-      { fileName: "meta.xml", fileContent: taxonMetaXml },
-    ];
-    if (emlXml) files.push({ fileName: "eml.xml", fileContent: emlXml });
-    checklistZip = await buildZip(files, { type: "blob", compression: "DEFLATE" });
+    const zip = new JSZip();
+    zip.file("taxa.csv", buildCsvString(allTaxonTerms, taxonCsvRows));
+    zip.file("meta.xml", taxonMetaXml);
+    if (emlXml) zip.file("eml.xml", emlXml);
+    checklistZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(
       `DwC Archive: Checklist archive ready - ${taxonCsvRows.length} taxon record(s) across ${taxaColumns.length} rank level(s).`,
       "DwC Archive"
@@ -1813,12 +1977,11 @@ export async function compileDwcArchive(params) {
   if (occurrenceExportEnabled && occurrenceCsvRows.length > 0) {
     const ot = ["occurrenceID", ...occurrenceExplicitTerms.filter(t => t !== "occurrenceID")];
     const emlXml = await resolveEmlForArchive("occurrences");
-    const files = [
-      { fileName: "occurrences.csv", fileContent: buildCsvString(ot, occurrenceCsvRows) },
-      { fileName: "meta.xml", fileContent: occMetaXml },
-    ];
-    if (emlXml) files.push({ fileName: "eml.xml", fileContent: emlXml });
-    occurrenceZip = await buildZip(files, { type: "blob", compression: "DEFLATE" });
+    const zip = new JSZip();
+    zip.file("occurrences.csv", buildCsvString(ot, occurrenceCsvRows));
+    zip.file("meta.xml", occMetaXml);
+    if (emlXml) zip.file("eml.xml", emlXml);
+    occurrenceZip = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
     Logger.info(`DwC Archive: Occurrence archive ready - ${occurrenceCsvRows.length} occurrence record(s).`, "DwC Archive");
   }
 

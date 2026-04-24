@@ -12,7 +12,7 @@ export const DWC_ARCHIVE_TYPES = {
         zipFileName: "taxa_dwca.zip",
 
     },
-    occurrence: {
+    occurrences: {
         rowTypeDwcUri: "http://rs.tdwg.org/dwc/terms/Occurrence",
         csvFileName: "occurrences.csv",
         zipFileName: "occurrences_dwca.zip",
@@ -29,7 +29,7 @@ export const CUSTOMIZATION_ITEMS = {
         key: "About section",
         defaultValue: null,
         description: "Markdown text for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. A generic default value is used in case none was entered. See [External text files](./external-text-files)."
-    }, // i18n — caller must supply
+    }, // i18n - caller must supply
     HOW_TO_CITE: {
         key: "How to cite",
         defaultValue: "",
@@ -1856,7 +1856,7 @@ export const nlDataStructureSheets = {
             dwcArchive: {
                 name: "DwC archive",
                 required: false,
-                description: "Configures export in **Darwin Core Archive** (DwC-A) format for submission to **GBIF** and other biodiversity databases. Each row maps one DwC term to a value source. The compiler can produce a checklist archive (`" + DWC_ARCHIVE_TYPES.checklist.zipFileName + "`), an occurrence archive (`" + DWC_ARCHIVE_TYPES.occurrence.zipFileName + "`), or both. See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide.",
+                description: "Configures export in **Darwin Core Archive** (DwC-A) format for submission to **GBIF** and other biodiversity databases. Each row maps one DwC term to a value source directive. The compiler can produce a checklist archive (`" + DWC_ARCHIVE_TYPES.checklist.zipFileName + "`), an occurrence archive (`" + DWC_ARCHIVE_TYPES.occurrences.zipFileName + "`), or both.\n\nThis table as a **translation layer** between your spreadsheet data and the DwC-A terms. The [[ref:content.dwcArchive.valueSource]] column holds that answer as a directive. See [Darwin Core Archive export](/author-guide/dwc) for the conceptual guide.",
                 notes: [
                     {
                         type: "warning",
@@ -1868,17 +1868,30 @@ export const nlDataStructureSheets = {
                     {
                         columnKey: "valueSource",
                         shouldProcessComment: "if `term` is `eml:precomposed`",
-                        // or use shouldProcess: null to process all rows unconditionally, or a custom function for more complex logic
                         shouldProcess: (row) => row.term === "eml:precomposed",
                     },
                 ],
                 columns: {
                     exportTo: {
                         name: "Export to",
-                        description: "Type of archive into which the row is exported.",
-                        howToUse: "Set to any of the accepted values depending on where you want to export the data.",
+                        description: "Controls which archive this row contributes to: the checklist archive (one row per taxon node) or the occurrence archive (one row per occurrence record). Each row targets exactly one archive.",
+                        howToUse: "Use `" + Object.keys(DWC_ARCHIVE_TYPES)[0] + "` for taxonomy-only archive. Use `" + Object.keys(DWC_ARCHIVE_TYPES)[1] + "` for occurrence-only archive. For terms that belong in both archives - `institutionCode`, `scientificName`, `language` or `eml` directives - add two rows with the same term and value source, one per archive.",
                         notes: [],
-                        examples: [],
+                        examples: [
+                            {
+                                label: "Shared terms duplicated per archive, archive-specific terms separate",
+                                text: "Simplified **checklist** and **occurrences** archives. Institution code and scientific name appear in both archives, so each gets two rows. Archive-specific terms use the target row.",
+                                columns: ["Export to", "Term", "Value source"],
+                                rows: [
+                                    ["checklist", "dwc:institutionCode", "plain: MNHN"],
+                                    ["occurrences", "dwc:institutionCode", "plain: MNHN"],
+                                    ["checklist", "dwc:scientificName", "auto:scientificName"],
+                                    ["occurrences", "dwc:scientificName", "auto:scientificName"],
+                                    ["checklist", "dwc:taxonID", "auto:taxonID"],
+                                    ["occurrences", "dwc:basisOfRecord", "plain: PreservedSpecimen"],
+                                ]
+                            }
+                        ],
                         integrity: {
                             allowEmpty: false,
                             allowDuplicates: "yes",
@@ -1889,23 +1902,41 @@ export const nlDataStructureSheets = {
                     },
                     term: {
                         name: "Term",
-                        description: "The Darwin Core term name (camelCase, e.g. `dwc:decimalLatitude`, `dcterms:language`), or an `eml:` prefixed field (e.g. `eml:precomposed`, `eml:title`, `eml:packageId`, ...) for EML metadata generation.",
-                        howToUse: "Use standard camelCase term names with `dwc:`, `dcterms:`, `dwciri:`, `dc:`; see Darwin Core List of Terms on [dwc.tdwg.org](https://dwc.tdwg.org/list/){target=_blank}, or `eml:` prefixes. See [EML metadata](./dwc#eml-metadata) for the full list of supported `eml:` terms. If your project has more than one language set in [[ref:appearance.supportedLanguages]], you have to specify `dcterms:language` to one of your language codes, otherwise the default (first row) language will be used.",
+                        description: "The Darwin Core term to populate, written with its namespace prefix in camelCase (e.g. `dwc:decimalLatitude`, `dcterms:language`, `dwciri:toDigitalSpecimen`). Alternatively, an `eml:` prefixed field (e.g. `eml:precomposed`, `eml:title`, `eml:creator.surName`) for EML metadata generation.\n\nSupported namespace prefixes: `dwc:`, `dcterms:`, `dwciri:`, `dc:`. See the full Darwin Core List of Terms at [dwc.tdwg.org](https://dwc.tdwg.org/list/){target=_blank}. For EML fields, see examples below.",
+                        howToUse: "Use the standard prefixed camelCase term name. If your project has more than one language set in [[ref:appearance.supportedLanguages]], specify `dcterms:language` to pin a language code to each archive; otherwise the first (default) language is used.",
                         notes: [],
                         examples: [
                             {
-                                label: "Specify language code",
-                                text: "Supposing you have English (en) and French (fr) in [[ref:appearance.supportedLanguages]] table, the below would take your English dataset as the basis for the `checklist` archive export, and your French dataset for the `occurrence` archive export. In practice, you will probably want to export only your default/English language dataset.",
-                                columns: [
-                                    "Export to",
-                                    "Term",
-                                    "Value source"
-                                ],
+                                label: "Pinning a language to each archive",
+                                text: "Supposing you have English (`en`) and French (`fr`) in [[ref:appearance.supportedLanguages]], the below takes the English dataset for the checklist archive and French for the occurrence archive. In practice you will usually want the same language for both.",
+                                columns: ["Export to", "Term", "Value source"],
                                 rows: [
                                     [Object.keys(DWC_ARCHIVE_TYPES)[0], "dcterms:language", "plain: en"],
                                     [Object.keys(DWC_ARCHIVE_TYPES)[1], "dcterms:language", "plain: fr"]
                                 ]
-                            }
+                            },
+                            {
+                                label: "EML metadata from file and from directives",
+                                text: "The **checklist** receives the EML metadata from a file you authored separately and stored inside `usercontent/`. The **occurrence** archive gets the metadata baked-in from directives in the table.",
+                                columns: ["Export to", "Term", "Value source", "[comment]"],
+                                rows: [
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "eml:precomposed", "F:dwc/checklist_eml.xml", "file stored in subfolder `dwc/` of `usercontent/`"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:packageId", "plain: doi:10.12345/mydataset", "Ensure you enter unique package ID"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:title", "config: " + CUSTOMIZATION_ITEMS.PROJECT_NAME.key, "Get title from our Project name in [[ref:appearance.customization]]"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:pubDate", "auto:pubDate", "Generated on export, if `eml:pubDate` is ommited, today's date is used by default"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:abstract", "config: " + CUSTOMIZATION_ITEMS.ABOUT_SECTION.key, "Get abstract from our About section in [[ref:appearance.customization]]"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:licenseUri", "plain: https://creativecommons.org/licenses/by/4.0/legalcode", "Use the full license URI for machine readability"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:licenseLabel", "plain: CC BY 4.0", "Use a human-readable license label for the EML metadata"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorGivenName", "plain: Jane", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorSurName", "plain: Doe", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorEmail", "plain: jane.doe@example.com", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorOrganizationName", "plain: Example Organization", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorUrl", "plain: https://example.com/jane-doe", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorUserId", "0000-0002-1825-1234", ""],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:geographicDescription", "plain: Azerbaijan", "In XML renders under `coverage/geographicCoverage/geographicDescription`"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:generalTaxonomicCoverage", "plain: Dataset covers the vascular plants of Gobustan National Park in Azerbaijan.", "In XML renders under `coverage/taxonomicCoverage/generalTaxonomicCoverage`"],
+                                ]
+                            },
                         ],
                         integrity: {
                             allowEmpty: false,
@@ -1916,37 +1947,122 @@ export const nlDataStructureSheets = {
                     },
                     valueSource: {
                         name: "Value source",
-                        description: "A directive that tells the compiler where to read the value for this DwC term. Read the full directive reference with all options and examples on [Value source directives](/author-guide/dwc#value-source-directives). Below is a quick overview of available directive types:\n\n- Plain column name (e.g. `recordedBy`), or a `{columnName}` template (e.g. `{collector} leg. | {observer} obs.`)\n\n- `config: Item Name`\n\n- `taxa: columnName`\n\n- `auto: termName`\n\n- `media: columnName, anotherColumnName, …`\n\n- `plain: Some static text…`",
-                        howToUse: "Enter the directive that matches the DwC term expected content. See [Value source directives](/author-guide/dwc#value-source-directives) for full reference.",
+                        description: "A directive that tells the compiler where to read the value for this DwC term. Several directive types are available, each suited to a different kind of term. See the examples section for detailed explanation and usage examples.",
+                        howToUse: "Enter the directive prefixes (before the :) in lower case, followed by the directive value.",
                         notes: [],
                         examples: [
                             {
-                                label: "Conceptual simplified setup for exporting both checklist and occurrence data",
-                                text: "Note the last `checklist` row using a DwC term not present in our inventory so the full identifier is provided after the |",
-                                columns: [
-                                    "Export to",
-                                    "DwC term",
-                                    "Value source"
-                                ],
+                                label: "A) Column name directives - per-record data from your data sheet",
+                                text: "Use the plain column name when the value is entered per-record in your [[ref:data]] sheet. Use a `{template}` to combine or format multiple columns into a single string; each `|`-separated segment is included only when all its placeholders resolve to non-empty values.",
+                                columns: ["Export to", "Term", "Value source", "[comment]"],
                                 rows: [
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dcterms:language", "plain: en"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:institutionCode", "plain: NHM"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:datasetName", "config: Checklist name"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "eml:precomposed", "F:dwc/checklist-eml.xml"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:taxonID", "auto: taxonID"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:scientificName", "auto:scientificName"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:taxonRank", "auto:taxonRank"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwciri:toDigitalSpecimen", "..."],
-                                    ["...", "...", "..."],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dcterms:language", "plain: en"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:institutionCode", "plain: NHM"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:precomposed", "F:dwc/occurrence-eml.xml"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:occurrenceID", "auto:occurrenceID"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:basisOfRecord", "plain: PreservedSpecimen"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:datasetName", "config: Checklist name"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:scientificName", "auto:scientificName"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:taxonRank", "auto:taxonRank"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:eventDate", "collectedDate.ymd"],
+                                    ["occurrences", "dwc:recordedBy", "collector.name", "Value from column `collector.name` in [[ref:data]] for that particular occurrence row"],
+                                    ["occurrences", "dwc:decimalLatitude", "collectedAt.lat", "Suppose `collectedAt` column is a [[ref:type.geopoint]] and as such it exposes `lat` and `long` sub-fields; we get the `lat` of the particular occurrence row here"],
+                                    ["occurrences", "dwc:decimalLongitude", "collectedAt.long", "... same for the `long` value"],
+                                    ["occurrences", "dwc:verbatimCoordinates", "collectedAt.verbatim", "[[ref:type.geopoint]] type also exposes `verbatim` value"],
+                                    ["occurrences", "dwc:verbatimLocality", "Country: {country} | Province: {province} | Place name: {placeName}", "Three columns combined here. For each occurrence row, if any of the `country`, `province` and `placeName` columns in your [[ref:data]] sheet are all empty, the segment value will be skipped. In a row where `province` and `placeName` are empty, this will only write e.g. `Country: Laos`. If only `country` and `placeName` collumns are filled, this would write e.g `Country: Laos | Place name: Muang Kham`."],
+                                    ["occurrences", "dwc:minimumElevationInMeters", "altitude.from", "Suppose `altitude` column is a [[ref:type.range]] and as such it exposes `from` and `to` sub-fields as numbers; we get the `from` value here"],
+                                    ["occurrences", "dwc:maximumElevationInMeters", "altitude.to", "... and `to` for the upper limit"],
+                                    ["occurrences", "dwc:eventDate", "collectionDate.ymd", "Suppose `collectionDate` column is a [[ref:type.date]], as such it exposes `ymd`, `year`, `month`, `day` sub-fields; we get the full date in YYYY-MM-DD format here"],
+                                    ["occurrences", "dwc:year", "collectionDate.year", "... and the standalone year; we could also get `.month` or `.day` if we wanted those separately"],
+                                ]
+                            },
+                            {
+                                label: "B) auto: - values computed from the compiled taxonomy",
+                                text: "Use `auto:` for terms whose values are rank-aware or hierarchy-aware - they cannot be read from a single spreadsheet column because the correct value depends on which node is being exported. `auto:scientificName`, for example, resolves to the taxon name of currenly processed node: a family node yields its family name, a genus node yields its genus name. `auto:parentNameUsageID` links every node to its immediate parent automatically. `auto:taxonID` produces a stable UUID derived from each node's identity, consistent across re-exports.",
+                                columns: ["Export to", "Term", "Value source", "[comment]"],
+                                rows: [
+                                    ["checklist", "dwc:taxonID", "auto:taxonID", "UUID v5 stable across re-exports"],
+                                    ["checklist", "dwc:parentNameUsageID", "auto:parentNameUsageID", "`taxonID` of the immediate parent node"],
+                                    ["checklist", "dwc:taxonRank", "auto:taxonRank", "Rank label from [[ref:content.taxa.columnName]] in your [[ref:content.taxa]] table, if you export to DwC-A, your column names should match the standard DwC rank names"],
+                                    ["checklist", "dwc:scientificName", "auto:scientificName", "Taxon name for the currently processed rank"],
+                                    ["checklist", "dwc:scientificNameAuthorship", "auto:scientificNameAuthorship", "Authority from the currently processed rank column's `.authority` sub-column"],
+                                    ["occurrences", "dwc:occurrenceID", "auto:occurrenceID", "Value from your `occurrence` column. If you use another column to store a unique ID for your occurrences, you can reference it with the plain column, e.g. `uniqueCatalogNumber`."],
+                                ]
+                            },
+                            {
+                                label: "C) plain: - static text constant across the entire export",
+                                text: "Use `plain:` to enter constant values that are the same for every record: language, institution code, collection code, license, basis of record, geodetic datum, and so on. The value after `plain:` is used verbatim.",
+                                columns: ["Export to", "Term", "Value source"],
+                                rows: [
+                                    ["checklist", "dcterms:language", "plain: en"],
+                                    ["checklist", "dwc:institutionCode", "plain: MNHN"],
+                                    ["checklist", "dwc:collectionCode", "plain: HERBARIUM-P"],
+                                    ["checklist", "dcterms:license", "plain: CC BY 4.0"],
+                                    ["occurrences", "dwc:basisOfRecord", "plain: PreservedSpecimen"],
+                                    ["occurrences", "dwc:geodeticDatum", "plain: WGS84"],
+                                ]
+                            },
+                            {
+                                label: "D) config: - dataset-wide metadata from your customization table",
+                                text: "Use `config:` to reference values already stored in [[ref:appearance.customization]], avoiding duplication. The item name after `config:` must match a key in that table exactly.",
+                                columns: ["Export to", "Term", "Value source"],
+                                rows: [
+                                    ["checklist", "dwc:datasetName", "config: " + CUSTOMIZATION_ITEMS.PROJECT_NAME.key],
+                                    ["occurrences", "dwc:bibliographicCitation", "config: " + CUSTOMIZATION_ITEMS.HOW_TO_CITE.key],
+                                ]
+                            },
+                            {
+                                label: "E) taxa: - literal value from a named taxon rank column",
+                                text: "Use `taxa:ColumnName` to read the value stored in a specific rank's column for every exported record. This is distinct from `auto:` in that `taxa:` reads what you entered in the specific taxon column, while `auto:` computes the value of the currently processed rank record. Append `.name`, `.authority`, or `.lastNamePart` to address sub-fields of a taxon column (`.lastNamePart` extracts the terminal epithet, e.g. `aurea` from `Litoria aurea`). In this example `Family`, `Genus`, `Species` and `Subspecies` are the column names in your [[ref:content.taxa]].",
+                                columns: ["Export to", "Term", "Value source"],
+                                rows: [
+                                    ["checklist", "dwc:family", "taxa:Family"],
+                                    ["checklist", "dwc:genus", "taxa:Genus"],
+                                    ["checklist", "dwc:specificEpithet", "taxa:Species.lastNamePart"],
+                                    ["checklist", "dwc:infraspecificEpithet", "taxa:Subspecies.lastNamePart"],
+                                ]
+                            },
+                            {
+                                label: "F) media: - resolved permalink URLs for associatedMedia",
+                                text: "Use `media:` exclusively for `dwc:associatedMedia` and other terms which expect full media URLs. Plain media columns are not useful here. The `media:` directive extracts and resolves the full permalink URL from each listed column and joins multiple results with `|`. List column names separated by commas. Append `#` to automatically expand array columns (`lifePhotos#` → `lifePhotos1`, `lifePhotos2`, …).",
+                                columns: ["Export to", "Term", "Value source", "[comment]"],
+                                rows: [
+                                    ["occurrences", "dwc:associatedMedia", "media: fieldPhotos#, specimenScan", "This will take all the photos from the `fieldPhotos` array and the image from `specimenScan` columns and join their URLs with `|` as required by DwC-A"],
+                                ]
+                            },
+                            {
+                                label: "Complete worked example - checklist and occurrence archive",
+                                text: "A fairly complete configuration for a herbarium dataset ready for both a taxon checklist and preserved specimen occurrences DwC-A export. Terms shared between archives are duplicated explicitly, one row per archive.",
+                                columns: ["Export to", "Term", "Value source", "[comment]"],
+                                rows: [
+                                    ["checklist", "eml:precomposed", "F:dwc/checklist_eml.xml"],
+                                    ["checklist", "dcterms:language", "plain: en"],
+                                    ["checklist", "dwc:institutionCode", "plain: MNHN"],
+                                    ["checklist", "dwc:collectionCode", "plain: HERBARIUM-P"],
+                                    ["checklist", "dcterms:license", "plain: CC BY 4.0"],
+                                    ["checklist", "dwc:datasetName", "config: Checklist name"],
+                                    ["checklist", "dwc:taxonRank", "auto:taxonRank"],
+                                    ["checklist", "dwc:scientificName", "auto:scientificName"],
+                                    ["checklist", "dwc:scientificNameAuthorship", "auto:scientificNameAuthorship"],
+                                    ["checklist", "dwc:kingdom", "plain: Plantae"],
+                                    ["checklist", "dwc:family", "taxa:Family"],
+                                    ["checklist", "dwc:genus", "taxa:Genus"],
+                                    ["checklist", "dwc:specificEpithet", "taxa:Species.lastNamePart"],
+                                    ["checklist", "dwc:taxonID", "auto:taxonID"],
+                                    ["checklist", "dwc:parentNameUsageID", "auto:parentNameUsageID"],
+                                    ["occurrences", "eml:precomposed", "F:dwc/occurrence-eml.xml"],
+                                    ["occurrences", "dcterms:language", "plain: en"],
+                                    ["occurrences", "dwc:institutionCode", "plain: MNHN"],
+                                    ["occurrences", "dwc:collectionCode", "plain: HERBARIUM-P"],
+                                    ["occurrences", "dcterms:license", "plain: CC BY 4.0"],
+                                    ["occurrences", "dwc:datasetName", "config: Checklist name"],
+                                    ["occurrences", "dwc:taxonRank", "auto:taxonRank"],
+                                    ["occurrences", "dwc:scientificName", "auto:scientificName"],
+                                    ["occurrences", "dwc:scientificNameAuthorship", "auto:scientificNameAuthorship"],
+                                    ["occurrences", "dwc:kingdom", "plain: Plantae"],
+                                    ["occurrences", "dwc:family", "taxa:Family"],
+                                    ["occurrences", "dwc:genus", "taxa:Genus"],
+                                    ["occurrences", "dwc:specificEpithet", "taxa:Species.lastNamePart"],
+                                    ["occurrences", "dwc:basisOfRecord", "plain: PreservedSpecimen"],
+                                    ["occurrences", "dwc:occurrenceID", "auto:occurrenceID"],
+                                    ["occurrences", "dwc:recordedBy", "collectorName"],
+                                    ["occurrences", "dwc:eventDate", "collectionDate.ymd"],
+                                    ["occurrences", "dwc:locality", "localityName"],
+                                    ["occurrences", "dwc:decimalLatitude", "location.lat"],
+                                    ["occurrences", "dwc:decimalLongitude", "location.long"],
+                                    ["occurrences", "dwc:geodeticDatum", "plain: WGS84"],
+                                    ["occurrences", "dwc:associatedMedia", "media: specimenScan, fieldPhotos#"],
                                 ]
                             }
                         ],
@@ -1960,9 +2076,16 @@ export const nlDataStructureSheets = {
                 },
                 data: [],
                 templateData: [
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "eml:precomposed", valueSource: "F:dwc/checklist-eml.xml" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dcterms:language", valueSource: "plain: en" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:institutionCode", valueSource: "plain: NHM" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:datasetName", valueSource: "config: Checklist name" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:taxonID", valueSource: "auto:taxonID" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:parentNameUsageID", valueSource: "auto:parentNameUsageID" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:taxonRank", valueSource: "auto:taxonRank" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:scientificName", valueSource: "auto:scientificName" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:scientificNameAuthorship", valueSource: "auto:scientificNameAuthorship" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:family", valueSource: "taxa: Family" },
                 ]
             }
         }
