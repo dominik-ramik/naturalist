@@ -3,17 +3,17 @@ import { TinyBibReader } from 'bibtex-json-toolbox';
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { absoluteUsercontent, isValidHttpUrl, pad, relativeToUsercontent, splitN } from "../components/Utils.js";
-import { getAllColumnInfos, getItem, nlDataStructure } from "./DataManagerData.js";
+import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
 import { Logger } from "../components/Logger.js";
 import { dataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
-import { resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
+import { MONTH_KEYS, resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
 import { compileDwcArchive } from "./dwc/DwcArchiveCompiler.js";
 import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
-import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { dataManagerI18n } from "./DataManager.i18n.js";
 
 registerMessages(selfKey, dataManagerI18n);
@@ -109,6 +109,33 @@ function hasAnyDataForRootColumn(headers, row, rootColName) {
   });
 }
 
+// DataManagerData.js
+export function getItem(tableData, itemNameOrDescriptor, langCode, callerDefault) {
+  const isDescriptor = itemNameOrDescriptor !== null
+    && typeof itemNameOrDescriptor === "object";
+
+  const itemName = isDescriptor ? itemNameOrDescriptor.key : itemNameOrDescriptor;
+  const defaultValue = ((isDescriptor && arguments.length < 4) || (arguments.length >= 4 && (callerDefault === undefined || callerDefault === null)))
+    ? itemNameOrDescriptor.defaultValue
+    : callerDefault;
+
+  if (!tableData || !tableData[langCode]) {
+    return defaultValue;
+  }
+
+  const item = tableData[langCode].find(row => row.item == itemName);
+  if (item === undefined) {
+    Logger.info(tf("dm_item_fallback_to_default", [itemName, langCode, defaultValue]), "Customization item using default value");
+    return defaultValue;
+  }
+
+  const value = item.value;
+  if (value === null || value === undefined) {
+    return defaultValue;
+  }
+  return value;
+}
+
 export let DataManager = function () {
   const data = nlDataStructure;
 
@@ -139,7 +166,7 @@ export let DataManager = function () {
         compiledForVersion: import.meta.env.VITE_APP_VERSION,
         lastUpdate: currentDateString,
         defaultVersion: data.common.languages.defaultLanguageCode,
-        bibliography: gatherReferences(),
+        bibliography: {}, // to be filled from content of bibliography table
       },
       versions: {},
     };
@@ -173,7 +200,7 @@ export let DataManager = function () {
 
           if (data && data != "") {
             // Pass assetsFromFDirectives as an argument to processFDirective
-            let result = processFDirective(data, runSpecificCache, log, dataPath, rowNumber, additionalAssets);
+            let result = processFDirective(data, runSpecificCache, dataPath, rowNumber, additionalAssets);
             if (result) {
               setDataAtDataPath(entryData, dataPath, result);
             }
@@ -181,6 +208,62 @@ export let DataManager = function () {
         }
       });
     });
+
+    // ── F-directive processing for content-sheet tables ──────────────────────
+    // Walks every table in sheets.content that declares fDirectiveColumns and
+    // resolves any "F:" references in the nominated columns.  This runs once
+    // per language so each language's data rows are processed independently.
+    // Adding fDirectiveColumns to a new table is sufficient to opt it in here.
+    data.common.languages.supportedLanguages.forEach(function (lang) {
+
+      const fDirectiveSheetKeys = ["content", "appearance"];
+
+      fDirectiveSheetKeys.forEach(function (sheetKey) {
+        const sheetTables = data.sheets[sheetKey]?.tables;
+        if (!sheetTables) return;
+
+        Object.keys(sheetTables).forEach(function (tableKey) {
+          const tableDef = sheetTables[tableKey];
+          const fDirectiveColumns = tableDef.fDirectiveColumns;
+
+          // Skip tables that have not opted in
+          if (!fDirectiveColumns || fDirectiveColumns.length === 0) return;
+
+          const rows = tableDef.data?.[lang.code];
+          if (!rows || rows.length === 0) return;
+
+          rows.forEach(function (row, rowIndex) {
+            fDirectiveColumns.forEach(function (colSpec) {
+              const { columnKey, shouldProcess, allowedExtensions } = colSpec;
+              const rawValue = row[columnKey];
+
+              // Nothing to process if cell is empty or not a string
+              if (typeof rawValue !== "string" || rawValue.trim() === "") return;
+
+              // Apply the optional per-row predicate
+              if (typeof shouldProcess === "function" && !shouldProcess(row)) return;
+
+              const result = processFDirective(
+                rawValue,
+                {},          // fresh cache per cell — these are not bulk-batch like checklist rows
+                columnKey,   // passed as dataPath for error messages
+                rowIndex + 1,
+                additionalAssets,
+                allowedExtensions
+              );
+
+              if (result !== null && result !== rawValue) {
+                row[columnKey] = result;
+              }
+            });
+          });
+        });
+      });
+    });
+
+    // All F: directives in content/appearance tables are now resolved.
+    // gatherReferences() can now read the already-substituted bibtex values.
+    checklist.general.bibliography = gatherReferences();
 
     // Now that all F: directives are processed, gather assets
     checklist.general.assets = gatherPreloadableAssets();
@@ -227,29 +310,6 @@ export let DataManager = function () {
     }
 
     function gatherReferences() {
-      let useCitations = getItem(
-        data.sheets.appearance.tables.customization.data,
-        "Use citations",
-        data.common.languages.defaultLanguageCode, //only support bibtex in default language code
-        ""
-      )
-        .toLowerCase();
-
-      if (useCitations.trim() == "") {
-        useCitations = "apa"; // default to APA if not specified
-      }
-
-      let supportedCitationStyles = ["apa", "harvard"];
-      if (!supportedCitationStyles.includes(useCitations)) {
-        Logger.error(
-          "Unknown citation style '" +
-          useCitations +
-          "'. Supported values are " +
-          ["apa", "harvard"].map((x) => "'" + x + "'").join(", ")
-        );
-        return {};
-      }
-
       // Get bibliography data from Excel table
 
       //console.log(data.sheets.content.tables);
@@ -265,11 +325,11 @@ export let DataManager = function () {
 
       // Combine all BibTeX entries from individual cells
       const bibCache = {};
-      let combinedBibtex = bibliographyData
+      const combinedBibtex = bibliographyData
         .map((row) => {
           const raw = row.bibtex?.trim();
           if (!raw) return null;
-          return raw.startsWith("F:") ? fetchFDirectiveContent(raw, ["txt", "bib"], bibCache) : raw;
+          return raw;   // already resolved — no F: check needed
         })
         .filter((bibtex) => bibtex && bibtex.length > 0)
         .join("\n\n");
@@ -409,18 +469,16 @@ export let DataManager = function () {
         let precacheMaxTotalSizeMb = parseFloat(
           getItem(
             data.sheets.appearance.tables.customization.data,
-            "Precache max total size",
-            data.common.languages.defaultLanguageCode,
-            200
+            CUSTOMIZATION_ITEMS.PRECACHE_MAX_TOTAL_SIZE,
+            data.common.languages.defaultLanguageCode
           )
         );
 
         let precacheMaxFileSizeMb = parseFloat(
           getItem(
             data.sheets.appearance.tables.customization.data,
-            "Precache max file size",
-            data.common.languages.defaultLanguageCode,
-            0.5
+            CUSTOMIZATION_ITEMS.PRECACHE_MAX_FILE_SIZE,
+            data.common.languages.defaultLanguageCode
           )
         );
 
@@ -510,59 +568,55 @@ export let DataManager = function () {
     function compileChecklistVersion(lang) {
       let hue = getItem(
         data.sheets.appearance.tables.customization.data,
-        "Color theme hue",
-        lang.code,
-        212
+        CUSTOMIZATION_ITEMS.COLOR_THEME_HUE,
+        lang.code
       );
       let name = getItem(
         data.sheets.appearance.tables.customization.data,
-        "Project name",
-        lang.code,
-        "New project"
-      );
-      let about = getItem(
-        data.sheets.appearance.tables.customization.data,
-        "About section",
-        lang.code,
-        t("generic_about")
+        CUSTOMIZATION_ITEMS.PROJECT_NAME,
+        lang.code
       );
 
-      let aboutResult = processFDirective(about, {}, log, null, null, additionalAssets);
-      if (aboutResult) {
-        about = aboutResult;
-      }
+      // The generic fDirectiveColumns loop has already resolved any F: reference
+      // in this row, so getItem now returns the processed content directly.
+      let about = getItem(
+        data.sheets.appearance.tables.customization.data,
+        CUSTOMIZATION_ITEMS.ABOUT_SECTION,
+        lang.code,
+        t("generic_about")
+      );;
 
       let howToCite = getItem(
         data.sheets.appearance.tables.customization.data,
-        "How to cite",
-        lang.code,
-        ""
+        CUSTOMIZATION_ITEMS.HOW_TO_CITE,
+        lang.code
       );
 
       let dateFormat = getItem(
         data.sheets.appearance.tables.customization.data,
-        "Date format",
-        lang.code,
-        "YYYY-MM-DD"
+        CUSTOMIZATION_ITEMS.DATE_FORMAT,
+        lang.code
       );
       let monthNames = resolveMonthNames(
         getItem(
           data.sheets.appearance.tables.customization.data,
-          "Month names",
+          CUSTOMIZATION_ITEMS.MONTH_NAMES,
           lang.code,
-          ""
+          MONTH_KEYS.map(k => t("months." + k)).join(", ")
         )
       );
+      /*
       let useCitations = getItem(
         data.sheets.appearance.tables.customization.data,
-        "Use citations",
-        lang.code,
-        ""
+        CUSTOMIZATION_ITEMS.USE_CITATIONS,
+        lang.code
       )
         ?.toLowerCase();
-      let precachedImageMaxSize = getItem(data.sheets.appearance.tables.customization.data, "Precached image max size",
-        lang.code,
-        0.5
+      */
+      let useCitations = "apa"; // Hardcode for now
+
+      let precachedImageMaxSize = getItem(data.sheets.appearance.tables.customization.data, CUSTOMIZATION_ITEMS.PRECACHE_MAX_FILE_SIZE,
+        lang.code
       );
 
       let version = {
@@ -574,7 +628,7 @@ export let DataManager = function () {
         howToCite: howToCite,
         dateFormat: dateFormat,
         monthNames: monthNames,
-        useCitations: useCitations.toLowerCase(),
+        useCitations: useCitations,
         precachedImageMaxSize: parseFloat(precachedImageMaxSize),
         dataset: {
           meta: compileMeta(lang),
@@ -1820,7 +1874,6 @@ export let DataManager = function () {
                       break;
                     case "list":
                       let found = false;
-                      console.log(integrity)
                       integrity.listItems.forEach(function (allowed) {
                         if (
                           !found &&
@@ -2424,10 +2477,15 @@ function fetchFDirectiveContent(directive, allowedExtensions, runSpecificCache, 
   return fetched.content;
 }
 
-function processFDirective(data, runSpecificCache, log, dataPath, rowNumber, assetsCollector) {
+function processFDirective(data, runSpecificCache, dataPath, rowNumber, assetsCollector, allowedExtensions) {
   if (typeof data !== "string" || !data.startsWith("F:")) return data;
 
-  const content = fetchFDirectiveContent(data, ["md"], runSpecificCache, dataPath, rowNumber);
+  const unsafeExts = allowedExtensions || ["md"];
+  const content = fetchFDirectiveContent(data, exts, runSpecificCache, dataPath, rowNumber);
+
+  //cleanup exts to allow only safe ones: ["md", "markdown", "txt", "bib", "xml"]
+  const exts = unsafeExts.filter(e => ["md", "markdown", "txt", "bib", "xml"].includes(e.toLowerCase()));
+
   if (content === null) return null;
 
   const filePath = data.substring(2).trim();
@@ -2850,7 +2908,7 @@ function runManualIntegrityChecks(data) {
 
     // 4. Month names
     const monthNamesValidation = validateConfiguredMonthNames(
-      getItem(customizationData, "Month names", lang.code, "")
+      getItem(customizationData, CUSTOMIZATION_ITEMS.MONTH_NAMES, lang.code)
     );
     if (monthNamesValidation.hasValue) {
       if (monthNamesValidation.wrongCount) {
@@ -2866,7 +2924,7 @@ function runManualIntegrityChecks(data) {
     }
 
     // 5. Color theme hue must be 0–360 when provided
-    const hueRow = customizationData.find((row) => row.item === "Color theme hue");
+    const hueRow = customizationData.find((row) => row.item === CUSTOMIZATION_ITEMS.COLOR_THEME_HUE);
     const hueString = hueRow ? hueRow.value : "";
     if (hueString.toString().trim() !== "") {
       const hue = parseInt(hueString);

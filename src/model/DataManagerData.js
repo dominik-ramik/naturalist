@@ -292,33 +292,6 @@ export function getAllColumnInfos(nlDataStructure, langCode) {
   return result;
 }
 
-export function getItem(tableData, itemName, langCode, defaultValue, Logger) {
-  if (!tableData || !tableData[langCode]) {
-    return defaultValue;
-  }
-
-  // Pure function: does not mutate input, returns value or default
-  const item = tableData[langCode].find(function (row) {
-    return row.item == itemName;
-  });
-  if (item === undefined) {
-    if (Logger && typeof Logger.warning === "function") {
-      Logger.warning(
-        "In sheet <b>nl_appearance</b>, table <b>Customization</b>, could not find the option <b>" +
-        itemName +
-        "</b>"
-      );
-    }
-    return defaultValue;
-  }
-  const value = item.value;
-  if (value === null || value === undefined) {
-    return defaultValue;
-  }
-  return value;
-}
-
-
 export let nlDataStructure = {
   common: {
     languages: {

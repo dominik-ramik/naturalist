@@ -1,9 +1,78 @@
-import { lab, text } from "d3";
+import { descending } from "d3";
 
 export const OCCURRENCE_IDENTIFIER = "occurrence";
 
 export const ANALYTICAL_INTENT_TAXA = "T";
 export const ANALYTICAL_INTENT_OCCURRENCE = "S";
+
+export const DWC_ARCHIVE_TYPES = {
+    checklist: {
+        rowTypeDwcUri: "http://rs.tdwg.org/dwc/terms/Taxon",
+        csvFileName: "taxa.csv",
+        zipFileName: "taxa_dwca.zip",
+
+    },
+    occurrence: {
+        rowTypeDwcUri: "http://rs.tdwg.org/dwc/terms/Occurrence",
+        csvFileName: "occurrences.csv",
+        zipFileName: "occurrences_dwca.zip",
+    }
+};
+
+export const CUSTOMIZATION_ITEMS = {
+    PROJECT_NAME: {
+        key: "Project name",
+        defaultValue: "New project",
+        description: "Short project name shown in the app header."
+    },
+    ABOUT_SECTION: {
+        key: "About section",
+        defaultValue: null,
+        description: "Markdown text for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. A generic default value is used in case none was entered. See [External text files](./external-text-files)."
+    }, // i18n — caller must supply
+    HOW_TO_CITE: {
+        key: "How to cite",
+        defaultValue: "",
+        description: "Plain text or Markdown citation string shown to users in the About page."
+    },
+    DATA_SHEETS_NAMES: {
+        key: "Data sheets names",
+        defaultValue: "checklist",
+        description: "Comma-separated list of [[ref:data]] sheets names, only needed if you have renamed the tab away from the default `checklist` or if you have multiple data sheets."
+    },
+    COLOR_THEME_HUE: {
+        key: "Color theme hue",
+        defaultValue: 212,
+        description: "Integer 0-360. Use an online HSL picker (e.g. https://hslpicker.com) to find your hue."
+    },
+    DATE_FORMAT: {
+        key: "Date format",
+        defaultValue: "YYYY-MM-DD",
+        description: "[day.js format string](https://day.js.org/docs/en/display/format), e.g. MMM D, YYYY or DD/MM/YYYY."
+    },
+    MONTH_NAMES: {
+        key: "Month names",
+        defaultValue: "",
+        description: "Comma-separated list of exactly 12 month names starting with January, e.g. Janvier, Février, Mars, ..."
+    },
+    PRECACHE_MAX_FILE_SIZE: {
+        key: "Precache max file size",
+        defaultValue: 0.5,
+        description: "Maximum size in MB of a single media file to cache for offline use. Format as a number."
+    },
+    PRECACHE_MAX_TOTAL_SIZE: {
+        key: "Precache max total size",
+        defaultValue: 200,
+        description: "Maximum total size in MB of all precached media assets. Format as a number."
+    },
+    /*
+    USE_CITATIONS: {
+        key: "Use citations",
+        defaultValue: "",
+        description: "Set to `yes` to enable citations for data points. This adds a small citation icon next to each data point that has a source specified in the [[ref:data]] sheet (e.g. `redListEvaluation.source`). Clicking the icon shows the source information in a tooltip. The source information is taken from the column specified in the [[ref:content.customDataDefinition]] for that data point's data path (e.g. `redListEvaluation.source`). For best results, provide complete source information including author, title, year, and URL if available."
+    },
+    */
+};
 
 export const nlDataStructureSheets = {
     content: {
@@ -476,7 +545,7 @@ export const nlDataStructureSheets = {
                             },
                             {
                                 label: "",
-                                text: "In your [[ref:data]] sheet, the `habitat#` column becomes multiple columns (e.g., `habitat1`, `habitat2`) containing individual habitats per taxon (you could also opt for a single `habitat` column with pipe-separated values), and the `dimmensions.beakToTail` and `dimmensions.wingspan` columns contain measurements that belong together under a common `dimmensions` root path. Note that there is no need to enter the intermediate data path items (no `habitat` column before `habitat1` and `habitat2`, no `dimmensions` column before `dimmensions.beakToTail` and `dimmensions.wingspan`) as they do not carry any data. It is only your terminal ('leaf') data paths that matter as columns. The example leaves out most of the taxonomic structure for brevity\n\nNote: in this example we write-out the `redlist` category verbatim for simplicity. For this and similar controlled vocabularies your data entry will be simpler, if you enter the RedList codes ('EN', 'VU') and set up the [[ref:appearance.dataCodes]] for them.",
+                                text: "In your [[ref:data]] sheet, the `habitat#` column becomes multiple columns (e.g., `habitat1`, `habitat2`) containing individual habitats per taxon (you could also opt for a single `habitat` column with pipe-separated values), and the `dimmensions.beakToTail` and `dimmensions.wingspan` columns contain measurements that belong together under a common `dimmensions` root path. Note that there is no need to enter the intermediate data path items (no `habitat` column before `habitat1` and `habitat2`, no `dimmensions` column before `dimmensions.beakToTail` and `dimmensions.wingspan`) as they do not carry any data. It is only your terminal ('leaf') data paths that matter as columns. The example leaves out most of the taxonomic structure for brevity\n\nNote: in this example we write-out the `redlist` category verbatim for simplicity. For this and similar controlled vocabularies your data entry will be simpler, if you enter the RedList codes ('EN', 'VU') and set up the [[ref:appearance.categoryDisplay]] for them.",
                                 fillRight: true,
                                 fillLeft: true,
                                 columns: [
@@ -1574,6 +1643,15 @@ export const nlDataStructureSheets = {
                 name: "Bibliography",
                 required: false,
                 description: "Stores BibTeX entries that can be cited using `@citekey` notation in any Markdown field throughout the project. Each row contains one or several complete BibTeX entries.\n\nCitations are rendered in APA style. The `@citekey` syntax supports narrative `@smith2020`, parenthetical `[@smith2020]` and several other forms (for a complete reference, see [github.com/dominik-ramik/bibtex-json-toolbox](https://github.com/dominik-ramik/bibtex-json-toolbox)).\n\nThis table can be left completely empty if you do not use bibliographic references.",
+                fDirectiveColumns: [
+                    {
+                        columnKey: "bibtex",
+                        shouldProcessComment: "",
+                        allowedExtensions: ["txt", "bib"],
+                        // or use shouldProcess: null to process all rows unconditionally, or a custom function for more complex logic
+                        shouldProcess: null,
+                    },
+                ],
                 notes: [
                     {
                         type: "warning",
@@ -1778,242 +1856,113 @@ export const nlDataStructureSheets = {
             dwcArchive: {
                 name: "DwC archive",
                 required: false,
-                description: "Configures export in Darwin Core Archive (DwC-A) format for submission to [GBIF](https://www.gbif.org/) and other biodiversity aggregators. Each row maps one DwC term to a value source. The compiler produces a checklist archive (`taxa_dwca.zip`) and, when `basisOfRecord` is configured, an additional occurrence archive (`occurrences_dwca.zip`). See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide, required and recommended terms, EML metadata configuration, and a worked example.",
+                description: "Configures export in **Darwin Core Archive** (DwC-A) format for submission to **GBIF** and other biodiversity databases. Each row maps one DwC term to a value source. The compiler can produce a checklist archive (`" + DWC_ARCHIVE_TYPES.checklist.zipFileName + "`), an occurrence archive (`" + DWC_ARCHIVE_TYPES.occurrence.zipFileName + "`), or both. See [Darwin Core Archive export](/author-guide/dwc) for the full feature guide.",
                 notes: [
                     {
                         type: "warning",
-                        title: "Experiment on living material in progress",
-                        text: "The DwC-A export feature is currently experimental and in early testing. It has been succesfully tested to be compliant with GBIF's DwC-A requirements on simple datasets, but we encourage you to verify the exported data against your database to ensure there are no surprises. Contact the developers on [GitHub](https://github.com/dominik-ramik/naturalist/) if you encounter any issues."
+                        title: "In vivo experimentation in progress",
+                        text: "The DwC-A export feature is currently experimental. It has been succesfully tested to be compliant with GBIF's DwC-A requirements on simple datasets, but we encourage you to verify the exported data against your database to ensure there are no surprises. Contact the developers on [GitHub](https://github.com/dominik-ramik/naturalist/) if you encounter any issues."
                     }
                 ],
-                columns: {
-                    term: {
-                        name: "DwC term",
-                        description: "The Darwin Core term name (camelCase, e.g. `decimalLatitude`), or an `eml:` prefixed field path (e.g. `eml:fromFile`, `eml:title`) for EML metadata fields.",
-                        howToUse: "Use standard DwC camelCase term names. Use the `eml:` prefix for EML metadata fields. See [EML metadata](./dwc#eml-metadata) for the full list of supported `eml:` terms.",
-                        notes: [],
-                        examples: [],
-                        integrity: {
-                            allowEmpty: false,
-                            allowDuplicates: "yes",
-                            allowedContent: "any",
-                            supportsMultilingual: false
-                        }
+                fDirectiveColumns: [
+                    {
+                        columnKey: "valueSource",
+                        shouldProcessComment: "if `term` is `eml:precomposed`",
+                        // or use shouldProcess: null to process all rows unconditionally, or a custom function for more complex logic
+                        shouldProcess: (row) => row.term === "eml:precomposed",
                     },
+                ],
+                columns: {
                     exportTo: {
                         name: "Export to",
-                        description: "A comma-separated list of archive types this row is included in. Accepted keywords: `checklist`, `occurrences`, `all`. Leave empty to default to `all` (the row appears in every archive).",
-                        howToUse: "Set to `checklist` for taxon-only terms (`taxonID`, `parentNameUsageID`, `taxonRank`, `taxonRemarks`, `namePublishedIn`, `establishmentMeans`, …). Set to `occurrences` for occurrence-only terms (`basisOfRecord`, `eventDate`, `occurrenceID`, `catalogNumber`, coordinates, `recordedBy`, …). Set to `all` or leave empty for shared terms (`scientificName`, higher taxonomy, `institutionCode`, `collectionCode`, `license`, `datasetName`, `associatedMedia`, `dcterms:modified`, and all `eml:` rows).",
+                        description: "Type of archive into which the row is exported.",
+                        howToUse: "Set to any of the accepted values depending on where you want to export the data.",
                         notes: [],
                         examples: [],
                         integrity: {
                             allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "list",
-                            listItems: ["checklist", "occurrences", "all"],
+                            listItems: Object.keys(DWC_ARCHIVE_TYPES),
                             supportsMultilingual: false
                         }
                     },
-                    sourceColumn: {
-                        name: "Source column",
-                        description: "A directive that tells the compiler where to read the value for this DwC term. Leave empty if supplying a **Constant value** instead.\n\nAccepted directive types:\n\n- **Plain column name** (e.g. `recordedBy`) - reads that column's value for each row. For compound data types, append a component key: `collectionDate.ymd`, `location.lat`, `altitude.from`, `specimenPhoto.source`\n- **`{col}` template** (e.g. `{collector} leg. | {observer} obs.`) - constructs a string from column values; `|` separates fallback alternatives, the first segment where all placeholders are non-empty is used\n- **`config:Item Name`** - reads a value from the [[ref:appearance.customization]] table (e.g. `config:Checklist name`)\n- **`taxa:ColumnName`** or **`taxa:ColumnName.component`** - reads from the taxon hierarchy (e.g. `taxa:Species`, `taxa:Species.authority`, `taxa:Species.lastNamePart`)\n- **`auto:termName`** - instructs the compiler to generate the value; see [Source column directives](/author-guide/dwc#source-column-directives) for all supported keys including `auto:taxonID`, `auto:taxonRank`, `auto:scientificName`, and others\n- **`media:path1, path2, …`** - for `associatedMedia` only; collects fully resolved URLs from image, sound, or map columns and joins them with ` | `; append `#` to expand array columns automatically (e.g. `lifePhotos#`)\n\nFor the full directive reference with all options and examples, see [Source column directives](/author-guide/dwc#source-column-directives).",
-                        howToUse: "Leave empty when supplying a Constant value. For taxonomy, prefer `auto:` directives. For dataset-wide metadata already in the [[ref:appearance.customization]], use `config:`. For occurrence-specific data columns, use plain column names or component keys.",
+                    term: {
+                        name: "Term",
+                        description: "The Darwin Core term name (camelCase, e.g. `dwc:decimalLatitude`, `dcterms:language`), or an `eml:` prefixed field (e.g. `eml:precomposed`, `eml:title`, `eml:packageId`, ...) for EML metadata generation.",
+                        howToUse: "Use standard camelCase term names with `dwc:`, `dcterms:`, `dwciri:`, `dc:`; see Darwin Core List of Terms on [dwc.tdwg.org](https://dwc.tdwg.org/list/){target=_blank}, or `eml:` prefixes. See [EML metadata](./dwc#eml-metadata) for the full list of supported `eml:` terms. If your project has more than one language set in [[ref:appearance.supportedLanguages]], you have to specify `dcterms:language` to one of your language codes, otherwise the default (first row) language will be used.",
                         notes: [],
                         examples: [
                             {
-                                label: "Common directive patterns",
-                                fillRight: true,
+                                label: "Specify language code",
+                                text: "Supposing you have English (en) and French (fr) in [[ref:appearance.supportedLanguages]] table, the below would take your English dataset as the basis for the `checklist` archive export, and your French dataset for the `occurrence` archive export. In practice, you will probably want to export only your default/English language dataset.",
                                 columns: [
-                                    "DwC term",
                                     "Export to",
-                                    "Source column",
-                                    "[comment]"
+                                    "Term",
+                                    "Value source"
                                 ],
                                 rows: [
-                                    ["datasetName", "all", "config:Checklist name", "config: directive"],
-                                    ["scientificName", "all", "auto:scientificName", "auto: directive"],
-                                    ["taxonRank", "all", "auto:taxonRank", "auto: directive"],
-                                    ["family", "all", "taxa:Family", "taxa: directive"],
-                                    ["specificEpithet", "all", "taxa:Species.lastNamePart", "taxa: directive with component"],
-                                    ["recordedBy", "all", "collector", "plain column name"],
-                                    ["decimalLatitude", "all", "plain column name with component"],
-                                    ["eventDate", "all", "plain column name with component"],
-                                    ["recordedBy", "all", "{collector} leg. | {observer} obs.", "{} template with fallback"],
-                                    ["associatedMedia", "all", "media:specimenPhoto, lifePhotos#", "media: directive"]
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dcterms:language", "plain: en"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dcterms:language", "plain: fr"]
                                 ]
                             }
                         ],
                         integrity: {
-                            allowEmpty: true,
+                            allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: false
                         }
                     },
-                    constantValue: {
-                        name: "Constant value",
-                        description: "A literal string applied to every record. Leave empty if using Source column.",
-                        howToUse: "Use for dataset-wide values that do not vary per row: `language`, `institutionCode`, `license`, `basisOfRecord`, `kingdom`, etc. The `license` field accepts common aliases (`cc0`, `cc by 4.0`, `cc by-nc 4.0`) which are normalised to the canonical GBIF-accepted URI.",
+                    valueSource: {
+                        name: "Value source",
+                        description: "A directive that tells the compiler where to read the value for this DwC term. Read the full directive reference with all options and examples on [Value source directives](/author-guide/dwc#value-source-directives). Below is a quick overview of available directive types:\n\n- Plain column name (e.g. `recordedBy`), or a `{columnName}` template (e.g. `{collector} leg. | {observer} obs.`)\n\n- `config: Item Name`\n\n- `taxa: columnName`\n\n- `auto: termName`\n\n- `media: columnName, anotherColumnName, …`\n\n- `plain: Some static text…`",
+                        howToUse: "Enter the directive that matches the DwC term expected content. See [Value source directives](/author-guide/dwc#value-source-directives) for full reference.",
                         notes: [],
                         examples: [
                             {
-                                label: "Common constant value rows",
-                                fillRight: true,
+                                label: "Conceptual simplified setup for exporting both checklist and occurrence data",
+                                text: "Note the last `checklist` row using a DwC term not present in our inventory so the full identifier is provided after the |",
                                 columns: [
+                                    "Export to",
                                     "DwC term",
-                                    "Constant value"
+                                    "Value source"
                                 ],
                                 rows: [
-                                    ["language", "en"],
-                                    ["institutionCode", "MNHN"],
-                                    ["license", "cc by 4.0"],
-                                    ["basisOfRecord", "PreservedSpecimen"],
-                                    ["kingdom", "Plantae"]
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dcterms:language", "plain: en"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:institutionCode", "plain: NHM"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:datasetName", "config: Checklist name"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "eml:precomposed", "F:dwc/checklist-eml.xml"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:taxonID", "auto: taxonID"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:scientificName", "auto:scientificName"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwc:taxonRank", "auto:taxonRank"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[0], "dwciri:toDigitalSpecimen", "..."],
+                                    ["...", "...", "..."],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dcterms:language", "plain: en"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:institutionCode", "plain: NHM"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:precomposed", "F:dwc/occurrence-eml.xml"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:occurrenceID", "auto:occurrenceID"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:basisOfRecord", "plain: PreservedSpecimen"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:datasetName", "config: Checklist name"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:scientificName", "auto:scientificName"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:taxonRank", "auto:taxonRank"],
+                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "dwc:eventDate", "collectedDate.ymd"],
                                 ]
                             }
                         ],
                         integrity: {
-                            allowEmpty: true,
+                            allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "any",
                             supportsMultilingual: false
                         }
-                    }
+                    },
                 },
                 data: [],
                 templateData: [
-                    {
-                        term: "language",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "en"
-                    },
-                    {
-                        term: "institutionCode",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "VANUHERP"
-                    },
-                    {
-                        term: "collectionCode",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "VANUATU-CHECKLIST"
-                    },
-                    {
-                        term: "license",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "https://creativecommons.org/licenses/by/4.0/legalcode"
-                    },
-                    {
-                        term: "datasetName",
-                        exportTo: "checklist",
-                        sourceColumn: "config:Checklist name",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:title",
-                        exportTo: "checklist",
-                        sourceColumn: "config:Checklist name",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:abstract",
-                        exportTo: "checklist",
-                        sourceColumn: "config:About section",
-                        constantValue: ""
-                    },
-                    {
-                        term: "eml:creator.organizationName",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "Example Natural History Museum"
-                    },
-                    {
-                        term: "eml:creator.givenName",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "Jane"
-                    },
-                    {
-                        term: "eml:creator.surName",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "Smith"
-                    },
-                    {
-                        term: "eml:creator.email",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "j.smith@example.com"
-                    },
-                    {
-                        term: "taxonID",
-                        exportTo: "checklist",
-                        sourceColumn: "auto:taxonID",
-                        constantValue: ""
-                    },
-                    {
-                        term: "parentNameUsageID",
-                        exportTo: "checklist",
-                        sourceColumn: "auto:parentNameUsageID",
-                        constantValue: ""
-                    },
-                    {
-                        term: "taxonRank",
-                        exportTo: "checklist",
-                        sourceColumn: "auto:taxonRank",
-                        constantValue: ""
-                    },
-                    {
-                        term: "scientificName",
-                        exportTo: "checklist",
-                        sourceColumn: "auto:scientificName",
-                        constantValue: ""
-                    },
-                    {
-                        term: "scientificNameAuthorship",
-                        exportTo: "checklist",
-                        sourceColumn: "auto:scientificNameAuthorship",
-                        constantValue: ""
-                    },
-                    {
-                        term: "kingdom",
-                        exportTo: "checklist",
-                        sourceColumn: "",
-                        constantValue: "Animalia"
-                    },
-                    {
-                        term: "class",
-                        exportTo: "checklist",
-                        sourceColumn: "taxa:Class",
-                        constantValue: ""
-                    },
-                    {
-                        term: "order",
-                        exportTo: "checklist",
-                        sourceColumn: "taxa:Order",
-                        constantValue: ""
-                    },
-                    {
-                        term: "family",
-                        exportTo: "checklist",
-                        sourceColumn: "taxa:Family",
-                        constantValue: ""
-                    },
-                    {
-                        term: "genus",
-                        exportTo: "checklist",
-                        sourceColumn: "taxa:Genus",
-                        constantValue: ""
-                    },
-                    {
-                        term: "specificEpithet",
-                        exportTo: "checklist",
-                        sourceColumn: "taxa:Species.lastNamePart",
-                        constantValue: ""
-                    },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dcterms:language", valueSource: "plain: en" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:institutionCode", valueSource: "plain: NHM" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:datasetName", valueSource: "config: Checklist name" },
                 ]
             }
         }
@@ -2029,8 +1978,15 @@ export const nlDataStructureSheets = {
             customization: {
                 name: "Customization",
                 required: false,
-                description: "A fixed set of named configuration items. The **Item** column contains predefined keywords, case-sensitive; you only edit the **Value** column (or `Value:en`, `Value:fr`, etc. for per-language overrides in multilingual projects). Skip any items you are happy with at their default. Typically you will want to fill in at least **Checklist name** and **About section**.",
+                description: "A fixed set of named configuration items. The **Item** column contains predefined keywords, case-sensitive; you only edit the **Value** column (or `Value:en`, `Value:fr`, etc. for per-language overrides in multilingual projects). Skip any items you are happy with at their default. Typically you will want to fill in at least **" + CUSTOMIZATION_ITEMS.PROJECT_NAME + "** and **" + CUSTOMIZATION_ITEMS.ABOUT_SECTION + "**.",
                 notes: [],
+                fDirectiveColumns: [
+                    {
+                        columnKey: "value",
+                        shouldProcessComment: "for the '" + CUSTOMIZATION_ITEMS.ABOUT_SECTION.key + "' item",
+                        shouldProcess: (row) => row.item === CUSTOMIZATION_ITEMS.ABOUT_SECTION.key,
+                    },
+                ],
                 columns: {
                     item: {
                         name: "Item",
@@ -2039,59 +1995,18 @@ export const nlDataStructureSheets = {
                         notes: [],
                         examples: [
                             {
-                                label: "Customization table overview",
+                                label: "Customization options overview",
                                 columns: [
                                     "Item",
                                     "Default",
-                                    "Value format"
+                                    "Value format and description"
                                 ],
-                                rows: [
+                                rows: Object.values(CUSTOMIZATION_ITEMS).map(item =>
                                     [
-                                        "Checklist name",
-                                        "New project",
-                                        "Short project name shown in the app header."
-                                    ],
-                                    [
-                                        "About section",
-                                        "(generic placeholder text)",
-                                        "Markdown text for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. Supports `Value:en`, `Value:fr`, etc. See [External text files](./external-text-files)."
-                                    ],
-                                    [
-                                        "How to cite",
-                                        "(empty)",
-                                        "Plain text or Markdown citation string shown to users in the About page."
-                                    ],
-                                    [
-                                        "Data sheets names",
-                                        "checklist",
-                                        "Comma-separated list of [[ref:data]] sheets names, only needed if you have renamed the tab away from the default `checklist` or if you have multiple data sheets."
-                                    ],
-                                    [
-                                        "Color theme hue",
-                                        "212",
-                                        "Integer 0-360. Use an online HSL picker (e.g. [hslpicker.com](https://hslpicker.com)) to find your hue."
-                                    ],
-                                    [
-                                        "Date format",
-                                        "YYYY-MM-DD",
-                                        "[day.js format string](https://day.js.org/docs/en/display/format), e.g. `MMM D, YYYY` or `DD/MM/YYYY` etc."
-                                    ],
-                                    [
-                                        "Month names",
-                                        "English months",
-                                        "Comma-separated list of exactly 12 month names starting with January, e.g. `Janvier, Février, Mars, ...`."
-                                    ],
-                                    [
-                                        "Precache max file size",
-                                        "0.5",
-                                        "Maximum size in MB of a single media file to cache for offline use."
-                                    ],
-                                    [
-                                        "Precache max total size",
-                                        "200",
-                                        "Maximum total size in MB of all precached media assets."
-                                    ]
-                                ]
+                                        item.key,
+                                        String(item.defaultValue || ""),
+                                        item.description
+                                    ])
                             }
                         ],
                         integrity: {
@@ -2099,17 +2014,7 @@ export const nlDataStructureSheets = {
                             allowDuplicates: "no",
                             allowEmpty: false,
                             allowedContent: "list",
-                            listItems: [
-                                "Checklist name",
-                                "About section",
-                                "How to cite",
-                                "Data sheets names",
-                                "Color theme hue",
-                                "Date format",
-                                "Month names",
-                                "Precache max file size",
-                                "Precache max total size",
-                            ],
+                            listItems: Object.values(CUSTOMIZATION_ITEMS).map(d => d.key),
                             supportsMultilingual: false
                         }
                     },
@@ -2128,37 +2033,37 @@ export const nlDataStructureSheets = {
                                 ],
                                 rows: [
                                     [
-                                        "Checklist name",
+                                        CUSTOMIZATION_ITEMS.PROJECT_NAME.key,
                                         "Birds of Lamèque Island",
                                         "Oiseaux de l'Île-de-Lamèque"
                                     ],
                                     [
-                                        "About section",
+                                        CUSTOMIZATION_ITEMS.ABOUT_SECTION.key,
                                         "This checklist is a collaborative effort of ...",
-                                        "Cette liste de contrôle est un effort collaboratif de ..."
+                                        "F:about.fr.md"
                                     ],
                                     [
-                                        "How to cite",
+                                        CUSTOMIZATION_ITEMS.HOW_TO_CITE.key,
                                         "Birds of Lamèque Island checklist. Author: Anicet Paulin (2024). https://example.com/lameque-checklist",
                                         "Liste des oiseaux de l'Île-de-Lamèque. Auteur : Anicet Paulin (2024). https://example.com/lameque-checklist"
                                     ],
                                     [
-                                        "Date format",
+                                        CUSTOMIZATION_ITEMS.DATE_FORMAT.key,
                                         "MMM D, YYYY",
                                         "DD/MM/YYYY"
                                     ],
                                     [
-                                        "Color theme hue",
+                                        CUSTOMIZATION_ITEMS.COLOR_THEME_HUE.key,
                                         "200",
                                         "97"
                                     ],
                                     [
-                                        "Data sheets names",
+                                        CUSTOMIZATION_ITEMS.DATA_SHEETS_NAMES.key,
                                         "landbirds, seabirds",
                                         "landbirds, seabirds"
                                     ],
                                     [
-                                        "Month names",
+                                        CUSTOMIZATION_ITEMS.MONTH_NAMES.key,
                                         "January, February, March, April, May, June, July, August, September, October, November, December",
                                         "Janvier, Février, Mars, Avril, Mai, Juin, Juillet, Août, Septembre, Octobre, Novembre, Décembre"
                                     ]
@@ -2177,15 +2082,15 @@ export const nlDataStructureSheets = {
                 data: [],
                 templateData: [
                     {
-                        item: "Checklist name",
+                        item: CUSTOMIZATION_ITEMS.PROJECT_NAME.key,
                         value: "Sample NaturaList checklist"
                     },
                     {
-                        item: "About section",
+                        item: CUSTOMIZATION_ITEMS.ABOUT_SECTION.key,
                         value: "This is a simple template checklist. Visit [naturalist.netlify.app](https://naturalist.netlify.app/) for comprehensive examples how to configure this spreadsheet to create rich taxonomic checklists or full-fledged biodiversity databases with taxonomy and specimens or other occurrences.\n\nThe values in this template are there only to get you started. Feel free to modify them and add your own, neither the taxonomic ranks nor the specific custom data are set in stone."
                     },
                     {
-                        item: "How to cite",
+                        item: CUSTOMIZATION_ITEMS.HOW_TO_CITE.key,
                         value: "Sample NaturaList checklist. Author: Dominik M. Ramík (2024). https://naturalist.netlify.app/"
                     }
                 ]
@@ -2898,7 +2803,7 @@ export const nlDataStructureSheets = {
                     },
                     value: {
                         name: "Values ordered",
-                        description: "One filter value per row, in the desired display order. The value must match a value that actually appears in the data column (after any [[ref:appearance.dataCodes]] replacement).",
+                        description: "One filter value per row, in the desired display order. The value must match a value that actually appears in the filter (after any possible [[ref:appearance.categoryDisplay]] label replacement, so that order is preserved per-language).",
                         howToUse: "List all values you want to control the position of. Values not listed will be appended alphabetically after the explicitly ordered ones.",
                         notes: [],
                         examples: [],
