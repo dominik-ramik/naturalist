@@ -12,6 +12,15 @@ let dataCacheName = "checklist-data";
 
 let communicationPort;
 
+function isSoftHtmlResponse(response, url = "") {
+    const contentType = response?.headers?.get("content-type") || "";
+    return contentType.includes("text/html") && !url.toLowerCase().endsWith(".html");
+}
+
+function isValidChecklistResponse(response, url = checklistURL) {
+    return !!response && response.ok && !isSoftHtmlResponse(response, url);
+}
+
 precacheAndRoute(self.__WB_MANIFEST);
 
 // 1. WORKBOX CLEANUP
@@ -77,7 +86,7 @@ self.addEventListener('fetch', function (e) {
 
             // NETWORK UPDATE: Always try to update in the background
             const networkPromise = fetch(e.request).then(networkResponse => {
-                if (networkResponse && networkResponse.status === 200) {
+                if (isValidChecklistResponse(networkResponse, e.request.url)) {
                     dataCache.put(e.request, networkResponse.clone());
                 }
                 return networkResponse;
@@ -112,9 +121,11 @@ self.addEventListener('fetch', function (e) {
 
         let cache = null;
         function urlForUserCache(url) {
-            if (url.includes("/usercontent/") && url.endsWith(".md")) return false;
-            if (url.includes("/usercontent/") && url.endsWith(".xml")) return false; //for eml.xml
-            return url.includes("/usercontent/") && !url.includes("/usercontent/identity");
+            const treatedUrl = url.toLowerCase();
+            if (treatedUrl.includes("/usercontent/") && treatedUrl.endsWith(".md")) return false;
+            if (treatedUrl.includes("/usercontent/") && treatedUrl.endsWith(".xml")) return false; //for eml.xml
+            if (treatedUrl.endsWith(".xlsx")) return false; //never cache XLSX files coming thorugh URL
+            return treatedUrl.includes("/usercontent/") && !treatedUrl.includes("/usercontent/identity");
         }
 
         if (urlForUserCache(e.request.url.toLowerCase())) {
@@ -140,6 +151,9 @@ async function refreshCachedChecklistData() {
         cache: "reload"
     });
     const response = await fetch(dataRequest);
+    if (!isValidChecklistResponse(response, dataRequest.url)) {
+        throw new Error(`[SW] Invalid checklist response (${response?.status ?? "no response"})`);
+    }
     const cache = await caches.open(dataCacheName);
     await cache.put(dataRequest.clone(), response.clone());
 }
@@ -162,7 +176,9 @@ async function handleAppMessage(message) {
             await refreshCachedChecklistData();
         } catch (err) {
             console.log("[SW] Could not update checklist data. Fetch or cache write failed.", err);
-            // Do not notify the app - the cache was not updated, so a reload would serve stale data.
+            if (communicationPort) {
+                communicationPort.postMessage({ type: 'CHECKLIST_UPDATE_FAILED' });
+            }
             return;
         }
         if (communicationPort) {

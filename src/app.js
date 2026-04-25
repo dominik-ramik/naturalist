@@ -92,10 +92,22 @@ const messageChannel = new MessageChannel();
 console.log("NaturaList version " + appVersion);
 
 let hasCriticalError = false;
+let appUpdatePending = false;
+let checklistUpdateInFlight = false;
+
+function hasPendingAppShellUpdate(registration = null) {
+  if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) {
+    return false;
+  }
+
+  return appUpdatePending || !!registration?.installing || !!registration?.waiting;
+}
 
 const updateServiceWorker = registerSW({
   immediate: false, // You can keep this false if you prefer
   onNeedRefresh() {
+    appUpdatePending = true;
+
     // If the app has already crashed, do not wait for user input.
     // FORCE the update immediately to unbrick the client.
     if (hasCriticalError) {
@@ -142,10 +154,19 @@ window.addEventListener("load", (event) => {
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.ready.then((registration) => {
+      registration.addEventListener("updatefound", () => {
+        if (navigator.serviceWorker.controller) {
+          appUpdatePending = true;
+        }
+      });
+
       openComChannel(registration.active);
-      checkForChecklistUpdate(registration.active);
+      checkForChecklistUpdate(registration.active, registration);
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        appUpdatePending = false;
+        checklistUpdateInFlight = false;
+
         if (DOCS_URL.includes(window.location.hostname) || window.location.href.includes("localhost")) {
           const deepLinkHref = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY + "_href");
           const deepLinkUrl = sessionStorage.getItem(DEEP_LINK_STORAGE_KEY);
@@ -199,6 +220,7 @@ function openComChannel(sw) {
         break;
 
       case "CHECKLIST_UPDATED":
+        checklistUpdateInFlight = false;
         console.log("Checklist data updated");
         if (message.data.updateMeta) {
           Settings.lastKnownDataVersion(message.data.updateMeta);
@@ -209,6 +231,11 @@ function openComChannel(sw) {
               window.location.origin + window.location.pathname;
           },
         });
+        break;
+
+      case "CHECKLIST_UPDATE_FAILED":
+        checklistUpdateInFlight = false;
+        console.warn("Checklist data update failed; will retry on the next check.");
         break;
 
       case "FETCHING_RESSOURCE_FAILED":
@@ -306,39 +333,65 @@ function shouldUpdateChecklist({ lastModifiedString, etagString, meta }) {
   return { update: false };
 }
 
-export function checkForChecklistUpdate(sw) {
-  var checkDataUpdate = new XMLHttpRequest();
-  checkDataUpdate.open("HEAD", checklistURL, true);
-  checkDataUpdate.onreadystatechange = function () {
-    if (checkDataUpdate.readyState === 4) {
-      if (checkDataUpdate.status === 200) {
+export function checkForChecklistUpdate(sw, knownRegistration = null) {
+  if (!sw || checklistUpdateInFlight) {
+    return;
+  }
 
-        let lastModifiedString = checkDataUpdate.getResponseHeader("Last-Modified");
-        let etagString = checkDataUpdate.getResponseHeader("ETag");
-        let meta = Settings.lastKnownDataVersion();
+  let registrationPromise = Promise.resolve(knownRegistration);
+  if (!knownRegistration && "serviceWorker" in navigator) {
+    registrationPromise = navigator.serviceWorker.getRegistration().catch(() => null);
+  }
 
-        const result = shouldUpdateChecklist({ lastModifiedString, etagString, meta });
-
-        if (result.update) {
-          Settings.lastKnownDataVersion(result.newMeta);
-          sw.postMessage({
-            type: "UPDATE_CHECKLIST_DATA",
-            updateMeta: result.newMeta
-          });
-        } else {
-          // Neither Last-Modified nor ETag present or no update needed, just get the cached version
-          return;
-        }
-      } else {
-        console.log("XHR status error: " + checkDataUpdate.status);
-        //something failed, just get the cached vesion
-      }
+  registrationPromise.then((registration) => {
+    if (hasPendingAppShellUpdate(registration)) {
+      console.log("Checklist update check deferred because an app update is already pending.");
+      return;
     }
-  };
-  checkDataUpdate.onerror = function (e) {
-    console.log("Error trying to get checklist update: ", e);
-  };
-  checkDataUpdate.send();
+
+    var checkDataUpdate = new XMLHttpRequest();
+    checkDataUpdate.open("HEAD", checklistURL, true);
+    checkDataUpdate.onreadystatechange = function () {
+      if (checkDataUpdate.readyState === 4) {
+        if (checkDataUpdate.status === 200) {
+
+          let lastModifiedString = checkDataUpdate.getResponseHeader("Last-Modified");
+          let etagString = checkDataUpdate.getResponseHeader("ETag");
+          let meta = Settings.lastKnownDataVersion();
+
+          const result = shouldUpdateChecklist({ lastModifiedString, etagString, meta });
+
+          if (result.update) {
+            if (hasPendingAppShellUpdate(registration)) {
+              console.log("Checklist refresh skipped because an app update started during the version check.");
+              return;
+            }
+
+            checklistUpdateInFlight = true;
+            try {
+              sw.postMessage({
+                type: "UPDATE_CHECKLIST_DATA",
+                updateMeta: result.newMeta
+              });
+            } catch (error) {
+              checklistUpdateInFlight = false;
+              console.warn("Could not request checklist cache refresh from the service worker.", error);
+            }
+          } else {
+            // Neither Last-Modified nor ETag present or no update needed, just get the cached version
+            return;
+          }
+        } else {
+          console.log("XHR status error: " + checkDataUpdate.status);
+          //something failed, just get the cached vesion
+        }
+      }
+    };
+    checkDataUpdate.onerror = function (e) {
+      console.log("Error trying to get checklist update: ", e);
+    };
+    checkDataUpdate.send();
+  });
 }
 
 Handlebars.registerHelper("ifeq", function (arg1, arg2, options) {
