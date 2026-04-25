@@ -14,11 +14,8 @@ export const customTypeMapregionsMeta = {
       "Region names (resolved from the [[ref:appearance.mapRegionsNames]] table) are indexed for full-text search. Categorical and numerical status values as well as individual occurrence notes are indexed as text",
 
     dwcNotes: {
-      output: "",
-      subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
-      ]
+      output: "none, the [[ref:type.mapregions]] doesn't map to any DwC fields.",
+      subPaths: []
     },
 
     detailsPaneTab: "Map",

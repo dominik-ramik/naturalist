@@ -390,7 +390,18 @@ export let customTypeMonths = {
   },
 
   toDwC: function (data, subPath) {
-    return null; // No standard DwC term for months, and the original cell format is too free-form to reliably convert back to a standard term. Better to return null than risk lossy or incorrect conversions.
+    if (!data || !Array.isArray(data) || data.length === 0) return null;
+
+    const ranges = groupMonthsIntoRanges(data);
+    
+    switch (subPath) {
+      case "compact":
+        return renderRangesString(ranges);
+      case "full":
+        return data.map(m => Checklist.getMonthLabel(m)).join(", ");
+      default:
+        return null;
+    }
   },
 
   render: function (data, uiContext) {

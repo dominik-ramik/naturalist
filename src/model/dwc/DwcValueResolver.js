@@ -19,6 +19,17 @@
  *   taxa: ColName[.sub]  → read from a named taxon rank's stored value
  *   media: col1, col2#   → resolve media URLs and join with |
  *   (anything else)      → literal constant value, used verbatim
+ *
+ * ── Logging (no Logger dependency) ───────────────────────────────────────────
+ *
+ * The resolver never imports Logger.  Instead, callers may supply an optional
+ * `ctx.onLog` callback:
+ *
+ *   ctx.onLog(level: "error"|"warn", message: string) => void
+ *
+ * If omitted, diagnostics are silently discarded.  The compiler (DwcArchiveCompiler)
+ * is responsible for wiring onLog to Logger and for deduplicating messages so
+ * that a misconfigured column does not flood the log with one error per row.
  */
 
 // ─── Directive prefix constants ───────────────────────────────────────────────
@@ -27,6 +38,21 @@ const PREFIX_CONFIG = "config:";
 const PREFIX_AUTO   = "auto:";
 const PREFIX_TAXA   = "taxa:";
 const PREFIX_MEDIA  = "media:";
+
+// ─── Known auto: tokens (used for error reporting) ───────────────────────────
+const AUTO_TOKENS_CHECKLIST   = new Set(["taxonID", "parentNameUsageID", "taxonRank", "scientificName", "scientificNameAuthorship"]);
+const AUTO_TOKENS_OCCURRENCES = new Set(["occurrenceID", "taxonRank", "scientificName", "scientificNameAuthorship"]);
+const AUTO_TOKENS_ANY         = new Set(["pubDate"]);
+
+// ─── Known taxa: sub-paths (used for error reporting) ────────────────────────
+const TAXA_KNOWN_SUBPATHS = new Set(["name", "authority", "lastNamePart"]);
+
+// ─── Pattern for detecting suspicious unknown directive prefixes ──────────────
+// Matches 1–10 lowercase letters immediately followed by ":".
+// Well-known URL schemes are excluded to avoid false positives on plain-text
+// constants like "https://example.org" or "doi:10.1234/foo".
+const DIRECTIVE_LIKE_RE = /^([a-z]{1,10}):/;
+const URL_SCHEMES = new Set(["http", "https", "ftp", "ftps", "mailto", "urn", "doi", "tel", "file", "data"]);
 
 // ─── Template pattern: column: value that contains [...] blocks ───────────────
 const BLOCK_RE = /\[([^\]]*)\]/;
@@ -60,7 +86,21 @@ const BLOCK_RE = /\[([^\]]*)\]/;
  * @property {Function}              mediaUrlResolver
  *   (rawSource: string, columnName: string) => string
  *   Callback from DataManager's closure to produce a fully resolved media URL.
+ * @property {Function}              [onLog]
+ *   Optional diagnostic callback: (level: "error"|"warn", message: string) => void.
+ *   The resolver calls this instead of importing Logger, keeping the module
+ *   dependency-free.  The compiler is responsible for deduplication so that
+ *   per-row errors for a misconfigured column are reported only once.
  */
+
+// ─── Internal logging helper ─────────────────────────────────────────────────
+
+/** @param {ResolverContext} ctx  @param {"error"|"warn"} level  @param {string} msg */
+function log(ctx, level, msg) {
+    ctx.onLog?.(level, msg);
+}
+
+// ─── Public entry point ───────────────────────────────────────────────────────
 
 /**
  * Resolve a single value-source directive.
@@ -82,13 +122,13 @@ export function resolve(directive, ctx) {
         if (BLOCK_RE.test(rest)) {
             return resolveBlockTemplate(rest, ctx);
         }
-        return resolveColumnName(rest, ctx);
+        return resolveColumnName(rest, ctx, /* logMissing */ true);
     }
 
     // ── config: ───────────────────────────────────────────────────────────────
     if (d.startsWith(PREFIX_CONFIG)) {
         const key = d.slice(PREFIX_CONFIG.length).trim();
-        return resolveConfig(key, ctx.customizationData);
+        return resolveConfig(key, ctx);
     }
 
     // ── auto: ─────────────────────────────────────────────────────────────────
@@ -110,16 +150,47 @@ export function resolve(directive, ctx) {
     }
 
     // ── Literal constant (no recognised prefix) ───────────────────────────────
+    // Warn if the value looks like an unknown directive (e.g. "coulmn:foo" is a
+    // typo of "column:").  We exclude well-known URL schemes and words longer than
+    // 10 characters (those are almost certainly plain text, not typos).
+    const prefixMatch = DIRECTIVE_LIKE_RE.exec(d);
+    if (prefixMatch) {
+        const candidate = prefixMatch[1];
+        if (!URL_SCHEMES.has(candidate)) {
+            log(ctx, "warn",
+                `DwC Value: "${d}" looks like a directive (starts with "${candidate}:") ` +
+                `but "${candidate}" is not a known prefix. ` +
+                `Known prefixes: column, config, auto, taxa, media. ` +
+                `If this is intentional plain text, it will be used verbatim.`
+            );
+        }
+    }
+
     return d || null;
 }
 
 // ─── config: ─────────────────────────────────────────────────────────────────
 
-function resolveConfig(key, customizationData) {
-    if (!customizationData || !key) return null;
-    const row = (Array.isArray(customizationData) ? customizationData : [])
-        .find(r => r.item === key);
-    if (!row) return null;
+function resolveConfig(key, ctx) {
+    const { customizationData } = ctx;
+    if (!key) return null;
+
+    if (!customizationData || !Array.isArray(customizationData)) {
+        log(ctx, "error",
+            `DwC Value: config: "${key}" — customization data is not available.`
+        );
+        return null;
+    }
+
+    const row = customizationData.find(r => r.item === key);
+    if (!row) {
+        log(ctx, "error",
+            `DwC Value: config: "${key}" — no such item in the Customization table. ` +
+            `Check the key spelling; it must match the "Item" column exactly.`
+        );
+        return null;
+    }
+
     const val = (row.value || "").toString().trim();
     return val || null;
 }
@@ -130,8 +201,10 @@ function resolveAuto(token, ctx) {
     const { target, taxonNode, occurrenceEntry, occurrenceLevelIndex, taxaColumnDefs } = ctx;
 
     // pubDate is always "today" from the perspective of this export run.
-    if (token === "pubDate") {
-        return new Date().toISOString().split("T")[0];
+    if (AUTO_TOKENS_ANY.has(token)) {
+        if (token === "pubDate") {
+            return new Date().toISOString().split("T")[0];
+        }
     }
 
     if (target === "checklist") {
@@ -148,8 +221,17 @@ function resolveAuto(token, ctx) {
                 return taxonNode.name || null;
             case "scientificNameAuthorship":
                 return taxonNode.authority || null;
-            default:
+            default: {
+                // Give a targeted hint when the token is valid for the other target.
+                const validForOccurrences = AUTO_TOKENS_OCCURRENCES.has(token);
+                log(ctx, "error",
+                    `DwC Value: auto: "${token}" is not a recognised token for target "checklist". ` +
+                    (validForOccurrences
+                        ? `It is valid for "occurrences" — check the "Export to" column.`
+                        : `Valid checklist tokens: ${[...AUTO_TOKENS_ANY, ...AUTO_TOKENS_CHECKLIST].join(", ")}.`)
+                );
                 return null;
+            }
         }
     }
 
@@ -177,8 +259,16 @@ function resolveAuto(token, ctx) {
                 const deepestTaxon = findDeepestNonOccurrenceTaxon(tArr, occurrenceLevelIndex, taxaColumnDefs);
                 return deepestTaxon ? deepestTaxon.authority : null;
             }
-            default:
+            default: {
+                const validForChecklist = AUTO_TOKENS_CHECKLIST.has(token);
+                log(ctx, "error",
+                    `DwC Value: auto: "${token}" is not a recognised token for target "occurrences". ` +
+                    (validForChecklist
+                        ? `It is valid for "checklist" — check the "Export to" column.`
+                        : `Valid occurrence tokens: ${[...AUTO_TOKENS_ANY, ...AUTO_TOKENS_OCCURRENCES].join(", ")}.`)
+                );
                 return null;
+            }
         }
     }
 
@@ -212,9 +302,9 @@ function findDeepestNonOccurrenceTaxon(tArr, occurrenceLevelIndex, taxaColumnDef
  */
 function resolveTaxa(rest, ctx) {
     // Split on the FIRST dot: "Species.lastNamePart" → ["Species", "lastNamePart"]
-    const dotIdx = rest.indexOf(".");
-    const colName  = dotIdx === -1 ? rest : rest.slice(0, dotIdx);
-    const subPath  = dotIdx === -1 ? null : rest.slice(dotIdx + 1);
+    const dotIdx  = rest.indexOf(".");
+    const colName = dotIdx === -1 ? rest : rest.slice(0, dotIdx);
+    const subPath = dotIdx === -1 ? null  : rest.slice(dotIdx + 1);
 
     const colNameLo = colName.toLowerCase().trim();
     const { taxaColumnDefs } = ctx;
@@ -223,11 +313,27 @@ function resolveTaxa(rest, ctx) {
     const levelIdx = (taxaColumnDefs || []).findIndex(
         row => (row.columnName || "").toLowerCase() === colNameLo
     );
-    if (levelIdx === -1) return null;
+    if (levelIdx === -1) {
+        log(ctx, "error",
+            `DwC Value: taxa: "${colName}" — no such column in the Taxa table. ` +
+            `Available columns: ${(taxaColumnDefs || []).map(r => r.columnName).join(", ")}.`
+        );
+        return null;
+    }
+
+    // Validate sub-path before accessing data — an invalid sub-path is always a
+    // configuration error regardless of what data the current row holds.
+    if (subPath !== null && !TAXA_KNOWN_SUBPATHS.has(subPath)) {
+        log(ctx, "error",
+            `DwC Value: taxa: "${rest}" — unknown sub-path ".${subPath}". ` +
+            `Known sub-paths: ${[...TAXA_KNOWN_SUBPATHS].join(", ")}.`
+        );
+        return null;
+    }
 
     // Get the .t array for this entry
     const tArr = ctx.target === "checklist"
-        ? (ctx.taxonNode?.t || [])
+        ? (ctx.taxonNode?.t  || [])
         : (ctx.occurrenceEntry?.t || []);
 
     const taxonAtLevel = tArr[levelIdx];
@@ -247,14 +353,15 @@ function resolveTaxa(rest, ctx) {
         case "authority":
             return authority || null;
         case "lastNamePart": {
-            // The last whitespace-delimited token of the name string
+            // The last whitespace-delimited token of the name string, nothing if name is a single token
             if (!name) return null;
             const parts = name.trim().split(/\s+/);
-            return parts[parts.length - 1] || null;
+            return parts.length > 1 ? parts[parts.length - 1] : null;
         }
-        default:
-            return null;
+        // No default needed: unknown subPath is already caught and returned above.
     }
+
+    return null;
 }
 
 // ─── media: ──────────────────────────────────────────────────────────────────
@@ -266,6 +373,15 @@ function resolveTaxa(rest, ctx) {
  */
 function resolveMedia(rest, ctx) {
     const parts = rest.split(",").map(s => s.trim()).filter(Boolean);
+
+    if (parts.length === 0) {
+        log(ctx, "error",
+            `DwC Value: media: directive has no column names. ` +
+            `Provide at least one column name after "media:".`
+        );
+        return null;
+    }
+
     const urls = [];
 
     const dObj = ctx.target === "checklist"
@@ -274,7 +390,21 @@ function resolveMedia(rest, ctx) {
 
     for (const part of parts) {
         const expandArray = part.endsWith("#");
-        const colBase = expandArray ? part.slice(0, -1).trim() : part;
+        const colBase     = expandArray ? part.slice(0, -1).trim() : part;
+
+        // Validate that the column exists in cddByPath at all (exact or # pattern).
+        const cddKeyExact = colBase.toLowerCase();
+        const cddKeyHash  = cddKeyExact + "#";
+        const colKnown    = ctx.cddByPath?.has(cddKeyExact) || ctx.cddByPath?.has(cddKeyHash);
+
+        if (!colKnown) {
+            log(ctx, "error",
+                `DwC Value: media: column "${colBase}${expandArray ? "#" : ""}" does not exist ` +
+                `in the column definitions. Check the column name spelling.`
+            );
+            // Continue — collect whatever URLs we can from other parts in the list
+            continue;
+        }
 
         if (expandArray) {
             // Expand: colBase1, colBase2, ... until no data found
@@ -284,7 +414,6 @@ function resolveMedia(rest, ctx) {
                 const val = getValueFromD(dObj, expandedCol);
                 if (val === null || val === undefined) break;
 
-                // val is expected to be an image/media object with a .source
                 const source = getMediaSource(val);
                 if (source) {
                     const resolved = ctx.mediaUrlResolver
@@ -328,7 +457,7 @@ function getMediaSource(val) {
  * Resolve a column: template that uses [...]-block notation.
  *
  * Grammar (after the "column:" prefix has been stripped):
- *   value = ( constantText | block )* 
+ *   value = ( constantText | block )*
  *   block = "[" innerText "]"
  *
  * Rules:
@@ -413,6 +542,7 @@ function findNearestBlock(resolved, from, direction) {
 /**
  * Substitute all {placeholder} references inside a single [...] block's inner text.
  * Returns the substituted string, or null if any placeholder resolved to empty.
+ * Column-existence errors are reported via resolveColumnName (logMissing=true).
  */
 function substituteBlock(innerText, ctx) {
     const placeholderRe = /\{([^}]+)\}/g;
@@ -428,7 +558,7 @@ function substituteBlock(innerText, ctx) {
     }
 
     for (const ph of placeholders) {
-        const val = resolveColumnName(ph.key, ctx);
+        const val = resolveColumnName(ph.key, ctx, /* logMissing */ true);
         if (!val || val.trim() === "") return null; // block is dropped
         result = result.replace(ph.full, val);
     }
@@ -443,14 +573,23 @@ function substituteBlock(innerText, ctx) {
  * Called after the "column:" prefix has been stripped, or internally by the
  * block-template substitution for individual {placeholder} keys.
  * Looks up the data in .d using the customType.toDwC() method.
+ *
+ * @param {string}          directive   Column name, optionally with dot-subPath
+ * @param {ResolverContext} ctx
+ * @param {boolean}         logMissing  When true, emit an error if the base column
+ *                                      does not exist in cddByPath at all, and emit
+ *                                      an error if a subPath yields null despite the
+ *                                      raw data being present (likely a bad subPath).
+ *                                      Pass false when the existence check is handled
+ *                                      by the caller to avoid duplicate messages.
  */
-function resolveColumnName(directive, ctx) {
+function resolveColumnName(directive, ctx, logMissing = false) {
     const d = directive.trim();
     if (!d) return null;
 
     // Split on the LAST dot to get basePath and subPath.
     // "collectionDate.ymd" → basePath="collectionDate", subPath="ymd"
-    // "collectionAt.lat"   → basePath="collectionAt",   subPath="lat"
+    // "collectedAt.lat"    → basePath="collectedAt",    subPath="lat"
     // "locality"           → basePath="locality",        subPath=null
     const lastDot = d.lastIndexOf(".");
     const basePath = lastDot === -1 ? d : d.slice(0, lastDot);
@@ -460,22 +599,51 @@ function resolveColumnName(directive, ctx) {
         ? (ctx.taxonNode?.d || {})
         : (ctx.occurrenceEntry?.d || {});
 
+    // ── Column existence check ────────────────────────────────────────────────
+    // Only report an error if the column is completely absent from cddByPath.
+    // A column that exists but has no value for this row is not a configuration
+    // error and must not be logged (the resolver simply returns null).
+    if (logMissing && ctx.cddByPath) {
+        const basePathLo = basePath.toLowerCase();
+        const known = ctx.cddByPath.has(basePathLo)
+            || ctx.cddByPath.has(basePathLo + "#"); // numbered-array pattern fallback
+        if (!known) {
+            log(ctx, "error",
+                `DwC Value: column: "${basePath}" — no such column in the column definitions. ` +
+                `Check the column name spelling.`
+            );
+            return null;
+        }
+    }
+
     const rawData = getValueFromD(dObj, basePath);
 
     // Look up the CDD row to find the dataType
-    const cddRow = ctx.cddByPath?.get(basePath.toLowerCase());
+    const cddRow  = ctx.cddByPath?.get(basePath.toLowerCase());
     const dataType = (cddRow?.dataType || "text").toLowerCase().split(/\s+/)[0]; // handle "list text"
 
     const customType = ctx.dataCustomTypes?.[dataType];
 
     if (!customType || typeof customType.toDwC !== "function") {
-        // Fallback: try to return as string
+        // Fallback: return as plain string
         if (rawData === null || rawData === undefined) return null;
         const s = String(rawData).trim();
         return s || null;
     }
 
     const result = customType.toDwC(rawData, subPath);
+
+    // ── Sub-path validation ───────────────────────────────────────────────────
+    // If a subPath was requested but toDwC returned null despite rawData being
+    // present, the subPath is likely invalid for this column type.  Report it
+    // so the user can distinguish a bad sub-path from an empty cell.
+    if (subPath !== null && result === null && rawData !== null && rawData !== undefined && logMissing) {
+        log(ctx, "error",
+            `DwC Value: column: "${d}" — sub-path ".${subPath}" returned no value for ` +
+            `column "${basePath}" (type: ${dataType}). The sub-path may be invalid for this type.`
+        );
+    }
+
     if (result === null || result === undefined) return null;
     const s = String(result).trim();
     return s || null;

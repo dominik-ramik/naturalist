@@ -10,8 +10,10 @@ export const customTypeTaxonMeta = {
     dwcNotes: {
       output: "",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+         {suffix: "", label: "name part of the taxon, e.g. 'Myzomela cardinalis'"},
+         {suffix: "name", label: "name part of the taxon, e.g. 'Myzomela cardinalis'"},
+         {suffix: "authority", label: "authority part of the taxon, e.g. '(Gmelin, JF, 1788)'"},
+         {suffix: "lastNamePart", label: "the last whitespace-delimited token of the name, e.g. 'cardinalis', or nothing if the name is a single token"},
       ]
     },
     detailsPaneTab: null,

@@ -8,10 +8,11 @@ export const customTypeGeopointMeta = {
     whenToUse: "Collection localities, observation coordinates, occurrence origins - any geographic point coordinate that users should open on an online map.",
     behaviorFulltextIndexing: "Geographic coordinates are not indexed for full-text search.",
     dwcNotes: {
-      output: "",
+      output: "selected coordinate component or verbatim coordinate string",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        { suffix: "lat", label: "decimal latitude numeric value, e.g. 45.1234" },
+        { suffix: "long", label: "decimal longitude numeric value, e.g. -120.5678" },
+        { suffix: "verbatim", label: "verbatim coordinate string as entered in the cell, e.g. `45°7'24\"N 120°34'4\"W`" },
       ]
     },
     detailsPaneTab: null,

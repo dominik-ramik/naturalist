@@ -98,19 +98,16 @@ export let customTypeNumber = {
 
   toDwC: function (data, subPath) {
     // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
+    if (!Number.isFinite(data)) {
       return null;
     }
+
+    return data;
   },
 
   render: function (data, uiContext) {
     // Only handle actual numbers
-    if (data === null || data === undefined) {
-      return null;
-    }
-
-    if (typeof data !== "number") {
-      // Not a number, don't handle
+    if (!Number.isFinite(data)) {
       return null;
     }
 

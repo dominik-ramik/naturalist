@@ -50,9 +50,13 @@ export let customTypeMarkdown = {
 
   toDwC: function (data, subPath) {
     // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
+    if (data === null || data === undefined || typeof data !== "string" || data.trim() === "") {
       return null;
     }
+
+    const htmlContent = processMarkdownWithBibliography(displayData);
+    const searchable = htmlToPlainText(htmlContent).trim();
+    return searchable;
   },
 
   render: function (data, uiContext) {

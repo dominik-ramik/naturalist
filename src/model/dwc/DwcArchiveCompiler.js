@@ -56,263 +56,208 @@ const LOG_TAG = "DwC Archive";
  * @returns {Promise<{checklist: Blob|null, occurrences: Blob|null}>}
  */
 export async function compileDwcArchive(opts) {
-    const {
-        dwcTableRows,
-        compiledChecklist,
-        taxaColumnDefs,
-        customizationData,
-        cddRows,
-        defaultLangCode,
-        mediaUrlResolver,
-    } = opts;
+  const {
+    dwcTableRows,
+    compiledChecklist,
+    taxaColumnDefs,
+    customizationData,
+    cddRows,
+    defaultLangCode,
+    mediaUrlResolver,
+  } = opts;
 
-    const result = { checklist: null, occurrences: null };
+  const result = { checklist: null, occurrences: null };
 
-    if (!dwcTableRows || dwcTableRows.length === 0) return result;
+  if (!dwcTableRows || dwcTableRows.length === 0) return result;
 
-    // Abort if compilation produced errors — no point writing corrupt archives.
-    if (Logger.hasErrors && Logger.hasErrors()) {
-        Logger.warning(
-            "DwC archive compilation skipped because the checklist has errors. " +
-            "Fix all errors first, then re-compile.",
-            LOG_TAG
-        );
-        return result;
-    }
-
-    // ── Pre-build cddByPath: Map<lowercaseColName, cddRow> ──────────────────
-    const cddByPath = buildCddByPath(cddRows);
-
-    // ── Locate the occurrence rank level index ───────────────────────────────
-    const occurrenceLevelIndex = findOccurrenceLevelIndex(
-        taxaColumnDefs,
-        OCCURRENCE_IDENTIFIER
+  // Abort if compilation produced errors — no point writing corrupt archives.
+  if (Logger.hasErrors && Logger.hasErrors()) {
+    Logger.warning(
+      "DwC archive compilation skipped because the checklist has errors. " +
+      "Fix all errors first, then re-compile.",
+      LOG_TAG
     );
-
-    // ── Get the compiled checklist entries for the default language ──────────
-    const compiledEntries =
-        compiledChecklist?.versions?.[defaultLangCode]?.dataset?.checklist || [];
-
-    if (compiledEntries.length === 0) {
-        Logger.warning("DwC Archive: no compiled checklist entries found.", LOG_TAG);
-        return result;
-    }
-
-    // ── Segment rows by target ───────────────────────────────────────────────
-    const rowsByTarget = {};
-    for (const archiveType of Object.keys(DWC_ARCHIVE_TYPES)) {
-        rowsByTarget[archiveType] = dwcTableRows.filter(
-            r => (r.exportTo || "").trim().toLowerCase() === archiveType
-        );
-    }
-
-    // ── Compile each non-empty target ────────────────────────────────────────
-    for (const [archiveType, typeConfig] of Object.entries(DWC_ARCHIVE_TYPES)) {
-        const rows = rowsByTarget[archiveType] || [];
-        if (rows.length === 0) continue;
-
-        const blob = await compileTarget({
-            archiveType,
-            typeConfig,
-            rows,
-            compiledEntries,
-            taxaColumnDefs,
-            customizationData,
-            cddByPath,
-            occurrenceLevelIndex,
-            mediaUrlResolver,
-            cddRows,
-        });
-
-        result[archiveType] = blob;
-    }
-
     return result;
+  }
+
+  // ── Pre-build cddByPath: Map<lowercaseColName, cddRow> ──────────────────
+  const cddByPath = buildCddByPath(cddRows);
+
+  // ── Locate the occurrence rank level index ───────────────────────────────
+  const occurrenceLevelIndex = findOccurrenceLevelIndex(
+    taxaColumnDefs,
+    OCCURRENCE_IDENTIFIER
+  );
+
+  // ── Get the compiled checklist entries for the default language ──────────
+  const compiledEntries =
+    compiledChecklist?.versions?.[defaultLangCode]?.dataset?.checklist || [];
+
+  if (compiledEntries.length === 0) {
+    Logger.warning("DwC Archive: no compiled checklist entries found.", LOG_TAG);
+    return result;
+  }
+
+  // ── Segment rows by target ───────────────────────────────────────────────
+  const rowsByTarget = {};
+  for (const archiveType of Object.keys(DWC_ARCHIVE_TYPES)) {
+    rowsByTarget[archiveType] = dwcTableRows.filter(
+      r => (r.exportTo || "").trim().toLowerCase() === archiveType
+    );
+  }
+
+  // ── Compile each non-empty target ────────────────────────────────────────
+  for (const [archiveType, typeConfig] of Object.entries(DWC_ARCHIVE_TYPES)) {
+    const rows = rowsByTarget[archiveType] || [];
+    if (rows.length === 0) continue;
+
+    const blob = await compileTarget({
+      archiveType,
+      typeConfig,
+      rows,
+      compiledEntries,
+      taxaColumnDefs,
+      customizationData,
+      cddByPath,
+      occurrenceLevelIndex,
+      mediaUrlResolver,
+      cddRows,
+    });
+
+    result[archiveType] = blob;
+  }
+
+  return result;
 }
 
 // ─── Per-target compilation ───────────────────────────────────────────────────
 
 async function compileTarget(opts) {
-    const {
-        archiveType,
-        typeConfig,
-        rows,
-        compiledEntries,
-        taxaColumnDefs,
-        customizationData,
-        cddByPath,
-        occurrenceLevelIndex,
-        mediaUrlResolver,
-        cddRows,
-    } = opts;
+  const {
+    archiveType,
+    typeConfig,
+    rows,
+    compiledEntries,
+    taxaColumnDefs,
+    customizationData,
+    cddByPath,
+    occurrenceLevelIndex,
+    mediaUrlResolver,
+    cddRows,
+  } = opts;
 
-    // ── 1. Separate eml: rows from DwC term rows ─────────────────────────────
-    const emlRows  = rows.filter(r => (r.term || "").startsWith("eml:"));
-    const dwcRows  = rows.filter(r => !(r.term || "").startsWith("eml:"));
+  // ── 1. Separate eml: rows from DwC term rows ─────────────────────────────
+  const emlRows = rows.filter(r => (r.term || "").startsWith("eml:"));
+  const dwcRows = rows.filter(r => !(r.term || "").startsWith("eml:"));
 
-    // ── 2. Validate DwC term namespace prefixes ──────────────────────────────
-    let namespaceErrors = 0;
-    for (const row of dwcRows) {
-        const term = (row.term || "").trim();
-        const colonIdx = term.indexOf(":");
-        if (colonIdx === -1) {
-            Logger.error(
-                `DwC Archive (${archiveType}): term "${term}" has no namespace prefix. ` +
-                `Use e.g. "dwc:scientificName".`,
-                LOG_TAG
-            );
-            namespaceErrors++;
-            continue;
-        }
-        const prefix = term.slice(0, colonIdx);
-        if (!prefixToNamespace(prefix)) {
-            Logger.error(
-                `DwC Archive (${archiveType}): unknown namespace prefix "${prefix}" in term "${term}". ` +
-                `Supported: dwc, dcterms, dwciri, dc.`,
-                LOG_TAG
-            );
-            namespaceErrors++;
-        }
+  // ── 2. Validate DwC term namespace prefixes ──────────────────────────────
+  let namespaceErrors = 0;
+  for (const row of dwcRows) {
+    const term = (row.term || "").trim();
+    const colonIdx = term.indexOf(":");
+    if (colonIdx === -1) {
+      Logger.error(
+        `DwC Archive (${archiveType}): term "${term}" has no namespace prefix. ` +
+        `Use e.g. "dwc:scientificName".`,
+        LOG_TAG
+      );
+      namespaceErrors++;
+      continue;
     }
-    if (namespaceErrors > 0) return null;
-
-    // ── 3. Validate required / optional terms ────────────────────────────────
-    const targetTermsMeta = termsMeta[archiveType] || [];
-    const configuredTerms = new Set(dwcRows.map(r => (r.term || "").trim()));
-
-    for (const termDef of targetTermsMeta) {
-        if (configuredTerms.has(termDef.term)) continue;
-
-        if (termDef.presence === "required" || termDef.presence === "critical") {
-            Logger.warning(
-                `DwC Archive (${archiveType}): required term "${termDef.term}" is not configured. ` +
-                `Add a row with exportTo="${archiveType}" and term="${termDef.term}".`,
-                LOG_TAG
-            );
-        } else if (termDef.presence === "optional") {
-            Logger.info &&
-                Logger.info(
-                    `DwC Archive (${archiveType}): optional term "${termDef.term}" is absent.`,
-                    LOG_TAG
-                );
-        }
+    const prefix = term.slice(0, colonIdx);
+    if (!prefixToNamespace(prefix)) {
+      Logger.error(
+        `DwC Archive (${archiveType}): unknown namespace prefix "${prefix}" in term "${term}". ` +
+        `Supported: dwc, dcterms, dwciri, dc.`,
+        LOG_TAG
+      );
+      namespaceErrors++;
     }
+  }
+  if (namespaceErrors > 0) return null;
 
-    // ── 4. Handle EML ────────────────────────────────────────────────────────
-    let emlContent = null;
-    const precomposedRow = emlRows.find(r => r.term === "eml:precomposed");
+  // ── 3. Validate required / optional terms ────────────────────────────────
+  const targetTermsMeta = termsMeta[archiveType] || [];
+  const configuredTerms = new Set(dwcRows.map(r => (r.term || "").trim()));
 
-    if (precomposedRow) {
-        const vs = (precomposedRow.valueSource || "").trim();
-        if (vs === "") {
-            Logger.error(
-                `DwC Archive (${archiveType}): "eml:precomposed" row has an empty value source.`,
-                LOG_TAG
-            );
-            // Continue without EML
-        } else {
-            // F-directives are already resolved by DataManager's pre-pass,
-            // so the value is the raw XML string.
-            emlContent = vs;
-        }
-    } else if (emlRows.length > 0) {
-        // Assemble EML from individual eml: rows
-        emlContent = buildEmlFromRows(emlRows, archiveType);
-    }
+  for (const termDef of targetTermsMeta) {
+    if (configuredTerms.has(termDef.term)) continue;
 
-    if (!emlContent) {
-        Logger.warning(
-            `DwC Archive (${archiveType}): no EML metadata configured. ` +
-            `Add "eml:precomposed" or individual "eml:*" rows.`,
-            LOG_TAG
+    if (termDef.presence === "required" || termDef.presence === "critical") {
+      Logger.warning(
+        `DwC Archive (${archiveType}): required term "${termDef.term}" is not configured. ` +
+        `Add a row with exportTo="${archiveType}" and term="${termDef.term}".`,
+        LOG_TAG
+      );
+    } else if (termDef.presence === "optional") {
+      Logger.info &&
+        Logger.info(
+          `DwC Archive (${archiveType}): optional term "${termDef.term}" is absent.`,
+          LOG_TAG
         );
     }
+  }
 
-    // ── 5. Build the field list (term columns) ───────────────────────────────
-    // Order: as declared in the user's dwcArchive table.
-    // We deduplicate by term (first occurrence wins) in case of accidental duplicates.
-    const seenTerms = new Set();
-    const termColumns = []; // { term, valueSource, uri }
+  // ── 4. Handle EML ────────────────────────────────────────────────────────
+  let emlContent = null;
+  const precomposedRow = emlRows.find(r => r.term === "eml:precomposed");
 
-    for (const row of dwcRows) {
-        const term = (row.term || "").trim();
-        if (!term || seenTerms.has(term)) continue;
-        seenTerms.add(term);
-
-        const colonIdx = term.indexOf(":");
-        const prefix   = term.slice(0, colonIdx);
-        const localPart = term.slice(colonIdx + 1);
-        const ns = prefixToNamespace(prefix);
-        const uri = ns ? ns + localPart : null;
-
-        termColumns.push({ term, valueSource: (row.valueSource || "").trim(), uri });
+  if (precomposedRow) {
+    const vs = (precomposedRow.valueSource || "").trim();
+    if (vs === "") {
+      Logger.error(
+        `DwC Archive (${archiveType}): "eml:precomposed" row has an empty value source.`,
+        LOG_TAG
+      );
+      // Continue without EML
+    } else {
+      // F-directives are already resolved by DataManager's pre-pass,
+      // so the value is the raw XML string.
+      emlContent = vs;
     }
+  } else if (emlRows.length > 0) {
+    // Assemble EML from individual eml: rows
+    emlContent = buildEmlFromRows(emlRows, archiveType);
+  }
 
-    if (termColumns.length === 0) {
-        Logger.error(
-            `DwC Archive (${archiveType}): no DwC term rows found. Nothing to export.`,
-            LOG_TAG
-        );
-        return null;
-    }
-
-    // ── 6. Build the data rows ───────────────────────────────────────────────
-    const { csvColumns, csvRows } = buildDataRows({
-        archiveType,
-        termColumns,
-        compiledEntries,
-        taxaColumnDefs,
-        customizationData,
-        cddByPath,
-        occurrenceLevelIndex,
-        mediaUrlResolver,
-    });
-
-    if (csvRows.length === 0) {
-        Logger.warning(
-            `DwC Archive (${archiveType}): no rows were generated. ` +
-            `Check that your data sheet has rows matching this archive type.`,
-            LOG_TAG
-        );
-    }
-
-    // ── 7. Build CSV ──────────────────────────────────────────────────────────
-    const csvContent = buildCsvString(csvColumns, csvRows);
-
-    // ── 8. Build meta.xml ────────────────────────────────────────────────────
-    const fieldUris = termColumns.map(tc => tc.uri);
-    const emlFileName = emlContent ? "eml.xml" : null;
-    const metaXml = buildMetaXml(
-        fieldUris,
-        typeConfig.rowTypeDwcUri,
-        typeConfig.csvFileName,
-        emlFileName
+  if (!emlContent) {
+    Logger.warning(
+      `DwC Archive (${archiveType}): no EML metadata configured. ` +
+      `Add "eml:precomposed" or individual "eml:*" rows.`,
+      LOG_TAG
     );
+  }
 
-    // ── 9. Package ZIP ────────────────────────────────────────────────────────
-    const files = [
-        { fileName: typeConfig.csvFileName,  fileContent: csvContent },
-        { fileName: "meta.xml",              fileContent: metaXml },
-    ];
-    if (emlContent) {
-        files.push({ fileName: "eml.xml", fileContent: emlContent });
-    }
+  // ── 5. Build the field list (term columns) ───────────────────────────────
+  // Order: as declared in the user's dwcArchive table.
+  // We deduplicate by term (first occurrence wins) in case of accidental duplicates.
+  const seenTerms = new Set();
+  const termColumns = []; // { term, valueSource, uri }
 
-    try {
-        const blob = await buildZip(files, { compression: "DEFLATE", type: "blob" });
-        return blob;
-    } catch (err) {
-        Logger.error(
-            `DwC Archive (${archiveType}): failed to build ZIP: ${err.message}`,
-            LOG_TAG
-        );
-        return null;
-    }
-}
+  for (const row of dwcRows) {
+    const term = (row.term || "").trim();
+    if (!term || seenTerms.has(term)) continue;
+    seenTerms.add(term);
 
-// ─── Data row generation ──────────────────────────────────────────────────────
+    const colonIdx = term.indexOf(":");
+    const prefix = term.slice(0, colonIdx);
+    const localPart = term.slice(colonIdx + 1);
+    const ns = prefixToNamespace(prefix);
+    const uri = ns ? ns + localPart : null;
 
-function buildDataRows({
+    termColumns.push({ term, valueSource: (row.valueSource || "").trim(), uri });
+  }
+
+  if (termColumns.length === 0) {
+    Logger.error(
+      `DwC Archive (${archiveType}): no DwC term rows found. Nothing to export.`,
+      LOG_TAG
+    );
+    return null;
+  }
+
+  // ── 6. Build the data rows ───────────────────────────────────────────────
+  const { csvColumns, csvRows } = buildDataRows({
     archiveType,
     termColumns,
     compiledEntries,
@@ -321,150 +266,212 @@ function buildDataRows({
     cddByPath,
     occurrenceLevelIndex,
     mediaUrlResolver,
+  });
+
+  if (csvRows.length === 0) {
+    Logger.warning(
+      `DwC Archive (${archiveType}): no rows were generated. ` +
+      `Check that your data sheet has rows matching this archive type.`,
+      LOG_TAG
+    );
+  }
+
+  // ── 7. Build CSV ──────────────────────────────────────────────────────────
+  const csvContent = buildCsvString(csvColumns, csvRows);
+
+  // ── 8. Build meta.xml ────────────────────────────────────────────────────
+  const fieldUris = termColumns.map(tc => tc.uri);
+  const emlFileName = emlContent ? "eml.xml" : null;
+  const metaXml = buildMetaXml(
+    fieldUris,
+    typeConfig.rowTypeDwcUri,
+    typeConfig.csvFileName,
+    emlFileName
+  );
+
+  // ── 9. Package ZIP ────────────────────────────────────────────────────────
+  const files = [
+    { fileName: typeConfig.csvFileName, fileContent: csvContent },
+    { fileName: "meta.xml", fileContent: metaXml },
+  ];
+  if (emlContent) {
+    files.push({ fileName: "eml.xml", fileContent: emlContent });
+  }
+
+  try {
+    const blob = await buildZip(files, { compression: "DEFLATE", type: "blob" });
+    return blob;
+  } catch (err) {
+    Logger.error(
+      `DwC Archive (${archiveType}): failed to build ZIP: ${err.message}`,
+      LOG_TAG
+    );
+    return null;
+  }
+}
+
+// ─── Data row generation ──────────────────────────────────────────────────────
+
+function buildDataRows({
+  archiveType,
+  termColumns,
+  compiledEntries,
+  taxaColumnDefs,
+  customizationData,
+  cddByPath,
+  occurrenceLevelIndex,
+  mediaUrlResolver,
 }) {
-    // The CSV columns are the term names (used as keys in row objects)
-    const csvColumns = termColumns.map(tc => tc.term);
+  // The CSV columns are the term names (used as keys in row objects)
+  const csvColumns = termColumns.map(tc => tc.term);
 
-    /** @type {Object[]} */
-    const csvRows = [];
+  /** @type {Object[]} */
+  const csvRows = [];
 
-    // ── Shared resolver context base (properties common to both targets) ──────
-    function makeBaseContext() {
-        return {
-            target: archiveType,
-            taxaColumnDefs,
-            customizationData,
-            cddByPath,
-            mediaUrlResolver,
-            // dataCustomTypes is imported dynamically to avoid circular deps at module load time
-            dataCustomTypes: getDataCustomTypes(),
-        };
+  // ── Shared resolver context base (properties common to both targets) ──────
+  const _seenLogMessages = new Set();
+
+  function makeBaseContext() {
+    return {
+      target: archiveType,
+      taxaColumnDefs,
+      customizationData,
+      cddByPath,
+      mediaUrlResolver,
+      dataCustomTypes: getDataCustomTypes(),
+      onLog(level, msg) {
+        if (_seenLogMessages.has(msg)) return; // deduplicate across rows
+        _seenLogMessages.add(msg);
+        if (level === "error") Logger.error(msg, LOG_TAG);
+        else Logger.warning(msg, LOG_TAG);
+      },
+    };
+  }
+
+  // ── CHECKLIST ─────────────────────────────────────────────────────────────
+  if (archiveType === "checklist") {
+    const taxonNodes = expandToTaxonNodes(
+      compiledEntries,
+      taxaColumnDefs,
+      occurrenceLevelIndex
+    );
+
+    for (const taxonNode of taxonNodes) {
+      const ctx = {
+        ...makeBaseContext(),
+        taxonNode,
+      };
+
+      const row = {};
+      for (const tc of termColumns) {
+        const val = resolve(tc.valueSource, ctx);
+        row[tc.term] = val !== null ? val : "";
+      }
+      csvRows.push(row);
+    }
+  }
+
+  // ── OCCURRENCES ───────────────────────────────────────────────────────────
+  else if (archiveType === "occurrences") {
+    if (occurrenceLevelIndex === -1) {
+      Logger.warning(
+        "DwC Archive (occurrences): no occurrence rank is defined in your Taxa table. " +
+        "Add a row whose Taxon name is \"Occurrence\" to enable occurrence export.",
+        LOG_TAG
+      );
+      return { csvColumns, csvRows };
     }
 
-    // ── CHECKLIST ─────────────────────────────────────────────────────────────
-    if (archiveType === "checklist") {
-        const taxonNodes = expandToTaxonNodes(
-            compiledEntries,
-            taxaColumnDefs,
-            occurrenceLevelIndex
-        );
+    const occurrenceEntries = compiledEntries.filter(entry => {
+      const tArr = entry.t || [];
+      const occNode = tArr[occurrenceLevelIndex];
+      return occNode != null && (occNode.name || "").trim() !== "";
+    });
 
-        for (const taxonNode of taxonNodes) {
-            const ctx = {
-                ...makeBaseContext(),
-                taxonNode,
-            };
+    for (const occurrenceEntry of occurrenceEntries) {
+      const ctx = {
+        ...makeBaseContext(),
+        occurrenceEntry,
+        occurrenceLevelIndex,
+      };
 
-            const row = {};
-            for (const tc of termColumns) {
-                const val = resolve(tc.valueSource, ctx);
-                row[tc.term] = val !== null ? val : "";
-            }
-            csvRows.push(row);
-        }
+      const row = {};
+      for (const tc of termColumns) {
+        const val = resolve(tc.valueSource, ctx);
+        row[tc.term] = val !== null ? val : "";
+      }
+      csvRows.push(row);
     }
+  }
 
-    // ── OCCURRENCES ───────────────────────────────────────────────────────────
-    else if (archiveType === "occurrences") {
-        if (occurrenceLevelIndex === -1) {
-            Logger.warning(
-                "DwC Archive (occurrences): no occurrence rank is defined in your Taxa table. " +
-                "Add a row whose Taxon name is \"Occurrence\" to enable occurrence export.",
-                LOG_TAG
-            );
-            return { csvColumns, csvRows };
-        }
-
-        const occurrenceEntries = compiledEntries.filter(entry => {
-            const tArr = entry.t || [];
-            const occNode = tArr[occurrenceLevelIndex];
-            return occNode != null && (occNode.name || "").trim() !== "";
-        });
-
-        for (const occurrenceEntry of occurrenceEntries) {
-            const ctx = {
-                ...makeBaseContext(),
-                occurrenceEntry,
-                occurrenceLevelIndex,
-            };
-
-            const row = {};
-            for (const tc of termColumns) {
-                const val = resolve(tc.valueSource, ctx);
-                row[tc.term] = val !== null ? val : "";
-            }
-            csvRows.push(row);
-        }
-    }
-
-    return { csvColumns, csvRows };
+  return { csvColumns, csvRows };
 }
 
 // ─── EML assembly from individual eml: rows ───────────────────────────────────
 
 function buildEmlFromRows(emlRows, archiveType) {
-    function getVal(term) {
-        const row = emlRows.find(r => r.term === term);
-        if (!row) return "";
-        // valueSource for eml: rows is always plain: already resolved or a literal
-        const vs = (row.valueSource || "").trim();
-        // Strip leading "plain: " if present (user may have used plain: prefix)
-        if (vs.startsWith("plain:")) return vs.slice("plain:".length).trim();
-        // For "config: X" or "auto: X" in EML rows, we'd need the resolver,
-        // but EML rows are typically plain: or literal. Treat as literal.
-        return vs;
-    }
+  function getVal(term) {
+    const row = emlRows.find(r => r.term === term);
+    if (!row) return "";
+    // valueSource for eml: rows is always plain: already resolved or a literal
+    const vs = (row.valueSource || "").trim();
+    // Strip leading "plain: " if present (user may have used plain: prefix)
+    if (vs.startsWith("plain:")) return vs.slice("plain:".length).trim();
+    // For "config: X" or "auto: X" in EML rows, we'd need the resolver,
+    // but EML rows are typically plain: or literal. Treat as literal.
+    return vs;
+  }
 
-    // Validate required EML terms
-    const required = termsMeta.eml.filter(t => t.presence === "required" || t.presence === "critical");
-    let missingRequired = [];
-    for (const termDef of required) {
-        if (termDef.term === "eml:precomposed") continue; // handled separately
-        if (!getVal(termDef.term)) {
-            Logger.warning(
-                `DwC Archive (${archiveType}): EML required term "${termDef.term}" is missing or empty.`,
-                LOG_TAG
-            );
-            if (termDef.presence === "critical") missingRequired.push(termDef.term);
-        }
+  // Validate required EML terms
+  const required = termsMeta.eml.filter(t => t.presence === "required" || t.presence === "critical");
+  let missingRequired = [];
+  for (const termDef of required) {
+    if (termDef.term === "eml:precomposed") continue; // handled separately
+    if (!getVal(termDef.term)) {
+      Logger.warning(
+        `DwC Archive (${archiveType}): EML required term "${termDef.term}" is missing or empty.`,
+        LOG_TAG
+      );
+      if (termDef.presence === "critical") missingRequired.push(termDef.term);
     }
-    if (missingRequired.length > 0) {
-        Logger.error(
-            `DwC Archive (${archiveType}): critical EML terms are missing. EML will not be generated. Either use "eml:precomposed" with a full EML XML, or add individual "eml:*" rows for the required terms: ${missingRequired.join(", ")}`,
-            LOG_TAG
-        );
-        return null;
-    }
+  }
+  if (missingRequired.length > 0) {
+    Logger.error(
+      `DwC Archive (${archiveType}): critical EML terms are missing. EML will not be generated. Either use "eml:precomposed" with a full EML XML, or add individual "eml:*" rows for the required terms: ${missingRequired.join(", ")}`,
+      LOG_TAG
+    );
+    return null;
+  }
 
-    const opts = {
-        packageId:              getVal("eml:packageId"),
-        language:               getVal("eml:language") || "en",
-        title:                  getVal("eml:title"),
-        pubDate:                getVal("eml:pubDate") || new Date().toISOString().split("T")[0],
-        abstract:               getVal("eml:abstract"),
-        licenseUri:             getVal("eml:licenseUri"),
-        licenseLabel:           getVal("eml:licenseLabel"),
-        geographicDescription:  getVal("eml:geographicDescription"),
-        taxonomicDescription:   getVal("eml:generalTaxonomicCoverage"),
-        creator: {
-            givenName:          getVal("eml:creatorGivenName"),
-            surName:            getVal("eml:creatorSurName"),
-            email:              getVal("eml:creatorEmail"),
-            organizationName:   getVal("eml:creatorOrganizationName"),
-            url:                getVal("eml:creatorUrl"),
-            userId:             getVal("eml:creatorUserId"),
-        },
-    };
+  const opts = {
+    packageId: getVal("eml:packageId"),
+    language: getVal("eml:language") || "en",
+    title: getVal("eml:title"),
+    pubDate: getVal("eml:pubDate") || new Date().toISOString().split("T")[0],
+    abstract: getVal("eml:abstract"),
+    licenseUri: getVal("eml:licenseUri"),
+    licenseLabel: getVal("eml:licenseLabel"),
+    geographicDescription: getVal("eml:geographicDescription"),
+    taxonomicDescription: getVal("eml:generalTaxonomicCoverage"),
+    creator: {
+      givenName: getVal("eml:creatorGivenName"),
+      surName: getVal("eml:creatorSurName"),
+      email: getVal("eml:creatorEmail"),
+      organizationName: getVal("eml:creatorOrganizationName"),
+      url: getVal("eml:creatorUrl"),
+      userId: getVal("eml:creatorUserId"),
+    },
+  };
 
-    try {
-        return buildEmlXml(opts);
-    } catch (err) {
-        Logger.error(
-            `DwC Archive (${archiveType}): failed to build EML XML: ${err.message}`,
-            LOG_TAG
-        );
-        return null;
-    }
+  try {
+    return buildEmlXml(opts);
+  } catch (err) {
+    Logger.error(
+      `DwC Archive (${archiveType}): failed to build EML XML: ${err.message}`,
+      LOG_TAG
+    );
+    return null;
+  }
 }
 
 // ─── CDD by-path map builder ─────────────────────────────────────────────────
@@ -479,16 +486,16 @@ function buildEmlFromRows(emlRows, archiveType) {
  * @returns {Map<string, Object>}
  */
 function buildCddByPath(cddRows) {
-    const map = new Map();
-    if (!cddRows) return map;
+  const map = new Map();
+  if (!cddRows) return map;
 
-    for (const row of cddRows) {
-        const name = (row.columnName || "").toLowerCase().trim();
-        if (!name) continue;
-        map.set(name, row);
-    }
+  for (const row of cddRows) {
+    const name = (row.columnName || "").toLowerCase().trim();
+    if (!name) continue;
+    map.set(name, row);
+  }
 
-    return map;
+  return map;
 }
 
 // ─── Lazy dataCustomTypes import ─────────────────────────────────────────────
@@ -496,20 +503,20 @@ function buildCddByPath(cddRows) {
 let _cachedDataCustomTypes = null;
 
 function getDataCustomTypes() {
-    if (_cachedDataCustomTypes) return _cachedDataCustomTypes;
-    try {
-        // Dynamic require-style access: in the ES module environment the
-        // customTypes/index.js export is already loaded by DataManager.
-        // We import it here lazily to avoid a circular dependency at module
-        // load time (DataManager → DwcArchiveCompiler → customTypes → ...).
-        // In practice this module will always be loaded after DataManager,
-        // so the import resolves immediately from the module cache.
-        // eslint-disable-next-line no-undef
-        _cachedDataCustomTypes = globalThis.__nl_dataCustomTypes;
-    } catch {
-        _cachedDataCustomTypes = {};
-    }
-    return _cachedDataCustomTypes || {};
+  if (_cachedDataCustomTypes) return _cachedDataCustomTypes;
+  try {
+    // Dynamic require-style access: in the ES module environment the
+    // customTypes/index.js export is already loaded by DataManager.
+    // We import it here lazily to avoid a circular dependency at module
+    // load time (DataManager → DwcArchiveCompiler → customTypes → ...).
+    // In practice this module will always be loaded after DataManager,
+    // so the import resolves immediately from the module cache.
+    // eslint-disable-next-line no-undef
+    _cachedDataCustomTypes = globalThis.__nl_dataCustomTypes;
+  } catch {
+    _cachedDataCustomTypes = {};
+  }
+  return _cachedDataCustomTypes || {};
 }
 
 /**
@@ -524,5 +531,5 @@ function getDataCustomTypes() {
  * @param {Object} types  The dataCustomTypes map
  */
 export function registerDataCustomTypes(types) {
-    _cachedDataCustomTypes = types;
+  _cachedDataCustomTypes = types;
 }

@@ -8,11 +8,8 @@ export const customTypeMapMeta = {
     whenToUse: "Scanned range maps, hand-drawn distribution maps, or any static image that represents geographic information.",
     behaviorFulltextIndexing: "The map title is indexed for full-text search.",
     dwcNotes: {
-      output: "",
-      subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
-      ]
+      output: "not accessible through column names, use `media:` directive in DwC export for media files, see [[ref:content.dwcArchive.valueSource]]",
+      subPaths: []
     },
     detailsPaneTab: "Map",
     inputFormats: [

@@ -108,9 +108,24 @@ export let customTypeTaxon = {
 
   toDwC: function (data, subPath) {
     // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
+    if (data === null || data === undefined || typeof data !== "object" || !data.name) {
       return null;
     }
+
+    switch (subPath) {
+      case "":
+        return data.name;
+      case "name":
+        return data.name;
+      case "authority":
+        return data.authority ? data.authority : null;
+      case "lastNamePart":
+        const parts = data.name.trim().split(/\s+/);
+        return parts.length > 1 ? parts[parts.length - 1] : null;
+      default:
+        return null;
+    }
+
   },
 
   render: function (data, uiContext) {

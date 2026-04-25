@@ -340,9 +340,17 @@ export let customTypeGeopoint = {
   },
 
   toDwC: function (data, subPath) {
-    // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
-      return null;
+    if (!data || !data.verbatim || !data.lat || !data.long) return null;
+
+    switch (subPath) {
+      case "lat":
+        return data.lat;
+      case "long":
+        return data.long;
+      case "verbatim":
+        return data.verbatim;
+      default:
+        return null;
     }
   },
 

@@ -8,10 +8,10 @@ export const customTypeMonthsMeta = {
     whenToUse: "Flowering periods, breeding seasons, flight periods, activity windows - any phenological attribute expressed as a set of months.",
     behaviorFulltextIndexing: "Individual month names are indexed even if they are displayed compactly as a range. Text-search for `February` will match `February`, `February-March` as well as `January-April`.",
     dwcNotes: {
-      output: "",
+      output: "compact months range or full list of months.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        { suffix: "compact", label: "Dash-and-comma separated ranges, e.g. January-March, July" },
+        { suffix: "full", label: "Full list of months, e.g. January, February, March, July" },
       ]
     },
     detailsPaneTab: null,

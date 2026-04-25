@@ -9,10 +9,9 @@ export const customTypeNumberMeta = {
     whenToUse: "Measurements, counts, scores, percentages, elevation, or any column that users may want to filter by numeric range.",
     behaviorFulltextIndexing: "The number's string representation is indexed.",
     dwcNotes: {
-      output: "",
+      output: "numeric value as is. Non-numeric values are skipped.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        {suffix: "", label: "Numeric value of the cell"},
       ]
     },
     detailsPaneTab: null,

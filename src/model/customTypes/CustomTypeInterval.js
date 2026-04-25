@@ -187,9 +187,21 @@ export let customTypeInterval = {
   },
 
   toDwC: function (data, subPath) {
-    // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
+    if (!Array.isArray(data) || data.length !== 2) return null;
+    
+    const [from, to] = data;
+
+    if(!Number.isFinite(from) || !Number.isFinite(to)) {
       return null;
+    }
+
+    switch (subPath) {
+      case "from":
+        return from;
+      case "to":
+        return to;
+      default:
+        return null;
     }
   },
 

@@ -2,23 +2,22 @@
 import { filterMetaText } from "../filterPlugins/filterPluginText.meta.js";
 
 export const customTypeTextMeta = {
-  dataType:   "text",
+  dataType: "text",
   filterMeta: filterMetaText,
   meta: {
-    summary:                  "Plain text string. No formatting.",
-    whenToUse:                "Any short label or any free-form text that does not need Markdown formatting (see [[ref:type.markdown]]) or category-based formatting (see [[ref:type.category]]).",
+    summary: "Plain text string. No formatting.",
+    whenToUse: "Any short label or any free-form text that does not need Markdown formatting (see [[ref:type.markdown]]) or category-based formatting (see [[ref:type.category]]).",
     behaviorFulltextIndexing: "The full string value is indexed as-is.",
     dwcNotes: {
-      output: "",
+      output: "Plain text value as appearing in the cell.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        {suffix: "", label: "raw cell value"},
       ]
     },
-    detailsPaneTab:           "Text",
+    detailsPaneTab: "Text",
     inputFormats: [
       {
-        label:  "Single cell",
+        label: "Single cell",
         syntax: "Any string value. Leading and trailing whitespace is trimmed. Empty cells are skipped.",
         example: { columns: ["specimenStateNote"], rows: [["fair"], ["..."], ["frass found, schedule fumigation"]] },
       },

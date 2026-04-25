@@ -9,10 +9,9 @@ export const customTypeMarkdownMeta = {
     whenToUse: "Long descriptions, field notes, habitat descriptions, species accounts - any text requiring rich formatting or external links.",
     behaviorFulltextIndexing: "Markdown syntax is stripped and plain text is indexed.",
     dwcNotes: {
-      output: "",
+      output: "Rendered text (without HTML markup). [[ref:content.bibliography]] `@citekey` references are resolved to their citation text and so are [[ref:content.databaseShortcodes]]. E.g. markdown string: <code>A **large** beetle reported on [EntomoSmith](http://smith.example) and published in [@smith2020].</code> renders to **A large beetle reported on EntomoSmith and published in (Smith et al. 2020).** in the DwC output.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        {suffix: "", label: "rendered plain text"},
       ]
     },
     detailsPaneTab: "Text",

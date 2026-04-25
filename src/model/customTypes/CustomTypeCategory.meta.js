@@ -9,10 +9,9 @@ export const customTypeCategoryMeta = {
     whenToUse: "Any column with a small, fixed set of categorical values that benefit from color coding or code-to-label mapping - Red List categories, presence/origin status, life-form codes, etc.",
     behaviorFulltextIndexing: "The display label resolved from [[ref:appearance.categoryDisplay]] is indexed; if no matching label is defined, the raw string value is indexed.",
     dwcNotes: {
-      output: "",
+      output: "The original cell value. Intentionally no label substitution by [[ref:appearance.categoryDisplay]] to keep the original intended codes intact.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        {suffix: "", label: "raw cell value"},
       ]
     },
     detailsPaneTab: "",

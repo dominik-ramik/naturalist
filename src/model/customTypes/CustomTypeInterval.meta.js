@@ -1,3 +1,4 @@
+import { shuffle } from "d3";
 import { filterMetaInterval } from "../filterPlugins/filterPluginInterval.meta.js";
 
 export const customTypeIntervalMeta = {
@@ -8,10 +9,10 @@ export const customTypeIntervalMeta = {
     whenToUse: "Typical ranges of physical dimensions (length, wingspan, weight), altitude limits or precision range, depth ranges, or any numeric attribute with a minimum and maximum boundary.",
     behaviorFulltextIndexing: "The rendered range string (e.g. `10 - 15`) is indexed as a single token.",
     dwcNotes: {
-      output: "",
+      output: "numeric value of either chosen endpoint.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+        { suffix: "from", label: "the lower endpoint numeric value" },
+        { suffix: "to", label: "the upper endpoint numeric value" },
       ]
     },
     detailsPaneTab: null,

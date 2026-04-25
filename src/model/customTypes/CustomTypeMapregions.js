@@ -263,10 +263,8 @@ export let customTypeMapregions = {
   },
 
   toDwC: function (data, subPath) {
-    // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
-      return null;
-    }
+    // The mapregions data structure is complex and doesn't have a straightforward mapping to DwC fields. The recommended approach is to use the `media:` directive in DwC export to include the original data as a media file (e.g. JSON or CSV) and document the structure in the metadata. This allows consumers to access the full richness of the data without losing information through an oversimplified mapping.
+    return null;
   },
 
   render: function (data, uiContext) {

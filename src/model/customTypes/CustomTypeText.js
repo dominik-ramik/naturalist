@@ -55,10 +55,7 @@ export let customTypeText = {
 
   toDwC: function (data, subPath) {
     // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
-      return null;
-    }
-    return data;
+    return (typeof data === 'string' && data.length > 0) ? data : null;
   },
 
   render: function (data, uiContext) {

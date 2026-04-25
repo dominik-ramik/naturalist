@@ -9,10 +9,12 @@ export const customTypeDateMeta = {
     whenToUse: "Collection dates, publication dates, observation dates, any date-stamped field.",
     behaviorFulltextIndexing: "The formatted date string (using the active **Date format** setting in [[ref:appearance.customization]]) is indexed.",
     dwcNotes: {
-      output: "",
+      output: "ISO 8601 date string (YYYY-MM-DD) its numeric components.",
       subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
+         {suffix: "dmy", label: "Date in YYYY-MM-DD format"},
+         {suffix: "year", label: "Year as a 4-digit number"},
+         {suffix: "month", label: "Month as a number (1-12)"},
+         {suffix: "day", label: "Day of month as a number (1-31)"},
       ]
     },
     detailsPaneTab: null,

@@ -74,7 +74,7 @@ export let customTypeDate = {
   },
 
   getSearchableText: function (data, uiContext) {
-    if (data === null || data === undefined) {
+    if (!Number.isFinite(data)) {
       return [];
     }
 
@@ -89,8 +89,8 @@ export let customTypeDate = {
   },
 
   toDwC: function (data, subPath) {
-    // For text, we can return the string directly, or null if it's not a valid string
-    if (data === null || data === undefined) {
+    // Dates are stored by day.js as milliseconds since Unix epoch. We want to output them as ISO 8601 strings, and also provide subpaths for the numeric components.
+    if (!Number.isFinite(data)) {
       return null;
     }
 
@@ -109,7 +109,7 @@ export let customTypeDate = {
   },
 
   render: function (data, uiContext) {
-    if (data === null || data === undefined) {
+    if (!Number.isFinite(data)) {
       return null;
     }
 

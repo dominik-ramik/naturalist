@@ -9,11 +9,8 @@ export const customTypeImageMeta = {
     whenToUse: "Species photographs, illustrations, habitat photos, specimen images, ...",
     behaviorFulltextIndexing: "The image title is indexed for full-text search.",
     dwcNotes: {
-      output: "",
-      subPaths: [
-        // {subPath: "source", label: "Source URL"},
-        // {subPath: "title", label: "Title or caption"},
-      ]
+      output: "not accessible through column names, use `media:` directive in DwC export for media files, see [[ref:content.dwcArchive.valueSource]]",
+      subPaths: []
     },
     detailsPaneTab: "Media",
     inputFormats: [
