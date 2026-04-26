@@ -42,6 +42,11 @@ const dataCustomTypes = buildReaders(
   customTypeInterval
 );
 
+export const allowedDataTypesIncludingList = [
+  "list",
+  ...Object.keys(dataCustomTypes)
+];
+
 // Export dataCustomTypes for use in UI rendering
 export { dataCustomTypes };
 

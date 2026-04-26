@@ -681,6 +681,11 @@ export const nlDataStructureSheets = {
                                 type: "tip",
                                 title: "Numbers and units",
                                 text: "Store bare numbers in your data cells and use the **Template** column to add units at display time (e.g. `{{unit \"m\"}}`). Entering `5 m` in a cell instead of `5` turns the value into text and disables numeric filtering. Read more about the [unit template](./templates#unit-automatic-unit-scaling)."
+                            },
+                            {
+                                type: "tip",
+                                title: "Displaying related items on the same line",
+                                text: "Use the `list` data type combined with `space`, `comma` or custom separator to display related items from structured or array fields on the same line instead of a vertical list. For example, `habitat#` with `list comma` will show multiple habitats in one line separated by commas instead of a bullet list."
                             }
                         ],
                         examples: [
@@ -739,13 +744,80 @@ export const nlDataStructureSheets = {
                                         "Rendered formatted text through Markdown; not filterable but searchable in full-text"
                                     ]
                                 ]
+                            },
+                            {
+                                label: "Structured items with `list` data type",
+                                text: "Use the `list` data type for structured fields with multiple sub-items (e.g. `dimmensions.beakToTail`, `dimmensions.wingspan`) or array fields (e.g. `habitat#`) to group them under a common heading and get a compact display. The separator keyword controls how the items are displayed.",
+                                columns: [
+                                    "Column name",
+                                    "Title",
+                                    "Data type",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "info", "",
+                                        "list space",
+                                        "No `Title` here, this is simply to group the two underlying sub-items underlying items on a single line with space separation."
+                                    ],
+                                    [
+                                        "info.redList", "Red List", "category", "The [[ref:type.category]] data type renders the red list category as a colored badge when set up in [[ref:appearance.categoryDisplay]]."
+                                    ],
+                                    [
+                                        "info.status", "Status", "category", "This `status` sub-item is grouped together with the previous `redList` sub-item on the taxon card."
+                                    ],
+                                    [
+                                        "distribution", "Distribution", "list comma", "Unlike the `info` example above, this is a root-level array field (note the `#` in the next row), so we want a common `Title` for each of the items. Each item will be separated by a `comma`."
+                                    ],
+                                    [
+                                        "distribution#", "", "text", "The `#` indicates **each** item in the array. No `Title` here as this would effectively prepend the same title to each of the countries. Simply use [[ref:type.text]] here, in practice you could leverage [[ref:type.mapitems]] and get a dynamically created map."
+                                    ],
+                                    [
+                                        "confuseSpecies", "Easy to confuse with", "list bullets", "An array field displayed as a bullet list under the common heading 'Easy to confuse with'."
+                                    ],
+                                    [
+                                        "confuseSpecies#", "", "taxon", "The `#` indicates **each** item in the array. No `Title` here, we don't need to prepend anything to the individual items. We use [[ref:type.taxon]] here to display it as a clickable taxon link the user can click and search this taxon online (if [[ref:content.searchOnline]] is configured)."
+                                    ]
+                                ]
+                            },
+                            {
+                                text: "In your [[ref:data]] sheet, you have multiple columns for the sub-items (e.g. `dimmensions.beakToTail`, `dimmensions.wingspan`), or multiple columns for array items (e.g. `habitat1`, `habitat2`) ...",
+                                fillLeft: true,
+                                fillRight: true,
+                                columns: [
+                                    "species.name",
+                                    "species.authority",
+                                    "info.redList",
+                                    "info.status",
+                                    "distribution",
+                                    "confuseSpecies1.name",
+                                    "confuseSpecies1.authority",
+                                    "confuseSpecies2.name",
+                                    "confuseSpecies2.authority"
+                                ],
+                                rows: [
+                                    ["Sibon nebulatus", "Linnaeus, 1758", "Least Concern", "Native", "Costa Rica | Panama | Colombia | Ecuador | Venezuela", "Dipsas elegans", "Boulenger, 1896", "Tropidodipsas fasciata", "Günther, 1858"]
+                                ]
+                            },
+                            {
+                                text: "The above will render something similar to this in the taxon card:",
+                                preformatted: `
+Sibon nebulatus (Linnaeus, 1758) (family Colubridae)
+--------------------------------------------------------------
+RED LIST: [Least Concern] STATUS: [Native]
+DISTRIBUTION: Costa Rica, Panama, Colombia, Ecuador, Venezuela
+EASY TO CONFUSE WITH:
+- Dipsas elegans (Boulenger, 1896)
+- Tropidodipsas fasciata Günther, 1858
+                                `
                             }
                         ],
                         integrity: {
                             description: "`list` may be followed by a separator keyword (e.g. `list comma`, `list bullets`, `list space`) or any data type name.",
                             allowEmpty: false,
+                            migration: "If you are migrating from a version prior v4, the column <bFormatting</b> was renamed to <bData type</b>, must be fully filled-in and takes some of the functionality of the removed <b>Subitems separator</b> column.",
                             allowDuplicates: "yes",
-                            allowedContent: "any",
+                            allowedContent: "dataTypeDef",
                             supportsMultilingual: false
                         }
                     },
@@ -1121,11 +1193,11 @@ export const nlDataStructureSheets = {
                         ],
                         integrity: {
                             description: "",
-                            allowEmpty: true,
+                            allowEmpty: false,
+                            migration: "If you are migrating from a version prior v4, you need to add this column and fill in 'taxon' for each row. In prior versions only taxa custom data were supported. This column serves to distinguish taxon-level data from occurrence-level data (new feature in v4).",
                             allowDuplicates: "yes",
                             allowedContent: "list",
                             listItems: [
-                                "",
                                 "taxon",
                                 "occurrence"
                             ],
@@ -1510,13 +1582,7 @@ export const nlDataStructureSheets = {
                             description: "Each pipe-separated token must be a filename with a valid extension, optionally followed by ` #Caption`. A `#`-only token with no preceding filename is invalid and will be skipped with a compiler error.",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            allowedContent: "filenameList",
-                            allowedExtensions: [
-                                ".jpg",
-                                ".jpeg",
-                                ".png",
-                                ".webp"
-                            ],
+                            allowedContent: "any",
                             supportsMultilingual: false
                         }
                     }
@@ -1958,7 +2024,7 @@ export const nlDataStructureSheets = {
                                     ["occurrences", "dwc:eventDate", "column:collectionDate.ymd", "Suppose `collectionDate` column is a [[ref:type.date]], as such it exposes `ymd`, `year`, `month`, `day` sub-fields; we get the full date in YYYY-MM-DD format here"],
                                     ["occurrences", "dwc:year", "column:collectionDate.year", "... and the standalone year; we could also get `.month` or `.day` if we wanted those separately"],
                                 ]
-                            }, 
+                            },
                             {
                                 label: "B) auto: - values computed from the compiled taxonomy",
                                 text: "Use `auto:` for terms whose values are rank-aware or hierarchy-aware - they cannot be read from a single spreadsheet column because the correct value depends on which node is being exported. `auto:scientificName`, for example, resolves to the taxon name of currenly processed node: a family node yields its family name, a genus node yields its genus name. `auto:parentNameUsageID` links every node to its immediate parent automatically. `auto:taxonID` produces a stable UUID derived from each node's identity, consistent across re-exports.",
@@ -2129,6 +2195,7 @@ export const nlDataStructureSheets = {
                             description: "",
                             allowDuplicates: "no",
                             allowEmpty: false,
+                            migration: "If you are migrating from a version before v4, please note that some item names have changed.",
                             allowedContent: "list",
                             listItems: Object.values(CUSTOMIZATION_ITEMS).map(d => d.key),
                             supportsMultilingual: false
@@ -2550,6 +2617,7 @@ export const nlDataStructureSheets = {
                         integrity: {
                             description: "",
                             allowEmpty: true,
+                            migration: "If you are migrating from a version prior v4, this coulmn is new. If your existing map regions legend had column-specific rows, fill in this column with the appropriate data paths to preserve the scoping. If your existing legend had no column-specific rows, you can leave this column empty and the legend will apply globally as before.",
                             allowDuplicates: "yes",
                             defaultValue: "",
                             allowedContent: "dataPath",
@@ -2761,6 +2829,7 @@ export const nlDataStructureSheets = {
                         integrity: {
                             description: "",
                             allowEmpty: true,
+                            migration: "If you are migrating from a version prior v4, the column <bLegend type</b> is new in v4. You need to add this column and set it to 'category', 'gradient' or 'stepped' as appropriate for each row. If you leave it empty, it defaults to 'category' mode.",
                             allowDuplicates: "yes",
                             defaultValue: "category",
                             allowedContent: "list",

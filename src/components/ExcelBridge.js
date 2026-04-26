@@ -12,7 +12,7 @@ registerMessages(selfKey, {
     dm_required_table_missing_in_sheet: "Required table '{0}' was not found in sheet '{1}'.",
     dm_optional_table_missing: "Optional table '{0}' was not found in sheet '{1}'. It will be treated as empty.",
     dm_required_table_columns_missing: "Required table '{0}' is missing mandatory columns: {1}.",
-    dm_optional_table_columns_missing: "Table '{0}' is present in the spreadsheet but is missing expected columns: {1}. Add the missing columns or remove the table entirely.",
+    dm_optional_table_columns_missing: "Table '{0}' is present in the spreadsheet but is missing expected columns: {1}.",
     dm_column_not_found: "Could not find column {0} in table {1}",
     dm_empty_row_in_data: "Empty row detected in sheet '{0}' at line {1}.",
     dm_data_after_empty_row_ignored: "Data found after the empty row will be ignored.",
@@ -223,19 +223,36 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
   if (missingColumns.length > 0) {
     if (tableInfo.required !== false) {
       // Required table: first missing column is fatal
+      const missingColMigrations = Object.values(tableInfo.columns)
+        .filter(c => missingColumns.includes(c.name) && c.integrity?.migration)
+        .map(c => c.integrity.migration);
+      const migrationSuffix = missingColMigrations.length > 0
+        ? " " + missingColMigrations.join(" ")
+        : "";
+
       Logger.critical(
         tf("dm_required_table_columns_missing", [tableInfo.name, missingColumns.join(", ")]) +
-        " " + t("dm_verify_doc"),
+        migrationSuffix + " " + t("dm_verify_doc"),
         "Column missing"
       );
-      return;
+      // Do NOT return here — let further checks run so other issues are surfaced too.
     } else {
-      // Optional table present in the file but columns are missing → error (not critical)
-      Logger.critical(
-        tf("dm_optional_table_columns_missing", [tableInfo.name, missingColumns.join(", ")]),
-        "Column missing"
-      );
-      return; //this is a critical failure for integrity so we won't continue with further checks to avoid overwhelming the user with messages that are likely all caused by the same root issue (missing columns).
+      // Optional table present in the file but columns are missing → error (not critical,
+      // so compilation continues and runManualIntegrityChecks can still run its checks).
+      const missingColObjects = Object.values(tableInfo.columns)
+        .filter(c => missingColumns.includes(c.name));
+
+      missingColObjects.forEach(function (colMeta) {
+        const migrationHint = colMeta.integrity?.migration
+          ? " " + colMeta.integrity.migration
+          : "";
+        Logger.error(
+          tf("dm_optional_table_columns_missing", [tableInfo.name, colMeta.name]) +
+          migrationHint,
+          "Column missing"
+        );
+      });
+      // Do NOT return here — let further checks run so other issues are surfaced too.
     }
   }
 

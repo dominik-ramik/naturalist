@@ -5,7 +5,7 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { absoluteUsercontent, isValidHttpUrl, pad, relativeToUsercontent, splitN } from "../components/Utils.js";
 import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
-import { loadDataByType, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
+import { loadDataByType, allowedDataTypesIncludingList, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
 // Register the dataCustomTypes map with the DwC compiler so it can call
 // each type's toDwC() method without a circular import.
 registerDataCustomTypes(dataCustomTypes);
@@ -966,6 +966,7 @@ export let DataManager = function () {
           row.parentTaxonIndication !== "" &&
           row.parentTaxonIndication !== "none"
         ) {
+          console.log("Parent taxon indication for " + row.columnName + ": " + row.parentTaxonIndication, "taxa meta", meta.taxa);
           if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
             Logger.warning(
               "Wrong value in Parent taxon indication will be ignored: " +
@@ -1846,12 +1847,11 @@ export let DataManager = function () {
                 let value = dataRow[columnKey];
 
                 // undefined means the column was not found in the sheet at all.
-                // This is already reported by validateColumnNames / mapSubTableToObject;
-                // here we only adjust severity based on required.
+                // the downright missing column (no header) is already reported by ExcelBridge, this here checks only the content
                 if (value === undefined) {
                   if (tableRequired) {
                     Logger.critical(
-                      tf("dm_required_table_columns_missing", [table.name, column.name]) +
+                      tf("dm_required_table_columns_missing", [table.name, column.name]) + (integrity.migration ? " " + integrity.migration : "") +
                       " " + t("dm_verify_doc")
                     );
                   }
@@ -1865,8 +1865,9 @@ export let DataManager = function () {
 
                 if (!integrity.allowEmpty && isEmpty) {
                   Logger.error(
-                    tf("dm_value_cannot_be_empty", [column.name, table.name])
+                    tf("dm_value_cannot_be_empty", [column.name, table.name]) + (integrity.migration ? " " + integrity.migration : "")
                   );
+                  return;
                 }
 
                 if (integrity.allowEmpty && isEmpty) {
@@ -1889,28 +1890,30 @@ export let DataManager = function () {
                       if (!found) {
                         Logger.error(
                           tf("dm_incorrect_list", [
-                            value,
-                            column.name,
-                            table.name,
-                            integrity.listItems
-                              .map(function (item) {
-                                return item == ""
-                                  ? "(space)"
-                                  : "'" + item + "'";
-                              })
-                              .join(", "),
-                          ])
+                            value, column.name, table.name,
+                            integrity.listItems.map(item => item == "" ? "(space)" : "'" + item + "'").join(", "),
+                          ]) + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
+                      break;
+                    case "dataTypeDef":
+                      const dataTypeDefParts = value.split(" ").map(p => p.trim());
+                      const dataTypeProvided = dataTypeDefParts[0];
+
+                      if (allowedDataTypesIncludingList.indexOf(dataTypeProvided) < 0) {
+                        Logger.error(
+                          tf("dm_incorrect_datatype", [
+                            dataTypeProvided, column.name, table.name, allowedDataTypesIncludingList.join(", ")
+                          ]) + (integrity.migration ? " " + integrity.migration : "")
+                        );
+                      }
+
                       break;
                     case "columnName":
                       if (!dataPath.validate.isSimpleColumnName(value)) {
                         Logger.error(
-                          tf("dm_incorrect_simple_column_name", [
-                            value,
-                            column.name,
-                            table.name,
-                          ])
+                          tf("dm_incorrect_simple_column_name", [value, column.name, table.name])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
@@ -1919,16 +1922,10 @@ export let DataManager = function () {
                         "(#([0-9a-f]{3}){1,2}|(rgba|hsla)(d{1,3}%?(,s?d{1,3}%?){2},s?(1|0|0?.d+))|(rgb|hsl)(d{1,3}%?(,s?d{1,3}%?){2}))",
                         "i"
                       );
-                      if (
-                        hexHslaRgbaColor.test(value) == false &&
-                        cssColorNames.indexOf(value.toLowerCase()) < 0
-                      ) {
+                      if (hexHslaRgbaColor.test(value) == false && cssColorNames.indexOf(value.toLowerCase()) < 0) {
                         Logger.error(
-                          tf("dm_incorrect_hlsa", [
-                            value,
-                            column.name,
-                            table.name,
-                          ])
+                          tf("dm_incorrect_hlsa", [value, column.name, table.name])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
@@ -1937,39 +1934,26 @@ export let DataManager = function () {
                       if (value.indexOf(".") > 0) {
                         ext = value.substring(value.indexOf("."));
                       }
-                      if (
-                        integrity.allowedExtensions.indexOf(ext.toLowerCase()) <
-                        0
-                      ) {
+                      if (integrity.allowedExtensions.indexOf(ext.toLowerCase()) < 0) {
                         Logger.error(
-                          tf("dm_incorrect_filename", [
-                            value,
-                            column.name,
-                            table.name,
-                            integrity.allowedExtensions.join(", ") + ")",
-                          ])
+                          tf("dm_incorrect_filename", [value, column.name, table.name, integrity.allowedExtensions.join(", ") + ")"])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
                     case "url":
                       if (!isValidHttpUrl(value)) {
                         Logger.error(
-                          tf("dm_incorrect_http", [
-                            value,
-                            column.name,
-                            table.name,
-                          ])
+                          tf("dm_incorrect_http", [value, column.name, table.name])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
                     case "dataPath":
                       if (!dataPath.validate.isDataPath(value)) {
                         Logger.error(
-                          tf("dm_incorrect_datapath", [
-                            value,
-                            column.name,
-                            table.name,
-                          ])
+                          tf("dm_incorrect_datapath", [value, column.name, table.name])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
@@ -1985,13 +1969,8 @@ export let DataManager = function () {
                       let regex = new RegExp(integrity.regex);
                       if (regex.test(value) == false) {
                         Logger.error(
-                          tf("dm_regex_failed", [
-                            value,
-                            column.name,
-                            table.name,
-                            integrity.regexExplanation,
-                            integrity.regex,
-                          ])
+                          tf("dm_regex_failed", [value, column.name, table.name, integrity.regexExplanation, integrity.regex])
+                          + (integrity.migration ? " " + integrity.migration : "")
                         );
                       }
                       break;
@@ -2006,10 +1985,12 @@ export let DataManager = function () {
 
                 if (integrity.allowDuplicates !== "yes") {
                   let count = 0;
+                  const valueStr = value != null ? value.toString().toLowerCase() : "";
 
                   entireColumn.forEach(function (item) {
-                    if (item.toString().toLowerCase() == value.toString().toLowerCase()) {
-                      if (value == "") {
+                    if (item == null) return; // guard: empty Excel cells arrive as null
+                    if (item.toString().toLowerCase() == valueStr) {
+                      if (value == null || value === "") {
                         if (integrity.allowDuplicates != "empty-only") {
                           count++;
                         }
@@ -2850,19 +2831,6 @@ function runManualIntegrityChecks(data) {
 
     const cddColumns = data.sheets.content.tables.customDataDefinition.columns;
 
-    // 6-pre. "Belongs to" column presence - CDD is optional as a whole, but
-    //        when it is present every declared column must exist.  A missing
-    //        "Belongs to" column causes silent wrong defaults rather than
-    //        obvious load failures, so we flag it explicitly once per table.
-    if (table[0].belongsTo === undefined) {
-      Logger.error(
-        "\"" + data.sheets.content.tables.customDataDefinition.name + "\" table is " +
-        "missing the \"" + cddColumns.belongsTo.name + "\" column. " +
-        "Add the column and set each row to \"taxon\" or \"occurrence\" (leave blank to default to \"taxon\"). " +
-        "Without it the cross-entity attribution check is disabled and filter visibility per mode will not work correctly."
-      );
-    }
-
     const allColumnNames = table
       .map((row) => row.columnName?.toLowerCase())
       .filter((v) => v !== undefined);
@@ -2946,9 +2914,13 @@ function runManualIntegrityChecks(data) {
       // 6h. "Belongs to" value must be one of the recognised keywords
       const belongsToRaw = (row.belongsTo || "").trim().toLowerCase();
       if (belongsToRaw !== "" && belongsToRaw !== "taxon" && belongsToRaw !== OCCURRENCE_IDENTIFIER) {
+        const migrationHint = cddColumns.belongsTo.integrity?.migration
+          ? " " + cddColumns.belongsTo.integrity.migration
+          : "";
         Logger.error(
           "Column \"" + columnName + "\": invalid \"Belongs to\" value \"" + row.belongsTo +
-          "\". Allowed values are \"taxon\", \"occurrence\", or empty (defaults to \"taxon\")."
+          "\". Allowed values are \"taxon\", \"occurrence\", or empty (defaults to \"taxon\")." +
+          migrationHint
         );
         row.belongsTo = ""; // reset to avoid misleading downstream, mirrors 6f pattern
       }
