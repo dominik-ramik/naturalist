@@ -156,7 +156,7 @@ function circlePacking(options) {
 
   function downloadSVG() {
     // 1. Fetch the citation text
-    const citationText = Checklist.getProjectHowToCite() || "";
+    const citationText = Checklist.getProjectHowToCite(true) || "";
 
     // 2. Configure text format and boundaries
     const fontSize = 14;

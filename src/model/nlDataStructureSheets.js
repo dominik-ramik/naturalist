@@ -28,7 +28,7 @@ export const CUSTOMIZATION_ITEMS = {
     ABOUT_SECTION: {
         key: "About section",
         defaultValue: null,
-        description: "Markdown text for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. A generic default value is used in case none was entered. See [External text files](./external-text-files)."
+        description: "Plain text or Markdown for the About page, or for longer texts an F: directive (`F:about.md`) pointing to a file in `usercontent/`. A generic default value is used in case none was entered. See [External text files](./external-text-files)."
     }, // i18n - caller must supply
     HOW_TO_CITE: {
         key: "How to cite",

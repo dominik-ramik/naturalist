@@ -61,6 +61,8 @@ export let MenuStripView = {
 };
 
 function menuPanel() {
+  const howToCite = Checklist.getProjectHowToCite() || null;
+
   return m(".menu-panel-wrapper", [
     m(".menu-panel-outer-wrapper", [m(".menu-panel", [
       m(
@@ -88,7 +90,7 @@ function menuPanel() {
             icon: "about",
             title: t("about_this"),
           }),
-          !Checklist.getProjectHowToCite() || Checklist.getProjectHowToCite().trim() == ""
+          !howToCite || howToCite.trim() == ""
             ? null
             : m(MenuItem, {
               onclick: function (e) {

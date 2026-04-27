@@ -51,6 +51,7 @@ function renderGenericView(vnode) {
 }
 
 function renderSearchView(vnode) {
+  const howToCite = Checklist.getProjectHowToCite() || null;
   return [
     [
       m(".interaction-area-branding-wrapper", [
@@ -58,8 +59,7 @@ function renderSearchView(vnode) {
       ]),
     ],
     m(".branding", t("powered_by_nl")),
-    !Checklist.getProjectHowToCite() ||
-      Checklist.getProjectHowToCite().trim() == ""
+    !howToCite || howToCite.trim() == ""
       ? null
       : m(
         ".desktop-cite",
@@ -67,7 +67,7 @@ function renderSearchView(vnode) {
           m("b[style=margin-right: 0.75em;]", t("how_to_cite")),
           m(
             "span[style=user-select: all]",
-            Checklist.getProjectHowToCite()
+            m.trust(howToCite)
           ),
         ])
       )

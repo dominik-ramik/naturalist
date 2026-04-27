@@ -6,6 +6,8 @@ import {
   clearSortByCustomOrderCache,
   getCurrentLocaleBestGuess,
   getGradedColor,
+  htmlToPlainText,
+  processMarkdownWithBibliography,
   routeTo,
   textLowerCaseAccentless,
 } from "../components/Utils.js";
@@ -918,9 +920,18 @@ export let Checklist = {
     return text;
   },
 
-  getProjectHowToCite: function () {
+  getProjectHowToCite: function (plainText = false) {
     let text =
       Checklist._data?.versions[Checklist.getCurrentLanguage()].howToCite;
+
+    if(text){
+      text = processMarkdownWithBibliography(text);
+
+      if(plainText){
+        text = htmlToPlainText(text);
+      }
+    }
+
     return text;
   },
 
