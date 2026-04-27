@@ -11,8 +11,10 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/n
 
 registerMessages(selfKey, {
   en: {
-    nothing_found_oops: "Oops!",
-    nothing_found_checklist: "We searched the world for you, but found nothing that matches your query",
+    nothing_found_oops: "Fall came too early?",
+    nothing_found_checklist: "This taxonomic tree branch has no leaves",
+    nothing_found_message: "No matches found for",
+    nothing_found_message_hint: "Try broadening your query or adjusting your filters",
     mobile_filter_notice: "Showing only taxa where {0}",
     temporary_draft_goto_manage: "Manage",
     draft_notice: "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
@@ -21,8 +23,10 @@ registerMessages(selfKey, {
     welcome_blessing: "May your taxonomic tree grow to the sky.",
   },
   fr: {
-    nothing_found_oops: "Oups !",
-    nothing_found_checklist: "Nous avons cherché dans le monde pour vous, mais nous n'avons trouvé aucun résultat correspondant à votre requête",
+    nothing_found_oops: "Rien trouvé",
+    nothing_found_checklist: "Cette branche de l'arbre taxonomique n'a pas de feuilles",
+    nothing_found_message: "Aucun résultat pour votre recherche actuelle. Essayez d'élargir votre requête ou d'ajuster vos filtres.",
+    nothing_found_message_hint: "Try broadening your query or adjusting your filters",
     mobile_filter_notice: "Affichage uniquement des taxons où {0}",
     temporary_draft_goto_manage: "Gérer",
     draft_notice: "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
@@ -124,10 +128,14 @@ export let ChecklistView = {
       m(".checklist-inner-wrapper", [
         allFilteredTaxa.length === 0
           ? m(".nothing-found-wrapper", [
-            m("h2", t("nothing_found_oops")),
-            m("img.search-world[src=img/ui/checklist/search_world.svg]"),
-            m(".nothing-found-message", t("nothing_found_checklist")),
-            m(".query", m.trust(Settings.pinnedSearches.getHumanNameForSearch())),
+            m("p.nothing-found-eyebrow", t("nothing_found_oops")),
+            m("h2.nothing-found-heading", t("nothing_found_checklist")),
+            m("img.search-world[src=img/ui/checklist/nothing-found.svg]"),
+            m("p.nothing-found-message", [
+              t("nothing_found_message"),
+              " ", m("span.query", m.trust(Settings.pinnedSearches.getHumanNameForSearch()))
+            ]),
+            m("p.nothing-found-message", t("nothing_found_message_hint")),
           ])
           : m(".checklist-inner-wrapper", [
             Checklist._isDraft ? draftNotice() : null,
