@@ -954,12 +954,21 @@ function captureDeepLinkAndReloadIfNeeded() {
     return false;
   }
 
+  // AFTER
   const rawUrl = decodeURIComponent(match[1]);
+
+  // Capture optional redirectHash param (value is already a hash query-string,
+  // e.g. "l=en&q=%7B%7D&v=tool_taxonomic_tree&s=S").
+  const redirectMatch = hash.match(/[?&]redirectHash=([^&]*)/);
+  const redirectHash = redirectMatch ? decodeURIComponent(redirectMatch[1]) : null;
 
   // Store the full original href so the controllerchange handler can reload
   // to it exactly, preserving the hash.
   sessionStorage.setItem(DEEP_LINK_STORAGE_KEY, rawUrl);
   sessionStorage.setItem(DEEP_LINK_STORAGE_KEY + "_href", window.location.href);
+  if (redirectHash) {
+    sessionStorage.setItem(DEEP_LINK_STORAGE_KEY + "_redirectHash", redirectHash);
+  }
 
   const swAlreadyControlling = "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
 
@@ -1006,10 +1015,15 @@ export let ManageView = {
       return;
     }
 
-    // If we got here via the stored URL, clear both keys now so they don't fire again.
+    // If we got here via the stored URL, clear all stored keys now so they don't fire again.
+    const redirectHash = storedUrl
+      ? sessionStorage.getItem(DEEP_LINK_STORAGE_KEY + "_redirectHash")
+      : m.route.param("redirectHash") || null;
+
     if (storedUrl) {
       sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY);
       sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY + "_href");
+      sessionStorage.removeItem(DEEP_LINK_STORAGE_KEY + "_redirectHash");
     }
 
     // CRITICAL: set the flag BEFORE any async work so onMatchGuard never
@@ -1020,13 +1034,29 @@ export let ManageView = {
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);
 
+    // AFTER
     fetchAndProcessUrl(xlsxUrl, true, () => {
-      // CRITICAL: clear the flag BEFORE m.route.set so that when onMatchGuard
-      // fires for the new /checklist route, deepLinkProcessing is already false
-      // and the guard correctly falls through to Checklist._isDataReady (true).
       deepLinkProcessing = false;
-      Settings.viewType(DEFAULT_TOOL);
-      m.route.set("/checklist?v=" + DEFAULT_TOOL, null, { replace: true });
+      if (redirectHash) {
+        // Parse the redirectHash query string into a proper params object so
+        // Mithril registers them as real route params (m.route.param("s") etc.).
+        // Passing them baked into the path string does NOT work with Mithril's
+        // hash router — it treats the whole "?..." as part of the literal path.
+        const params = Object.fromEntries(
+          redirectHash.split("&").map(pair => {
+            const [k, v = ""] = pair.split("=");
+            return [decodeURIComponent(k), decodeURIComponent(v)];
+          })
+        );
+        // Keep Settings in sync eagerly so validateActiveToolState() sees the
+        // right values when onmatch fires, before updateToolAndScope() runs.
+        if (params.v) Settings.viewType(params.v);
+        if (params.s) Settings.analyticalIntent(params.s);
+        m.route.set("/checklist", params, { replace: true });
+      } else {
+        Settings.viewType(DEFAULT_TOOL);
+        m.route.set("/checklist", { v: DEFAULT_TOOL }, { replace: true });
+      }
     });
   },
 
