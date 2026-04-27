@@ -45,7 +45,16 @@ export const ConfigurationDialog = {
     if (!ConfigurationDialog.isOpen) return null;
 
     const hasOccurrences    = Checklist.hasOccurrences();
-    const availableIntents = hasOccurrences ? [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE] : [ANALYTICAL_INTENT_TAXA];
+    const hasNonOccurrenceTaxa = Checklist.hasNonOccurrenceTaxa();
+    const availableIntents = [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE].filter(intent => {
+      if (intent === ANALYTICAL_INTENT_TAXA && hasNonOccurrenceTaxa) {
+        return ANALYTICAL_INTENT_TAXA;
+      }
+      if(intent === ANALYTICAL_INTENT_OCCURRENCE && hasOccurrences) {
+        return ANALYTICAL_INTENT_OCCURRENCE;
+      }
+    });
+
     const checklistData   = Checklist.getData();
 
     const currentViewId  = Settings.viewType() || TOOL_LIST[0].id;

@@ -2,7 +2,7 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./ChecklistView.css";
 
-import { routeTo } from "../components/Utils.js";
+import { routeTo, updateRouteParams } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { getCurrentTool } from "./analysisTools/index.js";
@@ -38,16 +38,54 @@ registerMessages(selfKey, {
 });
 
 export let ChecklistView = {
-  oninit: function () {
-    if (!Checklist.hasOccurrences() && Settings.analyticalIntent() !== ANALYTICAL_INTENT_TAXA) {
-      Settings.analyticalIntent(ANALYTICAL_INTENT_TAXA);
-    }
+oninit: function () {
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
     ChecklistView._syncFilterFromRoute();
+    ChecklistView._syncIntentToDataset();
   },
 
   onbeforeupdate: function () {
     ChecklistView._syncFilterFromRoute();
+    ChecklistView._syncIntentToDataset();
+  },
+
+  /**
+   * Ensures the analytical intent is compatible with the shape of the loaded
+   * dataset.  Called from oninit and onbeforeupdate — i.e. always *before*
+   * Mithril builds the vnode tree — so no state mutations happen during render.
+   *
+   * Two cases are handled:
+   *   1. Occurrence-only dataset + TAXA intent  → redirect to OCCURRENCE.
+   *   2. No occurrences at all + OCCURRENCE intent → redirect to TAXA
+   *      (preserves the pre-existing guard that was in oninit).
+   *
+   * The redirect is done via Settings mutation + updateRouteParams() so that
+   * the URL stays in sync and the browser history is not polluted with an
+   * extra entry.  This is intentionally separate from requestIntentChange()
+   * (which is a user-driven action) and from validateActiveToolState()
+   * (which is a tool-availability concern).
+   */
+  _syncIntentToDataset: function () {
+    if (!Checklist._isDataReady) return;
+
+    const intent = Settings.analyticalIntent();
+
+    // Case 1: dataset has no occurrence column at all → must be TAXA
+    if (!Checklist.hasOccurrences() && intent !== ANALYTICAL_INTENT_TAXA) {
+      Settings.analyticalIntent(ANALYTICAL_INTENT_TAXA);
+      updateRouteParams();
+      return;
+    }
+
+    // Case 2: dataset has occurrences but NO pure-taxa rows → must be OCCURRENCE
+    if (
+      Checklist.hasOccurrences() &&
+      !Checklist.hasNonOccurrenceTaxa() &&
+      intent !== ANALYTICAL_INTENT_OCCURRENCE
+    ) {
+      Settings.analyticalIntent(ANALYTICAL_INTENT_OCCURRENCE);
+      updateRouteParams();
+    }
   },
 
   // Applies URL query params to the filter model.  Extracted from view() so

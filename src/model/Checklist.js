@@ -52,6 +52,7 @@ export let Checklist = {
   _keyLCACache: new Map(), // Add LCA cache
   _occurrenceDataPathCache: undefined,
   _hasOccurrencesCache: null,
+  _hasNonOccurrenceTaxaCache: null,
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
@@ -493,6 +494,7 @@ export let Checklist = {
     Checklist.treefiedTaxaCache = null;
     Checklist._occurrenceDataPathCache = undefined;
     Checklist._hasOccurrencesCache = null;
+    Checklist._hasNonOccurrenceTaxaCache = null;
     Checklist._bibFormatterCache = {};
     Checklist.nameForMapRegionCache = new Map();
     Checklist.getCustomOrderGroupItemsCache = new Map();
@@ -924,10 +926,10 @@ export let Checklist = {
     let text =
       Checklist._data?.versions[Checklist.getCurrentLanguage()].howToCite;
 
-    if(text){
+    if (text) {
       text = processMarkdownWithBibliography(text);
 
-      if(plainText){
+      if (plainText) {
         text = htmlToPlainText(text);
       }
     }
@@ -1346,28 +1348,70 @@ export let Checklist = {
     return Object.keys(Checklist.getTaxaMeta()).indexOf(occurrenceDataPath);
   },
 
-  hasOccurrences: function () {
-    if (this._hasOccurrencesCache !== null) {
-      return this._hasOccurrencesCache;
-    }
+  /**
+ * Single-pass scan that populates both occurrence-related cache fields.
+ * Called lazily by hasOccurrences() and hasNonOccurrenceTaxa() — whichever
+ * is called first triggers the scan; the second call is then O(1).
+ *
+ * Never call this from render paths directly; always go through the public
+ * accessors so the cache-guard is respected.
+ */
+  _computeOccurrenceShape: function () {
+    // Already computed — nothing to do.
+    if (
+      this._hasOccurrencesCache !== null &&
+      this._hasNonOccurrenceTaxaCache !== null
+    ) return;
 
     if (!this._data) {
-      return false;
+      this._hasOccurrencesCache = false;
+      this._hasNonOccurrenceTaxaCache = true; // safe default
+      return;
     }
 
     const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
-    this._hasOccurrencesCache =
-      occurrenceMetaIndex !== -1 &&
-      Checklist.getData().checklist.some(function (taxon) {
-        const occurrenceEntry = taxon.t?.[occurrenceMetaIndex];
-        return (
-          occurrenceEntry !== null &&
-          occurrenceEntry !== undefined &&
-          occurrenceEntry.name?.trim() !== ""
-        );
-      });
 
+    // No occurrence column in the schema at all — fast path.
+    if (occurrenceMetaIndex === -1) {
+      this._hasOccurrencesCache = false;
+      this._hasNonOccurrenceTaxaCache = true;
+      return;
+    }
+
+    let foundOccurrence = false;
+    let foundNonOccurrence = false;
+
+    const checklist = Checklist.getData().checklist;
+    for (let i = 0; i < checklist.length; i++) {
+      const occEntry = checklist[i].t?.[occurrenceMetaIndex];
+      const isOccurrence =
+        occEntry !== null &&
+        occEntry !== undefined &&
+        occEntry.name?.trim() !== "";
+
+      if (isOccurrence) foundOccurrence = true;
+      else foundNonOccurrence = true;
+
+      // Early exit once both facts are known — no need to scan further.
+      if (foundOccurrence && foundNonOccurrence) break;
+    }
+
+    this._hasOccurrencesCache = foundOccurrence;
+    this._hasNonOccurrenceTaxaCache = foundNonOccurrence;
+  },
+
+  hasOccurrences: function () {
+    if (this._hasOccurrencesCache === null) {
+      this._computeOccurrenceShape();
+    }
     return this._hasOccurrencesCache;
+  },
+
+  hasNonOccurrenceTaxa: function () {
+    if (this._hasNonOccurrenceTaxaCache === null) {
+      this._computeOccurrenceShape();
+    }
+    return this._hasNonOccurrenceTaxaCache;
   },
 
   getDataMeta: function (dataType) {
