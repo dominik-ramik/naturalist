@@ -414,11 +414,12 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
       Logger.info(t("url_fetching_via_proxy"));
       const body = new FormData();
       body.append("url", url);
-      res = await fetch("../update.php?proxy", { method: "POST", body });
+      res = await fetch("../update.php?proxy", { method: "POST", body, cache: "no-store" });
     } else {
       // Static hosting: direct fetch - CORS restrictions may apply
       Logger.warning(t("url_fetching_direct"));
-      res = await fetch(url, { mode: "cors" });
+      const bustUrl = url + (url.includes("?") ? "&" : "?") + "_cb=" + Date.now();
+      res = await fetch(bustUrl, { mode: "cors", cache: "reload" });
     }
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
