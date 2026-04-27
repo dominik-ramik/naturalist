@@ -13,7 +13,7 @@ registerMessages(selfKey, {
   en: {
     nothing_found_oops: "Fall came too early?",
     nothing_found_checklist: "This taxonomic tree branch has no leaves",
-    nothing_found_message: "No matches found for",
+    nothing_found_message: "No matches found for query",
     nothing_found_message_hint: "Try broadening your query or adjusting your filters",
     mobile_filter_notice: "Showing only taxa where {0}",
     temporary_draft_goto_manage: "Manage",
@@ -25,7 +25,7 @@ registerMessages(selfKey, {
   fr: {
     nothing_found_oops: "Rien trouvé",
     nothing_found_checklist: "Cette branche de l'arbre taxonomique n'a pas de feuilles",
-    nothing_found_message: "Aucun résultat pour votre recherche actuelle. Essayez d'élargir votre requête ou d'ajuster vos filtres.",
+    nothing_found_message: "Aucun résultat trouvé pour la requête",    
     nothing_found_message_hint: "Try broadening your query or adjusting your filters",
     mobile_filter_notice: "Affichage uniquement des taxons où {0}",
     temporary_draft_goto_manage: "Gérer",
