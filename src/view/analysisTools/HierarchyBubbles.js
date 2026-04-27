@@ -15,20 +15,22 @@ registerMessages(selfKey, {
   en: {
     taxon_occurrences: "Occurrences of {0}",
     view_bubbles_no_filter_tip: "Tip: Use the filter to highlight how matching results are distributed across the hierarchy - circles will be colored by their proportion of matches. Use mouse wheel or pinch to zoom in and out.",
-    view_bubbles_filter_info_taxa : "Color shows the proportion of matching taxa in each group - {0} of {1} taxa match the current filter",
-    view_bubbles_filter_info_occurrence : "Color shows the proportion of matching occurrences in each group - {0} of {1} occurrences match the current filter",
+    view_bubbles_filter_info_taxa: "Color shows the proportion of matching taxa in each group - {0} of {1} taxa match the current filter",
+    view_bubbles_filter_info_occurrence: "Color shows the proportion of matching occurrences in each group - {0} of {1} occurrences match the current filter",
     view_bubbles_color_scale_no_match: "no match",
     view_bubbles_color_scale_1_match: "1% match",
     view_bubbles_color_scale_full_match: "100% match",
+    all_taxa: "All taxa",
   },
   fr: {
     taxon_occurrences: "Occurrences de {0}",
     iew_bubbles_no_filter_tip: "Astuce : Utilisez le filtre pour voir comment les résultats correspondants sont répartis dans la hiérarchie - les cercles seront colorés en fonction de leur proportion de correspondances. Utilisez la molette de la souris ou le pincement pour zoomer avant et arrière.",
-    view_bubbles_filter_info_taxa : "La couleur montre la proportion de taxons correspondants dans chaque groupe - {0} de {1} taxons correspondent au filtre actuel",
-    view_bubbles_filter_info_occurrence : "La couleur montre la proportion d'occurrences correspondantes dans chaque groupe - {0} de {1} occurrences correspondent au filtre actuel",
+    view_bubbles_filter_info_taxa: "La couleur montre la proportion de taxons correspondants dans chaque groupe - {0} de {1} taxons correspondent au filtre actuel",
+    view_bubbles_filter_info_occurrence: "La couleur montre la proportion d'occurrences correspondantes dans chaque groupe - {0} de {1} occurrences correspondent au filtre actuel",
     view_bubbles_color_scale_no_match: "aucune correspondance",
     view_bubbles_color_scale_1_match: "1% de correspondance",
-    view_bubbles_color_scale_full_match: "100% de correspondance",    
+    view_bubbles_color_scale_full_match: "100% de correspondance",
+    all_taxa: "Tous les taxons",
   }
 });
 
@@ -402,7 +404,7 @@ function circlePacking(options) {
   function renderBreadcrumbs(focusNode) {
     gHeader.selectAll("*").remove();
 
-    const breadcrumbNodes = focusNode.ancestors().reverse().slice(1);
+    const breadcrumbNodes = focusNode.ancestors().reverse();
     let currentX = 5;
     const breadcrumbY = 10;
 
@@ -843,7 +845,7 @@ function checklistDataForD3FromTaxa(taxa) {
   const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
 
   const root = {
-    name: "root",
+    name: t("all_taxa"),
     data: {},
     taxon: null,
     taxonMetaIndex: -1,
