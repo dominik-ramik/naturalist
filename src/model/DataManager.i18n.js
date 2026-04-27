@@ -69,7 +69,9 @@ export const dataManagerI18n = {
         dm_shortcode_missing_id_in_url: "Database shortcode \"{0}\": URL template must contain {{id}}; entry skipped",
         dm_shortcode_missing_id_in_label: "Database shortcode \"{0}\": label template must contain {{id}}; entry skipped",
         dm_category_display_unreachable_pattern: "In table {0} row {1}: the pattern '{2}' on column '{3}' is a plain text match (no wildcards) but the same text is used as a raw code by a Type A row in the same table. Because code translation runs before badge matching, this pattern can never match at display time. Either add a wildcard (e.g. '{2}*') to force a pattern match on the translated value, or remove this row.",
-        dm_incorrect_datatype: "Incorrect data type {0} in column {1} (table {2}); allowed values are: {3}"
+        dm_incorrect_datatype: "Incorrect data type {0} in column {1} (table {2}); allowed values are: {3}",
+        dm_no_data_columns_found: "No data columns found in sheet {0}. At least one column should have a data type assigned in the Custom data definition table.",
+        dm_no_taxa_defined: "No taxa defined. The 'Taxa definition' table must contain at least one taxon row."
     },
     fr: {
         problem_loading_data: "Problème de chargement des données",
@@ -139,7 +141,8 @@ export const dataManagerI18n = {
         dm_shortcode_missing_id_in_url: "Shortcode de base de données \"{0}\" : le modèle d'URL doit contenir {{id}} ; entrée ignorée",
         dm_shortcode_missing_id_in_label: "Shortcode de base de données \"{0}\" : le modèle d'étiquette doit contenir {{id}} ; entrée ignorée",
         dm_category_display_unreachable_pattern: "Dans la table {0} ligne {1} : le motif '{2}' sur la colonne '{3}' est une correspondance de texte brut (sans caractères génériques) mais le même texte est utilisé comme code brut par une ligne de type A dans la même table. Parce que la traduction de code s'exécute avant la correspondance des badges, ce motif ne peut jamais correspondre à l'affichage. Soit ajoutez un caractère générique (ex. '{2}*') pour forcer une correspondance de motif sur la valeur traduite, soit supprimez cette ligne.",
-        dm_incorrect_datatype: "Type de données incorrect {0} dans la colonne {1} (table {2}) ; les valeurs autorisées sont : {3}"
-        
+        dm_incorrect_datatype: "Type de données incorrect {0} dans la colonne {1} (table {2}) ; les valeurs autorisées sont : {3}",
+        dm_no_data_columns_found: "Aucune colonne de données trouvée dans la feuille {0}. Au moins une colonne doit avoir un type de données assigné dans la table de définition de données personnalisées.",
+        dm_no_taxa_defined: "Aucun taxon défini. La table 'Taxa definition' doit contenir au moins une ligne de taxon.",
     },
 }

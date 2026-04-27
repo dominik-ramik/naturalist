@@ -653,6 +653,14 @@ export let ExcelBridge = function (excelFile) {
           return null;
         }
 
+        if (table.length <= 1) {
+          Logger.warning(
+            "Data sheet '" + sheetName + "' contains no data rows. " +
+            "Add at least one data row and recompile."
+          );
+          return null;
+        }
+
         sheetTables.push({ sheetName, table });
       }
 

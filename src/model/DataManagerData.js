@@ -14,7 +14,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
 
   // --- Styles ---
   const separatorStyle = { fill: { fgColor: { rgb: "ACB9CA" } } }; // #ACB9CA
-  const separatorColWidth = { wpx: 20 };
+  const separatorColWidth = { wpx: 16 };
 
   const tableNameStyle = {
     font: { bold: true, color: { rgb: "FFFFFF" } },
@@ -34,7 +34,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
   // --- Helper: Get Data from new row-based templateData ---
   function getTableData(table, tableKey) {
     const colKeys = Object.keys(table.columns || {});
-    
+
     // 1. Build Headers
     const headers = colKeys.map(k => table.columns[k].name);
 
@@ -104,29 +104,37 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
     }
 
     const sheetData = [];
-    const blankMessageA1 = "Your data will go into this sheet";
-    const blankMessageA2 = "Configure the nl_content and nl_appearance sheets following the documentation on naturalist.netlify.app";
-    const blankMessageA4 = "https://naturalist.netlify.app";
+    const blankMessageA3 = "Your data will go into this sheet";
+    const blankMessageA4 = "Configure the nl_content and nl_appearance sheets following the documentation on naturalist.netlify.app";
 
-    // When completelyBlank is requested, put a helpful placeholder into A1
+    // When completelyBlank is requested, put a helpful placeholder into A3
     if (completelyBlank) {
       const ws = {};
-      ws['A1'] = { v: blankMessageA1, t: 's', s: { font: { color: { rgb: "FF0000" } } } };
-      ws['A2'] = { v: blankMessageA2, t: 's', s: { font: { color: { rgb: "FF0000" } } } };
-      ws['A4'] = { v: blankMessageA4, t: 's', s: { font: { color: { rgb: "0000FF" }, underline: true } }, l: { Target: blankMessageA4 } };
-      ws['!ref'] = 'A1:A4';
+      ws['A3'] = { v: blankMessageA3, t: 's', };
+      ws['A4'] = { v: blankMessageA4, t: 's', };
+
+      const FALLBACK_COLS = 10;
+      for (let C = 0; C < FALLBACK_COLS; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
+        ws[cellRef] = { v: (C == 0 ? "Define your data columns in this row" : ""), t: "s", s: tableNameStyle };
+      }
+      ws['!ref'] = 'A1:J4';
+
+      // Set the column widths
+      ws['!cols'] = [
+        { wpx: 220 } // Index 0 represents the first column (Column A)
+      ];
+
       return ws;
     }
 
     if (!completelyBlank && headerKeys.length > 0) {
       sheetData.push(headerKeys);
-      
+
       // Iterate over the row array directly
       checklistDataConfig.forEach((rowObj) => {
         const row = headerKeys.map(header => {
           if (rowObj[header] !== undefined) return rowObj[header];
-          // Legacy mapping support for "Species.name" if needed
-          if (header === "Species" && rowObj["Species.name"] !== undefined) return rowObj["Species.name"];
           return "";
         });
         sheetData.push(row);
@@ -134,14 +142,26 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
     }
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    console.log(sheetData);
     if (sheetData.length > 0) {
       // Bold Headers
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let C = range.s.c; C <= range.e.c; ++C) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
-        if (ws[cellRef]) ws[cellRef].s = headerStyle;
+        if (ws[cellRef]) ws[cellRef].s = tableNameStyle;
       }
       ws['!cols'] = calculateColumnWidths("checklist", sheetData);
+    } else {
+      // No columns defined — still colour the first 15 cells of row 0
+      const FALLBACK_COLS = 1;
+      for (let C = 0; C < FALLBACK_COLS; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });
+        ws[cellRef] = { v: (C == 0 ? "Define your data columns here" : ""), t: "s", s: tableNameStyle };
+      }
+      ws['!ref'] = XLSX.utils.encode_range(
+        { r: 0, c: 0 },
+        { r: 0, c: FALLBACK_COLS - 1 }
+      );
     }
     return ws;
   }

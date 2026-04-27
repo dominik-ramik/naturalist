@@ -1385,6 +1385,13 @@ export let DataManager = function () {
       return item.name;
     });
 
+    // Backstop: ExcelBridge already catches and names empty individual sheets with a warning
+    // This gives a hard critical error if none of the sheets has data
+    if (table.length <= 1) {
+      Logger.critical("The data sheet(s) contain no data rows.");
+      return null;
+    }
+
     const taxonColumnInfos = allColumnInfos.filter(i => i.dataType === "checklist-taxon");
     const occurrenceColIndex = taxonColumnInfos.findIndex(
       i => i.fullRow.taxonName.trim().toLowerCase() === OCCURRENCE_IDENTIFIER
@@ -1409,6 +1416,10 @@ export let DataManager = function () {
     const rootBelongsToMap = buildRootBelongsToMap(
       data.sheets.content.tables.customDataDefinition.data[data.common.languages.defaultLanguageCode]
     );
+
+    // Check there are any taxa defined at all
+    const taxaTableRows = data.sheets.content.tables.taxa.data[data.common.languages.defaultLanguageCode];
+    if (!taxaTableRows || taxaTableRows.length === 0) { Logger.error(t("dm_no_taxa_defined")); return null; }
 
     // Sort raw checklist rows by taxa columns so the spreadsheet does not need
     // to be manually ordered. Uses a stable sort so rows sharing the same full
