@@ -627,20 +627,12 @@ const SubViews = {
     });
 
     return [
-      !isDataReady
-        ? m(ManageCard, {
-          title: t("fresh_install_welcome"),
-          icon: "img/icon_transparent_blue.svg",
-          children: [m("p.manage-welcome-text", t("fresh_install_welcome_message"))],
-        })
-        : null,
-
       !isDataReady ? scratchCard : null,
 
       m(ManageCard, {
         title: isDataReady ? t("update_checklist_title") : t("upload_spreadsheet_title"),
         icon: "img/ui/manage/upload.svg",
-        description: isDataReady ? t("data_upload_waiting") : t("starting_from_scratch_continued"),
+
         children: [
           renderUploadSource(),
           Logger.hasErrors()

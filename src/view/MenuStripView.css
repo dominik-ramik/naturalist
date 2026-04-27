@@ -380,7 +380,7 @@
 /* ==========================================================================
    Responsive
    ========================================================================== */
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
   .menu-item {
     padding-top: var(--pad-large);
     padding-bottom: var(--pad-large);

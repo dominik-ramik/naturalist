@@ -16,6 +16,9 @@ registerMessages(selfKey, {
     mobile_filter_notice: "Showing only taxa where {0}",
     temporary_draft_goto_manage: "Manage",
     draft_notice: "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
+    welcome_headline_tagline: "The flexible biodiversity data publishing platform",
+    welcome_tagline: "Publish <strong>checklists</strong>, curate <strong>collections</strong>, and explore your data through filters, search, and analysis tools <strong>built for discovery</strong> — all from a single spreadsheet.",
+    welcome_blessing: "May your taxonomic tree grow to the sky.",
   },
   fr: {
     nothing_found_oops: "Oups !",
@@ -23,6 +26,10 @@ registerMessages(selfKey, {
     mobile_filter_notice: "Affichage uniquement des taxons où {0}",
     temporary_draft_goto_manage: "Gérer",
     draft_notice: "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
+    welcome_headline: "Bienvenue sur NaturaList",
+    welcome_headline_tagline: "La plateforme flexible de publication de données sur la biodiversité",
+    welcome_tagline: "Publiez des <strong>listes de taxons</strong>, organisez des <strong>collections</strong>, analysez les données et explorez les espèces, motifs et caractéristiques, et construisez des <strong>clés d'identification</strong> - tout cela à partir d'une seule feuille de calcul.",
+    welcome_blessing: "Que votre arbre taxonomique pousse jusqu'au ciel.",
   }
 });
 
@@ -67,8 +74,32 @@ export let ChecklistView = {
   },
 
   view: function () {
+    // In view(), replace the early-return guard:
     if (!Checklist._isDataReady) {
-      return m(".checklist");
+      return m(
+        ".checklist",
+        m(".welcome-wrapper", [
+          m(".fresh-install-welcome", [
+            // Category stamp — sets context before the brand name lands
+            // Primary greeting with brand name
+            m("h1.welcome-title", [
+              "Welcome to ", m("span.brand-name", "NaturaList"),
+            ]),
+            m("p.welcome-subtitle", t("welcome_headline_tagline")),
+            // Visual break between identity block and capability copy
+            m("hr.welcome-divider"),
+            // Feature summary — key actions bolded in the i18n string via <strong>
+            m("p.welcome-body", m.trust(t("welcome_tagline"))),
+            // Poetic sign-off — flanking rules mark it as decorative, not content
+            m(".welcome-closing-wrapper", [
+              m("span.welcome-closing", t("welcome_blessing")),
+            ]),
+          ]),
+          m(".welcome-illustration", [
+            m("img[src=img/icon_maskable.svg]")
+          ]),
+        ])
+      );
     }
 
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();

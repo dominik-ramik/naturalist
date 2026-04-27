@@ -124,7 +124,7 @@
     padding: 1.5em 0;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     .tabs-container-buttons {
         padding: 0.5em;
         gap: 0.35em;

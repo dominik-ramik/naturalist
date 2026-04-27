@@ -144,7 +144,7 @@
 
 /* ── Responsive overrides ────────────────────────────────────────────────── */
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
   .filter-dropdown .dropdown-area {
     position: fixed;
     bottom: 1em;

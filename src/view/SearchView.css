@@ -128,8 +128,8 @@ ul.filter-buttons li {
     height: 1em;
 }
 
-/* MOBILE LAYOUT AND CLEANUP (Max Width 1200px) */
-@media (max-width: 1200px) {
+/* MOBILE LAYOUT AND CLEANUP (Max Width 1000px) */
+@media (max-width: 1000px) {
 
     /* Filters should stack vertically on mobile (single column) */
     ul.filter-buttons {

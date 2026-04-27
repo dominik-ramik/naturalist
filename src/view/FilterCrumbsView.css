@@ -133,7 +133,7 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
   .filter-crumbs {
     display: none;
   }

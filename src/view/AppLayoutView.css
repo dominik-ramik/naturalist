@@ -16,7 +16,7 @@
 }
 
 /* The following media query handles the layout change: */
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     .app .app-content {
         flex-direction: column; /* Mobile: Stacked (Checklist then Filters) */
     }

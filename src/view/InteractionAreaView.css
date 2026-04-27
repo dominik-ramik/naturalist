@@ -69,8 +69,8 @@
   font-size: 80%;
 }
 
-/* NEW/EDITED: Mobile/Tablet Layout (Max Width 1200px) */
-@media (max-width: 1200px) {
+/* NEW/EDITED: Mobile/Tablet Layout (Max Width 1000px) */
+@media (max-width: 1000px) {
   .interaction-area {
     max-width: unset;
     width: 100%;

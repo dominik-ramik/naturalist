@@ -239,8 +239,158 @@
   color: white;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
   .temporary-notice.mobile-filter-on {
     display: flex;
+  }
+}
+
+/* ==========================================================================
+   Fresh-install welcome screen
+   Fills the .checklist panel (dark gradient bg) when no data is loaded yet.
+   On mobile the panel is hidden behind the interaction area, so this is
+   effectively a desktop-only experience — no special mobile overrides needed.
+
+   Element roles:
+     .welcome-subtitle   — product category stamp (what NaturaList is, in brief)
+     .welcome-title      — the main greeting + brand name
+     .welcome-divider    — visual break between identity and capability copy
+     .welcome-body       — feature summary (what users can do)
+     .welcome-closing    — poetic sign-off, clearly decorative
+   ========================================================================== */
+
+.welcome-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fresh-install-welcome {
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 3rem 2.5rem;
+  text-align: center;
+  gap: 0;
+  color: rgba(210, 230, 245, 0.72);
+  font-size: 1.3em;
+}
+
+/* ── Illustration slot ───────────────────────────────────────────────────── */
+
+.welcome-illustration {
+  position: absolute;
+  bottom: -16em;
+  right: -14em;
+  opacity: 0.5;
+}
+
+.welcome-illustration img {
+  width: 50em;
+  height: 50em;
+}
+
+/* ── Subtitle: product category stamp ────────────────────────────────────────
+   Appears above the title. Reads like an eyebrow label — sets context before
+   the brand name lands. Flanking hairlines add structure without decoration.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.welcome-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.65em;
+  font-size: 0.6em;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #7eb8d9;
+  margin: 0 0 1em 0;
+}
+
+/* ── Title: greeting + brand name ────────────────────────────────────────── */
+
+.welcome-title {
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin: 0 0 0.15em 0;
+  font-size: 2.6em;
+  color: rgba(220, 238, 250, 0.88);
+}
+
+.welcome-title .brand-name {
+  color: #ffffff;
+  font-variant: small-caps;
+  font-weight: 500;
+}
+
+/* ── Divider: separates identity block from capability copy ──────────────── */
+
+.welcome-divider {
+  width: 3.5em;
+  height: 2px;
+  background: rgba(141, 196, 232, 0.3);
+  border: none;
+  margin: 1.6rem 0;
+  flex-shrink: 0;
+}
+
+/* ── Body: feature summary ───────────────────────────────────────────────────
+   Communicates what users can actually do. Key actions are bolded inline
+   so the value prop scans fast even at a glance.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.welcome-body {
+  font-weight: 400;
+  font-size: 0.82em;
+  line-height: 1.85;
+  max-width: 27em;
+  color: rgba(190, 218, 238, 0.72);
+  margin: 0 0 2.5rem 0;
+}
+
+.welcome-body strong {
+  color: rgba(210, 232, 248, 0.92);
+  font-weight: 500;
+}
+
+/* ── Closing: poetic sign-off ────────────────────────────────────────────────
+   Clearly decorative — lower opacity and flanking rules signal "aside",
+   not content. Wrapper handles the ruled line layout; inner span is the text.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.welcome-closing-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  opacity: 0.65;
+}
+
+.welcome-closing-wrapper::before,
+.welcome-closing-wrapper::after {
+  content: '';
+  display: block;
+  width: 1.75em;
+  height: 1px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.welcome-closing {
+  font-family: var(--font-light);
+  font-style: italic;
+  font-size: 0.72em;
+  letter-spacing: 0.035em;
+  color: rgba(190, 218, 238, 0.9);
+}
+
+/* Hide the CTA hint on mobile — the panel layout makes it irrelevant */
+@media (max-width: 1000px) {
+  .welcome-wrapper {
+    display: none;
   }
 }
