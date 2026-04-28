@@ -321,8 +321,8 @@ function menuTopBar() {
         m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
         m("span.global-indicator-label", activeTool.label),
 
-        // ── Scope icon + label (only when occurrences data is available) ───────
-        Checklist.hasOccurrences() && activeScope && [
+        // ── Scope icon + label ───────
+        Checklist.availableIntents().length > 1 && activeScope && [
           m("span.global-indicator-sep"),
           m("img.global-indicator-img", {
             src: activeScope.iconPath.light,

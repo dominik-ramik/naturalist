@@ -23,7 +23,7 @@ import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
 import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
-import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { getDataFromDataPath } from "./DataPath.js";
 
 const templateResultSuffix = "$$templateresult";
@@ -51,14 +51,18 @@ export let Checklist = {
   _keyReachableTaxaCache: new Map(),
   _keyLCACache: new Map(), // Add LCA cache
   _occurrenceDataPathCache: undefined,
-  _hasOccurrencesCache: null,
-  _hasNonOccurrenceTaxaCache: null,
+
+  // Unified occurrence-shape cache. null = not yet computed for the current
+  // dataset. Reset to null on every loadData(). All three old separate fields
+  // (_hasOccurrencesCache, _hasNonOccurrenceTaxaCache, _availableIntentsCache)
+  // are replaced by this single object so they can never get out of sync.
+  // Shape when populated: { hasOccurrences: bool, hasNonOccurrenceTaxa: bool, intents: string[] }
+  _occurrenceShapeCache: null,
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
   _templateCompileCache: new Map(),
 
-  // Replace single _bibFormatter with a per-language cache
   _bibFormatterCache: {},
 
   filter: Filter,
@@ -279,7 +283,6 @@ export let Checklist = {
 
   getBibFormatter: function () {
     const lang = Checklist.getCurrentLanguage();
-    if (!this._bibFormatterCache) this._bibFormatterCache = {};
     if (!this._bibFormatterCache[lang]) {
       const bibliography = this._data.versions[lang]?.dataset?.general?.bibliography
         || this._data.general?.bibliography;
@@ -493,8 +496,7 @@ export let Checklist = {
     Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
     Checklist.treefiedTaxaCache = null;
     Checklist._occurrenceDataPathCache = undefined;
-    Checklist._hasOccurrencesCache = null;
-    Checklist._hasNonOccurrenceTaxaCache = null;
+    Checklist._occurrenceShapeCache = null;
     Checklist._bibFormatterCache = {};
     Checklist.nameForMapRegionCache = new Map();
     Checklist.getCustomOrderGroupItemsCache = new Map();
@@ -1349,32 +1351,27 @@ export let Checklist = {
   },
 
   /**
- * Single-pass scan that populates both occurrence-related cache fields.
- * Called lazily by hasOccurrences() and hasNonOccurrenceTaxa() — whichever
- * is called first triggers the scan; the second call is then O(1).
- *
- * Never call this from render paths directly; always go through the public
- * accessors so the cache-guard is respected.
- */
+   * Single-pass scan that populates _occurrenceShapeCache.
+   * All three public accessors (hasOccurrences, hasNonOccurrenceTaxa,
+   * availableIntents) call this lazily; the second and third calls are O(1).
+   * Never call this directly from outside this object.
+   */
   _computeOccurrenceShape: function () {
-    // Already computed — nothing to do.
-    if (
-      this._hasOccurrencesCache !== null &&
-      this._hasNonOccurrenceTaxaCache !== null
-    ) return;
+    // Already computed for the current dataset — nothing to do.
+    if (this._occurrenceShapeCache !== null) return;
 
-    if (!this._data) {
-      this._hasOccurrencesCache = false;
-      this._hasNonOccurrenceTaxaCache = true; // safe default
-      return;
-    }
+    // Data not ready yet — return without caching so we recompute once it is.
+    if (!this._isDataReady || !this._data) return;
 
     const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
 
-    // No occurrence column in the schema at all — fast path.
+    // No occurrence column in schema at all → fast path, taxa-only dataset.
     if (occurrenceMetaIndex === -1) {
-      this._hasOccurrencesCache = false;
-      this._hasNonOccurrenceTaxaCache = true;
+      this._occurrenceShapeCache = {
+        hasOccurrences: false,
+        hasNonOccurrenceTaxa: true,
+        intents: [ANALYTICAL_INTENT_TAXA],
+      };
       return;
     }
 
@@ -1392,26 +1389,44 @@ export let Checklist = {
       if (isOccurrence) foundOccurrence = true;
       else foundNonOccurrence = true;
 
-      // Early exit once both facts are known — no need to scan further.
+      // Early exit once both facts are established.
       if (foundOccurrence && foundNonOccurrence) break;
     }
 
-    this._hasOccurrencesCache = foundOccurrence;
-    this._hasNonOccurrenceTaxaCache = foundNonOccurrence;
+    // TAXA intent is available when there are non-occurrence rows to browse.
+    // OCCURRENCE intent is available when there are occurrence rows to browse.
+    const intents = [];
+    if (foundNonOccurrence) intents.push(ANALYTICAL_INTENT_TAXA);
+    if (foundOccurrence) intents.push(ANALYTICAL_INTENT_OCCURRENCE);
+
+    this._occurrenceShapeCache = {
+      hasOccurrences: foundOccurrence,
+      hasNonOccurrenceTaxa: foundNonOccurrence,
+      intents,
+    };
   },
 
   hasOccurrences: function () {
-    if (this._hasOccurrencesCache === null) {
-      this._computeOccurrenceShape();
-    }
-    return this._hasOccurrencesCache;
+    this._computeOccurrenceShape();
+    return this._occurrenceShapeCache?.hasOccurrences ?? false;
   },
 
   hasNonOccurrenceTaxa: function () {
-    if (this._hasNonOccurrenceTaxaCache === null) {
-      this._computeOccurrenceShape();
-    }
-    return this._hasNonOccurrenceTaxaCache;
+    this._computeOccurrenceShape();
+    return this._occurrenceShapeCache?.hasNonOccurrenceTaxa ?? true;
+  },
+
+  /**
+   * Returns the ANALYTICAL_INTENT_* strings supported by this dataset.
+   * Always contains at least [ANALYTICAL_INTENT_TAXA] when data is loaded.
+   *
+   * This is the single authoritative source of truth used by ConfigurationDialog,
+   * MenuStripView, ChecklistView, and index.js. Do not reconstruct this list
+   * elsewhere from hasOccurrences() — call availableIntents() instead.
+   */
+  availableIntents: function () {
+    this._computeOccurrenceShape();
+    return this._occurrenceShapeCache?.intents ?? [ANALYTICAL_INTENT_TAXA];
   },
 
   getDataMeta: function (dataType) {

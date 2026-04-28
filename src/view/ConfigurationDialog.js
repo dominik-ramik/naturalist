@@ -26,9 +26,11 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/n
 registerMessages(selfKey, {
   en: {
     done: "Done",
+    data_scope: "Data scope",
   },
   fr: {
     done: "Terminé",
+    data_scope: "Portée des données",
   }
 });
 
@@ -44,24 +46,13 @@ export const ConfigurationDialog = {
   view() {
     if (!ConfigurationDialog.isOpen) return null;
 
-    const hasOccurrences    = Checklist.hasOccurrences();
-    const hasNonOccurrenceTaxa = Checklist.hasNonOccurrenceTaxa();
-    const availableIntents = [ANALYTICAL_INTENT_TAXA, ANALYTICAL_INTENT_OCCURRENCE].filter(intent => {
-      if (intent === ANALYTICAL_INTENT_TAXA && hasNonOccurrenceTaxa) {
-        return ANALYTICAL_INTENT_TAXA;
-      }
-      if(intent === ANALYTICAL_INTENT_OCCURRENCE && hasOccurrences) {
-        return ANALYTICAL_INTENT_OCCURRENCE;
-      }
-    });
-
     const checklistData   = Checklist.getData();
 
     const currentViewId  = Settings.viewType() || TOOL_LIST[0].id;
     const selectedScope  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
     const activeTool             = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
-    const activeToolAvailability = activeTool.getAvailability(availableIntents, checklistData);
+    const activeToolAvailability = activeTool.getAvailability(Checklist.availableIntents(), checklistData);
 
     // Render active tool parameters using the ToolParams framework.
     // `parameters` is now a declarative array; renderParams filters by scope
@@ -85,7 +76,7 @@ export const ConfigurationDialog = {
           m(".configuration-section-label", "Analysis Tool"),
           m(".configuration-scope-segmented",
             TOOL_LIST.map(tool => {
-              const availability = tool.getAvailability(availableIntents, checklistData);
+              const availability = tool.getAvailability(Checklist.availableIntents(), checklistData);
               const isDisabled   = !availability.isAvailable;
 
               return m(
@@ -115,8 +106,8 @@ export const ConfigurationDialog = {
         ]),
 
         // ── Data Scope (only when occurrences exist) ────────────────────────────
-        hasOccurrences && m(".configuration-section", [
-          m(".configuration-section-label", "Data Scope"),
+        Checklist.availableIntents().length > 1 && m(".configuration-section", [
+          m(".configuration-section-label", t("data_scope")),
           m(".configuration-scope-segmented",
             SCOPE_CHOICES.map(scope => {
               const isScopeDisabled =

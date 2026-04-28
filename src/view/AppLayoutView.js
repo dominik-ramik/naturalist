@@ -106,7 +106,7 @@ export let Toast = {
                 // Message Text
                 m("span.toast-message", Toast.message),
 
-                // --- NEW: Action Button ---
+                // --- Action Button ---
                 (Toast.actionLabel && Toast.actionCallback) 
                     ? m("button.toast-action", {
                         onclick: function(e) {

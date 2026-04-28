@@ -25,7 +25,7 @@ registerMessages(selfKey, {
   fr: {
     nothing_found_oops: "Rien trouvé",
     nothing_found_checklist: "Cette branche de l'arbre taxonomique n'a pas de feuilles",
-    nothing_found_message: "Aucun résultat trouvé pour la requête",    
+    nothing_found_message: "Aucun résultat trouvé pour la requête",
     nothing_found_message_hint: "Try broadening your query or adjusting your filters",
     mobile_filter_notice: "Affichage uniquement des taxons où {0}",
     temporary_draft_goto_manage: "Gérer",
@@ -38,7 +38,7 @@ registerMessages(selfKey, {
 });
 
 export let ChecklistView = {
-oninit: function () {
+  oninit: function () {
     ChecklistView.lastQuery = JSON.stringify(Checklist.queryKey());
     ChecklistView._syncFilterFromRoute();
     ChecklistView._syncIntentToDataset();
@@ -50,40 +50,26 @@ oninit: function () {
   },
 
   /**
-   * Ensures the analytical intent is compatible with the shape of the loaded
-   * dataset.  Called from oninit and onbeforeupdate — i.e. always *before*
-   * Mithril builds the vnode tree — so no state mutations happen during render.
+   * Ensures the analytical intent stored in Settings is compatible with the
+   * shape of the loaded dataset. Called from oninit and onbeforeupdate — always
+   * before Mithril builds the vnode tree — so no state mutations happen during
+   * render.
    *
-   * Two cases are handled:
-   *   1. Occurrence-only dataset + TAXA intent  → redirect to OCCURRENCE.
-   *   2. No occurrences at all + OCCURRENCE intent → redirect to TAXA
-   *      (preserves the pre-existing guard that was in oninit).
+   * Uses Checklist.availableIntents() as the single source of truth. If the
+   * current intent is not in the available list, we redirect to the first
+   * available intent and keep the URL in sync via updateRouteParams().
    *
-   * The redirect is done via Settings mutation + updateRouteParams() so that
-   * the URL stays in sync and the browser history is not polluted with an
-   * extra entry.  This is intentionally separate from requestIntentChange()
-   * (which is a user-driven action) and from validateActiveToolState()
-   * (which is a tool-availability concern).
+   * This is intentionally separate from requestIntentChange() (user-driven) and
+   * validateActiveToolState() (tool-availability concern).
    */
   _syncIntentToDataset: function () {
     if (!Checklist._isDataReady) return;
 
+    const intents = Checklist.availableIntents();
     const intent = Settings.analyticalIntent();
 
-    // Case 1: dataset has no occurrence column at all → must be TAXA
-    if (!Checklist.hasOccurrences() && intent !== ANALYTICAL_INTENT_TAXA) {
-      Settings.analyticalIntent(ANALYTICAL_INTENT_TAXA);
-      updateRouteParams();
-      return;
-    }
-
-    // Case 2: dataset has occurrences but NO pure-taxa rows → must be OCCURRENCE
-    if (
-      Checklist.hasOccurrences() &&
-      !Checklist.hasNonOccurrenceTaxa() &&
-      intent !== ANALYTICAL_INTENT_OCCURRENCE
-    ) {
-      Settings.analyticalIntent(ANALYTICAL_INTENT_OCCURRENCE);
+    if (!intents.includes(intent)) {
+      Settings.analyticalIntent(intents[0] ?? ANALYTICAL_INTENT_TAXA);
       updateRouteParams();
     }
   },
