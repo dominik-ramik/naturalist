@@ -6,9 +6,12 @@ span.category {
   border-radius: var(--pad-large);
   padding-left: var(--pad-small);
   padding-right: var(--pad-small);
-  font-size: 85%;
+  font-size: 80%;
   padding-left: 0.5em;
   padding-right: 0.5em;
+  border: 1px solid transparent;
+  display: inline-block;
+  margin-bottom: 1px;
 }
 
 span.simple-value p:first-child {
@@ -181,14 +184,12 @@ a.citation {
   letter-spacing: 0.025em;
 }
 
-.unit-name{
+.unit-name {
   color: grey;
 }
 
-.unit-value{
-  
-}
+.unit-value {}
 
-.unit-dash{
+.unit-dash {
   color: grey;
 }

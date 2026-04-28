@@ -2412,7 +2412,7 @@ EASY TO CONFUSE WITH:
                             description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            defaultValue: "black",
+                            defaultValue: "transparent",
                             allowedContent: "cssColor",
                             supportsMultilingual: false
                         }
