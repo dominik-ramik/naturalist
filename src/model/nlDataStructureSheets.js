@@ -632,8 +632,8 @@ export const nlDataStructureSheets = {
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
-                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated suffix to group the filter with others under a common section heading - e.g. `Habitat | Ecology` and `Life form | Ecology` both appear under an **Ecology** section.",
-                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Label | Group` pattern to organise multiple logically related filters into named sections.",
+                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated prefix to group the filter with others under a common section heading - e.g. `Ecology | Habitat` and `Ecology | Life form` both appear under an **Ecology** section.",
+                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Group | Label` pattern to organise multiple logically related filters into named sections.",
                         notes: [
                             {
                                 type: "tip",
@@ -650,11 +650,11 @@ export const nlDataStructureSheets = {
                                 rows: [
                                     [
                                         "habitat",
-                                        "Habitat | Ecology"
+                                        "Ecology | Habitat"
                                     ],
                                     [
                                         "lifeform",
-                                        "Life form | Ecology"
+                                        "Ecology | Life form"
                                     ],
                                     [
                                         "redlist",
