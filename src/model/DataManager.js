@@ -24,7 +24,7 @@ registerMessages(selfKey, dataManagerI18n);
 
 // Global array to collect assets from F: directives
 
-// ─── Pure helpers for "Belongs to" column attribution ────────────────────────
+// --- Pure helpers for "Belongs to" column attribution ------------------------
 
 /**
  * Returns the root segment of a CDD data path - the portion before the first
@@ -213,7 +213,7 @@ export let DataManager = function () {
       });
     });
 
-    // ── F-directive processing for content-sheet tables ──────────────────────
+    // -- F-directive processing for content-sheet tables ----------------------
     // Walks every table in sheets.content that declares fDirectiveColumns and
     // resolves any "F:" references in the nominated columns.  This runs once
     // per language so each language's data rows are processed independently.
@@ -1435,7 +1435,8 @@ export let DataManager = function () {
     data.sheets.checklist.rawRows = table.slice(1);
 
     validateCDDColumnsAgainstHeaders(data);
-
+    validateTaxaAgainstHeaders(data);  // -- every declared taxon column must appear in the data sheet
+    
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
 
@@ -1529,7 +1530,7 @@ export let DataManager = function () {
             return; // Skip the rest of the loop for taxon columns
           }
 
-          // ── Cross-entity attribution check ──────────────────────────────────
+          // -- Cross-entity attribution check ----------------------------------
           // Only relevant when a occurrence column is declared; pure-taxon
           // datasets (occurrenceColumnName === null) are never checked.
           if (occurrenceColumnName !== null) {
@@ -1555,7 +1556,7 @@ export let DataManager = function () {
               if (position.isLeaf) return;
             }
           }
-          // ── End cross-entity check ──────────────────────────────────────────
+          // -- End cross-entity check ------------------------------------------
 
           if (!position.isLeaf) {
             return;
@@ -2623,6 +2624,50 @@ export function validateCDDColumnsAgainstHeaders(data) {
 }
 
 /**
+ * Validates that every taxon column declared in the Taxa definition table is
+ * actually present in the data sheet.  A taxon column may appear as:
+ *   – "<colName>"       (pipe-separated "Name|Authority" or name-only)
+ *   – "<colName>.name"  (explicit name sub-column)
+ *
+ * Taxa headers are always bare — they are never language-suffixed.
+ *
+ * Logs a critical error for every absent taxon column because a missing taxon
+ * column makes it impossible to build the taxonomic tree.
+ *
+ * Must be called AFTER data.sheets.checklist.rawHeaders has been populated.
+ *
+ * @param {object} data – nlDataStructure
+ */
+function validateTaxaAgainstHeaders(data) {
+  const headers = data.sheets.checklist.rawHeaders;
+  if (!headers || headers.length === 0) return;
+
+  const langCode = data.common.languages.defaultLanguageCode;
+  const taxaRows = data.sheets.content.tables.taxa.data[langCode] || [];
+
+  taxaRows.forEach(function (row) {
+    const colName = (row.columnName || "").toLowerCase().trim();
+    if (!colName) return;
+
+    // Taxon column headers are always bare — never language-suffixed.
+    // The column may be represented as a single "Name|Authority" cell (colName)
+    // or split into explicit sub-columns (colName.name / colName.authority).
+    // Presence of either the base column or the .name sub-column is sufficient.
+    const candidateHeaders = [colName, colName + ".name"];
+    const found = candidateHeaders.some(candidate => headers.indexOf(candidate) >= 0);
+
+    if (!found) {
+      Logger.critical(
+        "Taxon column \"" + (row.columnName || colName) + "\" is declared in the Taxa " +
+        "table but was not found in the data sheet. " +
+        "Expected at least one of: " +
+        candidateHeaders.map(h => "\"" + h + "\"").join(" or ") + "."
+      );
+    }
+  });
+}
+
+/**
  * Runs all manual integrity checks that go beyond what can be inferred from
  * the `integrity` props in nlDataStructure.  Pure function: reads `data` and
  * calls Logger / i18n helpers; does not mutate `data`.
@@ -2641,7 +2686,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
  */
 function runManualIntegrityChecks(data) {
 
-  // ── 1. mapRegionsLegend cross-row validation ──────────────────────────────
+  // -- 1. mapRegionsLegend cross-row validation ------------------------------
   data.common.languages.supportedLanguages.forEach(function (lang) {
     const rows = data.sheets.appearance.tables.mapRegionsLegend.data[lang.code];
     if (!rows || rows.length === 0) return;
@@ -2765,7 +2810,7 @@ function runManualIntegrityChecks(data) {
     });
   });
 
-  // ── 2. Language UI fallback coverage ─────────────────────────────────────
+  // -- 2. Language UI fallback coverage -------------------------------------
   data.common.languages.supportedLanguages.forEach(function (lang) {
     if (
       i18nMetadata.getSupportedLanguageCodes().indexOf(lang.code) < 0 &&
@@ -2782,7 +2827,7 @@ function runManualIntegrityChecks(data) {
     }
   });
 
-  // ── 3. Cross-table column-name uniqueness (Maps table exempted) ───────────
+  // -- 3. Cross-table column-name uniqueness (Maps table exempted) -----------
   const uniqueColumnNames = {};
   getAllColumnInfos(nlDataStructure, data.common.languages.defaultLanguageCode)
     .forEach(function (item) {
@@ -2800,7 +2845,7 @@ function runManualIntegrityChecks(data) {
       }
     });
 
-  // ── 4 & 5. Hue range + month names (per language) ────────────────────────
+  // -- 4 & 5. Hue range + month names (per language) ------------------------
   data.common.languages.supportedLanguages.forEach(function (lang) {
     const customizationData = data.sheets.appearance.tables.customization.data[lang.code];
     if (!customizationData) return;
@@ -2835,7 +2880,7 @@ function runManualIntegrityChecks(data) {
     }
   });
 
-  // ── 6. customDataDefinition positional / structural rules ─────────────────
+  // -- 6. customDataDefinition positional / structural rules -----------------
   data.common.languages.supportedLanguages.forEach(function (lang) {
     const table = data.sheets.content.tables.customDataDefinition.data[lang.code];
     if (!table || table.length === 0) return;
@@ -2949,7 +2994,7 @@ function runManualIntegrityChecks(data) {
     }
   });
 
-  // ── 7. categoryDisplay integrity ──────────────────────────────────────────
+  // -- 7. categoryDisplay integrity ------------------------------------------
   // Every row must have a rawValue - it is the universal matcher. Warn and
   // skip rows that have none so they don't silently match everything.
   data.common.languages.supportedLanguages.forEach(function (lang) {
