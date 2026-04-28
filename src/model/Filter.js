@@ -97,6 +97,13 @@ export let Filter = {
     const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
     const hasOccurrenceLevel  = occurrenceMetaIndex !== -1;
 
+    // In a pure-occurrence dataset (every row is an occurrence, no standalone
+    // taxon rows exist), the entity-separation guard below would starve every
+    // higher-rank taxon slot because no row would ever be a non-occurrence row.
+    // When hasNonOccurrenceTaxa() is false we must allow occurrence rows to
+    // populate higher-rank slots — there is no other source of data for them.
+    const hasPureTaxonRows = Checklist.hasNonOccurrenceTaxa();
+
     taxa.forEach(function (taxon) {
       // Determine row entity type once per row.  An occurrence row is one
       // where the occurrence-level taxon slot is populated.
@@ -109,14 +116,17 @@ export let Filter = {
 
         // Entity separation for taxa-filter slots:
         // • The occurrence slot accumulates only from occurrence rows.
-        // • Every other slot (family, genus, species…) accumulates only from
-        //   taxon rows, preventing occurrence rows from inflating the counts
-        //   for higher-rank slots (each occurrence carries its full t[] ancestry,
-        //   which would otherwise double-count species/genus/family values).
+        // • Every other slot (family, genus, species…) normally accumulates
+        //   only from taxon rows, preventing occurrence rows from inflating
+        //   counts (each occurrence carries its full t[] ancestry, which would
+        //   otherwise double-count species/genus/family values).
+        // • Exception: in a pure-occurrence dataset (no standalone taxon rows)
+        //   there is no other source for higher-rank values, so we allow
+        //   occurrence rows to populate those slots as well.
         if (hasOccurrenceLevel) {
           const isOccurrenceSlot = index === occurrenceMetaIndex;
           if (isOccurrenceSlot && !isOccurrenceRow) return;
-          if (!isOccurrenceSlot &&  isOccurrenceRow) return;
+          if (!isOccurrenceSlot && isOccurrenceRow && hasPureTaxonRows) return;
         }
 
         const fd = Filter.taxa[path];

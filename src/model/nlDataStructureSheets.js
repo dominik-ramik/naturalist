@@ -11,7 +11,7 @@ export const ANALYTICAL_INTENTS = [
         info: "Analyze data diversity and distribution at the taxonomic level",
     },
     {
-        id: "S",
+        id: "O",
         label: "Occurrences",
         iconPath: {
             light: "./img/ui/checklist/tag-light.svg",
@@ -25,7 +25,7 @@ export const ANALYTICAL_INTENTS = [
 // filter logic, Settings comparisons). Derived from the registry so there's
 // only one place to change if ids ever shift.
 export const ANALYTICAL_INTENT_TAXA = ANALYTICAL_INTENTS[0].id; // "T"
-export const ANALYTICAL_INTENT_OCCURRENCE = ANALYTICAL_INTENTS[1].id; // "S"
+export const ANALYTICAL_INTENT_OCCURRENCE = ANALYTICAL_INTENTS[1].id; // "O"
 
 export const DWC_ARCHIVE_TYPES = {
     checklist: {
