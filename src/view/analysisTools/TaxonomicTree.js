@@ -10,12 +10,12 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../mode
 registerMessages(selfKey, {
   en: {
     next_items_checklist: "Show next {0} search results",
-    display_all_taxa: "All taxa",
+    display_all_taxa: "All taxonomic ranks",
     display_occurrences_only: "Occurrences only",
   },
   fr: {
     next_items_checklist: "Afficher les {0} résultats de recherche suivants",
-    display_all_taxa: "Tous les taxons",
+    display_all_taxa: "Tous les rangs taxonomiques",
     display_occurrences_only: "Occurrences uniquement",
   }
 });
@@ -137,13 +137,25 @@ export const config = {
         },
     ],
 
-    render: ({ filteredTaxa, queryKey, datasetRevision }) =>
-        m(ChecklistTree, {
+    render: ({ filteredTaxa, queryKey, datasetRevision }) => {
+        // Guard: the occurrences-only sentinel is only valid in occurrence scope.
+        // If the user switches to taxa scope while it is set, reset to the
+        // default ("") so the tree renders normally and the select shows a
+        // valid option rather than the raw sentinel string.
+        if (
+            Settings.checklistDisplayLevel() === DISPLAY_MODE_OCCURRENCES_ONLY &&
+            Settings.analyticalIntent() !== ANALYTICAL_INTENT_OCCURRENCE
+        ) {
+            Settings.checklistDisplayLevel("");
+        }
+
+        return m(ChecklistTree, {
             taxa: filteredTaxa,
             displayLevel: Settings.checklistDisplayLevel(),
             queryKey,
             datasetRevision,
-        }),
+        });
+    },
 };
 
 // ─── ChecklistTree internal component ────────────────────────────────────────
