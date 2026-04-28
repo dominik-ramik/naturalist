@@ -7,8 +7,8 @@ import { DOCS_URL } from "../app.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-import { TOOL_LIST, SCOPE_CHOICES } from "./analysisTools/index.js";
-import { ANALYTICAL_INTENT_OCCURRENCE } from "../model/nlDataStructureSheets.js";
+import { TOOL_LIST, ANALYTICAL_INTENTS } from "./analysisTools/index.js";
+
 
 registerMessages(selfKey, {
   en: {
@@ -289,12 +289,14 @@ let MenuExpandable = function (initialVnode) {
 function menuTopBar() {
   const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
   const activeTool = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
-  const currentScope = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
+  // Use the stored intent if valid, otherwise fall back to the first intent the
+  // dataset actually supports. No hardcoded intent constants needed here.
+  const currentScope = Settings.analyticalIntent()
+    || Checklist.availableIntents()[0];
 
-  // Dynamic scope lookup from ViewRegistry.
-  const activeScope = SCOPE_CHOICES.find(s => s.id === currentScope)
-    || SCOPE_CHOICES.find(s => s.id === ANALYTICAL_INTENT_OCCURRENCE)
-    || SCOPE_CHOICES[0];
+  const activeScope = ANALYTICAL_INTENTS.find(s => s.id === currentScope)
+    || ANALYTICAL_INTENTS.find(s => Checklist.availableIntents().includes(s.id))
+    || ANALYTICAL_INTENTS[0];
 
   return [
     m(

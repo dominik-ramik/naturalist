@@ -8,7 +8,7 @@ import { Checklist } from "../../model/Checklist.js";
 import { updateRouteParams } from "../../components/Utils.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
-export { SCOPE_CHOICES } from "./scopes.js";
+export { ANALYTICAL_INTENTS } from "../../model/nlDataStructureSheets.js";
 
 // Guard flag: set before programmatic m.route.set() so that the onmatch
 // handler does not overwrite Settings with stale m.route.param() values.

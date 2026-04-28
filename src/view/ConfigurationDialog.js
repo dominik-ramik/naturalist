@@ -14,7 +14,7 @@ import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
 import {
   TOOL_LIST,
-  SCOPE_CHOICES,
+  ANALYTICAL_INTENTS,
   requestToolChange,
   requestIntentChange,
 } from "./analysisTools/index.js";
@@ -109,7 +109,7 @@ export const ConfigurationDialog = {
         Checklist.availableIntents().length > 1 && m(".configuration-section", [
           m(".configuration-section-label", t("data_scope")),
           m(".configuration-scope-segmented",
-            SCOPE_CHOICES.map(scope => {
+            ANALYTICAL_INTENTS.map(scope => {
               const isScopeDisabled =
                 !activeToolAvailability.supportedIntents.includes(scope.id);
 

@@ -1,9 +1,31 @@
-import { descending } from "d3";
-
 export const OCCURRENCE_IDENTIFIER = "occurrence";
 
-export const ANALYTICAL_INTENT_TAXA = "T";
-export const ANALYTICAL_INTENT_OCCURRENCE = "S";
+export const ANALYTICAL_INTENTS = [
+    {
+        id: "T",
+        label: "Taxa",
+        iconPath: {
+            light: "./img/ui/checklist/taxonomy-light.svg",
+            dark: "./img/ui/checklist/taxonomy.svg",
+        },
+        info: "Analyze data diversity and distribution at the taxonomic level",
+    },
+    {
+        id: "S",
+        label: "Occurrences",
+        iconPath: {
+            light: "./img/ui/checklist/tag-light.svg",
+            dark: "./img/ui/checklist/tag.svg",
+        },
+        info: "Analyze the data at the resolution of individual occurrences",
+    },
+];
+
+// Derived constants for the places that need a bare string (tool conditions,
+// filter logic, Settings comparisons). Derived from the registry so there's
+// only one place to change if ids ever shift.
+export const ANALYTICAL_INTENT_TAXA = ANALYTICAL_INTENTS[0].id; // "T"
+export const ANALYTICAL_INTENT_OCCURRENCE = ANALYTICAL_INTENTS[1].id; // "S"
 
 export const DWC_ARCHIVE_TYPES = {
     checklist: {
