@@ -966,7 +966,6 @@ export let DataManager = function () {
           row.parentTaxonIndication !== "" &&
           row.parentTaxonIndication !== "none"
         ) {
-          console.log("Parent taxon indication for " + row.columnName + ": " + row.parentTaxonIndication, "taxa meta", meta.taxa);
           if (!Object.keys(meta.taxa).includes(row.parentTaxonIndication)) {
             Logger.warning(
               "Wrong value in Parent taxon indication will be ignored: " +
