@@ -464,6 +464,7 @@ export function indexOfCaseInsensitive(haystack, needle) {
  * Extract the unit string from a {{unit ...}} Handlebars template.
  * Handles all syntax variants:
  *   {{unit "m"}}                  - implicit
+ *   {{"unit" "m"}}                - implicit, quoted helper name (JSON-escaped templates)
  *   {{unit myField "m"}}          - explicit
  *   {{unit "kg" "exact"}}         - implicit, exact mode
  *   {{unit myField "kg" "exact"}} - explicit, exact mode
@@ -471,7 +472,7 @@ export function indexOfCaseInsensitive(haystack, needle) {
  */
 export function getUnitFromTemplate(meta) {
   if (!meta?.template) return null;
-  const blockMatch = meta.template.match(/\{\{\s*unit\b(.*?)\}\}/);
+  const blockMatch = meta.template.match(/\{\{\s*(?:"unit"|unit\b)(.*?)\}\}/);
   if (!blockMatch) return null;
 
   // Find all quoted strings inside the {{unit ...}} block

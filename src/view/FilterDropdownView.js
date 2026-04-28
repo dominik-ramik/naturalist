@@ -162,10 +162,9 @@ let DropdownShell = function (initialVnode) {
     view(vnode) {
       const { type, dataPath, openHandler, color, plugin } = vnode.attrs;
       const filterDef = Checklist.filter[type][dataPath];
-      const unit      = plugin.getUnit(dataPath);
 
       return m(".dropdown-area[id=" + dropdownId + "]",
-        plugin.renderDropdown({ filterDef, type, dataPath, openHandler, unit, color, dropdownId })
+        plugin.renderDropdown({ filterDef, type, dataPath, openHandler, color, dropdownId })
       );
     },
   };
