@@ -845,12 +845,16 @@ EASY TO CONFUSE WITH:
                     },
                     template: {
                         name: "Template",
-                        description: "A [Handlebars](https://handlebarsjs.com/) expression applied to the raw data value before the type-specific renderer runs. Use `{{value}}` for the current field's value, `{{taxon.name}}` for the taxon name, `{{taxon.authority}}`, `{{taxon.fullName}}`, and `{{data.columnname}}` for any other field on the same row.\n\nFor `image`, `sound`, and `map` types, the template produces the **source URL**. For `mapregions`, it produces the **SVG file path**. For `geopoint`, it is the **map link URL** (use `{{lat}}` and `{{long}}`).\n\nSupports multilingual variants: `Template:en`, `Template:fr`.",
-                        howToUse: "Use when you need to modify the spreadsheet value in display to append a unit, build a URL, select a file path dynamically, or transform the raw value before display. See [Dynamic content with templates](./templates) for worked examples.",
+                        description: "A [Handlebars](https://handlebarsjs.com/) expression applied to the raw data value before the type-specific renderer runs. Use `{{value}}` for the current field's value, `{{taxon.name}}` for the taxon name, `{{taxon.authority}}`, `{{taxon.fullname}}`, and `{{data.columnname}}` for any other field on the same row.\n\nFor `image`, `sound`, and `map` types, the template produces the **source URL**. For `mapregions`, it produces the **SVG file path**. For `geopoint`, it is the **map link URL** (use `{{lat}}` and `{{long}}`).\n\nFor more details see the [Dynamic content with templates](./templates) section.",
+                        howToUse: "Use when you need to modify the spreadsheet value for display: [append a unit](./templates#unit), display an [image with its thumbnail](./templates#img), build a URL, or transform the raw value before display.",
                         notes: [
                             {
                                 type: "tip",
-                                text: "The `{{unit \"m\"}}` helper automatically scales numeric values to the most readable unit in the same category (e.g. `0.05` → `5 cm`, `1500` → `1.5 km`). See [Templates → `{{unit}}`](/author-guide/templates#unit--automatic-unit-scaling)."
+                                text: "The `{{unit \"m\"}}` helper automatically scales numeric values to the most readable unit in the same category (e.g. `0.05` → `5 cm`, `1500` → `1.5 km`). See [Templates → `{{unit}}`](/author-guide/templates#unit)."
+                            },
+                            {
+                                type: "tip",
+                                text: "For `image` and `map` columns, use the `{{img}}` helper to declare a thumbnail and a full-size variant from a single slug in your data cell. The app precaches only thumbnails (fast, small) and fetches the full-size file on demand when a user opens it. Use of `{{value}}` pattern (e.g. `scannedSpecimens/{{value}}.jpg`) is discouraged as it disables the thumbnail option and forces the user to download full-size images. See [Templates → `{{img}}`](/author-guide/templates#img)."
                             }
                         ],
                         examples: [
@@ -862,111 +866,35 @@ EASY TO CONFUSE WITH:
                                 ],
                                 rows: [
                                     [
-                                        "Auto-scale a unit",
+                                        "Auto-scale a measurement unit",
                                         "`{{unit \"m\"}}`"
                                     ],
                                     [
-                                        "Build a hyperlink (use with markdown formatting)",
-                                        "`[{{taxon.name}}](https://www.gbif.org/search?q={{value}})`"
+                                        "Image with thumbnail (`img/ficus_640.jpg`) and full-size (`img/ficus.jpg`) variants (supposing `ficus` in data cell)",
+                                        "`img/{{img (thumb \"_640\")}}.jpg`"
                                     ],
                                     [
-                                        "Simplify referencing media files in `usercontent/`",
-                                        "`usercontent/img/{{value}}.jpg`"
+                                        "Image with thumbnail (`img/morus_640.jpg`) and full-size (`img/morus_2400.jpg`) variants (supposing `morus` in data cell)",
+                                        "`img/{{img (thumb \"_640\") (full \"_2400\")}}.jpg`"
                                     ],
                                     [
-                                        "SVG map path",
-                                        "`maps/southeast-asia.svg`"
+                                        "Link to a GBIF species page (use with markdown data type)",
+                                        "`[{{taxon.name}}](https://www.gbif.org/species/{{value}})`"
                                     ],
                                     [
-                                        "Google Maps geopoint",
-                                        "`https://www.google.com/maps?q={{lat}},{{long}}`"
+                                        "SVG map path from a static file, typical example for a simple location map",
+                                        "`maps/laos.svg`"
+                                    ],
+                                    [
+                                        "SVG map path - per-taxon selection from a data column, advanced use case for distribution maps with a limited number of predefined variants",
+                                        "`maps/{{data.region}}.svg`"
+                                    ],
+                                    [
+                                        "Geopoint link to OpenStreetMap",
+                                        "`https://www.openstreetmap.org/?mlat={{lat}}&mlon={{long}}&zoom=8`"
                                     ]
                                 ]
                             },
-                            {
-                                label: "Custom data definition settings",
-                                fillRight: true,
-                                text: "Simplified table with one row per each previous example, with comments",
-                                columns: [
-                                    "Column name",
-                                    "Title",
-                                    "Data type",
-                                    "Template",
-                                    "[comment]"
-                                ],
-                                rows: [
-                                    [
-                                        "wingspan",
-                                        "Wingspan",
-                                        "interval",
-                                        "`{{\"unit\" \"cm\"}}`",
-                                        "Typical interval (use `interval` data type instead of single-value `number`) of wingspan in cm; the `{{unit}}` helper auto-scales the value to the most readable unit in the same category (e.g. `5` → `5 cm`, `150` → `1.5 m`)"
-                                    ],
-                                    [
-                                        "gbifTaxonNumber",
-                                        "GBIF taxon",
-                                        "number",
-                                        "`[{{taxon.name}}](https://www.gbif.org/species/{{value}})`",
-                                        "Use Markdown notation to render a link to the corresponding GBIF species page using the cell value"
-                                    ],
-                                    [
-                                        "referenceImage",
-                                        "",
-                                        "image",
-                                        "`usercontent/img/{{value}}.jpg`",
-                                        "No title, just a clickable image. The template builds the source URL from the cell value - e.g. a cell value of `rose` looks for `usercontent/img/rose.jpg` instead of you typing the full path every time."
-                                    ],
-                                    [
-                                        "southeastAsiaRange",
-                                        "Southeast Asia Range",
-                                        "mapregions",
-                                        "`maps/southeast-asia.svg`",
-                                        "Use satatic reference for an SVG file in `usercontent/maps/` to render a custom map showing the distribution range within Southeast Asia. This would expect some additional configuration, see **mapregions** data type for full details."
-                                    ],
-                                    [
-                                        "gpsCoordinates",
-                                        "GPS coordinates",
-                                        "geopoint",
-                                        "`https://www.openstreetmap.org/?mlat={{lat}}&mlon={{long}}&zoom=5`",
-                                        "Use any URL template with `{{lat}}` and `{{long}}` placeholders to render a link to an online map centered on the coordinates.."
-                                    ]
-                                ]
-                            },
-                            {
-                                label: "",
-                                fillLeft: true,
-                                fillRight: true,
-                                text: "In your [[ref:data]] sheet your data for each of those would look like this, taxonomy mostly left out for simplicity. See [Data types](./data-types) for full details on each of these data types and their specific data entry options.",
-                                columns: [
-                                    "species",
-                                    "wingspan",
-                                    "gbifTaxonNumber",
-                                    "referenceImage",
-                                    "southeastAsiaRange",
-                                    "gpsCoordinates",
-                                    "[comment]"
-                                ],
-                                rows: [
-                                    [
-                                        "Chrysococcyx maculatus",
-                                        "16 - 18",
-                                        "2496315",
-                                        "chrysococcyx_maculatus_1200px",
-                                        "vn | mm | th",
-                                        "15.9742, 105.8064",
-                                        "`referenceImage` needs only the actual file name without extension, not the full path thanks to our template. `southeastAsiaRange` supposes you have the region codes set up for `vn` (Vietnam), `mm` (Myanmar), and `th` (Thailand)."
-                                    ],
-                                    [
-                                        "Centropus sinensis",
-                                        "55 - 75",
-                                        "5232005",
-                                        "centropus_sinensis_1200px",
-                                        "cn | mm | th",
-                                        "22.3964, 114.1095",
-                                        "Another taxon with its own data"
-                                    ]
-                                ]
-                            }
                         ],
                         integrity: {
                             description: "",

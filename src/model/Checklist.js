@@ -889,8 +889,7 @@ export let Checklist = {
       value: currentValue,
       data: taxonData,
       taxon: {
-        fullName:
-          taxonName + (taxonAuthority != "" ? " " + taxonAuthority : ""),
+        fullname: taxonName + (taxonAuthority != "" ? " " + taxonAuthority : ""),
         name: taxonName,
         authority: taxonAuthority,
       },
