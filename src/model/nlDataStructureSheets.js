@@ -2648,7 +2648,7 @@ EASY TO CONFUSE WITH:
                     },
                     status: {
                         name: "Status code",
-                        description: "The status value or anchor position for this row. Interpretation depends on the **Legend type** of this row.\n\n**For `category` rows** (Legend type empty or `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`)..\n\n**For `gradient` and `stepped` rows**: a numeric anchor position in one of five notations. All data values for the column must be parseable numbers (or matched by a categorical row).\n\n- **Raw value**: a plain number (e.g. `7.6`, `0`, `-5`). Anchor at that absolute value. Use for fixed biological thresholds.\n- **Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves between dataset min and max. Use when relative position matters more than absolute value.\n- **Percentile**: a number followed by `p` (e.g. `25p`, `75p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many σ from the dataset mean. Use to visualise statistical outliers.\n- **Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]` (e.g. `-100%c0`, `0c28`, `-2sc28`). Diverges from a declared center point. Use for change maps or deviation from a target baseline.\n\nThe five numeric anchor types may be mixed freely for advanced cases, but most of the time using a single anchor type is sufficient. See [Anchor value notation](./mapregions#anchor-value-notation) for full explanations and the per-taxon dataset semantics.",
+                        description: "The status value or anchor position for this row. Interpretation depends on the **Legend type** of this row.\n\n**For `category` rows** (Legend type `category`): a plain text string matched exactly against the data cell content (e.g. `native`, `introduced`, `ND`)..\n\n**For `gradient` and `stepped` rows**: a numeric anchor position in one of five notations. All data values for the column must be parseable numbers (or matched by a categorical row).\n\n- **Raw value**: a plain number (e.g. `7.6`, `0`, `-5`). Anchor at that absolute value. Use for fixed biological thresholds.\n- **Percentage of range**: a number followed by `%` (e.g. `0%`, `50%`, `100%`). Resolves between dataset min and max. Use when relative position matters more than absolute value.\n- **Percentile**: a number followed by `p` (e.g. `25p`, `75p`). Resolves to that percentile of the data distribution. Use to highlight distributional extremes regardless of absolute scale.\n- **Standard deviation**: a number followed by `s` (e.g. `-2s`, `0s`, `1.5s`). Resolves to that many σ from the dataset mean. Use to visualise statistical outliers.\n- **Centered / diverging**: syntax `[±magnitude][modifier]c[centerValue]` (e.g. `-100%c0`, `0c28`, `-2sc28`). Diverges from a declared center point. Use for change maps or deviation from a target baseline.\n\nThe five numeric anchor types may be mixed freely for advanced cases, but most of the time using a single anchor type is sufficient. See [Anchor value notation](./mapregions#anchor-value-notation) for full explanations and the per-taxon dataset semantics.",
                         howToUse: "For simple categorical maps, enter the status strings used in your data. For numeric data, choose the anchor notation that best matches the data's nature and the intended visual communication.",
                         notes: [],
                         examples: [
@@ -2665,19 +2665,19 @@ EASY TO CONFUSE WITH:
                                         "native",
                                         "#1a9641",
                                         "Native",
-                                        ""
+                                        "category"
                                     ],
                                     [
                                         "introduced",
                                         "#d73027",
                                         "Introduced",
-                                        ""
+                                        "category"
                                     ],
                                     [
                                         "",
                                         "#aaaaaa",
                                         "Not assessed",
-                                        ""
+                                        "category"
                                     ]
                                 ]
                             },
@@ -2803,8 +2803,8 @@ EASY TO CONFUSE WITH:
                     },
                     legendType: {
                         name: "Legend type",
-                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **Empty or `category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (numeric anchors notation). Colors are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (numeric anchors notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No color blending. Use for crisp color bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
-                        howToUse: "Use `category` (or empty) for named status values. Use `gradient` for continuous numeric data. Use `stepped` for numeric data best communicated as discrete bins.",
+                        description: "Controls how this row is interpreted by the rendering engine.\n\n- **`category`**: the Status code is a plain text string matched exactly against data cell content. The Fill color is applied directly to any matching region. This covers simple presence/absence, named statuses, and categorical override rows mixed into a gradient/stepped column.\n- **`gradient`**: the Status code is an anchor position (numeric anchors notation). Colors are smoothly interpolated between adjacent anchors. Requires at least two `gradient` rows for the same column. Use for continuous data (population density, temperature, index values).\n- **`stepped`**: the Status code is an anchor position (numeric anchors notation). A value falls into the bin whose anchor is the highest anchor not exceeding the value - equivalent to histogram binning. No color blending. Use for crisp color bands at defined thresholds (abundance classes, IUCN criterion scores).\n\nFor a **mixed** column (e.g. a gradient with a categorical exception for 'No Data'), define the gradient anchors with `gradient` and the exception row with empty/`category`. The engine always checks for an exact categorical string match first; numeric anchor interpolation is the fallback.",
+                        howToUse: "Use `category` for named status values. Use `gradient` for continuous numeric data. Use `stepped` for numeric data best communicated as discrete bins.",
                         notes: [],
                         examples: [
                             {
@@ -2850,10 +2850,9 @@ EASY TO CONFUSE WITH:
                         ],
                         integrity: {
                             description: "",
-                            allowEmpty: true,
+                            allowEmpty: false,
                             migration: "If you are migrating from a version prior v4, the column <bLegend type</b> is new in v4. You need to add this column and set it to 'category', 'gradient' or 'stepped' as appropriate for each row. If you leave it empty, it defaults to 'category' mode.",
                             allowDuplicates: "yes",
-                            defaultValue: "category",
                             allowedContent: "list",
                             listItems: [
                                 "",
