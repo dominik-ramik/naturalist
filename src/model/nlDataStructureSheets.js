@@ -1143,7 +1143,7 @@ EASY TO CONFUSE WITH:
                         ],
                         integrity: {
                             description: "",
-                            allowEmpty: false,
+                            allowEmpty: true,
                             migration: "If you are migrating from a version prior v4, you need to add this column and fill in 'taxon' for each row. In prior versions only taxa custom data were supported. This column serves to distinguish taxon-level data from occurrence-level data (new feature in v4).",
                             allowDuplicates: "yes",
                             allowedContent: "list",

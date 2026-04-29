@@ -2556,14 +2556,31 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
 
-    // Only check leaf paths - intermediate paths (e.g. "image" when "image.source"
-    // also exists) have no direct header of their own and would false-positive
     const position = dataPath.analyse.position(allCDDColumnNames, colName);
     if (!position.isLeaf) return;
 
+    // --- NEW: resolve the header name(s) to check for array-leaf columns ---
+    // CDD uses "habitat#" to declare an array, but the actual spreadsheet header
+    // is either the bare root ("habitat", for pipe-separated notation) or
+    // numbered columns ("habitat1", "habitat2", …).  Neither contains "#".
+    // Strip the trailing "#" and accept the root name OR any "root<N>" variant.
+    const isArrayLeaf = colName.endsWith("#");
+    const effectiveColName = isArrayLeaf ? colName.slice(0, -1) : colName;
+
     const dataTypeBase = (row.dataType || "").trim().toLowerCase().split(/\s+/)[0];
 
-    if (!isColumnPresentInHeaders(dataTypeBase, colName, headers)) {
+    // For array-leaf columns, presence is satisfied by:
+    //   a) the bare root header ("habitat") — pipe-separated notation, OR
+    //   b) any numbered child header ("habitat1", "habitat2", …) — explicit columns
+    const present = isArrayLeaf
+      ? headers.some(h =>
+          h === effectiveColName ||                          // pipe-separated root
+          /^\d+$/.test(h.slice(effectiveColName.length)) && // numbered child
+          h.startsWith(effectiveColName)
+        )
+      : isColumnPresentInHeaders(dataTypeBase, effectiveColName, headers);
+
+    if (!present) {
       Logger.critical(tf("dm_cdd_missing_column", [row.columnName, row.dataType]), "Missing column");
     }
   });
