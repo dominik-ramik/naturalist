@@ -11,6 +11,7 @@
  */
 
 import m from "mithril";
+import { helpers } from "./helpers.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { nlDataStructure } from "../DataManagerData.js";
@@ -218,6 +219,12 @@ export let customTypeMapregions = {
     }
 
     return resultObject;
+  },
+
+  getPreloadableAssetPaths: function (mediaItem, rowTemplate, entry) {
+    // mapregions: source comes entirely from the template evaluated against
+    // the entry — the mediaItem itself carries no source path.
+    return [helpers.processSourceForPreload("", rowTemplate, entry)];
   },
 
   getSearchableText: function (data, uiContext) {

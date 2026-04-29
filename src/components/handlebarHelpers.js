@@ -219,30 +219,129 @@ export function registerHandlebarHelpers() {
   });
 
   Handlebars.registerHelper("unit", function (...args) {
-    // Last arg is always Handlebars options hash - strip it
+    /**
+     * {{unit}} Handlebars helper — converts a numeric value from a given unit to
+     * the most human-readable unit in the same category, formatting the result
+     * as styled HTML.
+     *
+     * The column's own value is used as the base number implicitly. An explicit
+     * number may be passed as the first argument when composing from a different
+     * data column.
+     *
+     * ─── SIGNATURES ────────────────────────────────────────────────────────────
+     *
+     *   {{ unit "kg" }}
+     *     Implicit value, auto-scaled. Converts this.value from kg to the most
+     *     readable weight unit (mg / g / kg / t).
+     *
+     *   {{ unit value "kg" }}
+     *     Explicit value from a data path, auto-scaled.
+     *
+     *   {{ unit "kg" "exact" }}
+     *     Implicit value, no scaling. Displays this.value in kg as-is.
+     *
+     *   {{ unit value "kg" "exact" }}
+     *     Explicit value, no scaling.
+     *
+     * ─── AUTO-SCALING ──────────────────────────────────────────────────────────
+     *
+     *   Without "exact", the helper converts the input to the most readable unit
+     *   in the same category — the one that keeps the displayed number in the
+     *   range [1, 1000) where possible. For example:
+     *
+     *     0.005 kg  → 5 g
+     *     1500 m    → 1.5 km
+     *     0.5 h     → 30 min
+     *
+     *   With "exact", the value is displayed in the declared unit as-is, with
+     *   no conversion. Use this when the unit is fixed by convention or when
+     *   the value must not be rescaled (e.g. a speed in km/h that should never
+     *   be shown as m/s).
+     *
+     *   "exact" also accepts arbitrary unit strings not in the built-in
+     *   dictionary (e.g. "km/h", "ppm", "°C"), allowing the helper to format
+     *   any labelled number even when auto-scaling is not applicable.
+     *
+     * ─── SUPPORTED UNITS ───────────────────────────────────────────────────────
+     *
+     *   Length : um  mm  cm  m   km
+     *   Time   : ms  s   min h   d   y
+     *   Weight : mg  g   kg  t
+     *   Area   : um2 mm2 cm2 m2  km2
+     *   Volume : um3 mm3 cm3 m3  km3   (cubic)
+     *            um3 mm3 ml  l   m3  km3  (liquid — use ml or l as input)
+     *
+     *   Volume flavour (cubic vs liquid) is preserved from the input unit:
+     *   inputting "ml" or "l" keeps the result in ml/l; all other volume units
+     *   stay in the cubic series.
+     *
+     * ─── VALUE DETECTION ───────────────────────────────────────────────────────
+     *
+     *   The first argument is treated as an explicit numeric base value when it
+     *   parses as a finite number (integers, decimals, comma-decimal separators
+     *   such as "1,5"). Otherwise it is treated as the unit string and the
+     *   column's own value is used implicitly. This means:
+     *
+     *   - Passing a numeric value explicitly is always safe regardless of its
+     *     magnitude or content.
+     *   - The unit string must never be a bare number — use "exact" with a
+     *     descriptive label instead (e.g. {{ unit "items" "exact" }}).
+     *
+     * ─── OUTPUT ────────────────────────────────────────────────────────────────
+     *
+     *   Returns an HTML string of the form:
+     *     <span class="unit-value">1.5</span>&nbsp;<span class="unit-name">km</span>
+     *
+     *   Superscripts in unit names (m², km³ etc.) are rendered as <sup> tags.
+     *   Style these classes in your CSS to control appearance.
+     *
+     * ─── QUICK REFERENCE ───────────────────────────────────────────────────────
+     *
+     *   Template                    this.value   Result
+     *   ──────────────────────────  ───────────  ──────────────────────
+     *   {{ unit "m" }}              1500         1.5 km
+     *   {{ unit "m" }}              0.05         5 cm
+     *   {{ unit "kg" }}             0.005        5 g
+     *   {{ unit "h" }}              0.5          30 min
+     *   {{ unit "cm2" }}            10000        1 m²
+     *   {{ unit "ml" }}             1500         1.5 l
+     *   {{ unit "cm3" }}            1500         1.5 l   (no — stays cubic: 1500 cm³)
+     *   {{ unit data.weight "kg" }} 0.005        5 g
+     *   {{ unit "km/h" "exact" }}   120          120 km/h
+     *   {{ unit "kg" "exact" }}     1500         1500 kg
+     */
+
+    // Last arg is always the Handlebars options object — discard it.
     const params = args.slice(0, -1);
+
+    // ── Argument parsing ────────────────────────────────────────────────────────
+    //
+    // The first argument is an explicit numeric base value when it parses as a
+    // finite number; otherwise it is the unit string and this.value is used
+    // implicitly. This makes `value` safely optional without any sentinel string
+    // or positional heuristic — a unit string can never be mistaken for a number.
+
     let value, unitStr, exact = false;
-    if (params.length === 1) {
-      // Implicit: {{ unit "kg" }}
-      value = this.value;
-      unitStr = params[0];
-    } else if (params.length === 2 && params[1] === "exact") {
-      // Implicit with exact: {{ unit "kg" "exact" }}
-      value = this.value;
-      unitStr = params[0];
-      exact = true;
-    } else if (params.length === 2) {
-      // Explicit: {{ unit value "kg" }}
-      value = params[0];
-      unitStr = params[1];
-    } else if (params.length >= 3) {
-      // Explicit with optional exact: {{ unit value "kg" "exact" }}
+
+    const firstIsNumber =
+      params.length > 0 &&
+      (typeof params[0] === "number" ||
+        !isNaN(parseFloat(String(params[0]).replace(",", "."))));
+
+    if (firstIsNumber) {
+      // {{ unit value "kg" }} or {{ unit value "kg" "exact" }}
       value = params[0];
       unitStr = params[1];
       exact = params[2] === "exact";
+    } else {
+      // {{ unit "kg" }} or {{ unit "kg" "exact" }}
+      value = this.value;
+      unitStr = params[0];
+      exact = params[1] === "exact";
     }
 
-    // ── Unit dictionary ────────────────────────────────────────────────────────
+    // ── Unit dictionary ─────────────────────────────────────────────────────────
+
     const UNITS = {
       // Length  (base: m)
       um: { category: "length", factor: 0.000001 },
@@ -262,13 +361,13 @@ export function registerHandlebarHelpers() {
       g: { category: "weight", factor: 1 },
       kg: { category: "weight", factor: 1000 },
       t: { category: "weight", factor: 1000000 },
-      // Area  (base: m2)
+      // Area  (base: m²)
       um2: { category: "area", factor: 1e-12 },
       mm2: { category: "area", factor: 1e-6 },
       cm2: { category: "area", factor: 0.0001 },
       m2: { category: "area", factor: 1 },
       km2: { category: "area", factor: 1000000 },
-      // Volume  (base: m3)
+      // Volume  (base: m³)
       um3: { category: "volume", factor: 1e-18 },
       mm3: { category: "volume", factor: 1e-9 },
       cm3: { category: "volume", factor: 1e-6 },
@@ -285,35 +384,27 @@ export function registerHandlebarHelpers() {
       area: ["um2", "mm2", "cm2", "m2", "km2"],
     };
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────────
 
-    // Accepts actual numbers or strings like "1.5", "1,5" (comma decimal separator)
+    // Accepts actual numbers or strings like "1.5", "1,5" (comma decimal separator).
     function parseNum(v) {
       if (typeof v === "number") return isFinite(v) ? v : NaN;
       if (typeof v === "string") {
-        const cleaned = v.trim().replace(",", ".");
-        const n = parseFloat(cleaned);
-        return (isNaN(n) || !isFinite(n)) ? NaN : n;
+        const n = parseFloat(v.trim().replace(",", "."));
+        return isNaN(n) || !isFinite(n) ? NaN : n;
       }
       return NaN;
     }
 
-    function isValid(v) { return !isNaN(v); }
-
-    // Intelligent number formatting: rounds to a reasonable number of decimal places,
-    // but keeps all significant leading zeros for small numbers (e.g. 0.0000123 → "0.0000123", not "0.00001")
+    // Intelligent number formatting: rounds to a reasonable number of decimal
+    // places, but preserves all significant leading zeros for small numbers
+    // (e.g. 0.0000123 → "0.0000123", not "0.00001").
     function formatNumber(n, defaultPlaces = 3) {
-      // Return immediately if it's already a clean integer
       if (Number.isInteger(n)) return n.toString();
 
-      // Convert to a high-precision string to prevent scientific notation ('e'),
-      // split at the decimal, and remove any trailing zeros from the engine's formatting.
-      const decimalPart = n.toFixed(100).split('.')[1].replace(/0+$/, '');
-
-      // If after stripping trailing zeros there is no decimal part, return safely
+      const decimalPart = n.toFixed(100).split(".")[1].replace(/0+$/, "");
       if (!decimalPart) return n.toString();
 
-      // Count continuous leading zeros right after the decimal point
       const match = decimalPart.match(/^0+/);
       const leadingZeros = Math.min(match ? match[0].length : 0, defaultPlaces);
 
@@ -336,39 +427,38 @@ export function registerHandlebarHelpers() {
 
       const significantPart = decimalPart.slice(leadingZeros);
       const period = detectPeriod(significantPart);
-
-      // Decide precision:
-      // - Periodic decimal: show 2 full cycles of the repeating pattern
-      //   (e.g. period=1 → 2 decimal places, period=3 → 6), capped at 6.
-      // - Otherwise: default places, but always enough to expose at least
-      //   one significant digit after any leading zeros.
       const places = period > 0
         ? leadingZeros + Math.min(period * 2, 6)
         : Math.max(defaultPlaces, leadingZeros + 1);
 
-      // Round accurately and return decimal string without exponential
-      // notation. Use toFixed to get a decimal representation, then strip
-      // trailing zeros while keeping at least one digit after the decimal
-      // point when appropriate.
       let fixed = n.toFixed(places);
-      // Remove trailing zeros and optional trailing decimal point
-      if (fixed.indexOf('.') >= 0) {
-        fixed = fixed.replace(/0+$/, '');
-        fixed = fixed.replace(/\.$/, '');
+      if (fixed.indexOf(".") >= 0) {
+        fixed = fixed.replace(/0+$/, "").replace(/\.$/, "");
       }
       return fixed;
     }
 
-    // Single formatted token, e.g. "<span class='unit-value'>1.5</span>&nbsp;<span class='unit-name'>km</span>"
+    // Converts plain unit keys to HTML, rendering numeric superscripts as <sup>.
+    // e.g. "km2" → "km<sup>2</sup>", "m3" → "m<sup>3</sup>", "kg" → "kg".
+    function unitToHtml(key) {
+      return key.replace(/(\d+)$/, "<sup>$1</sup>");
+    }
+
+    // Single formatted token:
+    // <span class="unit-value">1.5</span>&nbsp;<span class="unit-name">km</span>
     function formatPair(n, key) {
-      return '<span class="unit-value">' + formatNumber(n) + '</span>&nbsp;<span class="unit-name">' + unitToHtml(key) + '</span>';
+      return (
+        '<span class="unit-value">' + formatNumber(n) + "</span>" +
+        "&nbsp;" +
+        '<span class="unit-name">' + unitToHtml(key) + "</span>"
+      );
     }
 
     // Volume has two flavours: cubic (cm3) and liquid (ml/l).
     // Preserve whichever flavour the template author chose.
     function getCategoryUnits(category, inputKey) {
       if (category === "volume") {
-        return (inputKey === "ml" || inputKey === "l")
+        return inputKey === "ml" || inputKey === "l"
           ? ["um3", "mm3", "ml", "l", "m3", "km3"]
           : ["um3", "mm3", "cm3", "m3", "km3"];
       }
@@ -378,7 +468,7 @@ export function registerHandlebarHelpers() {
     function findBestUnit(baseValue, category, unitList) {
       const absVal = Math.abs(baseValue);
 
-      // Time uses threshold cascades, not base-10 scaling
+      // Time uses threshold cascades, not base-10 scaling.
       if (category === "time") {
         if (absVal < 1) return "ms";
         if (absVal < 60) return "s";
@@ -389,61 +479,46 @@ export function registerHandlebarHelpers() {
       }
 
       // Base-10 categories: find unit where 1 ≤ converted < 1000.
-      // Iterate largest-to-smallest so we pick the biggest unit that still keeps
-      // the value ≥ 1 (e.g. "2 cm" stays "2 cm", not "20 mm").
-      if (absVal / UNITS[unitList[0]].factor < 1) return unitList[0]; // too small: clamp to smallest
+      // Iterate largest-to-smallest so we pick the biggest unit that still
+      // keeps the value ≥ 1 (e.g. "2 cm" stays "2 cm", not "20 mm").
+      if (absVal / UNITS[unitList[0]].factor < 1) return unitList[0];
       for (const key of [...unitList].reverse()) {
         const converted = absVal / UNITS[key].factor;
         if (converted >= 1 && converted < 1000) return key;
       }
 
-      // No perfect fit (gap between adjacent units is > 1000×, e.g. cm³→m³ is 10⁶×).
-      // Pick the unit whose converted value is closest to [1, 1000) in log space,
-      // so we never return an astronomically small/large number when a more
-      // readable nearby unit exists (e.g. 2000 cm³ beats 2e-12 km³).
+      // No perfect fit (gap between adjacent units is > 1000×, e.g. cm³→m³
+      // is 10⁶×). Pick the unit closest to [1, 1000) in log space.
       let bestKey = unitList[unitList.length - 1];
       let bestScore = Infinity;
       for (const key of unitList) {
         const converted = absVal / UNITS[key].factor;
         const score = converted >= 1000
-          ? Math.log10(converted / 1000)   // overshoot above range
-          : Math.log10(1 / converted);      // undershoot below range
-        if (score < bestScore) {
-          bestScore = score;
-          bestKey = key;
-        }
+          ? Math.log10(converted / 1000)
+          : Math.log10(1 / converted);
+        if (score < bestScore) { bestScore = score; bestKey = key; }
       }
       return bestKey;
     }
 
-    // Core pipeline: input number + input unit → { value, unitKey }
     function processValue(numVal, inputKey) {
       const unitInfo = UNITS[inputKey];
       if (!unitInfo) return null;
-
       if (numVal === 0) return { value: 0, unitKey: inputKey };
-
       const baseValue = numVal * unitInfo.factor;
       const unitList = getCategoryUnits(unitInfo.category, inputKey);
       const bestKey = findBestUnit(baseValue, unitInfo.category, unitList);
-      const converted = baseValue / UNITS[bestKey].factor;
-
-      return { value: converted, unitKey: bestKey };
+      return { value: baseValue / UNITS[bestKey].factor, unitKey: bestKey };
     }
 
-    // ── Guard: unknown unit (exact mode allows any unit string) ────────────────
+    // ── Guard: unknown unit (exact mode allows any unit string) ─────────────────
     if (!exact && !UNITS[unitStr]) return value;
 
     const parsed = parseNum(value);
-    if (!isValid(parsed)) return value;
+    if (isNaN(parsed)) return value;
 
-    if (exact) {
-      return new Handlebars.SafeString(formatPair(parsed, unitStr));
-    }
-
-    if (parsed === 0) {
-      return new Handlebars.SafeString(formatPair(0, unitStr));
-    }
+    if (exact) return new Handlebars.SafeString(formatPair(parsed, unitStr));
+    if (parsed === 0) return new Handlebars.SafeString(formatPair(0, unitStr));
 
     const result = processValue(parsed, unitStr);
     if (!result) return value;

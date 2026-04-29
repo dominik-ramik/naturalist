@@ -883,6 +883,8 @@ export let Checklist = {
       return currentValue;
     }
 
+    // At compile time in DataManager.js in normalizeTemplateDataPaths(...) we already lowercase all data.columname and their children so it is safe to pass data as it is, no lowercasing needed
+
     const basePayload = {
       value: currentValue,
       data: taxonData,

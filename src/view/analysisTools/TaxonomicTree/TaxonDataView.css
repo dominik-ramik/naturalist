@@ -9,7 +9,7 @@
 }
 
 .middle-row .column:first-child {
-    flex-grow: 1;
+    /*flex-grow: 1;*/
 }
 
 .top-row {}

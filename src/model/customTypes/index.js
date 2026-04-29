@@ -176,8 +176,8 @@ export function isColumnPresentInHeaders(dataType, basePath, headers) {
 }
 
 // Cache management function
-export function clearDataCodesCache() {
-  helpers.dataCodesCache.clear();
+export function clearHelpersCache() {
+  helpers.clearCaches();
 }
 
 /**

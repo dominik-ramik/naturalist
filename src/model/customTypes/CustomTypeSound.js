@@ -31,6 +31,13 @@ export let customTypeSound = {
 
     return soundData;
   },
+
+  getPreloadableAssetPaths: function (mediaItem, rowTemplate, entry) {
+    if (!mediaItem || typeof mediaItem !== "object") return [];
+    const source = mediaItem.source;
+    if (!source || source.trim() === "") return [];
+    return [helpers.processSourceForPreload(source, rowTemplate, entry)];
+  },
   /**
    * Extract searchable text from sound data
    * @param {any} data - The sound object with source and title

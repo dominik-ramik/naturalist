@@ -1,3 +1,4 @@
+import Handlebars from "handlebars";
 import { nlDataStructure } from "../DataManagerData.js";
 import { dataPath } from "../DataPath.js";
 import { Checklist } from "../Checklist.js";
@@ -54,6 +55,46 @@ export function compileCategoryMatcher(pattern) {
 
 export const helpers = {
   dataCodesCache: new Map(),
+  _compiledTemplateCache: new Map(),   // keyed by raw template string
+
+  clearCaches: function () {
+    this.dataCodesCache.clear();
+    this._compiledTemplateCache.clear();
+  },
+
+  // In processSourceForPreload, replace the bare Handlebars.compile call:
+  processSourceForPreload: function (source, rowTemplate, entry) {
+    if (rowTemplate && rowTemplate.trim() !== "") {
+      let compiledTemplate = this._compiledTemplateCache.get(rowTemplate);
+      if (!compiledTemplate) {
+        try {
+          compiledTemplate = Handlebars.compile(rowTemplate);
+          this._compiledTemplateCache.set(rowTemplate, compiledTemplate);
+        } catch (ex) {
+          Logger.error("Handlebars error compiling preload template: " + ex, "Template content");
+          return relativeToUsercontent(source);
+        }
+      }
+
+      console.log("Processing source for preload with template:", rowTemplate, "and source:", source, "data", entry.d);
+
+      const templateData = Checklist.getDataObjectForHandlebars(
+        source,
+        entry.d,
+        entry.t[entry.t.length - 1]?.name || "",
+        entry.t[entry.t.length - 1]?.authority || ""
+      );
+
+      try {
+        source = compiledTemplate(templateData);
+      } catch (ex) {
+        this._compiledTemplateCache.delete(rowTemplate);
+        Logger.error("Handlebars error executing preload template: " + ex, "Template content");
+        return relativeToUsercontent(source);
+      }
+    }
+    return relativeToUsercontent(source);
+  },
 
   purifyCssString: function (css) {
     if (css.indexOf('"') >= 0) {
@@ -138,6 +179,7 @@ export const helpers = {
     this.dataCodesCache.set(cacheKey, result);
     return result;
   },
+
   processPossibleDataCode: function (currentDataPath, value, langCode) {
     return this.getDataCodeValue(currentDataPath, value, langCode);
   },
@@ -217,6 +259,63 @@ export const helpers = {
     text = text.replace(/\s+/g, ' ').trim();
 
     return text;
+  },
+
+  /**
+   * Resolve a media source to **both** the full-size and thumbnail URLs by
+   * evaluating the Handlebars template twice — once with `_isThumb: false`
+   * and once with `_isThumb: true`.
+   *
+   * When the template contains no `{{img}}` helper (plain `{{value}}` style,
+   * or no template at all), both results will be identical, which callers use
+   * as the signal that no thumbnail variant exists and the swap logic is a
+   * no-op.
+   *
+   * This is the render-time counterpart of `resolveThumbPathForPreload`.
+   *
+   * @param {string} source    - Raw source value from the data row.
+   * @param {Object} uiContext - Standard UI rendering context (same shape as
+   *   expected by `processSource` / `processTemplate`).
+   * @returns {{ fullSource: string, thumbSource: string }}
+   */
+  processSourceBothVariants: function (source, uiContext) {
+    const compiledTemplate =
+      uiContext?.compiledTemplate || Checklist.handlebarsTemplates?.[uiContext?.dataPath];
+
+    // No template configured, or no compiled template available: both variants
+    // are the same plain path — no thumbnail swapping will occur.
+    if (!uiContext?.meta?.template || uiContext.meta.template === "" || !compiledTemplate) {
+      const resolved = relativeToUsercontent(source);
+      return { fullSource: resolved, thumbSource: resolved };
+    }
+
+    const taxonName = uiContext.taxon?.name ?? "";
+    const taxonAuthority = uiContext.taxon?.authority ?? "";
+
+    const fullData = Checklist.getDataObjectForHandlebars(
+      source, uiContext.originalData, taxonName, taxonAuthority, { _isThumb: false }
+    );
+    const thumbData = Checklist.getDataObjectForHandlebars(
+      source, uiContext.originalData, taxonName, taxonAuthority, { _isThumb: true }
+    );
+
+    let fullResolved, thumbResolved;
+
+    try {
+      fullResolved = relativeToUsercontent(compiledTemplate(fullData));
+    } catch (ex) {
+      Logger.error("Handlebars error executing template (full variant): " + ex, "Template content");
+      fullResolved = relativeToUsercontent(source);
+    }
+
+    try {
+      thumbResolved = relativeToUsercontent(compiledTemplate(thumbData));
+    } catch (ex) {
+      Logger.error("Handlebars error executing template (thumb variant): " + ex, "Template content");
+      thumbResolved = relativeToUsercontent(source);
+    }
+
+    return { fullSource: fullResolved, thumbSource: thumbResolved };
   },
 
   /**

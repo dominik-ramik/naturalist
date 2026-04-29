@@ -30,6 +30,13 @@ export let customTypeMap = {
     return mapData;
   },
 
+  getPreloadableAssetPaths: function (mediaItem, rowTemplate, entry) {
+    if (!mediaItem || typeof mediaItem !== "object") return [];
+    const source = mediaItem.source;
+    if (!source || source.trim() === "") return [];
+    return [helpers.processSourceForPreload(source, rowTemplate, entry)];
+  },
+
   /**
    * Extract searchable text from map data
    * @param {any} data - The map object with source and title
@@ -57,24 +64,57 @@ export let customTypeMap = {
       return null;
     }
 
-    let source = data.source;
     let title = data.title;
 
-    source = helpers.processSource(source, uiContext);
+    // Resolve both the full-size and thumbnail source URLs.
+    // When the template uses plain {{value}} (or has no template), both will
+    // be identical and the swap logic below is a no-op — backward compatible.
+    const { fullSource, thumbSource } =
+      helpers.processSourceBothVariants(data.source, uiContext);
 
     const imageElement = m(
-      "span.image-in-view-wrap.fullscreenable-image.clickable[title=" +
-      title +
-      "]",
+      "span.image-in-view-wrap.fullscreenable-image.clickable[title=" + title + "]",
       {
         onclick: function (e) {
-          this.classList.toggle("fullscreen");
-          this.classList.toggle("clickable");
+          const wrap = this;
+          const img  = wrap.querySelector("img.image-in-view");
+          const goingFullscreen = !wrap.classList.contains("fullscreen");
+
+          wrap.classList.toggle("fullscreen");
+          wrap.classList.toggle("clickable");
+
+          if (goingFullscreen) {
+            const full  = img.dataset.fullsrc;
+            const thumb = img.dataset.thumbsrc;
+            if (full && full !== thumb) {
+              // Thumbnail is already showing (precached). Background-load the
+              // full-resolution map image; swap once ready. Silently keeps the
+              // thumbnail if the network request fails (offline fallback).
+              const loader = new window.Image();
+              loader.onload = function () {
+                if (wrap.classList.contains("fullscreen")) {
+                  img.src = full;
+                }
+              };
+              loader.src = full;
+            }
+          } else {
+            // Returning from fullscreen: restore thumbnail to free the large
+            // decoded bitmap from memory.
+            const thumb = img.dataset.thumbsrc;
+            if (thumb) img.src = thumb;
+          }
+
           e.preventDefault();
           e.stopPropagation();
         },
       },
-      m("img.image-in-view[src=" + source + "][alt=" + title + "]")
+      m("img.image-in-view", {
+        src:             thumbSource,
+        alt:             title,
+        "data-thumbsrc": thumbSource,
+        "data-fullsrc":  fullSource,
+      })
     );
 
     if (uiContext.placement === "details") {

@@ -7,7 +7,6 @@ import DOMPurify from "dompurify";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { Toast } from "../view/AppLayoutView.js";
-import { ianaLocaleSubtags } from "./IanaLocaleSubtags.js";
 import { materialColors } from "./MaterialColors.js";
 import { highlightHtml } from "../model/highlightUtils.js";
 
@@ -347,34 +346,35 @@ export function roundWithPrecision(number, precision) {
 }
 
 let _localeCache = null;
-export function getCurrentLocaleBestGuess() {
-  //subtags in IANA registry: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+function isValidLocale(tag) {
+  try {
+    "a".localeCompare("b", tag);
+    return true;
+  } catch (e) {
+    return false;
+  }
 
+}
+
+export function getCurrentLocaleBestGuess() {
   if (_localeCache === null) {
-    let knownSubtags = Object.keys(ianaLocaleSubtags);
-    let currentLang = Checklist.getCurrentLanguage().toLowerCase();
+    const currentLang = Checklist.getCurrentLanguage().toLowerCase();
 
     let foundLocale = "en";
 
-    if (knownSubtags.indexOf(currentLang) >= 0) {
+    if (isValidLocale(currentLang)) {
       foundLocale = currentLang;
     } else {
       let found = false;
       Checklist.getAllLanguages().forEach(function (lang) {
-        if (lang.code.toLowerCase() == currentLang) {
-          if (knownSubtags.indexOf(lang.fallbackUiLang) >= 0) {
+        if (lang.code.toLowerCase() === currentLang) {
+          if (isValidLocale(lang.fallbackUiLang)) {
             foundLocale = lang.fallbackUiLang;
             found = true;
           }
         }
-        if (!found) {
-          if (
-            knownSubtags.indexOf(
-              Checklist.getDefaultLanguage().toLowerCase()
-            ) >= 0
-          ) {
-            foundLocale = Checklist.getDefaultLanguage().toLowerCase();
-          }
+        if (!found && isValidLocale(Checklist.getDefaultLanguage().toLowerCase())) {
+          foundLocale = Checklist.getDefaultLanguage().toLowerCase();
         }
       });
     }

@@ -5,7 +5,7 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { absoluteUsercontent, isValidHttpUrl, pad, relativeToUsercontent, splitN } from "../components/Utils.js";
 import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
 import { Checklist } from "../model/Checklist.js";
-import { loadDataByType, allowedDataTypesIncludingList, clearDataCodesCache, dataCustomTypes, isColumnPresentInHeaders } from "./customTypes/index.js";
+import { loadDataByType, allowedDataTypesIncludingList, dataCustomTypes, isColumnPresentInHeaders, clearHelpersCache } from "./customTypes/index.js";
 // Register the dataCustomTypes map with the DwC compiler so it can call
 // each type's toDwC() method without a circular import.
 registerDataCustomTypes(dataCustomTypes);
@@ -61,11 +61,13 @@ function buildRootBelongsToMap(cddRows) {
   cddRows.forEach(function (row) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
-    // Only index root rows - child rows have no standalone belongsTo value
-    if (getRootDataPath(colName) !== colName) return;
+    // Skip child paths (e.g. "origPub.author"). Array roots ("habitat#") are
+    // still root declarations — getRootDataPath strips the # for the map key.
+    if (colName.includes(".")) return;  // ← was: getRootDataPath(colName) !== colName
+    const rootKey = getRootDataPath(colName); // "habitat#" → "habitat"
     const raw = (row.belongsTo || "").toLowerCase().trim();
-    // Blank defaults to "taxon" - all pre-existing columns are taxon columns.
-    map.set(colName, raw === OCCURRENCE_IDENTIFIER ? OCCURRENCE_IDENTIFIER : "taxon");
+    if (!raw) return;
+    map.set(rootKey, raw === OCCURRENCE_IDENTIFIER ? OCCURRENCE_IDENTIFIER : "taxon");
   });
   return map;
 }
@@ -79,7 +81,10 @@ function buildRootBelongsToMap(cddRows) {
  * @returns {"taxon"|"occurrence"}
  */
 function resolveBelongsTo(colName, rootBelongsToMap) {
-  return rootBelongsToMap.get(getRootDataPath(colName.toLowerCase())) || "taxon";
+  const rootPath = getRootDataPath(colName.toLowerCase());
+  if (rootBelongsToMap.has(rootPath)) return rootBelongsToMap.get(rootPath);
+  const stripped = rootPath.replace(/\d+$/, ""); // handle habitat1 → habitat
+  return rootBelongsToMap.get(stripped) ?? null; // null = not declared, skip check
 }
 
 /**
@@ -359,97 +364,42 @@ export let DataManager = function () {
     function gatherPreloadableAssets() {
       let assets = [];
 
+      function addAsset(rawSource) {
+        if (!rawSource || rawSource.trim() === "") return;
+        let source = rawSource.trim();
+        if (source.startsWith("/")) {
+          source = source.substring(1);
+        }
+        const asset = relativeToUsercontent(source);
+        if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
+          assets.push(asset);
+        }
+      }
+
       data.common.languages.supportedLanguages.forEach(function (lang) {
-        //all online search icons
+        // All online search icons
         data.sheets.content.tables.searchOnline?.data?.[lang.code]?.forEach(
           function (row) {
-            let asset = relativeToUsercontent(
-              "./online_search_icons/" + row.icon
-            );
-            if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
-              assets.push(asset);
-            }
+            addAsset("./online_search_icons/" + row.icon);
           }
         );
 
-        // Gather assets from customDataDefinition table
+        // Gather assets from customDataDefinition table via each type's own plugin
         data.sheets.content.tables.customDataDefinition.data[lang.code].forEach(
           function (row) {
-            if (!row.template || row.template.trim() === "") {
-              return;
-            }
+            if (!row.template || row.template.trim() === "") return;
 
-            // Skip if dataType is not media-related
-            if (!["image", "sound", "mapregions"].includes(row.dataType)) {
-              return;
-            }
+            const reader = dataCustomTypes[row.dataType];
+            if (!reader || typeof reader.getPreloadableAssetPaths !== "function") return;
 
-            let compiledTemplate = null;
-            try {
-              compiledTemplate = Handlebars.compile(row.template);
-            } catch (ex) {
-              console.log("Handlebars error for template:", row.template, ex);
-              return;
-            }
-
-            // Process each checklist entry to gather actual assets
             (data.sheets.checklist.data[lang.code] || []).forEach(function (entry) {
-              const mediaData = getDataFromDataPath(
-                entry.d,
-                row.columnName
-              );
+              const mediaData = getDataFromDataPath(entry.d, row.columnName);
+              if (!mediaData) return;
 
-              if (!mediaData) {
-                return;
-              }
-
-              // Handle both single items and arrays
               const mediaItems = Array.isArray(mediaData) ? mediaData : [mediaData];
-
               mediaItems.forEach(function (mediaItem) {
-                if (!mediaItem || typeof mediaItem !== "object") {
-                  return;
-                }
-
-                let source = "";
-
-                // Different media types have different source properties
-                if (row.dataType === "mapregions") {
-                  // For mapregions, the source comes from the template
-                  let templateData = Checklist.getDataObjectForHandlebars(
-                    "",
-                    entry.d,
-                    entry.t[entry.t.length - 1]?.name || "",
-                    entry.t[entry.t.length - 1]?.authority || ""
-                  );
-                  source = compiledTemplate(templateData);
-                } else {
-                  // For images and sounds, use the source property
-                  source = mediaItem.source;
-                  if (!source || source.trim() === "") {
-                    return;
-                  }
-
-                  let templateData = Checklist.getDataObjectForHandlebars(
-                    source,
-                    entry.d,
-                    entry.t[entry.t.length - 1]?.name || "",
-                    entry.t[entry.t.length - 1]?.authority || ""
-                  );
-                  source = compiledTemplate(templateData);
-                }
-
-                if (source && source.trim() !== "") {
-                  // Remove leading slash if present
-                  if (source.startsWith("/")) {
-                    source = source.substring(1);
-                  }
-
-                  const asset = relativeToUsercontent(source);
-                  if (!assets.includes(asset) && isSameOriginAsCurrent(asset)) {
-                    assets.push(asset);
-                  }
-                }
+                const paths = reader.getPreloadableAssetPaths(mediaItem, row.template, entry);
+                paths.forEach(addAsset);
               });
             });
           }
@@ -457,8 +407,6 @@ export let DataManager = function () {
       });
 
       // Add assets from F: directives, avoiding duplicates
-      //console.log("Assets from F: directives to add:", additionalAssets.length);
-
       additionalAssets.forEach(function (asset) {
         if (!assets.includes(asset)) {
           assets.push(asset);
@@ -1435,7 +1383,7 @@ export let DataManager = function () {
 
     validateCDDColumnsAgainstHeaders(data);
     validateTaxaAgainstHeaders(data);  // -- every declared taxon column must appear in the data sheet
-    
+
     data.sheets.checklist.data = {};
     data.common.allUsedDataPaths = {};
 
@@ -1536,11 +1484,16 @@ export let DataManager = function () {
             const resolvedBelongsTo = resolveBelongsTo(info.name, rootBelongsToMap);
             const actualEntity = isOccurrenceRow ? OCCURRENCE_IDENTIFIER : "taxon";
 
-            if (resolvedBelongsTo !== actualEntity) {
+            if (resolvedBelongsTo === null) {
+              // belongsTo not declared for this column — skip cross-entity check entirely
+            } else if (resolvedBelongsTo !== actualEntity) {
               // Report once per root/simple column to avoid flooding the log
               // with one error per child path (origPub.author, origPub.year…).
               if ((position.isRoot || position.isSimpleItem) &&
                 hasAnyDataForRootColumn(headers, row, info.name)) {
+
+                console.log("Cross-entity check failed for row", rowIndex + 1, "column", info.name, "resolved belongsTo:", resolvedBelongsTo, "actual entity:", actualEntity);
+
                 Logger.error(
                   tf("dm_wrong_belongs_to", [
                     (row._sourceSheet ? row._sourceSheet + " " : ""),
@@ -1821,7 +1774,7 @@ export let DataManager = function () {
       }
     }
 
-    clearDataCodesCache();
+    clearHelpersCache();
   }
 
   function checkMetaValidity() {
@@ -2111,14 +2064,8 @@ export let DataManager = function () {
                 if (columnKey == "columnName") {
                   dataRow[columnKey] = dataRow[columnKey].toLowerCase();
                 }
-
-                if (typeof value === "string" && value.trim() != "") {
-                  dataRow[columnKey] = dataRow[columnKey].replace(
-                    /({{[^}}]*}})/g,
-                    function (m, p1) {
-                      return p1 ? p1.toLowerCase() : m.toLowerCase();
-                    }
-                  );
+                if (tableKey == "customDataDefinition" && columnKey == "template") {
+                  dataRow[columnKey] = normalizeTemplateDataPaths(dataRow[columnKey]);
                 }
               });
             });
@@ -2248,7 +2195,7 @@ export let DataManager = function () {
         const templateStr = cddDef.template?.trim();
         let compiled = null;
         if (templateStr) {
-          try { compiled = Handlebars.compile(templateStr); }
+          try { compiled = Handlebars.compile(normalizeTemplateDataPaths(templateStr)); }
           catch (ex) {
             Logger.warning(
               `DwC Archive: Failed to compile template for "${cddDef.columnName}": ${ex.message}`,
@@ -2277,9 +2224,9 @@ export let DataManager = function () {
           dataPath: columnName,
           meta: { template: cddDef?.template?.trim() || "" },
           originalData: {},    // not needed for source resolution
-          taxon: { name: "", authority: "" },
+          taxon: { name: "", authority: "" },          
         };
-        return customTypeHelpers.processSource(rawSource, uiContext);
+        return customTypeHelpers.processSource(rawSource, uiContext).fullSource;
       };
 
       const result = await compileDwcArchive({
@@ -2942,8 +2889,8 @@ function runManualIntegrityChecks(data) {
             columnKey === "searchCategoryTitle" // allowed on hidden columns
           ) return;
           if (row[columnKey].toString().trim() !== "") {
-            Logger.warning(
-              tf("dm_hidden_column_name", [columnName, cddColumns[columnKey].name])
+            Logger.info(
+              tf("dm_hidden_column_name", [columnName, cddColumns[columnKey].name]), "Hidden column"
             );
             row[columnKey] = ""; // intentional: reset to avoid misleading downstream
           }
@@ -3013,4 +2960,26 @@ function runManualIntegrityChecks(data) {
       }
     });
   });
+}
+
+function normalizeTemplateDataPaths(template) {
+  if (!template || typeof template !== "string") return template;
+
+  //   Alt 1 (group 1): quoted string — consume and echo unchanged
+  //                    double-quoted: "..."  handles \" escapes
+  //                    single-quoted: '...'  handles \' escapes
+  //
+  //   Alt 2 (group 2): data path — \bdata\. followed by one or more of:
+  //                    [a-zA-Z0-9_.#]  covers dot/hash/digit notation
+  //                    \[[^\]]*\]      covers bracket notation data.[My Key]
+  //
+  // Alternation order is the safety net: a quoted string is consumed whole
+  // before the engine ever tries to match a data path inside it.
+  return template.replace(
+    /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(\bdata\.(?:[a-zA-Z0-9_.#]|\[[^\]]*\])+)/g,
+    (match, quotedLiteral, dataPath) => {
+      if (quotedLiteral !== undefined) return quotedLiteral; // rule 1: hands off
+      return dataPath.toLowerCase();                         // rule 2: normalise
+    }
+  );
 }
