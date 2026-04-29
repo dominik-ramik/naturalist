@@ -18,6 +18,7 @@ import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clea
 import { compressor } from "./components/LZString.js";
 import { ManageView, deepLinkProcessing, DEEP_LINK_STORAGE_KEY } from "./view/ManageView.js";
 import { registerHandlebarHelpers } from "./components/handlebarHelpers.js";
+import { FullscreenManager } from "./components/FullscreenManager.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
@@ -344,6 +345,9 @@ function runApp() {
       }
 
       const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
+
+      FullscreenManager.init();
+
       m.route(document.body, initialRoute, {
         "/checklist": {
           render: function () {

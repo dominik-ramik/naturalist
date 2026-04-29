@@ -76,8 +76,6 @@ export const helpers = {
         }
       }
 
-      console.log("Processing source for preload with template:", rowTemplate, "and source:", source, "data", entry.d);
-
       const templateData = Checklist.getDataObjectForHandlebars(
         source,
         entry.d,

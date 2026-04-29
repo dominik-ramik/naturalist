@@ -275,18 +275,27 @@ export function mdImagesClickableAndUsercontentRelative(markdown) {
   return markdown.replace(/<img[^>]+src="([^">]+)"[^>]*>/gi, (match, src) => {
     const getAlt = /alt=["']([^"']*)["']/gi;
     const alt = getAlt.exec(match);
-    const altText = alt ? alt[1] : null;
+    const altText = alt ? alt[1] : "";
 
-    return match
-      .replace(
-        match,
-        '<span class="image-wrap fullscreenable-image" title="' +
-        altText +
-        '" onClick="this.classList.toggle(\'fullscreen\')">' +
-        match +
-        "</span>"
-      )
-      .replace(src, relativeToUsercontent(src));
+    const resolvedSrc = relativeToUsercontent(src);
+
+    // Rewrite the <img> src to the resolved URL and add data-* attributes so
+    // FullscreenManager can perform the thumb→full swap.  In the markdown
+    // pipeline there is only ever one resolution (full = thumb), so both
+    // data-thumbsrc and data-fullsrc point to the same URL.
+    const rewrittenImg = match
+      .replace(src, resolvedSrc)
+      .replace(/<img/, `<img class="image-in-view" data-thumbsrc="${resolvedSrc}" data-fullsrc="${resolvedSrc}"`);
+
+    // No onClick here — FullscreenManager's document-level capture listener
+    // handles all .fullscreenable-image clicks, including those in m.trust() HTML.
+    return (
+      '<span class="image-wrap fullscreenable-image clickable" title="' +
+      altText +
+      '">' +
+      rewrittenImg +
+      '</span>'
+    );
   });
 }
 

@@ -37,6 +37,7 @@ import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
 import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
 import { getDataFromDataPath } from '../../model/DataPath.js';
+import { FullscreenableMedia } from '../../components/FullscreenableMedia.js';
 
 registerMessages(selfKey, {
   en: {
@@ -347,20 +348,18 @@ function renderSVGMap(map, colors) {
   }
 
   return m('.map-chart-image-wrap-outer',
-    m('.map-chart-image-wrap.fullscreenable-image', {
-      onclick(e) {
-        this.classList.toggle('fullscreen');
-        e.preventDefault();
-        e.stopPropagation();
+    m(FullscreenableMedia, {
+      type:     'svg-object',
+      fullSrc:  map.source,
+      svgId:    'rd-map',
+      svgStyle: 'pointer-events: none;',
+      extraWrapClass: 'map-chart-image-wrap',
+      oncreate: function (vnode) {
+        // Native listener avoids a Mithril auto-redraw on SVG load.
+        vnode.dom.addEventListener("load", function () {
+          colorSVGMap(vnode.dom, displayColors);
+        });
       },
-    },
-      m('object#rd-map[type=image/svg+xml][style=pointer-events: none;][data=' + map.source + ']', {
-        oncreate: function (vnode) {
-          // Native listener avoids a Mithril auto-redraw on SVG load.
-          vnode.dom.addEventListener("load", function () {
-            colorSVGMap(vnode.dom, displayColors);
-          });
-        },
-      })
-    ));
+    })
+  );
 }

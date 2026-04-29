@@ -309,9 +309,9 @@ path {
 /* Fullscreenable image containers */
 .fullscreenable-image img,
 .fullscreenable-image object {
-  width: 100%;
-  height: auto;
+  width: auto;
   max-width: 100%;
+  max-height: 15em;
 }
 
 .image-in-view-wrap.fullscreenable-image {

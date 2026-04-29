@@ -19,6 +19,7 @@ import { Checklist } from "../Checklist.js";
 import { processMarkdownWithBibliography, htmlToPlainText } from "../../components/Utils.js";
 import { Logger } from "../../components/Logger.js";
 import { colorSVGMap } from "../../components/ColorSVGMap.js";
+import { FullscreenableMedia } from "../../components/FullscreenableMedia.js";
 import { applyHighlight, highlightHtml } from "../highlightUtils.js";
 
 import {
@@ -419,24 +420,19 @@ function renderDetailsMap(data, uiContext) {
 
   return m(".media-map", [
     m(".media-map-card", [
-      m(".image-wrap.clickable.fullscreenable-image", {
-        onclick(e) {
-          this.classList.toggle("fullscreen");
-          this.classList.toggle("clickable");
-          e.preventDefault(); e.stopPropagation();
-        }
-      }, m(`object#${mapId}[style=pointer-events: none; width: 100%; height: auto;][type=image/svg+xml][data=usercontent/${source}]`, {
+      m(FullscreenableMedia, {
+        type: 'svg-object',
+        fullSrc: `usercontent/${source}`,
+        svgId: mapId,
         oncreate: function (vnode) {
-          // Use a native addEventListener instead of a Mithril onload attribute.
-          // Mithril wraps attribute-based event handlers with auto-redraw; a raw
-          // SVG load should not cause a full tree redraw.
+          // Native listener avoids a Mithril auto-redraw on SVG load.
           vnode.dom.addEventListener("load", function () {
             clearTimeout(_pendingRecolorTimers[mapId]);
             delete _pendingRecolorTimers[mapId];
             colorSVGMap(vnode.dom, regionColors);
           });
         },
-      })),
+      }),
       renderMapLegend(legendConfig, datasetStats, data),
       renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId),
     ]),
