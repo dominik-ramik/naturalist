@@ -1,0 +1,137 @@
+/* ==========================================================================
+   FullscreenableMedia — self-contained styles
+   Covers the .fullscreenable-image wrapper, its inner <img> and <object>,
+   the .fullscreen-clickable affordance, and the fullscreen overlay.
+   No other file should define rules for these selectors.
+   ========================================================================== */
+
+/* ── Clickable affordance ─────────────────────────────────────────────────── */
+
+.fullscreen-clickable {
+  cursor: zoom-in;
+}
+
+.fullscreen-clickable:hover {
+  opacity: 0.85;
+}
+
+/* ── Normal (non-fullscreen) wrapper ─────────────────────────────────────── */
+/*
+ * .fullscreenable-image is the element that toggles .fullscreen.
+ * It is always accompanied by .image-wrap and .fullscreen-clickable (see component).
+ *
+ * - position: relative provides the stacking context for the ::after hint.
+ * - width: 100% so the wrapper fills its parent column/cell naturally.
+ * - display: flex + centering keeps the inner media centred when it is
+ *   smaller than the wrapper.
+ */
+
+.fullscreenable-image {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Expand-hint icon (bottom-right corner, normal state only) ────────────── */
+
+.fullscreenable-image:not(.fullscreen)::after {
+  content: "⛶";
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 1.1em;
+  color: rgba(85, 118, 155, 0.55);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ── Inner media elements — normal state ─────────────────────────────────── */
+/*
+ * Both <img> and <object> (SVG) default to:
+ *   - width: auto so they never stretch beyond their natural width
+ *   - max-width: 100% so they never overflow the wrapper
+ *   - max-height: 15em as a sensible thumbnail cap (callers may override
+ *     via a more-specific rule on their own container)
+ */
+
+.fullscreenable-image img,
+.fullscreenable-image object {
+  width: auto;
+  max-width: 100%;
+  max-height: 15em;
+  display: block;
+}
+
+/* ── Fullscreen overlay ───────────────────────────────────────────────────── */
+/*
+ * When FullscreenManager adds .fullscreen to the wrapper it becomes a
+ * fixed full-viewport overlay.  All !important declarations guard against
+ * specificity from caller stylesheets (e.g. max-height caps set by a parent).
+ */
+
+.fullscreenable-image.fullscreen {
+  position: fixed;
+  inset: 0;
+  width:      100dvw !important;
+  height:     100dvh !important;
+  max-width:  100dvw !important;
+  max-height: 100dvh !important;
+  background-color: rgba(0, 0, 0, 0.82) !important;
+  z-index: 10000;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  cursor: zoom-out;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+}
+
+/* Hide the expand-hint in fullscreen */
+.fullscreenable-image.fullscreen::after {
+  display: none;
+}
+
+/* Caption bar at the bottom of the fullscreen overlay */
+.fullscreenable-image.fullscreen::before {
+  display: block;
+  content: attr(title);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 1.5em;
+  line-height: 2em;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* ── Inner media elements — fullscreen state ─────────────────────────────── */
+
+.fullscreenable-image.fullscreen img,
+.fullscreenable-image.fullscreen object {
+  width: auto !important;
+  height: auto !important;
+  max-width:  95dvw !important;
+  max-height: 95dvh !important;
+  object-fit: contain !important;
+  margin: auto !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── extraWrapClass: image-in-view-wrap ──────────────────────────────────── */
+/*
+ * Applied by CustomTypeImage and CustomTypeMap when placement === "details".
+ * Ensures the wrapper spans the full available width of its text/media column.
+ */
+
+.image-in-view-wrap.fullscreenable-image {
+  width: 100%;
+}

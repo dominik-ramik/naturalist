@@ -2224,7 +2224,7 @@ export let DataManager = function () {
           dataPath: columnName,
           meta: { template: cddDef?.template?.trim() || "" },
           originalData: {},    // not needed for source resolution
-          taxon: { name: "", authority: "" },          
+          taxon: { name: "", authority: "" },
         };
         return customTypeHelpers.processSource(rawSource, uiContext).fullSource;
       };
@@ -2574,10 +2574,10 @@ export function validateCDDColumnsAgainstHeaders(data) {
     //   b) any numbered child header ("habitat1", "habitat2", …) — explicit columns
     const present = isArrayLeaf
       ? headers.some(h =>
-          h === effectiveColName ||                          // pipe-separated root
-          /^\d+$/.test(h.slice(effectiveColName.length)) && // numbered child
-          h.startsWith(effectiveColName)
-        )
+        h === effectiveColName ||                                    // pipe-separated root
+        (h.startsWith(effectiveColName) &&
+          /^\d/.test(h.slice(effectiveColName.length)))              // numbered child: "photo1", "photo1.source", etc.
+      )
       : isColumnPresentInHeaders(dataTypeBase, effectiveColName, headers);
 
     if (!present) {

@@ -3,6 +3,16 @@
    Wraps the SVG image, legend row, and collapsible data table as one unit.
    ========================================================================== */
 
+.media-list .image-wrap {
+    text-align: center;
+}
+
+.media-list .title {
+    text-align: center;
+    margin-bottom: 1em;
+    font-size: 100%;
+}
+
 .media-map-card {
     border-radius: var(--pad-large, 1em);
     box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
@@ -12,30 +22,14 @@
     /* clips image to card corners */
 }
 
-/* The image-wrap sits flush at the top - no padding, no gap */
+/* The image-wrap sits flush at the top - no padding, no gap.
+   Fullscreen behaviour (cursor, ::after hint, overlay) is handled by
+   FullscreenableMedia.css via .fullscreenable-image. */
 .media-map-card .image-wrap {
     display: block;
     border-radius: 0;
     /* card handles the corners */
-    cursor: zoom-in;
-}
-
-/* Positioning context for the expand hint - only when not fullscreen,
-   so that .fullscreenable-image.fullscreen's position:absolute is not overridden */
-.media-map-card .image-wrap:not(.fullscreen) {
-    position: relative;
-}
-
-/* Expand hint icon - bottom-right corner, mirrors RegionalDistribution chrome */
-.media-map-card .image-wrap:not(.fullscreen)::after {
-    content: "⛶";
-    position: absolute;
-    bottom: 6px;
-    right: 8px;
-    font-size: 1.1em;
-    color: rgba(85, 118, 155, 0.55);
-    pointer-events: none;
-    line-height: 1;
+    text-align: center;
 }
 
 /* ==========================================================================
@@ -46,7 +40,7 @@
     padding: 0.55em 0.85em;
     border-top: 1px solid rgba(0, 0, 0, 0.07);
     gap: 0.4em 0.85em;
-    box-sizing: border-box;;
+    box-sizing: border-box;
 }
 
 .legend.media-map-legend .legend-item {
@@ -190,9 +184,11 @@
     height: 0.65em;
     border-radius: 0.35em;
     border: 1px solid rgba(0, 0, 0, 0.12);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
-    overflow: visible;    /* ticks extend outside the bar */
-    box-sizing: border-box; /* prevent border from exceeding container width */
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    overflow: visible;
+    /* ticks extend outside the bar */
+    box-sizing: border-box;
+    /* prevent border from exceeding container width */
 }
 
 /* ── Tick marks - shared base ── */
@@ -225,12 +221,14 @@
 
 /* Below labels: rendered after ramp; margin creates room for tick + gap */
 .map-gradient-labels--below {
-    margin-top: 0.9em; /* tick height (0.45em) + visual gap (0.45em) */
+    margin-top: 0.9em;
+    /* tick height (0.45em) + visual gap (0.45em) */
 }
 
 /* Above labels: rendered before ramp; labels anchor to bottom of container */
 .map-gradient-labels--above {
-    margin-bottom: 0.9em; /* tick height (0.45em) + visual gap (0.45em) */
+    margin-bottom: 0.9em;
+    /* tick height (0.45em) + visual gap (0.45em) */
 }
 
 /* ── Individual label ── */
@@ -268,6 +266,7 @@
         display: none;
     }
 }
+
 /* ==========================================================================
    Data Table - per-cell annotation (stepped actual value)
    ========================================================================== */

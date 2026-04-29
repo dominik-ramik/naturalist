@@ -112,24 +112,14 @@
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  /* On desktop the parent constrains height and children's accumulated
-     bottom spacing (paddings + margins) spills a few pixels past the
-     boundary - not real content, just whitespace. overflow: hidden absorbs
-     those stray pixels without clipping anything meaningful.
-     On mobile the same constraint requires real vertical scrolling, so
-     the media query below switches to overflow: auto.               */
-  overflow: hidden;
-}
-
-@media (max-width: 600px) {
-  .map-chart {
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ==========================================================================
-   Map image wrapper - single definition, responsive
+   Map image wrapper — layout context only.
+   Fullscreen behaviour (cursor, overlay, hint icon, inner media sizing)
+   is handled entirely by FullscreenableMedia.css via .fullscreenable-image.
    ========================================================================== */
 
 /*
@@ -140,111 +130,44 @@
 .map-chart-image-wrap-outer {
   flex: 1 1 400px;
   border-radius: 8px;
-  overflow: hidden;          /* clip, not scroll - the inner wrap handles overflow */
+  overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background: rgba(255, 255, 255, 0.5);
   margin: 0;
-  /* Give the outer a sensible minimum so it never crushes to nothing */
   min-width: 0;
 }
 
 /*
- * Inner wrapper: the element that toggles `.fullscreen`.
+ * .map-chart-image-wrap is the extraWrapClass applied to the
+ * .fullscreenable-image element.  Only layout-specific overrides live here;
+ * all fullscreen, cursor, and hint rules are in FullscreenableMedia.css.
  *
- * Normal state:
- *   - No hardcoded min-width (was 40em - the main cause of mobile clipping)
- *   - Height capped at a fraction of the viewport so it never dominates the page
- *   - overflow-x: auto so that SVGs wider than the container scroll instead of clip
- *   - cursor: zoom-in as a UX affordance that the map is tap-to-fullscreen
+ * - max-height caps the map so it never dominates the page in normal state.
+ * - overflow-x: auto provides graceful horizontal scroll for wide SVGs.
+ * - background-color: white gives a neutral canvas behind the SVG.
  */
 .map-chart-image-wrap {
-  position: relative;
   width: 100%;
   height: auto;
-  /* Cap height so it does not eat the entire screen, especially on landscape mobile */
   max-height: 65vh;
   background-color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Horizontal scroll as graceful fallback if the SVG truly cannot shrink */
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  cursor: zoom-in;
-}
-
-/* Hint that the map can be tapped */
-.map-chart-image-wrap::after {
-  content: "⛶";
-  position: absolute;
-  bottom: 6px;
-  right: 8px;
-  font-size: 1.1em;
-  color: rgba(85, 118, 155, 0.55);
-  pointer-events: none;
-  line-height: 1;
 }
 
 /*
  * The <object> / SVG itself.
- * width: 100% + height: auto lets the browser scale it to the container.
- * max-height keeps it inside the capped wrapper.
+ * Constrain both axes so the SVG scales to the capped wrapper height.
  */
 .map-chart-image-wrap object {
   display: block;
   width: 100%;
   height: auto;
   max-height: 65vh;
-  /* SVGs embedded via <object> don't support object-fit, but constraining
-     both max-width and max-height while leaving the other dimension auto
-     achieves the same contain-like behaviour.               */
-}
-
-/*
- * Fullscreen overlay.
- *
- * Fixes:
- *   1. align-items + justify-content center the SVG in both axes (was missing
- *      - the cause of the off-center rendering).
- *   2. The <object> is sized with max-* rather than hard 100vw/100vh so that
- *      the browser keeps the aspect ratio instead of stretching it.
- *   3. cursor: zoom-out signals the tap-to-close affordance.
- */
-.map-chart-image-wrap.fullscreen {
-  position: fixed;
-  inset: 0;               /* shorthand for top/right/bottom/left: 0 */
-  width: 100dvw !important;
-  height: 100dvh !important;
-  max-width: 100dvw !important;
-  max-height: 100dvh !important;
-  background-color: rgba(0, 0, 0, 0.82) !important;
-  z-index: 999;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;      /* horizontal centering */
-  justify-content: center !important;  /* vertical centering   */
-  overflow: hidden !important;
-  cursor: zoom-out;
-}
-
-/* Hide the expand hint in fullscreen */
-.map-chart-image-wrap.fullscreen::after {
-  display: none;
-}
-
-.map-chart-image-wrap.fullscreen object {
-  /* Let the SVG fill as much of the screen as possible while keeping its
-     aspect ratio. Do NOT set both width and height to 100* - that stretches
-     it. Set one to auto and cap the other.                    */
-  width: auto !important;
-  height: auto !important;
-  max-width:  95vw !important;
-  max-height: 95vh !important;
-  margin: auto !important;
-  /* Ensure the SVG is reachable above any stacking context */
-  position: relative;
-  z-index: 1000;
 }
 
 button {
@@ -326,19 +249,16 @@ table.results-table td.region-color {
   gap: 20px;
   padding: 0 10px 20px 10px;
   align-items: flex-start;
+  flex: 0 0 auto;
 }
 
-/*
- * Table wrapper: takes up the remaining third on desktop; full width on mobile
- * once the flex row wraps. max-height + overflow-y let it scroll independently
- * without growing taller than the map.
- */
 .table-responsive-wrapper {
   flex: 1 1 120px;
-  min-width: 0;                         /* prevent flex blowout */
+  min-width: 0;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 65vh;                     /* matches the map cap so they align */
+  max-height: 65vh;
+  max-width: min(50%, 420px);
   background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -348,21 +268,17 @@ table.results-table td.region-color {
    Mobile overrides  (≤ 600 px)
    ========================================================================== */
 @media (max-width: 600px) {
-  /*
-   * On narrow screens the flex items each become full-width (flex-wrap already
-   * handles this), but we also loosen the height cap so the map gets more room
-   * when it is the only thing visible.
-   */
   .map-chart-image-wrap,
   .map-chart-image-wrap object {
     max-height: 55vw; /* roughly square on portrait phones */
   }
 
   .table-responsive-wrapper {
-    max-height: none;  /* let the table expand naturally below the map */
+    max-height: none;
+    max-width: 100%;
+    overflow-x: auto;
   }
 
-  /* Tighten the control panel on small screens */
   .chart-controls-card {
     margin: 6px;
     padding: 10px;
@@ -375,11 +291,6 @@ table.results-table td.region-color {
   background-color: white;
   padding: 0.25em;
 }
-
-/* ============================================================
-   RegionalDistribution - CSS additions
-   Append to or replace RegionalDistribution_additions.css
-   ============================================================ */
 
 /* ── Config card ─────────────────────────────────────────────────────────── */
 
@@ -434,6 +345,16 @@ table.results-table td.region-color {
   min-width: 0;
 }
 
+/* Desktop flow: controls share rows instead of stacking full-width */
+.rd-config-body .rd-control-map      { flex: 2 1 220px; }
+.rd-config-body .rd-control-segment   { flex: 3 1 280px; }
+
+/* Groups checkbox sits below the map dropdown inside the same column */
+.rd-groups-checkbox {
+  margin-top: 6px;
+  font-size: 0.85em;
+}
+
 /* Verb sentence - always visible, bottom of card */
 .rd-verb-box {
   padding: 8px 15px 10px;
@@ -453,42 +374,6 @@ table.results-table td.region-color {
   gap: 6px;
   font-size: 0.9em;
   cursor: pointer;
-}
-
-/* ── Map + table layout ──────────────────────────────────────────────────────
-   .map-chart is a flex column. .map-and-table-container gets flex:1 so it
-   fills the space freed when the config card collapses.
-   overflow:visible on .map-chart lets natural height work (parent context
-   determines actual height; the original overflow:hidden was mainly to prevent
-   scroll - we can keep it but change to auto so it only appears when needed).
-   ───────────────────────────────────────────────────────────────────────── */
-
-.map-chart {
-  overflow: auto;
-}
-
-.map-and-table-container {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-/* ── Table wrapper - width cap ───────────────────────────────────────────────
-   Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
-   smaller). Contents that overflow are hidden - no stray horizontal scroll bar
-   on the wrapper on wide screens.
-   On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
-   ───────────────────────────────────────────────────────────────────────── */
-
-.table-responsive-wrapper {
-  max-width: min(50%, 420px);
-  overflow-x: hidden;
-}
-
-@media (max-width: 600px) {
-  .table-responsive-wrapper {
-    max-width: 100%;
-    overflow-x: auto;
-  }
 }
 
 /* ── Aggregate table ─────────────────────────────────────────────────────── */
@@ -671,300 +556,5 @@ table.rd-drill-table tr:last-child td { border-bottom: none; }
   .rd-config-body   { gap: 10px; padding: 10px; }
   .rd-config-body .rd-control-map,
   .rd-config-body .rd-control-segment { flex: 1 1 100%; }
-  .rd-numeric-stats { gap: 6px 10px; }
-}
-
-/* ============================================================
-   RegionalDistribution - CSS additions
-   Append to or replace RegionalDistribution_additions.css
-   ============================================================ */
-
-/* ── Config card ─────────────────────────────────────────────────────────── */
-
-.rd-config-card {
-  background-color: #eceff2;
-  border: 1px solid white;
-  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-  border-radius: var(--pad-large, 1em);
-  margin: 10px;
-}
-
-.rd-config-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  cursor: pointer;
-  user-select: none;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
-}
-
-/* When body is absent (collapsed), header bottom rounds too */
-.rd-config-header:only-child,
-.rd-config-header:last-child { border-radius: var(--pad-large, 1em); border-bottom: none; }
-
-.rd-config-header:hover { background-color: rgba(0,0,0,0.03); }
-
-.rd-config-title {
-  font-weight: bold;
-  font-size: 0.85em;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #444;
-}
-
-.rd-config-toggle { font-size: 0.75em; color: #777; }
-
-.rd-config-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: flex-start;
-  padding: 15px;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.rd-config-body .chart-control-group,
-.rd-config-body .chart-control-group-full {
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-/* Verb sentence - always visible, bottom of card */
-.rd-verb-box {
-  padding: 8px 15px 10px;
-  font-size: 0.85em;
-  color: #444;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  background: rgba(255,255,255,0.5);
-  line-height: 1.5;
-  border-radius: 0 0 var(--pad-large, 1em) var(--pad-large, 1em);
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.rd-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9em;
-  cursor: pointer;
-}
-
-/* ── Map + table layout ──────────────────────────────────────────────────────
-   .map-chart is a flex column; .map-and-table-container sits inside it.
-   We use flex: 0 0 auto (content-sized) rather than flex: 1 1 auto (greedy)
-   because the map and table have a max-height: 65 vh cap - if the container
-   grew to fill all remaining height when the config card collapses, the space
-   below the children would be blank. Content-sizing avoids that gap entirely.
-   .map-chart keeps overflow: auto so content can scroll when the viewport is
-   too short (e.g. on mobile or very small windows).
-   ───────────────────────────────────────────────────────────────────────── */
-
-.map-chart {
-  overflow: auto;
-}
-
-.map-and-table-container {
-  /* Content-sized: don't expand beyond the actual map + table height.       */
-  flex: 0 0 auto;
-}
-
-/* Desktop flow: controls share rows instead of stacking full-width */
-.rd-config-body .rd-control-map      { flex: 2 1 220px; }
-.rd-config-body .rd-control-segment   { flex: 3 1 280px; }
-
-/* Groups checkbox sits below the map dropdown inside the same column */
-.rd-groups-checkbox {
-  margin-top: 6px;
-  font-size: 0.85em;
-}
-
-/* ── Table wrapper - width cap ───────────────────────────────────────────────
-   Never wider than 50% of the shared row (or a 420 px ceiling, whichever is
-   smaller). Contents that overflow are hidden - no stray horizontal scroll bar
-   on the wrapper on wide screens.
-   On mobile (flex-wrap has triggered, each item is 100%) the cap is lifted.
-   ───────────────────────────────────────────────────────────────────────── */
-
-.table-responsive-wrapper {
-  max-width: min(50%, 420px);
-  overflow-x: hidden;
-}
-
-@media (max-width: 600px) {
-  .table-responsive-wrapper {
-    max-width: 100%;
-    overflow-x: auto;
-  }
-}
-
-/* ── Aggregate table ─────────────────────────────────────────────────────── */
-
-.rd-table-wrap {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-table.rd-table {
-  table-layout: fixed;
-  width: 100%;
-}
-
-table.rd-table td,
-table.rd-table th {
-  padding: 6px 8px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-table.rd-table .rd-cell-dot   { width: 1.4em; padding-right: 0; }
-table.rd-table .rd-cell-name  { text-align: left; }
-table.rd-table .rd-cell-value,
-table.rd-table .rd-cell-count { text-align: right; white-space: nowrap; }
-table.rd-table .rd-cell-arrow { width: 1.6em; text-align: center; color: #aaa; font-size: 0.75em; }
-
-.rd-dot {
-  display: inline-block;
-  width: 0.85em;
-  height: 0.85em;
-  border-radius: 2px;
-  vertical-align: middle;
-  border: 1px solid rgba(0,0,0,0.12);
-}
-
-tr.rd-table-row { cursor: pointer; transition: background-color 0.1s; }
-tr.rd-table-row:hover               { background-color: #e8f4fb; }
-tr.rd-row-active                    { background-color: #d6eaf7 !important; }
-tr.rd-row-group td                  { font-weight: bold; background-color: #f0f4f7; }
-tr.rd-row-group.rd-row-active td    { background-color: #c8dff0 !important; }
-
-.rd-table-hint {
-  font-size: 0.78em;
-  color: #888;
-  padding: 4px 8px 6px;
-  text-align: right;
-  font-style: italic;
-}
-
-/* ── Drill-down panel ────────────────────────────────────────────────────── */
-
-tr.rd-drill-row td {
-  padding: 0;
-  background: #f7fbff;
-  border-bottom: 2px solid #b0cde8;
-}
-
-.rd-drill-panel {
-  padding: 10px 14px 12px;
-  box-sizing: border-box;
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.rd-numeric-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  font-size: 0.85em;
-  margin-bottom: 8px;
-  background: rgba(85,118,155,0.08);
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.rd-stat { white-space: nowrap; }
-.rd-stat strong { color: #55769b; }
-
-.rd-drill-members {
-  font-size: 0.82em;
-  color: #555;
-  margin-bottom: 6px;
-  word-break: break-word;
-}
-
-.rd-member-code {
-  display: inline-block;
-  background: rgba(85,118,155,0.12);
-  border-radius: 3px;
-  padding: 1px 5px;
-  font-size: 0.92em;
-  margin: 1px;
-}
-
-.rd-drill-excluded {
-  font-size: 0.8em;
-  color: #a05000;
-  background: #fff3e0;
-  border-left: 3px solid #f59e0b;
-  padding: 3px 8px;
-  margin-bottom: 6px;
-  border-radius: 0 3px 3px 0;
-}
-
-table.rd-drill-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 0.85em;
-  margin-top: 6px;
-}
-
-table.rd-drill-table th {
-  text-align: left;
-  background: #eaf1f8;
-  padding: 4px 8px;
-  font-weight: bold;
-  border-bottom: 1px solid #cde;
-  word-break: break-word;
-}
-
-table.rd-drill-table td {
-  padding: 3px 8px;
-  border-bottom: 1px solid #e8edf2;
-  vertical-align: middle;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-table.rd-drill-table tr:last-child td { border-bottom: none; }
-
-.rd-drill-overflow {
-  text-align: center;
-  font-style: italic;
-  color: #888;
-  padding: 5px;
-}
-
-.rd-drill-empty {
-  color: #888;
-  font-style: italic;
-  font-size: 0.85em;
-  padding: 4px 0;
-}
-
-.rd-status-dot {
-  display: inline-block;
-  width: 0.65em;
-  height: 0.65em;
-  border-radius: 2px;
-  vertical-align: middle;
-  border: 1px solid rgba(0,0,0,0.1);
-  margin-right: 3px;
-  flex-shrink: 0;
-}
-
-.rd-status-bin-label {
-  color: #888;
-  font-size: 0.85em;
-}
-
-.rd-no-data { padding: 16px; }
-
-@media (max-width: 600px) {
-  .rd-config-body   { gap: 10px; padding: 10px; }
   .rd-numeric-stats { gap: 6px 10px; }
 }

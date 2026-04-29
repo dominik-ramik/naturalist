@@ -40,7 +40,7 @@ export function TabMedia(tabData, taxon, taxonName) {
                   renderedItem
                 ]);
               }
-              return renderedItem;
+              return m(".media-item", renderedItem);
             })
           ),
         ])
@@ -65,11 +65,11 @@ export function TabMedia(tabData, taxon, taxonName) {
             renderedContent.push(
               m(".media-set", [
                 m(".details-group-title", meta.title),
-                m(".media-set-list", [renderedItem]),
+                m(".media-set-list", [m(".media-item", renderedItem)]),
               ])
             );
           } else {
-            renderedContent.push(renderedItem);
+            renderedContent.push(m(".media-item", renderedItem));
           }
         }
       });

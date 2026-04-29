@@ -16,6 +16,8 @@
 
 import m from 'mithril';
 
+import './FullscreenableMedia.css';
+
 export function FullscreenableMedia() {
   return {
     view({ attrs }) {
@@ -31,7 +33,7 @@ export function FullscreenableMedia() {
       } = attrs;
 
       const wrapClass =
-        '.image-wrap.fullscreenable-image.clickable' +
+        '.image-wrap.fullscreenable-image.fullscreen-clickable' +
         (extraWrapClass ? '.' + extraWrapClass.split(' ').join('.') : '');
 
       const wrapAttrs = { title };
