@@ -991,23 +991,16 @@ EASY TO CONFUSE WITH:
                             }
                         ],
                         integrity: {
-                            description: "When combining with `|`, the second keyword must always be `details` (e.g. `bottom|details`). For column groups, every row in the group must carry the same value.",
-                            allowEmpty: false,
+                            description: "One or two pipe-separated keywords (spaces around `|` are ignored). When combining two keywords, one must be a position (`top`, `bottom`, `left`, `middle`, `right`) and the other must be `details`. `details` alone is also valid.",
+                            allowEmpty: true,
                             allowDuplicates: "yes",
-                            allowedContent: "list",
-                            listItems: [
-                                "top",
-                                "bottom",
-                                "left",
-                                "middle",
-                                "right",
-                                "details",
-                                "top|details",
-                                "bottom|details",
-                                "left|details",
-                                "middle|details",
-                                "right|details",
-                            ],
+                            defaultValue: "top",
+                            allowedContent: "tokenSet",
+                            tokenSetVocabulary: ["top", "bottom", "left", "middle", "right", "details"],
+                            tokenSetRules: {
+                                maxTokens: 2,
+                                requiredIfMultiple: "details"
+                            },
                             supportsMultilingual: false
                         }
                     },

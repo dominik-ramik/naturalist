@@ -3,33 +3,18 @@
    Wraps the SVG image, legend row, and collapsible data table as one unit.
    ========================================================================== */
 
-.media-list .image-wrap {
-    text-align: center;
-}
+/*
+ * .image-wrap is the INNER wrapper inside .fullscreenable-image.
+ * The outer .fullscreenable-image already centres .image-wrap via flexbox,
+ * so no additional centering rules are needed here.
+ * Fullscreen behaviour (cursor, ::after hint, overlay) is handled entirely
+ * by FullscreenableMedia.css.
+ */
 
 .media-list .title {
     text-align: center;
     margin-bottom: 1em;
     font-size: 100%;
-}
-
-.media-map-card {
-    border-radius: var(--pad-large, 1em);
-    box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-    background-color: #eceff2;
-    border: 1px solid white;
-    overflow: hidden;
-    /* clips image to card corners */
-}
-
-/* The image-wrap sits flush at the top - no padding, no gap.
-   Fullscreen behaviour (cursor, ::after hint, overlay) is handled by
-   FullscreenableMedia.css via .fullscreenable-image. */
-.media-map-card .image-wrap {
-    display: block;
-    border-radius: 0;
-    /* card handles the corners */
-    text-align: center;
 }
 
 /* ==========================================================================

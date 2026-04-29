@@ -1074,45 +1074,6 @@ export let DataManager = function () {
             .split("|")
             .forEach((x) => placement.push(x.trim()));
 
-          if (placement.length == 0) {
-            placement = [
-              data.sheets.content.tables.customDataDefinition.columns.placement
-                .integrity.defaultValue,
-            ];
-          }
-
-          // --- Integrity check: ensure placement tokens are allowed by DataManagerData ---
-          try {
-            const rawPlacement = (info.fullRow.placement || "").toString();
-            const normalized = rawPlacement.trim().toLowerCase().replace(/\s*\|\s*/g, "|");
-            const allowed = (data.sheets.content.tables.customDataDefinition.columns.placement.integrity.listItems || []).map(x => x.toString().toLowerCase());
-
-            // Accept empty placement
-            if (normalized !== "") {
-              // Direct match for any listed allowed combination
-              const directOk = allowed.indexOf(normalized) >= 0;
-
-              // Also accept pipe-separated tokens if each token is present among allowed single tokens
-              const allowedSingles = allowed.filter(x => x.indexOf("|") < 0 && x !== "");
-              const tokens = normalized.split("|");
-              const tokensOk = tokens.length > 0 && tokens.every(t => allowedSingles.indexOf(t) >= 0);
-
-              if (!directOk && !tokensOk) {
-                Logger.error(
-                  "Invalid placement '" + rawPlacement + "' for column " + info.fullRow.columnName + ". Allowed placements: " + allowed.join(", ")
-                );
-                // Fallback to default placement to avoid later errors
-                placement = [
-                  data.sheets.content.tables.customDataDefinition.columns.placement
-                    .integrity.defaultValue,
-                ];
-              }
-            }
-          } catch (e) {
-            // Defensive: if any lookup fails, log and continue
-            Logger.error("Error validating placement for column " + info.fullRow.columnName + ": " + e.message);
-          }
-
           if (dataType == "custom") {
             meta[computedDataPath].title = info.fullRow.title;
             meta[computedDataPath].searchCategory =
@@ -1865,6 +1826,33 @@ export let DataManager = function () {
                         );
                       }
                       break;
+                    case "tokenSet": {
+                      const vocabulary = (integrity.tokenSetVocabulary || []).map(x => x.toLowerCase());
+                      const rules = integrity.tokenSetRules || {};
+                      const tokens = value.trim().toLowerCase().split(/\s*\|\s*/).filter(t => t !== "");
+
+                      let tokenSetError = null;
+
+                      if (tokens.length === 0) {
+                        // handled by allowEmpty check above — should not reach here
+                      } else if (rules.maxTokens && tokens.length > rules.maxTokens) {
+                        tokenSetError = "Value '" + value + "' in column " + column.name + " (table " + table.name + ") has too many tokens (max " + rules.maxTokens + ").";
+                      } else {
+                        const unknownTokens = tokens.filter(t => !vocabulary.includes(t));
+                        if (unknownTokens.length > 0) {
+                          tokenSetError = "Value '" + value + "' in column " + column.name + " (table " + table.name + ") contains unknown token(s): " + unknownTokens.map(t => "'" + t + "'").join(", ") + ". Allowed: " + vocabulary.map(t => "'" + t + "'").join(", ") + ".";
+                        } else if (tokens.length > 1 && rules.requiredIfMultiple) {
+                          if (!tokens.includes(rules.requiredIfMultiple.toLowerCase())) {
+                            tokenSetError = "Value '" + value + "' in column " + column.name + " (table " + table.name + "): when combining tokens, '" + rules.requiredIfMultiple + "' is required as one of them.";
+                          }
+                        }
+                      }
+
+                      if (tokenSetError) {
+                        Logger.error(tokenSetError + (integrity.migration ? " " + integrity.migration : ""));
+                      }
+                      break;
+                    }
                     case "dataTypeDef":
                       const dataTypeDefParts = value.split(" ").map(p => p.trim());
                       const dataTypeProvided = dataTypeDefParts[0];

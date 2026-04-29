@@ -1,9 +1,23 @@
 /* ==========================================================================
    FullscreenableMedia — self-contained styles
-   Covers the .fullscreenable-image wrapper, its inner <img> and <object>,
-   the .fullscreen-clickable affordance, and the fullscreen overlay.
-   No other file should define rules for these selectors.
    ========================================================================== */
+
+/*
+ * DOM structure (see component JSDoc for full rationale):
+ *
+ *   .fullscreenable-image.fullscreen-clickable[.extraWrapClass]   OUTER
+ *     .image-wrap[.image-wrap--fill]                              INNER
+ *       <img class="image-in-view"> / <object>
+ *
+ * Responsibility split:
+ *   OUTER  – click zone, flex centering, fullscreen overlay, title attribute.
+ *   INNER  – hugs the media element; anchors the expand-hint ::after icon so
+ *            it always sits in the corner of the image, not the container.
+ *
+ * Callers may add layout-only overrides (max-height, background, overflow) via
+ * extraWrapClass on the OUTER.  Fullscreen behaviour must not be overridden.
+ */
+
 
 /* ── Clickable affordance ─────────────────────────────────────────────────── */
 
@@ -15,15 +29,14 @@
   opacity: 0.85;
 }
 
-/* ── Normal (non-fullscreen) wrapper ─────────────────────────────────────── */
+
+/* ── OUTER wrapper — normal (non-fullscreen) state ───────────────────────── */
 /*
- * .fullscreenable-image is the element that toggles .fullscreen.
- * It is always accompanied by .image-wrap and .fullscreen-clickable (see component).
- *
- * - position: relative provides the stacking context for the ::after hint.
- * - width: 100% so the wrapper fills its parent column/cell naturally.
- * - display: flex + centering keeps the inner media centred when it is
- *   smaller than the wrapper.
+ * - position: relative so callers' extraWrapClass ::before/::after
+ *   pseudo-elements (other than ours) can anchor to the outer if needed.
+ * - width: 100% fills the parent column/cell.
+ * - flex + centering keeps .image-wrap centred when the image is narrower
+ *   than the available width.
  */
 
 .fullscreenable-image {
@@ -34,9 +47,40 @@
   justify-content: center;
 }
 
-/* ── Expand-hint icon (bottom-right corner, normal state only) ────────────── */
 
-.fullscreenable-image:not(.fullscreen)::after {
+/* ── INNER wrapper ────────────────────────────────────────────────────────── */
+/*
+ * display: inline-block — shrinks to the exact rendered dimensions of the
+ * media element, so the ::after icon is always anchored to its corner.
+ *
+ * position: relative — stacking context for the ::after expand-hint.
+ */
+
+.image-wrap {
+  display: inline-block;
+  position: relative;
+}
+
+/*
+ * .image-wrap--fill is added for svg-object type.
+ * <object> resolves width:100% against its nearest block parent, so without
+ * this the inline-block parent would collapse to minimum-content width.
+ * width:100% here also means the icon tracks the full SVG edge, which is
+ * correct since the SVG itself fills that space.
+ */
+.image-wrap--fill {
+  width: 100%;
+}
+
+
+/* ── Expand-hint icon — anchored to the INNER wrapper ────────────────────── */
+/*
+ * By placing ::after on .image-wrap (which shrinks to the image),
+ * bottom/right are measured from the image boundary, not the outer container.
+ * This is the fix for the icon floating away from narrow images.
+ */
+
+.fullscreenable-image:not(.fullscreen) .image-wrap::after {
   content: "⛶";
   position: absolute;
   bottom: 6px;
@@ -47,13 +91,14 @@
   line-height: 1;
 }
 
+
 /* ── Inner media elements — normal state ─────────────────────────────────── */
 /*
- * Both <img> and <object> (SVG) default to:
- *   - width: auto so they never stretch beyond their natural width
- *   - max-width: 100% so they never overflow the wrapper
- *   - max-height: 15em as a sensible thumbnail cap (callers may override
- *     via a more-specific rule on their own container)
+ * width: auto     — never stretch beyond natural width.
+ * max-width: 100% — never overflow the .image-wrap.
+ * max-height: 15em — sensible thumbnail cap; callers override via a
+ *                    more-specific rule scoped to their extraWrapClass.
+ * display: block  — eliminates the baseline gap below inline images.
  */
 
 .fullscreenable-image img,
@@ -64,11 +109,11 @@
   display: block;
 }
 
-/* ── Fullscreen overlay ───────────────────────────────────────────────────── */
+
+/* ── OUTER wrapper — fullscreen overlay ──────────────────────────────────── */
 /*
- * When FullscreenManager adds .fullscreen to the wrapper it becomes a
- * fixed full-viewport overlay.  All !important declarations guard against
- * specificity from caller stylesheets (e.g. max-height caps set by a parent).
+ * !important guards against specificity from caller stylesheets
+ * (e.g. max-height caps on an extraWrapClass rule).
  */
 
 .fullscreenable-image.fullscreen {
@@ -91,12 +136,7 @@
   opacity: 1 !important;
 }
 
-/* Hide the expand-hint in fullscreen */
-.fullscreenable-image.fullscreen::after {
-  display: none;
-}
-
-/* Caption bar at the bottom of the fullscreen overlay */
+/* Caption bar at the bottom of the fullscreen overlay — always above the image */
 .fullscreenable-image.fullscreen::before {
   display: block;
   content: attr(title);
@@ -104,13 +144,15 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.55);
   color: white;
   font-size: 1.5em;
   line-height: 2em;
   pointer-events: none;
   text-align: center;
+  z-index: 2;
 }
+
 
 /* ── Inner media elements — fullscreen state ─────────────────────────────── */
 
@@ -126,10 +168,11 @@
   z-index: 1;
 }
 
+
 /* ── extraWrapClass: image-in-view-wrap ──────────────────────────────────── */
 /*
  * Applied by CustomTypeImage and CustomTypeMap when placement === "details".
- * Ensures the wrapper spans the full available width of its text/media column.
+ * Ensures the outer wrapper spans the full available width of its column.
  */
 
 .image-in-view-wrap.fullscreenable-image {

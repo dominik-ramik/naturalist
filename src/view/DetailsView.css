@@ -141,6 +141,13 @@
   margin-left: 0.33em
 }
 
+/*
+ * In prose paragraphs, let .image-wrap expand to block so the image centres
+ * within the text column.  The expand-hint icon will anchor to the right edge
+ * of the text column rather than the image; acceptable trade-off for inline
+ * content.  Block display overrides the inline-block default from
+ * FullscreenableMedia.css intentionally.
+ */
 .tabs-container-content-text p .image-wrap {
   text-align: center;
   display: block;
@@ -210,7 +217,7 @@
 
 .media-list .media-set-list {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex-wrap: wrap;
   width: 100%;
   justify-content: center;
@@ -224,28 +231,6 @@
   display: block;
   margin: var(--pad-large);
   text-align: center;
-}
-
-.media-list .media-image {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 33%;
-  padding: var(--pad-large);
-  box-sizing: border-box;
-  justify-content: flex-end;
-}
-
-.media-list .media-image .image-wrap {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.media-list .media-image img {
-  max-height: 15em;
-  max-width: 100%;
 }
 
 .media-list .title {

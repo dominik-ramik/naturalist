@@ -318,7 +318,7 @@ export let TaxonDataItemView = {
       return null;
     }
 
-    return m("span", [
+    return m("span.simple-wrapper", [
       title,
       itemType == "simple"
         ? m("span.simple-value", data)

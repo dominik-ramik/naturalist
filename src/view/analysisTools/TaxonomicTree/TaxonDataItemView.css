@@ -99,6 +99,16 @@ span.simple-value h4 {
   display: inline;
 }
 
+
+.data-item-view span.simple-wrapper span.plain {
+  display: flex;
+  flex-direction: row;
+}
+
+.data-item-view span.simple-wrapper .image-in-view-wrap {
+  display: inline-block;
+}
+
 .data-item-view span.separator {
   margin: 0;
   padding: 0;

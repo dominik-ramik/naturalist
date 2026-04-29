@@ -123,9 +123,16 @@
    ========================================================================== */
 
 /*
+ * DOM produced by FullscreenableMedia for the SVG map:
+ *
+ *   .map-chart-image-wrap-outer                      ← flex-row sibling of table
+ *     .fullscreenable-image.map-chart-image-wrap     ← OUTER (extraWrapClass)
+ *       .image-wrap.image-wrap--fill                 ← INNER (fills 100% for SVG)
+ *         <object id="rd-map">                       ← the SVG
+ */
+
+/*
  * Outer shell: participates in the flex row alongside the table.
- * flex: 2 1 400px means it takes 2/3 of space on desktop, but can shrink
- * below 400 px on mobile once flex-wrap kicks in.
  */
 .map-chart-image-wrap-outer {
   flex: 1 1 400px;
@@ -138,13 +145,14 @@
 }
 
 /*
- * .map-chart-image-wrap is the extraWrapClass applied to the
- * .fullscreenable-image element.  Only layout-specific overrides live here;
- * all fullscreen, cursor, and hint rules are in FullscreenableMedia.css.
+ * .map-chart-image-wrap is extraWrapClass on the OUTER .fullscreenable-image.
+ * Only layout overrides live here — fullscreen rules are in FullscreenableMedia.css.
  *
- * - max-height caps the map so it never dominates the page in normal state.
- * - overflow-x: auto provides graceful horizontal scroll for wide SVGs.
+ * - max-height caps the map so it never dominates the page.
+ * - overflow-x: auto gives graceful scroll for wide SVGs.
  * - background-color: white gives a neutral canvas behind the SVG.
+ * - display:flex / centering are redundant with .fullscreenable-image base rules
+ *   but kept explicitly for documentation clarity.
  */
 .map-chart-image-wrap {
   width: 100%;
@@ -160,8 +168,8 @@
 }
 
 /*
- * The <object> / SVG itself.
- * Constrain both axes so the SVG scales to the capped wrapper height.
+ * The SVG <object> itself (descendant selector still works through .image-wrap--fill).
+ * Constrain both axes so the SVG scales within the capped outer height.
  */
 .map-chart-image-wrap object {
   display: block;
