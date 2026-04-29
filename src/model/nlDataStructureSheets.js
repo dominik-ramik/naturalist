@@ -461,7 +461,7 @@ export const nlDataStructureSheets = {
                             description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            defaultValue: "",
+                            defaultValue: "no",
                             allowedContent: "list",
                             listItems: [
                                 "yes",
@@ -908,8 +908,13 @@ EASY TO CONFUSE WITH:
                     placement: {
                         name: "Placement",
                         description: "Defines where the data field appears in the taxon card.\n\nWhen `details` is used, the field won't show up in the taxon card, but will appear upon clicking that taxon in a [details tab](/user-guide/taxon-details) determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](./placement-visibility) for the layout diagram and guidance table.",
-                        howToUse: "Use `left`, `middle`, or `right` for compact single-value fields (status badges, dates, short measurements). Use `top` or `bottom` for longer content (descriptions, distribution lists). Use `details` for rich content (large images, full maps, long notes) that users seek out by clicking a taxon.",
-                        notes: [],
+                        howToUse: "Use `left`, `middle`, or `right` for compact single-value fields (status badges, dates, short measurements). Use `top` or `bottom` for longer content (descriptions, distribution lists). Use `details` for rich content (large images, full maps, long notes) that users seek out by clicking the taxon.\n\nFor column groups - entries sharing the same parent in the `Column name` (e.g. `origPub.author`, `origPub.year`, … being grouped inside `origPub`), fill in the same `Placement` value on **every row** of the group. All rows in a group share one placement as they will appear together - the app will report an error if they differ.",
+                        notes: [
+                            {
+                                type: "tip",
+                                text: "Filling in `Placement` on every row of a column group makes the table self-documenting: you can see at a glance where each row will appear without having to trace back to a root row."
+                            }
+                        ],
                         examples: [
                             {
                                 label: "Sample placement choices",
@@ -952,13 +957,43 @@ EASY TO CONFUSE WITH:
                                         "This won't show up on the main card, but users can click the taxon name to see the image in the Media tab."
                                     ]
                                 ]
+                            },
+                            {
+                                label: "Column group - repeat the same Placement on every row",
+                                text: "When a column is split into child paths (e.g. `origPub.author`, `origPub.year`), fill in the same Placement on every row of the group. This makes each row self-contained and immediately readable.",
+                                fillRight: true,
+                                columns: [
+                                    "Column name",
+                                    "Data type",
+                                    "Placement",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "origPub",
+                                        "list comma",
+                                        "bottom",
+                                        "Root row - declares the list container"
+                                    ],
+                                    [
+                                        "origPub.author",
+                                        "text",
+                                        "bottom",
+                                        "Same Placement as the root - the group appears at the bottom of the taxon card"
+                                    ],
+                                    [
+                                        "origPub.year",
+                                        "text",
+                                        "bottom",
+                                        "Same Placement as the root"
+                                    ]
+                                ]
                             }
                         ],
                         integrity: {
-                            description: "When combining with `|`, the second keyword must always be `details` (e.g. `bottom|details`).",
-                            allowEmpty: true,
+                            description: "When combining with `|`, the second keyword must always be `details` (e.g. `bottom|details`). For column groups, every row in the group must carry the same value.",
+                            allowEmpty: false,
                             allowDuplicates: "yes",
-                            defaultValue: "top",
                             allowedContent: "list",
                             listItems: [
                                 "top",
@@ -972,7 +1007,6 @@ EASY TO CONFUSE WITH:
                                 "left|details",
                                 "middle|details",
                                 "right|details",
-                                ""
                             ],
                             supportsMultilingual: false
                         }
@@ -1027,16 +1061,16 @@ EASY TO CONFUSE WITH:
                     },
                     belongsTo: {
                         name: "Belongs to",
-                        description: "If your dataset includes **occurrences**, this column controls whether it belongs to taxon or occurrence rows.\n\n- Empty (default) or `taxon`: the column belongs to taxon rows.\n- `occurrence`: the column belongs to occurrence rows only.\n\nEvery column must belong to one entity or the other - there is no shared option.\n\nOnly set this on root or simple columns; child columns (`.subfield`, `#`) inherit the value automatically. See [Occurrence and collection mode](./occurrence-collection-mode) for more information.",
-                        howToUse: "Leave empty for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality).",
+                        description: "If your dataset includes **occurrences**, this column controls whether a data column belongs to taxon or occurrence rows.\n\n- `taxon`: the column belongs to taxon rows.\n- `occurrence`: the column belongs to occurrence rows only.\n\nEvery column must belong to one entity or the other - there is no shared option.\n\nFor column groups (`origPub.author`, `origPub.year`, …), fill in the same **Belongs to** value on **every row** of the group. The app will report an error if rows in the same group disagree. See [Occurrence and collection mode](./occurrence-collection-mode) for more information.",
+                        howToUse: "Set to `taxon` for columns that contain taxon-level information. Set to `occurrence` for every column that carries occurrence-specific data (e.g. collector name, collection date, catalog number, locality).\n\nFor column groups, repeat the same value on every row - this makes each row self-contained and easy to audit at a glance.",
                         notes: [
                             {
                                 type: "tip",
                                 text: "In the filter sidebar, `taxon` filters are always visible, but when the user switches to Occurrence mode, `occurrence` filters become visible."
                             },
                             {
-                                type: "warning",
-                                text: "Only set **Belongs to** on the root row of a column group. For example, set it on `origPub`, not on `origPub.author` or `origPub.year` - the value cascades to all child paths automatically."
+                                type: "tip",
+                                text: "Filling in **Belongs to** on every row of a column group makes the table self-documenting: you can see at a glance which entity each row belongs to without having to trace back to a root row."
                             }
                         ],
                         examples: [
@@ -1052,12 +1086,12 @@ EASY TO CONFUSE WITH:
                                     [
                                         "redlist",
                                         "Red List",
-                                        ""
+                                        "taxon"
                                     ],
                                     [
                                         "description",
                                         "Description",
-                                        ""
+                                        "taxon"
                                     ],
                                     [
                                         "collector",
@@ -1068,7 +1102,7 @@ EASY TO CONFUSE WITH:
                             },
                             {
                                 label: "",
-                                text: "In your [[ref:data]] sheet, the `collector` and `catalogNumber` columns would only have values in occurrence rows, while `redlist`, `description`, and `distribution` would have values in taxon rows. Taxonomy is simplified for this example and the `catalogNumber` column is the `occurrence` level taxon from [[ref:content.taxa]] table.\n\nUsing this pattern you can define separate rows for taxa-related data and others for occurrence-related data.",
+                                text: "In your [[ref:data]] sheet, the `collector` column would only have values in occurrence rows, while `redlist` and `description` would have values in taxon rows. Taxonomy is simplified for this example and the `catalogNumber` column is the `occurrence` level taxon from [[ref:content.taxa]] table.\n\nUsing this pattern you can define separate rows for taxa-related data and others for occurrence-related data.",
                                 fillRight: true,
                                 columns: [
                                     "family",
@@ -1119,8 +1153,7 @@ EASY TO CONFUSE WITH:
                                 ]
                             },
                             {
-                                label: "",
-                                text: "In the checklist view, this will render to something like this:",
+                                label: "In the checklist view, this will render to something like this:",
                                 preformatted: `
 ┌────────────────────────────────────────────────────────┐
 │ Accipiteridae                                          │
@@ -1139,19 +1172,54 @@ EASY TO CONFUSE WITH:
 │ └────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────┘
 `
+                            },
+                            {
+                                label: "Column group - repeat the same Belongs to on every row",
+                                text: "When a column is split into child paths, fill in the same **Belongs to** on every row of the group. This keeps the table readable without any hidden inheritance.",
+                                fillRight: true,
+                                columns: [
+                                    "Column name",
+                                    "Title",
+                                    "Belongs to",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    [
+                                        "origPub",
+                                        "Original publication",
+                                        "taxon",
+                                        "Root row"
+                                    ],
+                                    [
+                                        "origPub.author",
+                                        "Author",
+                                        "taxon",
+                                        "Same Belongs to as the root"
+                                    ],
+                                    [
+                                        "origPub.year",
+                                        "Year",
+                                        "taxon",
+                                        "Same Belongs to as the root"
+                                    ],
+                                    [
+                                        "collector",
+                                        "Collector",
+                                        "occurrence",
+                                        "Occurrence-level column"
+                                    ]
+                                ]
                             }
                         ],
                         integrity: {
-                            description: "",
-                            allowEmpty: true,
-                            migration: "If you are migrating from a version prior v4, you need to add this column and fill in 'taxon' for each row. In prior versions only taxa custom data were supported. This column serves to distinguish taxon-level data from occurrence-level data (new feature in v4).",
+                            description: "For column groups, every row in the group must carry the same value.",
+                            allowEmpty: false,
                             allowDuplicates: "yes",
                             allowedContent: "list",
                             listItems: [
                                 "taxon",
                                 "occurrence"
                             ],
-                            defaultValue: "taxon",
                             supportsMultilingual: false
                         }
                     }

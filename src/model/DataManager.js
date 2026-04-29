@@ -48,9 +48,13 @@ function getRootDataPath(colName) {
 
 /**
  * Builds a Map<rootColName(lowercase) → "taxon"|"occurrence"> from a CDD
- * table's row array.  Only processes root-level rows; child rows inherit
- * through `resolveBelongsTo`.  Blank value is normalised to "taxon" -
+ * table's row array.  Processes all rows; the effective value for any path
+ * is resolved by looking up its root.  Blank value is normalised to "taxon" -
  * the backward-compatible default for columns that pre-date this feature.
+ *
+ * Only the root row's value is authoritative for downstream resolution;
+ * child rows may also declare the value (and are validated for consistency
+ * in the integrity-check pass), but this map is keyed on the root segment.
  *
  * @param {Object[]} cddRows  Rows from customDataDefinition.data[langCode]
  * @returns {Map<string, "taxon"|"occurrence">}
@@ -61,9 +65,10 @@ function buildRootBelongsToMap(cddRows) {
   cddRows.forEach(function (row) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
-    // Skip child paths (e.g. "origPub.author"). Array roots ("habitat#") are
-    // still root declarations — getRootDataPath strips the # for the map key.
-    if (colName.includes(".")) return;  // ← was: getRootDataPath(colName) !== colName
+    // Only index root-level entries into the authoritative map so that
+    // resolveBelongsTo can always find the canonical value via the root key.
+    // Child rows are free to repeat the value, but are not indexed here.
+    if (colName.includes(".")) return;
     const rootKey = getRootDataPath(colName); // "habitat#" → "habitat"
     const raw = (row.belongsTo || "").toLowerCase().trim();
     if (!raw) return;
@@ -928,7 +933,7 @@ export let DataManager = function () {
           order: row.orderBy,
           searchCategoryOrder: [],
           parentTaxonIndication: row.parentTaxonIndication,
-          italicize: row.italicize,
+          italicize: row.italicize?.toLowerCase().trim() === "yes" ? "yes" : "no",
         };
 
         data.sheets.appearance.tables.searchOrder.data[lang.code].forEach(
@@ -1002,7 +1007,7 @@ export let DataManager = function () {
       let allDataPaths = (data.common.allUsedDataPaths[lang.code] || []).sort();
 
       // Pre-build the root→belongsTo map once for this language pass so that
-      // every computedDataPath can resolve its cascaded value in O(1).
+      // every computedDataPath can resolve its effective value in O(1).
       const rootBelongsToMap = buildRootBelongsToMap(
         data.sheets.content.tables.customDataDefinition.data[lang.code]
       );
@@ -1207,7 +1212,7 @@ export let DataManager = function () {
             meta[computedDataPath].template = info.fullRow.template;
             meta[computedDataPath].placement = placement;
             meta[computedDataPath].hidden = info.fullRow.hidden;
-            // Cascade: any child path inherits the root column's belongsTo value.
+            // Resolve belongsTo for this computed data path via the root→belongsTo map.
             meta[computedDataPath].belongsTo = resolveBelongsTo(computedDataPath, rootBelongsToMap);
 
             if (parseddataType.toLowerCase() == "category") {
@@ -2532,7 +2537,6 @@ function checkCustomDataDefinitionDataPaths(data, langCode, dataPathLib) {
           tf("dm_hidden_missing_index", [
             cumulative,
             data.sheets.content.tables.customDataDefinition.name,
-            data.sheets.content.tables.customDataDefinition.columns.columnName.name,
           ])
         );
       }
@@ -2860,15 +2864,19 @@ function runManualIntegrityChecks(data) {
 
       const colPosition = dataPath.analyse.position(allColumnNames, columnName.toLowerCase());
 
-      // 6a. Only root/simple columns may carry a placement
-      if (row.placement !== "" && !(colPosition.isSimpleItem || colPosition.isRoot)) {
-        Logger.error(
-          tf("dm_wrong_placement", [
-            columnName,
-            row.placement,
-            columnName.split(/[\.\#]/)[0], // root segment
-          ])
-        );
+      // 6a. Child columns may declare Placement, but it must match the root row's value.
+      if (!(colPosition.isSimpleItem || colPosition.isRoot) && row.placement !== "") {
+        const rootSegment6a = columnName.split(/[\.\#]/)[0].toLowerCase();
+        const rootRow6a = table.find(r => (r.columnName || "").toLowerCase().trim() === rootSegment6a);
+        const rootPlacement6a = rootRow6a ? (rootRow6a.placement || "").trim() : "";
+        if (row.placement.trim() !== rootPlacement6a) {
+          Logger.error(
+            "Column \"" + columnName + "\": Placement \"" + row.placement +
+            "\" does not match the root column \"" + rootSegment6a +
+            "\" which has Placement \"" + (rootPlacement6a || "(empty)") +
+            "\". All rows in a column group must declare the same Placement value."
+          );
+        }
       }
 
       // 6b. Only leaf columns may carry a template
@@ -2944,15 +2952,20 @@ function runManualIntegrityChecks(data) {
         row.belongsTo = ""; // reset to avoid misleading downstream, mirrors 6f pattern
       }
 
-      // 6i. "Belongs to" may only be set on root or simple columns - child columns
-      //     inherit it automatically.  This mirrors the 6a rule for "Placement".
+      // 6i. Child columns may declare "Belongs to", but it must match the root row's value.
       if (belongsToRaw !== "" && !(colPosition.isSimpleItem || colPosition.isRoot)) {
-        Logger.error(
-          "Column \"" + columnName + "\": \"Belongs to\" can only be declared on root columns. " +
-          "\"" + columnName + "\" is a child path; set it on \"" +
-          getRootDataPath(columnName) + "\" and it will cascade automatically."
-        );
-        row.belongsTo = ""; // reset to avoid misleading downstream
+        const rootSegment6i = getRootDataPath(columnName.toLowerCase());
+        const rootRow6i = table.find(r => (r.columnName || "").toLowerCase().trim() === rootSegment6i);
+        const rootBelongsTo6i = rootRow6i ? (rootRow6i.belongsTo || "").trim().toLowerCase() : "";
+        if (belongsToRaw !== rootBelongsTo6i) {
+          Logger.error(
+            "Column \"" + columnName + "\": \"Belongs to\" value \"" + row.belongsTo +
+            "\" does not match the root column \"" + rootSegment6i +
+            "\" which has \"Belongs to\" = \"" + (rootBelongsTo6i || "(empty)") +
+            "\". All rows in a column group must declare the same \"Belongs to\" value."
+          );
+          row.belongsTo = ""; // reset to avoid misleading downstream
+        }
       }
     }
   });
