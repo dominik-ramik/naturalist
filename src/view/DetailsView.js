@@ -41,6 +41,7 @@ export let DetailsView = {
   taxonAuthority: "",
   taxonData: {},
   taxon: null,
+  isInChecklist: false,
   // Cache the raw tab DATA returned by Checklist (safe to cache - it is plain data,
   // not vnodes).  This avoids re-running the Checklist lookup on every redraw while
   // still producing fresh vnode trees each render, which Mithril requires.
@@ -69,20 +70,21 @@ export let DetailsView = {
     DetailsView.taxonAuthority = authority;
     const taxon = Checklist.getTaxonByNameAndAuthority(name, authority);
     DetailsView.taxon = taxon;
+    DetailsView.isInChecklist = taxon?.isInChecklist ?? false;
     if (taxon.isInChecklist) {
       DetailsView.taxonData = taxon.d;
     }
-    DetailsView._cachedDetailsTabs = Checklist.getDetailsTabsForTaxon(name);
+    DetailsView._cachedDetailsTabs = Checklist.getDetailsTabsForTaxon(name, authority);
   },
 
   view: function (vnode) {
-    const taxon = DetailsView.taxon ?? Checklist.getTaxonByName(DetailsView.taxonName);
+    const taxon = DetailsView.taxon ?? Checklist.getTaxonByNameAndAuthority(DetailsView.taxonName, DetailsView.taxonAuthority);
 
     // Vnode trees MUST be built fresh on every render - Mithril mutates them
     // in-place during the diff/patch cycle, so cached vnodes cause stale DOM
     // references and dead event handlers.  Only the upstream data is cached.
     const tabs = TabsForDetails(
-      DetailsView._cachedDetailsTabs ?? Checklist.getDetailsTabsForTaxon(DetailsView.taxonName),
+      DetailsView._cachedDetailsTabs ?? Checklist.getDetailsTabsForTaxon(DetailsView.taxonName, DetailsView.taxonAuthority),
       taxon,
       DetailsView.taxonName
     );
@@ -103,7 +105,15 @@ export let DetailsView = {
 
     if (!Object.keys(tabs).includes(tab)) {
       console.log("fallback to default tab, because requested tab '" + tab + "' is not available for this taxon");
-      tab = "externalsearch" in tabs ? "externalsearch" : "summary";
+      // For unknown taxa the first available tab is externalsearch (if configured);
+      // for known taxa fall back to summary as before.
+      if ("externalsearch" in tabs) {
+        tab = "externalsearch";
+      } else if ("summary" in tabs) {
+        tab = "summary";
+      } else {
+        tab = Object.keys(tabs)[0] ?? "summary";
+      }
     }
 
     // Only persist when the active tab actually changed – avoids redundant
@@ -113,7 +123,11 @@ export let DetailsView = {
     }
 
     return m(".details", [
-      m(".details-taxon-crumbs-zone", taxonomyCrumbs(DetailsView.taxonName)),
+      // Ancestor breadcrumbs are only meaningful for taxa that exist in the
+      // database; for external taxa the taxon-zone already shows the name.
+      m(".details-taxon-crumbs-zone",
+        DetailsView.isInChecklist ? taxonomyCrumbs(DetailsView.taxonName, DetailsView.taxonAuthority) : null
+      ),
       m(".details-taxon-zone",
         [
           m(".details-taxon-zone-name", DetailsView.taxonName),
@@ -127,8 +141,12 @@ export let DetailsView = {
   },
 };
 
-function taxonomyCrumbs(taxonName) {
-  let taxon = Checklist.getTaxonByName(taxonName);
+function taxonomyCrumbs(taxonName, taxonAuthority) {
+  let taxon = Checklist.getTaxonByNameAndAuthority(taxonName, taxonAuthority);
+
+  // Taxon is not in the database – nothing to show (caller already guards,
+  // but be defensive here too).
+  if (!taxon?.isInChecklist || !taxon.t) return null;
 
   const nonNullTaxa = taxon.t.filter(t => t !== null);
   return nonNullTaxa.map(function (taxonEntry, index) {
@@ -148,25 +166,36 @@ function taxonomyCrumbs(taxonName) {
 
 function TabsForDetails(detailsTabs, taxon, taxonName) {
   let tabs = {};
+  const isInChecklist = taxon?.isInChecklist ?? false;
+
+  // taxon.t is always defined (getTaxonByName synthesises a single-entry array
+  // for unknown taxa), so this dereference is safe in both branches.
   const taxonLeaf = taxon.t[taxon.t.length - 1];
+  const authority = taxonLeaf.authority ?? taxonLeaf.a ?? "";
   const taxonRouteParam = encodeURIComponent(
-    taxonLeaf.name + "\x00" + (taxonLeaf.authority ?? taxonLeaf.a ?? "")
+    taxonLeaf.name + (authority ? "\x00" + authority : "")
   );
 
-  tabs["summary"] = new TabsContainerTab(
-    TabSummary(taxon, taxonName),
-    "./img/ui/tabs/summary.svg",
-    t("tab_title_summary"),
-    function () {
-      Settings.currentDetailsTab("summary");
-      routeTo("/details/" + taxonRouteParam + "/summary");
-    }
-  );
+  // Summary tab is only meaningful for taxa that exist in the database.
+  if (isInChecklist) {
+    tabs["summary"] = new TabsContainerTab(
+      TabSummary(taxon, taxonName),
+      "./img/ui/tabs/summary.svg",
+      t("tab_title_summary"),
+      function () {
+        Settings.currentDetailsTab("summary");
+        routeTo("/details/" + taxonRouteParam + "/summary");
+      }
+    );
+  }
 
   if (detailsTabs == null) return tabs;
 
   Object.keys(detailsTabs).forEach(function (key) {
     if (!detailsTabs[key] || detailsTabs[key].length === 0) return;
+
+    // For taxa not in the database, only the "Search online" tab makes sense.
+    if (!isInChecklist && key !== "externalsearch") return;
 
     let tabData = null;
     switch (key) {

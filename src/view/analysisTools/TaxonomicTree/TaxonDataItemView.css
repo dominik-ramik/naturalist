@@ -103,6 +103,7 @@ span.simple-value h4 {
 .data-item-view span.simple-wrapper span.plain {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .data-item-view span.simple-wrapper .image-in-view-wrap {

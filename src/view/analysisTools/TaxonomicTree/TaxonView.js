@@ -69,7 +69,8 @@ export let TaxonView = {
     }
 
     const taxonName = vnode.attrs.taxonTree.taxon.name;
-    const tabsData = Checklist.getDetailsTabsForTaxon(taxonName);
+    const taxonAuthority = vnode.attrs.taxonTree.taxon.authority ?? "";
+    const tabsData = Checklist.getDetailsTabsForTaxon(taxonName, taxonAuthority);
 
     let inverseTaxonLevel = Checklist.inverseTaxonLevel(vnode.attrs.currentTaxonLevel);
 

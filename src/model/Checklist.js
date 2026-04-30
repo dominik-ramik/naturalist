@@ -1447,41 +1447,55 @@ export let Checklist = {
     return this.getData().meta.mapRegionsNames;
   },
 
-  getTaxonByName: function (taxonNameFind) {
+  getTaxonByName: function (taxonNameFind, authorityFind) {
+    // When an authority is supplied, delegate to the authority-aware lookup so
+    // homonyms that differ only by authority are resolved correctly.
+    if (authorityFind != null && authorityFind !== "") {
+      return this.getTaxonByNameAndAuthority(taxonNameFind, authorityFind);
+    }
+
     if (this._taxonCache && this._taxonCache.has(taxonNameFind)) {
       // Return a copy or extended object to match the expected format (isInChecklist)
       const cached = this._taxonCache.get(taxonNameFind);
       return Object.assign({ isInChecklist: true }, cached);
     }
 
+    // Non-leaf (ancestor) taxon: not in the leaf cache. Scan for a descendant
+    // row that contains this name at some level in order to reconstruct the
+    // ancestry path (t array up to and including the matched level).
+    // Ancestors have no data row of their own, so we never attach .d here --
+    // callers that need data must work with leaf taxa directly.
     let reconstructedTaxonomy = [];
 
     let found = this.getData().checklist.find(function (taxon) {
       for (let index = 0; index < taxon.t.length; index++) {
-        const taxonName = taxon.t[index];
-        if (taxonName === null) continue;
-        if (taxonName.name == taxonNameFind) {
+        const taxonLevel = taxon.t[index];
+        if (taxonLevel === null) continue;
+        if (taxonLevel.name == taxonNameFind) {
           if (reconstructedTaxonomy.length == 0) {
             reconstructedTaxonomy = taxon.t.slice(0, index + 1);
-            break;
           }
+          // Leaf-level match: this row IS the taxon, return it directly.
+          if (index === taxon.t.length - 1) {
+            return true;
+          }
+          // Ancestor-level match: stop scanning this row but don't claim it
+          // as a direct match -- the row belongs to a descendant.
+          break;
         }
-      }
-
-      const taxonName = taxon.t[taxon.t.length - 1]; //the taxon name of this item is the last in the taxon array
-      if (taxonName.name == taxonNameFind) {
-        return true;
       }
       return false;
     });
 
     if (!found) {
       if (reconstructedTaxonomy.length > 0) {
-        found = { t: reconstructedTaxonomy };
+        // Taxon exists as an ancestor in the checklist -- synthesise a minimal
+        // record with just the reconstructed t array. No .d, intentionally.
+        found = { t: reconstructedTaxonomy, isInChecklist: true };
       } else {
-        found = { t: [{ name: taxonNameFind, authority: "" }] };
+        // Genuinely unknown taxon.
+        found = { t: [{ name: taxonNameFind, authority: "" }], isInChecklist: false };
       }
-      found.isInChecklist = false;
     } else {
       found.isInChecklist = true;
     }
@@ -1724,8 +1738,8 @@ export let Checklist = {
     return dataCells;
   },
 
-  getDetailsTabsForTaxon: function (taxonName) {
-    let originalTaxon = Checklist.getTaxonByName(taxonName);
+  getDetailsTabsForTaxon: function (taxonName, taxonAuthority) {
+    let originalTaxon = Checklist.getTaxonByNameAndAuthority(taxonName, taxonAuthority);
 
     let tabs = {
       externalsearch: Checklist.getData().meta.externalSearchEngines,

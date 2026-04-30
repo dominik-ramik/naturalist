@@ -3,6 +3,7 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 import { applyHighlight } from "../highlightUtils.js";
+import { Checklist } from "../Checklist.js";
 
 export let customTypeTaxon = {
   dataType: "taxon",
@@ -131,6 +132,8 @@ export let customTypeTaxon = {
   render: function (data, uiContext) {
     // Highlighted inline render for data-cell taxon fields (embedded taxon
     // references within a taxon's data, not the tree taxon name itself).
+    // No search suffix here – this path is for in-cell rendering, not a
+    // standalone card field.
     if (uiContext?.highlightRegex && data && typeof data === "object" && data.name) {
       return m("span.taxon-inline", [
         m("i.taxon-name", applyHighlight(data.name, uiContext.highlightRegex)),
@@ -140,15 +143,41 @@ export let customTypeTaxon = {
       ]);
     }
 
-    // Standard path - delegate to ClickableTaxonName which handles its own
-    // filter.text highlight via filterMatches in ClickableTaxonNameView.
-    if (data && data.taxonTree && data.taxonTree.taxon) {
-      return m(ClickableTaxonName, {
-        taxonTree: { taxon: data.taxonTree.taxon, data: {}, children: {} },
-      });
-    }
-    return m(ClickableTaxonName, {
-      taxonTree: { taxon: data, data: {}, children: {} },
+    // Resolve the plain taxon object regardless of how data was passed in.
+    const taxonObj = (data && data.taxonTree && data.taxonTree.taxon)
+      ? data.taxonTree.taxon
+      : data;
+
+    const clickableName = m(ClickableTaxonName, {
+      taxonTree: { taxon: taxonObj, data: {}, children: {} },
     });
+
+    // If this taxon exists in the database, add a search-suffix icon so the
+    // user can jump to its checklist entries with a single click.
+    const taxonRecord = taxonObj?.name ? Checklist.getTaxonByName(taxonObj.name, taxonObj.authority) : null;
+    if (taxonRecord?.isInChecklist) {
+      const nameToSearch = taxonObj.name;
+      return m("span.custom-taxon-with-search", [
+        clickableName,
+        m("span.custom-taxon-search-suffix.clickable", {
+          title: nameToSearch,
+          onclick: function (e) {
+            // Stop propagation so we don't also trigger the ClickableTaxonName
+            // route-change handler that sits in the same DOM subtree.
+            e.stopPropagation();
+            // m.route.set (inside filter.commit) schedules its own redraw.
+            e.redraw = false;
+            Checklist.filter.clear();
+            Checklist.filter.text = nameToSearch;
+            Checklist.filter.commit("/checklist");
+          },
+        },
+          [
+            m("img.custom-taxon-search-icon[src=img/ui/checklist/search.svg]"),
+          ]),
+      ]);
+    }
+
+    return clickableName;
   },
 };

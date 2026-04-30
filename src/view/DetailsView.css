@@ -404,3 +404,31 @@ path {
   padding-left: 1em;
   /* indent to show hierarchy */
 }
+/* CUSTOM-TYPE TAXON SEARCH SUFFIX
+ * Rendered by CustomTypeTaxon when the referenced taxon exists in the database.
+ * Mirrors the look of .copy-leaf-taxon in TaxonNameView so the two inline
+ * action icons feel consistent.
+ */
+.custom-taxon-with-search {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+}
+
+.custom-taxon-search-suffix {
+  display: inline-flex;
+  align-items: baseline;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.custom-taxon-search-suffix:hover {
+  opacity: 0.8;
+}
+
+.custom-taxon-search-icon {
+  height: 1.0em;
+  vertical-align: text-bottom;
+}

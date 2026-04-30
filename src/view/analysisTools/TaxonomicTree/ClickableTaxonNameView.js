@@ -70,7 +70,7 @@ export let ClickableTaxonName = {
           e.redraw = false;
           routeTo(
             "/details/"
-            + encodeURIComponent(taxonTree.taxon.name + "\x00" + (taxonTree.taxon.authority ?? ""))
+            + encodeURIComponent(taxonTree.taxon.name + (taxonTree.taxon.authority ? "\x00" + taxonTree.taxon.authority : ""))
             + "/" + Settings.currentDetailsTab()
           );
         },
