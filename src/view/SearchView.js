@@ -24,6 +24,112 @@ registerMessages(selfKey, {
 });
 
 const SEARCH_CATEGORY_SEPARATOR = "|";
+const PRIORITY_PREFIX = "!";
+
+/**
+ * Parses a raw searchCategory string into its components.
+ *
+ * Handles four formats (whitespace around "!" is ignored, "!" and "! " are
+ * treated identically):
+ *   "!mygroup | mytitle"   → { isPriority: true,  category: "mygroup", title: "mytitle" }
+ *   "! mygroup | mytitle"  → { isPriority: true,  category: "mygroup", title: "mytitle" }
+ *   "! mytitle"            → { isPriority: true,  category: "",        title: "mytitle" }
+ *   "mygroup | mytitle"    → { isPriority: false, category: "mygroup", title: "mytitle" }
+ *   "mytitle"              → { isPriority: false, category: "",        title: "mytitle" }
+ *
+ * isPriority and category are independent axes: a priority "mygroup" and a
+ * non-priority "mygroup" are distinct namespaces and will never be merged.
+ */
+function parseSearchCategory(raw) {
+    let rest = raw.trim();
+
+    const isPriority = rest.startsWith(PRIORITY_PREFIX);
+    if (isPriority) {
+        // Strip the "!" and any following whitespace ("!" and "! " are equivalent)
+        rest = rest.slice(PRIORITY_PREFIX.length).trim();
+    }
+
+    let category = "";
+    let title = "";
+
+    if (rest.includes(SEARCH_CATEGORY_SEPARATOR)) {
+        const parts = rest.split(SEARCH_CATEGORY_SEPARATOR);
+        category = parts[0].trim();
+        title    = parts[1].trim();
+    } else {
+        title = rest;
+    }
+
+    return { isPriority, category, title };
+}
+
+/**
+ * Groups an array of data filter paths into an ordered structure, preserving
+ * the first-seen order of categories and correctly merging non-contiguous items
+ * that share the same (isPriority, category) key.
+ *
+ * Returns two arrays, each containing group objects { category, items[] }:
+ *   - priorityGroups : filters whose searchCategory starts with "!" (with or
+ *                      without a space after it)
+ *   - normalGroups   : all other filters
+ *
+ * Each item in a group is: { title, dataPath }
+ *
+ * Because priority and normal filters live in separate Maps, "! mygroup" and
+ * "mygroup" can never accidentally merge even when the stripped label is equal.
+ */
+function groupDataFilters(dataPaths) {
+    const priorityMap = new Map(); // category → { category, items[] }
+    const normalMap   = new Map();
+
+    for (const dataPath of dataPaths) {
+        const raw = Checklist.getDataMeta()[dataPath].searchCategory;
+
+        if (!raw) {
+            console.warn(`Data path '${dataPath}' is missing 'searchCategory' metadata. Skipping.`);
+            continue;
+        }
+
+        const { isPriority, category, title } = parseSearchCategory(raw);
+        const map = isPriority ? priorityMap : normalMap;
+
+        if (!map.has(category)) {
+            map.set(category, { category, items: [] });
+        }
+        map.get(category).items.push({ title, dataPath });
+    }
+
+    return {
+        priorityGroups: Array.from(priorityMap.values()),
+        normalGroups:   Array.from(normalMap.values()),
+    };
+}
+
+/**
+ * Renders a list of groups as filter button lists, with optional category
+ * headings.
+ *
+ * @param {Array}   groups    - Output from groupDataFilters (priorityGroups or normalGroups)
+ * @param {boolean} fullWidth - When true, adds the "full-width" modifier class so
+ *                              items span the full row instead of the default two-column grid.
+ */
+function renderFilterGroups(groups, fullWidth) {
+    return groups.map(({ category, items }) =>
+        m("div.data-filter-category", [
+            category ? m("h4.search-category-group", category) : null,
+            m("ul.filter-buttons.data-filter" + (fullWidth ? ".full-width" : ""),
+                items.map(({ title, dataPath }) =>
+                    m("li", m(FilterDropdown, {
+                        color:    Checklist.filter.data[dataPath].color,
+                        title,
+                        type:     "data",
+                        dataPath,
+                    }))
+                )
+            ),
+        ])
+    );
+}
 
 export let SearchView = {
 
@@ -33,73 +139,59 @@ export let SearchView = {
         const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
         const inTaxonMode         = intent === ANALYTICAL_INTENT_TAXA;
 
+        // ── Taxa filter dropdowns ─────────────────────────────────────────────
         let taxaFilterDropdown = [];
         Object.keys(Checklist.filter.taxa).forEach(function (dataPath, index) {
             // In taxon mode there are no occurrences, so the occurrence taxa-level
-            // slot would always be empty - hide it.  In occurrence mode every taxa
-            // slot is relevant: higher ranks filter occurrences through their
-            // taxonomy, and the occurrence slot filters by occurrence identity.
+            // slot would always be empty - hide it.
             if (inTaxonMode && occurrenceMetaIndex !== -1 && index === occurrenceMetaIndex) return;
-            taxaFilterDropdown.push(m("li", m(FilterDropdown, { color: Checklist.filter.taxa[dataPath].color, title: Checklist.getNameOfTaxonLevel(dataPath), type: "taxa", dataPath: dataPath })));
+            taxaFilterDropdown.push(m("li", m(FilterDropdown, {
+                color:    Checklist.filter.taxa[dataPath].color,
+                title:    Checklist.getNameOfTaxonLevel(dataPath),
+                type:     "taxa",
+                dataPath,
+            })));
         });
 
-        let categorizedDataFilters = {};
-
-        Object.keys(Checklist.filter.data).forEach(function (dataPath) {
-            // In taxon mode, occurrence-only data columns are meaningless
-            // (no occurrence rows exist in the result set).
-            // In occurrence mode, taxon data columns remain useful: a taxon data
-            // filter (e.g. Red List = CR) propagates to occurrences via the
-            // includeChildren path in the query engine, so hiding them would
-            // prevent legitimate cross-entity filtering.
+        // ── Collect eligible data filter paths ────────────────────────────────
+        // Filtering happens here, before grouping, so groupDataFilters works on
+        // the final set and never creates duplicate groups from non-contiguous
+        // entries that happen to share a category label.
+        const eligibleDataPaths = Object.keys(Checklist.filter.data).filter(dataPath => {
+            // In taxon mode, occurrence-only data columns are meaningless.
             const belongsTo = Checklist.filter.data[dataPath].belongsTo || "taxon";
-            if (inTaxonMode && belongsTo === OCCURRENCE_IDENTIFIER) return;
-
-            let category = "";
-            let title = "";
-
-            if (!Checklist.getDataMeta()[dataPath].searchCategory) {
-                console.warn("Data path '" + dataPath + "' is missing 'searchCategory' metadata. It will be grouped under an empty category.");
-                return;
-            }
-
-            if (Checklist.getDataMeta()[dataPath].searchCategory.includes(SEARCH_CATEGORY_SEPARATOR)) {
-                category = Checklist.getDataMeta()[dataPath].searchCategory.split(SEARCH_CATEGORY_SEPARATOR)[0].trim();
-                title = Checklist.getDataMeta()[dataPath].searchCategory.split(SEARCH_CATEGORY_SEPARATOR)[1].trim();
-            } else {
-                category = "";
-                title = Checklist.getDataMeta()[dataPath].searchCategory;
-            }
-
-            categorizedDataFilters[category] = categorizedDataFilters[category] || [];
-            categorizedDataFilters[category].push({ category, title, dataPath });
+            if (inTaxonMode && belongsTo === OCCURRENCE_IDENTIFIER) return false;
+            return true;
         });
+
+        // ── Split and group into priority (!) and normal sections ─────────────
+        const { priorityGroups, normalGroups } = groupDataFilters(eligibleDataPaths);
 
         return m(".search", [
-            // 1. Filter Groups Wrapper (Filters + Crumbs)
             m(".filter-groups-wrapper", [
+                // 1. Priority (!) data filters — full-width, above taxa
+                renderFilterGroups(priorityGroups, true),
+
+                // 2. Taxa filters
                 m("ul.filter-buttons.taxa-filter", taxaFilterDropdown),
-                ...Object.keys(categorizedDataFilters).map(category => {
-                    return m("div.data-filter-category", [
-                        category == "" ? null : m("h4.search-category-group", category),
-                        m("ul.filter-buttons.data-filter", categorizedDataFilters[category].map(item => m("li", m(FilterDropdown, { color: Checklist.filter.data[item.dataPath].color, title: item.title, type: "data", dataPath: item.dataPath }))))
-                    ]);
-                }),               
+
+                // 3. Normal data filters — standard two-column layout
+                renderFilterGroups(normalGroups, false),
             ]),
 
-            // 2. SearchBox with integrated toggle button (Now at the bottom)
+            // 4. Search box with integrated mobile toggle
             m(SearchBox, {
-                isExpanded: InteractionAreaView.isExpanded,
+                isExpanded:    InteractionAreaView.isExpanded,
                 toggleHandler: () => {
                     InteractionAreaView.isExpanded = !InteractionAreaView.isExpanded;
-
                     Settings.mobileFiltersPaneCollapsed(InteractionAreaView.isExpanded);
                 }
             }),
+
             m(FilterCrumbsView),
         ]);
     }
-}
+};
 
 let SearchBox = {
     typingTimer: null,
@@ -115,7 +207,6 @@ let SearchBox = {
             ? SearchBox.ghostText
             : Checklist.filter.text;
 
-        // SearchBox is now a flex container (styled in CSS)
         return m(".search-box", [
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", [Settings.SEARCH_OR_SEPARATOR], true) + "]", {
                 value: displayValue,
@@ -168,6 +259,7 @@ let SearchBox = {
                 t("filters"),
                 m("img.toggle-icon[src=img/ui/menu/" + (isExpanded ? "expand_more" : "expand_less") + ".svg]"),
             ]),
+
             !Checklist.filter.isEmpty() ? m("button.filter-button.mobile-clear-filters", {
                 onclick: function () {
                     if (SearchBox.typingTimer) {
@@ -184,4 +276,4 @@ let SearchBox = {
             ]) : null,
         ]);
     }
-}
+};

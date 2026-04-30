@@ -15,6 +15,11 @@ ul.filter-buttons li {
     flex-basis: 50%;
 }
 
+/* Priority (!) filters always span the full width — one item per row */
+ul.filter-buttons.full-width li {
+    flex-basis: 100%;
+}
+
 .search-box {
     padding: var(--pad-small);
     display: flex;
@@ -141,6 +146,11 @@ ul.filter-buttons li {
         flex-basis: 25%;
     }
 
+    /* Priority filters stay full-width on mobile too */
+    ul.filter-buttons.full-width li {
+        flex-basis: 100%;
+    }
+
     /* Show the toggle button on mobile */
     .search-box .mobile-filter-toggle {
         display: flex;
@@ -185,6 +195,11 @@ ul.filter-buttons li {
     ul.filter-buttons li {
         flex-basis: 33%;
     }
+
+    /* Priority filters stay full-width on all breakpoints */
+    ul.filter-buttons.full-width li {
+        flex-basis: 100%;
+    }
 }
 
 @media (max-width: 640px) {
@@ -192,5 +207,10 @@ ul.filter-buttons li {
 
     ul.filter-buttons li {
         flex-basis: 50%;
+    }
+
+    /* Priority filters stay full-width on all breakpoints */
+    ul.filter-buttons.full-width li {
+        flex-basis: 100%;
     }
 }

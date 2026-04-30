@@ -15,6 +15,20 @@ function purifyCssString(css) {
   return css;
 }
 
+/**
+ * Build an inline style string from a badge format object.
+ * Returns an empty string when none of the style properties are set.
+ */
+function buildBadgeStyles(badgeFormat) {
+  const declarations = [
+    badgeFormat.background && `background-color: ${purifyCssString(badgeFormat.background)};`,
+    badgeFormat.text       && `color: ${purifyCssString(badgeFormat.text)};`,
+    badgeFormat.border     && `border-color: ${purifyCssString(badgeFormat.border)};`,
+  ].filter(Boolean);
+
+  return declarations.join(" ");
+}
+
 export let customTypeCategory = {
   dataType: "category",
   expectedColumns: (basePath) => [basePath],
@@ -83,20 +97,15 @@ export let customTypeCategory = {
     });
 
     if (badgeFormat) {
+      const styles = buildBadgeStyles(badgeFormat);
+      const classes = [
+        "category",
+        styles ? "styled" : "unstyled",
+        textMatchesHighlight(dataString, uiContext?.highlightRegex) ? "search-highlight-field" : null,
+      ].filter(Boolean).join(" ");
+
       return m.trust(
-        "<span class='category" + (textMatchesHighlight(dataString, uiContext?.highlightRegex) ? " search-highlight-field" : "") + "' style='" +
-        (badgeFormat.background
-          ? "background-color: " + purifyCssString(badgeFormat.background) + ";"
-          : "") +
-        (badgeFormat.text
-          ? "color: " + purifyCssString(badgeFormat.text) + ";"
-          : "") +
-        (badgeFormat.border
-          ? "border-color: " + purifyCssString(badgeFormat.border) + ";"
-          : "") +
-        "'>" +
-        dataString.replace(/\s/g, "&nbsp;") +
-        "</span>"
+        `<span class='${classes}'${styles ? ` style='${styles}'` : ""}>${dataString.replace(/\s/g, "&nbsp;")}</span>`
       );
     }
 
