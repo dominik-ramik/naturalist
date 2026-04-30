@@ -276,9 +276,10 @@ export let customTypeMapregions = {
   },
 
   render: function (data, uiContext) {
+    const hl = uiContext?.highlightRegex || null;
     return uiContext.placement === "details"
       ? renderDetailsMap(data, uiContext)
-      : renderRegionsList(data, uiContext);
+      : renderRegionsList(data, uiContext, hl);
   },
 };
 
@@ -705,7 +706,7 @@ function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
 
 // ─── Regions list ─────────────────────────────────────────────────────────────
 
-function renderRegionsList(data, uiContext) {
+function renderRegionsList(data, uiContext, hl) {
   const dataPath = uiContext.dataPath;
   const legendConfig = getLegendConfig(dataPath);
   const datasetStats = getCachedDatasetStats(data, legendConfig, dataPath);
