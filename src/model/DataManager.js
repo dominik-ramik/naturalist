@@ -420,6 +420,11 @@ export let DataManager = function () {
 
       if (checkAssetsSize) {
         const assetsSizesMsg = "Checking " + assets.length + " assets sizes";
+
+        if(import.meta.env.DEV) {
+          console.time(assets);
+          console.log("Assets", assets)
+        }
         //console.time(assetsSizesMsg);
 
         let totalPrecacheSize = 0;
@@ -487,23 +492,23 @@ export let DataManager = function () {
 
     function getContentLengthInfo(url) {
       const result = { url: "", contentLength: null, responseStatus: 0 };
-
-      url = new URL(url, window.location.href).href;
+      
+      const absoluteUrl = new URL(url, window.location.href).href;
 
       try {
         const xhr = new XMLHttpRequest();
-        xhr.open("HEAD", url, false); // false makes the request synchronous
+        xhr.open("HEAD", absoluteUrl, false); // false makes the request synchronous
         xhr.withCredentials = true; // Include credentials for CORS
         xhr.send(null);
 
         result.responseStatus = xhr.status;
-        result.url = url;
+        result.url = absoluteUrl;
 
         if (xhr.status === 200) {
           let contentType = xhr.getResponseHeader("Content-Type");
 
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
-            Logger.warning(tf("dm_asset_head_error", [url]), "File not found");
+            Logger.warning(tf("dm_asset_head_error", [absoluteUrl]), "File not found");
             return null;
           } else {
             const contentLength = xhr.getResponseHeader("Content-Length");
@@ -513,10 +518,10 @@ export let DataManager = function () {
           }
         } else {
           result.responseStatus = xhr.status;
-          Logger.error("Error fetching HEAD for " + url + " status: " + xhr.status, "Error fetching asset");
+          Logger.error("Error fetching HEAD for " + absoluteUrl + " status: " + xhr.status, "Error fetching asset");
         }
       } catch (error) {
-        Logger.error("Error fetching HEAD for " + url + ": " + error.message, "Error fetching asset");
+        Logger.error("Error fetching HEAD for " + absoluteUrl + ": " + error.message, "Error fetching asset");
       }
 
       return result;
@@ -2251,7 +2256,7 @@ function isSameOriginAsCurrent(url) {
   }
 }
 
-function getMarkdownContent(url, runSpecificCache) {
+function getTextContentFromFile(url, runSpecificCache) {
   let result = { content: "", responseStatus: 0 };
 
   if (runSpecificCache[url]) {
@@ -2268,6 +2273,12 @@ function getMarkdownContent(url, runSpecificCache) {
 
     if (xhr.status === 200) {
       result.content = xhr.responseText;
+
+      if(result.content.startsWith("<!DOCTYPE html>"))
+      {
+        // Possible soft 404
+        console.warn(`Warning: The content fetched from ${url} appears to be an HTML page, which may indicate a soft 404 or an error page. Please verify the URL and ensure it points to the intended file.`);        
+      }
     }
   } catch (error) {
     console.error("Error fetching remote markdown:", error.message);
@@ -2308,7 +2319,7 @@ function fetchFDirectiveContent(directive, allowedExtensions, runSpecificCache, 
     return null;
   }
 
-  const fetched = getMarkdownContent(fileUrl, runSpecificCache);
+  const fetched = getTextContentFromFile(fileUrl, runSpecificCache);
   if (fetched.responseStatus !== 200) {
     Logger.error(tf("dm_markdown_file_not_found", [fileUrl, dataPathCtx ?? "-", rowCtx ?? "-"]));
     return null;

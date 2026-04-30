@@ -374,15 +374,29 @@ export function absoluteUsercontent(url) {
 }
 
 export function relativeToUsercontent(url) {
-  if (url.length > 1 && url[0] == "/" && url[1] != "/") {
-    url = "." + url;
-  }
   if (url.indexOf("://") >= 0) {
     return url;
   }
 
+  // Normalize to a plain string without leading ./ or / so we can
+  // inspect the path segments uniformly.
+  let normalized = url;
+  // Strip leading ./  →  "usercontent/foo"
+  // Strip leading /   →  "usercontent/foo"  (but not protocol-relative //)
+  normalized = normalized.replace(/^\.\//, "");
+  if (normalized.length > 1 && normalized[0] === "/" && normalized[1] !== "/") {
+    normalized = normalized.substring(1);
+  }
+
+  // If the path already starts with "usercontent/" (case-sensitive, matching
+  // how the folder is named on disk), strip it so the URL resolution below
+  // does not produce a doubled segment.
+  if (normalized.toLowerCase().startsWith("usercontent/")) {
+    normalized = normalized.substring("usercontent/".length);
+  }
+
   let processed = new URL(
-    url,
+    normalized,
     window.location.origin + window.location.pathname + "usercontent/"
   ).href;
 

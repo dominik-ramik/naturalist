@@ -185,10 +185,13 @@ export function getLegendConfig(dataPath) {
       Checklist.getMapRegionsLegendRows(),
       dataPath
     );
-    // Inject a built-in default for bare-code regions (status === "\0") if no
-    // user-supplied row covers "\0" for this column or globally.
     if (!config.categoryStatusMap.has("\0")) {
-      const row = { status: "\0", ..._DEFAULT_NO_STATUS_ROW };
+      // Inherit the fill from the user-supplied fallback row when present,
+      // so that bare-code regions (status==="\0") are colored identically to
+      // what the legend swatch will show. Falling back to the hardcoded default
+      // only when the user has set no fallback row at all.
+      const fallbackFill = config.fallbackRow?.fill ?? _DEFAULT_NO_STATUS_ROW.fill;
+      const row = { status: "\0", ..._DEFAULT_NO_STATUS_ROW, fill: fallbackFill };
       config.categoryRows.push(row);
       config.categoryStatusSet.add("\0");
       config.categoryStatusMap.set("\0", row);
@@ -563,7 +566,7 @@ function renderTableStats(data, legendConfig, datasetStats) {
  * Gradient mode: continuous color ramp with tick marks pinned at each
  * anchor's proportional position.  With ≤2 ticks all labels go below;
  * with ≥3 ticks labels alternate below/above to avoid crowding.
- * Resolved dataset values are appended in grey parentheses (issue 6).
+ * Resolved dataset values are appended in grey parentheses.
  *
  * Stepped mode: color swatch + label + resolved range per bin.
  * Category rows always follow numeric rows.
@@ -573,20 +576,23 @@ function renderMapLegend(legendConfig, datasetStats, data) {
 
   const presentStatuses = new Set(Object.values(data).map(r => r?.status ?? ''));
 
-  // Statuses explicitly covered by a non-fallback category row
+  // Statuses explicitly covered by a non-fallback category row.
+  // "\0" is the internal sentinel for bare-code regions (no status given) and
+  // is semantically the fallback case — exclude it here just like "".
   const explicitlyCoveredStatuses = new Set(
-    categoryRows.filter(r => r.status !== '').map(r => r.status)
+    categoryRows.filter(r => r.status !== '' && r.status !== '\0').map(r => r.status)
   );
 
-  // The fallback row (empty status) should appear in the legend when at least
-  // one present status is NOT matched by any explicit row — i.e. the fallback
-  // is actually being used to color at least one region.
+  // The fallback row should appear when at least one present status is not
+  // matched by any explicit row. "\0" (bare-code) and "" both count as
+  // "using the fallback", so neither should suppress fallbackIsActive.
   const fallbackIsActive = [...presentStatuses].some(
-    s => s !== '' && !explicitlyCoveredStatuses.has(s)
-  );
+    s => s !== '' && s !== '\0' && !explicitlyCoveredStatuses.has(s)
+  ) || presentStatuses.has('\0');
 
+  // Only render explicit (non-fallback, non-sentinel) category rows inline.
   const presentCatRows = categoryRows.filter(r => {
-    if (r.status === '') return fallbackIsActive && r.legend !== '';
+    if (r.status === '' || r.status === '\0') return false; // handled by fallback block below
     return presentStatuses.has(r.status);
   });
 
@@ -596,13 +602,13 @@ function renderMapLegend(legendConfig, datasetStats, data) {
     const css = gradientCSSForConfig(numericRows, datasetStats);
     const ticks = gradientTicksForConfig(numericRows, datasetStats);
     if (css && ticks.length >= 2) {
-      // Issue 2: alternate below/above for ≥3 ticks; ≤2 → all below.
+      // alternate below/above for ≥3 ticks; ≤2 → all below.
       const hasAbove = ticks.length > 2;
       const ticksIdx = ticks.map((t, i) => ({ ...t, idx: i }));
       const belowTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 0) : ticksIdx;
       const aboveTicks = hasAbove ? ticksIdx.filter(t => t.idx % 2 === 1) : [];
 
-      // Issue 1 & 6: label renderer - first always left, last always right,
+      // label renderer - first always left, last always right,
       // resolved value in grey parentheses.
       const renderLabel = (t, total) => {
         const isFirst = t.idx === 0;
@@ -640,7 +646,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
     }
 
   } else if (numericMode === 'stepped') {
-    // Issue 6: show resolved range [binLo – binHi) in grey parentheses.
+    // show resolved range [binLo – binHi) in grey parentheses.
     const bins = steppedBinsForConfig(numericRows, datasetStats);
     bins.forEach((bin, i) => {
       const nextResolved = bins[i + 1]?.resolved;
@@ -680,7 +686,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
 
 function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
   const isExpanded = !!_tableExpanded[mapId];
-  // Issue 3: sorted region codes (default order / gradient desc / mixed)
+  // sorted region codes (default order / gradient desc / mixed)
   const regionCodes = sortedRegionCodes(data, legendConfig);
   const hasNotes = regionCodes.some(rc => data[rc].notes?.length > 0);
 
@@ -719,7 +725,7 @@ function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
           const resolved = getCachedRegionColor(regionData.status ?? '', legendConfig, datasetStats, dataPath);
           const rawStatus = regionData.status ?? '';
 
-          // Issue 4: stepped shows bin label + actual value in parentheses.
+          // stepped shows bin label + actual value in parentheses.
           // Gradient shows the raw value. Category/fallback shows legend label.
           const statusCell = (() => {
             if (!resolved) return rawStatus;
