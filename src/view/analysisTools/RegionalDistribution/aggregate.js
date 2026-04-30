@@ -15,6 +15,7 @@ import {
 import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { getDataFromDataPath } from '../../../model/DataPath.js';
+import { resolveToHex } from '../../../components/Utils.js';
 
 // ─── Segment detection ────────────────────────────────────────────────────────
 
@@ -339,6 +340,8 @@ const DEFAULT_COLOR = '#55769b';  // --nlblue
 const MIN_INTENSITY = 0.12;       // lightest shade is never pure white
 
 function fadeToWhite(hex, t) {
+  hex = resolveToHex((hex || '').toString().trim());
+
   const h = hex.replace('#', '').padStart(6, '0');
   const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
   const blend = c => Math.min(255, Math.max(0, Math.round(255 + (c - 255) * t)));

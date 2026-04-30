@@ -34,6 +34,47 @@ export function injectCiteKeyLinks(el) {
   });
 }
 
+// Resolve any CSS color string (named, hex, etc.) to a #rrggbb hex string.
+// Uses the browser's own color parser - zero-dependency, handles all valid CSS colors.
+const colorCache = new Map();
+export function resolveToHex(color) {
+  if (colorCache.has(color)) {
+    return colorCache.get(color);
+  }
+
+  if (!color) {
+    colorCache.set(color, '#000000');
+    return '#000000';
+  }
+  // Already a 6-digit hex
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+    colorCache.set(color, color);
+    return color;
+  }
+  // 3-digit hex
+  if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+    const [, r, g, b] = color.match(/^#(.)(.)(.)$/);
+    colorCache.set(color, '#' + r + r + g + g + b + b);
+    return colorCache.get(color);
+  }
+  // Named color or any other CSS value — ask the browser
+  const el = document.createElement('canvas');
+  const ctx = el.getContext('2d');
+  ctx.fillStyle = color;
+  const resolved = ctx.fillStyle; // browser normalises to #rrggbb or rgba(...)
+  if (/^#[0-9a-fA-F]{6}$/.test(resolved)) {
+    colorCache.set(color, resolved);
+    return resolved;
+  }
+  // Handle rgba(r, g, b, a) fallback
+  const m = resolved.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (m) {
+    colorCache.set(color, '#' + [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, '0')).join(''));
+    return colorCache.get(color);
+  }
+  return '#000000';
+}
+
 const markdownCache = new Map();
 export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false, highlightRegex = null) {
   //process bibliography

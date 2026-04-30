@@ -68,6 +68,7 @@
 }
 
 .map-data-table-header-label {
+    text-align: left;
     flex: 1;
 }
 
