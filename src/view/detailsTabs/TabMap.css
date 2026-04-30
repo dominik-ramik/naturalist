@@ -38,7 +38,6 @@
    ========================================================================== */
 
 .map-data-table-wrap {
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Toggle header */
@@ -46,18 +45,23 @@
     display: flex;
     align-items: center;
     gap: 0.55em;
-    padding: 0.45em 0.85em;
-    background-color: rgba(255, 255, 255, 0.35);
+    padding: 0.5em 0.85em;
+    background-color: rgba(85, 118, 155, 0.12);
+    border-top: 2px solid rgba(85, 118, 155, 0.25);
     cursor: pointer;
     user-select: none;
     font-size: 0.8em;
     font-weight: 600;
-    color: #555;
+    color: var(--nlblue, #55769b);
     transition: background-color 0.15s;
 }
 
 .map-data-table-header:hover {
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(85, 118, 155, 0.2);
+}
+
+.map-data-table-toggle {
+    opacity: 0.8;
 }
 
 .map-data-table-toggle {
