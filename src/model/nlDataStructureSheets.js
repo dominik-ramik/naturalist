@@ -2393,7 +2393,7 @@ EASY TO CONFUSE WITH:
                             description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            defaultValue: "transparent",
+                            defaultValue: "",
                             allowedContent: "cssColor",
                             supportsMultilingual: false
                         }
@@ -2408,7 +2408,7 @@ EASY TO CONFUSE WITH:
                             description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            defaultValue: "black",
+                            defaultValue: "",
                             allowedContent: "cssColor",
                             supportsMultilingual: false
                         }
@@ -2423,7 +2423,7 @@ EASY TO CONFUSE WITH:
                             description: "",
                             allowEmpty: true,
                             allowDuplicates: "yes",
-                            defaultValue: "transparent",
+                            defaultValue: "",
                             allowedContent: "cssColor",
                             supportsMultilingual: false
                         }

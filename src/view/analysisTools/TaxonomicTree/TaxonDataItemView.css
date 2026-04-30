@@ -2,7 +2,7 @@ span.simple-value {
   user-select: text;
 }
 
-span.category {
+span.category.styled {
   border-radius: var(--pad-large);
   padding-left: var(--pad-small);
   padding-right: var(--pad-small);
@@ -12,6 +12,9 @@ span.category {
   border: 1px solid transparent;
   display: inline-block;
   margin-bottom: 1px;
+}
+
+span.category.unstyled {
 }
 
 span.simple-value p:first-child {
