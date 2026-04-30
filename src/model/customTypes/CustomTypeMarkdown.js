@@ -1,7 +1,7 @@
 import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers } from "./helpers.js";
-import { htmlToPlainText, processMarkdownWithBibliography } from "../../components/Utils.js";
+import { htmlToPlainText, injectCiteKeyLinks, processMarkdownWithBibliography } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
 
 export let customTypeMarkdown = {
@@ -54,7 +54,7 @@ export let customTypeMarkdown = {
       return null;
     }
 
-    const htmlContent = processMarkdownWithBibliography(displayData);
+    const htmlContent = processMarkdownWithBibliography(data);
     const searchable = htmlToPlainText(htmlContent).trim();
     return searchable;
   },
@@ -75,6 +75,9 @@ export let customTypeMarkdown = {
     // Process markdown
     const htmlContent = processMarkdownWithBibliography(displayData, "", false, uiContext?.highlightRegex);
 
-    return m("span", m.trust(htmlContent));
+    return m("span", {
+      oncreate: (vnode) => injectCiteKeyLinks(vnode.dom),
+      onupdate: (vnode) => injectCiteKeyLinks(vnode.dom),
+    }, m.trust(htmlContent));
   },
 };

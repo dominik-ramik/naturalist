@@ -52,11 +52,16 @@ export let TaxonView = {
           break;
       }
 
+      const taxonLeaf = vnode.attrs.taxonTree.taxon;
+      const taxonRouteParam = encodeURIComponent(
+        taxonLeaf.name + "\x00" + (taxonLeaf.authority ?? "")
+      );
+      
       return m(
         ".show-all-of-taxon.clickable",
         {
           onclick: function (e) {
-            routeTo("/details/" + taxonName + "/" + tabName);
+            routeTo("/details/" + taxonRouteParam + "/" + tabName);
           },
         },
         m(".taxon-details-icon", [m("img[src=./img/ui/tabs/" + icon + ".svg]")]),
