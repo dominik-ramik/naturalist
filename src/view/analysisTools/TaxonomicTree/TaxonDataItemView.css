@@ -117,7 +117,8 @@ span.simple-value h4 {
 }
 
 .data-item-view .map-regions-data {
-  display: inline;
+  display: inline-block;
+  width: 100%;
 }
 
 .data-item-view .map-regions-data p {
@@ -175,7 +176,7 @@ a.citation {
   /* New additions to separate the footnote from the main taxon data */
   margin-top: var(--pad-small);
   margin-bottom: var(--pad-small);
-  font-size: var(--font-smaller);
+  font-size: 0.85em;
 }
 
 /**************************/

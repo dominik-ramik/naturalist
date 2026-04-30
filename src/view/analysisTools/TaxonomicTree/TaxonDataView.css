@@ -3,44 +3,81 @@
     flex-direction: column;
 }
 
-.middle-row {
-    display: flex;
-    flex-direction: row;
-}
-
-.middle-row .column:first-child {
-    /*flex-grow: 1;*/
-}
-
 .top-row {}
 
 .bottom-row {
-    margin-top: 1em
+    margin-top: 1em;
 }
 
-.column {
-    width: 33%;
+/* ── Middle row ─────────────────────────────────────────────────────────────
+ * Columns use flex-grow so proportions are set via a single variable per
+ * column, borders + padding are absorbed by box-sizing, and the gap between
+ * columns is handled by the divider border on :not(:first-child) so no extra
+ * margin arithmetic is needed.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.middle-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;    /* columns don't stretch to the tallest sibling */
 }
 
-.column:not(:first-child) {
+.middle-row .column {
+    box-sizing: border-box;
+    min-width: 0;               /* allows flex children to shrink below content size */
+}
+
+.middle-row .column:not(:first-child) {
     border-left: 1px solid #d7d7d7;
     padding-left: 1em;
 }
 
-.left-column {}
+/* ── 1-column layout: sole column fills the row ─────────────────────────── */
+.middle-row .column:first-child:last-child {
+    flex: 1 1 100%;
+}
 
-.middle-column {}
+/* ── 2-column layout ────────────────────────────────────────────────────────
+ * Both columns are 50 / 50 by default.
+ * To switch to 1/3 + 2/3, change the two flex-grow values to 1 and 2.
+ * ────────────────────────────────────────────────────────────────────────── */
+.middle-row .column:first-child:nth-last-child(2) {
+    flex: 1 1 0;   /* ← col1 weight (1 = 50%, or set to 1 for 1/3) */
+}
+.middle-row .column:nth-child(2):last-child {
+    flex: 2 1 0;   /* ← col2 weight (1 = 50%, or set to 2 for 2/3) */
+}
 
-.right-column {}
+/* ── 3-column layout: equal thirds ──────────────────────────────────────── */
+.middle-row .column:first-child:nth-last-child(3),
+.middle-row .column:nth-child(2):nth-last-child(2),
+.middle-row .column:nth-child(3):last-child {
+    flex: 1 1 0;
+}
 
-.bottom-row {}
-
+/* ── Responsive: stack columns below 1000 px ────────────────────────────── */
 @media (max-width: 1000px) {
     .middle-row {
         flex-direction: column;
     }
 
-    .column {
-        width: auto;
+    /* Reset all column flex-grow overrides so stacked columns fill the row */
+    .middle-row .column,
+    .middle-row .column:first-child:last-child,
+    .middle-row .column:first-child:nth-last-child(2),
+    .middle-row .column:nth-child(2):last-child,
+    .middle-row .column:first-child:nth-last-child(3),
+    .middle-row .column:nth-child(2):nth-last-child(2),
+    .middle-row .column:nth-child(3):last-child {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .middle-row .column:not(:first-child) {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #d7d7d7;
+        padding-top: 1em;
+        margin-top: 1em;
     }
 }
