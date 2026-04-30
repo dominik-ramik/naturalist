@@ -654,8 +654,8 @@ export const nlDataStructureSheets = {
                     },
                     searchCategoryTitle: {
                         name: "Search category title",
-                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated prefix to group the filter with others under a common section heading - e.g. `Ecology | Habitat` and `Ecology | Life form` both appear under an **Ecology** section.",
-                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Group | Label` pattern to organise multiple logically related filters into named sections.",
+                        description: "If non-empty, a filter dropdown appears in the search sidebar with this label allowing you to filter data on this column. The filter type (categorical checkboxes vs. numeric range) is determined automatically from the [[ref:content.customDataDefinition.dataType]] value.\n\nAdd a pipe-separated prefix to group the filter with others under a common section heading - e.g. `Ecology | Habitat` and `Ecology | Life form` both appear under an **Ecology** section. Prepend `!` for one or few important data filters you want to display above all other filters in a dedicated row. Ideal for your most important filters that you want users to see right away without scrolling through the full filter list.",
+                        howToUse: "Set for any column whose values users should be able to filter by. Omit for display-only or template-only columns. Use the `Group | Label` pattern to organise multiple logically related filters into named sections. Prepend `!` to the filter label to pin it above all other filters in a dedicated row.",
                         notes: [
                             {
                                 type: "tip",
@@ -681,6 +681,10 @@ export const nlDataStructureSheets = {
                                     [
                                         "redlist",
                                         "Red List"
+                                    ],
+                                    [
+                                        "country",
+                                        "! Country checklist"
                                     ]
                                 ]
                             }

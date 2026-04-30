@@ -15,6 +15,11 @@ ul.filter-buttons li {
     flex-basis: 50%;
 }
 
+ul.filter-buttons.full-width {
+    border-bottom: 1px solid white;
+    padding-bottom: 1em;
+}
+
 /* Priority (!) filters always span the full width — one item per row */
 ul.filter-buttons.full-width li {
     flex-basis: 100%;
