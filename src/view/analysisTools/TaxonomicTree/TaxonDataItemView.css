@@ -59,7 +59,7 @@ span.simple-value h4 {
 }
 
 .data-item-view {
-  margin-bottom: var(--pad-small);
+  margin-bottom: 0.2em;
   margin-right: var(--pad-small);
   margin-left: var(--pad-small);
 }
@@ -180,12 +180,6 @@ a.citation {
 }
 
 /**************************/
-
-.data-item-view {
-  margin-bottom: 0;
-  margin-right: var(--pad-small);
-  margin-left: var(--pad-small);
-}
 
 .data-item-title {
   display: inline-block;

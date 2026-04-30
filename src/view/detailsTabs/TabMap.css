@@ -127,6 +127,13 @@
 
 .map-data-table-td-notes {
     color: #666;
+    max-width: 13em;
+}
+
+.map-data-table-td-notes p{
+    display: inline;
+    margin: 0;
+    padding: 0;
 }
 
 /* Status color dot */

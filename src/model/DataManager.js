@@ -967,22 +967,21 @@ export let DataManager = function () {
           const status = (row.status || "").toString().trim();
           const legendType = (row.legendType || "category").toString().trim().toLowerCase();
 
-          const entry = {
-            columnName: colName,
-            status: status,
-            fill: row.fillColor,
-            legend: (row.legend || "").toString(),
-            appendedLegend: (row.appendedLegend || "").toString(),
-            legendType: legendType,
-          };
-
-          // The global fallback: empty columnName AND empty status AND category type
+          // The global fallback: empty columnName AND empty status AND category type.
+          // Handled separately; does not go into statuses[].
           if (colName === "" && status === "" && (legendType === "" || legendType === "category")) {
-            meta.mapRegionsLegend.default.fill = entry.fill;
-            meta.mapRegionsLegend.default.legend = entry.legend;
-            meta.mapRegionsLegend.default.appendedLegend = entry.appendedLegend;
+            meta.mapRegionsLegend.default.fill = row.fillColor;
+            meta.mapRegionsLegend.default.legend = (row.legend || "").toString();
+            meta.mapRegionsLegend.default.appendedLegend = (row.appendedLegend || "").toString();
           } else {
-            meta.mapRegionsLegend.statuses.push(entry);
+            meta.mapRegionsLegend.statuses.push({
+              columnName: colName,
+              status: status,
+              fill: row.fillColor,
+              legend: (row.legend || "").toString(),
+              appendedLegend: (row.appendedLegend || "").toString(),
+              legendType: legendType,
+            });
           }
         }
       );
@@ -1073,6 +1072,7 @@ export let DataManager = function () {
             .toLowerCase()
             .split("|")
             .forEach((x) => placement.push(x.trim()));
+
 
           if (dataType == "custom") {
             meta[computedDataPath].title = info.fullRow.title;

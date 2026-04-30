@@ -173,12 +173,27 @@ export function getCachedAggregateStats(allNumericValues, mapPath) {
  * Exported so TabSummary, FilterDropdownView, and other consumers can share
  * the same cached instance without calling parseLegendConfig on every render.
  */
+const _DEFAULT_NO_STATUS_ROW = {
+  fill: '#4bc455',
+  legend: '',
+  appendedLegend: '',
+};
+
 export function getLegendConfig(dataPath) {
   if (!_legendConfigCache[dataPath]) {
-    _legendConfigCache[dataPath] = parseLegendConfig(
+    const config = parseLegendConfig(
       Checklist.getMapRegionsLegendRows(),
       dataPath
     );
+    // Inject a built-in default for bare-code regions (status === "\0") if no
+    // user-supplied row covers "\0" for this column or globally.
+    if (!config.categoryStatusMap.has("\0")) {
+      const row = { status: "\0", ..._DEFAULT_NO_STATUS_ROW };
+      config.categoryRows.push(row);
+      config.categoryStatusSet.add("\0");
+      config.categoryStatusMap.set("\0", row);
+    }
+    _legendConfigCache[dataPath] = config;
   }
   return _legendConfigCache[dataPath];
 }
@@ -317,12 +332,15 @@ function parseInlineMapRegions(mapRegions) {
     else if (idxHash !== -1) splitIndex = idxHash;
 
     let regionCode, tail;
-    if (splitIndex === -1) { regionCode = regionStr; tail = ""; }
+    const isBareCode = splitIndex === -1;
+    if (isBareCode) { regionCode = regionStr; tail = ""; }
     else { regionCode = regionStr.substring(0, splitIndex); tail = regionStr.substring(splitIndex); }
     regionCode = regionCode.trim();
     if (!regionCode) return;
     if (tail.startsWith(":")) tail = tail.substring(1);
-    result[regionCode] = parseRegionString(tail);
+    const parsed = parseRegionString(tail);
+    if (isBareCode) parsed.status = "\0";
+    result[regionCode] = parsed;
   });
 
   return result;
@@ -551,9 +569,27 @@ function renderTableStats(data, legendConfig, datasetStats) {
  * Category rows always follow numeric rows.
  */
 function renderMapLegend(legendConfig, datasetStats, data) {
-  const { categoryRows, numericRows, numericMode } = legendConfig;
+  const { categoryRows, numericRows, numericMode, fallbackRow } = legendConfig;
+
   const presentStatuses = new Set(Object.values(data).map(r => r?.status ?? ''));
-  const presentCatRows = categoryRows.filter(r => presentStatuses.has(r.status));
+
+  // Statuses explicitly covered by a non-fallback category row
+  const explicitlyCoveredStatuses = new Set(
+    categoryRows.filter(r => r.status !== '').map(r => r.status)
+  );
+
+  // The fallback row (empty status) should appear in the legend when at least
+  // one present status is NOT matched by any explicit row — i.e. the fallback
+  // is actually being used to color at least one region.
+  const fallbackIsActive = [...presentStatuses].some(
+    s => s !== '' && !explicitlyCoveredStatuses.has(s)
+  );
+
+  const presentCatRows = categoryRows.filter(r => {
+    if (r.status === '') return fallbackIsActive && r.legend !== '';
+    return presentStatuses.has(r.status);
+  });
+
   const items = [];
 
   if (numericMode === 'gradient') {
@@ -630,6 +666,13 @@ function renderMapLegend(legendConfig, datasetStats, data) {
     ]));
   });
 
+  if (fallbackIsActive && fallbackRow?.legend) {
+    items.push(m('.legend-item', [
+      m('.map-fill', { style: { backgroundColor: fallbackRow.fill } }),
+      m('.map-legend-title', fallbackRow.legend),
+    ]));
+  }
+
   return items.length ? m('.legend.media-map-legend', items) : null;
 }
 
@@ -696,7 +739,7 @@ function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
               m('span.map-data-table-dot', { style: { backgroundColor: resolved?.fill ?? '#ccc' } }),
               m('span', statusCell),
             ]),
-            hasNotes ? m('td.map-data-table-td.map-data-table-td-notes', ( (regionData.notes.map(note => processMarkdownWithBibliography(note)) ) || []).join('; ')) : null,
+            hasNotes ? m('td.map-data-table-td.map-data-table-td-notes', m.trust(((regionData.notes.map(note => processMarkdownWithBibliography(note))) || []).join('; '))) : null,
           ]);
         })),
       ]),

@@ -1314,7 +1314,7 @@ export let Checklist = {
     if (Array.isArray(legend.statuses)) rows.push(...legend.statuses);
     return rows.map(r => ({
       columnName: r.columnName || "",
-      statusCode: r.status || "",
+      statusCode: r.status ?? "",
       fillColor: r.fill || "",
       legend: r.legend || "",
       appendedLegend: r.appendedLegend || "",
