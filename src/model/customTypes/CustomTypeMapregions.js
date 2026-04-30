@@ -696,7 +696,7 @@ function renderMapDataTable(data, dataPath, legendConfig, datasetStats, mapId) {
               m('span.map-data-table-dot', { style: { backgroundColor: resolved?.fill ?? '#ccc' } }),
               m('span', statusCell),
             ]),
-            hasNotes ? m('td.map-data-table-td.map-data-table-td-notes', (regionData.notes || []).join('; ')) : null,
+            hasNotes ? m('td.map-data-table-td.map-data-table-td-notes', ( (regionData.notes.map(note => processMarkdownWithBibliography(note)) ) || []).join('; ')) : null,
           ]);
         })),
       ]),

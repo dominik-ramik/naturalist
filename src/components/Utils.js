@@ -34,8 +34,14 @@ export function injectCiteKeyLinks(el) {
   });
 }
 
+const markdownCache = new Map();
 export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false, highlightRegex = null) {
   //process bibliography
+  const key = data + "|" + tailingSeparator + "|" + skipInterpolationToUserContentFolder + "|" + highlightRegex;
+  if (markdownCache.has(key)) {
+    return markdownCache.get(key);
+  }
+
   try {
     data = Checklist.transformDatabaseShortcodes(data);
 
@@ -66,6 +72,8 @@ export function processMarkdownWithBibliography(data, tailingSeparator = "", ski
   if (highlightRegex) {
     data = highlightHtml(data, highlightRegex);
   }
+
+  markdownCache.set(key, data);
 
   return data;
 }
