@@ -171,7 +171,10 @@ export function isColumnPresentInHeaders(dataType, basePath, headers) {
   // Also normalise candidates for the same reason (though CDD paths already use #)
   return candidates.some(col => {
     const normCol = dataPath.modify.itemNumbersToHash(col);
-    return normalisedHeaders.some(h => h === normCol || h.startsWith(normCol + "."));
+    return normalisedHeaders.some(h =>
+      h === normCol ||
+      h.startsWith(normCol + ".") ||
+      h.startsWith(normCol + ":")); // language-suffixed variant: "col:en"
   });
 }
 

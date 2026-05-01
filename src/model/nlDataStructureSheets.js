@@ -1228,21 +1228,24 @@ EASY TO CONFUSE WITH:
                         title: "Status",
                         searchCategoryTitle: "Status",
                         dataType: "category",
-                        placement: "left"
+                        placement: "left",
+                        belongsTo: "taxon"
                     },
                     {
                         columnName: "redlist",
                         title: "Red List Category",
                         searchCategoryTitle: "Red List Category",
                         dataType: "category",
-                        placement: "left"
+                        placement: "left",
+                        belongsTo: "taxon"
                     },
                     {
                         columnName: "notes",
                         title: "Notes",
                         searchCategoryTitle: "",
                         dataType: "markdown",
-                        placement: "bottom"
+                        placement: "bottom",
+                        belongsTo: "taxon"
                     }
                 ]
             },
@@ -3215,7 +3218,7 @@ EASY TO CONFUSE WITH:
                 "Species.authority": "(Lesson, 1829)",
                 "redlist": "NT",
                 "status": "I",
-                "notes": ""
+                "notes": "Large, terrestrial Australian hylid frog characterized by prominent green and gold dorsal markings and unwebbed fingers. Native to eastern Australia but introduced to several Pacific countries initially as a pest control."
             },
             {
                 "Class": "Reptilia",
@@ -3259,7 +3262,7 @@ EASY TO CONFUSE WITH:
                 "Species.authority": "Mertens, 1928",
                 "redlist": "LC",
                 "status": "E",
-                "notes": ""
+                "notes": "Small, terrestrial New Caledonian scincid lizard characterized by dark-spotted dorsal markings and a preference for leaf-litter habitat."
             },
             {
                 "Class": "Reptilia",

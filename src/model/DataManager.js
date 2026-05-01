@@ -2743,6 +2743,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const present = isArrayLeaf
       ? headers.some(h =>
         h === effectiveColName ||                                    // pipe-separated root
+        h.startsWith(effectiveColName + ":") ||                     // language-suffixed root: "habitat:en"
         (h.startsWith(effectiveColName) &&
           /^\d/.test(h.slice(effectiveColName.length)))              // numbered child: "photo1", "photo1.source", etc.
       )
