@@ -2389,7 +2389,10 @@ export let DataManager = function () {
           originalData: {},    // not needed for source resolution
           taxon: { name: "", authority: "" },
         };
-        return customTypeHelpers.processSource(rawSource, uiContext).fullSource;
+
+        const relativeUrl = customTypeHelpers.processSourceBothVariants(rawSource, uiContext).fullSource;
+
+        return absoluteUsercontent(relativeUrl);
       };
 
       const result = await compileDwcArchive({
