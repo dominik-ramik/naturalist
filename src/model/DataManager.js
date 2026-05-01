@@ -2060,6 +2060,16 @@ export let DataManager = function () {
                         );
                       }
                       break;
+                    case "dataPathWithWildcard": {
+                      const wildcardStripped = value.endsWith(".*") ? value.slice(0, -2) : value;
+                      if (wildcardStripped.includes("*") || !dataPath.validate.isDataPath(wildcardStripped)) {
+                        Logger.error(
+                          tf("dm_incorrect_datapath", [value, column.name, table.name])
+                          + (integrity.migration ? " " + integrity.migration : "")
+                        );
+                      }
+                      break;
+                    }
                     case "regex":
                       let regexPattern = integrity.regex;
                       if (!regexPattern.startsWith("^")) {
