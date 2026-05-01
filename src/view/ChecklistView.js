@@ -122,7 +122,7 @@ export let ChecklistView = {
                 m("span.demo-notice-badge", t("demo_mode_badge")),
                 m("p.demo-notice-text", m.trust( t("demo_mode_notice"))),
                 m("a.demo-notice-btn[href=../examples]", t("demo_mode_btn")),
-                m("a.demo-notice-btn[href=../examples/pmp]", t("demo_mode_btn_main")), // TODO add example
+                //m("a.demo-notice-btn[href=../examples/pmp]", t("demo_mode_btn_main")), // TODO add example
               ]),
               m("hr.welcome-divider"),
             ] : []),

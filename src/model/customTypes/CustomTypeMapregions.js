@@ -584,10 +584,11 @@ function renderMapLegend(legendConfig, datasetStats, data) {
   );
 
   // The fallback row should appear when at least one present status is not
-  // matched by any explicit row. "\0" (bare-code) and "" both count as
-  // "using the fallback", so neither should suppress fallbackIsActive.
+  // matched by any explicit row or by the numeric mode (gradient/stepped).
+  // "\0" (bare-code) and "" both count as "using the fallback", so neither
+  // should suppress fallbackIsActive.
   const fallbackIsActive = [...presentStatuses].some(
-    s => s !== '' && s !== '\0' && !explicitlyCoveredStatuses.has(s)
+    s => s !== '' && s !== '\0' && !explicitlyCoveredStatuses.has(s) && !(numericMode && parseNumericStatus(s) !== null)
   ) || presentStatuses.has('\0');
 
   // Only render explicit (non-fallback, non-sentinel) category rows inline.
