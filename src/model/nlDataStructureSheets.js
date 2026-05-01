@@ -2009,8 +2009,6 @@ EASY TO CONFUSE WITH:
                                     [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorOrganizationName", "Example Organization", ""],
                                     [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorUrl", "https://example.com/jane-doe", ""],
                                     [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:creatorUserId", "0000-0002-1825-1234", ""],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:geographicDescription", "Azerbaijan", "In XML renders under `coverage/geographicCoverage/geographicDescription`"],
-                                    [Object.keys(DWC_ARCHIVE_TYPES)[1], "eml:generalTaxonomicCoverage", "Dataset covers the vascular plants of Gobustan National Park in Azerbaijan.", "In XML renders under `coverage/taxonomicCoverage/generalTaxonomicCoverage`"],
                                 ]
                             },
                         ],
@@ -2086,7 +2084,7 @@ EASY TO CONFUSE WITH:
                             },
                             {
                                 label: "F) plain text constant across the entire export",
-                                text: "Use plain unprefixed text for constant values that are the same for every record: language, institution code, collection code, license, basis of record, geodetic datum, and so on. The value after `plain:` is used verbatim.",
+                                text: "Use plain unprefixed text for constant values that are the same for every record: language, institution code, collection code, license, basis of record, geodetic datum, and so on.",
                                 columns: ["Export to", "Term", "Value source"],
                                 rows: [
                                     ["checklist", "dcterms:language", "en"],
@@ -2152,7 +2150,18 @@ EASY TO CONFUSE WITH:
                 },
                 data: [],
                 templateData: [
-                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "eml:precomposed", valueSource: "F:dwc/checklist-eml.xml" },
+                    {                     exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:packageId", valueSource: "doi:10.12345/mydataset"},
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:title", valueSource: "config:Project name" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:pubDate", valueSource: "auto:pubDate" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:abstract", valueSource: "config:About section" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:licenseUri", valueSource: "https://creativecommons.org/licenses/by/4.0/legalcode" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:licenseLabel", valueSource: "CC BY 4.0" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorGivenName", valueSource: "Jane" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorSurName", valueSource: "Doe" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorEmail", valueSource: "jane.doe@example.com" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorOrganizationName", valueSource: "Example Organization" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorUrl", valueSource: "https://example.com/jane-doe" },
+                    { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0],	term: "eml:creatorUserId", valueSource: "0000-0002-1825-1234" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dcterms:language", valueSource: "en" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:institutionCode", valueSource: "NHM" },
                     { exportTo: Object.keys(DWC_ARCHIVE_TYPES)[0], term: "dwc:datasetName", valueSource: "config: Project name" },

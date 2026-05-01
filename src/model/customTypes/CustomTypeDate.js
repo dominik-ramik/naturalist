@@ -95,7 +95,7 @@ export let customTypeDate = {
     }
 
     switch (subPath) {
-      case "dmy":
+      case "ymd":
         return dayjs(data).format("YYYY-MM-DD");
       case "year":
         return dayjs(data).format("YYYY");

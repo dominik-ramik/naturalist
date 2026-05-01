@@ -11,7 +11,7 @@ export const customTypeDateMeta = {
     dwcNotes: {
       output: "ISO 8601 date string (YYYY-MM-DD) its numeric components.",
       subPaths: [
-         {suffix: "dmy", label: "Date in YYYY-MM-DD format"},
+         {suffix: "ymd", label: "Date in YYYY-MM-DD format"},
          {suffix: "year", label: "Year as a 4-digit number"},
          {suffix: "month", label: "Month as a number (1-12)"},
          {suffix: "day", label: "Day of month as a number (1-31)"},

@@ -56,35 +56,21 @@ export function buildEmlXml(opts) {
     const metadataProviderBlock = `    <metadataProvider>\n${responsiblePartyContent}    </metadataProvider>\n`;
     const contactBlock = `    <contact>\n${responsiblePartyContent}    </contact>\n`;
 
-    const geoCoverage = geographicDescription
-        ? `    <coverage>\n      <geographicCoverage>\n` +
-        `        <geographicDescription>${e(geographicDescription)}</geographicDescription>\n` +
-        `      </geographicCoverage>\n    </coverage>\n` : "";
-
-    const taxCoverage = taxonomicDescription
-        ? `    <coverage>\n      <taxonomicCoverage>\n` +
-        `        <generalTaxonomicCoverage>${e(taxonomicDescription)}</generalTaxonomicCoverage>\n` +
-        `      </taxonomicCoverage>\n    </coverage>\n` : "";
-
     // intellectualRights: use a human-readable label if available, else the URI
     const licenseText = licenseLabel || licenseUri || "";
 
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.0"
-                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.0 http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd"
-                 packageId="${e(packageId)}"
-                 system="http://gbif.org"
-                 scope="system"
-                 xml:lang="${e(language)}">
+    const resultXml = `<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 https://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd" packageId="${e(packageId)}" system="http://gbif.org" scope="system" xml:lang="${e(language)}">
     <dataset>
         <title xml:lang="${e(language)}">${e(title)}</title>
 ${creatorBlock}${metadataProviderBlock}<pubDate>${e(pubDate)}</pubDate>
         <language>${e(language)}</language>
         <abstract><para>${e(abstract)}</para></abstract>
-${geoCoverage}${taxCoverage}    <intellectualRights>
+    <intellectualRights>
             <para><ulink url="${e(licenseUri)}"><citetitle>${e(licenseText)}</citetitle></ulink></para>
         </intellectualRights>${contactBlock}
     </dataset>
 </eml:eml>`;
+
+    return resultXml;
 }

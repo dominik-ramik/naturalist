@@ -2439,14 +2439,15 @@ function getTextContentFromFile(url, runSpecificCache) {
     if (xhr.status === 200) {
       result.content = xhr.responseText;
 
-      if(result.content.startsWith("<!DOCTYPE html>"))
-      {
-        // Possible soft 404
-        console.warn(`Warning: The content fetched from ${url} appears to be an HTML page, which may indicate a soft 404 or an error page. Please verify the URL and ensure it points to the intended file.`);        
+      if (result.content.startsWith("<!DOCTYPE html")) {
+        // Soft 404: server returned an HTML error page instead of the requested file
+        Logger.error(`The file at ${url} returned an HTML page instead of the expected content (possible soft 404).`);
+        result.content = "";
+        result.responseStatus = 0;
       }
     }
   } catch (error) {
-    console.error("Error fetching remote markdown:", error.message);
+    // Network-level failure; responseStatus remains 0 and the caller will log a contextual error
   }
 
   runSpecificCache[url] = result;
@@ -2509,7 +2510,7 @@ function processFDirective(data, runSpecificCache, dataPath, rowNumber, assetsCo
 
   const rewrittenImagePaths = [];
   const processedContent = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, altText, imageUrl) => {
-    if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/')) return match;
+    if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/') || imageUrl.startsWith('./')) return match;
     const rewrittenPath = mdFileDirectory + imageUrl;
     rewrittenImagePaths.push(rewrittenPath);
     return `![${altText}](${rewrittenPath})`;

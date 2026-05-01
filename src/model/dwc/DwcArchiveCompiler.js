@@ -217,7 +217,7 @@ async function compileTarget(opts) {
     }
   } else if (emlRows.length > 0) {
     // Assemble EML from individual eml: rows
-    emlContent = buildEmlFromRows(emlRows, archiveType);
+    emlContent = buildEmlFromRows(emlRows, archiveType, customizationData);
   }
 
   if (!emlContent) {
@@ -245,7 +245,7 @@ async function compileTarget(opts) {
     const ns = prefixToNamespace(prefix);
     const uri = ns ? ns + localPart : null;
 
-    termColumns.push({ term, valueSource: (row.valueSource || "").trim(), uri });
+    termColumns.push({ term, localPart, valueSource: (row.valueSource || "").trim(), uri });
   }
 
   if (termColumns.length === 0) {
@@ -282,11 +282,16 @@ async function compileTarget(opts) {
   // ── 8. Build meta.xml ────────────────────────────────────────────────────
   const fieldUris = termColumns.map(tc => tc.uri);
   const emlFileName = emlContent ? "eml.xml" : null;
+  // Determine the ID term URI so <id index="N"/> points to the right column.
+  const idTermLocalName = archiveType === "occurrences" ? "occurrenceID" : "taxonID";
+  const idTermUri = "http://rs.tdwg.org/dwc/terms/" + idTermLocalName;
+
   const metaXml = buildMetaXml(
     fieldUris,
     typeConfig.rowTypeDwcUri,
     typeConfig.csvFileName,
-    emlFileName
+    emlFileName,
+    idTermUri
   );
 
   // ── 9. Package ZIP ────────────────────────────────────────────────────────
@@ -322,8 +327,8 @@ function buildDataRows({
   occurrenceLevelIndex,
   mediaUrlResolver,
 }) {
-  // The CSV columns are the term names (used as keys in row objects)
-  const csvColumns = termColumns.map(tc => tc.term);
+  // The CSV columns are the bare local part of each term (e.g. "scientificName" not "dwc:scientificName")
+  const csvColumns = termColumns.map(tc => tc.localPart);
 
   /** @type {Object[]} */
   const csvRows = [];
@@ -365,7 +370,7 @@ function buildDataRows({
       const row = {};
       for (const tc of termColumns) {
         const val = resolve(tc.valueSource, ctx);
-        row[tc.term] = val !== null ? val : "";
+        row[tc.localPart] = val !== null ? val : "";
       }
       csvRows.push(row);
     }
@@ -398,7 +403,7 @@ function buildDataRows({
       const row = {};
       for (const tc of termColumns) {
         const val = resolve(tc.valueSource, ctx);
-        row[tc.term] = val !== null ? val : "";
+        row[tc.localPart] = val !== null ? val : "";
       }
       csvRows.push(row);
     }
@@ -409,17 +414,26 @@ function buildDataRows({
 
 // ─── EML assembly from individual eml: rows ───────────────────────────────────
 
-function buildEmlFromRows(emlRows, archiveType) {
+function buildEmlFromRows(emlRows, archiveType, customizationData) {
+  // Minimal resolver context for EML-level directives (config:, auto:, literals).
+  // Row-level directives (column:, taxa:, media:) are not meaningful in EML.
+  const emlCtx = {
+    target: archiveType,
+    customizationData,
+    onLog(level, msg) {
+      if (level === "error") Logger.error(msg, LOG_TAG);
+      else Logger.warning(msg, LOG_TAG);
+    },
+  };
+
   function getVal(term) {
     const row = emlRows.find(r => r.term === term);
     if (!row) return "";
-    // valueSource for eml: rows is always plain: already resolved or a literal
     const vs = (row.valueSource || "").trim();
-    // Strip leading "plain: " if present (user may have used plain: prefix)
-    if (vs.startsWith("plain:")) return vs.slice("plain:".length).trim();
-    // For "config: X" or "auto: X" in EML rows, we'd need the resolver,
-    // but EML rows are typically plain: or literal. Treat as literal.
-    return vs;
+    if (!vs) return "";
+    // Resolve all directives (config:, auto:, literals) via the shared resolver
+    const resolved = resolve(vs, emlCtx);
+    return resolved !== null ? resolved : "";
   }
 
   // Validate required EML terms
