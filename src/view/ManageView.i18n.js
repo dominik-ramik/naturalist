@@ -44,7 +44,7 @@ export const manageViewI18n = {
     config_format_error: "Server configuration error: credentials.php is improperly formatted. Please contact the administrator.",
     back_to_upload_after_error: "Back to spreadsheet upload",
     processing: "Processing",
-    this_may_take_time: "Relax.This may take some time, especially if your spreadsheet has thousands of entries.",
+    this_may_take_time: "Relax. This may take some time, especially if your spreadsheet has thousands of entries.",
     server_returned_odd_message: "The server returned an unexpected response.You may need to change the configuration of your PHP server or contact the author of this app.",
     server_returned_odd_message_details: "Here are details: ",
     log_messages: "Messages",
