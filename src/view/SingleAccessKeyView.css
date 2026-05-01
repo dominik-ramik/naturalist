@@ -20,7 +20,7 @@
     box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
     border-radius: var(--pad-large, 1em);
     color: black;
-    
+
     /* Layout */
     margin-bottom: 15px;
     padding: 15px;
@@ -40,7 +40,8 @@
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 0.85em;
-    border: 1px solid #999; /* reachable style */
+    border: 1px solid #999;
+    /* reachable style */
     background-color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     color: #000;
@@ -49,7 +50,7 @@
 
 .sak-clear-filter:hover {
     background-color: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
@@ -235,14 +236,6 @@
     margin-left: 1em;
 }
 
-/* Images inside options */
-.sak-option-images {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
 .sak-thumb {
     height: 7em;
     width: 7em;
@@ -251,27 +244,6 @@
     border-radius: 4px;
     cursor: zoom-in;
     background: #fff;
-}
-
-/* Fullscreen Image Overlay */
-.sak-fullscreen-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: zoom-out;
-}
-
-.sak-fullscreen-img {
-    max-width: 95%;
-    max-height: 95%;
-    object-fit: contain;
 }
 
 /* ==========================================================================
@@ -359,4 +331,18 @@
     color: #000;
     border-color: #999;
     background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Images inside options */
+.sak-option-images {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.sak-option-images img {
+    width: 10em;
 }

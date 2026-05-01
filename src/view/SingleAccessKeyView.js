@@ -4,6 +4,7 @@ import "./SingleAccessKeyView.css";
 import { Checklist } from "../model/Checklist.js";
 import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";
+import { FullscreenableMedia } from "../components/FullscreenableMedia.js";
 
 registerMessages(selfKey, {
   en: {
@@ -137,28 +138,17 @@ const isLinkClick = (e) => {
     return false;
 };
 
+// Thin adapter: maps the {src, caption} shape used in key step image data
+// to the props expected by FullscreenableMedia.
 const ImageToggler = {
-    view: ({ attrs, state }) => {
+    view: ({ attrs }) => {
         const { src, caption } = attrs;
-        return m("span.sak-image-wrap", [
-            m("img.sak-thumb", {
-                src,
-                alt: caption || "",
-                onclick: (e) => {
-                    e.stopPropagation();
-                    state.isFullscreen = true;
-                }
-            }),
-            state.isFullscreen ? m(".sak-fullscreen-overlay", {
-                onclick: (e) => {
-                    e.stopPropagation();
-                    state.isFullscreen = false;
-                }
-            }, [
-                m("img.sak-fullscreen-img", { src, alt: caption || "" }),
-                caption ? m(".sak-image-caption", caption) : null
-            ]) : null
-        ]);
+        return m(FullscreenableMedia, {
+            fullSrc: src,
+            thumbSrc: src,
+            title: caption || "",
+            extraWrapClass: "sak-image-wrap",
+        });
     }
 };
 
