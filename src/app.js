@@ -16,12 +16,13 @@ import { Settings } from "./model/Settings.js";
 import { checklistURL, unitToHtml } from "./components/Utils.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
 import { compressor } from "./components/LZString.js";
-import { ManageView, deepLinkProcessing, DEEP_LINK_STORAGE_KEY } from "./view/ManageView.js";
+import { ManageView, deepLinkProcessing, DEEP_LINK_STORAGE_KEY, DEMO_CHECKLIST_KEY } from "./view/ManageView.js";
 import { registerHandlebarHelpers } from "./components/handlebarHelpers.js";
 import { FullscreenManager } from "./components/FullscreenManager.js";
 
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
+export let isDemoMode = false;
 
 registerMessages(selfKey, {
   en: {
@@ -255,6 +256,32 @@ registerHandlebarHelpers();
 
 function runApp() {
 
+  // Demo-preview mode: if a compiled checklist was stored in sessionStorage by
+  // the xlsxUrl deep-link pipeline, use it directly without hitting the network.
+  const rawDemoData = sessionStorage.getItem(DEMO_CHECKLIST_KEY);
+
+  if (rawDemoData) {
+    let demoChecklistData = null;
+    try {
+      demoChecklistData = JSON.parse(compressor.decompress(rawDemoData));
+      isDemoMode = true;
+    } catch (e) {
+      console.warn("Failed to parse demo checklist from sessionStorage, clearing.", e);
+      sessionStorage.removeItem(DEMO_CHECKLIST_KEY);
+    }
+
+    if (isDemoMode) {
+      window.setTimeout(function () {
+        if (demoChecklistData) {
+          Checklist.loadData(demoChecklistData, false);
+        }
+        readyPreloadableAssets();
+        setupRoutes();
+      }, 50);
+      return;
+    }
+  }
+
   m.request({
     method: "GET",
     url: checklistURL,
@@ -286,180 +313,183 @@ function runApp() {
       }
 
       readyPreloadableAssets();
+      setupRoutes();
+    }, 50);
+  });
+}
 
-      function updateLanguage() {
-        const lang = m.route.param("l");
-        if (lang) {
-          setLocale(lang);
-        }
+function setupRoutes() {
+  function updateLanguage() {
+    const lang = m.route.param("l");
+    if (lang) {
+      setLocale(lang);
+    }
+  }
+
+  function updateToolAndScope() {
+    // When the route was changed programmatically (e.g. from the
+    // ConfigurationDialog), Settings already hold the correct values.
+    // m.route.param() would still return stale (pre-set) values at
+    // this point, so skip the read-back to avoid reverting the change.
+    if (isProgrammaticRouteChange()) {
+      clearProgrammaticRouteChange();
+      if (Checklist._isDataReady) {
+        validateActiveToolState(Checklist.getData());
       }
+      return;
+    }
 
-      function updateToolAndScope() {
-        // When the route was changed programmatically (e.g. from the
-        // ConfigurationDialog), Settings already hold the correct values.
-        // m.route.param() would still return stale (pre-set) values at
-        // this point, so skip the read-back to avoid reverting the change.
-        if (isProgrammaticRouteChange()) {
-          clearProgrammaticRouteChange();
-          if (Checklist._isDataReady) {
-            validateActiveToolState(Checklist.getData());
-          }
-          return;
-        }
+    const toolParam = m.route.param("v");
+    const scopeParam = m.route.param("s");
 
-        const toolParam = m.route.param("v");
-        const scopeParam = m.route.param("s");
+    if (toolParam && TOOL_REGISTRY[toolParam]) {
+      Settings.viewType(toolParam);
+    }
+    if (scopeParam && (scopeParam === "T" || scopeParam === "S")) {
+      Settings.analyticalIntent(scopeParam);
+    }
 
-        if (toolParam && TOOL_REGISTRY[toolParam]) {
-          Settings.viewType(toolParam);
-        }
-        if (scopeParam && (scopeParam === "T" || scopeParam === "S")) {
-          Settings.analyticalIntent(scopeParam);
-        }
+    if (Checklist._isDataReady) {
+      validateActiveToolState(Checklist.getData());
+    }
+  }
 
-        if (Checklist._isDataReady) {
-          validateActiveToolState(Checklist.getData());
-        }
-      }
-
-      function onMatchGuard() {
-        updateLanguage();
-        updateToolAndScope();
-        if (!Checklist._isDataReady && !deepLinkProcessing) {
-          m.route.set("/manage");
-        }
-        if (
-          !Settings.alreadyViewedAboutSection() &&
-          Checklist.getProjectAbout()?.trim() != ""
-        ) {
-          Toast.show(t("show_about"), {
-            timeout: 10000,
-            actionLabel: t("open_about_page"),
-            actionCallback: () => {
-              m.route.set("/about/checklist");
-            },
-          });
-        }
-
-        Settings.alreadyViewedAboutSection(true);
-      }
-
-      const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
-
-      FullscreenManager.init();
-
-      m.route(document.body, initialRoute, {
-        "/checklist": {
-          render: function () {
-            // AppLayoutView.display = "checklist"; // DELETE display setting
-            return componentRender(m(AppLayoutView, [m(SearchView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/details/:taxon/:tab": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(DetailsView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/about/checklist": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [
-              m(AboutView, { text: Checklist.getProjectAbout() }),
-            ]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/about/cite": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [
-              m(AboutView, {
-                text:
-                  tf("how_to_cite_header", [Checklist.getProjectName()]) +
-                  "\n\n<p style='user-select: all'>" +
-                  Checklist.getProjectHowToCite() +
-                  " </p>",
-              }),
-            ]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/references": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(LiteratureView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/references/:citekey": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(LiteratureView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/single-access-keys": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/single-access-keys/filter/:taxon": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/single-access-keys/:key": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/single-access-keys/:key/:steps": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/pinned": {
-          render: function () {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(PinnedView)]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/about/app": {
-          render: function () {
-            AppLayoutView.display = "details";
-            console.log("Rendering about app with version: " + appVersion);
-            return componentRender(m(AppLayoutView, [
-              m(AboutView, { text: t("about_app", appVersion) }),
-            ]));
-          },
-          onmatch: onMatchGuard,
-        },
-        "/manage": {
-          onmatch: function () {
-            // Redirect root /manage to the upload step
-            m.route.set("/manage/upload", null, { replace: true });
-          }
-        },
-        "/manage/:step": {
-          render: function (vnode) {
-            AppLayoutView.display = "details";
-            return componentRender(m(AppLayoutView, [m(ManageView, vnode.attrs)]));
-          },
+  function onMatchGuard() {
+    updateLanguage();
+    updateToolAndScope();
+    if (!Checklist._isDataReady && !deepLinkProcessing) {
+      m.route.set("/manage");
+    }
+    if (
+      !Settings.alreadyViewedAboutSection() &&
+      Checklist.getProjectAbout()?.trim() != ""
+    ) {
+      Toast.show(t("show_about"), {
+        timeout: 10000,
+        actionLabel: t("open_about_page"),
+        actionCallback: () => {
+          m.route.set("/about/checklist");
         },
       });
-    }, 50);
+    }
+
+    Settings.alreadyViewedAboutSection(true);
+  }
+
+  const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
+
+  FullscreenManager.init();
+
+  m.route(document.body, initialRoute, {
+    "/checklist": {
+      render: function () {
+        // AppLayoutView.display = "checklist"; // DELETE display setting
+        return componentRender(m(AppLayoutView, [m(SearchView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/details/:taxon/:tab": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(DetailsView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/about/checklist": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [
+          m(AboutView, { text: Checklist.getProjectAbout() }),
+        ]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/about/cite": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [
+          m(AboutView, {
+            text:
+              tf("how_to_cite_header", [Checklist.getProjectName()]) +
+              "\n\n<p style='user-select: all'>" +
+              Checklist.getProjectHowToCite() +
+              " </p>",
+          }),
+        ]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/references": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(LiteratureView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/references/:citekey": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(LiteratureView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/single-access-keys": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/single-access-keys/filter/:taxon": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/single-access-keys/:key": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/single-access-keys/:key/:steps": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(SingleAccessKeyView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/pinned": {
+      render: function () {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(PinnedView)]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/about/app": {
+      render: function () {
+        AppLayoutView.display = "details";
+        console.log("Rendering about app with version: " + appVersion);
+        return componentRender(m(AppLayoutView, [
+          m(AboutView, { text: t("about_app", appVersion) }),
+        ]));
+      },
+      onmatch: onMatchGuard,
+    },
+    "/manage": {
+      onmatch: function () {
+        // Redirect root /manage to the upload step
+        m.route.set("/manage/upload", null, { replace: true });
+      }
+    },
+    "/manage/:step": {
+      render: function (vnode) {
+        AppLayoutView.display = "details";
+        return componentRender(m(AppLayoutView, [m(ManageView, vnode.attrs)]));
+      },
+    },
   });
 }
 

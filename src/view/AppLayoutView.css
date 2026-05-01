@@ -8,6 +8,44 @@
     flex-direction: column;
 }
 
+/* Demo / preview mode banner */
+.demo-banner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.45em 1em;
+    background: #2c3e52;
+    color: #e5ebf1;
+    font-size: 0.82em;
+    font-family: var(--font-normal);
+    flex-shrink: 0;
+}
+
+.demo-banner-message {
+    flex: 1;
+}
+
+.demo-banner-quit {
+    white-space: nowrap;
+    background: #2c3e52;
+    border: 1px solid #e5ebf1;
+    color: #e5ebf1;
+    border-radius: 0.3em;
+    padding: 0.2em 0.75em;
+    font-size: 1em;
+    font-family: var(--font-normal);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.demo-banner-quit:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
 .app .app-content {
     flex-grow: 1;
     display: flex;

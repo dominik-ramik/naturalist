@@ -269,7 +269,7 @@ const LogsPanel = {
  * @param {boolean} checkAssetsSize
  * @param {Function} onSuccess - Called instead of default "/manage/review" redirect on success
  */
-async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
+async function _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo = false) {
   ManageStore.dataman = new DataManager();
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
@@ -286,7 +286,16 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess) {
       m.route.set("/manage/upload", null, { replace: true })
     );
   } else {
-    Checklist.loadData(compiled, true);
+    // In demo mode, store the compiled data in sessionStorage so it survives
+    // page reloads, and skip the draftNotice (the demo banner replaces it).
+    if (isDemo) {
+      try {
+        sessionStorage.setItem(DEMO_CHECKLIST_KEY, compressor.compress(JSON.stringify(compiled)));
+      } catch (e) {
+        console.warn("Could not store demo checklist in sessionStorage:", e);
+      }
+    }
+    Checklist.loadData(compiled, isDemo ? false : true);
     Checklist.getTaxaForCurrentQuery();
 
     if (ManageStore.dwcAutoRecompile) {
@@ -384,7 +393,7 @@ function processUpload(filepicker, file, checkAssetsSize) {
  * @param {boolean} checkAssetsSize
  * @param {Function} [onSuccess] - Override route after successful processing
  */
-async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
+async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess, isDemo = false) {
   url = url && url.trim();
 
   if (!url) {
@@ -445,7 +454,7 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess) {
     return;
   }
 
-  setTimeout(() => _runPipeline(buffer, checkAssetsSize, onSuccess), 50);
+  setTimeout(() => _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo), 50);
 }
 
 // --- UPLOAD SOURCE RENDERER ---
@@ -924,6 +933,10 @@ const SubViews = {
 // Exported so app.js can reference the same key in the controllerchange handler.
 export const DEEP_LINK_STORAGE_KEY = "xlsxDeepLinkUrl";
 
+// Key used to store the compiled demo checklist in sessionStorage so it
+// survives page reloads while demo mode is active.
+export const DEMO_CHECKLIST_KEY = "demoChecklistData";
+
 /**
  * Called once at module load time (before m.route is set up).
  *
@@ -1034,7 +1047,7 @@ export let ManageView = {
     ManageStore.setUploadMode("url");
     Settings.spreadsheetUrl(xlsxUrl);
 
-    // AFTER
+    // AFTER: isDemo=true so the compiled data is stored in sessionStorage
     fetchAndProcessUrl(xlsxUrl, true, () => {
       deepLinkProcessing = false;
       if (redirectHash) {
@@ -1052,12 +1065,14 @@ export let ManageView = {
         // right values when onmatch fires, before updateToolAndScope() runs.
         if (params.v) Settings.viewType(params.v);
         if (params.s) Settings.analyticalIntent(params.s);
+        ManageStore.setUploadMode("file");
         m.route.set("/checklist", params, { replace: true });
       } else {
         Settings.viewType(DEFAULT_TOOL);
+        ManageStore.setUploadMode("file");
         m.route.set("/checklist", { v: DEFAULT_TOOL }, { replace: true });
       }
-    });
+    }, true);
   },
 
   oncreate: function () {
