@@ -2,7 +2,7 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import "./ChecklistView.css";
 
-import { routeTo, updateRouteParams } from "../components/Utils.js";
+import { routeTo, updateRouteParams, isInDemoMode } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { getCurrentTool } from "./analysisTools/index.js";
@@ -21,6 +21,10 @@ registerMessages(selfKey, {
     welcome_headline_tagline: "The flexible biodiversity data publishing platform",
     welcome_tagline: "Publish <strong>checklists</strong>, curate <strong>collections</strong>, and explore your data through filters, search, and analysis tools <strong>built for discovery</strong> — all from a single spreadsheet.",
     welcome_blessing: "May your taxonomic tree grow to the sky.",
+    demo_mode_badge: "Demo",
+    demo_mode_notice: "This is a demo instance - load an example to see <b>NaturaList</b> in action.",
+    demo_mode_btn: "Explore examples gallery",
+    demo_mode_btn_main: "Open featured example",
   },
   fr: {
     nothing_found_oops: "Rien trouvé",
@@ -34,6 +38,10 @@ registerMessages(selfKey, {
     welcome_headline_tagline: "La plateforme flexible de publication de données sur la biodiversité",
     welcome_tagline: "Publiez des <strong>listes de taxons</strong>, organisez des <strong>collections</strong>, analysez les données et explorez les espèces, motifs et caractéristiques, et construisez des <strong>clés d'identification</strong> - tout cela à partir d'une seule feuille de calcul.",
     welcome_blessing: "Que votre arbre taxonomique pousse jusqu'au ciel.",
+    demo_mode_badge: "Démo",
+    demo_mode_notice: "Il s'agit d'une instance de démonstration - chargez un exemple pour voir <b>NaturaList</b> en action.",
+    demo_mode_btn: "Explorer la galerie d'exemples",
+    demo_mode_btn_main: "Ouvrir l'exemple phare",
   }
 });
 
@@ -108,6 +116,16 @@ export let ChecklistView = {
         ".checklist",
         m(".welcome-wrapper", [
           m(".fresh-install-welcome", [
+            // Demo-mode notice — visible only when served from a /demo/ subfolder
+            ...(isInDemoMode ? [
+              m(".demo-notice", [
+                m("span.demo-notice-badge", t("demo_mode_badge")),
+                m("p.demo-notice-text", m.trust( t("demo_mode_notice"))),
+                m("a.demo-notice-btn[href=../examples]", t("demo_mode_btn")),
+                m("a.demo-notice-btn[href=../examples/pmp]", t("demo_mode_btn_main")), // TODO add example
+              ]),
+              m("hr.welcome-divider"),
+            ] : []),
             // Category stamp — sets context before the brand name lands
             // Primary greeting with brand name
             m("h1.welcome-title", [

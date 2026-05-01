@@ -6,7 +6,7 @@ import { marked } from "marked";
 
 import { checkForChecklistUpdate, DOCS_URL } from "../app.js";
 import { ExcelBridge } from "../components/ExcelBridge.js";
-import { routeTo } from "../components/Utils.js";
+import { routeTo, isInDemoMode } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { DataManager } from "../model/DataManager.js";
 import { Settings } from "../model/Settings.js";
@@ -16,6 +16,8 @@ import { compressor } from "../components/LZString.js";
 import { DEFAULT_TOOL } from "./analysisTools/index.js";
 import { manageViewI18n } from "./ManageView.i18n.js";
 import { DWC_ARCHIVE_TYPES } from "../model/nlDataStructureSheets.js";
+
+const MAIN_EXAMPLE_URL = "../examples/pmp";
 
 // Some message keys may be coming from update.php in jsonState
 registerMessages(selfKey, manageViewI18n);
@@ -96,9 +98,9 @@ export let deepLinkProcessing = false;
 
 const ManageCard = {
   view: function (vnode) {
-    const { title, icon, description, children, headerAction } = vnode.attrs;
+    const { title, icon, description, children, headerAction, className } = vnode.attrs;
 
-    return m(".manage-card", [
+    return m(".manage-card" + (className ? "." + className : ""), [
       m(".manage-card-header", [
         icon ? m("img.manage-card-icon", { src: icon }) : null,
         m("h3.manage-card-title", title),
@@ -608,6 +610,21 @@ const SubViews = {
 
     const isDataReady = Checklist._isDataReady;
 
+    const demoCard = (isInDemoMode) && !isDataReady ? m(ManageCard, {
+      className: "demo-card-mobile-only",
+      title: t("demo_card_title"),
+      icon: "img/ui/manage/docs.svg",
+      description: t("demo_card_description"),
+      children: [
+        m(ActionButton, {
+          label: t("demo_card_btn"),
+          onclick: () => { window.location.href = "../examples"; },
+          primary: true,
+          block: true,
+        }),
+      ],
+    }) : null;
+
     const scratchCard = m(ManageCard, {
       title: t("start_scratch_title"),
       icon: "img/ui/manage/docs.svg",
@@ -637,6 +654,7 @@ const SubViews = {
     });
 
     return [
+      demoCard,
       !isDataReady ? scratchCard : null,
 
       m(ManageCard, {

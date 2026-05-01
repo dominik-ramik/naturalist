@@ -77,6 +77,10 @@ export const manageViewI18n = {
     dwc_export_has_errors: "DwC compilation completed with errors. Review the messages below and retry after fixing your spreadsheet.",
     download_dwc_checklist: "Download Checklist DwC Archive",
     download_dwc_occurrences: "Download Occurrences DwC Archive",
+    demo_card_title: "Explore NaturaList",
+    demo_card_description: "This is a demo instance. Load one of the example projects to see NaturaList in action.",
+    demo_card_btn: "Browse examples gallery",
+    demo_card_btn_main: "Open featured example",
   },
   fr: {
     data_upload_processing: "Traitement des données du tableur",
@@ -154,5 +158,9 @@ export const manageViewI18n = {
     dwc_export_has_errors: "La compilation DwC s'est terminée avec des erreurs. Consultez les messages ci-dessous et réessayez après avoir corrigé votre tableur.",
     download_dwc_checklist: "Télécharger l'archive DwC de la checklist",
     download_dwc_occurrences: "Télécharger l'archive DwC des occurrences",
+    demo_card_title: "Explorer NaturaList",
+    demo_card_description: "Il s'agit d'une instance de démonstration. Chargez l'un des projets d'exemple pour voir NaturaList en action.",
+    demo_card_btn: "Parcourir la galerie d'exemples",
+    demo_card_btn_main: "Ouvrir l'exemple phare",
   }
 }

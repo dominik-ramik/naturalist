@@ -22,6 +22,18 @@ registerMessages(selfKey, {
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
+// Evaluated once at module load — location never changes without a full reload.
+export const isInDemoMode = (() => {
+  const { hostname, pathname } = window.location;
+  const isKnownHost =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    /^localhost(:\d+)?$/.test(hostname) ||
+    hostname === 'naturalist.netlify.app';
+  const isInDemoPath = /\/demo(\/|$)/.test(pathname);
+  return isKnownHost && isInDemoPath;
+})();
+
 export function injectCiteKeyLinks(el) {
   if (!el) return;
 

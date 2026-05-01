@@ -260,7 +260,7 @@ function runApp() {
   // the xlsxUrl deep-link pipeline, use it directly without hitting the network.
   const rawDemoData = sessionStorage.getItem(DEMO_CHECKLIST_KEY);
 
-  if (rawDemoData) {
+  if (rawDemoData ) {
     let demoChecklistData = null;
     try {
       demoChecklistData = JSON.parse(compressor.decompress(rawDemoData));

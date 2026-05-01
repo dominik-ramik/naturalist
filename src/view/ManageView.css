@@ -695,6 +695,19 @@
 }
 
 /* ==========================================================================
+   Demo card — visible only on mobile (mirrors the welcome-screen breakpoint)
+   ========================================================================== */
+.manage-card.demo-card-mobile-only {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .manage-card.demo-card-mobile-only {
+    display: block;
+  }
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 @media (max-width: 600px) {

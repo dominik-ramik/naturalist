@@ -1588,14 +1588,15 @@ export let Checklist = {
         dataPath.length - templateResultSuffix.length
       );
     }
-    if (this._metaForDataPathCache.hasOwnProperty(dataPath)) {
-      return this._metaForDataPathCache[dataPath];
+    const cacheKey = `${Checklist.getCurrentLanguage()}|${dataPath}`;
+    if (this._metaForDataPathCache.hasOwnProperty(cacheKey)) {
+      return this._metaForDataPathCache[cacheKey];
     }
     let meta = null;
     if (this.getData().meta.data.hasOwnProperty(dataPath)) {
       meta = this.getData().meta.data[dataPath];
     }
-    this._metaForDataPathCache[dataPath] = meta;
+    this._metaForDataPathCache[cacheKey] = meta;
     return meta;
     //data not intended to be shown in view
     //return this.getData().meta.data["$$default-custom$$"];

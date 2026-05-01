@@ -72,7 +72,7 @@
 /*
 for markdown-rendered content
 */
-.interaction-area .desktop-cite p{
+.interaction-area .desktop-cite p {
   display: inline;
   margin: 0;
   padding: 0;
@@ -99,7 +99,7 @@ for markdown-rendered content
     display: none;
   }
 
-  /* EDITED: Branding wrapper now holds the SearchView, padding is now inside SearchBox */
+  /* Branding wrapper now holds the SearchView, padding is now inside SearchBox */
   .interaction-area .interaction-area-branding-wrapper {
     padding: 0;
     flex-grow: 1;
