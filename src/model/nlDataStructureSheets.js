@@ -2306,15 +2306,43 @@ EASY TO CONFUSE WITH:
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The [data path](./data-sheet#column-naming-and-data-paths) of the column whose values this row applies to. Multiple rows sharing the same **Column name** are evaluated in order; the first matching row wins.",
-                        howToUse: "Use the same column name as declared with `category` data type in [[ref:content.customDataDefinition]]. The `#` notation for numbered array columns is supported: a **Column name** of `habit#` applies to `habit1`, `habit2`, etc.",
-                        notes: [],
-                        examples: [],
+                        description: "The [data path](./data-sheet#column-naming-and-data-paths) of the column whose values this row applies to. Multiple rows sharing the same **Column name** are evaluated in order; the first matching row wins.\n\nTwo shorthand notations are supported in addition to exact column names:\n\n- **Numbered-array shorthand** (`habit#`): a trailing `#` matches all numbered instances of that column (`habit1`, `habit2`, etc.). This notation is resolved at render time.\n- **One-level child wildcard** (`status.*`): a trailing `.*` is expanded at compile time into one logical copy of this row for every direct child of `status` declared in [[ref:content.customDataDefinition]] (e.g. `status.nc`, `status.vu`, `status.fj`). Only immediate children are matched — grandchildren such as `status.nc.sub` are excluded. If an explicit row for a given child already exists anywhere in this table, that explicit row takes precedence and the wildcard does not generate a duplicate. The wildcard must appear as the last two characters after a valid prefix; patterns such as `*.status`, `status.*.sub`, or `status*` are rejected with an error.",
+                        howToUse: "Use the exact column name as declared with `category` data type in [[ref:content.customDataDefinition]] for a single-column row. Use the `#` suffix for numbered-array columns (`habit#` covers `habit1`, `habit2`, …). Use the `.*` suffix when several sibling columns share identical badge definitions — instead of repeating the rows once per column, write them once with e.g. `status.*` and the compiler generates the copies automatically. Explicit rows always override wildcard-generated ones, so you can use a wildcard as a base and override individual children where needed.",
+                        notes: [
+                            {
+                                type: "tip",
+                                text: "The `.*` wildcard only covers **direct** children. If your data structure has `status.nc`, `status.vu`, and `status.fj` as leaf columns in [[ref:content.customDataDefinition]], a single `status.*` row covers all three. A deeper path such as `status.nc.sub` would not be covered."
+                            },
+                            {
+                                type: "warning",
+                                text: "The `.*` wildcard is expanded from the [[ref:content.customDataDefinition]] table. A column must be declared there for the wildcard to reach it. Columns that exist only in your [[ref:data]] sheet but are not declared in [[ref:content.customDataDefinition]] are never matched."
+                            }
+                        ],
+                        examples: [
+                            {
+                                label: "Wildcard covering sibling status columns",
+                                text: "Instead of repeating the same three badge rows for `status.nc`, `status.vu`, and `status.fj` separately, a single `status.*` row covers all three. An explicit override for `status.nc` takes precedence over the wildcard for that column only.",
+                                columns: [
+                                    "Column name",
+                                    "Raw value",
+                                    "Label",
+                                    "Background color",
+                                    "Text color",
+                                    "[comment]"
+                                ],
+                                rows: [
+                                    ["status.*", "e", "Endemic", "#000000", "#cd3030", "Applies to status.nc, status.vu, status.fj, and any future status.* child"],
+                                    ["status.*", "n", "Native", "#000000", "#FFFFFF", ""],
+                                    ["status.*", "i", "Introduced", "#cd3030", "#ffcdcd", ""],
+                                    ["status.nc", "e", "Endemic NC", "#000000", "#aa0000", "Explicit override for status.nc only; wildcard row is skipped for this column"]
+                                ]
+                            }
+                        ],
                         integrity: {
-                            description: "",
+                            description: "Accepts a plain data path, a data path ending with `#` for numbered-array columns, or a data path ending with `.*` for one-level child wildcard expansion. Any other use of `*` is an error.",
                             allowEmpty: false,
                             allowDuplicates: "yes",
-                            allowedContent: "dataPath",
+                            allowedContent: "dataPathWithWildcard",
                             supportsMultilingual: false
                         }
                     },
@@ -2866,9 +2894,14 @@ EASY TO CONFUSE WITH:
                 columns: {
                     columnName: {
                         name: "Column name",
-                        description: "The data path of the filtered column whose values should be reordered. Must match a column that has a [[ref:content.customDataDefinition.searchCategoryTitle]] set in the [[ref:content.customDataDefinition]] table.",
-                        howToUse: "Enter the column name exactly as it appears in the [[ref:content.customDataDefinition]] table.",
-                        notes: [],
+                        description: "The data path of the filtered column whose values should be reordered. Must match a column that has a [[ref:content.customDataDefinition.searchCategoryTitle]] set in the [[ref:content.customDataDefinition]] table.\n\nThe same two shorthand notations supported in [[ref:appearance.categoryDisplay.columnName]] also work here:\n\n- **Numbered-array shorthand** (`habit#`): covers all numbered instances at render time.\n- **One-level child wildcard** (`status.*`): expanded at compile time into one copy of each row for every direct child of `status` declared in [[ref:content.customDataDefinition]]. Explicit rows for a given child always take precedence over wildcard-generated ones.",
+                        howToUse: "Enter the column name exactly as it appears in the [[ref:content.customDataDefinition]] table. Use `.*` when several sibling columns share the same filter value order — write the ordering rows once with e.g. `status.*` and the compiler generates copies for each child automatically.",
+                        notes: [
+                            {
+                                type: "tip",
+                                text: "The `.*` wildcard is particularly useful when the same controlled vocabulary (e.g. Endemic / Native / Introduced) is used across multiple per-region status columns such as `status.nc`, `status.vu`, and `status.fj`. One set of ordering rows with `status.*` keeps the filter order consistent across all of them without repetition."
+                            }
+                        ],
                         examples: [
                             {
                                 label: "Red List in severity order",
@@ -2920,7 +2953,7 @@ EASY TO CONFUSE WITH:
                             description: "",
                             allowEmpty: false,
                             allowDuplicates: "yes",
-                            allowedContent: "dataPath",
+                            allowedContent: "dataPathWithWildcard",
                             supportsMultilingual: false
                         }
                     },

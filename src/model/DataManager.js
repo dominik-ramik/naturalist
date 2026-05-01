@@ -92,6 +92,147 @@ function resolveBelongsTo(colName, rootBelongsToMap) {
   return rootBelongsToMap.get(stripped) ?? null; // null = not declared, skip check
 }
 
+// ---------------------------------------------------------------------------
+// Wildcard expansion helpers for categoryDisplay and searchOrder tables
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when a columnName is a trailing "prefix.*" wildcard — the only
+ * supported wildcard form for categoryDisplay and searchOrder column names.
+ *
+ * Valid:   "status.*", "info.redList.*"
+ * Invalid: "*.status", "status.*.sub", "status*"  (caught separately)
+ *
+ * @param {string} columnName
+ * @returns {boolean}
+ */
+function isTrailingDotStarWildcard(columnName) {
+  return typeof columnName === "string" && columnName.endsWith(".*");
+}
+
+/**
+ * Returns all direct-child CDD column names for a given parent prefix.
+ *
+ * "Direct child" means a CDD columnName matching exactly `prefix.<segment>`
+ * where `<segment>` contains no further "." or "#" characters.
+ *
+ * Examples (prefix = "status"):
+ *   CDD has: status.nc, status.vu, status.fj, status.nc.detail
+ *   Returns: ["status.nc", "status.vu", "status.fj"]
+ *            (status.nc.detail is excluded — it is a grandchild)
+ *
+ * @param {string}   prefix   Parent path prefix, e.g. "status" (case-insensitive)
+ * @param {Object[]} cddRows  Rows from customDataDefinition.data[langCode]
+ * @returns {string[]}        Column names using the original casing from CDD rows
+ */
+function getDirectCddChildren(prefix, cddRows) {
+  const childPrefix = prefix.toLowerCase() + ".";
+  const seen = new Set();
+  const result = [];
+  (cddRows || []).forEach(function (row) {
+    const colName = (row.columnName || "").toString().trim();
+    if (!colName) return;
+    const colLower = colName.toLowerCase();
+    if (!colLower.startsWith(childPrefix)) return;
+    const rest = colLower.slice(childPrefix.length);
+    // Direct child only: rest must be non-empty and contain no "." or "#"
+    if (!rest || rest.includes(".") || rest.includes("#")) return;
+    if (!seen.has(colLower)) {
+      seen.add(colLower);
+      result.push(colName);
+    }
+  });
+  return result;
+}
+
+/**
+ * Expands trailing ".*" wildcard rows in a table rows array into one concrete
+ * row per matching direct CDD child column, following these rules:
+ *
+ *  1. Only trailing "prefix.*" wildcards are supported.  Any other use of "*"
+ *     in a columnName is logged as an error and the row is dropped.
+ *  2. Expansion resolves direct children from CDD declared columns (depth +1).
+ *  3. If a child column already has at least one explicit (non-wildcard) row
+ *     anywhere in the table, the wildcard does NOT generate a row for that
+ *     child (explicit rows always win).  An info message is logged.
+ *  4. A wildcard that matches zero CDD children triggers a warning.
+ *
+ * The original rows array is never mutated; a new array is returned.
+ *
+ * @param {Object[]} rows       Source rows for one language (not modified)
+ * @param {Object[]} cddRows    CDD rows for the same language
+ * @param {string}   tableLabel Human-readable table name for log messages
+ * @returns {Object[]}          New rows array with wildcards expanded in place
+ */
+function expandWildcardRows(rows, cddRows, tableLabel) {
+  if (!rows || rows.length === 0) return rows;
+
+  // First pass: collect every explicit (non-wildcard) columnName (lowercased)
+  // so wildcard expansion can skip children that are already explicitly covered.
+  const explicitColumnNames = new Set();
+  rows.forEach(function (row) {
+    const colName = (row.columnName || "").toString().trim();
+    if (!isTrailingDotStarWildcard(colName)) {
+      explicitColumnNames.add(colName.toLowerCase());
+    }
+  });
+
+  // Second pass: build the output array, expanding wildcards in-place.
+  const result = [];
+  rows.forEach(function (row) {
+    const colName = (row.columnName || "").toString().trim();
+
+    if (!isTrailingDotStarWildcard(colName)) {
+      // Reject any other use of "*" in the column name.
+      if (colName.includes("*")) {
+        Logger.error(
+          'In table "' + tableLabel + '": column name "' + colName +
+          '" uses "*" in an unsupported position. Only a trailing ".*" is' +
+          ' allowed (e.g. "status.*"). This row will be ignored.'
+        );
+        return; // drop the invalid row
+      }
+      result.push(row);
+      return;
+    }
+
+    // Strip the trailing ".*" to obtain the parent prefix.
+    const prefix = colName.slice(0, -2);
+    if (!prefix) {
+      Logger.error(
+        'In table "' + tableLabel + '": column name "' + colName +
+        '" is not a valid wildcard — the prefix before ".*" must not be empty.' +
+        ' This row will be ignored.'
+      );
+      return;
+    }
+
+    const children = getDirectCddChildren(prefix, cddRows);
+    if (children.length === 0) {
+      Logger.warning(
+        'In table "' + tableLabel + '": wildcard "' + colName +
+        '" did not match any direct children of "' + prefix + '" in the' +
+        ' Custom data definition table. Check the column name spelling.'
+      );
+      return;
+    }
+
+    children.forEach(function (childColName) {
+      if (explicitColumnNames.has(childColName.toLowerCase())) {
+        Logger.info(
+          'In table "' + tableLabel + '": wildcard "' + colName +
+          '" skipped for "' + childColName +
+          '" — an explicit row for that column already exists and takes precedence.'
+        );
+        return;
+      }
+      result.push(Object.assign({}, row, { columnName: childColName }));
+    });
+  });
+
+  return result;
+}
+
 /**
  * Returns true if any spreadsheet cell belonging to the given root column
  * (or its children) contains a non-empty value in the current row.
@@ -1010,11 +1151,11 @@ export let DataManager = function () {
 
       let allDataPaths = (data.common.allUsedDataPaths[lang.code] || []).sort();
 
+      const cddRows = data.sheets.content.tables.customDataDefinition.data[lang.code] || [];
+
       // Pre-build the root→belongsTo map once for this language pass so that
       // every computedDataPath can resolve its effective value in O(1).
-      const rootBelongsToMap = buildRootBelongsToMap(
-        data.sheets.content.tables.customDataDefinition.data[lang.code]
-      );
+      const rootBelongsToMap = buildRootBelongsToMap(cddRows);
 
       let meta = {};
 
@@ -2074,6 +2215,30 @@ export let DataManager = function () {
 
     data.common.languages.supportedLanguages.forEach(function (lang) {
       checkCustomDataDefinitionDataPaths(data, lang.code, dataPath);
+    });
+
+    // Expand trailing ".*" wildcard rows in categoryDisplay and searchOrder into
+    // concrete child column entries, writing results back into the live data
+    // tables.  After this point no wildcard column names remain anywhere in the
+    // data structures, so all downstream code (compileDataMeta, helpers.js,
+    // render code) is completely unaware of the feature.
+    data.common.languages.supportedLanguages.forEach(function (lang) {
+      const cddRows =
+        data.sheets.content.tables.customDataDefinition.data[lang.code] || [];
+
+      data.sheets.appearance.tables.categoryDisplay.data[lang.code] =
+        expandWildcardRows(
+          data.sheets.appearance.tables.categoryDisplay.data[lang.code] || [],
+          cddRows,
+          data.sheets.appearance.tables.categoryDisplay.name
+        );
+
+      data.sheets.appearance.tables.searchOrder.data[lang.code] =
+        expandWildcardRows(
+          data.sheets.appearance.tables.searchOrder.data[lang.code] || [],
+          cddRows,
+          data.sheets.appearance.tables.searchOrder.name
+        );
     });
   }
 
