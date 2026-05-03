@@ -8,6 +8,7 @@ import { Settings } from "../model/Settings.js";
 import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
+import { collapsePaneAndDismissKeyboard } from "../components/MobileInteraction.js";
 
 registerMessages(selfKey, {
   en: {
@@ -120,7 +121,7 @@ export let ChecklistView = {
             ...(isInDemoMode ? [
               m(".demo-notice", [
                 m("span.demo-notice-badge", t("demo_mode_badge")),
-                m("p.demo-notice-text", m.trust( t("demo_mode_notice"))),
+                m("p.demo-notice-text", m.trust(t("demo_mode_notice"))),
                 m("a.demo-notice-btn[href=../examples]", t("demo_mode_btn")),
                 //m("a.demo-notice-btn[href=../examples/pmp]", t("demo_mode_btn_main")), // TODO add example
               ]),
@@ -167,7 +168,22 @@ export let ChecklistView = {
       ".checklist[style=background: linear-gradient(45deg, " +
       Checklist.getThemeHsl("dark") + ", " +
       Checklist.getThemeHsl("light") + ");]",
-      m(".checklist-inner-wrapper", [
+      m(".checklist-inner-wrapper", {
+        oncreate: function (vnode) {
+          vnode.dom.addEventListener(
+            "scroll",
+            collapsePaneAndDismissKeyboard,
+            { capture: true, passive: true }
+          );
+        },
+        onremove: function (vnode) {
+          vnode.dom.removeEventListener(
+            "scroll",
+            collapsePaneAndDismissKeyboard,
+            { capture: true }
+          );
+        },
+      }, [
         allFilteredTaxa.length === 0
           ? m(".nothing-found-wrapper", [
             m("p.nothing-found-eyebrow", t("nothing_found_oops")),
@@ -179,7 +195,7 @@ export let ChecklistView = {
             ]),
             m("p.nothing-found-message", t("nothing_found_message_hint")),
           ])
-          : m(".checklist-inner-wrapper", [
+          : m(".checklist-results-wrapper", [
             Checklist._isDraft ? draftNotice() : null,
             !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
             // Show the non-default params notice whenever the active tool has

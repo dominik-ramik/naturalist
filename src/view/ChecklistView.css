@@ -10,6 +10,12 @@
   height: 100%;
 }
 
+.checklist-results-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .listed-taxa {
   flex-grow: 1;
   overflow-y: auto;
