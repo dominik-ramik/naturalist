@@ -82,6 +82,7 @@ export function clearLegendConfigCache() {
   _mdCache.clear();
   _resolvedColorCache.clear();
   clearDatasetStatsCache();
+  Object.keys(_knownCodesCache).forEach(k => delete _knownCodesCache[k]);
 }
 
 function cachedMarkdown(text) {
