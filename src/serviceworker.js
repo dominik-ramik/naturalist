@@ -87,7 +87,7 @@ self.addEventListener('fetch', function (e) {
             // NETWORK UPDATE: Always try to update in the background
             const networkPromise = fetch(e.request).then(networkResponse => {
                 if (isValidChecklistResponse(networkResponse, e.request.url)) {
-                    dataCache.put(e.request, networkResponse.clone());
+                    dataCache.put(cacheKey, networkResponse.clone());
                 }
                 return networkResponse;
             });
