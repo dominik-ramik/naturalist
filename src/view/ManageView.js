@@ -526,6 +526,84 @@ function renderDropzone() {
   );
 }
 
+// --- CLOUD URL DETECTION & CONVERSION ---
+
+/**
+ * Analyses a URL string and returns a conversion descriptor if the URL is a
+ * recognised cloud sharing link that needs rewriting before it can be fetched
+ * as a raw .xlsx file.  Returns null if no conversion is needed (either
+ * because the URL is already a direct download link, or it is not from a
+ * supported provider).
+ *
+ * Returned object shape:
+ *   { messageKey: string, convert: (url: string) => string }
+ */
+function detectCloudShareLink(raw) {
+  const url = raw && raw.trim();
+  if (!url) return null;
+
+  let parsed;
+  try { parsed = new URL(url); } catch { return null; }
+
+  const host = parsed.hostname.toLowerCase();
+
+  // --- Google Sheets native document ---
+  // Sharing URL:  https://docs.google.com/spreadsheets/d/{ID}/edit?usp=sharing
+  // Direct URL:   https://docs.google.com/spreadsheets/d/{ID}/export?format=xlsx[&gid=…]
+  if (host === "docs.google.com" && parsed.pathname.includes("/spreadsheets/d/")) {
+    // Already a direct export link - no conversion needed
+    if (parsed.pathname.endsWith("/export") || parsed.pathname.includes("/export?")) return null;
+    const idMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^/]+)/);
+    if (!idMatch) return null;
+    const fileId = idMatch[1];
+    // Do NOT include gid: when present it restricts the export to a single
+    // sheet. The compiler always needs the full workbook.
+    return {
+      messageKey: "url_convert_gdrive_sheets",
+      convert: () => `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`,
+    };
+  }
+
+  // --- Google Drive file (non-Sheets, e.g. an .xlsx stored on Drive) ---
+  // Sharing URL:  https://drive.google.com/file/d/{ID}/view?usp=sharing
+  // Direct URL:   https://drive.google.com/uc?export=download&id={ID}
+  if (host === "drive.google.com") {
+    // Already a direct download link - no conversion needed
+    if (parsed.pathname === "/uc" && parsed.searchParams.get("export") === "download") return null;
+    const idMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+    // Also handle /open?id= style links
+    const openId = parsed.searchParams.get("id");
+    const fileId = (idMatch && idMatch[1]) || openId;
+    if (!fileId) return null;
+    return {
+      messageKey: "url_convert_gdrive_file",
+      convert: () => `https://drive.google.com/uc?export=download&id=${fileId}`,
+    };
+  }
+
+  // --- Dropbox ---
+  // Sharing URL ends with ?dl=0 (or has dl=0 somewhere in the query string)
+  // Direct URL:   same URL but dl=1
+  // dl.dropboxusercontent.com links are already direct - skip them.
+  if ((host === "www.dropbox.com" || host === "dropbox.com") &&
+      !host.includes("dropboxusercontent")) {
+    const dl = parsed.searchParams.get("dl");
+    // dl=1 already → direct link, no conversion needed
+    if (dl === "1") return null;
+    return {
+      messageKey: "url_convert_dropbox",
+      convert: (original) => {
+        const u = new URL(original.trim());
+        u.searchParams.set("dl", "1");
+        return u.toString();
+      },
+    };
+  }
+
+  return null;
+}
+
+
 function renderUrlInput() {
   const isStatic = !ManageStore.shouldShowUploadForm;
 
@@ -541,6 +619,8 @@ function renderUrlInput() {
     ]);
   }
 
+  const conversion = detectCloudShareLink(ManageStore.urlInputValue);
+
   return m(".manage-url-input", [
     isStatic
       ? m("p.manage-hint-warning", t("static_hosting_cors_reminder"))
@@ -555,6 +635,19 @@ function renderUrlInput() {
         },
       }),
     ]),
+    conversion
+      ? m(".manage-url-convert-notice", [
+          m("span.manage-url-convert-notice-text", t(conversion.messageKey)),
+          m(ActionButton, {
+            label: t("url_convert_button"),
+            small: true,
+            onclick: () => {
+              ManageStore.urlInputValue = conversion.convert(ManageStore.urlInputValue);
+              Settings.spreadsheetUrl(ManageStore.urlInputValue);
+            },
+          }),
+        ])
+      : null,
     m("p.manage-dropzone-hint", t("url_public_hint")),
     m(".manage-dropzone-options", [
       m("label.manage-checkbox", [

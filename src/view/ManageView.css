@@ -695,6 +695,26 @@
 }
 
 /* ==========================================================================
+   Cloud link conversion notice (inline, below URL input)
+   ========================================================================== */
+.manage-url-convert-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.5em 0.75em;
+  background-color: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 0.4em;
+  font-size: 0.82em;
+  color: #6d4c00;
+}
+
+.manage-url-convert-notice-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
    Demo card — visible only on mobile (mirrors the welcome-screen breakpoint)
    ========================================================================== */
 .manage-card.demo-card-mobile-only {
