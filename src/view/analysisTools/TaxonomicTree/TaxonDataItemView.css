@@ -102,15 +102,59 @@ span.simple-value h4 {
 }
 
 
-.data-item-view span.simple-wrapper span.plain {
+.data-item-view span.simple-wrapper .image-in-view-wrap {
+  display: inline-block;
+}
+
+/* ── Media item list ──────────────────────────────────────────────────────────
+ * Applied when a list's child dataType is a visual media type (image, map).
+ *
+ * Actual DOM structure for e.g. "photo" (array of images):
+ *
+ *   span.simple-wrapper                      ← titleValuePair() for "photo"
+ *     span.data-item-title                   ← "Photos"
+ *     ul.unmarked-list.media-item-list       ← renderDataItem() container
+ *       span.simple-wrapper                  ← titleValuePair() per photo1/2…
+ *         .fullscreenable-image              ← reader result (direct child,
+ *                                               no span.simple-value wrapper,
+ *                                               because itemType=="object")
+ *
+ * Goals:
+ *   1. "Photos" title sits on its own line above the images.
+ *   2. Images flow left-to-right, wrapping when needed.
+ *   3. Non-image lists (habitats, synonyms…) are unaffected.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. The outer span.simple-wrapper that holds a media list: switch to block
+ *    so the group title and the image row stack vertically. */
+.data-item-view span.simple-wrapper:has(> .media-item-list) {
+  display: block;
+}
+
+/* 2. The list container: flex row with wrapping. */
+.data-item-view .media-item-list {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 0.2em;
+  gap: 0.25em;
+  margin-top: 0.25em;
+  list-style: none;
+  padding: 0;
 }
 
-.data-item-view span.simple-wrapper .image-in-view-wrap {
-  display: inline-block;
+/* 3. Each per-item span.simple-wrapper is a flex child that hugs its image. */
+.data-item-view .media-item-list > span.simple-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+}
+
+/* 4. .fullscreenable-image has width:100% from FullscreenableMedia.css.
+ *    Inside a media list that stretches each image to fill the whole row.
+ *    Override to auto so images take only their natural rendered width. */
+.data-item-view .media-item-list .fullscreenable-image {
+  width: auto;
 }
 
 .data-item-view span.separator {
