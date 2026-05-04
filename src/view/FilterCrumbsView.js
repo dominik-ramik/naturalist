@@ -42,7 +42,7 @@ export let FilterCrumbsView = {
         const color = getGradedColor(type, "crumb");
         const cat   = type === "taxa"
           ? Checklist.getTaxaMeta()[dataPath].name
-          : Checklist.getMetaForDataPath(dataPath).searchCategory;
+          : Checklist.getMetaForDataPath(dataPath).searchCategory.replace(/^!\s*/, "");
 
         const ctx = { dataPath, type };
 

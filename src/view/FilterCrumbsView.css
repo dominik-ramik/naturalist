@@ -104,7 +104,7 @@
 }
 
 .filter-crumbs .crumb.reset-filter img {
-  height: 2em;
+  height: 1.5em;
   margin-right: 0;
   margin-left: var(--pad-large);
 }
