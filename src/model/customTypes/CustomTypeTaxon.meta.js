@@ -4,7 +4,7 @@ export const customTypeTaxonMeta = {
   dataType: "taxon",
   filterMeta: filterMetaText,
   meta: {
-    summary: "A taxon name, rendered as a clickable link. Shows the [Taxon details](/user-guide/taxon-details) upon click with external search engines if configured in [[ref:content.searchOnline]]. If the taxon is part of the taxa in this project, a search icon is shown and clicking it will filter the checklist for that taxon.",
+    summary: "A taxon name, rendered as a clickable link. Shows the [Taxon details](/introduction/end-user-guide#taxon-and-occurrence-details) upon click with external search engines if configured in [[ref:content.searchOnline]]. If the taxon is part of the taxa in this project, a search icon is shown and clicking it will filter the checklist for that taxon.",
     whenToUse: "Basionyms, synonyms, type species, host plants, common pests, and other indications of inter-organism relationships ...",
     behaviorFulltextIndexing: "Both `taxon.name` and `taxon.authority` are indexed for full-text search.",
     dwcNotes: {

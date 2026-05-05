@@ -911,7 +911,7 @@ EASY TO CONFUSE WITH:
                     },
                     placement: {
                         name: "Placement",
-                        description: "Defines where the data field appears in the taxon card.\n\nWhen `details` is used, the field won't show up in the taxon card, but will appear upon clicking that taxon in a [details tab](/user-guide/taxon-details) determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](./placement-visibility) for the layout diagram and guidance table.",
+                        description: "Defines where the data field appears in the taxon card.\n\nWhen `details` is used, the field won't show up in the taxon card, but will appear upon clicking that taxon in a [details tab](/introduction/end-user-guide#taxon-and-occurrence-details) determined by its data type: `image` and `sound` → **Media** tab; `map` and `mapregions` → **Map** tab; `text` and `markdown` → **Text** tab.\n\nSee [Placement Options](./placement-visibility) for the layout diagram and guidance table.",
                         howToUse: "Use `left`, `middle`, or `right` for compact single-value fields (status badges, dates, short measurements). Use `top` or `bottom` for longer content (descriptions, distribution lists). Use `details` for rich content (large images, full maps, long notes) that users seek out by clicking the taxon.\n\nFor column groups - entries sharing the same parent in the `Column name` (e.g. `origPub.author`, `origPub.year`, … being grouped inside `origPub`), fill in the same `Placement` value on **every row** of the group. All rows in a group share one placement as they will appear together - the app will report an error if they differ.",
                         notes: [
                             {
@@ -1252,7 +1252,7 @@ EASY TO CONFUSE WITH:
             searchOnline: {
                 name: "Search online",
                 required: false,
-                description: "Defines external search engine links that appear in the [Details pane](/user-guide/taxon-details) for each taxon, allowing users to look up taxa in online databases, herbaria, encyclopaedias, and other resources. Each row is one link.\n\nThis table can be left completely empty if you do not want to provide external search links, but it is a great way to enhance the user to easily look up the taxa in relevant third party online resources.",
+                description: "Defines external search engine links that appear in the [Details pane](/introduction/end-user-guide#taxon-and-occurrence-details) for each taxon, allowing users to look up taxa in online databases, herbaria, encyclopaedias, and other resources. Each row is one link.\n\nThis table can be left completely empty if you do not want to provide external search links, but it is a great way to enhance the user to easily look up the taxa in relevant third party online resources.",
                 notes: [
                     {
                         type: "tip",

@@ -5,7 +5,7 @@ export const customTypeMapregionsMeta = {
   filterMeta: filterMetaMapregions,
   meta: {
     summary:
-      "Encodes geographic distribution as a set of `region` / `status` / `note` (optional) tuples. Renders in two ways: as a color-coded SVG choropleth map in the [Details pane](/user-guide/taxon-details) and as an annotated inline text list of region names in the taxon card. The two outputs can be used independently or together.",
+      "Encodes geographic distribution as a set of `region` / `status` / `note` (optional) tuples. Renders in two ways: as a color-coded SVG choropleth map in the [Details pane](/introduction/end-user-guide#taxon-and-occurrence-details) and as an annotated inline text list of region names in the taxon card. The two outputs can be used independently or together.",
 
     whenToUse:
       "Any geographic distribution data where you want a colored choropleth map, a filterable region list, or both. Works equally well for simple presence/absence, named qualitative statuses (native / introduced / extirpated), and numeric data (counts, scores, measurements) rendered as a gradient or binned color ramp.\n\nThree things are needed together:\n\n- Region codes and status values (with optional notes) in the [[ref:data]] sheet\n\n- A row per region code in the [[ref:appearance.mapRegionsNames]] table\n\n- Color rules in the [[ref:appearance.mapRegionsLegend]] table. The [[ref:content.customDataDefinition.template]] column in Custom Data Definition must hold the SVG file path (e.g. `maps/europe.svg`) for the choropleth map to appear - without it, only the inline text list renders.\n\nSee [Distribution maps with mapregions](./mapregions) for the full mental model, SVG authoring guidance, and worked examples.",
