@@ -459,7 +459,7 @@ function buildEmlFromRows(emlRows, archiveType, customizationData) {
 
   const opts = {
     packageId: getVal("eml:packageId"),
-    language: getVal("eml:language") || "en",
+    language: getVal("eml:language") || DEFAULT_LOCALE_CODE,
     title: getVal("eml:title"),
     pubDate: getVal("eml:pubDate") || new Date().toISOString().split("T")[0],
     abstract: getVal("eml:abstract"),

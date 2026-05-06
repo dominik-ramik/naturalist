@@ -1,5 +1,5 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import "./MenuStripView.css";
 
 import { copyToClipboard, routeTo } from "../components/Utils.js";
@@ -8,44 +8,6 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
 import { TOOL_LIST, ANALYTICAL_INTENTS } from "./analysisTools/index.js";
-
-
-registerMessages(selfKey, {
-  en: {
-    back_to_search: "Back to search",
-    menu: "Menu",
-    about_this: "About this project",
-    literature: "References",
-    documentation: "Documentation",
-    about_nl: "About NaturaList app",
-    manage: "Manage",
-    languages: "Other languages",
-    how_to_cite: "How to cite",
-    pin_search: "Pinned searches",
-    share_url: "Share this search",
-    keys: "Single-access keys",
-    storage_persistent: "Media available offline",
-    storage_not_persistent: "Media online only",
-    configure_view: "Current view",
-  },
-  fr: {
-    back_to_search: "Retour à la recherche",
-    menu: "Menu",
-    about_this: "À propos de ce projet",
-    literature: "Références",
-    documentation: "Documentation",
-    about_nl: "À propos de l'application NaturaList",
-    manage: "Gérer",
-    languages: "Autres langues",
-    how_to_cite: "Comment citer",
-    pin_search: "Recherches épinglées",
-    share_url: "Partager cette recherche",
-    keys: "Clés d'identification",
-    storage_persistent: "Médias disponibles hors ligne",
-    storage_not_persistent: "Médias disponibles uniquement en ligne",
-    configure_view: "Vue actuelle",
-  }
-});
 
 export let MenuStripView = {
   menuOpen: false,
@@ -165,7 +127,6 @@ function menuPanel() {
                       Settings.language(lang.code);
                       routeTo("/checklist", "", lang.code);
                       MenuStripView.menuOpen = false;
-                      location.reload(true);
                     },
                     title: lang.name,
                   });

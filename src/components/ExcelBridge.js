@@ -358,8 +358,8 @@ function processLanguages(workbook, schema) {
   const generalSheetData = parseSheetData(workbook, appearanceSheetName);
 
   if (!generalSheetData) {
-    schema.common.languages.defaultLanguageCode = "en";
-    pushLanguage("en", "English", "");
+    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE;
+    pushLanguage(DEFAULT_LOCALE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE], "");
     return;
   }
 
@@ -370,9 +370,9 @@ function processLanguages(workbook, schema) {
   const languageTable = extractSubTableData(generalSheetData, appearanceSheetName, tableName, tableInfo, null, null);
 
   if (!languageTable || languageTable.length < 2) {
-    Logger.info(`The '${tableName}' table is empty, using English as default language.`);
-    schema.common.languages.defaultLanguageCode = "en";
-    pushLanguage("en", "English", "");
+    Logger.info(`The '${tableName}' table is empty, using ${AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE]} as default language.`);
+    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE;
+    pushLanguage(DEFAULT_LOCALE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE], "");
     return;
   }
 

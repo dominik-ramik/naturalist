@@ -25,6 +25,7 @@ import { validateActiveToolState } from "../view/analysisTools/index.js";
 import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { getDataFromDataPath } from "./DataPath.js";
+import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -396,7 +397,7 @@ export let Checklist = {
 
     if (!this._isDataReady) {
       let versions = Object.keys(this._data?.versions);
-      return versions?.length > 0 ? versions[0] : "en";
+      return versions?.length > 0 ? versions[0] : DEFAULT_LOCALE_CODE;
     }
 
     if (m.route.param("l")) {
@@ -449,7 +450,7 @@ export let Checklist = {
   },
 
   getDefaultLanguage: function () {
-    return this._data.general.defaultVersion;
+    return this._data.general.defaultVersion || DEFAULT_LOCALE_CODE;
   },
 
   loadData: function (jsonData, isDraft) {

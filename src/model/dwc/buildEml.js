@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE_CODE } from "../../i18n/availableLocalesInfo";
+
 export function buildEmlXml(opts) {
     // Options accepted in `opts` (all values are expected to be strings unless
     // otherwise noted):
@@ -18,7 +20,7 @@ export function buildEmlXml(opts) {
     // Destructure opts with safe defaults to make available fields explicit.
     const {
         packageId = "",
-        language = "en",
+        language = DEFAULT_LOCALE_CODE,
         title = "",
         pubDate = new Date().toISOString().split("T")[0], // Default to current date in YYYY-MM-DD format
         abstract = "",

@@ -1,5 +1,5 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { te } from "../i18n/index.js";
 import "./ManageView.css";
 import { marked } from "marked";
@@ -14,13 +14,9 @@ import { Logger } from "../components/Logger.js";
 import { exportTemplateSpreadsheetEmpty, exportTemplateSpreadsheetFilled } from "../model/DataManagerData.js";
 import { compressor } from "../components/LZString.js";
 import { DEFAULT_TOOL } from "./analysisTools/index.js";
-import { manageViewI18n } from "./ManageView.i18n.js";
 import { DWC_ARCHIVE_TYPES } from "../model/nlDataStructureSheets.js";
 
 const MAIN_EXAMPLE_URL = "../examples/pmp";
-
-// Some message keys may be coming from update.php in jsonState
-registerMessages(selfKey, manageViewI18n);
 
 // --- INTERNAL STATE STORE ---
 const ManageStore = {
@@ -586,7 +582,7 @@ function detectCloudShareLink(raw) {
   // Direct URL:   same URL but dl=1
   // dl.dropboxusercontent.com links are already direct - skip them.
   if ((host === "www.dropbox.com" || host === "dropbox.com") &&
-      !host.includes("dropboxusercontent")) {
+    !host.includes("dropboxusercontent")) {
     const dl = parsed.searchParams.get("dl");
     // dl=1 already → direct link, no conversion needed
     if (dl === "1") return null;
@@ -637,16 +633,16 @@ function renderUrlInput() {
     ]),
     conversion
       ? m(".manage-url-convert-notice", [
-          m("span.manage-url-convert-notice-text", t(conversion.messageKey)),
-          m(ActionButton, {
-            label: t("url_convert_button"),
-            small: true,
-            onclick: () => {
-              ManageStore.urlInputValue = conversion.convert(ManageStore.urlInputValue);
-              Settings.spreadsheetUrl(ManageStore.urlInputValue);
-            },
-          }),
-        ])
+        m("span.manage-url-convert-notice-text", t(conversion.messageKey)),
+        m(ActionButton, {
+          label: t("url_convert_button"),
+          small: true,
+          onclick: () => {
+            ManageStore.urlInputValue = conversion.convert(ManageStore.urlInputValue);
+            Settings.spreadsheetUrl(ManageStore.urlInputValue);
+          },
+        }),
+      ])
       : null,
     m("p.manage-dropzone-hint", t("url_public_hint")),
     m(".manage-dropzone-options", [

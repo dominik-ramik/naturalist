@@ -1,20 +1,15 @@
 import { createI18n } from 'vue-i18n';
-import m from 'mithril';
-import en from './locales/en.json';
-import fr from './locales/fr.json';
+import { AVAILABLE_LOCALES_INFO, DEFAULT_LOCALE_CODE } from './availableLocalesInfo';
+import { bundleLoaders } from 'virtual:i18n-loaders';
 
-const defaultLanguage = 'en';
-const supportedLanguages = ['en', 'fr'];
-
-let currentLang = (m.route.param('l') || defaultLanguage).toLowerCase();
-if (!supportedLanguages.includes(currentLang)) {
-  currentLang = defaultLanguage;
-}
+// ---------------------------------------------------------------------------
+// Composer bootstrap — no locale messages yet, loaded dynamically below.
+// ---------------------------------------------------------------------------
 
 const i18n = createI18n({
-  locale: currentLang,
-  fallbackLocale: defaultLanguage,
-  messages: { en, fr },
+  locale: DEFAULT_LOCALE_CODE,
+  fallbackLocale: DEFAULT_LOCALE_CODE,
+  messages: {},
   legacy: false,
   warnHtmlMessage: false,
   missingWarn: false,
@@ -24,17 +19,71 @@ const i18n = createI18n({
 const composer = i18n.global;
 
 // ---------------------------------------------------------------------------
+// Available locales — derived at build time from the files in ./locales/.
+// Adding a new locale only requires dropping a JSON file there; no code change.
+// Exported so app.js and localeLoader.js can import it without a separate file.
+// ---------------------------------------------------------------------------
+
+export const AVAILABLE_LOCALES = Object.keys(AVAILABLE_LOCALES_INFO)
+
+// ---------------------------------------------------------------------------
+// Loaded-locale registry
+// ---------------------------------------------------------------------------
+
+const _loadedLocales = new Set();
+
+/** Returns the locale codes currently registered in the composer. */
+export function getLoadedLocales() {
+  return [..._loadedLocales];
+}
+
+// ---------------------------------------------------------------------------
+// Locale loading — all translations for a given locale (shared + all
+// component namespaces) are inlined into a single virtual bundle per locale
+// by vite-plugin-i18n-self.  One dynamic import → one chunk.
+// Call once from app.js after the checklist is resolved, passing the full
+// derived set of required UI locale codes (always includes DEFAULT_LOCALE_CODE).
+// ---------------------------------------------------------------------------
+
+export async function loadLocales(localeCodes) {
+  await Promise.all(localeCodes.map(async code => {
+    if (_loadedLocales.has(code)) return; // idempotent
+    const loader = bundleLoaders[code];
+    if (!loader) {
+      console.warn(`[i18n] No locale bundle for: ${code}`);
+    } else {
+      const bundle = (await loader()).default;
+      composer.mergeLocaleMessage(code, bundle.shared);
+      for (const [key, msgs] of Object.entries(bundle.components)) {
+        composer.mergeLocaleMessage(code, { [key]: msgs });
+      }
+    }
+    _loadedLocales.add(code);
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// English loads eagerly — must be present before the first render, before
+// the checklist resolves, as it is the authoritative fallback locale.
+// ---------------------------------------------------------------------------
+
+export const i18nReady = loadLocales([DEFAULT_LOCALE_CODE]);
+
+// ---------------------------------------------------------------------------
 // Locale switching
 // ---------------------------------------------------------------------------
 
 export function setLocale(lang) {
-  if (supportedLanguages.includes(lang)) {
+  if (_loadedLocales.has(lang)) {
     composer.locale.value = lang;
+  } else {
+    console.warn(`[i18n] setLocale: "${lang}" not loaded — using '${DEFAULT_LOCALE_CODE}'`);
+    composer.locale.value = DEFAULT_LOCALE_CODE;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Per-module dictionary registration
+// Per-module dictionary registration (called by the Vite plugin transform)
 // ---------------------------------------------------------------------------
 
 export function registerMessages(namespaceKey, messagesByLocale) {
@@ -56,8 +105,8 @@ export function registerMessages(namespaceKey, messagesByLocale) {
 // ---------------------------------------------------------------------------
 
 export const i18nMetadata = {
-  getDefaultTranslationLanguage: () => defaultLanguage,
-  getSupportedLanguageCodes:     () => supportedLanguages,
+  getDefaultTranslationLanguage: () => DEFAULT_LOCALE_CODE,
+  getSupportedLanguageCodes:     () => [..._loadedLocales],
 };
 
 export { i18nMetadata as i18n };
@@ -73,7 +122,7 @@ function escapeHtml(value) {
 }
 
 // ---------------------------------------------------------------------------
-// Key resolution - flat key first, then namespace-prefixed.
+// Key resolution — flat key first, then namespace-prefixed.
 // ---------------------------------------------------------------------------
 
 function resolveKey(tag, namespace) {
@@ -94,8 +143,7 @@ function resolveKey(tag, namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// createLocalT - factory used by the Vite plugin.
-// Returns a { t, tf } pair bound to a namespace so components use flat keys.
+// createLocalT — factory used by the Vite plugin.
 // ---------------------------------------------------------------------------
 
 export function createLocalT(namespace) {
@@ -118,7 +166,7 @@ export function createLocalT(namespace) {
         usePlainTextOutput ? value : `<strong>${escapeHtml(value)}</strong>`;
       if (Array.isArray(substitute))       params = substitute.map(wrap);
       else if (typeof substitute === 'object') params = Object.fromEntries(Object.entries(substitute).map(([k, v]) => [k, wrap(v)]));
-      else                                 params = wrap(substitute);
+      else                                    params = wrap(substitute);
     }
     return localT(tag, params);
   }
@@ -127,14 +175,15 @@ export function createLocalT(namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// Named global t/tf for modules that import directly from the i18n index
-// (no namespace - flat keys from shared JSON only).
+// Named global t/tf — flat keys from shared locale JSON only.
 // ---------------------------------------------------------------------------
 
 export const { t, tf } = createLocalT(null);
 
-// Returns true when a translation key exists (flat or namespace-prefixed).
-// Use this to decide whether to prefer a server-supplied English fallback.
+// ---------------------------------------------------------------------------
+// Key existence check
+// ---------------------------------------------------------------------------
+
 export function te(tag, namespace) {
   return resolveKey(tag, namespace) !== null;
 }

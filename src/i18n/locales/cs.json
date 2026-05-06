@@ -1,0 +1,16 @@
+{
+  "months": {
+    "jan": "Leden",
+    "feb": "Únor",
+    "mar": "Březen",
+    "apr": "Duben",
+    "may": "Květen",
+    "jun": "Červen",
+    "jul": "Červenec",
+    "aug": "Srpen",
+    "sep": "Září",
+    "oct": "Říjen",
+    "nov": "Listopad",
+    "dec": "Prosinec"
+  }
+}

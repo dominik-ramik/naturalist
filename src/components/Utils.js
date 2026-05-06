@@ -9,6 +9,8 @@ import { Settings } from "../model/Settings.js";
 import { Toast } from "../view/AppLayoutView.js";
 import { materialColors } from "./MaterialColors.js";
 import { highlightHtml } from "../model/highlightUtils.js";
+import { AVAILABLE_LOCALES } from "../i18n/index.js";
+import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 
 registerMessages(selfKey, {
   en: {
@@ -430,6 +432,7 @@ export function roundWithPrecision(number, precision) {
 }
 
 let _localeCache = null;
+let _localeCacheKey = null;
 function isValidLocale(tag) {
   try {
     "a".localeCompare("b", tag);
@@ -441,24 +444,27 @@ function isValidLocale(tag) {
 }
 
 export function getCurrentLocaleBestGuess() {
-  if (_localeCache === null) {
-    const currentLang = Checklist.getCurrentLanguage().toLowerCase();
+  const currentLang = Checklist.getCurrentLanguage().toLowerCase();
+  if (_localeCache === null || _localeCacheKey !== currentLang) {
+    _localeCacheKey = currentLang;
 
-    let foundLocale = "en";
+    let foundLocale = DEFAULT_LOCALE_CODE; // Fallback to default if no match found
 
-    if (isValidLocale(currentLang)) {
+    if (AVAILABLE_LOCALES.includes(currentLang) && isValidLocale(currentLang)) {
       foundLocale = currentLang;
     } else {
       let found = false;
       Checklist.getAllLanguages().forEach(function (lang) {
         if (lang.code.toLowerCase() === currentLang) {
-          if (isValidLocale(lang.fallbackUiLang)) {
-            foundLocale = lang.fallbackUiLang;
+          const fallbackUiLang = lang.fallbackUiLang?.toLowerCase();
+          if (AVAILABLE_LOCALES.includes(fallbackUiLang) && isValidLocale(fallbackUiLang)) {
+            foundLocale = fallbackUiLang;
             found = true;
           }
         }
-        if (!found && isValidLocale(Checklist.getDefaultLanguage().toLowerCase())) {
-          foundLocale = Checklist.getDefaultLanguage().toLowerCase();
+        const defaultLanguage = Checklist.getDefaultLanguage().toLowerCase();
+        if (!found && AVAILABLE_LOCALES.includes(defaultLanguage) && isValidLocale(defaultLanguage)) {
+          foundLocale = defaultLanguage;
         }
       });
     }
@@ -474,10 +480,9 @@ export function routeTo(destination, query, language, replace = false) {
   if (lang === undefined || lang === null) {
     let routeLang = m.route.param("l");
     if (routeLang === undefined || routeLang === null) {
-      if (Checklist._isDataReady) {
-        lang = Checklist.getDefaultLanguage();
-      } else {
-        lang = "en";
+      lang = Settings.language();
+      if (!lang) {
+        lang = Checklist._isDataReady ? Checklist.getDefaultLanguage() : DEFAULT_LOCALE_CODE;
       }
     } else {
       lang = routeLang;

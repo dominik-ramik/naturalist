@@ -2,7 +2,8 @@ import m from "mithril"
 import { registerSW } from 'virtual:pwa-register';
 import "./styles/style.css";
 
-import { setLocale } from "./i18n/index.js";
+import { setLocale, loadLocales } from "./i18n/index.js";
+import { deriveRequiredUiLocales, resolveUiLocaleForDataLang } from "./i18n/localeLoader.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { AppLayoutView, Toast } from "./view/AppLayoutView.js";
 import { Checklist } from "./model/Checklist.js";
@@ -74,7 +75,12 @@ if (SHOULD_TRACE) {
   };
 }
 
+let syncRouteStateBeforeRender = null;
+
 function componentRender(component) {
+  if (syncRouteStateBeforeRender) {
+    syncRouteStateBeforeRender();
+  }
   return SHOULD_TRACE ? m(RenderTracker, component) : component;
 }
 
@@ -260,7 +266,7 @@ function runApp() {
   // the xlsxUrl deep-link pipeline, use it directly without hitting the network.
   const rawDemoData = sessionStorage.getItem(DEMO_CHECKLIST_KEY);
 
-  if (rawDemoData ) {
+  if (rawDemoData) {
     let demoChecklistData = null;
     try {
       demoChecklistData = JSON.parse(compressor.decompress(rawDemoData));
@@ -271,9 +277,12 @@ function runApp() {
     }
 
     if (isDemoMode) {
-      window.setTimeout(function () {
+      window.setTimeout(async function () {
         if (demoChecklistData) {
           Checklist.loadData(demoChecklistData, false);
+          const requiredLocales = deriveRequiredUiLocales(Checklist);
+          await loadLocales(requiredLocales);
+          setLocale(resolveUiLocaleForDataLang(Settings.language(), Checklist));
         }
         readyPreloadableAssets();
         setupRoutes();
@@ -307,11 +316,13 @@ function runApp() {
     },
   }).then(function (checklistData) {
 
-    window.setTimeout(function () {
+    window.setTimeout(async function () {
       if (checklistData) {
         Checklist.loadData(checklistData, false);
+        const requiredLocales = deriveRequiredUiLocales(Checklist);
+        await loadLocales(requiredLocales);
+        setLocale(resolveUiLocaleForDataLang(Settings.language(), Checklist));
       }
-
       readyPreloadableAssets();
       setupRoutes();
     }, 50);
@@ -320,9 +331,22 @@ function runApp() {
 
 function setupRoutes() {
   function updateLanguage() {
-    const lang = m.route.param("l");
-    if (lang) {
-      setLocale(lang);
+    // URL param takes priority, persists to localStorage as the data lang code
+    const langParam = m.route.param("l");
+    if (langParam) {
+      Settings.language(langParam);
+    }
+
+    // Resolve the stored data lang code to a UI locale before applying.
+    // This handles cases where the data code differs from the UI locale code
+    // (e.g. data lang "bislama" with fallbackUiLang "fr" → setLocale("fr")).
+    const dataLang = Settings.language();
+    if (dataLang && Checklist._isDataReady) {
+      setLocale(resolveUiLocaleForDataLang(dataLang, Checklist));
+    } else if (dataLang) {
+      // Checklist not yet loaded — set directly if it's a known UI locale,
+      // full resolution will happen again after loadLocales() completes.
+      setLocale(dataLang);
     }
   }
 
@@ -375,6 +399,8 @@ function setupRoutes() {
 
     Settings.alreadyViewedAboutSection(true);
   }
+
+  syncRouteStateBeforeRender = updateLanguage;
 
   const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
 
@@ -480,8 +506,9 @@ function setupRoutes() {
     },
     "/manage": {
       onmatch: function () {
-        // Redirect root /manage to the upload step
-        m.route.set("/manage/upload", null, { replace: true });
+        // Redirect root /manage to the upload step, preserving all params (incl. l=)
+        const params = m.route.param();
+        m.route.set("/manage/upload", params, { replace: true });
       }
     },
     "/manage/:step": {
@@ -489,6 +516,7 @@ function setupRoutes() {
         AppLayoutView.display = "details";
         return componentRender(m(AppLayoutView, [m(ManageView, vnode.attrs)]));
       },
+      onmatch: onMatchGuard,
     },
   });
 }
