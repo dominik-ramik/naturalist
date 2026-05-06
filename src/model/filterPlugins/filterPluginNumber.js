@@ -7,7 +7,7 @@
  */
 
 import m from "mithril";
-import { t, registerMessages, selfKey } from "virtual:i18n-self";
+import { t } from "virtual:i18n-self";
 import { getUnitFromTemplate, unitToHtml, roundWithPrecision, textLowerCaseAccentless } from "../../components/Utils.js";
 import { Checklist } from "../Checklist.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
@@ -30,16 +30,7 @@ import { renderHistogramWrap } from "./shared/histogramWidget.js";
 import "./filterPluginNumber.css";
 import "./shared/numericDropdown.css";
 
-registerMessages(selfKey, {
-  en: {
-    histogram_toggle_show: "Show distribution",
-    histogram_toggle_hide: "Hide distribution",
-  },
-  fr: {
-    histogram_toggle_show: "Afficher la distribution",
-    histogram_toggle_hide: "Masquer la distribution",
-  }
-});
+
 
 
 

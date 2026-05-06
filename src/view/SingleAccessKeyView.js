@@ -1,19 +1,12 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import "./SingleAccessKeyView.css";
 import { Checklist } from "../model/Checklist.js";
 import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";
 import { FullscreenableMedia } from "../components/FullscreenableMedia.js";
 
-registerMessages(selfKey, {
-  en: {
-   key_or: "or", 
-  },
-  fr: {
-    key_or: "ou"
-  }
-});
+
 
 // ==========================================
 // 1. DATA & LOGIC HELPERS

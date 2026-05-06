@@ -22,21 +22,14 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
 import { Logger } from "../../components/Logger.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
 import { textMatchesHighlight } from "../highlightUtils.js";
 
-registerMessages(selfKey, {
-  en: {
-    months_and: "and",
-  },
-  fr: {
-    months_and: "et",
-  }
-});
+
 
 // ---------------------------------------------------------------------------
 // Parsing helpers

@@ -12,8 +12,7 @@
 
 import m from "mithril";
 import { helpers } from "./helpers.js";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
 import { processMarkdownWithBibliography, htmlToPlainText } from "../../components/Utils.js";
@@ -36,35 +35,7 @@ import {
 import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
 import { CacheManager, CacheScope } from "../CacheManager.js";
 
-registerMessages(selfKey, {
-  en: {
-    dm_mapregions_unknown_region_code: "Region code '{0}' in column '{1}' doesn't have any Region name set in the table 'mapregions information'. Region codes can be only composed of lowercase letters a-z. The data is {2}",
-    dm_mapregions_names_table_not_loaded: "mapregions: cannot validate region codes for column '{0}' - Map Regions Information table is not loaded for language '{1}'.",
-    map_data_table: "Data table",
-    map_data_table_count: "{0} regions",
-    map_data_table_region: "Region",
-    map_data_table_status: "Status",
-    map_data_table_notes: "Notes",
-    map_stats_min: "Minimum",
-    map_stats_max: "Maximum",
-    map_stats_mean: "Mean",
-    map_stats_median: "Median",
-  },
-  fr: {
-    dm_mapregions_unknown_region_code: "Le code de région '{0}' dans la colonne '{1}' n'a pas de nom de région défini dans la table 'informations sur les régions'. Les codes de région ne peuvent être composés que de lettres minuscules a-z. Les données sont {2}",
-    dm_mapregions_names_table_not_loaded: "mapregions: cannot validate region codes for column '{0}' - Map Regions Information table is not loaded for language '{1}'.",
-    map_data_table: "Tableau de données",
-    map_data_table_count: "{0} régions",
-    map_data_table_region: "Région",
-    map_data_table_status: "Statut",
-    map_data_table_notes: "Notes",
-    map_stats_min: "Minimum",
-    map_stats_max: "Maximum",
-    map_stats_mean: "Mean",
-    map_stats_median: "Median",
 
-  }
-});
 
 
 const nlData = nlDataStructure;

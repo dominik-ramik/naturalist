@@ -1,0 +1,12 @@
+{
+  "sf_range_from": "From",
+  "sf_range_to": "To",
+  "sf_range_min_placeholder": "Min ({0})",
+  "sf_range_max_placeholder": "Max ({0})",
+  "sf_range_clear": "Clear numeric range filter",
+  "sf_cat_clear": "Clear category selection",
+  "mapregions_status_filter": "Filter by status",
+  "is_all_list_joiner": "is all of",
+  "is_not_list_joiner": "is not",
+  "is_list_joiner": "is"
+}

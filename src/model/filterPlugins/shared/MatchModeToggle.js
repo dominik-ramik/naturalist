@@ -3,37 +3,10 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import "./MatchModeToggle.css";
 
-registerMessages(selfKey, {
-  en: {
-    match_mode_change: "Change",
-    match_mode_cancel: "Cancel",
-    match_mode_any: "Match any",
-    match_mode_any_sub: "Show entries that have at least one of the selected values.",
-    match_mode_any_summary: "Matches any selected",
-    match_mode_all: "Match all",
-    match_mode_all_sub: "Show only entries that have every selected value simultaneously.",
-    match_mode_all_summary: "Matches all selected",
-    match_mode_exclude: "Exclude",
-    match_mode_exclude_sub: "Hide entries that have any of the selected values. Entries with no data for this field are also hidden.",
-    match_mode_exclude_summary: "Excludes selected",
-  },
-  fr: {
-    match_mode_change: "Changer",
-    match_mode_cancel: "Annuler",
-    match_mode_any: "Correspond à au moins un",
-    match_mode_any_sub: "Afficher les entrées qui ont au moins une des valeurs sélectionnées.",
-    match_mode_any_summary: "Correspond à au moins un sélectionné",
-    match_mode_all: "Correspond à tous",
-    match_mode_all_sub: "Afficher uniquement les entrées qui ont toutes les valeurs sélectionnées simultanément.",
-    match_mode_all_summary: "Correspond à tous les sélectionnés",
-    match_mode_exclude: "Exclure",
-    match_mode_exclude_sub: "Masquer les entrées qui ont l'une des valeurs sélectionnées. Les entrées sans données pour ce champ sont également masquées.",
-    match_mode_exclude_summary: "Exclut les sélectionnés",    
-  }
-});
+
 
 // ── Public mode constants (imported by every opt-in plugin) ───────────────────
 

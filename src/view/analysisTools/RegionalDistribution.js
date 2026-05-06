@@ -18,8 +18,7 @@
 
 import m from 'mithril';
 import './RegionalDistribution.css';
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { Settings } from '../../model/Settings.js';
 import { Checklist } from '../../model/Checklist.js';
 import { filterTerminalLeavesForMode, relativeToUsercontent } from '../../components/Utils.js';
@@ -46,16 +45,7 @@ import { getDataFromDataPath } from '../../model/DataPath.js';
 import { FullscreenableMedia } from '../../components/FullscreenableMedia.js';
 import { CacheManager } from '../../model/CacheManager.js';
 
-registerMessages(selfKey, {
-  en: {
-    rd_no_data_message: "No data for the current selection. Try changing the filter, segment, or operation.",
-    rd_computing_maps: "Preparing maps…",
-  },
-  fr: {
-    rd_no_data_message: "Aucune donnée pour la sélection actuelle. Essayez de changer le filtre, le segment ou l'opération.",
-    rd_computing_maps: "Préparation des cartes…",
-  }
-});
+
 
 
 // ─── Constants ────────────────────────────────────────────────────────────────

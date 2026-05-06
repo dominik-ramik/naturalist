@@ -3,69 +3,12 @@
  */
 
 import m from 'mithril';
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { Checklist } from '../../../model/Checklist.js';
 import { resolveRegionColor, computeDatasetStats } from '../../../components/MapregionsColorEngine.js';
 import { getOperationMeta, computeRatio } from './aggregate.js';
 
-registerMessages(selfKey, {
-  en: {
-    rd_col_region: "Region",
-    rd_col_count: "Records",
-    rd_row_click_hint: "Click to see individual records",
-    rd_click_row_hint: "Click a row to see individual records",
-    rd_no_data_message: "No data for the current selection. Try changing the filter, segment, or operation.",
-    rd_stat_min: "Min",
-    rd_stat_mean: "Mean",
-    rd_stat_median: "Median",
-    rd_stat_max: "Max",
-    rd_drill_name: "Record",
-    rd_drill_status: "Status / value",
-    rd_drill_group_members: "Regions in group",
-    rd_drill_empty: "No matching records for the current segment.",
-    rd_drill_excluded: "{0} record(s) with non-numeric status excluded from calculation.",
-    rd_drill_overflow: "… and {0} more records not shown.",
-    rd_drill_show_all: "Show all {0} records",
-    rd_drill_show_less: "Show less",
-    rd_op_count: "Count",
-    rd_op_sum: "Sum",
-    rd_op_mean: "Mean",
-    rd_op_median: "Median",
-    rd_op_min: "Min",
-    rd_op_max: "Max",
-    rd_op_stddev: "Std. deviation",
-    rd_op_pct_above: "% above threshold",
-    rd_op_pct_below: "% below threshold",
-  },
-  fr: {
-    rd_col_region: "Région",
-    rd_col_count: "Enregistrements",
-    rd_row_click_hint: "Cliquez pour voir les enregistrements individuels",
-    rd_click_row_hint: "Cliquez sur une ligne pour voir les enregistrements individuels",
-    rd_no_data_message: "Aucune donnée pour la sélection actuelle. Essayez de changer le filtre, le segment ou l'opération.",
-    rd_stat_min: "Min",
-    rd_stat_mean: "Moyenne",
-    rd_stat_median: "Médiane",
-    rd_stat_max: "Max",
-    rd_drill_name: "Enregistrement",
-    rd_drill_status: "Statut / valeur",
-    rd_drill_group_members: "Régions dans le groupe",
-    rd_drill_empty: "Aucun enregistrement correspondant pour le segment actuel.",
-    rd_drill_excluded: "{0} enregistrement(s) avec un statut non numérique exclus de calculations.",
-    rd_drill_overflow: "… et {0} enregistrements supplémentaires non affichés.",
-    rd_drill_show_all: "Afficher les {0} enregistrements",
-    rd_drill_show_less: "Afficher moins",
-    rd_op_count: "Nombre",
-    rd_op_sum: "Somme",
-    rd_op_mean: "Moyenne",
-    rd_op_median: "Médiane",
-    rd_op_min: "Min",
-    rd_op_max: "Max",
-    rd_op_stddev: "Écart-type",
-    rd_op_pct_above: "% au-dessus du seuil",
-    rd_op_pct_below: "% en-dessous du seuil",
-  }
-});
+
 
 
 const OVERFLOW_THRESHOLD = 200;

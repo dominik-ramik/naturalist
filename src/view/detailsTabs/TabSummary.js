@@ -1,6 +1,5 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../../model/Checklist";
 import { Settings } from "../../model/Settings";
 import { dataCustomTypes } from "../../model/customTypes/index.js";
@@ -16,60 +15,7 @@ import { MONTH_KEYS } from "../../model/MonthNames.js";
 import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
 import { getDataFromDataPath } from "../../model/DataPath.js";
 
-registerMessages(selfKey, {
-  en: {
-    sp_view: "View",
-    sp_occurrences: "Occurrences",
-    sp_general: "General",
-    sp_in_group: "sibling taxa",
-    sp_children_taxa: "{0} child taxa",
-    sp_title_for_occurrences: "{0} (occurrences)",
-    sp_taxonomy: "Taxonomy",
-    sp_spec_own: "Own",
-    sp_spec_total: "Total",
-    sp_cat_col_value: "Category",
-    sp_cat_col_count: "Count",
-    sp_cat_col_pct: "%",
-    sp_region_col_region: "Region",
-    sp_region_col_status: "Status",
-    sp_region_col_status_range: "Values range",
-    sp_region_col_count: "Count",
-    sp_region_col_pct: "%",
-    sp_region_details_toggle: "Per-region details",
-    sp_region_stat_max: "Max",
-    sp_region_stat_avg: "Average",
-    sp_region_stat_median: "Median",
-    sp_region_stat_min: "Min",
-    sp_region_stat_value: "Value",
-    sp_calculating: "Calculating…",
-  },
-  fr: {
-    sp_view: "Vue",
-    sp_occurrences: "Occurrences",
-    sp_general: "Général",
-    sp_in_group: "taxons frères",
-    sp_children_taxa: "{0} taxons enfants",
-    sp_title_for_occurrences: "{0} (occurrences)",
-    sp_taxonomy: "Taxonomie",
-    sp_spec_own: "Directes",
-    sp_spec_total: "Totales",
-    sp_cat_col_value: "Catégorie",
-    sp_cat_col_count: "Nombre",
-    sp_cat_col_pct: "%",
-    sp_region_col_region: "Région",
-    sp_region_col_status: "Statut",
-    sp_region_col_status_range: "Plage de valeurs",
-    sp_region_col_count: "Nombre",
-    sp_region_col_pct: "%",
-    sp_region_details_toggle: "Détails par région",
-    sp_region_stat_max: "Max",
-    sp_region_stat_avg: "Moyenne",
-    sp_region_stat_median: "Médiane",
-    sp_region_stat_min: "Min",
-    sp_region_stat_value: "Valeur",
-    sp_calculating: "Calcul en cours…",
-  }
-});
+
 
 // ─── postTask polyfill ────────────────────────────────────────────────────────
 // scheduler.postTask() is available in Chromium 94+ and Firefox 115+.

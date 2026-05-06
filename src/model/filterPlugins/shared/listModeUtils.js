@@ -10,25 +10,7 @@
 import m from "mithril";
 import { Checklist } from "../../Checklist.js";
 import { CacheManager } from "../../CacheManager.js";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
-registerMessages(selfKey, {
-  en: {
-    search: "Search",
-    next_items_dropdown: "Show next {0} items",
-    no_items_filter: "No matching items found",
-    apply_selection: "Apply",
-    check_all_shown: "Check all shown items",
-  },
-  fr: {
-    search: "Rechercher",
-    next_items_dropdown: "Afficher les {0} éléments suivants",
-    no_items_filter: "Aucun élément correspondant trouvé",
-    apply_selection: "Appliquer",
-    check_all_shown: "Cocher tous les éléments affichés",
-  }
-});
-
+import { t, tf } from 'virtual:i18n-self';
 // ── Value-set helpers ─────────────────────────────────────────────────────────
 
 /**

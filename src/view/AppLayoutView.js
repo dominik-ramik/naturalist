@@ -1,26 +1,14 @@
 import m from "mithril"
 import "./AppLayoutView.css";
-import { registerMessages, selfKey, t } from 'virtual:i18n-self';
-
+import { t } from 'virtual:i18n-self';
 import { MenuStripView } from "./MenuStripView.js";
 import { ChecklistView } from "./ChecklistView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
-import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 
 const DEMO_CHECKLIST_KEY = "demoChecklistData";
 
-registerMessages(selfKey, {
-    en: {
-        demo_banner_message: "<b>Demo mode</b> - you are looking at an example project. Hit the 'Exit preview' button to see other examples.",
-        demo_banner_quit: "Exit preview",
-    },
-    fr: {
-        demo_banner_message: "<b>Mode démo</b> - vous regardez un projet d'exemple. Cliquez sur le bouton 'Quitter l'aperçu' pour voir d'autres exemples.",
-        demo_banner_quit: "Quitter l'aperçu",
-    }
-});
+
 
 const DemoBanner = {
     view: function () {

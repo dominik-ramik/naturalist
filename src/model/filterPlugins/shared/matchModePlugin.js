@@ -10,21 +10,9 @@
  *     and cannot use the flat variant directly, but can use matchModeVerb)
  */
 
-import { t, selfKey, registerMessages } from "virtual:i18n-self";
 import { MATCH_MODES } from "./MatchModeToggle.js";
 
-registerMessages(selfKey, {
-  en: {
-    is_all_list_joiner: "is all of",
-    is_not_list_joiner: "is not",
-    is_list_joiner: "is",
-  },
-  fr: {
-    is_all_list_joiner: "est tout de",
-    is_not_list_joiner: "n'est pas",
-    is_list_joiner: "est",
-  }
-});
+
 
 
 // ── Verb-key for describeSerializedValue ──────────────────────────────────────

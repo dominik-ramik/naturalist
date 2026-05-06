@@ -87,6 +87,7 @@ export function setLocale(lang) {
 // ---------------------------------------------------------------------------
 
 export function registerMessages(namespaceKey, messagesByLocale) {
+  console.error(`[i18n] registerMessages called at runtime Namespace: ${namespaceKey}`);
   if (
     typeof namespaceKey !== 'string' ||
     !namespaceKey ||

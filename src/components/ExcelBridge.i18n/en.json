@@ -1,0 +1,13 @@
+{
+  "dm_cannot_have_language_indicators": "Column {0} in table {1} cannot have language indicators ({2})",
+  "dm_verify_doc": "Verify the documentation to be on the same page with the latest format of the configuration sheets.",
+  "dm_required_sheet_missing": "Required sheet '{0}' is missing from the spreadsheet. The project cannot be compiled without it.",
+  "dm_optional_sheet_missing": "Optional sheet '{0}' was not found. All its tables will be treated as empty.",
+  "dm_required_table_missing_in_sheet": "Required table '{0}' was not found in sheet '{1}'.",
+  "dm_optional_table_missing": "Optional table '{0}' was not found in sheet '{1}'. It will be treated as empty.",
+  "dm_required_table_columns_missing": "Required table '{0}' is missing mandatory columns: {1}.",
+  "dm_optional_table_columns_missing": "Table '{0}' is present in the spreadsheet but is missing expected columns: {1}.",
+  "dm_column_not_found": "Could not find column {0} in table {1}",
+  "dm_empty_row_in_data": "Empty row detected in sheet '{0}' at line {1}.",
+  "dm_data_after_empty_row_ignored": "Data found after the empty row will be ignored."
+}

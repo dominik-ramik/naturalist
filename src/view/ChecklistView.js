@@ -1,5 +1,5 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import {  t, tf } from 'virtual:i18n-self';
 import "./ChecklistView.css";
 
 import { routeTo, updateRouteParams, isInDemoMode } from "../components/Utils.js";
@@ -10,42 +10,6 @@ import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
 import { collapsePaneAndDismissKeyboard } from "../components/MobileInteraction.js";
-
-registerMessages(selfKey, {
-  en: {
-    nothing_found_oops: "Fall came too early?",
-    nothing_found_checklist: "This taxonomic tree branch has no leaves",
-    nothing_found_message: "No matches found for query",
-    nothing_found_message_hint: "Try broadening your query or adjusting your filters",
-    mobile_filter_notice: "Showing only taxa where {0}",
-    temporary_draft_goto_manage: "Manage",
-    draft_notice: "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
-    welcome_headline_tagline: "The flexible biodiversity data publishing platform",
-    welcome_tagline: "Publish <strong>checklists</strong>, curate <strong>collections</strong>, and explore your data through filters, search, and analysis tools <strong>built for discovery</strong> - all from a single spreadsheet.",
-    welcome_blessing: "May your taxonomic tree grow to the sky.",
-    demo_mode_badge: "Demo",
-    demo_mode_notice: "This is a demo instance - load an example to see <b>NaturaList</b> in action.",
-    demo_mode_btn: "Explore examples gallery",
-    demo_mode_btn_main: "Open featured example",
-  },
-  fr: {
-    nothing_found_oops: "Rien trouvé",
-    nothing_found_checklist: "Cette branche de l'arbre taxonomique n'a pas de feuilles",
-    nothing_found_message: "Aucun résultat trouvé pour la requête",
-    nothing_found_message_hint: "Try broadening your query or adjusting your filters",
-    mobile_filter_notice: "Affichage uniquement des taxons où {0}",
-    temporary_draft_goto_manage: "Gérer",
-    draft_notice: "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
-    welcome_headline: "Bienvenue sur NaturaList",
-    welcome_headline_tagline: "La plateforme flexible de publication de données sur la biodiversité",
-    welcome_tagline: "Publiez des <strong>listes de taxons</strong>, organisez des <strong>collections</strong>, analysez les données et explorez les espèces, motifs et caractéristiques, et construisez des <strong>clés d'identification</strong> - tout cela à partir d'une seule feuille de calcul.",
-    welcome_blessing: "Que votre arbre taxonomique pousse jusqu'au ciel.",
-    demo_mode_badge: "Démo",
-    demo_mode_notice: "Il s'agit d'une instance de démonstration - chargez un exemple pour voir <b>NaturaList</b> en action.",
-    demo_mode_btn: "Explorer la galerie d'exemples",
-    demo_mode_btn_main: "Ouvrir l'exemple phare",
-  }
-});
 
 export let ChecklistView = {
   oninit: function () {

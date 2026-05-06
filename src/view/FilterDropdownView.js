@@ -10,26 +10,12 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { copyToClipboard, getUnitFromTemplate, unitToHtml } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { getFilterPlugin } from "../model/filterPlugins/index.js";
 
 import "./FilterDropdownView.css";
-
-registerMessages(selfKey, {
-  en: {
-    copy_taxa_dropdown: "Copy {0} taxa results of this search",
-    list_of_taxa: "List of {0} taxa",
-    filter_no_plugin: "Filter for '{0}' doesn't exist",
-  },
-  fr: {
-    copy_taxa_dropdown: "Copier les résultats {0} de ce recherche",
-    list_of_taxa: "Liste des taxons {0}",
-    filter_no_plugin: "Le filtre pour '{0}' n'existe pas",
-  }
-});
 
 // ── FilterDropdown ─────────────────────────────────────────────────────────────
 

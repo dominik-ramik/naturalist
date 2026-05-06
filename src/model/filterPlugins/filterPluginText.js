@@ -3,7 +3,7 @@
  */
 
 import m from "mithril";
-import { t, registerMessages, selfKey } from "virtual:i18n-self";
+import { t } from "virtual:i18n-self";
 import { Checklist } from "../Checklist.js";
 import { buildCheckItems } from "./shared/DropdownCheckItem.js";
 import { describeList } from "./shared/filterUtils.js";
@@ -17,14 +17,7 @@ import {
   makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
-registerMessages(selfKey, {
-  en: {
-    is_list_joiner: "is",
-  },
-  fr: {
-    is_list_joiner: "est",
-  }
-});
+
 
 // ── Dropdown component ────────────────────────────────────────────────────────
 

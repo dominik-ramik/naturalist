@@ -5,7 +5,7 @@
  */
 
 import m from "mithril";
-import { t, selfKey, registerMessages } from "virtual:i18n-self";
+import { t, selfKey } from "virtual:i18n-self";
 import { Checklist } from "../Checklist.js";
 import { groupMonthsIntoRanges, renderRangesString } from "../customTypes/CustomTypeMonths.js";
 import { DropdownCheckItemSkeleton } from "./shared/DropdownCheckItem.js";
@@ -17,14 +17,7 @@ import {
   makeListPluginLifecycle,
 } from "./shared/matchModePlugin.js";
 
-registerMessages(selfKey, {
-  en: {
-    is_list_joiner: "is",
-  },
-  fr: {
-    is_list_joiner: "est",
-  }
-});
+
 
 
 // ── Dropdown component ────────────────────────────────────────────────────────

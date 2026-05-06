@@ -1,5 +1,5 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
 import { TaxonView } from "./TaxonomicTree/TaxonView.js";
@@ -7,18 +7,7 @@ import { TaxonNameView } from "./TaxonomicTree/TaxonNameView.js";
 import { TaxonDataView } from "./TaxonomicTree/TaxonDataView.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
 
-registerMessages(selfKey, {
-  en: {
-    next_items_checklist: "Show next {0} search results",
-    display_all_taxa: "All taxonomic ranks",
-    display_occurrences_only: "Occurrences only",
-  },
-  fr: {
-    next_items_checklist: "Afficher les {0} résultats de recherche suivants",
-    display_all_taxa: "Tous les rangs taxonomiques",
-    display_occurrences_only: "Occurrences uniquement",
-  }
-});
+
 
 // Sentinel value stored in Settings.checklistDisplayLevel when the user selects
 // the "Occurrences only" flat-list mode. Must not collide with any real taxon

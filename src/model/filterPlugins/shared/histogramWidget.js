@@ -7,19 +7,10 @@
  */
 
 import m from "mithril";
-import { t, registerMessages, selfKey } from "virtual:i18n-self";
+import { t } from "virtual:i18n-self";
 import { Checklist } from "../../Checklist.js";
 
-registerMessages(selfKey, {
-  en: {
-  histogram_all_data: "All data",
-  histogram_displayed_data: "Currently displayed data",
-  },
-  fr: {
-    histogram_all_data: "Toutes les données",
-    histogram_displayed_data: "Données actuellement affichées",
-  }
-});
+
 
 /**
  * Renders the histogram container + legend.

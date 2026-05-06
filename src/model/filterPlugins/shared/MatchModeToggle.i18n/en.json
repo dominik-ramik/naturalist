@@ -1,0 +1,13 @@
+{
+  "match_mode_change": "Change",
+  "match_mode_cancel": "Cancel",
+  "match_mode_any": "Match any",
+  "match_mode_any_sub": "Show entries that have at least one of the selected values.",
+  "match_mode_any_summary": "Matches any selected",
+  "match_mode_all": "Match all",
+  "match_mode_all_sub": "Show only entries that have every selected value simultaneously.",
+  "match_mode_all_summary": "Matches all selected",
+  "match_mode_exclude": "Exclude",
+  "match_mode_exclude_sub": "Hide entries that have any of the selected values. Entries with no data for this field are also hidden.",
+  "match_mode_exclude_summary": "Excludes selected"
+}

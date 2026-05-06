@@ -9,7 +9,7 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
 import {
@@ -22,17 +22,6 @@ import { renderParams } from "./shared/ToolParams.js";
 
 import "./ConfigurationDialog.css";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
-
-registerMessages(selfKey, {
-  en: {
-    done: "Done",
-    data_scope: "Data scope",
-  },
-  fr: {
-    done: "Terminé",
-    data_scope: "Portée des données",
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG COMPONENT

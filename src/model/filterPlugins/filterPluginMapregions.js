@@ -35,7 +35,7 @@
  */
 
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import "./filterPluginMapregions.css";
 import { Checklist } from "../Checklist.js";
 import { parseLegendConfig, parseNumericStatus } from "../../components/MapregionsColorEngine.js";
@@ -47,32 +47,7 @@ import {
 } from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
 
-registerMessages(selfKey, {
-  en: {
-    sf_range_from: "From",
-    sf_range_to: "To",
-    sf_range_min_placeholder: "Min ({0})",
-    sf_range_max_placeholder: "Max ({0})",
-    sf_range_clear: "Clear numeric range filter",
-    sf_cat_clear: "Clear category selection",
-    mapregions_status_filter: "Filter by status",
-    is_all_list_joiner: "is all of",
-    is_not_list_joiner: "is not",
-    is_list_joiner: "is",
-  },
-  fr: {
-    sf_range_from: "De",
-    sf_range_to: "À",
-    sf_range_min_placeholder: "Min ({0})",
-    sf_range_max_placeholder: "Max ({0})",
-    sf_range_clear: "Effacer le filtre de plage numérique",
-    sf_cat_clear: "Effacer la sélection de catégories",
-    mapregions_status_filter: "Filtrer par statut",
-    is_all_list_joiner: "est tout de",
-    is_not_list_joiner: "n'est pas",
-    is_list_joiner: "est",
-  }
-});
+
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 

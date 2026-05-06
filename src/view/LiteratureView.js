@@ -1,17 +1,10 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import "./LiteratureView.css";
 import { marked } from "marked";
 import { Checklist } from "../model/Checklist.js";
 
-registerMessages(selfKey, {
-  en: {
-    literature: "References"
-  },
-  fr: {
-    literature: "Références"
-  }
-});
+
 
 export let LiteratureView = {
   view: function (vnode) {

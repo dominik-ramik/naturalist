@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 
@@ -13,14 +13,7 @@ import { AVAILABLE_LOCALES } from "../i18n/index.js";
 import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 import { CacheManager, CacheScope } from "../model/CacheManager.js";
 
-registerMessages(selfKey, {
-  en: {
-    and_list_joiner: "and",
-  },
-  fr: {
-    and_list_joiner: "et",
-  }
-});
+
 
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";

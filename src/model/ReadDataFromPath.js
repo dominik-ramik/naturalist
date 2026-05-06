@@ -2,17 +2,7 @@ import { helpers } from "./customTypes/helpers.js";
 import { nlDataStructure } from "./DataManagerData.js";
 import { dataPath } from "./DataPath.js";
 import { Logger } from "../components/Logger.js";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
-registerMessages(selfKey, {
-  en: {
-    dm_generic_column_names: "Error in column names for data type {0} in the data sheet; we expect either a single column called {1} or multiple columns with the following suffixes: {2}. Also check you don't have the column {3} empty while filling-in the other columns",
-  },
-  fr: {
-    dm_generic_column_names: "Erreur dans les noms de colonnes pour le formatage du type {0} dans la feuille de données ; nous attendons soit une seule colonne appelée {1}, soit plusieurs colonnes avec les suffixes suivants : {2}. Vérifiez également que vous n'avez pas la colonne {3} vide tout en remplissant les autres colonnes",    
-  }
-});
-
+import { selfKey, t, tf } from 'virtual:i18n-self';
 const data = nlDataStructure;
 
 /**

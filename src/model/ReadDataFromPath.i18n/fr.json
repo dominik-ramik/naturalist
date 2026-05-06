@@ -1,0 +1,3 @@
+{
+  "dm_generic_column_names": "Erreur dans les noms de colonnes pour le formatage du type {0} dans la feuille de données ; nous attendons soit une seule colonne appelée {1}, soit plusieurs colonnes avec les suffixes suivants : {2}. Vérifiez également que vous n'avez pas la colonne {3} vide tout en remplissant les autres colonnes"
+}

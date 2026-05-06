@@ -1,22 +1,12 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { ClickableTaxonName } from "./ClickableTaxonNameView.js";
 import { Checklist } from "../../../model/Checklist.js";
 import { copyToClipboard } from "../../../components/Utils.js";
 
 import "./TaxonNameView.css";
 
-registerMessages(selfKey, {
-  en: {
-    in_taxon_group: "{0} {1}",
-    item: "Item",
-  },
-  fr: {
-    in_taxon_group: "{0} {1}",
-    item: "Élément",
-  }
-});
+
 
 export let TaxonNameView = {
   view: function (vnode) {

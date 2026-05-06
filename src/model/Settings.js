@@ -3,23 +3,7 @@ import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { dataCustomTypes } from "./customTypes/index.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "./nlDataStructureSheets.js";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
-registerMessages(selfKey, {
-  en: {
-    text_is_list_joiner: "contains text",
-    crumb_or: "or",
-    view_chart_mode_taxa: "Taxa",
-    view_chart_mode_occurrence: "Occurrences",
-  },
-  fr: {
-    text_is_list_joiner: "contient texte",
-    crumb_or: "ou",
-    view_chart_mode_taxa: "Taxons",
-    view_chart_mode_occurrence: "Occurrences",
-  }
-});
-
+import { selfKey, t, tf } from 'virtual:i18n-self';
 export let Settings = {
   // Full-text search OR separator symbol
   SEARCH_OR_SEPARATOR: "/",

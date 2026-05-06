@@ -1,10 +1,9 @@
 import Handlebars from "handlebars";
 import { TinyBibReader } from 'bibtex-json-toolbox';
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { t, tf } from 'virtual:i18n-self';
 
 import { absoluteUsercontent, isValidHttpUrl, pad, relativeToUsercontent, splitN } from "../components/Utils.js";
 import { getAllColumnInfos, nlDataStructure } from "./DataManagerData.js";
-import { Checklist } from "../model/Checklist.js";
 import { loadDataByType, allowedDataTypesIncludingList, dataCustomTypes, isColumnPresentInHeaders, clearHelpersCache } from "./customTypes/index.js";
 // Register the dataCustomTypes map with the DwC compiler so it can call
 // each type's toDwC() method without a circular import.
@@ -18,9 +17,6 @@ import { validateConfiguredMonthNames } from "./MonthNames.js";
 import { compileDwcArchive, registerDataCustomTypes } from "./dwc/DwcArchiveCompiler.js";
 import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
 import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
-import { dataManagerI18n } from "./DataManager.i18n.js";
-
-registerMessages(selfKey, dataManagerI18n);
 
 // Global array to collect assets from F: directives
 

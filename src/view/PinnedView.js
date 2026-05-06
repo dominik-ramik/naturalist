@@ -1,21 +1,11 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-
+import { t, tf } from 'virtual:i18n-self';
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { validateActiveToolState } from "./analysisTools/index.js";
 
-registerMessages(selfKey, {
-  en: {
-    pin_this_search: "Pin this search",
-    pined_searches: "Pinned searches",
-  },
-  fr: {
-    pin_this_search: "Épingler cette recherche",
-    pined_searches: "Recherches épinglées",
-  }
-});
+
 
 export let PinnedView = {
   view: function (vnode) {
