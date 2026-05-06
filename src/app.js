@@ -216,11 +216,12 @@ function runApp() {
       Accept: "*/*",
     },
     extract: function (xhr) {
-      if (xhr.status != 200) {
-        return null;
-      }
-
-      let parsed = "";
+      if (xhr.status !== 200) return null;
+      // In dev mode Vite returns 200 + index.html for missing files (SPA fallback).
+      // In production the SW now returns a real 404, but guard here too for safety.
+      const ct = xhr.getResponseHeader("Content-Type") || "";
+      if (ct.includes("text/html")) return null;
+      let parsed = null;
       try {
         parsed = JSON.parse(compressor.decompress(xhr.responseText));
         if (import.meta.env.DEV) {
@@ -232,15 +233,19 @@ function runApp() {
       return parsed;
     },
   }).then(function (checklistData) {
-
     window.setTimeout(async function () {
       if (checklistData) {
         Checklist.loadData(checklistData, false);
         const requiredLocales = deriveRequiredUiLocales(Checklist);
         await loadLocales(requiredLocales);
         setLocale(resolveUiLocaleForDataLang(Settings.language(), Checklist));
+        readyPreloadableAssets();
       }
-      readyPreloadableAssets();
+      setupRoutes(appVersion);
+    }, 50);
+  }).catch(function (err) {
+    console.warn("Checklist data unavailable:", err);
+    window.setTimeout(function () {
       setupRoutes(appVersion);
     }, 50);
   });

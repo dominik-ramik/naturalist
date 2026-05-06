@@ -3,7 +3,7 @@
     "default_legend": "Présent",
     "generic_about": "Ce projet a été créé en utilisant **NaturaList**, la plateforme flexible de publication de données de biodiversité.\n\nEn savoir plus sur **NaturaList** sur [naturalist.app](https://naturalist.app).",
     "dm_array_with_empty_cells_in_the_middle": "Vérifiez la colonne {0}{1} de la ligne suivante dans la feuille de données du projet. Il ne devrait pas y avoir de cellule vide à cet index : {2}",
-    "dm_specify_fallback_language": "La langue {0} dans la table {1} (feuille {2}) n'a pas de langue de secours existante, entrez un des codes de langue suivants dans la colonne de langue de secours pour assurer un affichage correct, sinon l'interface de l'application reviendra à l'anglais",
+    "dm_specify_fallback_language": "La langue {0} dans la table {1} (feuille {2}) n'a pas de langue de secours existante, entrez l'un des codes de langue suivants dans la colonne de langue de secours pour assurer un affichage correct, sinon l'interface de l'application reviendra à l'anglais",
     "dm_verify_doc": "Vérifiez la documentation pour être à jour avec le dernier format des feuilles de configuration.",
     "dm_required_table_missing": "La table requise '{0}' est manquante. Le projet ne peut pas être compilé sans elle.",
     "dm_required_table_columns_missing": "La table requise '{0}' est manquante des colonnes obligatoires : {1}.",

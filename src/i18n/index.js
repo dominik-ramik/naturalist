@@ -125,7 +125,7 @@ export function registerMessages(namespaceKey, messagesByLocale) {
 
 export const i18nMetadata = {
   getDefaultTranslationLanguage: () => DEFAULT_LOCALE_CODE,
-  getSupportedLanguageCodes:     () => [..._loadedLocales],
+  getSupportedLanguageCodes:     () => AVAILABLE_LOCALES,
 };
 
 export { i18nMetadata as i18n };

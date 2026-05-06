@@ -77,28 +77,26 @@ self.addEventListener('fetch', function (e) {
     }
 
     // C. STALE-WHILE-REVALIDATE for Checklist.json
-    // 1. Serve from 'checklist-data' cache immediately.
-    // 2. Update 'checklist-data' cache in background.
     if (e.request.url.toLowerCase().endsWith("/" + checklistFileName)) {
         e.respondWith((async function () {
             const dataCache = await caches.open(dataCacheName);
             const cachedResponse = await dataCache.match(e.request);
 
-            // NETWORK UPDATE: Always try to update in the background
             const networkPromise = fetch(e.request).then(networkResponse => {
                 if (isValidChecklistResponse(networkResponse, e.request.url)) {
                     dataCache.put(e.request, networkResponse.clone());
+                    return networkResponse;
                 }
-                return networkResponse;
+                // Soft 404: server returned HTML instead of JSON — surface a real 404
+                // so the app knows the file is absent rather than receiving garbage.
+                return new Response(null, { status: 404, statusText: "Not Found" });
             });
 
-            // If we have cached data, return it fast & update in background.
             if (cachedResponse) {
                 e.waitUntil(networkPromise.catch(() => { }));
                 return cachedResponse;
             }
 
-            // If we have absolutely nothing, we must wait for the network.
             return networkPromise;
         })());
         return;

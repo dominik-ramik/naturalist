@@ -126,10 +126,10 @@ export function setupRoutes(appVersion) {
     }
   }
 
-  function onMatchGuard() {
+function onMatchGuard(attrs, requestedPath) {
     updateLanguage();
     updateToolAndScope();
-    if (!Checklist._isDataReady && !deepLinkProcessing) {
+    if (!Checklist._isDataReady && !deepLinkProcessing && !requestedPath.startsWith("/manage")) {
       m.route.set("/manage");
     }
     if (
@@ -147,7 +147,6 @@ export function setupRoutes(appVersion) {
 
     Settings.alreadyViewedAboutSection(true);
   }
-
   syncRouteStateBeforeRender = updateLanguage;
 
   const initialRoute = hasDeepLinkParam() ? "/manage" : "/checklist";
