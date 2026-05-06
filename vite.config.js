@@ -12,7 +12,21 @@ export default defineConfig({
         outDir: 'dist',
         sourcemap: false,
         rollupOptions: {
-
+            output: {
+                // Give each non-default locale bundle a predictable name so it
+                // can be excluded from the SW precache manifest below.
+                // The default locale (en) is statically imported and ends up
+                // inlined in the main chunk, so it needs no special treatment.
+                manualChunks(id) {
+                    const prefix = '\0virtual:i18n-bundle/';
+                    if (id.startsWith(prefix)) {
+                        const code = id.slice(prefix.length);
+                        if (code !== 'en') {
+                            return `locale-${code}`;
+                        }
+                    }
+                },
+            },
         },
     },
     define: {
@@ -37,7 +51,12 @@ export default defineConfig({
                     '**/*.{js,css,html}',
                     'usercontent/identity/favicon.{svg,png}',
                     'img/**/*.{svg,png}'
-                ]
+                ],
+                // Locale chunks are loaded on-demand by loadLocales() based on
+                // what languages are actually defined in the checklist data.
+                // Precaching them all would download every language even when
+                // the active checklist only uses one.
+                globIgnores: ['**/locale-*.js']
             },
             manifest: false
         }),

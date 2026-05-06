@@ -1,5 +1,5 @@
 import path from 'node:path';
-import fs   from 'node:fs';
+import fs from 'node:fs';
 
 const SKIP_SEGMENTS = new Set([
   'src', 'app', 'views', 'view', 'components', 'component',
@@ -9,24 +9,24 @@ const GENERIC_BASENAMES = new Set([
   'index', 'main', 'component', 'view', 'widget', 'module',
 ]);
 
-const VIRTUAL_ID  = 'virtual:i18n-self';
+const VIRTUAL_ID = 'virtual:i18n-self';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
 
 // Per-locale bundle virtual modules - one chunk per language.
-const VIRTUAL_LOADERS_ID      = 'virtual:i18n-loaders';
-const RESOLVED_LOADERS_ID     = '\0' + VIRTUAL_LOADERS_ID;
-const VIRTUAL_BUNDLE_PREFIX   = 'virtual:i18n-bundle/';
-const RESOLVED_BUNDLE_PREFIX  = '\0virtual:i18n-bundle/';
+const VIRTUAL_LOADERS_ID = 'virtual:i18n-loaders';
+const RESOLVED_LOADERS_ID = '\0' + VIRTUAL_LOADERS_ID;
+const VIRTUAL_BUNDLE_PREFIX = 'virtual:i18n-bundle/';
+const RESOLVED_BUNDLE_PREFIX = '\0virtual:i18n-bundle/';
 
 function deriveKey(absoluteFilePath, projectRoot) {
   // Strip any Vite query suffix (e.g. ?t=1234 added in dev HMR) so that
   // path operations and fs.existsSync work on the real filesystem path.
   const cleanPath = absoluteFilePath.split('?')[0];
-  const rel      = path.relative(projectRoot, cleanPath).replace(/\\/g, '/');
-  const parts    = rel.split('/');
-  const ext      = path.extname(parts[parts.length - 1]);
+  const rel = path.relative(projectRoot, cleanPath).replace(/\\/g, '/');
+  const parts = rel.split('/');
+  const ext = path.extname(parts[parts.length - 1]);
   const basename = path.basename(parts[parts.length - 1], ext);
-  const dirs     = parts.slice(0, -1);
+  const dirs = parts.slice(0, -1);
 
   const meaningfulDirs = [];
   let skipping = true;
@@ -121,7 +121,9 @@ function generateLoadersModule(projectRoot) {
 
   const lines = ['export const bundleLoaders = {'];
   for (const code of codes) {
-    lines.push(`  ${JSON.stringify(code)}: () => import(${JSON.stringify(VIRTUAL_BUNDLE_PREFIX + code)}),`);
+    // The /* @vite-ignore */ suppresses the static analysis that causes Vite
+    // to emit modulepreload hints for these chunks in the built HTML.
+    lines.push(`  ${JSON.stringify(code)}: () => import(/* @vite-ignore */ ${JSON.stringify(VIRTUAL_BUNDLE_PREFIX + code)}),`);
   }
   lines.push('};');
   return lines.join('\n');
@@ -129,21 +131,21 @@ function generateLoadersModule(projectRoot) {
 
 export default function i18nSelfPlugin(options = {}) {
   const i18nEntryRelative = options.i18nEntry ?? 'src/i18n/index.js';
-  let projectRoot  = process.cwd();
+  let projectRoot = process.cwd();
   let i18nEntryAbs = '';
 
   return {
     name: 'vite-plugin-i18n-self',
 
     configResolved(config) {
-      projectRoot  = config.root;
+      projectRoot = config.root;
       i18nEntryAbs = path.resolve(projectRoot, i18nEntryRelative);
     },
 
     resolveId(id) {
-      if (id === VIRTUAL_ID)                       return RESOLVED_ID;
-      if (id === VIRTUAL_LOADERS_ID)               return RESOLVED_LOADERS_ID;
-      if (id.startsWith(VIRTUAL_BUNDLE_PREFIX))    return RESOLVED_BUNDLE_PREFIX + id.slice(VIRTUAL_BUNDLE_PREFIX.length);
+      if (id === VIRTUAL_ID) return RESOLVED_ID;
+      if (id === VIRTUAL_LOADERS_ID) return RESOLVED_LOADERS_ID;
+      if (id.startsWith(VIRTUAL_BUNDLE_PREFIX)) return RESOLVED_BUNDLE_PREFIX + id.slice(VIRTUAL_BUNDLE_PREFIX.length);
     },
 
     load(id) {
