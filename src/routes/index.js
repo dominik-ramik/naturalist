@@ -150,7 +150,7 @@ export function setupRoutes(appVersion) {
 
   syncRouteStateBeforeRender = updateLanguage;
 
-  const initialRoute = hasDeepLinkParam() ? "/manage/upload" : "/checklist";
+  const initialRoute = hasDeepLinkParam() ? "/manage" : "/checklist";
 
   FullscreenManager.init();
 

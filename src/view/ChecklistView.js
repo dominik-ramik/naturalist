@@ -290,7 +290,7 @@ function draftNotice() {
     action: function () { Settings.checklistDisplayLevel(""); },
     notice: t("draft_notice"),
     additionalButton: {
-      action: function () { routeTo("/manage/review"); },
+      action: function () { routeTo("/manage"); },
       icon: "manage",
       text: t("temporary_draft_goto_manage"),
     },

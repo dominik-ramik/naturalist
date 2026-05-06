@@ -482,14 +482,46 @@
   margin-bottom: 0.5em;
 }
 
+/* Tabbed publish panel — mirrors .manage-source-panel */
+.manage-publish-panel {
+  border: 1px solid #e0e3e8;
+  border-radius: 0.6em;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.manage-publish-tabs {
+  display: flex;
+  border-bottom: 2px solid #ddd;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Static title header used when there is no tab bar */
+.manage-panel-header {
+  padding: 0.65em 1.1em;
+  border-bottom: 2px solid #ddd;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.87em;
+  font-weight: 600;
+  color: #444;
+}
+
+/* Re-uses the shared .manage-tab styles; no extra rules needed there */
+
+.manage-publish-tab-body {
+  padding: 1em;
+}
+
 .manage-publish-option {
-  margin-bottom: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65em;
 }
 
 .manage-publish-option>p {
   font-size: 0.9em;
   color: #555;
-  margin: 0 0 0.65em 0;
+  margin: 0;
   line-height: 1.45;
 }
 
@@ -497,7 +529,6 @@
   font-size: 0.87em;
   color: #555;
   line-height: 1.5;
-  margin-bottom: 0.75em;
 }
 
 .manage-publish-description p {

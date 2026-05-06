@@ -130,6 +130,9 @@ const ManageStore = {
   // ── Server
   shouldShowUploadForm: Settings.lastKnownUploadFormAvailability(),
 
+  // ── Publish tab ("direct" | "manual")
+  publishTab: "direct",
+
   // ── Templates section (collapsed for returning users, expanded for first-timers)
   templatesExpanded: false,
 
@@ -871,44 +874,47 @@ function renderReadyResult() {
 
 function renderDwcSection(dwcCompiled, dwcHasErrors, dwcSucceeded, dwcResult) {
   return m(".manage-dwc-section", [
-    m("h4.manage-section-title", t("dwc_section_title")),
+    m(".manage-publish-panel", [
+      m(".manage-panel-header", t("dwc_section_title")),
+      m(".manage-publish-tab-body", [
+        !dwcCompiled ? m(".manage-dwc-panel", [
+          m("p", t("dwc_export_configured")),
+          m("p.manage-hint-muted", t("dwc_compile_invitation")),
+          m(ActionButton, {
+            label: t("compile_dwc_export"),
+            block: true,
+            onclick: _runDwcPipeline,
+          }),
+        ]) : null,
 
-    !dwcCompiled ? m(".manage-dwc-panel", [
-      m("p", t("dwc_export_configured")),
-      m("p.manage-hint-muted", t("dwc_compile_invitation")),
-      m(ActionButton, {
-        label: t("compile_dwc_export"),
-        block: true,
-        onclick: _runDwcPipeline,
-      }),
-    ]) : null,
+        dwcHasErrors ? m(".manage-dwc-panel", [
+          m("p.manage-hint-error", t("dwc_export_has_errors")),
+          m("p.manage-hint-muted", t("dwc_rebuild_after_errors")),
+          m(ActionButton, {
+            label: t("dwc_retry"),
+            block: true,
+            onclick: _runDwcPipeline,
+          }),
+        ]) : null,
 
-    dwcHasErrors ? m(".manage-dwc-panel", [
-      m("p.manage-hint-error", t("dwc_export_has_errors")),
-      m("p.manage-hint-muted", t("dwc_rebuild_after_errors")),
-      m(ActionButton, {
-        label: t("dwc_retry"),
-        block: true,        
-        onclick: _runDwcPipeline,
-      }),
-    ]) : null,
-
-    dwcSucceeded ? m(".manage-dwc-panel", [
-      m("p.manage-hint-success", t("dwc_export_ready")),
-      m(".manage-actions",
-        Object.entries(DWC_ARCHIVE_TYPES)
-          .filter(([archiveType]) => dwcResult && dwcResult[archiveType])
-          .map(([archiveType, typeConfig]) =>
-            m(ActionButton, {
-              key: archiveType,
-              label: t("download_dwc_" + archiveType),
-              icon: "img/ui/manage/download.svg",
-              block: true,
-              onclick: () => downloadCompiledData(dwcResult[archiveType], typeConfig.zipFileName),
-            })
-          )
-      ),
-    ]) : null,
+        dwcSucceeded ? m(".manage-dwc-panel", [
+          m("p.manage-hint-success", t("dwc_export_ready")),
+          m(".manage-actions",
+            Object.entries(DWC_ARCHIVE_TYPES)
+              .filter(([archiveType]) => dwcResult && dwcResult[archiveType])
+              .map(([archiveType, typeConfig]) =>
+                m(ActionButton, {
+                  key: archiveType,
+                  label: t("download_dwc_" + archiveType),
+                  icon: "img/ui/manage/download.svg",
+                  block: true,
+                  onclick: () => downloadCompiledData(dwcResult[archiveType], typeConfig.zipFileName),
+                })
+              )
+          ),
+        ]) : null,
+      ]),
+    ]),
   ]);
 }
 
@@ -932,37 +938,50 @@ function renderPublishSection() {
     ]);
   }
 
-  return m(".manage-publish-section", [
-    ManageStore.shouldShowUploadForm ||true
-      ? m(".manage-publish-option", [
-        m("h4.manage-section-title", t("data_upload_integrate_data")),
-        m("p", t("enter_creds_to_publish")),
-        renderServerUploadForm(),
-      ])
-      : null,
+  const showDirect = ManageStore.shouldShowUploadForm;
+  const tab = ManageStore.publishTab;
 
-    m(".manage-publish-option", [
-      m("h4.manage-section-title", t("download_data")),
-      m(".manage-publish-description", m.trust(marked.parse(t("download_for_manual_update")))),
-      m(ActionButton, {
-        label: t("download_checklist"),
-        primary: true,
-        block: true,
-        loading: ManageStore.isCompilingDownload,
-        onclick: function () {
-          ManageStore.isCompilingDownload = true;
-          setTimeout(() => {
-            const json = ManageStore.dataman.getCompiledChecklist();
-            const blob = new Blob(
-              [compressor.compress(JSON.stringify(json))],
-              { type: "application/json;charset=utf-8" }
-            );
-            downloadCompiledData(blob, "checklist.json");
-            ManageStore.isCompilingDownload = false;
-            m.redraw();
-          }, 50);
-        },
-      }),
+  const directContent = m(".manage-publish-option", [
+    m("p", t("enter_creds_to_publish")),
+    renderServerUploadForm(),
+  ]);
+
+  const manualContent = m(".manage-publish-option", [
+    m(".manage-publish-description", m.trust(marked.parse(t("download_for_manual_update")))),
+    m(ActionButton, {
+      label: t("download_checklist"),
+      primary: true,
+      block: true,
+      loading: ManageStore.isCompilingDownload,
+      onclick: function () {
+        ManageStore.isCompilingDownload = true;
+        setTimeout(() => {
+          const json = ManageStore.dataman.getCompiledChecklist();
+          const blob = new Blob(
+            [compressor.compress(JSON.stringify(json))],
+            { type: "application/json;charset=utf-8" }
+          );
+          downloadCompiledData(blob, "checklist.json");
+          ManageStore.isCompilingDownload = false;
+          m.redraw();
+        }, 50);
+      },
+    }),
+  ]);
+
+  return m(".manage-publish-section", [
+    m(".manage-publish-panel", [
+      showDirect ? m(".manage-publish-tabs", [
+        m("button.manage-tab" + (tab === "direct" ? ".active" : ""), {
+          onclick: () => { ManageStore.publishTab = "direct"; },
+        }, t("data_upload_integrate_data")),
+        m("button.manage-tab" + (tab === "manual" ? ".active" : ""), {
+          onclick: () => { ManageStore.publishTab = "manual"; },
+        }, t("download_data")),
+      ]) : m(".manage-panel-header", t("data_upload_integrate_data")),
+      m(".manage-publish-tab-body",
+        showDirect && tab === "direct" ? directContent : manualContent
+      ),
     ]),
   ]);
 }
