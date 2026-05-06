@@ -978,7 +978,7 @@ function renderPublishSection() {
         m("button.manage-tab" + (tab === "manual" ? ".active" : ""), {
           onclick: () => { ManageStore.publishTab = "manual"; },
         }, t("download_data")),
-      ]) : m(".manage-panel-header", t("data_upload_integrate_data")),
+      ]) : m(".manage-panel-header", t("download_data")),
       m(".manage-publish-tab-body",
         showDirect && tab === "direct" ? directContent : manualContent
       ),

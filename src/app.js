@@ -7,7 +7,7 @@ import { deriveRequiredUiLocales, resolveUiLocaleForDataLang } from "./i18n/loca
 import { showNewVersionToast, showChecklistUpdatedToast, showOfflineFetchFailedToast } from "./components/AppNotifications.js";
 import { Checklist } from "./model/Checklist.js";
 import { Settings } from "./model/Settings.js";
-import { checklistURL, unitToHtml } from "./components/Utils.js";
+import { checklistURL } from "./components/Utils.js";
 import { compressor } from "./components/LZString.js";
 import { DEEP_LINK_STORAGE_KEY, DEMO_CHECKLIST_KEY } from "./view/ManageView.js";
 import { registerHandlebarHelpers } from "./components/handlebarHelpers.js";
@@ -16,8 +16,6 @@ import { setupRoutes } from "./routes/index.js";
 export let appVersion = import.meta.env.VITE_APP_VERSION;
 export const DOCS_URL = "https://naturalist.netlify.app/";
 export let isDemoMode = false;
-
-
 
 const messageChannel = new MessageChannel();
 
