@@ -90,7 +90,7 @@ for markdown-rendered content
     overflow-y: auto;
     padding: 0;
     max-height: 100%;
-    box-shadow: 0 0 1.5em 0.1em black;
+    box-shadow: var(--elevation-shadow);
   }
 
   /* Hide desktop branding and citation */

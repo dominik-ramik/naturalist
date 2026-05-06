@@ -1,650 +1,231 @@
 /* ==========================================================================
-   ManageView - Main Container
+   Parent wrapper override - applied via oncreate / removed via onremove.
+   Converts the interaction-area into a proper flex column so ManageView
+   can own its own scroll and keep the log zone pinned to the bottom.
+   ========================================================================== */
+.interaction-area.manage-layout-active {
+  overflow-y: hidden !important;
+}
+
+/* ==========================================================================
+   ManageView - two-zone root
    ========================================================================== */
 .manage-view {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1em;
-}
-
-/* ==========================================================================
-   Step Indicator
-   ========================================================================== */
-.manage-steps {
-  display: flex;
-  justify-content: center;
-  gap: 0.5em;
-  margin-bottom: 1.5em;
-  padding: 1em;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: var(--pad-large, 1em);
-}
-
-.manage-step {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.25em;
-  padding: 0.5em 1em;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-
-.manage-step.active {
-  opacity: 1;
-}
-
-.manage-step.completed {
-  opacity: 0.8;
-}
-
-.manage-step-number {
-  width: 2em;
-  height: 2em;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.3);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9em;
-}
-
-.manage-step.active .manage-step-number {
+  height: 100%;
+  overflow: hidden;
   background-color: white;
-  color: var(--nlblue, #55769b);
-}
-
-.manage-step.completed .manage-step-number {
-  background-color: #7cb342;
-  color: white;
-}
-
-.manage-step-label {
-  font-size: 0.75em;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ==========================================================================
-   Card Component (matches .sak-card)
-   ========================================================================== */
-.manage-card {
-  border-radius: var(--pad-large, 1em);
-  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-  background-color: #eceff2;
-  border: 1px solid white;
   color: black;
-  margin-bottom: 1em;
-  margin-top: 1em;
+}
+
+/* ── Top zone: scrollable workflow ──────────────────────────────────────── */
+.manage-workflow {
+  flex: 1 1 0;
+  min-height: 0;
+  /* critical: lets flex children scroll */
+  overflow-y: auto;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Bottom zone: always-visible log panel ──────────────────────────────── */
+.manage-log-zone {
+  flex: 0 0 auto;
+  max-height: 35%;
+  /* cap at roughly one-third of the panel */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 2px solid rgba(0, 0, 0, 0.08);
+  background-color: #eceff2;
+  /* When empty the zone collapses to just the header row; when messages
+     arrive it grows naturally up to max-height. */
+
+  box-shadow: var(--elevation-shadow);
+}
+
+/* When the log has messages, give it a comfortable minimum so it opens
+   automatically without the user needing to resize anything. */
+.manage-log-zone:has(.manage-log-list) {
+  min-height: 8em;
+}
+
+.manage-log-zone-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
-.manage-card-header {
-  display: flex;
-  align-items: center;
-  padding: 1em;
-  background-color: rgba(255, 255, 255, 0.5);
-  gap: 0.75em;
-}
-
-.manage-card-icon {
-  width: 2em;
-  height: 2em;
-  object-fit: contain;
-}
-
-.manage-card-title {
-  margin: 0;
-  font-size: 1.1em;
-  font-weight: 600;
-  flex: 1;
-}
-
-.manage-card-description {
-  padding: 0 1em 1em 1em;
-  font-size: 0.9em;
-  line-height: 1.5;
-  color: #555;
-  background-color: rgba(255, 255, 255, 0.5);
-}
-
-.manage-card-description p {
-  margin: 0 0 0.5em 0;
-}
-
-.manage-card-description a {
-  color: #3366cc;
-  text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.manage-card-description a:hover {
-  text-decoration: underline;
-}
-
-.manage-card-content {
-  padding: 1em;
-}
-
-/* ==========================================================================
-   Buttons (matches app style)
-   ========================================================================== */
-.manage-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
-  padding: 0.6em 1.25em;
-  border: 1px solid #ccc;
-  border-radius: 0.5em;
-  background-color: white;
-  color: black;
-  font-family: var(--font-normal);
-  font-size: 0.9em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.manage-btn:hover {
-  background-color: #f5f5f5;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.manage-btn-primary {
-  background-color: var(--nlblue, #55769b);
-  color: white;
-  border-color: var(--nlblue, #55769b);
-}
-
-.manage-btn-primary:hover {
-  background-color: #466a8a;
-}
-
-.manage-btn-small {
-  padding: 0.4em 0.8em;
-  font-size: 0.8em;
-}
-
-.manage-btn-block {
-  width: 100%;
-}
-
-.manage-btn-secondary {
-  background-color: transparent;
-  border: 1px dashed #bbb;
-  color: #777;
-  font-size: 0.85em;
-}
-
-.manage-btn-fixed {
-  min-width: 12em;
-}
-
-.manage-btn-icon {
-  width: 1.25em;
-  height: 1.25em;
+.manage-log-header {
   flex-shrink: 0;
-}
-
-.manage-btn-spinner {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  border: 0.15em solid rgba(255, 255, 255, 0.4);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: manage-spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-.manage-btn:not(.manage-btn-primary) .manage-btn-spinner {
-  border-color: rgba(0, 0, 0, 0.15);
-  border-top-color: var(--nlblue, #55769b);
-}
-
-.manage-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* ==========================================================================
-   Dropzone
-   ========================================================================== */
-.manage-dropzone {
-  border: 2px dashed #aaa;
-  border-radius: var(--pad-large, 1em);
-  padding: 2em;
-  text-align: center;
-  transition: all 0.2s;
-  background-color: rgba(255, 255, 255, 0.5);
-}
-
-.manage-dropzone.entered {
-  border-color: var(--nlblue, #55769b);
-  background-color: rgba(85, 118, 155, 0.1);
-}
-
-.manage-dropzone-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1em;
-}
-
-.manage-dropzone-icon {
-  width: 4em;
-  height: 4em;
-  opacity: 0.6;
-}
-
-.manage-dropzone-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.manage-dropzone-or {
-  font-size: 0.85em;
-  color: #666;
-}
-
-.manage-dropzone-options {
-  margin-top: 1.5em;
-  padding-top: 1em;
-  border-top: 1px solid #ddd;
-}
-
-.manage-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  cursor: pointer;
-  font-size: 0.9em;
-}
-
-.manage-checkbox input[type="checkbox"] {
-  width: 1.25em;
-  height: 1.25em;
-  cursor: pointer;
-}
-
-.manage-dropzone-hint {
-  font-size: 0.8em;
-  color: #888;
-  margin: 0.5em 0 0 0;
-}
-
-/* ==========================================================================
-   Inline Hints (lightweight status text replacing heavy notice boxes)
-   ========================================================================== */
-.manage-hint-error {
-  font-size: 0.85em;
-  color: #c62828;
-  margin: 0.5em 0;
-}
-
-.manage-hint-warning {
-  font-size: 0.85em;
-  color: #e65100;
-  margin: 0.5em 0;
-}
-
-.manage-hint-success {
-  font-size: 0.85em;
-  color: #2e7d32;
-  margin: 0.5em 0;
-}
-
-/* ==========================================================================
-   Processing State
-   ========================================================================== */
-.manage-processing {
-  text-align: center;
-  padding: 2em;
-}
-
-.manage-spinner {
-  display: inline-block;
-  width: 3em;
-  height: 3em;
-  border: 0.3em solid #ddd;
-  border-radius: 50%;
-  border-top-color: var(--nlblue, #55769b);
-  animation: manage-spin 1s ease-in-out infinite;
-  margin-bottom: 1em;
-}
-
-@keyframes manage-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.manage-processing-hint {
-  font-size: 0.85em;
-  color: #888;
-  margin-top: 0.5em;
-}
-
-/* ==========================================================================
-   Action Stacks (consistent vertical button layout)
-   ========================================================================== */
-.manage-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6em;
-}
-
-.manage-dwc-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75em;
-}
-
-/* ==========================================================================
-   Form Styling
-   ========================================================================== */
-.manage-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-
-.manage-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25em;
-}
-
-.manage-form-group label {
-  font-size: 0.85em;
-  font-weight: 600;
-  color: #555;
-}
-
-.manage-form-group input[type="text"],
-.manage-form-group input[type="password"] {
-  padding: 0.75em;
-  border: 1px solid #ccc;
-  border-radius: 0.5em;
-  font-family: var(--font-normal);
-  font-size: 1em;
-  transition: border-color 0.2s;
-}
-
-.manage-form-group input:focus {
-  outline: none;
-  border-color: var(--nlblue, #55769b);
-}
-
-/* ==========================================================================
-   Logs Section
-   ========================================================================== */
-.manage-logs {
-  margin-top: 1em;
-  border-radius: var(--pad-large, 1em);
-  background-color: #eceff2;
-  border: 1px solid white;
-  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-  overflow: hidden;
-}
-
-.manage-logs-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75em 1em;
-  background-color: rgba(255, 255, 255, 0.5);
+  padding: 0.55em 1em;
+  background-color: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.manage-log-title {
   font-weight: 600;
-  font-size: 0.9em;
-}
-
-.manage-logs-counts {
-  display: flex;
-  gap: 0.4em;
-  align-items: center;
-}
-
-.manage-logs-count {
-  padding: 0.15em 0.6em;
-  border-radius: 1em;
   font-size: 0.85em;
-  font-weight: 600;
+  color: #555;
 }
 
-.manage-logs-count--error {
-  background-color: #c62828;
-  color: white;
-}
-
-.manage-logs-count--warning {
-  background-color: #f57c00;
-  color: white;
-}
-
-.manage-logs-count--total {
-  background-color: #555;
-  color: white;
-}
-
-.manage-logs-list {
-  max-height: 300px;
+.manage-log-list {
+  min-height: 0;
   overflow-y: auto;
 }
 
-/* ==========================================================================
-   Log Item (flat / ungrouped)
-   ========================================================================== */
-.manage-log-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75em;
-  padding: 0.75em 1em;
-  border-bottom: 1px solid #ddd;
-  font-size: 0.85em;
-  user-select: text;
-}
-
-.manage-log-item:last-child {
-  border-bottom: none;
-}
-
-.manage-log-icon {
-  width: 1.25em;
-  height: 1.25em;
-  flex-shrink: 0;
-  margin-top: 0.1em;
-}
-
-.manage-log-content {
-  flex: 1;
-  line-height: 1.4;
-}
-
-.manage-log-level {
-  font-weight: 600;
-  margin-right: 0.5em;
-}
-
-.manage-log-item.critical {
-  background-color: #ffebee;
-}
-
-.manage-log-item.critical .manage-log-level {
-  color: #c62828;
-}
-
-.manage-log-item.error {
-  background-color: #f7d3d0;
-}
-
-.manage-log-item.error .manage-log-level {
-  color: #e65100;
-}
-
-.manage-log-item.warning {
-  background-color: #fff8e1;
-}
-
-.manage-log-item.warning .manage-log-level {
-  color: #f57c00;
-}
-
-.manage-log-item.info {
-  background-color: #e3f2fd;
-}
-
-.manage-log-item.info .manage-log-level {
-  color: #1976d2;
-}
-
-/* ==========================================================================
-   Log Group (collapsible)
-   ========================================================================== */
-
-/* Outer wrapper - provides the bottom separator between groups */
-.manage-log-group {
-  border-bottom: 1px solid #ddd;
-}
-
-.manage-log-group:last-child {
-  border-bottom: none;
-}
-
-/* Clickable group header row */
-.manage-log-group-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6em;
+.manage-log-empty {
   padding: 0.7em 1em;
-  cursor: pointer;
-  user-select: none;
-  font-size: 0.85em;
-  font-weight: 600;
-  transition: filter 0.15s;
+  font-size: 0.82em;
+  color: #aaa;
+  font-style: italic;
 }
 
-.manage-log-group-header:hover {
-  filter: brightness(0.95);
-}
-
-/* Severity-tinted header backgrounds - mirrors the flat item colors */
-.manage-log-group.critical>.manage-log-group-header {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-.manage-log-group.error>.manage-log-group-header {
-  background-color: #fff3e0;
-  color: #e65100;
-}
-
-.manage-log-group.warning>.manage-log-group-header {
-  background-color: #fff8e1;
-  color: #f57c00;
-}
-
-.manage-log-group.info>.manage-log-group-header {
-  background-color: #e3f2fd;
-  color: #1976d2;
-}
-
-/* Collapse / expand arrow */
-.manage-log-group-toggle {
-  font-size: 0.9em;
-  line-height: 1;
-  width: 1em;
-  flex-shrink: 0;
-  opacity: 0.75;
-}
-
-/* Group title text - takes remaining width */
-.manage-log-group-title {
-  flex: 1;
-}
-
-/* category row inside the group header */
-.manage-log-group-categories {
+/* ==========================================================================
+   Source chip - compact source display shown in loading / dirty / ready
+   ========================================================================== */
+.manage-source-chip {
   display: flex;
-  gap: 0.3em;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.35em;
+  padding: 0.7em 0.85em;
+  background: #f5f6f8;
+  border: 1px solid #e0e3e8;
+  border-radius: 0.6em;
+  margin-bottom: 1em;
 }
 
-/* Group body - contains the individual child log items */
-.manage-log-group-body {
-  /* Subtle left border ties the items visually to their parent group */
-  border-left: 3px solid rgba(0, 0, 0, 0.08);
-  margin-left: 1em;
+/* File/URL name: truncate from the START so the meaningful tail is visible.
+   The rtl trick reverses overflow direction; ltr on the inner span keeps
+   the text itself left-to-right. */
+.manage-source-chip-name {
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* Truncate from the left so the end of the path/URL remains visible */
+  direction: rtl;
+  text-align: left;
+  unicode-bidi: plaintext;
 }
 
-/* Indent child items to visually nest them under the group header */
-.manage-log-group-body .manage-log-item {
-  padding-left: 1.5em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+.manage-source-chip-status {
+  font-size: 0.78em;
+  color: #777;
 }
 
-.manage-log-group-body .manage-log-item:last-child {
-  border-bottom: none;
+.manage-source-chip-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin-top: 0.2em;
 }
+
+/* "Choose a different spreadsheet" is now a real manage-btn - remove the old link style */
 
 /* ==========================================================================
-   Success/Error Content
+   Templates section - contextual expand/collapse
    ========================================================================== */
-.manage-success-content,
-.manage-error-content {
-  text-align: center;
+.manage-templates {
+  border: 1px solid #e0e3e8;
+  border-radius: 0.6em;
+  overflow: hidden;
+  margin-bottom: 1em;
+}
+
+/* First-time user: always open, no toggle */
+.manage-templates.manage-templates--open {
   padding: 1em;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-.manage-success-content p,
-.manage-error-content p {
-  margin: 0 0 1.5em 0;
-  font-size: 1em;
-  line-height: 1.5;
-}
-
-/* ==========================================================================
-   Welcome Text
-   ========================================================================== */
-.manage-welcome-text {
-  font-size: 1em;
+.manage-templates-intro {
+  margin: 0 0 0.9em 0;
+  font-size: 0.88em;
   line-height: 1.5;
   color: #555;
-  margin: 0;
+}
+
+/* Returning user: collapsible full-width strip */
+.manage-templates.manage-templates--collapsible {
+  background: #f9fafb;
+}
+
+.manage-templates-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7em 1em;
+  background: none;
+  border: none;
+  font-family: var(--font-normal);
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  text-align: left;
+}
+
+.manage-templates-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.manage-templates-arrow {
+  font-size: 0.9em;
+  color: #999;
+}
+
+.manage-templates-body {
+  padding: 1em 1em 1em 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
 }
 
 /* ==========================================================================
-   ADD TO END OF ManageView.css
+   Source picker (tabs + file/URL pickers)
    ========================================================================== */
+.manage-source-panel {
+  border: 1px solid #e0e3e8;
+  border-radius: 0.6em;
+  overflow: hidden;
+  background: #f9fafb;
+}
 
-/* ==========================================================================
-   Upload Source Tab Switcher
-   ========================================================================== */
 .manage-source-tabs {
   display: flex;
-  gap: 0;
   border-bottom: 2px solid #ddd;
-  margin-bottom: 1.25em;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .manage-tab {
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  padding: 0.6em 1.25em;
+  gap: 0.4em;
+  padding: 0.65em 1.1em;
   border: none;
   background: none;
   cursor: pointer;
   font-family: var(--font-normal);
-  font-size: 0.9em;
+  font-size: 0.87em;
   color: #666;
-  /* Overlap the container's bottom border when active */
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
   transition: color 0.15s;
@@ -660,49 +241,113 @@
   font-weight: 600;
 }
 
-/* ==========================================================================
-   URL Input Panel
-   ========================================================================== */
-.manage-url-input {
+/* ── Dropzone ────────────────────────────────────────────────────────────── */
+.manage-dropzone {
+  border: 2px dashed #bbb;
+  border-radius: 0.5em;
+  margin: 1em;
+  padding: 1.75em 1em;
+  text-align: center;
+  transition: border-color 0.15s, background-color 0.15s;
+  background-color: rgba(255, 255, 255, 0.6);
+  cursor: default;
+}
+
+.manage-dropzone.entered {
+  border-color: var(--nlblue, #55769b);
+  background-color: rgba(85, 118, 155, 0.07);
+}
+
+.manage-dropzone-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  align-items: center;
+  gap: 0.85em;
 }
 
-.manage-url-input input[type="url"] {
-  padding: 0.75em;
+.manage-dropzone-icon {
+  width: 3em;
+  height: 3em;
+  opacity: 0.45;
+}
+
+.manage-dropzone-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.manage-dropzone-or {
+  font-size: 0.82em;
+  color: #888;
+}
+
+/* ── Assets checkbox (shared by file and URL pickers) ───────────────────── */
+.manage-assets-check {
+  padding: 0.85em 1em;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.manage-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  font-size: 0.88em;
+}
+
+.manage-checkbox input[type="checkbox"] {
+  width: 1.1em;
+  height: 1.1em;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── URL picker ──────────────────────────────────────────────────────────── */
+.manage-url-picker {
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+}
+
+.manage-url-picker input[type="url"] {
+  padding: 0.65em 0.75em;
   border: 1px solid #ccc;
-  border-radius: 0.5em;
+  border-radius: 0.4em;
   font-family: var(--font-normal);
-  font-size: 1em;
+  font-size: 0.95em;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s;
 }
 
-.manage-url-input input[type="url"]:focus {
+.manage-url-picker input[type="url"]:focus {
   outline: none;
   border-color: var(--nlblue, #55769b);
 }
 
-.manage-cors-notice-text {
-  font-size: 0.9em;
-  line-height: 1.5;
-  margin-left: 0.5em;
-  margin-right: 0.5em;
-  margin-bottom: 0.5em;
-  color: #555;
+.manage-cors-notice {
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
 }
 
-/* ==========================================================================
-   Cloud link conversion notice (inline, below URL input)
-   ========================================================================== */
+.manage-cors-notice-text {
+  font-size: 0.87em;
+  line-height: 1.5;
+  color: #555;
+  margin: 0;
+}
+
 .manage-url-convert-notice {
   display: flex;
   align-items: center;
-  gap: 0.75em;
-  padding: 0.5em 0.75em;
-  background-color: #fff8e1;
+  gap: 0.65em;
+  padding: 0.45em 0.75em;
+  background: #fff8e1;
   border: 1px solid #ffe082;
   border-radius: 0.4em;
   font-size: 0.82em;
@@ -715,40 +360,520 @@
 }
 
 /* ==========================================================================
-   Demo card — visible only on mobile (mirrors the welcome-screen breakpoint)
+   Processing spinner
    ========================================================================== */
-.manage-card.demo-card-mobile-only {
+.manage-processing {
+  text-align: center;
+  padding: 2em 1em;
+}
+
+.manage-spinner {
+  display: inline-block;
+  width: 2.75em;
+  height: 2.75em;
+  border: 0.28em solid #ddd;
+  border-radius: 50%;
+  border-top-color: var(--nlblue, #55769b);
+  animation: manage-spin 0.9s ease-in-out infinite;
+  margin-bottom: 0.9em;
+}
+
+@keyframes manage-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.manage-processing-title {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0 0 0.35em 0;
+  color: #333;
+}
+
+/* ==========================================================================
+   Result blocks (dirty and ready)
+   ========================================================================== */
+.manage-result-block {
+  border-radius: 0.6em;
+  padding: 0.9em 1em;
+  margin-bottom: 1em;
+}
+
+.manage-result-block--dirty {
+  background: #fff3f3;
+  border: 1px solid #f5c6c6;
+}
+
+.manage-result-block--ok {
+  background: #f3fbf3;
+  border: 1px solid #b9deba;
+}
+
+.manage-result-title {
+  font-size: 1em;
+  font-weight: 700;
+  margin: 0 0 0.4em 0;
+  color: #222;
+}
+
+.manage-result-block--dirty .manage-result-title {
+  color: #a31515;
+}
+
+.manage-result-block--ok .manage-result-title {
+  color: #2a6b2a;
+}
+
+.manage-result-block p {
+  margin: 0 0 0.75em 0;
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: #444;
+}
+
+.manage-result-block p:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Section titles (DwC, publish)
+   ========================================================================== */
+.manage-section-title {
+  font-size: 0.9em;
+  font-weight: 700;
+  color: #444;
+  margin: 0 0 0.6em 0;
+  padding-top: 1em;
+  border-top: 1px solid #e8eaed;
+}
+
+/* First section-title in the workflow should not have a top border/padding */
+.manage-result-block+.manage-section-title,
+.manage-source-chip+.manage-result-block+*>.manage-section-title {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   DwC section
+   ========================================================================== */
+.manage-dwc-section {
+  margin-bottom: 0.5em;
+}
+
+.manage-dwc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65em;
+  padding: 0.5em 0 0.75em 0;
+}
+
+.manage-dwc-panel p {
+  margin: 0;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Publish section
+   ========================================================================== */
+.manage-publish-section {
+  margin-bottom: 0.5em;
+}
+
+.manage-publish-option {
+  margin-bottom: 1em;
+}
+
+.manage-publish-option>p {
+  font-size: 0.9em;
+  color: #555;
+  margin: 0 0 0.65em 0;
+  line-height: 1.45;
+}
+
+.manage-publish-description {
+  font-size: 0.87em;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 0.75em;
+}
+
+.manage-publish-description p {
+  margin: 0 0 0.4em 0;
+}
+
+.manage-publish-description a {
+  color: #3366cc;
+}
+
+/* ==========================================================================
+   Done screen
+   ========================================================================== */
+.manage-done {
+  text-align: center;
+  padding: 1.5em 0.5em;
+}
+
+.manage-done-title {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #2a6b2a;
+  margin: 0 0 0.4em 0;
+}
+
+.manage-done p:not(.manage-done-title) {
+  font-size: 0.9em;
+  color: #555;
+  margin: 0 0 1.2em 0;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Demo card (mobile-first, matches original behaviour)
+   ========================================================================== */
+.manage-demo-card {
   display: none;
+  background: #ecf5ff;
+  border: 1px solid #b3d4f5;
+  border-radius: 0.6em;
+  padding: 1em;
+  margin-bottom: 1em;
+}
+
+.manage-demo-card p {
+  font-size: 0.88em;
+  color: #444;
+  margin: 0 0 0.85em 0;
+  line-height: 1.45;
 }
 
 @media (max-width: 1000px) {
-  .manage-card.demo-card-mobile-only {
+  .manage-demo-card {
     display: block;
   }
 }
 
 /* ==========================================================================
-   Responsive
+   Buttons
    ========================================================================== */
-@media (max-width: 600px) {
-  .manage-view {
-    padding: 0.5em;
-  }
+.manage-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.6em 1.15em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  background-color: white;
+  color: black;
+  font-family: var(--font-normal);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s;
+  text-align: center;
+}
 
-  .manage-steps {
-    gap: 0.25em;
-    padding: 0.75em;
-  }
+.manage-btn:hover:not(:disabled) {
+  background-color: #f4f5f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
 
-  .manage-step {
-    padding: 0.25em 0.5em;
-  }
+.manage-btn-primary {
+  background-color: var(--nlblue, #55769b);
+  color: white;
+  border-color: var(--nlblue, #55769b);
+}
 
-  .manage-step-label {
-    display: none;
-  }
+.manage-btn-primary:hover:not(:disabled) {
+  background-color: #486886;
+}
 
-  .manage-dropzone {
-    padding: 1.5em 1em;
-  }
+.manage-btn-secondary {
+  background-color: transparent;
+  border: 1px dashed #bbb;
+  color: #777;
+  font-size: 0.87em;
+}
+
+.manage-btn-small {
+  padding: 0.35em 0.8em;
+  font-size: 0.82em;
+}
+
+.manage-btn-block {
+  width: 100%;
+}
+
+.manage-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.manage-btn-icon {
+  width: 1.2em;
+  height: 1.2em;
+  flex-shrink: 0;
+}
+
+.manage-btn-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 0.15em solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: manage-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.manage-btn:not(.manage-btn-primary) .manage-btn-spinner {
+  border-color: rgba(0, 0, 0, 0.15);
+  border-top-color: var(--nlblue, #55769b);
+}
+
+/* Thin spacer between stacked buttons */
+.manage-btn-gap {
+  height: 0.5em;
+}
+
+/* ==========================================================================
+   Actions stack
+   ========================================================================== */
+.manage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+.manage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+}
+
+.manage-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+.manage-form-group label {
+  font-size: 0.84em;
+  font-weight: 600;
+  color: #555;
+}
+
+.manage-form-group input[type="text"],
+.manage-form-group input[type="password"] {
+  padding: 0.65em 0.75em;
+  border: 1px solid #ccc;
+  border-radius: 0.45em;
+  font-family: var(--font-normal);
+  font-size: 0.95em;
+  transition: border-color 0.15s;
+}
+
+.manage-form-group input[type="text"]:focus,
+.manage-form-group input[type="password"]:focus {
+  outline: none;
+  border-color: var(--nlblue, #55769b);
+}
+
+/* ==========================================================================
+   Inline hint variants
+   ========================================================================== */
+.manage-hint-muted {
+  font-size: 0.8em;
+  color: #999;
+  margin: 0.3em 0 0 0;
+  line-height: 1.4;
+}
+
+.manage-hint-error {
+  font-size: 0.87em;
+  color: #c62828;
+  margin: 0.3em 0;
+  line-height: 1.4;
+}
+
+.manage-hint-warning {
+  font-size: 0.87em;
+  color: #e65100;
+  margin: 0.3em 0;
+  line-height: 1.4;
+}
+
+.manage-hint-success {
+  font-size: 0.87em;
+  color: #2e7d32;
+  margin: 0.3em 0;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Log items (shared styles kept from original)
+   ========================================================================== */
+.manage-logs-counts {
+  display: flex;
+  gap: 0.35em;
+  align-items: center;
+}
+
+.manage-logs-count {
+  padding: 0.12em 0.55em;
+  border-radius: 1em;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.manage-logs-count--error {
+  background-color: #c62828;
+  color: white;
+}
+
+.manage-logs-count--warning {
+  background-color: #f57c00;
+  color: white;
+}
+
+.manage-logs-count--total {
+  background-color: #666;
+  color: white;
+}
+
+.manage-log-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65em;
+  padding: 0.6em 1em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 0.83em;
+  user-select: text;
+}
+
+.manage-log-item:last-child {
+  border-bottom: none;
+}
+
+.manage-log-content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.manage-log-level {
+  font-weight: 700;
+  margin-right: 0.4em;
+}
+
+.manage-log-item.critical {
+  background-color: #ffebee;
+}
+
+.manage-log-item.critical .manage-log-level {
+  color: #c62828;
+}
+
+.manage-log-item.error {
+  background-color: #fff3ee;
+}
+
+.manage-log-item.error .manage-log-level {
+  color: #e65100;
+}
+
+.manage-log-item.warning {
+  background-color: #fffde7;
+}
+
+.manage-log-item.warning .manage-log-level {
+  color: #f57c00;
+}
+
+.manage-log-item.info {
+  background-color: #e8f4fd;
+}
+
+.manage-log-item.info .manage-log-level {
+  color: #1976d2;
+}
+
+/* ── Log groups ──────────────────────────────────────────────────────────── */
+.manage-log-group {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.manage-log-group:last-child {
+  border-bottom: none;
+}
+
+.manage-log-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.6em 1em;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.83em;
+  font-weight: 600;
+  transition: filter 0.12s;
+}
+
+.manage-log-group-header:hover {
+  filter: brightness(0.94);
+}
+
+.manage-log-group.critical>.manage-log-group-header {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.manage-log-group.error>.manage-log-group-header {
+  background-color: #fff3ee;
+  color: #e65100;
+}
+
+.manage-log-group.warning>.manage-log-group-header {
+  background-color: #fffde7;
+  color: #f57c00;
+}
+
+.manage-log-group.info>.manage-log-group-header {
+  background-color: #e8f4fd;
+  color: #1976d2;
+}
+
+.manage-log-group-toggle {
+  font-size: 0.85em;
+  width: 1em;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.manage-log-group-title {
+  flex: 1;
+}
+
+.manage-log-group-categories {
+  display: flex;
+  gap: 0.3em;
+  align-items: center;
+}
+
+.manage-log-group-body {
+  border-left: 3px solid rgba(0, 0, 0, 0.07);
+  margin-left: 1em;
+}
+
+.manage-log-group-body .manage-log-item {
+  padding-left: 1.4em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.manage-log-group-body .manage-log-item:last-child {
+  border-bottom: none;
 }

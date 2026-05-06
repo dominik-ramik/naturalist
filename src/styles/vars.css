@@ -9,6 +9,7 @@
     --pad-large-negative: -0.5em;
     --font-smaller: 75%;
     --hover-background: #f1f1f1;
+    --elevation-shadow: 0 0 2em 0em #00000040;
 }
 
 @font-face {
