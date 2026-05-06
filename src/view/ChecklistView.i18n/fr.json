@@ -6,7 +6,6 @@
   "mobile_filter_notice": "Affichage uniquement des taxons où {0}",
   "temporary_draft_goto_manage": "Gérer",
   "draft_notice": "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",
-  "welcome_headline": "Bienvenue sur NaturaList",
   "welcome_headline_tagline": "La plateforme flexible de publication de données sur la biodiversité",
   "welcome_tagline": "Publiez des <strong>listes de taxons</strong>, organisez des <strong>collections</strong>, analysez les données et explorez les espèces, motifs et caractéristiques, et construisez des <strong>clés d'identification</strong> - tout cela à partir d'une seule feuille de calcul.",
   "welcome_blessing": "Que votre arbre taxonomique pousse jusqu'au ciel.",

@@ -1,3 +1,4 @@
 {
-    "update_checklist_title": "Updatovat tento projekt"
+  "update_checklist_title": "Updatovat tento projekt",
+  "dm_mapregions_duplicate_pair": "V tabulce {0}: Kombinace Název sloupce '{1}' Stavový kód '{2}' je duplicitní (řádky {3} a {4}). \nPár (název sloupce, stavový kód) musí být jedinečný."
 }
