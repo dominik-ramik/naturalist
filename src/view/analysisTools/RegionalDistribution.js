@@ -83,7 +83,7 @@ export const config = {
   getAvailability: (availableIntents) => {
     const supportedIntents = availableIntents.filter(intent => {
       const maps = getAvailableMaps(intent);
-      // Treat COMPUTING as "potentially available" — dynamic paths are still
+      // Treat COMPUTING as "potentially available" - dynamic paths are still
       // being enumerated; we'll know for sure after the async pass completes.
       return maps === COMPUTING || maps.length > 0;
     });
@@ -178,10 +178,10 @@ function deriveTitleFromPath(source) {
 /**
  * Walks the full checklist for a dynamic mapregions template and collects
  * the set of unique resolved SVG paths.  Rows that produce an empty/blank
- * path are skipped.  Row identity is not tracked — all variants are windows
+ * path are skipped.  Row identity is not tracked - all variants are windows
  * onto the same dataset; no per-variant data scoping is applied.
  *
- * Pure function — reads only its arguments, no module state.
+ * Pure function - reads only its arguments, no module state.
  *
  * @returns {Set<string>}  unique raw source strings
  */
@@ -268,7 +268,7 @@ function getAvailableMaps(intent, rev = CacheManager.contextRevision()) {
   const mode = (intent || Settings.analyticalIntent()) === ANALYTICAL_INTENT_OCCURRENCE
     ? OCCURRENCE_IDENTIFIER : 'taxa';
 
-  // Return cached result — may be the COMPUTING sentinel or a resolved array.
+  // Return cached result - may be the COMPUTING sentinel or a resolved array.
   if (_mapsCache[mode] !== undefined) return _mapsCache[mode];
 
   const occurrenceIdx = Checklist.getOccurrenceMetaIndex();
@@ -321,7 +321,7 @@ function getAvailableMaps(intent, rev = CacheManager.contextRevision()) {
   });
 
   if (pendingDynamic.length === 0) {
-    // No dynamic templates — populate cache synchronously and return.
+    // No dynamic templates - populate cache synchronously and return.
     _mapsCache[mode] = staticMaps;
     return staticMaps;
   }

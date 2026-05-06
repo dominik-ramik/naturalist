@@ -169,13 +169,13 @@ export let SearchView = {
 
         return m(".search", [
             m(".filter-groups-wrapper", [
-                // 1. Priority (!) data filters — full-width, above taxa
+                // 1. Priority (!) data filters - full-width, above taxa
                 renderFilterGroups(priorityGroups, true),
 
                 // 2. Taxa filters
                 m("ul.filter-buttons.taxa-filter", taxaFilterDropdown),
 
-                // 3. Normal data filters — standard two-column layout
+                // 3. Normal data filters - standard two-column layout
                 renderFilterGroups(normalGroups, false),
             ]),
 

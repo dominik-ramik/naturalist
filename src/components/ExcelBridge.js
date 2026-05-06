@@ -236,7 +236,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
         migrationSuffix + " " + t("dm_verify_doc"),
         "Column missing"
       );
-      // Do NOT return here — let further checks run so other issues are surfaced too.
+      // Do NOT return here - let further checks run so other issues are surfaced too.
     } else {
       // Optional table present in the file but columns are missing → error (not critical,
       // so compilation continues and runManualIntegrityChecks can still run its checks).
@@ -253,7 +253,7 @@ function validateColumnNames(headers, tableName, tableInfo, langCode, defaultLan
           "Column missing"
         );
       });
-      // Do NOT return here — let further checks run so other issues are surfaced too.
+      // Do NOT return here - let further checks run so other issues are surfaced too.
     }
   }
 

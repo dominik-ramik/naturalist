@@ -20,7 +20,7 @@ ul.filter-buttons.full-width {
     padding-bottom: 1em;
 }
 
-/* Priority (!) filters always span the full width — one item per row */
+/* Priority (!) filters always span the full width - one item per row */
 ul.filter-buttons.full-width li {
     flex-basis: 100%;
 }

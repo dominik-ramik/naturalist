@@ -6,7 +6,7 @@ import { AVAILABLE_LOCALES } from './index.js';
  * all language versions declared in the current checklist.
  *
  * For each data version:
- *   - DEFAULT_LOCALE_CODE is always included — it is the authoritative fallback
+ *   - DEFAULT_LOCALE_CODE is always included - it is the authoritative fallback
  *   - If the data version code matches an available UI locale → include it
  *   - Otherwise use its fallbackUiLang if that matches an available UI locale
  *   - If neither matches → DEFAULT_LOCALE_CODE covers it, nothing extra added
@@ -21,7 +21,7 @@ export function deriveRequiredUiLocales(checklist) {
     } else if (fallbackUiLang && AVAILABLE_LOCALES.includes(fallbackUiLang.toLowerCase())) {
       required.add(fallbackUiLang.toLowerCase());
     }
-    // else: no UI translation for this version — DEFAULT_LOCALE_CODE fallback covers it
+    // else: no UI translation for this version - DEFAULT_LOCALE_CODE fallback covers it
   });
 
   return [...required];
@@ -29,7 +29,7 @@ export function deriveRequiredUiLocales(checklist) {
 
 /**
  * Resolves the UI locale code for a single data language code.
- * Mirrors deriveRequiredUiLocales() but for one version at a time —
+ * Mirrors deriveRequiredUiLocales() but for one version at a time -
  * used when applying the active language after loadLocales() completes.
  */
 export function resolveUiLocaleForDataLang(dataLangCode, checklist) {

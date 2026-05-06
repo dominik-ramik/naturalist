@@ -3,11 +3,11 @@ import Handlebars from "handlebars";
 export function registerHandlebarHelpers() {
 
   /**
-   * {{img}} Handlebars helper family — resolves an image source to its full-size
+   * {{img}} Handlebars helper family - resolves an image source to its full-size
    * and thumbnail URLs when a template is evaluated twice by
    * processSourceBothVariants.
    *
-   * The app calls your template twice automatically — once with _isThumb: false
+   * The app calls your template twice automatically - once with _isThumb: false
    * (full-size) and once with _isThumb: true (thumbnail). You only need to
    * describe the variants; the helpers return the right string each time.
    *
@@ -43,7 +43,7 @@ export function registerHandlebarHelpers() {
    *   The base value is the stem shared by both variants before any suffix is
    *   applied. It is always an unquoted data path resolved by Handlebars before
    *   being passed to the helper (e.g. `value`, `data.otherCol`). It is
-   *   optional — when absent, the column's own value is used implicitly.
+   *   optional - when absent, the column's own value is used implicitly.
    *
    *   The file extension is always written outside the helper in the template
    *   string itself:
@@ -100,7 +100,7 @@ export function registerHandlebarHelpers() {
    *   declared.
    *
    *   When no variant subexpressions are present at all, both evaluations return
-   *   the same string — identical to using a plain {{value}} template. Existing
+   *   the same string - identical to using a plain {{value}} template. Existing
    *   templates require no migration.
    *
    * ─── QUICK REFERENCE ─────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ export function registerHandlebarHelpers() {
     const isThumb = !!this._isThumb;
 
     // Locate each typed subexpression result and the plain base value arg.
-    // Identification is by tag, not position — all arguments may appear in
+    // Identification is by tag, not position - all arguments may appear in
     // any order.
     const thumbArg = args.find(a => a?.__isThumb);
     const fullArg = args.find(a => a?.__isFull);
@@ -199,7 +199,7 @@ export function registerHandlebarHelpers() {
           thumbArg.isSuffix ? baseValue + thumbArg.value : thumbArg.value
         );
       }
-      // No thumb variant declared — fall back to full variant if present,
+      // No thumb variant declared - fall back to full variant if present,
       // otherwise return bare base so the template is always safe to call twice.
       if (fullArg !== undefined) {
         return new Handlebars.SafeString(
@@ -220,7 +220,7 @@ export function registerHandlebarHelpers() {
 
   Handlebars.registerHelper("unit", function (...args) {
     /**
-     * {{unit}} Handlebars helper — converts a numeric value from a given unit to
+     * {{unit}} Handlebars helper - converts a numeric value from a given unit to
      * the most human-readable unit in the same category, formatting the result
      * as styled HTML.
      *
@@ -246,7 +246,7 @@ export function registerHandlebarHelpers() {
      * ─── AUTO-SCALING ──────────────────────────────────────────────────────────
      *
      *   Without "exact", the helper converts the input to the most readable unit
-     *   in the same category — the one that keeps the displayed number in the
+     *   in the same category - the one that keeps the displayed number in the
      *   range [1, 1000) where possible. For example:
      *
      *     0.005 kg  → 5 g
@@ -269,7 +269,7 @@ export function registerHandlebarHelpers() {
      *   Weight : mg  g   kg  t
      *   Area   : um2 mm2 cm2 m2  km2
      *   Volume : um3 mm3 cm3 m3  km3   (cubic)
-     *            um3 mm3 ml  l   m3  km3  (liquid — use ml or l as input)
+     *            um3 mm3 ml  l   m3  km3  (liquid - use ml or l as input)
      *
      *   Volume flavour (cubic vs liquid) is preserved from the input unit:
      *   inputting "ml" or "l" keeps the result in ml/l; all other volume units
@@ -284,7 +284,7 @@ export function registerHandlebarHelpers() {
      *
      *   - Passing a numeric value explicitly is always safe regardless of its
      *     magnitude or content.
-     *   - The unit string must never be a bare number — use "exact" with a
+     *   - The unit string must never be a bare number - use "exact" with a
      *     descriptive label instead (e.g. {{ unit "items" "exact" }}).
      *
      * ─── OUTPUT ────────────────────────────────────────────────────────────────
@@ -305,13 +305,13 @@ export function registerHandlebarHelpers() {
      *   {{ unit "h" }}              0.5          30 min
      *   {{ unit "cm2" }}            10000        1 m²
      *   {{ unit "ml" }}             1500         1.5 l
-     *   {{ unit "cm3" }}            1500         1.5 l   (no — stays cubic: 1500 cm³)
+     *   {{ unit "cm3" }}            1500         1.5 l   (no - stays cubic: 1500 cm³)
      *   {{ unit data.weight "kg" }} 0.005        5 g
      *   {{ unit "km/h" "exact" }}   120          120 km/h
      *   {{ unit "kg" "exact" }}     1500         1500 kg
      */
 
-    // Last arg is always the Handlebars options object — discard it.
+    // Last arg is always the Handlebars options object - discard it.
     const params = args.slice(0, -1);
 
     // ── Argument parsing ────────────────────────────────────────────────────────
@@ -319,7 +319,7 @@ export function registerHandlebarHelpers() {
     // The first argument is an explicit numeric base value when it parses as a
     // finite number; otherwise it is the unit string and this.value is used
     // implicitly. This makes `value` safely optional without any sentinel string
-    // or positional heuristic — a unit string can never be mistaken for a number.
+    // or positional heuristic - a unit string can never be mistaken for a number.
 
     let value, unitStr, exact = false;
 

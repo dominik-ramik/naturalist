@@ -13,7 +13,7 @@
  *      e. Packages the ZIP blob.
  *   3. Returns { checklist: Blob|null, occurrences: Blob|null }.
  *
- * All errors and warnings are routed through Logger — never thrown — so that
+ * All errors and warnings are routed through Logger - never thrown - so that
  * ManageView's Logger.hasErrors() gate works correctly.
  */
 
@@ -70,7 +70,7 @@ export async function compileDwcArchive(opts) {
 
   if (!dwcTableRows || dwcTableRows.length === 0) return result;
 
-  // Abort if compilation produced errors — no point writing corrupt archives.
+  // Abort if compilation produced errors - no point writing corrupt archives.
   if (Logger.hasErrors && Logger.hasErrors()) {
     Logger.warning(
       "DwC archive compilation skipped because the checklist has errors. " +

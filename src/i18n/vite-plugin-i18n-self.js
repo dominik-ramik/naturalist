@@ -12,7 +12,7 @@ const GENERIC_BASENAMES = new Set([
 const VIRTUAL_ID  = 'virtual:i18n-self';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
 
-// Per-locale bundle virtual modules — one chunk per language.
+// Per-locale bundle virtual modules - one chunk per language.
 const VIRTUAL_LOADERS_ID      = 'virtual:i18n-loaders';
 const RESOLVED_LOADERS_ID     = '\0' + VIRTUAL_LOADERS_ID;
 const VIRTUAL_BUNDLE_PREFIX   = 'virtual:i18n-bundle/';
@@ -73,7 +73,7 @@ function findAllI18nDirs(startDir) {
  * Generates the source of `virtual:i18n-bundle/{code}`.
  * All locale JSON files (shared + every *.i18n/ dir) are read from the
  * filesystem and inlined as JS object literals, so Rollup bundles everything
- * into a single chunk — one per language.
+ * into a single chunk - one per language.
  */
 function generateBundleModule(code, projectRoot) {
   const localesDir = path.join(projectRoot, 'src', 'i18n', 'locales');
@@ -117,7 +117,7 @@ function generateLoadersModule(projectRoot) {
     codes = fs.readdirSync(localesDir)
       .filter(f => f.endsWith('.json'))
       .map(f => path.basename(f, '.json'));
-  } catch { /* locales dir missing — bundleLoaders will be empty */ }
+  } catch { /* locales dir missing - bundleLoaders will be empty */ }
 
   const lines = ['export const bundleLoaders = {'];
   for (const code of codes) {

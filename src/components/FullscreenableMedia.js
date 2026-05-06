@@ -1,7 +1,7 @@
 // src/components/FullscreenableMedia.js
 //
 // Thin Mithril component.  Renders a two-level wrapper around either an
-// <img> or an <object> (SVG).  Does NOT attach its own event handler —
+// <img> or an <object> (SVG).  Does NOT attach its own event handler -
 // FullscreenManager's document-level listener handles all clicks.
 //
 // DOM structure produced:
@@ -18,7 +18,7 @@
 //
 // INNER (.image-wrap):
 //   - display: inline-block so it shrinks to the exact image dimensions.
-//   - position: relative — the ::after expand-hint icon is anchored here,
+//   - position: relative - the ::after expand-hint icon is anchored here,
 //     so the icon is always in the corner of the image, never in the corner
 //     of the (potentially wider) outer zone.
 //   - Gets .image-wrap--fill for svg-object type, so the <object> can use

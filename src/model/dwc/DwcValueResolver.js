@@ -72,7 +72,7 @@ const BLOCK_RE = /\[([^\]]*)\]/;
  * @property {number} occurrenceLevelIndex
  *   Index in .t that holds the occurrence ID.
  * @property {Array}  taxaColumnDefs
- *   All taxa table rows in declaration order — used for auto:taxonRank and taxa: lookups.
+ *   All taxa table rows in declaration order - used for auto:taxonRank and taxa: lookups.
  *
  * Shared:
  * @property {Map<string, Object>}   cddByPath
@@ -177,7 +177,7 @@ function resolveConfig(key, ctx) {
 
     if (!customizationData || !Array.isArray(customizationData)) {
         log(ctx, "error",
-            `DwC Value: config: "${key}" — customization data is not available.`
+            `DwC Value: config: "${key}" - customization data is not available.`
         );
         return null;
     }
@@ -185,7 +185,7 @@ function resolveConfig(key, ctx) {
     const row = customizationData.find(r => r.item === key);
     if (!row) {
         log(ctx, "error",
-            `DwC Value: config: "${key}" — no such item in the Customization table. ` +
+            `DwC Value: config: "${key}" - no such item in the Customization table. ` +
             `Check the key spelling; it must match the "Item" column exactly.`
         );
         return null;
@@ -227,7 +227,7 @@ function resolveAuto(token, ctx) {
                 log(ctx, "error",
                     `DwC Value: auto: "${token}" is not a recognised token for target "checklist". ` +
                     (validForOccurrences
-                        ? `It is valid for "occurrences" — check the "Export to" column.`
+                        ? `It is valid for "occurrences" - check the "Export to" column.`
                         : `Valid checklist tokens: ${[...AUTO_TOKENS_ANY, ...AUTO_TOKENS_CHECKLIST].join(", ")}.`)
                 );
                 return null;
@@ -264,7 +264,7 @@ function resolveAuto(token, ctx) {
                 log(ctx, "error",
                     `DwC Value: auto: "${token}" is not a recognised token for target "occurrences". ` +
                     (validForChecklist
-                        ? `It is valid for "checklist" — check the "Export to" column.`
+                        ? `It is valid for "checklist" - check the "Export to" column.`
                         : `Valid occurrence tokens: ${[...AUTO_TOKENS_ANY, ...AUTO_TOKENS_OCCURRENCES].join(", ")}.`)
                 );
                 return null;
@@ -315,17 +315,17 @@ function resolveTaxa(rest, ctx) {
     );
     if (levelIdx === -1) {
         log(ctx, "error",
-            `DwC Value: taxa: "${colName}" — no such column in the Taxa table. ` +
+            `DwC Value: taxa: "${colName}" - no such column in the Taxa table. ` +
             `Available columns: ${(taxaColumnDefs || []).map(r => r.columnName).join(", ")}.`
         );
         return null;
     }
 
-    // Validate sub-path before accessing data — an invalid sub-path is always a
+    // Validate sub-path before accessing data - an invalid sub-path is always a
     // configuration error regardless of what data the current row holds.
     if (subPath !== null && !TAXA_KNOWN_SUBPATHS.has(subPath)) {
         log(ctx, "error",
-            `DwC Value: taxa: "${rest}" — unknown sub-path ".${subPath}". ` +
+            `DwC Value: taxa: "${rest}" - unknown sub-path ".${subPath}". ` +
             `Known sub-paths: ${[...TAXA_KNOWN_SUBPATHS].join(", ")}.`
         );
         return null;
@@ -402,7 +402,7 @@ function resolveMedia(rest, ctx) {
                 `DwC Value: media: column "${colBase}${expandArray ? "#" : ""}" does not exist ` +
                 `in the column definitions. Check the column name spelling.`
             );
-            // Continue — collect whatever URLs we can from other parts in the list
+            // Continue - collect whatever URLs we can from other parts in the list
             continue;
         }
 
@@ -480,7 +480,7 @@ function resolveBlockTemplate(value, ctx) {
         if (value[i] === "[") {
             const end = value.indexOf("]", i);
             if (end === -1) {
-                // Unclosed bracket — treat remainder as constant
+                // Unclosed bracket - treat remainder as constant
                 tokens.push({ type: "const", text: value.slice(i) });
                 break;
             }
@@ -513,7 +513,7 @@ function resolveBlockTemplate(value, ctx) {
             continue;
         }
 
-        // "const" token — check if it is junction text between two blocks
+        // "const" token - check if it is junction text between two blocks
         const prevBlock = findNearestBlock(resolved, j, -1);
         const nextBlock = findNearestBlock(resolved, j, +1);
 
@@ -609,7 +609,7 @@ function resolveColumnName(directive, ctx, logMissing = false) {
             || ctx.cddByPath.has(basePathLo + "#"); // numbered-array pattern fallback
         if (!known) {
             log(ctx, "error",
-                `DwC Value: column: "${basePath}" — no such column in the column definitions. ` +
+                `DwC Value: column: "${basePath}" - no such column in the column definitions. ` +
                 `Check the column name spelling.`
             );
             return null;
@@ -639,7 +639,7 @@ function resolveColumnName(directive, ctx, logMissing = false) {
     // so the user can distinguish a bad sub-path from an empty cell.
     if (subPath !== null && result === null && rawData !== null && rawData !== undefined && logMissing) {
         log(ctx, "error",
-            `DwC Value: column: "${d}" — sub-path ".${subPath}" returned no value for ` +
+            `DwC Value: column: "${d}" - sub-path ".${subPath}" returned no value for ` +
             `column "${basePath}" (type: ${dataType}). The sub-path may be invalid for this type.`
         );
     }

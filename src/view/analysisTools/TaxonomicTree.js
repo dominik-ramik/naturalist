@@ -91,7 +91,7 @@ export const config = {
             type: "toggle",
             default: true,
             accessor: Settings.checklistShowTaxonMeta,
-            // Hidden in occurrences-only mode — there are no taxon rows to annotate.
+            // Hidden in occurrences-only mode - there are no taxon rows to annotate.
             condition: () => Settings.checklistDisplayLevel() !== DISPLAY_MODE_OCCURRENCES_ONLY,
         },
 
@@ -187,7 +187,7 @@ function ChecklistTree() {
             }
 
             // Clamp the visible set and track overflow.
-            // In occurrences-only mode we don't clamp the raw taxa here — we collect
+            // In occurrences-only mode we don't clamp the raw taxa here - we collect
             // occurrence leaf nodes from the tree first and clamp that derived list.
             let clampedTaxa = taxa;
             let overflowing = 0;
@@ -290,7 +290,7 @@ function ChecklistTree() {
 //
 // Flat list of occurrence cards, rendered without any parent taxon tree.
 // Each item in `taxa` that sits at the occurrence meta index gets its own card,
-// identical in structure to the occurrence cards produced by TaxonView — reusing
+// identical in structure to the occurrence cards produced by TaxonView - reusing
 // TaxonNameView and TaxonDataView directly so styling stays perfectly in sync.
 
 const OccurrenceListView = {

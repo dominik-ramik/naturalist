@@ -167,7 +167,7 @@ export function deriveTaxonId(lineageKey) {
  * of unique taxon tree nodes for checklist CSV export.
  *
  * Occurrence rows (entries whose `.t` array has a non-null value at
- * `occurrenceLevelIndex`) are silently skipped — they belong to the occurrence
+ * `occurrenceLevelIndex`) are silently skipped - they belong to the occurrence
  * archive, not the checklist.
  *
  * @param {Array<{t: Array, d: Object}>} compiledEntries

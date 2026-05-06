@@ -1351,10 +1351,10 @@ export let Checklist = {
    * Never call this directly from outside this object.
    */
   _computeOccurrenceShape: function () {
-    // Already computed for the current dataset — nothing to do.
+    // Already computed for the current dataset - nothing to do.
     if (this._occurrenceShapeCache !== null) return;
 
-    // Data not ready yet — return without caching so we recompute once it is.
+    // Data not ready yet - return without caching so we recompute once it is.
     if (!this._isDataReady || !this._data) return;
 
     const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
@@ -1416,7 +1416,7 @@ export let Checklist = {
    *
    * This is the single authoritative source of truth used by ConfigurationDialog,
    * MenuStripView, ChecklistView, and index.js. Do not reconstruct this list
-   * elsewhere from hasOccurrences() — call availableIntents() instead.
+   * elsewhere from hasOccurrences() - call availableIntents() instead.
    */
   availableIntents: function () {
     this._computeOccurrenceShape();

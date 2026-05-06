@@ -3,7 +3,7 @@ import { AVAILABLE_LOCALES_INFO, DEFAULT_LOCALE_CODE } from './availableLocalesI
 import { bundleLoaders } from 'virtual:i18n-loaders';
 
 // ---------------------------------------------------------------------------
-// Composer bootstrap — no locale messages yet, loaded dynamically below.
+// Composer bootstrap - no locale messages yet, loaded dynamically below.
 // ---------------------------------------------------------------------------
 
 const i18n = createI18n({
@@ -19,7 +19,7 @@ const i18n = createI18n({
 const composer = i18n.global;
 
 // ---------------------------------------------------------------------------
-// Available locales — derived at build time from the files in ./locales/.
+// Available locales - derived at build time from the files in ./locales/.
 // Adding a new locale only requires dropping a JSON file there; no code change.
 // Exported so app.js and localeLoader.js can import it without a separate file.
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ export function getLoadedLocales() {
 }
 
 // ---------------------------------------------------------------------------
-// Locale loading — all translations for a given locale (shared + all
+// Locale loading - all translations for a given locale (shared + all
 // component namespaces) are inlined into a single virtual bundle per locale
 // by vite-plugin-i18n-self.  One dynamic import → one chunk.
 // Call once from app.js after the checklist is resolved, passing the full
@@ -63,7 +63,7 @@ export async function loadLocales(localeCodes) {
 }
 
 // ---------------------------------------------------------------------------
-// English loads eagerly — must be present before the first render, before
+// English loads eagerly - must be present before the first render, before
 // the checklist resolves, as it is the authoritative fallback locale.
 // ---------------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ export function setLocale(lang) {
   if (_loadedLocales.has(lang)) {
     composer.locale.value = lang;
   } else {
-    console.warn(`[i18n] setLocale: "${lang}" not loaded — using '${DEFAULT_LOCALE_CODE}'`);
+    console.warn(`[i18n] setLocale: "${lang}" not loaded - using '${DEFAULT_LOCALE_CODE}'`);
     composer.locale.value = DEFAULT_LOCALE_CODE;
   }
 }
@@ -122,7 +122,7 @@ function escapeHtml(value) {
 }
 
 // ---------------------------------------------------------------------------
-// Key resolution — flat key first, then namespace-prefixed.
+// Key resolution - flat key first, then namespace-prefixed.
 // ---------------------------------------------------------------------------
 
 function resolveKey(tag, namespace) {
@@ -143,7 +143,7 @@ function resolveKey(tag, namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// createLocalT — factory used by the Vite plugin.
+// createLocalT - factory used by the Vite plugin.
 // ---------------------------------------------------------------------------
 
 export function createLocalT(namespace) {
@@ -175,7 +175,7 @@ export function createLocalT(namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// Named global t/tf — flat keys from shared locale JSON only.
+// Named global t/tf - flat keys from shared locale JSON only.
 // ---------------------------------------------------------------------------
 
 export const { t, tf } = createLocalT(null);

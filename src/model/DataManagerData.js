@@ -152,7 +152,7 @@ function localExportSpreadsheetFromNLData(nlDataStructure, completelyBlank = fal
       }
       ws['!cols'] = calculateColumnWidths("checklist", sheetData);
     } else {
-      // No columns defined — still colour the first 15 cells of row 0
+      // No columns defined - still colour the first 15 cells of row 0
       const FALLBACK_COLS = 1;
       for (let C = 0; C < FALLBACK_COLS; C++) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: C });

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FullscreenableMedia — self-contained styles
+   FullscreenableMedia - self-contained styles
    ========================================================================== */
 
 /*
@@ -30,7 +30,7 @@
 }
 
 
-/* ── OUTER wrapper — normal (non-fullscreen) state ───────────────────────── */
+/* ── OUTER wrapper - normal (non-fullscreen) state ───────────────────────── */
 /*
  * - position: relative so callers' extraWrapClass ::before/::after
  *   pseudo-elements (other than ours) can anchor to the outer if needed.
@@ -50,10 +50,10 @@
 
 /* ── INNER wrapper ────────────────────────────────────────────────────────── */
 /*
- * display: inline-block — shrinks to the exact rendered dimensions of the
+ * display: inline-block - shrinks to the exact rendered dimensions of the
  * media element, so the ::after icon is always anchored to its corner.
  *
- * position: relative — stacking context for the ::after expand-hint.
+ * position: relative - stacking context for the ::after expand-hint.
  */
 
 .image-wrap {
@@ -73,7 +73,7 @@
 }
 
 
-/* ── Expand-hint icon — anchored to the INNER wrapper ────────────────────── */
+/* ── Expand-hint icon - anchored to the INNER wrapper ────────────────────── */
 /*
  * By placing ::after on .image-wrap (which shrinks to the image),
  * bottom/right are measured from the image boundary, not the outer container.
@@ -92,13 +92,13 @@
 }
 
 
-/* ── Inner media elements — normal state ─────────────────────────────────── */
+/* ── Inner media elements - normal state ─────────────────────────────────── */
 /*
- * width: auto     — never stretch beyond natural width.
- * max-width: 100% — never overflow the .image-wrap.
- * max-height: 15em — sensible thumbnail cap; callers override via a
+ * width: auto     - never stretch beyond natural width.
+ * max-width: 100% - never overflow the .image-wrap.
+ * max-height: 15em - sensible thumbnail cap; callers override via a
  *                    more-specific rule scoped to their extraWrapClass.
- * display: block  — eliminates the baseline gap below inline images.
+ * display: block  - eliminates the baseline gap below inline images.
  */
 
 .fullscreenable-image img,
@@ -110,7 +110,7 @@
 }
 
 
-/* ── OUTER wrapper — fullscreen overlay ──────────────────────────────────── */
+/* ── OUTER wrapper - fullscreen overlay ──────────────────────────────────── */
 /*
  * !important guards against specificity from caller stylesheets
  * (e.g. max-height caps on an extraWrapClass rule).
@@ -136,7 +136,7 @@
   opacity: 1 !important;
 }
 
-/* Caption bar at the bottom of the fullscreen overlay — always above the image */
+/* Caption bar at the bottom of the fullscreen overlay - always above the image */
 .fullscreenable-image.fullscreen::before {
   display: block;
   content: attr(title);
@@ -154,7 +154,7 @@
 }
 
 
-/* ── Inner media elements — fullscreen state ─────────────────────────────── */
+/* ── Inner media elements - fullscreen state ─────────────────────────────── */
 
 .fullscreenable-image.fullscreen img,
 .fullscreenable-image.fullscreen object {

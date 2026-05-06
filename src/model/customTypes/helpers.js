@@ -262,7 +262,7 @@ export const helpers = {
 
   /**
    * Resolve a media source to **both** the full-size and thumbnail URLs by
-   * evaluating the Handlebars template twice — once with `_isThumb: false`
+   * evaluating the Handlebars template twice - once with `_isThumb: false`
    * and once with `_isThumb: true`.
    *
    * When the template contains no `{{img}}` helper (plain `{{value}}` style,
@@ -282,7 +282,7 @@ export const helpers = {
       uiContext?.compiledTemplate || Checklist.handlebarsTemplates?.[uiContext?.dataPath];
 
     // No template configured, or no compiled template available: both variants
-    // are the same plain path — no thumbnail swapping will occur.
+    // are the same plain path - no thumbnail swapping will occur.
     if (!uiContext?.meta?.template || uiContext.meta.template === "" || !compiledTemplate) {
       const resolved = relativeToUsercontent(source);
       return { fullSource: resolved, thumbSource: resolved };

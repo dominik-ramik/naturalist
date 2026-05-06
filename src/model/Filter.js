@@ -102,7 +102,7 @@ export let Filter = {
     // taxon rows exist), the entity-separation guard below would starve every
     // higher-rank taxon slot because no row would ever be a non-occurrence row.
     // When hasNonOccurrenceTaxa() is false we must allow occurrence rows to
-    // populate higher-rank slots — there is no other source of data for them.
+    // populate higher-rank slots - there is no other source of data for them.
     const hasPureTaxonRows = Checklist.hasNonOccurrenceTaxa();
 
     taxa.forEach(function (taxon) {

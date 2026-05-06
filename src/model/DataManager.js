@@ -97,7 +97,7 @@ function resolveBelongsTo(colName, rootBelongsToMap) {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns true when a columnName is a trailing "prefix.*" wildcard — the only
+ * Returns true when a columnName is a trailing "prefix.*" wildcard - the only
  * supported wildcard form for categoryDisplay and searchOrder column names.
  *
  * Valid:   "status.*", "info.redList.*"
@@ -119,7 +119,7 @@ function isTrailingDotStarWildcard(columnName) {
  * Examples (prefix = "status"):
  *   CDD has: status.nc, status.vu, status.fj, status.nc.detail
  *   Returns: ["status.nc", "status.vu", "status.fj"]
- *            (status.nc.detail is excluded — it is a grandchild)
+ *            (status.nc.detail is excluded - it is a grandchild)
  *
  * @param {string}   prefix   Parent path prefix, e.g. "status" (case-insensitive)
  * @param {Object[]} cddRows  Rows from customDataDefinition.data[langCode]
@@ -201,7 +201,7 @@ function expandWildcardRows(rows, cddRows, tableLabel) {
     if (!prefix) {
       Logger.error(
         'In table "' + tableLabel + '": column name "' + colName +
-        '" is not a valid wildcard — the prefix before ".*" must not be empty.' +
+        '" is not a valid wildcard - the prefix before ".*" must not be empty.' +
         ' This row will be ignored.'
       );
       return;
@@ -222,7 +222,7 @@ function expandWildcardRows(rows, cddRows, tableLabel) {
         Logger.info(
           'In table "' + tableLabel + '": wildcard "' + colName +
           '" skipped for "' + childColName +
-          '" — an explicit row for that column already exists and takes precedence.'
+          '" - an explicit row for that column already exists and takes precedence.'
         );
         return;
       }
@@ -564,7 +564,7 @@ export let DataManager = function () {
 
         if(import.meta.env.DEV) {
           console.time(assets);
-          console.log("Assets", assets)
+          //console.log("Assets", assets)
         }
         //console.time(assetsSizesMsg);
 
@@ -647,7 +647,7 @@ export let DataManager = function () {
 
         if (xhr.status === 200) {
           let contentType = xhr.getResponseHeader("Content-Type");
-
+          
           if (!contentType || !(contentType.startsWith("image/") || contentType.startsWith("audio/"))) {
             Logger.warning(tf("dm_asset_head_error", [absoluteUrl]), "File not found");
             return null;
@@ -1070,7 +1070,7 @@ export let DataManager = function () {
             Logger.warning(
               "Wrong value in Parent taxon indication will be ignored: " +
               row.parentTaxonIndication
-            );
+            , "Wrong parent taxon indication");
             row.parentTaxonIndication = "";
           }
         }
@@ -1598,7 +1598,7 @@ export let DataManager = function () {
             const actualEntity = isOccurrenceRow ? OCCURRENCE_IDENTIFIER : "taxon";
 
             if (resolvedBelongsTo === null) {
-              // belongsTo not declared for this column — skip cross-entity check entirely
+              // belongsTo not declared for this column - skip cross-entity check entirely
             } else if (resolvedBelongsTo !== actualEntity) {
               // Report once per root/simple column to avoid flooding the log
               // with one error per child path (origPub.author, origPub.year…).
@@ -1981,7 +1981,7 @@ export let DataManager = function () {
                       let tokenSetError = null;
 
                       if (tokens.length === 0) {
-                        // handled by allowEmpty check above — should not reach here
+                        // handled by allowEmpty check above - should not reach here
                       } else if (rules.maxTokens && tokens.length > rules.maxTokens) {
                         tokenSetError = "Value '" + value + "' in column " + column.name + " (table " + table.name + ") has too many tokens (max " + rules.maxTokens + ").";
                       } else {
@@ -2334,7 +2334,7 @@ export let DataManager = function () {
       const defaultLangCode = data.common.languages.defaultLanguageCode;
       const dwcTableRows = data.sheets.content.tables.dwcArchive?.data?.[defaultLangCode];
       if (!dwcTableRows || dwcTableRows.length === 0) {
-        return; // DwC table absent or empty — nothing to compile
+        return; // DwC table absent or empty - nothing to compile
       }
 
       // Build a per-CDD Handlebars template cache so templates are compiled once.
@@ -2382,7 +2382,7 @@ export let DataManager = function () {
       }
 
       /**
-       * mediaUrlResolver — resolves a raw media source string to a fully qualified URL.
+       * mediaUrlResolver - resolves a raw media source string to a fully qualified URL.
        * Lives here in the DataManager closure because it requires window.location context
        * and access to the Handlebars template defined in the CDD for each column.
        *
@@ -2753,8 +2753,8 @@ export function validateCDDColumnsAgainstHeaders(data) {
     const dataTypeBase = (row.dataType || "").trim().toLowerCase().split(/\s+/)[0];
 
     // For array-leaf columns, presence is satisfied by:
-    //   a) the bare root header ("habitat") — pipe-separated notation, OR
-    //   b) any numbered child header ("habitat1", "habitat2", …) — explicit columns
+    //   a) the bare root header ("habitat") - pipe-separated notation, OR
+    //   b) any numbered child header ("habitat1", "habitat2", …) - explicit columns
     const present = isArrayLeaf
       ? headers.some(h =>
         h === effectiveColName ||                                    // pipe-separated root
@@ -2776,7 +2776,7 @@ export function validateCDDColumnsAgainstHeaders(data) {
  *   – "<colName>"       (pipe-separated "Name|Authority" or name-only)
  *   – "<colName>.name"  (explicit name sub-column)
  *
- * Taxa headers are always bare — they are never language-suffixed.
+ * Taxa headers are always bare - they are never language-suffixed.
  *
  * Logs a critical error for every absent taxon column because a missing taxon
  * column makes it impossible to build the taxonomic tree.
@@ -2796,7 +2796,7 @@ function validateTaxaAgainstHeaders(data) {
     const colName = (row.columnName || "").toLowerCase().trim();
     if (!colName) return;
 
-    // Taxon column headers are always bare — never language-suffixed.
+    // Taxon column headers are always bare - never language-suffixed.
     // The column may be represented as a single "Name|Authority" cell (colName)
     // or split into explicit sub-columns (colName.name / colName.authority).
     // Presence of either the base column or the .name sub-column is sufficient.
@@ -3175,11 +3175,11 @@ function runManualIntegrityChecks(data) {
 function normalizeTemplateDataPaths(template) {
   if (!template || typeof template !== "string") return template;
 
-  //   Alt 1 (group 1): quoted string — consume and echo unchanged
+  //   Alt 1 (group 1): quoted string - consume and echo unchanged
   //                    double-quoted: "..."  handles \" escapes
   //                    single-quoted: '...'  handles \' escapes
   //
-  //   Alt 2 (group 2): data path — \bdata\. followed by one or more of:
+  //   Alt 2 (group 2): data path - \bdata\. followed by one or more of:
   //                    [a-zA-Z0-9_.#]  covers dot/hash/digit notation
   //                    \[[^\]]*\]      covers bracket notation data.[My Key]
   //

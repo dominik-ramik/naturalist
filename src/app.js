@@ -357,7 +357,7 @@ function setupRoutes() {
         CacheManager.invalidate(CacheScope.LANGUAGE, "route-language-change-before-data-ready");
       }
       lastAppliedDataLanguage = dataLang;
-      // Checklist not yet loaded — set directly if it's a known UI locale,
+      // Checklist not yet loaded - set directly if it's a known UI locale,
       // full resolution will happen again after loadLocales() completes.
       setLocale(dataLang);
     }

@@ -1,7 +1,7 @@
 // src/components/FullscreenManager.js
 //
 // Pure-JS singleton.  Owns 100% of fullscreen behavior.
-// No Mithril dependency — safe to import from anywhere.
+// No Mithril dependency - safe to import from anywhere.
 //
 // To swap the CSS-toggle implementation for a dialog/lightbox in the future,
 // edit only the `enter()` and `exit()` methods here.  Every call site is
@@ -74,7 +74,7 @@ export const FullscreenManager = {
   /**
    * Call once at app startup.
    * Installs a single capture-phase document listener that handles all
-   * .fullscreenable-image clicks — including those inside <object> SVG
+   * .fullscreenable-image clicks - including those inside <object> SVG
    * children and m.trust() HTML injected by the markdown pipeline.
    */
   init() {

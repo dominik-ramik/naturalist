@@ -3,7 +3,7 @@
 //
 // Usage:
 //   import { collapsePaneAndDismissKeyboard } from "../MobileInteraction.js";
-//   onscroll: collapsePaneAndDismissKeyboard   // pass by reference — no wrapper needed
+//   onscroll: collapsePaneAndDismissKeyboard   // pass by reference - no wrapper needed
 
 import m from "mithril";
 import { InteractionAreaView } from "../view/InteractionAreaView.js";
@@ -17,7 +17,7 @@ import { Settings } from "../model/Settings.js";
  * as a raw onscroll handler without incurring a redraw on every scroll tick.
  */
 export function collapsePaneAndDismissKeyboard() {
-  // Unconditionally blur — cheap, and the surest way to hide the soft keyboard
+  // Unconditionally blur - cheap, and the surest way to hide the soft keyboard
   // regardless of which element currently holds focus.
   if (document.activeElement && document.activeElement !== document.body) {
     document.activeElement.blur();

@@ -62,7 +62,7 @@
   gap: 0;
 }
 
-/* ── Eyebrow label — mirrors .welcome-subtitle ── */
+/* ── Eyebrow label - mirrors .welcome-subtitle ── */
 .nothing-found-eyebrow {
   display: flex;
   align-items: center;
@@ -86,7 +86,7 @@
   flex-shrink: 0;
 }
 
-/* ── Illustration — subdued, decorative ── */
+/* ── Illustration - subdued, decorative ── */
 .nothing-found-wrapper img {
   width: 15em;
   opacity: 0.55;
@@ -114,7 +114,7 @@
   font-size: 110%;
 }
 
-/* ── Query display — the "missing leaf" ── */
+/* ── Query display - the "missing leaf" ── */
 .nothing-found-wrapper .query {
   font-style: italic;
   color: #efad1a;
@@ -304,14 +304,14 @@
    Fresh-install welcome screen
    Fills the .checklist panel (dark gradient bg) when no data is loaded yet.
    On mobile the panel is hidden behind the interaction area, so this is
-   effectively a desktop-only experience — no special mobile overrides needed.
+   effectively a desktop-only experience - no special mobile overrides needed.
 
    Element roles:
-     .welcome-subtitle   — product category stamp (what NaturaList is, in brief)
-     .welcome-title      — the main greeting + brand name
-     .welcome-divider    — visual break between identity and capability copy
-     .welcome-body       — feature summary (what users can do)
-     .welcome-closing    — poetic sign-off, clearly decorative
+     .welcome-subtitle   - product category stamp (what NaturaList is, in brief)
+     .welcome-title      - the main greeting + brand name
+     .welcome-divider    - visual break between identity and capability copy
+     .welcome-body       - feature summary (what users can do)
+     .welcome-closing    - poetic sign-off, clearly decorative
    ========================================================================== */
 
 .welcome-wrapper {
@@ -350,7 +350,7 @@
 }
 
 /* ── Subtitle: product category stamp ────────────────────────────────────────
-   Appears above the title. Reads like an eyebrow label — sets context before
+   Appears above the title. Reads like an eyebrow label - sets context before
    the brand name lands. Flanking hairlines add structure without decoration.
    ─────────────────────────────────────────────────────────────────────────── */
 
@@ -414,7 +414,7 @@
 }
 
 /* ── Closing: poetic sign-off ────────────────────────────────────────────────
-   Clearly decorative — lower opacity and flanking rules signal "aside",
+   Clearly decorative - lower opacity and flanking rules signal "aside",
    not content. Wrapper handles the ruled line layout; inner span is the text.
    ─────────────────────────────────────────────────────────────────────────── */
 
@@ -523,7 +523,7 @@
   transform: translateX(3px);
 }
 
-/* Hide the CTA hint on mobile — the panel layout makes it irrelevant */
+/* Hide the CTA hint on mobile - the panel layout makes it irrelevant */
 @media (max-width: 1000px) {
   .welcome-wrapper {
     display: none;

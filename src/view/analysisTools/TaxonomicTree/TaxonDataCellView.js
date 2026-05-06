@@ -12,7 +12,7 @@ export let TaxonDataCellView = {
         // Pre-filter to only cells that will actually render something.
         // m(TaxonDataItemView, ...) always returns a vnode object, so we can't
         // detect null renders after the fact. Instead we call titleValuePair
-        // directly — the same check TaxonDataItemView.view() uses — to see
+        // directly - the same check TaxonDataItemView.view() uses - to see
         // whether each cell would produce output before committing to a wrapper.
         const visibleCells = vnode.attrs.dataCells.filter(function(item) {
             const data = vnode.attrs.taxon.data[item];

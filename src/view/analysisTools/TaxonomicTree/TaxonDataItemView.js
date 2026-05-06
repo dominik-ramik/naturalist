@@ -81,7 +81,7 @@ export let TaxonDataItemView = {
 
     // Detect whether child items are a media type (image, map).
     // Array items are keyed as dataPath+"1", dataPath+"2" etc.
-    // We probe "1" — the first slot — to read the child dataType from meta.
+    // We probe "1" - the first slot - to read the child dataType from meta.
     // If the child dataType is a visual media type, append .media-item-list so
     // CSS can render them as a wrapped row of inline-blocks on a new line,
     // independent of the title. Non-media items are unaffected.

@@ -244,7 +244,7 @@ export let customTypeMapregions = {
 
   getPreloadableAssetPaths: function (mediaItem, rowTemplate, entry) {
     // mapregions: source comes entirely from the template evaluated against
-    // the entry — the mediaItem itself carries no source path.
+    // the entry - the mediaItem itself carries no source path.
     return [helpers.processSourceForPreload("", rowTemplate, entry)];
   },
 
@@ -580,7 +580,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
 
   // Statuses explicitly covered by a non-fallback category row.
   // "\0" is the internal sentinel for bare-code regions (no status given) and
-  // is semantically the fallback case — exclude it here just like "".
+  // is semantically the fallback case - exclude it here just like "".
   const explicitlyCoveredStatuses = new Set(
     categoryRows.filter(r => r.status !== '' && r.status !== '\0').map(r => r.status)
   );

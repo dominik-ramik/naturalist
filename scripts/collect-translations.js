@@ -16,7 +16,7 @@ for (const locale of LOCALES) {
   const aggregated = {};
   
   for (const file of files) {
-    // Use directory name as namespace key — matches selfKey derivation
+    // Use directory name as namespace key - matches selfKey derivation
     const namespace = path.basename(path.dirname(file), '.i18n');
     aggregated[namespace] = JSON.parse(readFileSync(file, 'utf8'));
   }

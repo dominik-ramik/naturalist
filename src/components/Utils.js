@@ -25,7 +25,7 @@ registerMessages(selfKey, {
 export const checklistURL = "./usercontent/data/checklist.json";
 export const checklistFileName = "checklist.json";
 
-// Evaluated once at module load — location never changes without a full reload.
+// Evaluated once at module load - location never changes without a full reload.
 export const isInDemoMode = (() => {
   const { hostname, pathname } = window.location;
   const isKnownHost =
@@ -72,7 +72,7 @@ export function resolveToHex(color) {
     colorCache.set(color, '#' + r + r + g + g + b + b);
     return colorCache.get(color);
   }
-  // Named color or any other CSS value — ask the browser
+  // Named color or any other CSS value - ask the browser
   const el = document.createElement('canvas');
   const ctx = el.getContext('2d');
   ctx.fillStyle = color;
@@ -357,7 +357,7 @@ export function mdImagesClickableAndUsercontentRelative(markdown) {
       .replace(src, resolvedSrc)
       .replace(/<img/, `<img class="image-in-view" data-thumbsrc="${resolvedSrc}" data-fullsrc="${resolvedSrc}"`);
 
-    // No onClick here — FullscreenManager's document-level capture listener
+    // No onClick here - FullscreenManager's document-level capture listener
     // handles all .fullscreenable-image clicks, including those in m.trust() HTML.
     return (
       '<span class="image-wrap fullscreenable-image clickable" title="' +

@@ -21,7 +21,7 @@ registerMessages(selfKey, {
     temporary_draft_goto_manage: "Manage",
     draft_notice: "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",
     welcome_headline_tagline: "The flexible biodiversity data publishing platform",
-    welcome_tagline: "Publish <strong>checklists</strong>, curate <strong>collections</strong>, and explore your data through filters, search, and analysis tools <strong>built for discovery</strong> — all from a single spreadsheet.",
+    welcome_tagline: "Publish <strong>checklists</strong>, curate <strong>collections</strong>, and explore your data through filters, search, and analysis tools <strong>built for discovery</strong> - all from a single spreadsheet.",
     welcome_blessing: "May your taxonomic tree grow to the sky.",
     demo_mode_badge: "Demo",
     demo_mode_notice: "This is a demo instance - load an example to see <b>NaturaList</b> in action.",
@@ -61,8 +61,8 @@ export let ChecklistView = {
 
   /**
    * Ensures the analytical intent stored in Settings is compatible with the
-   * shape of the loaded dataset. Called from oninit and onbeforeupdate — always
-   * before Mithril builds the vnode tree — so no state mutations happen during
+   * shape of the loaded dataset. Called from oninit and onbeforeupdate - always
+   * before Mithril builds the vnode tree - so no state mutations happen during
    * render.
    *
    * Uses Checklist.availableIntents() as the single source of truth. If the
@@ -118,7 +118,7 @@ export let ChecklistView = {
         ".checklist",
         m(".welcome-wrapper", [
           m(".fresh-install-welcome", [
-            // Demo-mode notice — visible only when served from a /demo/ subfolder
+            // Demo-mode notice - visible only when served from a /demo/ subfolder
             ...(isInDemoMode ? [
               m(".demo-notice", [
                 m("span.demo-notice-badge", t("demo_mode_badge")),
@@ -128,7 +128,7 @@ export let ChecklistView = {
               ]),
               m("hr.welcome-divider"),
             ] : []),
-            // Category stamp — sets context before the brand name lands
+            // Category stamp - sets context before the brand name lands
             // Primary greeting with brand name
             m("h1.welcome-title", [
               "Welcome to ", m("span.brand-name", "NaturaList"),
@@ -136,9 +136,9 @@ export let ChecklistView = {
             m("p.welcome-subtitle", t("welcome_headline_tagline")),
             // Visual break between identity block and capability copy
             m("hr.welcome-divider"),
-            // Feature summary — key actions bolded in the i18n string via <strong>
+            // Feature summary - key actions bolded in the i18n string via <strong>
             m("p.welcome-body", m.trust(t("welcome_tagline"))),
-            // Poetic sign-off — flanking rules mark it as decorative, not content
+            // Poetic sign-off - flanking rules mark it as decorative, not content
             m(".welcome-closing-wrapper", [
               m("span.welcome-closing", t("welcome_blessing")),
             ]),
