@@ -1,6 +1,7 @@
 import m from "mithril";
 import { t, tf } from 'virtual:i18n-self';
-import { te } from "../i18n/index.js";
+import { loadLocales, setLocale, te } from "../i18n/index.js";
+import { deriveRequiredUiLocales, resolveUiLocaleForDataLang } from "../i18n/localeLoader.js";
 import "./ManageView.css";
 import { marked } from "marked";
 
@@ -294,6 +295,9 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo = false) 
       }
     }
     Checklist.loadData(compiled, isDemo ? false : true);
+    const requiredLocales = deriveRequiredUiLocales(Checklist);
+    await loadLocales(requiredLocales);
+    setLocale(resolveUiLocaleForDataLang(Settings.language(), Checklist));
     Checklist.getTaxaForCurrentQuery();
 
     if (ManageStore.dwcAutoRecompile) {

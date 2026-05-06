@@ -81,8 +81,8 @@ export const config = {
     },
   ],
 
-  render: ({ filteredTaxa, allTaxa, datasetRevision }) =>
-    circlePackingView(allTaxa, filteredTaxa, datasetRevision),
+  render: ({ filteredTaxa, allTaxa, dataContextRevision }) =>
+    circlePackingView(allTaxa, filteredTaxa, dataContextRevision),
 };
 
 const occurrenceTagIconPath =
@@ -986,13 +986,13 @@ function assignLeavesCount(node, allMatchingData) {
 
 let cachedData = null;
 let oldQueryKey = "";
-let cachedDataDatasetRevision = -1;
+let cachedDataContextRevision = "";
 
-function ensureCirclePackingCacheFresh(datasetRevision) {
-  if (datasetRevision !== cachedDataDatasetRevision) {
+function ensureCirclePackingCacheFresh(dataContextRevision) {
+  if (dataContextRevision !== cachedDataContextRevision) {
     cachedData = null;
     oldQueryKey = "";
-    cachedDataDatasetRevision = datasetRevision;
+    cachedDataContextRevision = dataContextRevision;
   }
 }
 
@@ -1037,12 +1037,12 @@ function renderColorScale(isFilterEmpty) {
   ]);
 }
 
-function circlePackingView(allTaxa, matchingTaxa, datasetRevision) {
+function circlePackingView(allTaxa, matchingTaxa, dataContextRevision) {
   if (allTaxa.length === 0) {
     return m(".listed-taxa");
   }
 
-  ensureCirclePackingCacheFresh(datasetRevision);
+  ensureCirclePackingCacheFresh(dataContextRevision);
 
   const isFilterEmpty = Checklist.filter.isEmpty();
   const mapChartMode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : "taxa";

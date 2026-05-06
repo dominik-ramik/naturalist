@@ -1,5 +1,6 @@
 import { t } from 'virtual:i18n-self';
 import { textLowerCaseAccentless } from "../components/Utils.js";
+import { CacheManager, CacheScope } from "./CacheManager.js";
 
 export const MONTH_KEYS = [
   "jan",
@@ -118,6 +119,12 @@ function normalizedPrefix(name, length) {
 
 const _shortNamesCache = new Map();
 
+export function clearMonthNameCaches() {
+  _fallbackCache = null;
+  _fallbackCacheCanary = null;
+  _shortNamesCache.clear();
+}
+
 export function deriveShortMonthNames(monthNamesOrRawValue) {
   const canary = t('months.jan');
   const inputKey = Array.isArray(monthNamesOrRawValue)
@@ -187,3 +194,9 @@ export function getShortMonthLabel(monthNumber, monthNamesOrRawValue) {
 
   return monthNames[monthIndex];
 }
+
+CacheManager.subscribe("model.MonthNames", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Fallback and derived month labels from active UI locale and checklist configuration.",
+  clear: clearMonthNameCaches,
+});

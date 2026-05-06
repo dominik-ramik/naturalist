@@ -9,6 +9,7 @@
 
 import m from "mithril";
 import { Checklist } from "../../Checklist.js";
+import { CacheManager } from "../../CacheManager.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 registerMessages(selfKey, {
@@ -104,7 +105,7 @@ export function makePreviewDataCache() {
 
   return {
     get(dataPath) {
-      const key = dataPath + "|" + Checklist.filter.queryKey("data." + dataPath);
+      const key = CacheManager.key([dataPath, Checklist.filter.queryKey("data." + dataPath)]);
       if (!cachedData || cachedKey !== key) {
         cachedKey = key;
         cachedData = Checklist.filter.getRangeFilterPreviewData(dataPath);

@@ -143,7 +143,7 @@ export const config = {
     };
   },
 
-  render: ({ filteredTaxa }) => categoryChart(filteredTaxa),
+  render: ({ filteredTaxa, dataContextRevision }) => categoryChart(filteredTaxa, dataContextRevision),
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -210,9 +210,11 @@ let _tmCachedData = null;
 
 function getCachedCrossTabulation(
   filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
-  categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+  categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning,
+  dataContextRevision
 ) {
   const key = JSON.stringify([
+    dataContextRevision,
     filteredTaxa.length,
     categoryToView,
     secondaryDimCategory,
@@ -619,7 +621,7 @@ function renderLivingPanel(rowDimLabel, colTraitName, unit) {
 
 // ─── Main render function ─────────────────────────────────────────────────────
 
-function categoryChart(filteredTaxa) {
+function categoryChart(filteredTaxa, dataContextRevision) {
   const result = [];
   const isCustomMode = secondaryDimMode === "custom";
 
@@ -674,7 +676,8 @@ function categoryChart(filteredTaxa) {
   if (categoryToView !== "") {
     categorizedData = getCachedCrossTabulation(
       filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
-      categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+      categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning,
+      dataContextRevision
     );
     if (categorizedData == null && !isCustomMode) {
       // Reset local variables synchronously so the fallback getCachedCrossTabulation
@@ -688,7 +691,8 @@ function categoryChart(filteredTaxa) {
       }, 0);
       categorizedData = getCachedCrossTabulation(
         filteredTaxa, categoryToView, secondaryDimCategory, isCustomMode,
-        categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning
+        categoryRoot, chartMode, allTaxaForInheritance, dateBinning, secondaryDimDateBinning,
+        dataContextRevision
       );
     }
 

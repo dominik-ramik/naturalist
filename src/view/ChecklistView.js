@@ -5,6 +5,7 @@ import "./ChecklistView.css";
 import { routeTo, updateRouteParams, isInDemoMode } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
+import { CacheManager } from "../model/CacheManager.js";
 import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
@@ -152,7 +153,7 @@ export let ChecklistView = {
     const allFilteredTaxa = Checklist.getTaxaForCurrentQuery();
     const filteredTaxa = filterOutOccurrenceTaxa(allFilteredTaxa);
     const allTaxa = filterOutOccurrenceTaxa(Checklist.getData().checklist);
-    const datasetRevision = Checklist.getDataRevision();
+    const dataContextRevision = CacheManager.contextRevision();
 
     const tool = getCurrentTool();
     const specificView = tool
@@ -160,7 +161,7 @@ export let ChecklistView = {
         filteredTaxa,
         allTaxa,
         queryKey: ChecklistView.lastQuery,
-        datasetRevision,
+        dataContextRevision,
       })
       : null;
 

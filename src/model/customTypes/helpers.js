@@ -4,6 +4,7 @@ import { dataPath } from "../DataPath.js";
 import { Checklist } from "../Checklist.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
 import { Logger } from "../../components/Logger.js";
+import { CacheManager, CacheScope } from "../CacheManager.js";
 
 const data = nlDataStructure;
 
@@ -379,3 +380,9 @@ export const helpers = {
     return source;
   },
 };
+
+CacheManager.subscribe("customTypes.helpers", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Custom type helper caches for translated category labels and preload templates.",
+  clear: () => helpers.clearCaches(),
+});

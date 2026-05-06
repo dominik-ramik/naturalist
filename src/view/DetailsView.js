@@ -7,6 +7,7 @@ import {
   TabsContainerTab,
 } from "../components/TabsContainer.js";
 import { Checklist } from "../model/Checklist.js";
+import { CacheManager } from "../model/CacheManager.js";
 import { Settings } from "../model/Settings.js";
 import {
   routeTo,
@@ -47,6 +48,7 @@ export let DetailsView = {
   // still producing fresh vnode trees each render, which Mithril requires.
   // Invalidated whenever the taxon changes.
   _cachedDetailsTabs: null,
+  _cachedDataContextRevision: "",
 
   oninit: function (vnode) {
     DetailsView._updateTaxonState();
@@ -64,10 +66,16 @@ export let DetailsView = {
 
     // Guard must compare BEFORE writing - currently it writes taxonName first,
     // making the comparison always true
-    if (name === DetailsView.taxonName && authority === DetailsView.taxonAuthority) return;
+    const dataContextRevision = CacheManager.contextRevision();
+    if (
+      name === DetailsView.taxonName &&
+      authority === DetailsView.taxonAuthority &&
+      dataContextRevision === DetailsView._cachedDataContextRevision
+    ) return;
 
     DetailsView.taxonName = name;
     DetailsView.taxonAuthority = authority;
+    DetailsView._cachedDataContextRevision = dataContextRevision;
     const taxon = Checklist.getTaxonByNameAndAuthority(name, authority);
     DetailsView.taxon = taxon;
     DetailsView.isInChecklist = taxon?.isInChecklist ?? false;

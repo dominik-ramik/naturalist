@@ -11,6 +11,7 @@ import { materialColors } from "./MaterialColors.js";
 import { highlightHtml } from "../model/highlightUtils.js";
 import { AVAILABLE_LOCALES } from "../i18n/index.js";
 import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
+import { CacheManager, CacheScope } from "../model/CacheManager.js";
 
 registerMessages(selfKey, {
   en: {
@@ -89,10 +90,13 @@ export function resolveToHex(color) {
   return '#000000';
 }
 
-const markdownCache = new Map();
+const markdownCache = CacheManager.managedMap("components.Utils.markdown", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Markdown rendered with bibliography, locale-sensitive citations, and active usercontent paths.",
+});
 export function processMarkdownWithBibliography(data, tailingSeparator = "", skipInterpolationToUserContentFolder = false, highlightRegex = null) {
   //process bibliography
-  const key = data + "|" + tailingSeparator + "|" + skipInterpolationToUserContentFolder + "|" + highlightRegex;
+  const key = CacheManager.key([data, tailingSeparator, skipInterpolationToUserContentFolder, String(highlightRegex)]);
   if (markdownCache.has(key)) {
     return markdownCache.get(key);
   }
@@ -235,9 +239,12 @@ export function filterTerminalLeavesForMode(nodes, mode, occurrenceMetaIndex) {
   );
 }
 
-let sortByCustomOrderCache = new Map();
+let sortByCustomOrderCache = CacheManager.managedMap("components.Utils.sortByCustomOrder", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Sorted filter/category options using active metadata custom order.",
+});
 export function clearSortByCustomOrderCache() {
-  sortByCustomOrderCache = new Map();
+  sortByCustomOrderCache.clear();
 }
 
 export function sortByCustomOrder(array, type, dataPath) {
@@ -245,7 +252,7 @@ export function sortByCustomOrder(array, type, dataPath) {
     return array;
   }
 
-  let key = JSON.stringify(array) + "|" + type + "|" + dataPath;
+  let key = CacheManager.key([JSON.stringify(array), type, dataPath]);
 
   if (!sortByCustomOrderCache.has(key)) {
     let result = array.sort();
@@ -473,6 +480,15 @@ export function getCurrentLocaleBestGuess() {
 
   return _localeCache;
 }
+
+CacheManager.subscribe("components.Utils.localeBestGuess", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Resolved Intl locale for current data language/fallback.",
+  clear: () => {
+    _localeCache = null;
+    _localeCacheKey = null;
+  },
+});
 
 export function routeTo(destination, query, language, replace = false) {
   //console.log("Routing to: " + destination);

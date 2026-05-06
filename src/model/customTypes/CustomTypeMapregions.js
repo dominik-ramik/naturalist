@@ -34,6 +34,7 @@ import {
 } from "../../components/MapregionsColorEngine.js";
 
 import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
+import { CacheManager, CacheScope } from "../CacheManager.js";
 
 registerMessages(selfKey, {
   en: {
@@ -69,7 +70,7 @@ registerMessages(selfKey, {
 const nlData = nlDataStructure;
 
 // ─── Legend config cache ──────────────────────────────────────────────────────
-// Keyed by dataPath. Invalidate on dataset load via clearLegendConfigCache().
+// Keyed by dataPath. Invalidate on dataset or language change via CacheManager.
 
 const _legendConfigCache = {};
 
@@ -857,3 +858,9 @@ function renderRegionsList(data, uiContext, hl) {
     footnotesElements.length ? m(".region-footnotes", footnotesElements) : null,
   ]);
 }
+
+CacheManager.subscribe("customTypes.mapregions", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Mapregions legend, markdown, color, stats, and known-code caches.",
+  clear: clearLegendConfigCache,
+});

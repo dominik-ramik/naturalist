@@ -2,6 +2,7 @@ import * as XLSX from "xlsx-js-style";
 import { indexOfCaseInsensitive, isArrayOfEmptyStrings, pad } from "./Utils.js";
 import { Logger } from "./Logger.js";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
+import { AVAILABLE_LOCALES_INFO, DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 
 registerMessages(selfKey, {
   en: {
@@ -358,8 +359,8 @@ function processLanguages(workbook, schema) {
   const generalSheetData = parseSheetData(workbook, appearanceSheetName);
 
   if (!generalSheetData) {
-    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE;
-    pushLanguage(DEFAULT_LOCALE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE], "");
+    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE_CODE;
+    pushLanguage(DEFAULT_LOCALE_CODE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE_CODE], "");
     return;
   }
 
@@ -370,9 +371,9 @@ function processLanguages(workbook, schema) {
   const languageTable = extractSubTableData(generalSheetData, appearanceSheetName, tableName, tableInfo, null, null);
 
   if (!languageTable || languageTable.length < 2) {
-    Logger.info(`The '${tableName}' table is empty, using ${AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE]} as default language.`);
-    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE;
-    pushLanguage(DEFAULT_LOCALE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE], "");
+    Logger.info(`The '${tableName}' table is empty, using ${AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE_CODE]} as default language.`);
+    schema.common.languages.defaultLanguageCode = DEFAULT_LOCALE_CODE;
+    pushLanguage(DEFAULT_LOCALE_CODE, AVAILABLE_LOCALES_INFO[DEFAULT_LOCALE_CODE], "");
     return;
   }
 

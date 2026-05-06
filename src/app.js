@@ -14,6 +14,7 @@ import { LiteratureView } from "./view/LiteratureView.js";
 import { SingleAccessKeyView } from "./view/SingleAccessKeyView.js";
 import { PinnedView } from "./view/PinnedView.js";
 import { Settings } from "./model/Settings.js";
+import { CacheManager, CacheScope } from "./model/CacheManager.js";
 import { checklistURL, unitToHtml } from "./components/Utils.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "./view/analysisTools/index.js";
 import { compressor } from "./components/LZString.js";
@@ -76,6 +77,7 @@ if (SHOULD_TRACE) {
 }
 
 let syncRouteStateBeforeRender = null;
+let lastAppliedDataLanguage = null;
 
 function componentRender(component) {
   if (syncRouteStateBeforeRender) {
@@ -333,17 +335,28 @@ function setupRoutes() {
   function updateLanguage() {
     // URL param takes priority, persists to localStorage as the data lang code
     const langParam = m.route.param("l");
-    if (langParam) {
+    if (langParam && (!Checklist._isDataReady || Checklist.isLanguageAvailable(langParam))) {
       Settings.language(langParam);
     }
 
     // Resolve the stored data lang code to a UI locale before applying.
     // This handles cases where the data code differs from the UI locale code
     // (e.g. data lang "bislama" with fallbackUiLang "fr" → setLocale("fr")).
-    const dataLang = Settings.language();
+    let dataLang = Settings.language();
+    if (Checklist._isDataReady && !Checklist.isLanguageAvailable(dataLang)) {
+      dataLang = Checklist.ensureStoredLanguageIsAvailable();
+    }
     if (dataLang && Checklist._isDataReady) {
+      if (lastAppliedDataLanguage !== null && dataLang !== lastAppliedDataLanguage) {
+        CacheManager.invalidate(CacheScope.LANGUAGE, "route-language-change");
+      }
+      lastAppliedDataLanguage = dataLang;
       setLocale(resolveUiLocaleForDataLang(dataLang, Checklist));
     } else if (dataLang) {
+      if (lastAppliedDataLanguage !== null && dataLang !== lastAppliedDataLanguage) {
+        CacheManager.invalidate(CacheScope.LANGUAGE, "route-language-change-before-data-ready");
+      }
+      lastAppliedDataLanguage = dataLang;
       // Checklist not yet loaded — set directly if it's a known UI locale,
       // full resolution will happen again after loadLocales() completes.
       setLocale(dataLang);

@@ -3,7 +3,6 @@ import Handlebars from "handlebars";
 import { TinyBibFormatter } from 'bibtex-json-toolbox';
 
 import {
-  clearSortByCustomOrderCache,
   getCurrentLocaleBestGuess,
   getGradedColor,
   htmlToPlainText,
@@ -22,10 +21,10 @@ import {
 import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
-import { clearLegendConfigCache } from "./customTypes/CustomTypeMapregions.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { getDataFromDataPath } from "./DataPath.js";
 import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
+import { CacheManager, CacheScope } from "./CacheManager.js";
 
 const templateResultSuffix = "$$templateresult";
 
@@ -39,12 +38,7 @@ export let Checklist = {
       .checklist;
   },
 
-  getDataRevision: function () {
-    return Checklist._dataRevision;
-  },
-
   _data: null,
-  _dataRevision: 0,
   _dataFulltextIndex: {},
   _isDraft: false,
   _isDataReady: false,
@@ -62,6 +56,7 @@ export let Checklist = {
 
   // Pre-computed searchable text cache per language
   _searchableTextCache: {},
+  _metaForDataPathCache: {},
   _templateCompileCache: new Map(),
 
   _bibFormatterCache: {},
@@ -453,6 +448,24 @@ export let Checklist = {
     return this._data.general.defaultVersion || DEFAULT_LOCALE_CODE;
   },
 
+  isLanguageAvailable: function (langCode) {
+    if (!langCode || !this._data?.versions) return false;
+    return Object.prototype.hasOwnProperty.call(this._data.versions, langCode);
+  },
+
+  ensureStoredLanguageIsAvailable: function () {
+    if (!this._data?.versions) return DEFAULT_LOCALE_CODE;
+
+    const current = Settings.language();
+    if (Checklist.isLanguageAvailable(current)) {
+      return current;
+    }
+
+    const fallback = Checklist.getDefaultLanguage();
+    Settings.language(fallback);
+    return fallback;
+  },
+
   loadData: function (jsonData, isDraft) {
 
     if (
@@ -474,14 +487,11 @@ export let Checklist = {
     }
 
     this._data = jsonData;
-    this._dataRevision += 1;
+    CacheManager.invalidate(CacheScope.DATASET, isDraft ? "checklist-draft-load" : "checklist-load");
 
     this._isDraft = isDraft;
     this._bibFormatter = null;
-
-    Checklist._dataFulltextIndex = {};
-    Checklist._metaForDataPathCache = {};
-
+    this.ensureStoredLanguageIsAvailable();
 
     Checklist.handlebarsTemplates = {};
 
@@ -490,22 +500,6 @@ export let Checklist = {
     Checklist.filter.data = {};
     Checklist.filter.text = "";
     Checklist.filter.delayCommitDataPath = "";
-    Checklist.filter._queryResultCache = {};
-
-    Checklist._taxonCache = new Map();
-    Checklist._keyReachableTaxaCache = new Map();
-    Checklist._keyLCACache = new Map(); // Clear LCA cache on data load
-    Checklist.treefiedTaxaCache = null;
-    Checklist._occurrenceDataPathCache = undefined;
-    Checklist._occurrenceShapeCache = null;
-    Checklist._bibFormatterCache = {};
-    Checklist.nameForMapRegionCache = new Map();
-    Checklist.getCustomOrderGroupItemsCache = new Map();
-    Checklist.getCustomOrderGroupCache = new Map();
-    Checklist._templateCompileCache = new Map();
-    clearSortByCustomOrderCache();
-    clearLegendConfigCache();
-
     // each of taxa or data contains keys as "dataPath" and values as: all: [], possible: {}, selected: [], color: "",
     // "possible" is a hash table of values with number of their occurrences from current search (values and numbers)
     Object.keys(Checklist.getTaxaMeta()).forEach(function (dataPath, index) {
@@ -709,8 +703,6 @@ export let Checklist = {
 
     validateActiveToolState(this.getData());
 
-    // Clear and recompute searchable text cache
-    this._searchableTextCache = {};
     this.precomputeSearchableText();
 
     if (import.meta.env && import.meta.env.DEV) {
@@ -1876,3 +1868,27 @@ export let Checklist = {
     }
   },
 };
+
+CacheManager.subscribe("model.Checklist", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Checklist model caches derived from active dataset and language.",
+  clear: () => {
+    Checklist._dataFulltextIndex = {};
+    Checklist._metaForDataPathCache = {};
+    Checklist.filter._queryResultCache = {};
+    Checklist._taxonCache = new Map();
+    Checklist._keyReachableTaxaCache = new Map();
+    Checklist._keyLCACache = new Map();
+    Checklist.treefiedTaxaCache = null;
+    Checklist._occurrenceDataPathCache = undefined;
+    Checklist._occurrenceShapeCache = null;
+    Checklist._searchableTextCache = {};
+    Checklist._bibFormatterCache = {};
+    Checklist.nameForMapRegionCache = new Map();
+    Checklist.getCustomOrderGroupItemsCache = new Map();
+    Checklist.getCustomOrderGroupCache = new Map();
+    Checklist._templateCompileCache = new Map();
+    Checklist.leafDataRenderCache = {};
+    Checklist.getAllLeafDataCache = new Map();
+  },
+});

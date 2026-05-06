@@ -6,6 +6,7 @@ import { getMonthNumbers } from "./MonthNames.js";
 import { getFilterPlugin } from "./filterPlugins/index.js";
 import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
 import { getDataFromDataPath } from "./DataPath.js";
+import { CacheManager, CacheScope } from "./CacheManager.js";
 
 export let Filter = {
   taxa: {},
@@ -197,7 +198,7 @@ export let Filter = {
       // Namespace by intent so that switching analytical intent correctly
       // invalidates cached results without polluting the filter serialization.
       let intent = Settings.analyticalIntent();
-      let queryKey = intent + "|" + Filter.queryKey(excludedFilterKey);
+      let queryKey = CacheManager.key([intent, Filter.queryKey(excludedFilterKey)]);
       Filter._queryResultCache[queryKey] = {
         taxa: searchResults,
         filterSnapshot: {
@@ -209,7 +210,7 @@ export let Filter = {
     },
     retrieve: function (excludedFilterKey = "") {
       let intent = Settings.analyticalIntent();
-      let queryKey = intent + "|" + Filter.queryKey(excludedFilterKey);
+      let queryKey = CacheManager.key([intent, Filter.queryKey(excludedFilterKey)]);
       return Filter._queryResultCache.hasOwnProperty(queryKey)
         ? Filter._queryResultCache[queryKey]
         : false;
@@ -473,3 +474,11 @@ export let Filter = {
     return finalResults;
   }
 };
+
+CacheManager.subscribe("model.Filter.queryResults", {
+  scopes: [CacheScope.DATASET, CacheScope.LANGUAGE],
+  description: "Filtered checklist row arrays from the active data context.",
+  clear: () => {
+    Filter._queryResultCache = {};
+  },
+});

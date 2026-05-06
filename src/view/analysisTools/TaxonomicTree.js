@@ -137,7 +137,7 @@ export const config = {
         },
     ],
 
-    render: ({ filteredTaxa, queryKey, datasetRevision }) => {
+    render: ({ filteredTaxa, queryKey, dataContextRevision }) => {
         // Guard: the occurrences-only sentinel is only valid in occurrence scope.
         // If the user switches to taxa scope while it is set, reset to the
         // default ("") so the tree renders normally and the select shows a
@@ -153,7 +153,7 @@ export const config = {
             taxa: filteredTaxa,
             displayLevel: Settings.checklistDisplayLevel(),
             queryKey,
-            datasetRevision,
+            dataContextRevision,
         });
     },
 };
@@ -166,19 +166,19 @@ function ChecklistTree() {
     let cachedTree = null;
     let lastCacheKey = "";
     let lastQueryKey = "";
-    let lastDatasetRevision = -1;
+    let lastDataContextRevision = "";
 
     return {
         view: function (vnode) {
-            const { taxa, displayLevel, queryKey, datasetRevision } = vnode.attrs;
+            const { taxa, displayLevel, queryKey, dataContextRevision } = vnode.attrs;
 
-            if (datasetRevision !== lastDatasetRevision) {
+            if (dataContextRevision !== lastDataContextRevision) {
                 // Reset memoized output when Checklist.loadData(...) swaps in a new dataset.
                 cachedTree = null;
                 lastCacheKey = "";
                 lastQueryKey = "";
                 totalItemsToShow = 50;
-                lastDatasetRevision = datasetRevision;
+                lastDataContextRevision = dataContextRevision;
             }
 
             if (queryKey !== lastQueryKey) {
@@ -208,6 +208,7 @@ function ChecklistTree() {
                 showOccurrences: Settings.checklistShowOccurrences(),
                 pruneEmpty: Settings.checklistPruneEmpty(),
                 displayLevel: displayLevel,
+                dataContextRevision,
             });
 
             if (cachedTree === null || cacheKey !== lastCacheKey) {

@@ -44,6 +44,7 @@ import { renderAggregateTable, resetDrillState } from './RegionalDistribution/ag
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
 import { getDataFromDataPath } from '../../model/DataPath.js';
 import { FullscreenableMedia } from '../../components/FullscreenableMedia.js';
+import { CacheManager } from '../../model/CacheManager.js';
 
 registerMessages(selfKey, {
   en: {
@@ -95,8 +96,8 @@ export const config = {
     };
   },
 
-  render: ({ filteredTaxa, allTaxa, datasetRevision }) =>
-    mapChart(filteredTaxa, allTaxa, datasetRevision),
+  render: ({ filteredTaxa, allTaxa, dataContextRevision }) =>
+    mapChart(filteredTaxa, allTaxa, dataContextRevision),
 };
 
 
@@ -112,7 +113,7 @@ const COMPUTING = Symbol('computing');
 
 // ─── Module-level cache ───────────────────────────────────────────────────────
 
-let _rev = -1;
+let _rev = '';
 let _mapsCache = {};   // mode → map[] | COMPUTING
 let _countsCache = {};   // cache key → allRegionCounts  (key includes source for dynamic variants)
 let _svgColorsJSON = '';   // guards redundant DOM colorSVGMap calls
@@ -261,7 +262,7 @@ function buildDynamicMapEntries(dataPath, meta, pathMap) {
  *
  * @returns {object[] | COMPUTING}
  */
-function getAvailableMaps(intent, rev = Checklist.getDataRevision()) {
+function getAvailableMaps(intent, rev = CacheManager.contextRevision()) {
   if (rev !== _rev) invalidateCaches(rev);
 
   const mode = (intent || Settings.analyticalIntent()) === ANALYTICAL_INTENT_OCCURRENCE
@@ -390,8 +391,8 @@ function renderComputingSpinner() {
 
 // ─── Main render ──────────────────────────────────────────────────────────────
 
-function mapChart(filteredTaxa, allTaxa, datasetRevision) {
-  if (datasetRevision !== _rev) invalidateCaches(datasetRevision);
+function mapChart(filteredTaxa, allTaxa, dataContextRevision) {
+  if (dataContextRevision !== _rev) invalidateCaches(dataContextRevision);
 
   const mode = Settings.analyticalIntent() === ANALYTICAL_INTENT_OCCURRENCE ? OCCURRENCE_IDENTIFIER : 'taxa';
   const occurrenceIdx = Checklist.getOccurrenceMetaIndex();

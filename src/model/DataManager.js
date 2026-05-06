@@ -14,7 +14,7 @@ import { Logger } from "../components/Logger.js";
 import { dataPath, getDataFromDataPath } from "./DataPath.js";
 import { i18nMetadata } from "../i18n/index.js";
 import { cssColorNames } from "../components/CssColorNames.js";
-import { MONTH_KEYS, resolveMonthNames, validateConfiguredMonthNames } from "./MonthNames.js";
+import { validateConfiguredMonthNames } from "./MonthNames.js";
 import { compileDwcArchive, registerDataCustomTypes } from "./dwc/DwcArchiveCompiler.js";
 import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
 import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
@@ -700,14 +700,15 @@ export let DataManager = function () {
         CUSTOMIZATION_ITEMS.DATE_FORMAT,
         lang.code
       );
-      let monthNames = resolveMonthNames(
-        getItem(
-          data.sheets.appearance.tables.customization.data,
-          CUSTOMIZATION_ITEMS.MONTH_NAMES,
-          lang.code,
-          MONTH_KEYS.map(k => t("months." + k)).join(", ")
-        )
+      const configuredMonthNames = getItem(
+        data.sheets.appearance.tables.customization.data,
+        CUSTOMIZATION_ITEMS.MONTH_NAMES,
+        lang.code
       );
+      const monthNamesValidation = validateConfiguredMonthNames(configuredMonthNames);
+      const monthNames = monthNamesValidation.hasValue && monthNamesValidation.names
+        ? monthNamesValidation.names
+        : null;
       /*
       let useCitations = getItem(
         data.sheets.appearance.tables.customization.data,
