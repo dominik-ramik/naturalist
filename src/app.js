@@ -4,8 +4,7 @@ import "./styles/style.css";
 
 import { setLocale, loadLocales } from "./i18n/index.js";
 import { deriveRequiredUiLocales, resolveUiLocaleForDataLang } from "./i18n/localeLoader.js";
-import { t } from 'virtual:i18n-self';
-import { Toast } from "./view/AppLayoutView.js";
+import { showNewVersionToast, showChecklistUpdatedToast, showOfflineFetchFailedToast } from "./components/AppNotifications.js";
 import { Checklist } from "./model/Checklist.js";
 import { Settings } from "./model/Settings.js";
 import { checklistURL, unitToHtml } from "./components/Utils.js";
@@ -50,11 +49,8 @@ const updateServiceWorker = registerSW({
     }
 
     // Standard behavior: Ask the user
-    Toast.show(t("new_version_available"), {
-      showPermanently: true,
-      whenClosed: function () {
-        updateServiceWorker(true);
-      },
+    showNewVersionToast(function () {
+      updateServiceWorker(true);
     });
   },
   onOfflineReady() {
@@ -158,11 +154,9 @@ function openComChannel(sw) {
         if (message.data.updateMeta) {
           Settings.lastKnownDataVersion(message.data.updateMeta);
         }
-        Toast.show(t("checklist_data_updated"), {
-          whenClosed: function () {
-            window.location.href =
-              window.location.origin + window.location.pathname;
-          },
+        showChecklistUpdatedToast(function () {
+          window.location.href =
+            window.location.origin + window.location.pathname;
         });
         break;
 
@@ -172,7 +166,7 @@ function openComChannel(sw) {
         break;
 
       case "FETCHING_RESSOURCE_FAILED":
-        Toast.show(t("offline_fetch_failed"));
+        showOfflineFetchFailedToast();
         break;
 
       default:
