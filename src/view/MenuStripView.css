@@ -5,7 +5,7 @@
   height: 3em;
   min-height: 3em;
   max-height: 3em;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
   z-index: 999;
   display: flex;
   flex-direction: row;
@@ -129,7 +129,8 @@
   padding: 0.8em 1em;
   cursor: pointer;
   transition: background-color 0.12s;
-  border-radius: 0; /* items are full-width; radius lives on the container */
+  border-radius: 0;
+  /* items are full-width; radius lives on the container */
 }
 
 .menu-item:hover {
@@ -357,7 +358,7 @@
   margin-left: auto;
   margin-right: 0.75rem;
   border-radius: 0.6em;
-  padding: 0.35em 0.85em 0.35em 0.75em;
+  padding: 0.45em 0.85em 0.45em 0.75em;
   background-color: var(--nlblue, #1f3044);
   border: 2px solid var(--nlblue, #1f3044);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -464,5 +465,9 @@
     display: inline;
     font-weight: normal;
     margin-right: 0.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 6em;
+    text-overflow: ellipsis;
   }
 }
