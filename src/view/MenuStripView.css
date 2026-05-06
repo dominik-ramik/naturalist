@@ -1,14 +1,21 @@
+/* ==========================================================================
+   App Menu Bar
+   ========================================================================== */
 .app-menu {
   height: 3em;
   min-height: 3em;
   max-height: 3em;
-  box-shadow: 0 0 0.5em 0 black;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
   z-index: 999;
   display: flex;
   flex-direction: row;
   align-items: center;
+  background-color: white;
 }
 
+/* ==========================================================================
+   Top-bar buttons & labels
+   ========================================================================== */
 .menu-button {
   display: flex;
   flex-direction: row;
@@ -38,64 +45,58 @@
   text-overflow: ellipsis;
 }
 
+/* ==========================================================================
+   Menu Panel — full-screen overlay
+   ========================================================================== */
 .menu-panel-wrapper {
   position: absolute;
-  left: 0px;
-  top: 0px;
-  bottom: 0px;
-  right: 0px;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
   display: flex;
   flex-direction: row;
+  z-index: 1000;
 }
 
-.menu-panel-outer-wrapper{
-  background-color: white;
+/* Semi-transparent dark backdrop (clicking it closes the panel) */
+.menu-background {
+  flex-grow: 1;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Outer wrapper: width + shadow + card border */
+.menu-panel-outer-wrapper {
+  background-color: #eceff2;
+  border-right: 1px solid white;
+  box-shadow: 0.05em 0 0.5em 0.1em rgba(12, 12, 12, 0.18);
   width: 25em;
   max-width: 90vw;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
+  border-radius: 0 var(--pad-large, 1em) var(--pad-large, 1em) 0;
+  overflow: hidden;
 }
 
+/* Inner panel: decorative background + flex column */
 .menu-panel {
   flex-grow: 1;
-  box-shadow: 0 0 2em black;
   display: flex;
   flex-direction: column;
 
   background-image: url("/img/icon_transparent_blue.svg");
-  background-repeat: no-repeat, no-repeat;
-  background-position: bottom 2em right 0.25em;
-  background-size: 10em;
-  background-blend-mode: lighten;
-  background-color: rgba(255, 255, 255, 0.7);
-}
-
-/* Make menu items area transparent so the panel background shows through */
-.menu-items {
-  overflow-y: auto;
-  opacity: 0.7;
-  font-weight: bold;
-  flex-grow: 1;
-  background-color: transparent;
-  /* was implicitly white */
-}
-
-/* Same for version info strip at the bottom */
-.version-info {
-  font-size: 70%;
-  color: gray;
-  margin-left: 0.5em;
-  margin-bottom: 0.25em;
-  text-align: left;
+  background-repeat: no-repeat;
+  background-position: bottom -2em right -1.25em;
+  background-size: 15em;
   background-color: transparent;
 }
 
-.menu-background {
-  flex-grow: 1;
-  background: transparent;
-}
-
+/* ==========================================================================
+   Panel header row ("← Menu")
+   ========================================================================== */
 .menu-hide-panel {
   height: 3em;
   display: flex;
@@ -103,51 +104,72 @@
   align-items: center;
   max-width: 12em;
   padding-left: var(--pad-large);
+  background-color: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
+/* ==========================================================================
+   Menu items list
+   ========================================================================== */
 .menu-items {
   overflow-y: auto;
-  opacity: 0.7;
-  font-weight: bold;
   flex-grow: 1;
+  background-color: transparent;
+  /* No opacity: items are fully legible; hover handles focus feedback */
 }
 
 .menu-item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding-top: 0.8em;
-  padding-bottom: 0.8em;
-  padding-left: 1em;
+  padding: 0.8em 1em;
   cursor: pointer;
+  transition: background-color 0.12s;
+  border-radius: 0; /* items are full-width; radius lives on the container */
+}
+
+.menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.55);
 }
 
 .menu-item.inactive {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: default;
 }
 
 .menu-item.inactive:hover {
-  background-color: white;
+  background-color: transparent;
 }
 
-.menu-item-menu-button:hover {
-  background-color: var(--hover-background);
+/* Expandable parent row — not directly clickable */
+.menu-item.expandable-main-button {
+  cursor: default;
+  font-weight: 600;
+  color: #555;
 }
 
 .menu-item.expandable-main-button:hover {
-  background-color: white;
-  cursor: default;
+  background-color: transparent;
 }
 
+/* ==========================================================================
+   Menu item icons & text
+   ========================================================================== */
 .menu-item-img {
   height: 2em;
   padding-right: 1em;
+  opacity: 0.75;
+  flex-shrink: 0;
 }
 
 .menu-item-icon {
   height: 2em;
   width: 2em;
+  flex-shrink: 0;
 }
 
 .menu-item-icon img {
@@ -156,45 +178,55 @@
   padding-left: 0.5em;
 }
 
+/* ==========================================================================
+   Dividers
+   ========================================================================== */
+.menu-divider {
+  padding: 0.2em 0;
+}
+
 .menu-divider-inner {
-  border-bottom: 1px solid #dddddd;
-  margin-left: 1em;
-  margin-right: 1em;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 0 1em;
 }
 
-.multi-item-menu-button {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
+/* ==========================================================================
+   Version strip (bottom of panel)
+   ========================================================================== */
+.version-info {
+  flex-shrink: 0;
+  font-size: 0.75em;
+  color: #888;
+  padding: 0.6em 1em;
+  text-align: left;
+  background-color: rgba(255, 255, 255, 0.45);
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  line-height: 1.5;
 }
 
-.multi-item-menu-button.selected {
-  background-color: var(--nlblue);
-  opacity: 0.8;
+/* ==========================================================================
+   Labels (non-clickable section headings inside the menu)
+   ========================================================================== */
+.menu-label {
+  margin-left: 0;
+  color: #888;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: default;
+  padding-top: 1em;
+  padding-bottom: 0.4em;
 }
 
-.menu-action-button {
-  padding-left: var(--pad-large);
-  padding-right: var(--pad-large);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 100%;
-  cursor: pointer;
+.menu-label:hover {
+  background-color: transparent;
 }
 
-.menu-action-button .action-button-title {
-  padding-left: var(--pad-large);
-  padding-right: var(--pad-large);
-  font-size: 85%;
-}
-
-.multi-item-menu-button:hover {
-  background-color: var(--hover-background);
-}
-
+/* ==========================================================================
+   Expandable group
+   ========================================================================== */
 .menu-expandable-wrapper {
   display: flex;
   flex-direction: column;
@@ -212,51 +244,59 @@
 .menu-expandable-expander {
   height: 1.5em;
   margin-right: 1em;
-}
-
-.menu-action-button img {
-  height: 1.5em;
+  opacity: 0.5;
 }
 
 .menu-group-items {
   padding-left: 4em;
 }
 
-.menu-action-button-with-menu-wrapper {
-  position: relative;
+/* ==========================================================================
+   Action button (top bar, with optional sub-menu)
+   ========================================================================== */
+.menu-action-button {
+  padding-left: var(--pad-large);
+  padding-right: var(--pad-large);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   height: 100%;
-  margin: 0.5em;
-  border: 1px solid gray;
-  box-sizing: border-box;
-  height: auto;
-  padding: 0.3em;
-  margin-right: 0;
-  border-radius: 0.3em;
+  cursor: pointer;
 }
 
-.menu-action-button-with-menu-wrapper .submenu {
-  position: absolute;
-  right: var(--pad-small);
-  top: var(--pad-small);
-  width: 19em;
-  max-width: 80vw;
-  max-height: 75vh;
-  z-index: 999;
-  background-color: white;
-  box-shadow: 0px 0.5em 1.5em 0 black;
-  border-radius: var(--pad-small);
-  overflow-y: auto;
+.menu-action-button .action-button-title {
+  padding-left: var(--pad-large);
+  padding-right: var(--pad-large);
   font-size: 85%;
 }
 
-.menu-label {
-  margin-left: 0em;
-  color: gray;
-  cursor: default;
+.menu-action-button img {
+  height: 1.5em;
 }
 
-.menu-label:hover {
-  background-color: white;
+.menu-action-button.mobile-cite-button {
+  display: none;
+}
+
+/* ==========================================================================
+   Multi-item (button + alt action) rows inside sub-menus
+   ========================================================================== */
+.multi-item-menu-button {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  transition: background-color 0.12s;
+}
+
+.multi-item-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+.multi-item-menu-button.selected {
+  background-color: var(--nlblue);
+  opacity: 0.85;
+  cursor: default;
 }
 
 .multi-item-menu-button .alt-action-item {
@@ -274,26 +314,49 @@
   flex-grow: 1;
 }
 
-.menu-action-button.mobile-cite-button {
-  display: none;
+/* ==========================================================================
+   Action button with dropdown sub-menu (top-bar variant)
+   ========================================================================== */
+.menu-action-button-with-menu-wrapper {
+  position: relative;
+  padding: 0.3em;
+  margin-right: 0;
+  margin: 0.5em;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 0.5em;
+  box-sizing: border-box;
+  height: auto;
+  background-color: white;
+  transition: box-shadow 0.12s;
 }
 
-.version-info {
-  font-size: 70%;
-  color: gray;
-  margin-left: 0.5em;
-  margin-bottom: 0.25em;
-  text-align: left;
+.menu-action-button-with-menu-wrapper:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.menu-action-button-with-menu-wrapper .submenu {
+  position: absolute;
+  right: var(--pad-small);
+  top: var(--pad-small);
+  width: 19em;
+  max-width: 80vw;
+  max-height: 75vh;
+  z-index: 999;
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.5em 0.1em rgba(12, 12, 12, 0.2);
+  border-radius: var(--pad-large, 1em);
+  overflow-y: auto;
+  font-size: 85%;
 }
 
 /* ==========================================================================
-   Global Indicator Button
-   Prominent, highly visible configuration button matching existing visual vocabulary
+   Global Indicator Button (top-bar, opens ConfigurationDialog)
    ========================================================================== */
 .global-indicator-btn {
   margin-left: auto;
   margin-right: 0.75rem;
-  border-radius: var(--pad-large);
+  border-radius: 0.6em;
   padding: 0.35em 0.85em 0.35em 0.75em;
   background-color: var(--nlblue, #1f3044);
   border: 2px solid var(--nlblue, #1f3044);
@@ -304,33 +367,29 @@
   font-size: 0.85em;
   color: #ffffff;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  height: 3em;
+  transition: background-color 0.18s, box-shadow 0.18s, color 0.18s;
 }
 
 .global-indicator-btn:hover {
   background-color: #ffffff;
   color: var(--nlblue, #1f3044);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* Icons inside the indicator chip */
 .global-indicator-img {
   width: 1.1em;
   height: 1.1em;
   object-fit: contain;
   flex-shrink: 0;
   opacity: 0.85;
-  transition: filter 0.2s ease-in-out;
+  transition: filter 0.18s;
 }
 
-/* Invert icons to white on hover */
 .global-indicator-btn:hover .global-indicator-img {
   filter: brightness(0) invert(1);
   opacity: 1;
 }
 
-/* Text labels inside the indicator chip */
 .global-indicator-label {
   display: inline-flex;
   align-items: center;
@@ -338,24 +397,22 @@
   white-space: nowrap;
 }
 
-/* Thin vertical separator between tool and scope sections */
 .global-indicator-sep {
   display: inline-block;
   width: 1.5px;
   height: 1.1em;
-  background-color: var(--nlblue, #1f3044);
-  opacity: 0.4;
+  background-color: #ffffff;
+  opacity: 0.35;
   margin: 0 0.2em;
   flex-shrink: 0;
-  transition: background-color 0.2s, opacity 0.2s;
+  transition: opacity 0.18s;
 }
 
 .global-indicator-btn:hover .global-indicator-sep {
-  background-color: #ffffff;
-  opacity: 0.6;
+  background-color: var(--nlblue, #1f3044);
+  opacity: 0.3;
 }
 
-/* Expand caret */
 .global-indicator-caret {
   width: 1em;
   height: 1em;
@@ -363,7 +420,7 @@
   flex-shrink: 0;
   opacity: 0.6;
   margin-left: 0.1em;
-  transition: filter 0.2s ease-in-out;
+  transition: filter 0.18s;
 }
 
 .global-indicator-btn:hover .global-indicator-caret {
@@ -399,7 +456,6 @@
     padding-right: var(--pad-large);
   }
 
-  /* On narrow screens, collapse the scope portion of the indicator */
   .global-indicator-btn .global-indicator-label {
     display: none;
   }
