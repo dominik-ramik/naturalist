@@ -9,5 +9,6 @@
   "map_stats_min": "Minimum",
   "map_stats_max": "Maximum",
   "map_stats_mean": "Mean",
-  "map_stats_median": "Median"
+  "map_stats_median": "Median",
+  "map_legend_scale_per_taxon": "Scale adjusts per {0}"
 }

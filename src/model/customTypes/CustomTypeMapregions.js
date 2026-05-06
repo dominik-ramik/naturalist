@@ -30,10 +30,13 @@ import {
   gradientTicksForConfig,
   steppedBinsForConfig,
   parseNumericStatus,
+  isRuntimeResolvedAnchor,
 } from "../../components/MapregionsColorEngine.js";
 
 import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
 import { CacheManager, CacheScope } from "../CacheManager.js";
+import { ANALYTICAL_INTENTS } from "../nlDataStructureSheets.js";
+import { Settings } from "../Settings.js";
 
 
 
@@ -448,6 +451,16 @@ const fmtNum = n => {
 };
 
 /**
+ * Returns true when at least one numeric row in the legend config uses an
+ * anchor whose resolved value is unknowable at design time (i.e. any relative
+ * anchor: %, p, s, or A5 with a modifier). Used to decide whether to render
+ * the per-taxon scale notice below the legend.
+ */
+function hasRuntimeResolvedAnchors(numericRows) {
+  return numericRows.some(r => isRuntimeResolvedAnchor(r.anchor));
+}
+
+/**
  * Return region codes sorted according to display rules:
  *   – No numeric mode → mapRegionsNames default order.
  *   – Numeric only    → highest value first.
@@ -626,7 +639,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
       const nextResolved = bins[i + 1]?.resolved;
       const rangeStr = bin.resolved != null
         ? (nextResolved != null
-          ? `${fmtNum(bin.resolved)}–${fmtNum(nextResolved)}`
+          ? `${i === 0 ? '≤' : ''}${fmtNum(bin.resolved)}–${fmtNum(nextResolved)}`
           : `≥${fmtNum(bin.resolved)}`)
         : null;
       items.push(m('.legend-item', [
@@ -637,6 +650,12 @@ function renderMapLegend(legendConfig, datasetStats, data) {
         ]),
       ]));
     });
+  }
+
+  if (numericMode && hasRuntimeResolvedAnchors(numericRows)) {
+    items.push(m('.map-legend-scale-notice', m.trust(tf('map_legend_scale_per_taxon', [
+      (ANALYTICAL_INTENTS.find(i => i.id === Settings.analyticalIntent()) || ANALYTICAL_INTENTS[0]).single,
+    ]))));
   }
 
   presentCatRows.forEach(r => {

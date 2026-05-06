@@ -448,3 +448,25 @@ export function findSteppedBin(value, numericRows, datasetStats) {
   }
   return match ?? sorted[0];
 }
+
+/**
+ * Returns true when the anchor's resolved value is unknowable at design time
+ * and therefore meaningful to display dynamically in the legend parenthetical.
+ *
+ * A1 (raw value) and scalar-only A5 (center + raw magnitude, no modifier)
+ * resolve to a constant the author already wrote into the legend table.
+ * Appending that constant to their own label would be redundant at best and
+ * garbled at worst ("Highest specimens (312)" authored as "Highest specimens (312)").
+ *
+ * A2 (%), A3 (p), A4 (s), and A5 with % or s modifier resolve against
+ * per-taxon runtime statistics — the author could not have known the value at
+ * design time, so displaying it is genuinely informative.
+ */
+export function isRuntimeResolvedAnchor(anchor) {
+  if (!anchor) return false;
+  switch (anchor.type) {
+    case 'A1': return false;
+    case 'A5': return anchor.modifier != null; // scalar-only (no modifier) → false
+    default:   return true;                    // A2, A3, A4 → always true
+  }
+}
