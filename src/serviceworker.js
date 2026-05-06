@@ -87,7 +87,7 @@ self.addEventListener('fetch', function (e) {
             // NETWORK UPDATE: Always try to update in the background
             const networkPromise = fetch(e.request).then(networkResponse => {
                 if (isValidChecklistResponse(networkResponse, e.request.url)) {
-                    dataCache.put(cacheKey, networkResponse.clone());
+                    dataCache.put(e.request, networkResponse.clone());
                 }
                 return networkResponse;
             });
@@ -115,7 +115,7 @@ self.addEventListener('fetch', function (e) {
                 return null;
             }
             return response;
-        });
+        }).catch(() => null);
 
         if (!response) return null;
 
@@ -134,7 +134,7 @@ self.addEventListener('fetch', function (e) {
             cache = await caches.open(appCacheName);
         }
 
-        if (cache !== null && response.status == 200 && e.request.method.toLowerCase() != "head") {
+        if (cache !== null && response.status == 200 && e.request.method.toLowerCase() === "get") {
             cache.put(e.request, response.clone());
         }
 
