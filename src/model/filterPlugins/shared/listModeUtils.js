@@ -11,6 +11,7 @@ import m from "mithril";
 import { Checklist } from "../../Checklist.js";
 import { CacheManager } from "../../CacheManager.js";
 import { t, tf } from 'virtual:i18n-self';
+import { mdiFormatListChecks } from "@mdi/js";
 // ── Value-set helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -58,7 +59,7 @@ export function makeOperationNormalizer(allowedOps, defaultOp, aliases = {}) {
  * @returns {string}
  */
 export function getOperationIcon(op, filterTable) {
-  return op === "list" ? "list" : (filterTable[op]?.icon ?? op);
+  return op === "list" ? mdiFormatListChecks : (filterTable[op]?.icon ?? op);
 }
 
 // ── isListMode predicate ──────────────────────────────────────────────────────
