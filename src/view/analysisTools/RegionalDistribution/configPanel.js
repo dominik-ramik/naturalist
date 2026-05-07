@@ -170,16 +170,16 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
   let action;
   if (segmentTrack === 'numeric') {
     if (numericOperation === 'pct_above') {
-      action = tf('rd_verb_pct_above', [threshold]);
+      action = tf('rd_verb_pct_above', [threshold], true);
     } else if (numericOperation === 'pct_below') {
-      action = tf('rd_verb_pct_below', [threshold]);
+      action = tf('rd_verb_pct_below', [threshold], true);
     } else {
-      action = tf('rd_verb_numeric_op', [t(opMeta.labelKey)]);
+      action = tf('rd_verb_numeric_op', [t(opMeta.labelKey)], true);
     }
   } else if (categoryStatus && segments) {
     const catMeta = segments.namedCategories.find(c => c.status === categoryStatus);
     const label = catMeta?.legend || categoryStatus;
-    action = tf('rd_verb_category', ['<strong>' + label + '</strong>']);
+    action = tf('rd_verb_category', ['<strong>' + label + '</strong>'], true);
   } else {
     action = t('rd_verb_presence');
   }
@@ -187,12 +187,12 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
   // - Scope / filter -
   let scope;
   if (filterIsEmpty) {
-    scope = tf('rd_verb_scope_all', [unit]);
+    scope = tf('rd_verb_scope_all', [unit], true);
   } else {
     const filterLabel = Settings.pinnedSearches.getHumanNameForSearch(
       JSON.parse(Checklist.queryKey()), true
     );
-    scope = tf('rd_verb_scope_filtered', [filterLabel, unit, filteredCount]);
+    scope = tf('rd_verb_scope_filtered', [filterLabel, unit, filteredCount], true);
   }
 
   // - Denominator clause -
