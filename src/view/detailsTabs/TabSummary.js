@@ -12,7 +12,7 @@ import {
   parseNumericStatus,
 } from "../../components/MapregionsColorEngine.js";
 import { MONTH_KEYS } from "../../model/MonthNames.js";
-import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE } from "../../model/DataStructure.js";
 import { getDataFromDataPath } from "../../model/DataPath.js";
 
 

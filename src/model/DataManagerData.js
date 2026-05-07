@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx-js-style"
-import { nlDataStructureSheets } from "./nlDataStructureSheets";
+import { nlDataStructureSheets } from "./DataStructure";
 
 export function exportTemplateSpreadsheetFilled() {
   localExportSpreadsheetFromNLData(nlDataStructure, false);

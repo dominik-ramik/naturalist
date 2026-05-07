@@ -15,6 +15,8 @@ import { getGradedColor, getUnitFromTemplate, unitToHtml } from "../components/U
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { getFilterPlugin } from "../model/filterPlugins/index.js";
+import { Icon } from "../components/Icon.js";
+import { mdiDeleteOutline } from "@mdi/js";
 
 export let FilterCrumbsView = {
   view() {
@@ -73,7 +75,7 @@ export let FilterCrumbsView = {
           onclick() { Checklist.filter.clear(); Checklist.filter.commit(); },
         }, [
           m(".crumb-text", [m(".filter-value", t("reset_filter"))]),
-          m("img[src=img/ui/search/clear_filter.svg]"),
+          m(Icon, {path: mdiDeleteOutline, color: "#dddddd" })
         ]),
       ] : null,
     ]);
@@ -104,7 +106,8 @@ let Crumb = {
       : null;
 
     return m(".crumb.clickable" + extraClass, { style: { backgroundColor: color }, onclick }, [
-      m(".crumb-recycle-wrap", m("img.crumb-overlay-recycler[src=img/ui/search/clear_filter.svg]")),
+      m(".crumb-recycle-wrap", 
+        m(Icon, { path: mdiDeleteOutline, color: "#dddddd" })),
       m(".crumb-text", [
         m("span.filter-category", category),
         m("span.filter-value" + (descriptor.isStatusFilter ? ".filter-value--status" : ""), [

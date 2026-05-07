@@ -4,7 +4,7 @@ import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { processMarkdownWithBibliography } from "../../components/Utils.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { applyHighlight } from "../HighlightUtils.js";
 import { FullscreenableMedia } from "../../components/FullscreenableMedia.js";
 
 export let customTypeImage = {

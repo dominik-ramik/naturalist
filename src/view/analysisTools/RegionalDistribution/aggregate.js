@@ -12,7 +12,7 @@ import {
   resolveRegionColor,
   parseNumericStatus,
 } from '../../../components/MapregionsColorEngine.js';
-import { OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
+import { OCCURRENCE_IDENTIFIER } from '../../../model/DataStructure.js';
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { getDataFromDataPath } from '../../../model/DataPath.js';
 import { resolveToHex } from '../../../components/Utils.js';

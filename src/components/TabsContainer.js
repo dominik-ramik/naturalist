@@ -1,7 +1,7 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import "./TabsContainer.css";
+import { Icon } from "./Icon";
 
 export let TabsContainer = {
 
@@ -43,7 +43,9 @@ export let TabsContainer = {
                             }
                         }
                     }, [
-                        tab.icon ? m("img.tabs-container-tab-button-icon[src=" + tab.icon + "]") : null,
+                        tab.icon ? 
+                        m(Icon, { path: tab.icon })
+                        : null,
                         m(".tabs-container-tab-button-title", tab.title),
                     ])
                 })

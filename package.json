@@ -1,6 +1,6 @@
 {
   "name": "naturalist",
-  "version": "4.1.4",
+  "version": "4.1.5",
   "description": "The flexible taxonomic checklist app",
   "main": "index.html",
   "scripts": {
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/dominik-ramik/naturalist#readme",
   "dependencies": {
+    "@mdi/js": "^7.4.47",
     "bibtex-js-parser": "^1.1.6",
     "d3": "^7.9.0",
     "dayjs": "^1.11.19",

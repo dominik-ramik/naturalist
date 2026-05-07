@@ -19,6 +19,7 @@ import { TabMap } from "./detailsTabs/TabMap.js";
 import { TabText } from "./detailsTabs/TabText.js";
 import { TabExternalSearch } from "./detailsTabs/TabExternalSearch.js";
 import { TabMedia } from "./detailsTabs/TabMedia.js";
+import { getUiForTab } from "../components/TabsUi.js";
 
 
 
@@ -173,8 +174,8 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
   if (isInChecklist) {
     tabs["summary"] = new TabsContainerTab(
       TabSummary(taxon, taxonName),
-      "./img/ui/tabs/summary.svg",
-      t("tab_title_summary"),
+      getUiForTab("summary").icon,
+      t(getUiForTab("summary").text),
       function () {
         Settings.currentDetailsTab("summary");
         routeTo("/details/" + taxonRouteParam + "/summary");
@@ -211,8 +212,8 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
 
     tabs[key] = new TabsContainerTab(
       tabData,
-      "./img/ui/tabs/" + key + ".svg",
-      t("tab_title_" + key),
+      getUiForTab(key).icon,
+      t(getUiForTab(key).text),
       function () {
         Settings.currentDetailsTab(key);
         routeTo("/details/" + taxonRouteParam + "/" + Settings.currentDetailsTab());

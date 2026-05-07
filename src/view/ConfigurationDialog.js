@@ -14,14 +14,15 @@ import { Settings } from "../model/Settings.js";
 import { Checklist } from "../model/Checklist.js";
 import {
   TOOL_LIST,
-  ANALYTICAL_INTENTS,
   requestToolChange,
   requestIntentChange,
 } from "./analysisTools/index.js";
+import { ANALYTICAL_INTENTS_UI } from "../components/analyticalIntentIcons.js";
+import { Icon } from "../components/Icon.js";
 import { renderParams } from "./shared/ToolParams.js";
 
 import "./ConfigurationDialog.css";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/DataStructure.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG COMPONENT
@@ -29,18 +30,18 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/n
 
 export const ConfigurationDialog = {
   isOpen: false,
-  open:  () => { ConfigurationDialog.isOpen = true; },
+  open: () => { ConfigurationDialog.isOpen = true; },
   close: () => { ConfigurationDialog.isOpen = false; },
 
   view() {
     if (!ConfigurationDialog.isOpen) return null;
 
-    const checklistData   = Checklist.getData();
+    const checklistData = Checklist.getData();
 
-    const currentViewId  = Settings.viewType() || TOOL_LIST[0].id;
-    const selectedScope  = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
+    const currentViewId = Settings.viewType() || TOOL_LIST[0].id;
+    const selectedScope = Settings.analyticalIntent() || ANALYTICAL_INTENT_TAXA;
 
-    const activeTool             = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
+    const activeTool = TOOL_LIST.find(v => v.id === currentViewId) || TOOL_LIST[0];
     const activeToolAvailability = activeTool.getAvailability(Checklist.availableIntents(), checklistData);
 
     // Render active tool parameters using the ToolParams framework.
@@ -66,11 +67,13 @@ export const ConfigurationDialog = {
           m(".configuration-scope-segmented",
             TOOL_LIST.map(tool => {
               const availability = tool.getAvailability(Checklist.availableIntents(), checklistData);
-              const isDisabled   = !availability.isAvailable;
+              const isDisabled = !availability.isAvailable;
+
+              const isActive = tool.id === currentViewId;
 
               return m(
                 "button.configuration-scope-btn" +
-                (currentViewId === tool.id ? ".active" : "") +
+                (isActive ? ".active" : "") +
                 (isDisabled ? ".disabled" : ""),
                 {
                   onclick: (e) => {
@@ -80,7 +83,8 @@ export const ConfigurationDialog = {
                   },
                 },
                 [
-                  m("img.configuration-scope-img", { src: tool.iconPath.dark, alt: "" }),
+                  //m("img.configuration-scope-img", { src: tool.iconPath, alt: "" }),
+                  m(Icon, { path: tool.iconPath }),
                   m(".configuration-scope-card-text", [
                     m("span.configuration-scope-label", tool.label),
                     tool.info ? m("small.configuration-scope-info", tool.info) : null,
@@ -98,13 +102,15 @@ export const ConfigurationDialog = {
         Checklist.availableIntents().length > 1 && m(".configuration-section", [
           m(".configuration-section-label", t("data_scope")),
           m(".configuration-scope-segmented",
-            ANALYTICAL_INTENTS.map(scope => {
+            ANALYTICAL_INTENTS_UI.map(scope => {
               const isScopeDisabled =
                 !activeToolAvailability.supportedIntents.includes(scope.id);
 
+              const isActive = scope.id === selectedScope;
+
               return m(
                 "button.configuration-scope-btn" +
-                (selectedScope === scope.id ? ".active" : "") +
+                (isActive ? ".active" : "") +
                 (isScopeDisabled ? ".disabled" : ""),
                 {
                   onclick: (e) => {
@@ -114,13 +120,13 @@ export const ConfigurationDialog = {
                   },
                 },
                 [
-                  m("img.configuration-scope-img", { src: scope.iconPath.dark, alt: "" }),
+                  m(Icon, { path: scope.icon }),
                   m(".configuration-scope-card-text", [
                     m("span.configuration-scope-label", scope.label),
                     scope.info ? m("small.configuration-scope-info", scope.info) : null,
                     isScopeDisabled
                       ? m("small.configuration-scope-disabled-reason",
-                          activeToolAvailability.scopeDisabledReason(scope.id))
+                        activeToolAvailability.scopeDisabledReason(scope.id))
                       : null,
                   ]),
                 ]

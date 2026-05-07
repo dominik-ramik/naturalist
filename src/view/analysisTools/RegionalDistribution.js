@@ -40,10 +40,11 @@ import {
 import { getMapState, setMapState, getGlobalState, setGlobalState } from './RegionalDistribution/state.js';
 import { renderConfigPanel } from './RegionalDistribution/configPanel.js';
 import { renderAggregateTable, resetDrillState } from './RegionalDistribution/aggregateTable.js';
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/nlDataStructureSheets.js';
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from '../../model/DataStructure.js';
 import { getDataFromDataPath } from '../../model/DataPath.js';
 import { FullscreenableMedia } from '../../components/FullscreenableMedia.js';
 import { CacheManager } from '../../model/CacheManager.js';
+import { mdiMapLegend } from '@mdi/js';
 
 
 
@@ -63,10 +64,7 @@ const MAX_DYNAMIC_MAP_PATHS = 20;
 export const config = {
   id: 'tool_regional_distribution',
   label: 'Regional Distribution',
-  iconPath: {
-    light: './img/ui/menu/view_map-light.svg',
-    dark: './img/ui/menu/view_map.svg',
-  },
+  iconPath: mdiMapLegend,
   info: 'Aggregate regional distribution across filtered records - count presences, compare categories, or compute numeric statistics per region',
   getTaxaAlongsideOccurrences: false,
 

@@ -8,7 +8,7 @@ import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { Toast } from "../view/AppLayoutView.js";
 import { materialColors } from "./MaterialColors.js";
-import { highlightHtml } from "../model/highlightUtils.js";
+import { highlightHtml } from "../model/HighlightUtils.js";
 import { AVAILABLE_LOCALES } from "../i18n/index.js";
 import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 import { CacheManager, CacheScope } from "../model/CacheManager.js";

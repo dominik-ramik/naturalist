@@ -19,7 +19,7 @@ import { processMarkdownWithBibliography, htmlToPlainText } from "../../componen
 import { Logger } from "../../components/Logger.js";
 import { colorSVGMap } from "../../components/ColorSVGMap.js";
 import { FullscreenableMedia } from "../../components/FullscreenableMedia.js";
-import { applyHighlight, highlightHtml } from "../highlightUtils.js";
+import { applyHighlight, highlightHtml } from "../HighlightUtils.js";
 
 import {
   parseLegendConfig,
@@ -35,7 +35,7 @@ import {
 
 import { filterPluginMapregions } from "../filterPlugins/filterPluginMapregions.js";
 import { CacheManager, CacheScope } from "../CacheManager.js";
-import { ANALYTICAL_INTENTS } from "../nlDataStructureSheets.js";
+import { ANALYTICAL_INTENTS } from "../DataStructure.js";
 import { Settings } from "../Settings.js";
 
 

@@ -2,7 +2,7 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers, compileCategoryMatcher, MATCHER_CACHE } from "./helpers.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
-import { applyHighlight, textMatchesHighlight } from "../highlightUtils.js";
+import { applyHighlight, textMatchesHighlight } from "../HighlightUtils.js";
 
 // ---------------------------------------------------------------------------
 // CSS helper

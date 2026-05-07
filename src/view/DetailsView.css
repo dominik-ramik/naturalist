@@ -295,11 +295,13 @@
   margin-right: var(--pad-large);
 }
 
+/*
 path {
   fill: none;
   stroke: steelblue;
   stroke-width: 1px;
 }
+*/
 
 @media (max-width: 1000px) {
   .details {
@@ -404,6 +406,7 @@ path {
   padding-left: 1em;
   /* indent to show hierarchy */
 }
+
 /* CUSTOM-TYPE TAXON SEARCH SUFFIX
  * Rendered by CustomTypeTaxon when the referenced taxon exists in the database.
  * Mirrors the look of .copy-leaf-taxon in TaxonNameView so the two inline
@@ -426,6 +429,10 @@ path {
 
 .custom-taxon-search-suffix:hover {
   opacity: 0.8;
+}
+
+.custom-taxon-search-suffix svg {
+  
 }
 
 .custom-taxon-search-icon {

@@ -8,7 +8,10 @@ import { Checklist } from "../model/Checklist.js";
 import { FilterCrumbsView } from "./FilterCrumbsView.js";
 import { InteractionAreaView } from "./InteractionAreaView.js";
 import { Settings } from "../model/Settings.js";
-import { ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../model/DataStructure.js";
+import { CacheManager } from "../model/CacheManager.js";
+import { Icon } from "../components/Icon.js";
+import { mdiChevronDown, mdiChevronUp, mdiDeleteOutline, mdiTune } from "@mdi/js";
 
 
 
@@ -188,9 +191,23 @@ let SearchBox = {
     // Rendering from ghostText (rather than Checklist.filter.text) means that
     // Mithril redraws triggered by route commits can never clobber in-progress input.
     ghostText: null,
+    _lastDataRevision: "",
 
     view: function (vnode) {
         const { isExpanded, toggleHandler } = vnode.attrs;
+
+        // When a new dataset is loaded the data revision changes. Reset any
+        // in-flight ghost text and pending debounce so the search box reflects
+        // the freshly-cleared filter state.
+        const currentRevision = CacheManager.contextRevision();
+        if (currentRevision !== SearchBox._lastDataRevision) {
+            if (SearchBox.typingTimer) {
+                clearTimeout(SearchBox.typingTimer);
+                SearchBox.typingTimer = null;
+            }
+            SearchBox.ghostText = null;
+            SearchBox._lastDataRevision = currentRevision;
+        }
 
         const displayValue = SearchBox.ghostText !== null
             ? SearchBox.ghostText
@@ -244,9 +261,9 @@ let SearchBox = {
             m("button.filter-button.mobile-filter-toggle", {
                 onclick: toggleHandler,
             }, [
-                m("img.toggle-icon[src=img/ui/checklist/filter.svg]"),
+                m(Icon, { path: mdiTune }),
                 t("filters"),
-                m("img.toggle-icon[src=img/ui/menu/" + (isExpanded ? "expand_more" : "expand_less") + ".svg]"),
+                m(Icon, { path: isExpanded ? mdiChevronDown : mdiChevronUp }),
             ]),
 
             !Checklist.filter.isEmpty() ? m("button.filter-button.mobile-clear-filters", {
@@ -260,7 +277,7 @@ let SearchBox = {
                     Checklist.filter.commit();
                 },
             }, [
-                m("img.toggle-icon[src=img/ui/search/clear_filter.svg]"),
+                m(Icon, { path: mdiDeleteOutline, color: "#dddddd" }),
                 t("reset_filter_mobile"),
             ]) : null,
         ]);

@@ -5,7 +5,8 @@ import { Settings } from "../../model/Settings.js";
 import { TaxonView } from "./TaxonomicTree/TaxonView.js";
 import { TaxonNameView } from "./TaxonomicTree/TaxonNameView.js";
 import { TaxonDataView } from "./TaxonomicTree/TaxonDataView.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/DataStructure.js";
+import { mdiViewListOutline } from "@mdi/js";
 
 
 
@@ -17,10 +18,7 @@ export const DISPLAY_MODE_OCCURRENCES_ONLY = "__occurrences_only__";
 export const config = {
     id: "tool_taxonomic_tree",
     label: "Taxonomic tree",
-    iconPath: {
-        light: "./img/ui/menu/view_checklist-light.svg",
-        dark: "./img/ui/menu/view_checklist.svg",
-    },
+    iconPath: mdiViewListOutline,
     info: "Browse your data as a taxonomic tree, applying filters to easily isolate the exact records you need",
     getTaxaAlongsideOccurrences: true,
 

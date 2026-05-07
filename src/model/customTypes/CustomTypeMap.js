@@ -3,7 +3,7 @@ import m from "mithril";
 import { helpers } from "./helpers.js";
 import { readDataFromPath } from "../ReadDataFromPath.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { applyHighlight } from "../HighlightUtils.js";
 import { FullscreenableMedia } from "../../components/FullscreenableMedia.js";
 
 export let customTypeMap = {

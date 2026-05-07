@@ -2,8 +2,10 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { ClickableTaxonName } from "../../view/analysisTools/TaxonomicTree/ClickableTaxonNameView.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { applyHighlight } from "../HighlightUtils.js";
 import { Checklist } from "../Checklist.js";
+import { mdiMagnify } from "@mdi/js";
+import { Icon } from "../../components/Icon.js";
 
 export let customTypeTaxon = {
   dataType: "taxon",
@@ -157,6 +159,7 @@ export let customTypeTaxon = {
     const taxonRecord = taxonObj?.name ? Checklist.getTaxonByName(taxonObj.name, taxonObj.authority) : null;
     if (taxonRecord?.isInChecklist) {
       const nameToSearch = taxonObj.name;
+      
       return m("span.custom-taxon-with-search", [
         clickableName,
         m("span.custom-taxon-search-suffix.clickable", {
@@ -173,7 +176,7 @@ export let customTypeTaxon = {
           },
         },
           [
-            m("img.custom-taxon-search-icon[src=img/ui/checklist/search.svg]"),
+            m(Icon, { path: mdiMagnify, size: 16 }),
           ]),
       ]);
     }

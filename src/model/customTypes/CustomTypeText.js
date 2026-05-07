@@ -2,7 +2,7 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers } from "./helpers.js";
 import { filterPluginText } from "../filterPlugins/filterPluginText.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { applyHighlight } from "../HighlightUtils.js";
 
 export let customTypeText = {
   dataType: "text",

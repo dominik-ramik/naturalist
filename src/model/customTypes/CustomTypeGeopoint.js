@@ -2,7 +2,7 @@ import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { Logger } from "../../components/Logger.js";
 import { helpers } from "./helpers.js";
-import { applyHighlight } from "../highlightUtils.js";
+import { applyHighlight } from "../HighlightUtils.js";
 
 const GOOGLE_MAPS_FALLBACK = "https://www.google.com/maps?q={{lat}},{{long}}";
 

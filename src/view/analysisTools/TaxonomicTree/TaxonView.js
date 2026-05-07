@@ -8,6 +8,9 @@ import { TaxonDataView } from "./TaxonDataView.js";
 import { TaxonNameView } from "./TaxonNameView.js";
 
 import "./TaxonView.css";
+import { mdiImageOutline, mdiKeyVariant, mdiMagnify } from "@mdi/js";
+import { Icon } from "../../../components/Icon.js";
+import { getUiForTab } from "../../../components/TabsUi.js";
 
 export let TaxonView = {
   view: function (vnode) {
@@ -33,38 +36,19 @@ export let TaxonView = {
     }
 
     function detailsIcon(taxonName, detailsType) {
-      let icon = "";
-      let tabName = "";
-      switch (detailsType) {
-        case "media":
-          icon = "media";
-          tabName = "media";
-          break;
-        case "maps":
-          icon = "map";
-          tabName = "map";
-          break;
-        case "text":
-          icon = "text";
-          tabName = "text";
-          break;
-        default:
-          break;
-      }
-
       const taxonLeaf = vnode.attrs.taxonTree.taxon;
       const taxonRouteParam = encodeURIComponent(
         taxonLeaf.name + "\x00" + (taxonLeaf.authority ?? "")
       );
-      
+
       return m(
         ".show-all-of-taxon.clickable",
         {
           onclick: function (e) {
-            routeTo("/details/" + taxonRouteParam + "/" + tabName);
+            routeTo("/details/" + taxonRouteParam + "/" + detailsType);
           },
         },
-        m(".taxon-details-icon", [m("img[src=./img/ui/tabs/" + icon + ".svg]")]),
+        m(Icon, { path: getUiForTab(detailsType).icon }),
       );
     }
 
@@ -149,18 +133,20 @@ export let TaxonView = {
           m(".spacer"),
           m(".details-icons-wrapper", [
             (Checklist.getSingleAccessTaxonomicKeys().some(k => Checklist.isKeyRelevantToTaxon(k, taxonName)))
-              ? m(".show-all-of-taxon.clickable",
+              ? m(".additional-taxon-indicators.clickable",
                 {
                   onclick: function (e) {
                     routeTo("/single-access-keys/filter/" + taxonName);
                   },
-                }, m(".taxon-details-icon", [m("img[src=./img/ui/checklist/key_vertical.svg]")]))
+                }, m(".taxon-details-icon", [
+                  m(Icon, { path: mdiKeyVariant })
+                ]))
               : null,
             shouldRenderTab(tabsData, "media") &&
             shouldRenderTab(tabsData, "media") &&
             detailsIcon(taxonName, "media"),
             shouldRenderTab(tabsData, "map") &&
-            detailsIcon(taxonName, "maps"),
+            detailsIcon(taxonName, "map"),
             shouldRenderTab(tabsData, "text") &&
             detailsIcon(taxonName, "text"),
             (shouldRenderTab(tabsData, "media") ||
@@ -184,7 +170,7 @@ export let TaxonView = {
                   },
                 },
                 m(".search-all-of-taxon", [
-                  m("img[src=./img/ui/checklist/search.svg]"),
+                  m(Icon, { path: mdiMagnify }),
                   vnode.attrs.taxonTree.taxon.name,
                 ])
               )

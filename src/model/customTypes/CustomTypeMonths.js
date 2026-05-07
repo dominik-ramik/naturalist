@@ -27,7 +27,7 @@ import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
 import { Logger } from "../../components/Logger.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
-import { textMatchesHighlight } from "../highlightUtils.js";
+import { textMatchesHighlight } from "../HighlightUtils.js";
 
 
 

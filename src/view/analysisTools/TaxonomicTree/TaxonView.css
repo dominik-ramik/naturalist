@@ -29,6 +29,13 @@
   flex-grow: 1;
 }
 
+.listed-taxa .taxon-name-stripe .additional-taxon-indicators {
+  padding-right: var(--pad-large);
+  margin-right: var(--pad-large);
+  border-right: 1px solid #c7c7c7;
+  font-size: 85%;
+}
+
 .listed-taxa .taxon-name-stripe .show-all-of-taxon {
   margin-right: var(--pad-large);
   font-size: 85%;

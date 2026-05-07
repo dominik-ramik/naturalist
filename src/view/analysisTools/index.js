@@ -6,9 +6,9 @@ import { config as regionalDistribution } from "./RegionalDistribution.js";
 import { Settings } from "../../model/Settings.js";
 import { Checklist } from "../../model/Checklist.js";
 import { updateRouteParams } from "../../components/Utils.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../../model/DataStructure.js";
 
-export { ANALYTICAL_INTENTS } from "../../model/nlDataStructureSheets.js";
+export { ANALYTICAL_INTENTS } from "../../model/DataStructure.js";
 
 // Guard flag: set before programmatic m.route.set() so that the onmatch
 // handler does not overwrite Settings with stale m.route.param() values.
@@ -73,9 +73,8 @@ export function validateToolConfig(config) {
   // 2. Required objects / booleans
   if (typeof getTaxaAlongsideOccurrences !== "boolean")
     errors.push("Missing or invalid 'getTaxaAlongsideOccurrences' (expected boolean).");
-  if (!iconPath || typeof iconPath !== "object" ||
-    typeof iconPath.light !== "string" || typeof iconPath.dark !== "string")
-    errors.push("Missing or invalid 'iconPath' (expected object with 'light' and 'dark' string paths).");
+  if (!iconPath || typeof iconPath !== "string")
+    errors.push("Missing or invalid 'iconPath' (expected string).");
 
   // 3. Required functions
   if (typeof render !== "function")

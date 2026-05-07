@@ -46,6 +46,8 @@ import {
   renderApplyButton, renderCheckAllShown,
 } from "./shared/listModeUtils.js";
 import { MatchModeToggle, MATCH_MODES } from "./shared/MatchModeToggle.js";
+import { Icon } from "../../components/Icon.js";
+import { mdiCheckboxBlankOutline, mdiCheckboxOutline, mdiDeleteOutline } from "@mdi/js";
 
 
 
@@ -206,7 +208,7 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath
       return m(".option-item" + (isInactive ? ".inactive" : ""), {
         onclick: !isInactive ? () => toggleStatus(row.status) : undefined,
       }, [
-        m("img.item-checkbox[src=img/ui/search/checkbox_" + (isChecked ? "checked" : "unchecked") + ".svg]"),
+        m(Icon, {path : isChecked ? mdiCheckboxOutline  : mdiCheckboxBlankOutline }),
         m("span.sf-swatch", { style: { backgroundColor: row.fill } }),
         m(".item-label", row.legend || row.status),
         m(".item-count", isPossible ? (possibleSt[row.status] || "") : ""),
@@ -222,8 +224,8 @@ function _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath
           Checklist.filter.delayCommitDataPath = type + "." + dataPath;
           Checklist.filter.commit();
         },
-      }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
-      : null,
+      }, 
+      m(Icon, {path: mdiDeleteOutline })) : null
   ]);
 }
 

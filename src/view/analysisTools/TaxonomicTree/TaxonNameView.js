@@ -5,6 +5,8 @@ import { Checklist } from "../../../model/Checklist.js";
 import { copyToClipboard } from "../../../components/Utils.js";
 
 import "./TaxonNameView.css";
+import { Icon } from "../../../components/Icon.js";
+import { mdiContentCopy } from "@mdi/js";
 
 
 
@@ -95,7 +97,7 @@ export let TaxonNameView = {
                 return false;
               },
             },
-            m("img[src=img/ui/checklist/copy.svg]")
+            m(Icon, { path: mdiContentCopy, size: 18, style: {"margin-left": "0.5em"} }),
           ),
         ])
         : null,

@@ -14,6 +14,8 @@ import { Checklist } from "../../Checklist.js";
 import { MATCH_MODES } from "./MatchModeToggle.js";
 
 import "./DropdownCheckItem.css";
+import { mdiCheckboxBlankOutline, mdiCheckboxOutline  } from "@mdi/js";
+import { Icon } from "../../../components/Icon.js";
 
 // ── Pure presentational row ───────────────────────────────────────────────────
 
@@ -21,14 +23,14 @@ export let DropdownCheckItemSkeleton = function (initialVnode) {
   return {
     view(vnode) {
       if (String(vnode.attrs.item).trim() === "") return null;
+      const isChecked = vnode.attrs.state === "checked";
       return m(
         ".option-item" +
           (vnode.attrs.group ? ".group-member" : "") +
           (vnode.attrs.state === "inactive" ? ".inactive" : ""),
         { onclick: vnode.attrs.action },
         [
-          m("img.item-checkbox[src=img/ui/search/checkbox_" +
-            (vnode.attrs.state === "checked" ? "checked" : "unchecked") + ".svg]"),
+          m(Icon, {path : isChecked ? mdiCheckboxOutline : mdiCheckboxBlankOutline }),
           m(".item-label", vnode.attrs.item),
           m(".item-count", vnode.attrs.count),
         ]

@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { dataCustomTypes } from "./customTypes/index.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "./nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "./DataStructure.js";
 import { selfKey, t, tf } from 'virtual:i18n-self';
 export let Settings = {
   // Full-text search OR separator symbol

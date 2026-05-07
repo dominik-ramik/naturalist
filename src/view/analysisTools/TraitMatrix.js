@@ -10,8 +10,10 @@ import {
   filterTerminalLeavesForMode,
 } from "../../components/Utils.js";
 import { Checklist } from "../../model/Checklist.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/DataStructure.js";
 import { getDataFromDataPath } from "../../model/DataPath.js";
+import { mdiArrowUpThin, mdiChartBarStacked, mdiChevronDown, mdiChevronUp } from "@mdi/js";
+import { Icon } from "../../components/Icon.js";
 
 
 
@@ -20,10 +22,7 @@ import { getDataFromDataPath } from "../../model/DataPath.js";
 export const config = {
   id: "tool_trait_matrix",
   label: "Trait Matrix",
-  iconPath: {
-    light: "./img/ui/menu/view_category_density-light.svg",
-    dark: "./img/ui/menu/view_category_density.svg",
-  },
+  iconPath: mdiChartBarStacked,
   info: "Evaluate the breakdown of your data by chosen traits and apply filters to focus the comparison on specific records",
   getTaxaAlongsideOccurrences: false,
 
@@ -709,7 +708,7 @@ function categoryChart(filteredTaxa, dataContextRevision) {
       m("button.tm-panel-edit-btn", {
         onclick: e => { e.stopPropagation(); togglePanel(); }
       }, [
-        m("img.tm-panel-collapse-img", { src: "./img/ui/search/expand.svg" }),
+            m(Icon, { path: mdiChevronDown, size: 16, style: { "vertical-align": "middle" } }),
         t("tm_panel_edit")]),
     ])
     : m(".tm-panel-header.tm-panel-header--expanded", [
@@ -721,8 +720,7 @@ function categoryChart(filteredTaxa, dataContextRevision) {
       categoryToView !== ""
         ? m("button.tm-panel-collapse-btn", { onclick: togglePanel },
           [
-            m("img.tm-panel-collapse-img", { src: "./img/ui/search/collapse.svg" })
-            ,
+            m(Icon, { path: mdiChevronUp, size: 16, style: { "vertical-align": "middle" } }),
             t("tm_panel_edit_close")
           ]
         )
@@ -977,7 +975,9 @@ function categoryChart(filteredTaxa, dataContextRevision) {
             Settings.categoryChartRoot(parent);
             sortColumn = null;
           }
-        }, [m("img[src=img/ui/checklist/level_up.svg]"), "Up"]),
+        }, [
+          m(Icon, { path: mdiArrowUpThin }),
+          "Up"]),
         m(".category-nav-crumb", [
           m("span.category-nav-crumb-step", {
             onclick: () => {

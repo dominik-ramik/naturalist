@@ -4,7 +4,7 @@ import { textLowerCaseAccentless } from "../components/Utils.js";
 import { Settings } from "./Settings.js";
 import { getMonthNumbers } from "./MonthNames.js";
 import { getFilterPlugin } from "./filterPlugins/index.js";
-import { OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { OCCURRENCE_IDENTIFIER } from "./DataStructure.js";
 import { getDataFromDataPath } from "./DataPath.js";
 import { CacheManager, CacheScope } from "./CacheManager.js";
 

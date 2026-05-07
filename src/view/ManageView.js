@@ -15,8 +15,10 @@ import { Logger } from "../components/Logger.js";
 import { exportTemplateSpreadsheetEmpty, exportTemplateSpreadsheetFilled } from "../model/DataManagerData.js";
 import { compressor } from "../components/LZString.js";
 import { DEFAULT_TOOL } from "./analysisTools/index.js";
-import { DWC_ARCHIVE_TYPES } from "../model/nlDataStructureSheets.js";
+import { DWC_ARCHIVE_TYPES } from "../model/DataStructure.js";
 import { Toast } from "./AppLayoutView.js";
+import { Icon } from "../components/Icon.js";
+import { mdiCloudUploadOutline, mdiMonitorArrowDownVariant } from "@mdi/js";
 
 const MAIN_EXAMPLE_URL = "../examples/pmp";
 
@@ -404,7 +406,9 @@ const ActionButton = {
       "button." + cls + style,
       { onclick, disabled: !!loading },
       [
-        loading ? m("span.manage-btn-spinner") : (icon ? m("img.manage-btn-icon", { src: icon }) : null),
+        loading ? m("span.manage-btn-spinner") : (icon ?
+          m(Icon, { path: icon })
+          : null),
         label,
       ]
     );
@@ -718,7 +722,7 @@ function renderFilePicker() {
       ondrop: handleDrop,
     }, [
       m(".manage-dropzone-content", [
-        m("img.manage-dropzone-icon", { src: "img/ui/manage/upload.svg" }),
+        m(Icon, { path: mdiCloudUploadOutline, color: "#00000088", size: 48 }),
         m(".manage-dropzone-text", [
           hasFSA
             ? m("button.manage-btn.manage-btn-primary", { onclick: handleFSAPick }, t("click_to_upload"))
@@ -915,7 +919,7 @@ function renderDwcSection(dwcCompiled, dwcHasErrors, dwcSucceeded, dwcResult) {
                 m(ActionButton, {
                   key: archiveType,
                   label: t("download_dwc_" + archiveType),
-                  icon: "img/ui/manage/download.svg",
+                  icon: mdiMonitorArrowDownVariant,
                   block: true,
                   onclick: () => downloadCompiledData(dwcResult[archiveType], typeConfig.zipFileName),
                 })

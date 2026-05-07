@@ -23,6 +23,11 @@
   padding-left: var(--pad-large);
 }
 
+.menu-button svg {
+  margin-left: var(--pad-small);
+  margin-right: var(--pad-small);
+}
+
 .menu-button-description {
   font-size: 120%;
   font-family: var(--font-light);
@@ -160,23 +165,9 @@
 /* ==========================================================================
    Menu item icons & text
    ========================================================================== */
-.menu-item-img {
-  height: 2em;
+.menu-panel svg {
   padding-right: 1em;
-  opacity: 0.75;
-  flex-shrink: 0;
-}
-
-.menu-item-icon {
-  height: 2em;
-  width: 2em;
-  flex-shrink: 0;
-}
-
-.menu-item-icon img {
-  height: 2em;
-  width: 2em;
-  padding-left: 0.5em;
+  opacity: 0.8;
 }
 
 /* ==========================================================================
@@ -198,7 +189,7 @@
 .version-info {
   flex-shrink: 0;
   font-size: 0.75em;
-  color: #888;
+  color: #646464;
   padding: 0.6em 1em;
   text-align: left;
   background-color: rgba(255, 255, 255, 0.45);

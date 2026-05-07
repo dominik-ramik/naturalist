@@ -25,7 +25,7 @@ import { buildEmlXml } from "./buildEml.js";
 import { buildZip } from "./buildZip.js";
 import { expandToTaxonNodes, findOccurrenceLevelIndex } from "./DwcTreeExpander.js";
 import { resolve } from "./DwcValueResolver.js";
-import { DWC_ARCHIVE_TYPES, OCCURRENCE_IDENTIFIER } from "../nlDataStructureSheets.js";
+import { DWC_ARCHIVE_TYPES, OCCURRENCE_IDENTIFIER } from "../DataStructure.js";
 import { DEFAULT_LOCALE_CODE } from "../../i18n/availableLocalesInfo.js";
 
 const LOG_TAG = "DwC Archive";

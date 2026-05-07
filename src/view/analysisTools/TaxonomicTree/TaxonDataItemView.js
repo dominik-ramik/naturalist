@@ -8,10 +8,12 @@ import { Checklist } from "../../../model/Checklist.js";
 import { injectCiteKeyLinks, routeTo, shouldHide } from "../../../components/Utils.js";
 import { dataCustomTypes } from "../../../model/customTypes/index.js";
 import { AppLayoutView } from "../../AppLayoutView.js";
-import { buildSearchRegex } from "../../../model/highlightUtils.js";
+import { buildSearchRegex } from "../../../model/HighlightUtils.js";
 import { Settings } from "../../../model/Settings.js";
 
 import "./search-highlight.css";
+import { Icon } from "../../../components/Icon.js";
+import { mdiInformationOutline } from "@mdi/js";
 
 export let TaxonDataItemView = {
   originalData: null,
@@ -277,7 +279,7 @@ export let TaxonDataItemView = {
           mainTitle,
           infoText
             ? m(
-              "span.data-item-info-icon[style=display:inline-block;vertical-align:baseline;cursor:pointer;margin-left:0.3em;]",
+              "span.data-item-info-icon",
               {
                 onclick: function (e) {
                   AppLayoutView.toast(infoText, { showPermanently: true });
@@ -285,9 +287,7 @@ export let TaxonDataItemView = {
                 },
                 title: infoText,
               },
-              m("img[style=width:1em;height:1em;vertical-align:middle;]", {
-                src: "img/ui/checklist/question.svg",
-              })
+              m(Icon, { path: mdiInformationOutline, size: 16, color: "nlblue" })
             )
             : null,
           //m("span", m.trust("&#8201;:&nbsp;"))

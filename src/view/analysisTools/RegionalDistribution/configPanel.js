@@ -10,7 +10,7 @@ import m from 'mithril';
 import { Checklist } from '../../../model/Checklist.js';
 import { Settings } from '../../../model/Settings.js';
 import { NUMERIC_OPERATIONS, getOperationMeta } from './aggregate.js';
-import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../../model/nlDataStructureSheets.js';
+import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../../model/DataStructure.js';
 import { t, tf } from 'virtual:i18n-self';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

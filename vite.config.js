@@ -61,6 +61,34 @@ export default defineConfig({
             manifest: false
         }),
         {
+            name: 'log-img-requests',
+            apply: 'serve',
+            resolveId(id) {
+                if (id === 'virtual:img-logger') return '\0virtual:img-logger';
+            },
+            load(id) {
+                if (id === '\0virtual:img-logger') {
+                    return `if (import.meta.hot) { import.meta.hot.on('img-request', ({ path }) => console.error(path)); }`;
+                }
+            },
+            transformIndexHtml() {
+                return [{
+                    tag: 'script',
+                    attrs: { type: 'module', src: '/@id/__x00__virtual:img-logger' },
+                    injectTo: 'head',
+                }];
+            },
+            configureServer(server) {
+                server.middlewares.use((req, _res, next) => {
+                    const match = req.url?.match(/^\/img\/([^?]+)/);
+                    if (match) {
+                        server.ws.send('img-request', { path: match[1] });
+                    }
+                    next();
+                });
+            }
+        },
+        {
             name: 'serve-dev-public-fallback',
             apply: 'serve',
             configureServer(server) {

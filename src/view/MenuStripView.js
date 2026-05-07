@@ -7,7 +7,10 @@ import { DOCS_URL } from "../app.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { ConfigurationDialog } from "./ConfigurationDialog.js";
-import { TOOL_LIST, ANALYTICAL_INTENTS } from "./analysisTools/index.js";
+import { TOOL_LIST } from "./analysisTools/index.js";
+import { ANALYTICAL_INTENTS_UI } from "../components/analyticalIntentIcons.js";
+import { mdiArrowLeft, mdiBookEducationOutline, mdiChevronDown, mdiFileCogOutline, mdiFileDocumentMultipleOutline, mdiFileEditOutline, mdiInformationOutline, mdiKeyChainVariant, mdiMenu, mdiPinOutline, mdiShareVariantOutline, mdiTranslate } from "@mdi/js";
+import { Icon, WELL_KNOWN_ICONS_NLLEAF } from "../components/Icon.js";
 
 export let MenuStripView = {
   menuOpen: false,
@@ -35,7 +38,7 @@ function menuPanel() {
           },
         },
         [
-          m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
+          m(Icon, { path: mdiArrowLeft, class: "menu-hide-panel-icon" }),
           m(".menu-button-description", t("menu")),
         ]
       ),
@@ -49,7 +52,7 @@ function menuPanel() {
               e.redraw = false;
               routeTo("/about/checklist");
             },
-            icon: "about",
+            icon: mdiInformationOutline,
             title: t("about_this"),
           }),
           !howToCite || howToCite.trim() == ""
@@ -60,7 +63,7 @@ function menuPanel() {
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/about/cite");
               },
-              icon: "cite",
+              icon: mdiFileEditOutline,
               title: t("how_to_cite"),
             }),
           Checklist.getSingleAccessTaxonomicKeys().length > 0
@@ -70,7 +73,7 @@ function menuPanel() {
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/single-access-keys");
               },
-              icon: "single_access_key",
+              icon: mdiKeyChainVariant,
               title: t("keys"),
             })
             : null,
@@ -81,7 +84,7 @@ function menuPanel() {
                 MenuStripView.menuOpen = !MenuStripView.menuOpen;
                 routeTo("/references");
               },
-              icon: "literature",
+              icon: mdiBookEducationOutline,
               title: t("literature"),
             })
             : null,
@@ -102,7 +105,7 @@ function menuPanel() {
                 copyToClipboard(window.location.href);
               }
             },
-            icon: "share",
+            icon: mdiShareVariantOutline,
             title: t("share_url"),
           }),
           m(MenuItem, {
@@ -111,12 +114,12 @@ function menuPanel() {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/pinned");
             },
-            icon: "push_pin",
+            icon: mdiPinOutline,
             title: t("pin_search"),
           }),
           m(MenuDivider),
           Checklist.getAllLanguages().length > 1
-            ? m(MenuExpandable, { title: t("languages") }, [
+            ? m(LanguageMenu, { title: t("languages") }, [
               Checklist.getAllLanguages().map(function (lang) {
                 if (lang.code == Checklist.getCurrentLanguage()) {
                   return null;
@@ -140,7 +143,7 @@ function menuPanel() {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/manage");
             },
-            icon: "manage",
+            icon: mdiFileCogOutline,
             title: t("manage"),
           }),
           m(MenuDivider),
@@ -148,7 +151,7 @@ function menuPanel() {
             onclick: function () {
               window.open(DOCS_URL, "_blank");
             },
-            icon: "docs",
+            icon: mdiFileDocumentMultipleOutline,
             title: t("documentation"),
           }),
           m(MenuItem, {
@@ -157,7 +160,7 @@ function menuPanel() {
               MenuStripView.menuOpen = !MenuStripView.menuOpen;
               routeTo("/about/app");
             },
-            icon: "./img/icon_transparent_dark.svg",
+            icon: WELL_KNOWN_ICONS_NLLEAF,
             title: t("about_nl"),
           }),
         ]),
@@ -192,13 +195,8 @@ let MenuItem = {
       { onclick: vnode.attrs.onclick },
       [
         vnode.attrs.icon
-          ? m(
-            "img.menu-item-img[src=" +
-            (vnode.attrs.icon.startsWith(".")
-              ? vnode.attrs.icon
-              : "./img/ui/menu/" + vnode.attrs.icon + ".svg") +
-            "]"
-          )
+          ?
+          m(Icon, { path: vnode.attrs.icon })
           : null,
         m(".menu-item-title", vnode.attrs.title),
       ]
@@ -220,7 +218,7 @@ let MenuDivider = {
   },
 };
 
-let MenuExpandable = function (initialVnode) {
+let LanguageMenu = function (initialVnode) {
   let open = true;
   return {
     view: function (vnode) {
@@ -231,7 +229,7 @@ let MenuExpandable = function (initialVnode) {
             ".menu-item.expandable-main-button",
             { onclick: function () { } },
             [
-              m("img.menu-item-img[src=img/ui/menu/language.svg]"),
+              m(Icon, {path: mdiTranslate }),
               m(".menu-expandable-title", vnode.attrs.title),
             ]
           ),
@@ -255,9 +253,9 @@ function menuTopBar() {
   const currentScope = Settings.analyticalIntent()
     || Checklist.availableIntents()[0];
 
-  const activeScope = ANALYTICAL_INTENTS.find(s => s.id === currentScope)
-    || ANALYTICAL_INTENTS.find(s => Checklist.availableIntents().includes(s.id))
-    || ANALYTICAL_INTENTS[0];
+  const activeScope = ANALYTICAL_INTENTS_UI.find(s => s.id === currentScope)
+    || ANALYTICAL_INTENTS_UI.find(s => Checklist.availableIntents().includes(s.id))
+    || ANALYTICAL_INTENTS_UI[0];
 
   return [
     m(
@@ -267,7 +265,10 @@ function menuTopBar() {
           MenuStripView.menuOpen = !MenuStripView.menuOpen;
         },
       },
-      [m("img.menu-button-image[src=./img/ui/menu/menu.svg]")]
+      [
+        //m("img.menu-button-image[src=./img/ui/menu/menu.svg]")
+        m(Icon, { path: mdiMenu }),
+      ]
     ),
 
     m(".menu-project-name", Checklist.getProjectName()),
@@ -281,21 +282,19 @@ function menuTopBar() {
       [
         m("span.mobile-only-title", t("configure_view")),
         // ── Analysis tool icon + label ──────────────────────────────────────
-        m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
+        //m("img.global-indicator-img", { src: activeTool.iconPath.light, alt: "" }),
+        m(Icon, { path: activeTool.iconPath, fill: "#ffffff", class: "global-indicator-img" }),
         m("span.global-indicator-label", activeTool.label),
 
         // ── Scope icon + label ───────
         Checklist.availableIntents().length > 1 && activeScope && [
           m("span.global-indicator-sep"),
-          m("img.global-indicator-img", {
-            src: activeScope.iconPath.light,
-            alt: ""
-          }),
+          m(Icon, { path: activeScope.icon, fill: "#ffffff", class: "global-indicator-img" }),
           m("span.global-indicator-label", activeScope.label),
         ],
 
         // ── Expand caret ─────────────────────────────────────────────────────
-        m("img.global-indicator-caret[src=./img/ui/search/expand-light.svg]", { alt: "" }),
+        m(Icon, { path: mdiChevronDown, fill: "#ffffff", class: "global-indicator-caret" }),
       ]
     ),
   ];
@@ -331,9 +330,9 @@ let ActionButtonWithMenu = function (initialVnode) {
           ".menu-action-button",
           { onclick: function () { open = !open; } },
           [
-            m("img[src=" + vnode.attrs.icon + "]"),
+            m(Icon, { path: vnode.attrs.icon, class: "action-button-icon" }),
             m(".action-button-title", vnode.attrs.title),
-            m("img[src=img/ui/menu/expand_" + (open ? "less" : "more") + ".svg]"),
+            m(Icon, { path: mdiChevronDown, class: "action-button-caret" }),
           ]
         ),
         open
@@ -404,7 +403,7 @@ function backButton() {
     },
     Checklist._isDataReady
       ? [
-        m("img.menu-button-image[src=./img/ui/menu/arrow_back.svg]"),
+        m(Icon, { path: mdiArrowLeft }),
         m(
           ".menu-button-description",
           t("back_to_search")

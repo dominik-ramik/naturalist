@@ -6,7 +6,7 @@ import { Checklist } from "../Checklist.js";
 import { helpers } from "./helpers.js";
 import { filterPluginDate } from "../filterPlugins/filterPluginDate.js";
 import { numericFilters } from "../filterPlugins/shared/filterUtils.js";
-import { applyHighlight, highlightHtml, textMatchesHighlight } from "../highlightUtils.js";
+import { applyHighlight, highlightHtml, textMatchesHighlight } from "../HighlightUtils.js";
 
 function getDateFormat(langCode) {
   return Checklist.getCurrentDateFormat(langCode);

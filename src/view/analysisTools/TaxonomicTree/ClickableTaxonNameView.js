@@ -4,9 +4,10 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../../../model/Checklist.js";
 import { Settings } from "../../../model/Settings.js";
 import { routeTo } from "../../../components/Utils.js";
-import { applyHighlight, buildSearchRegex } from "../../../model/highlightUtils.js";
+import { applyHighlight, buildSearchRegex } from "../../../model/HighlightUtils.js";
 
 import "./ClickableTaxonNameView.css";
+import { mdiTag } from "@mdi/js";
 
 function getTaxonHighlightRegex() {
   const terms = [];
@@ -36,10 +37,8 @@ function getTaxonHighlightRegex() {
  */
 const VARIANT_CONFIG = {
   occurrence: {
-    icon: "img/ui/checklist/tag-light.svg",
+    icon: mdiTag,
   },
-  // future variants:
-  // invasive: { icon: "img/ui/checklist/warning.svg" },
 };
 
 export let ClickableTaxonName = {

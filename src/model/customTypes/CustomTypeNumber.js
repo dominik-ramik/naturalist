@@ -3,7 +3,7 @@ import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 import { helpers } from "./helpers.js";
 import { filterPluginNumber } from "../filterPlugins/filterPluginNumber.js";
 import { numericFilters } from "../filterPlugins/shared/filterUtils.js";
-import { applyHighlight, highlightHtml, textMatchesHighlight } from "../highlightUtils.js";
+import { applyHighlight, highlightHtml, textMatchesHighlight } from "../HighlightUtils.js";
 
 function matchesNumberFilter(value, filterDef) {
   if (!filterDef) return false;

@@ -8,8 +8,10 @@ import { Settings } from "../model/Settings.js";
 import { CacheManager } from "../model/CacheManager.js";
 import { getCurrentTool } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/DataStructure.js";
 import { collapsePaneAndDismissKeyboard } from "../components/MobileInteraction.js";
+import { Icon } from "../components/Icon.js";
+import { mdiCog, mdiCogOutline } from "@mdi/js";
 
 export let ChecklistView = {
   oninit: function () {
@@ -153,7 +155,7 @@ export let ChecklistView = {
           ? m(".nothing-found-wrapper", [
             m("p.nothing-found-eyebrow", t("nothing_found_oops")),
             m("h2.nothing-found-heading", t("nothing_found_checklist")),
-            m("img.search-world[src=img/ui/checklist/nothing-found.svg]"),
+            m("img.search-world[src=img/nothing-found.svg]"),
             m("p.nothing-found-message", [
               t("nothing_found_message"),
               " ", m("span.query", m.trust(Settings.pinnedSearches.getHumanNameForSearch()))
@@ -252,21 +254,27 @@ function modifiedParamsNotice(tool) {
 
 let Notice = {
   view: function (vnode) {
+    const { accent, bg, text, btnHoverBg } = vnode.attrs;
+    const style = {};
+    if (accent)      style["--notice-accent"]       = accent;
+    if (bg)         style["--notice-bg"]            = bg;
+    if (text)       style["--notice-text"]          = text;
+    if (btnHoverBg) style["--notice-btn-hover-bg"]  = btnHoverBg;
     return m(
       ".temporary-notice" +
       (vnode.attrs.additionalClasses === undefined
         ? ""
         : "." + vnode.attrs.additionalClasses),
-      { onclick: vnode.attrs.action },
+      {
+        onclick: vnode.attrs.action,
+        style,
+      },
       [
         m(".notice", vnode.attrs.notice),
         vnode.attrs.additionalButton === undefined
           ? null
           : m("button.show-all", { onclick: vnode.attrs.additionalButton.action }, [
-            m(
-              "img.notice-icon[src=img/ui/menu/" +
-              vnode.attrs.additionalButton.icon + ".svg]"
-            ),
+            m(Icon, { path: vnode.attrs.additionalButton.icon, size: 18, color: vnode.attrs.accent }),
             vnode.attrs.additionalButton.text,
           ]),
       ]
@@ -287,11 +295,15 @@ function mobileFilterOnNotice() {
 function draftNotice() {
   return m(Notice, {
     additionalClasses: "draft-notice",
+    accent:      "#d97706",
+    bg:          "rgba(254, 243, 199, 0.92)",
+    text:        "#78350f",
+    btnHoverBg:  "rgba(217, 119, 6, 0.08)",
     action: function () { Settings.checklistDisplayLevel(""); },
     notice: t("draft_notice"),
     additionalButton: {
       action: function () { routeTo("/manage"); },
-      icon: "manage",
+      icon: mdiCogOutline,
       text: t("temporary_draft_goto_manage"),
     },
   });

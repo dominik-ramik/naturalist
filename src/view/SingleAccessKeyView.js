@@ -5,6 +5,8 @@ import { Checklist } from "../model/Checklist.js";
 import { injectCiteKeyLinks, processMarkdownWithBibliography } from "../components/Utils.js";
 import { routeTo } from "../components/Utils.js";
 import { FullscreenableMedia } from "../components/FullscreenableMedia.js";
+import { Icon } from "../components/Icon.js";
+import { mdiArrowLeftCircleOutline, mdiChevronRight, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from "@mdi/js";
 
 
 
@@ -205,8 +207,8 @@ const KeyCard = {
         const showIcon = isListView || showActiveExpander;
 
         const iconSrc = isListView
-            ? "img/ui/menu/chevron_forward.svg"
-            : (state.isDetailsExpanded ? "img/ui/menu/collapse_all.svg" : "img/ui/menu/expand_all.svg");
+            ? mdiChevronRight
+            : (state.isDetailsExpanded ? mdiUnfoldMoreHorizontal : mdiUnfoldLessHorizontal);
 
         // --- 2. Description Logic ---
 
@@ -233,16 +235,17 @@ const KeyCard = {
                 e.redraw = false;
             }
         }, [
-            (!isListView && onBack) ? m("img.sak-icon.sak-icon-left", {
-                src: "img/ui/menu/arrow_circle_left.svg",
+            (!isListView && onBack) ? m("sak-icon.sak-icon-left", {
                 onclick: (e) => {
                     e.stopPropagation();
                     onBack(e);
                 }
-            }) : null,
+            }, [
+                m(Icon, { path: mdiArrowLeftCircleOutline  })
+            ]) : null,
             m("h3.sak-title", m.trust(processMarkdownWithBibliography(keyData.title))),
             showIcon
-                ? m("img.sak-icon", { src: iconSrc })
+                ? m(Icon, { path: iconSrc })
                 : null
         ]);
 
@@ -372,11 +375,7 @@ const KeyCard = {
                     }
                 }, [
                     m("span", `Taxa Included (${reachableTaxa.length}/${allTaxa.length})`),
-                    m("img.sak-icon", {
-                        src: state.isTaxaExpanded
-                            ? "img/ui/menu/expand_less.svg"
-                            : "img/ui/menu/expand_more.svg"
-                    })
+                    m(Icon, { path: state.isTaxaExpanded ? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal, color: "#555555" }),
                 ]),
 
                 state.isTaxaExpanded ? m(".sak-chips-container", allTaxa.map(taxon => {

@@ -16,7 +16,7 @@ import { cssColorNames } from "../components/CssColorNames.js";
 import { validateConfiguredMonthNames } from "./MonthNames.js";
 import { compileDwcArchive, registerDataCustomTypes } from "./dwc/DwcArchiveCompiler.js";
 import { helpers as customTypeHelpers } from "./customTypes/helpers.js";
-import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { CUSTOMIZATION_ITEMS, OCCURRENCE_IDENTIFIER } from "./DataStructure.js";
 
 // Global array to collect assets from F: directives
 

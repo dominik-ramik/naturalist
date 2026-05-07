@@ -21,7 +21,7 @@ import {
 import { dataCustomTypes, getSearchableTextByType } from "./customTypes/index.js";
 
 import { validateActiveToolState } from "../view/analysisTools/index.js";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "./nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "./DataStructure.js";
 import { getDataFromDataPath } from "./DataPath.js";
 import { DEFAULT_LOCALE_CODE } from "../i18n/availableLocalesInfo.js";
 import { CacheManager, CacheScope } from "./CacheManager.js";

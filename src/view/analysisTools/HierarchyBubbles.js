@@ -6,10 +6,10 @@ import { Checklist } from "../../model/Checklist.js";
 import { Settings } from "../../model/Settings.js";
 import { colorFromRatio } from "../../components/Utils.js";
 import { D3ChartView } from "../shared/D3ChartView.js";
-import { SelectParam } from "../shared/FormControls.js";
 
 import "./HierarchyBubbles.css";
-import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/nlDataStructureSheets.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/DataStructure.js";
+import { mdiChartBubble } from "@mdi/js";
 
 
 
@@ -23,10 +23,7 @@ import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTI
 export const config = {
   id: "tool_hierarchy_bubbles",
   label: "Hierarchy bubbles",
-  iconPath: {
-    light: "./img/ui/menu/view_circle_pack-light.svg",
-    dark: "./img/ui/menu/view_circle_pack.svg",
-  },
+  iconPath: mdiChartBubble,
   info: "Visualize the relative volume of nested taxonomic groups, using color to instantly spot where filter matches are concentrated",
   getTaxaAlongsideOccurrences: false,
 

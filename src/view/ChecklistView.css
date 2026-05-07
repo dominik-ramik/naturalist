@@ -135,22 +135,21 @@
 .temporary-notice {
   font-family: var(--font-light);
   padding: 0.55em 0.9em;
-  background-color: rgba(255, 255, 255, 0.88);
+  background-color: var(--notice-bg, rgba(255, 255, 255, 0.88));
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.6em;
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  /* Default accent: nlblue - used for the mobile filter notice */
-  border-left: 3px solid var(--nlblue, #55769b);
+  border-left: 3px solid var(--notice-accent, var(--nlblue, #55769b));
   flex-shrink: 0;
 }
 
 .temporary-notice .notice {
   flex-grow: 1;
   font-size: 85%;
-  color: #2d4a6a;
+  color: var(--notice-text, #2d4a6a);
   line-height: 1.4;
 }
 
@@ -163,9 +162,9 @@
   gap: 0.35em;
   padding: 3px 10px;
   background-color: transparent;
-  border: 1px solid var(--nlblue, #55769b);
+  border: 1px solid var(--notice-accent, var(--nlblue, #55769b));
   border-radius: 20px;
-  color: var(--nlblue, #55769b);
+  color: var(--notice-accent, var(--nlblue, #55769b));
   font-size: 0.82em;
   font-weight: 600;
   cursor: pointer;
@@ -174,31 +173,12 @@
 }
 
 .temporary-notice button.show-all:hover {
-  background-color: rgba(85, 118, 155, 0.1);
+  background-color: var(--notice-btn-hover-bg, rgba(85, 118, 155, 0.1));
 }
 
 .temporary-notice .notice-icon {
   height: 1.25em;
   opacity: 0.75;
-}
-
-/* ── Draft notice: amber - warns about unpublished dataset state ── */
-.temporary-notice.draft-notice {
-  border-left-color: #e09b25;
-  background-color: rgba(254, 243, 199, 0.92);
-}
-
-.temporary-notice.draft-notice .notice {
-  color: #78350f;
-}
-
-.temporary-notice.draft-notice button.show-all {
-  border-color: #d97706;
-  color: #92400e;
-}
-
-.temporary-notice.draft-notice button.show-all:hover {
-  background-color: rgba(217, 119, 6, 0.08);
 }
 
 /* ── Mobile filter notice: hidden until narrow viewport ── */
@@ -211,15 +191,6 @@
    Uses the same nlblue accent as the base .temporary-notice; distinguished
    from the filter notice by its content and the Reset button.
    ─────────────────────────────────────────────────────────────────────────── */
-.params-modified-notice {
-  border-left-color: var(--nlblue, #55769b);
-  background-color: rgba(255, 255, 255, 0.88);
-}
-
-.params-modified-notice .notice {
-  color: #2d4a6a;
-}
-
 .notice-reset-btn {
   flex-shrink: 0;
   display: inline-flex;
@@ -227,9 +198,9 @@
   gap: 0.3em;
   padding: 3px 10px;
   background: transparent;
-  border: 1px solid var(--nlblue, #55769b);
+  border: 1px solid var(--notice-accent, var(--nlblue, #55769b));
   border-radius: 20px;
-  color: var(--nlblue, #55769b);
+  color: var(--notice-accent, var(--nlblue, #55769b));
   font-size: 0.82em;
   font-weight: 600;
   cursor: pointer;
@@ -238,7 +209,7 @@
 }
 
 .notice-reset-btn:hover {
-  background-color: rgba(85, 118, 155, 0.1);
+  background-color: var(--notice-btn-hover-bg, rgba(85, 118, 155, 0.1));
 }
 
 /* ==========================================================================
