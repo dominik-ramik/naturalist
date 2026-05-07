@@ -118,25 +118,6 @@ function menuPanel() {
             title: t("pin_search"),
           }),
           m(MenuDivider),
-          Checklist.getAllLanguages().length > 1
-            ? m(LanguageMenu, { title: t("languages") }, [
-              Checklist.getAllLanguages().map(function (lang) {
-                if (lang.code == Checklist.getCurrentLanguage()) {
-                  return null;
-                } else {
-                  return m(MenuItem, {
-                    onclick: function (e) {
-                      e.redraw = false;
-                      Settings.language(lang.code);
-                      routeTo("/checklist", "", lang.code);
-                      MenuStripView.menuOpen = false;
-                    },
-                    title: lang.name,
-                  });
-                }
-              }),
-            ])
-            : null,
           m(MenuItem, {
             onclick: function (e) {
               e.redraw = false;
@@ -163,6 +144,8 @@ function menuPanel() {
             icon: WELL_KNOWN_ICONS_NLLEAF,
             title: t("about_nl"),
           }),
+          
+      menuLangStrip(),
         ]),
       m(".version-info",
         [
@@ -218,27 +201,40 @@ let MenuDivider = {
   },
 };
 
-let LanguageMenu = function (initialVnode) {
-  let open = true;
-  return {
-    view: function (vnode) {
+/**
+ * menuLangStrip
+ * Renders a compact horizontal row of language chips directly beneath the
+ * panel header. The active language is highlighted with the --nlblue fill
+ * (matching global-indicator-btn); inactive languages are ghost chips that
+ * match the sak-chip vocabulary. The row is hidden when only one language
+ * is available.
+ */
+function menuLangStrip() {
+  const langs = Checklist.getAllLanguages();
+  if (langs.length <= 1) return null;
+  const current = Checklist.getCurrentLanguage();
+
+  return m(".menu-lang-strip", [
+    m(Icon, { path: mdiTranslate, class: "menu-lang-icon" }),
+    langs.map(function (lang) {
+      const isActive = lang.code === current;
       return m(
-        ".menu-expandable",
-        m(".menu-expandable-wrapper", [
-          m(
-            ".menu-item.expandable-main-button",
-            { onclick: function () { } },
-            [
-              m(Icon, {path: mdiTranslate }),
-              m(".menu-expandable-title", vnode.attrs.title),
-            ]
-          ),
-          open ? m(".menu-group-items", [vnode.children]) : null,
-        ])
+        ".menu-lang-chip" + (isActive ? ".active" : ""),
+        {
+          onclick: isActive
+            ? undefined
+            : function (e) {
+              e.redraw = false;
+              Settings.language(lang.code);
+              routeTo("/checklist", "", lang.code);
+              MenuStripView.menuOpen = false;
+            },
+        },
+        lang.name
       );
-    },
-  };
-};
+    }),
+  ]);
+}
 
 /**
  * menuTopBar
