@@ -8,6 +8,7 @@ import { applyHighlight, buildSearchRegex } from "../../../model/HighlightUtils.
 
 import "./ClickableTaxonNameView.css";
 import { mdiTag } from "@mdi/js";
+import { Icon } from "../../../components/Icon.js";
 
 function getTaxonHighlightRegex() {
   const terms = [];
@@ -76,7 +77,8 @@ export let ClickableTaxonName = {
       },
       [
         iconSrc
-          ? m("img.taxon-name-icon", { src: iconSrc, "aria-hidden": "true" })
+          ? 
+          m(Icon, { path: iconSrc, color: "#ffffff", size: 16, style: { "margin-right": "0.5em"}})
           : null,
         m(
           nameTag +
