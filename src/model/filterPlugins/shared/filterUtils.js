@@ -16,6 +16,7 @@ import m from "mithril";
 import { formatList } from "../../../components/Utils.js";
 import { Checklist } from "../../Checklist.js";
 import { t, tf } from 'virtual:i18n-self';
+import { mdiEqual, mdiGreaterThan, mdiGreaterThanOrEqual, mdiLessThan, mdiLessThanOrEqual, mdiPlusMinus, mdiUnfoldMoreVertical } from "@mdi/js";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function sortedUniqueNumbers(values) {
@@ -296,11 +297,11 @@ export function makeScalarRangeLifecycle(type, comparerTable) {
 // ── Operator table ────────────────────────────────────────────────────────────
 
 export const numericFilters = {
-  equal: { operation: "equal", icon: "equal", values: 1, comparer: (v, t1) => v == t1 },
-  lesser: { operation: "lesser", icon: "lesser", values: 1, comparer: (v, t1) => v < t1 },
-  lesserequal: { operation: "lesserequal", icon: "lesserequal", values: 1, comparer: (v, t1) => v <= t1 },
-  greater: { operation: "greater", icon: "greater", values: 1, comparer: (v, t1) => v > t1 },
-  greaterequal: { operation: "greaterequal", icon: "greaterequal", values: 1, comparer: (v, t1) => v >= t1 },
-  between: { operation: "between", icon: "between", values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
-  around: { operation: "around", icon: "around", values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
+  equal: { operation: "equal", icon: mdiEqual, values: 1, comparer: (v, t1) => v == t1 },
+  lesser: { operation: "lesser", icon: mdiLessThan, values: 1, comparer: (v, t1) => v < t1 },
+  lesserequal: { operation: "lesserequal", icon: mdiLessThanOrEqual, values: 1, comparer: (v, t1) => v <= t1 },
+  greater: { operation: "greater", icon: mdiGreaterThan, values: 1, comparer: (v, t1) => v > t1 },
+  greaterequal: { operation: "greaterequal", icon: mdiGreaterThanOrEqual, values: 1, comparer: (v, t1) => v >= t1 },
+  between: { operation: "between", icon: mdiUnfoldMoreVertical, values: 2, comparer: (v, t1, t2) => v >= t1 && v <= t2 },
+  around: { operation: "around", icon: mdiPlusMinus, values: 2, comparer: (v, t1, t2) => v >= t1 - t2 && v <= t1 + t2 },
 };

@@ -3,6 +3,7 @@
   "nothing_found_checklist": "This taxonomic tree branch has no leaves",
   "nothing_found_message": "No matches found for query",
   "nothing_found_message_hint": "Try broadening your query or adjusting your filters",
+  "nothing_found_reset_btn": "Reset all filters",
   "mobile_filter_notice": "Showing only taxa where {0}",
   "temporary_draft_goto_manage": "Manage",
   "draft_notice": "You are viewing a draft version of the project only visible to you. Click on Manage to manage the data or refresh the page to show the current published data.",

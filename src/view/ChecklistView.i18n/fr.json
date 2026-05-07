@@ -3,6 +3,7 @@
   "nothing_found_checklist": "Cette branche de l'arbre taxonomique n'a pas de feuilles",
   "nothing_found_message": "Aucun résultat trouvé pour la requête",
   "nothing_found_message_hint": "Try broadening your query or adjusting your filters",
+  "nothing_found_reset_btn": "Réinitialiser tous les filtres",
   "mobile_filter_notice": "Affichage uniquement des taxons où {0}",
   "temporary_draft_goto_manage": "Gérer",
   "draft_notice": "Vous visualisez une version brouillon du projet, uniquement visible par vous. Cliquez sur Gérer pour gérer les données ou rafraîchissez la page pour afficher les données publiées actuelles.",

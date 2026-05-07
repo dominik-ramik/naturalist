@@ -262,7 +262,6 @@ function menuTopBar() {
         },
       },
       [
-        //m("img.menu-button-image[src=./img/ui/menu/menu.svg]")
         m(Icon, { path: mdiMenu }),
       ]
     ),
@@ -295,98 +294,6 @@ function menuTopBar() {
     ),
   ];
 }
-
-let ActionButtonWithMenu = function (initialVnode) {
-  let menuId = "";
-  let open = false;
-  let handleDocumentClick = null;
-
-  return {
-    oninit: function (vnode) {
-      menuId =
-        "action_button_menu_" + (Math.random() + 1).toString(36).substring(2);
-      handleDocumentClick = function (event) {
-        if (!open) return;
-        let thisDropdown = document.getElementById(menuId);
-        if (!thisDropdown) return;
-        if (event.target == thisDropdown || thisDropdown.contains(event.target)) return;
-        open = false;
-        m.redraw();
-      };
-    },
-    oncreate: function () {
-      document.addEventListener("click", handleDocumentClick);
-    },
-    onremove: function () {
-      document.removeEventListener("click", handleDocumentClick);
-    },
-    view: function (vnode) {
-      return m(".menu-action-button-with-menu-wrapper[id=" + menuId + "]", [
-        m(
-          ".menu-action-button",
-          { onclick: function () { open = !open; } },
-          [
-            m(Icon, { path: vnode.attrs.icon, class: "action-button-icon" }),
-            m(".action-button-title", vnode.attrs.title),
-            m(Icon, { path: mdiChevronDown, class: "action-button-caret" }),
-          ]
-        ),
-        open
-          ? m(
-            ".submenu" +
-            (vnode.attrs.forceWidth
-              ? "[style=width: " + vnode.attrs.forceWidth + "]"
-              : ""),
-            [
-              vnode.attrs.items.map(function (item) {
-                if (!item) return null;
-                if (item.type == "divider") return m(MenuDivider);
-                if (item.type == "label") return m(MenuLabel, { title: item.title });
-                if (item.type == "button") {
-                  return m(
-                    ".multi-item-menu-button" + (item.selected ? ".selected" : ""),
-                    {
-                      onclick: function (e) {
-                        if (!item.selected && item.state != "inactive") {
-                          item.action();
-                          open = false;
-                        }
-                      },
-                    },
-                    [
-                      m(".menu-item-icon",
-                        item.icon
-                          ? m("img[src=./img/" + item.icon + ".svg]")
-                          : null
-                      ),
-                      m(
-                        ".menu-item" +
-                        (!item.selected && item.state == "inactive" ? ".inactive" : ""),
-                        [m(".menu-item-title", item.title)]
-                      ),
-                      item.altActionIcon
-                        ? m(
-                          ".menu-item.alt-action-item",
-                          {
-                            onclick: function (e) {
-                              item.altAction();
-                              e.stopPropagation();
-                            },
-                          },
-                          m("img[src=" + item.altActionIcon + "]")
-                        )
-                        : null,
-                    ]
-                  );
-                }
-              }),
-            ]
-          )
-          : null,
-      ]);
-    },
-  };
-};
 
 function backButton() {
   return m(

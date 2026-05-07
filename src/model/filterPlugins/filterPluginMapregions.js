@@ -165,7 +165,7 @@ function _renderStatusRangeSection(sf, globalMin, globalMax, type, dataPath) {
             Checklist.filter.delayCommitDataPath = type + "." + dataPath;
             Checklist.filter.commit();
           },
-        }, m("img[src=img/ui/search/clear_filter_dark.svg]"))
+        }, m(Icon, { path: mdiDeleteOutline }),)
         : null,
     ]),
   ]);

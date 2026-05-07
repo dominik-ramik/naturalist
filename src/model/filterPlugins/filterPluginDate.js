@@ -25,10 +25,12 @@ import {
 } from "./shared/listModeUtils.js";
 
 import "./filterPluginDate.css";
+import { Icon } from "../../components/Icon.js";
+import { mdiDeleteOutline } from "@mdi/js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const DATE_INPUT_FORMAT   = "YYYY-MM-DD";
+const DATE_INPUT_FORMAT = "YYYY-MM-DD";
 const dateFilterOperations = ["list", "equal", "lesserequal", "greaterequal", "between"];
 
 // Replaces local getSortedUniqueDateValues (≡ sortedUniqueNumbers)
@@ -61,8 +63,8 @@ let DropdownDate = function (initialVnode) {
   // Threshold state uses the same shape as Number/Interval so inputsOk() works
   const thresholdState = {
     initialThresholds: [null, null, null],
-    actualThresholds:  [null, null, null],
-    thresholdsShown:   0,
+    actualThresholds: [null, null, null],
+    thresholdsShown: 0,
   };
 
   let actualOperation = "list";
@@ -73,7 +75,7 @@ let DropdownDate = function (initialVnode) {
 
   // Lazy preview-data cache (replaces inline duplication)
   const previewCache = makePreviewDataCache();
-  const getPreviewData           = () => previewCache.get(dataPath);
+  const getPreviewData = () => previewCache.get(dataPath);
   const getOperatorPreviewValues = () => getPreviewData().possible;
 
   function getDisplayedOperatorValues() {
@@ -105,25 +107,25 @@ let DropdownDate = function (initialVnode) {
 
   function dateInput(thresholdNumber, min, max) {
     thresholdState.thresholdsShown++;
-    const initialVal   = thresholdState.initialThresholds[thresholdNumber];
-    const actualVal    = thresholdState.actualThresholds[thresholdNumber];
+    const initialVal = thresholdState.initialThresholds[thresholdNumber];
+    const actualVal = thresholdState.actualThresholds[thresholdNumber];
     const currentValue = initialVal !== null ? formatDateForInput(initialVal) : formatDateForInput(actualVal);
 
     let isInputError = actualVal !== null && (typeof actualVal !== "number" || isNaN(actualVal));
     if (actualOperation === "between" && thresholdNumber === 2 &&
-        actualVal !== null && thresholdState.actualThresholds[1] !== null &&
-        actualVal < thresholdState.actualThresholds[1]) {
+      actualVal !== null && thresholdState.actualThresholds[1] !== null &&
+      actualVal < thresholdState.actualThresholds[1]) {
       isInputError = true;
     }
 
     return m(
       "input" +
-        (actualVal !== null && isInputError ? ".error" : "") +
-        "[id=threshold" + thresholdNumber + "_" + dropdownId + "]" +
-        "[type=date][name=threshold" + thresholdNumber + "]" +
-        (min ? "[min=" + min + "]" : "") +
-        (max ? "[max=" + max + "]" : "") +
-        (currentValue ? "[value=" + currentValue + "]" : ""),
+      (actualVal !== null && isInputError ? ".error" : "") +
+      "[id=threshold" + thresholdNumber + "_" + dropdownId + "]" +
+      "[type=date][name=threshold" + thresholdNumber + "]" +
+      (min ? "[min=" + min + "]" : "") +
+      (max ? "[max=" + max + "]" : "") +
+      (currentValue ? "[value=" + currentValue + "]" : ""),
       {
         oninput() {
           thresholdState.initialThresholds[thresholdNumber] = null;
@@ -141,9 +143,9 @@ let DropdownDate = function (initialVnode) {
       Checklist.filter.data[dataPath], dataPath,
       getSortedUniqueDateValues, mutator,
       {
-        setOperation:         op  => { actualOperation = op; },
+        setOperation: op => { actualOperation = op; },
         setInitialThresholds: arr => { thresholdState.initialThresholds = arr; },
-        setActualThresholds:  arr => { thresholdState.actualThresholds  = arr; },
+        setActualThresholds: arr => { thresholdState.actualThresholds = arr; },
       }
     );
   }
@@ -191,10 +193,10 @@ let DropdownDate = function (initialVnode) {
   return {
     oninit(vnode) {
       dataPath = vnode.attrs.dataPath;
-      const fd   = Checklist.filter.data[dataPath];
+      const fd = Checklist.filter.data[dataPath];
       const saved = fd.numeric.operation;
       thresholdState.initialThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
-      thresholdState.actualThresholds  = [null, fd.numeric.threshold1, fd.numeric.threshold2];
+      thresholdState.actualThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
       actualOperation = normalizeDateOperation(saved);
     },
 
@@ -202,14 +204,14 @@ let DropdownDate = function (initialVnode) {
       dataPath = vnode.attrs.dataPath;
       thresholdState.thresholdsShown = 0;
 
-      const fd           = Checklist.filter.data[dataPath];
-      const preview      = getPreviewData();
-      const allDates     = getSortedUniqueDateValues(preview.possible);
+      const fd = Checklist.filter.data[dataPath];
+      const preview = getPreviewData();
+      const allDates = getSortedUniqueDateValues(preview.possible);
       const possibleCounts = getDateValueCounts(preview.possible);
-      const selectedDates  = fd.selected || [];
-      const dateFormat     = Checklist.getCurrentDateFormat();
-      const statsMin       = preview.min ?? fd.globalMin ?? null;
-      const statsMax       = preview.max ?? fd.globalMax ?? null;
+      const selectedDates = fd.selected || [];
+      const dateFormat = Checklist.getCurrentDateFormat();
+      const statsMin = preview.min ?? fd.globalMin ?? null;
+      const statsMax = preview.max ?? fd.globalMax ?? null;
 
       const inputMin = formatDateForInput(statsMin);
       const inputMax = formatDateForInput(statsMax);
@@ -255,43 +257,46 @@ let DropdownDate = function (initialVnode) {
                 }, 200);
               }
             },
-          }, m("img[src=img/ui/search/numeric_" + getOperationIcon(key, numericFilters) + ".svg]")),
+          },
+            m(Icon, { path: getOperationIcon(key, numericFilters) })),
           key === "list" ? m(".separator") : null,
         ])),
 
         // Operator input row
         !isListMode(actualOperation)
           ? m(".input-ui", [
-              inputUi,
-              m(".clear-button.clickable", {
-                onclick() {
-                  actualOperation = "list";
-                  fd.numeric      = { operation: "", threshold1: null, threshold2: null };
-                  fd.selected     = [];
-                  thresholdState.initialThresholds = [null, null, null];
-                  thresholdState.actualThresholds  = [null, null, null];
-                  Checklist.filter.commit();
-                },
-              }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
-            ])
+            inputUi,
+            m(".clear-button.clickable", {
+              onclick() {
+                actualOperation = "list";
+                fd.numeric = { operation: "", threshold1: null, threshold2: null };
+                fd.selected = [];
+                thresholdState.initialThresholds = [null, null, null];
+                thresholdState.actualThresholds = [null, null, null];
+                Checklist.filter.commit();
+              },
+            },
+              m(Icon, { path: mdiDeleteOutline }),
+            ),
+          ])
           : null,
 
         // Operator apply
         !isListMode(actualOperation)
           ? m(".apply.clickable" + (canApply() ? "" : ".inactive"), {
-              onclick() {
-                if (!canApply()) return;
-                const comparer = numericFilters[actualOperation].comparer;
-                const t1 = thresholdState.actualThresholds[1];
-                const t2 = thresholdState.actualThresholds[2];
-                fd.selected = getSortedUniqueDateValues(
-                  getOperatorPreviewValues().filter(v => comparer(v, t1, t2))
-                );
-                fd.numeric = { operation: actualOperation, threshold1: t1, threshold2: t2 };
-                vnode.attrs.openHandler(false);
-                Checklist.filter.commit();
-              },
-            }, formatResultCount(countResults()))
+            onclick() {
+              if (!canApply()) return;
+              const comparer = numericFilters[actualOperation].comparer;
+              const t1 = thresholdState.actualThresholds[1];
+              const t2 = thresholdState.actualThresholds[2];
+              fd.selected = getSortedUniqueDateValues(
+                getOperatorPreviewValues().filter(v => comparer(v, t1, t2))
+              );
+              fd.numeric = { operation: actualOperation, threshold1: t1, threshold2: t2 };
+              vnode.attrs.openHandler(false);
+              Checklist.filter.commit();
+            },
+          }, formatResultCount(countResults()))
           : null,
 
         // Stats (always visible)
@@ -308,27 +313,27 @@ let DropdownDate = function (initialVnode) {
         // List mode: item list (shared)
         isListMode(actualOperation)
           ? renderOptionsSections(
-              { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
-              () => { itemsOverflowLimit += INITIAL_LIMIT; },
-              INITIAL_LIMIT
-            )
+            { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
+            () => { itemsOverflowLimit += INITIAL_LIMIT; },
+            INITIAL_LIMIT
+          )
           : null,
 
         // List mode: check all shown
         isListMode(actualOperation)
           ? renderCheckAllShown(filter, totalPossibleUnchecked, () => {
-              commitSelectedDates(sel => [...sel, ...filteredPossible]);
-              vnode.attrs.openHandler(false);
-            })
+            commitSelectedDates(sel => [...sel, ...filteredPossible]);
+            vnode.attrs.openHandler(false);
+          })
           : null,
 
         // List mode: apply / close
         isListMode(actualOperation)
           ? renderApplyButton(vnode.attrs.openHandler, () => {
-              if (fd.numeric.operation !== "") {
-                commitSelectedDates(sel => sel);
-              }
-            })
+            if (fd.numeric.operation !== "") {
+              commitSelectedDates(sel => sel);
+            }
+          })
           : null,
       ]);
     },

@@ -512,7 +512,7 @@ function renderLivingPanel(rowDimLabel, colTraitName, unit) {
     }, m.trust(flipLabel)) : null,
     !Checklist.filter.isEmpty()
       ? m("span.tm-living-filter",
-        m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch(undefined, true)])))
+        m.trust(tf("tm_living_filtered", [Settings.pinnedSearches.getHumanNameForSearch(undefined, true)], true)))
       : null,
   ]);
 }

@@ -161,6 +161,12 @@ export let ChecklistView = {
               " ", m("span.query", m.trust(Settings.pinnedSearches.getHumanNameForSearch()))
             ]),
             m("p.nothing-found-message", t("nothing_found_message_hint")),
+            m("button.demo-notice-btn", {
+              onclick: function () {
+                Checklist.filter.clear();
+                updateRouteParams();
+              },
+            }, t("nothing_found_reset_btn")),
           ])
           : m(".checklist-results-wrapper", [
             Checklist._isDraft ? draftNotice() : null,

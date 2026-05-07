@@ -29,6 +29,8 @@ import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
 import "./filterPluginNumber.css";
 import "./shared/numericDropdown.css";
+import { Icon } from "../../components/Icon.js";
+import { mdiChevronDown, mdiChevronUp, mdiDeleteOutline } from "@mdi/js";
 
 
 
@@ -173,11 +175,12 @@ let DropdownNumber = function (initialVnode) {
 
   let _lastHistogramKey = "";
   function redrawHistogram() {
-    const key = JSON.stringify([dataPath, actualOperation, thresholdState.actualThresholds]);
+    const preview = getPreviewData();
+    const key = JSON.stringify([dataPath, actualOperation, thresholdState.actualThresholds, showDistribution, preview.possible.length]);
     if (key === _lastHistogramKey) return;
     _lastHistogramKey = key;
     window.setTimeout(() => {
-      drawHistogram(dropdownId, getOperatorPreviewValues(), getDisplayedOperatorValues());
+      drawHistogram(dropdownId, preview.possible, getDisplayedOperatorValues());
     }, 0);
   }
 
@@ -264,7 +267,9 @@ let DropdownNumber = function (initialVnode) {
                   if (el) { el.focus(); el.select?.(); }
                 }, 200);
               },
-            }, m("img[src=img/ui/search/numeric_" + getOperationIcon(key, numericFilters) + ".svg]"))
+            },          
+            m(Icon, { path: getOperationIcon(key, numericFilters) }),
+          )
           )
         ),
 
@@ -282,7 +287,7 @@ let DropdownNumber = function (initialVnode) {
                 thresholdState.actualThresholds = [null, null, null];
                 Checklist.filter.commit();
               },
-            }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
+            }, m(Icon, { path: mdiDeleteOutline })),
           ])
           : null,
 
@@ -304,46 +309,41 @@ let DropdownNumber = function (initialVnode) {
           }, formatResultCount(countResults()))
           : null,
 
-        // List mode: search box (shared renderSearchInput)
+        // List mode: all scrollable content + pinned apply at bottom
         isListMode(actualOperation)
-          ? renderSearchInput(dropdownId, val => { filter = val; })
-          : null,
-
-        // List mode: item list (shared renderOptionsSections)
-        isListMode(actualOperation)
-          ? renderOptionsSections(
-            { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
-            () => { itemsOverflowLimit += INITIAL_LIMIT; },
-            INITIAL_LIMIT
-          )
-          : null,
-
-        // List mode: check-all-shown
-        isListMode(actualOperation)
-          ? renderCheckAllShown(filter, totalPossibleUnchecked, () => {
-            commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
-            vnode.attrs.openHandler(false);
-          })
-          : null,
-
-        // Distribution toggle (list mode only)
-        isListMode(actualOperation)
-          ? m(".distribution-toggle.clickable" + (showDistribution ? ".expanded" : ""), {
-            onclick() { showDistribution = !showDistribution; },
-          }, [
-            m("img.distribution-toggle-icon[src=img/ui/search/expand.svg]"),
-            m(".distribution-toggle-label",
-              showDistribution ? t("histogram_toggle_show") : t("histogram_toggle_hide")),
+          ? m(".numeric-list-scroll", [
+            renderSearchInput(dropdownId, val => { filter = val; }),
+            renderOptionsSections(
+              { showSelected, selected, showPossible, possible, showImpossible, impossible, itemsOverflowing },
+              () => { itemsOverflowLimit += INITIAL_LIMIT; },
+              INITIAL_LIMIT
+            ),
+            renderCheckAllShown(filter, totalPossibleUnchecked, () => {
+              commitSelectedNumbers(sel => [...sel, ...filteredPossible]);
+              vnode.attrs.openHandler(false);
+            }),
+            m(".distribution-toggle.clickable" + (showDistribution ? ".expanded" : ""), {
+              onclick() { showDistribution = !showDistribution; },
+            }, [
+              m(Icon, { path: showDistribution ? mdiChevronDown : mdiChevronUp }),
+              m(".distribution-toggle-label",
+                showDistribution ? t("histogram_toggle_hide") : t("histogram_toggle_show")),
+            ]),
+            showDistribution ? renderHistogramWrap(dropdownId) : null,
+            showDistribution
+              ? renderStats([
+                { key: "stats_min", value: min !== null ? min.toLocaleString() : null, suffix: unitTag },
+                { key: "stats_max", value: max !== null ? max.toLocaleString() : null, suffix: unitTag },
+                { key: "stats_avg", value: avg.toLocaleString(), suffix: unitTag },
+                { key: "stats_distinct", value: distinct.toLocaleString() },
+              ])
+              : null,
           ])
           : null,
 
-        // Histogram (shared renderHistogramWrap)
-        (!isListMode(actualOperation) || showDistribution)
-          ? renderHistogramWrap(dropdownId)
-          : null,
-
-        // Stats
-        (!isListMode(actualOperation) || showDistribution)
+        // Histogram + stats (operator mode only)
+        !isListMode(actualOperation) ? renderHistogramWrap(dropdownId) : null,
+        !isListMode(actualOperation)
           ? renderStats([
             { key: "stats_min", value: min !== null ? min.toLocaleString() : null, suffix: unitTag },
             { key: "stats_max", value: max !== null ? max.toLocaleString() : null, suffix: unitTag },
@@ -352,7 +352,7 @@ let DropdownNumber = function (initialVnode) {
           ])
           : null,
 
-        // List mode: apply / close
+        // List mode: apply / close (pinned outside scroll area)
         isListMode(actualOperation)
           ? renderApplyButton(vnode.attrs.openHandler, () => {
             if (fd.numeric.operation !== "") {

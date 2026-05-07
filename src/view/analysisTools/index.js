@@ -15,6 +15,7 @@ export { ANALYTICAL_INTENTS } from "../../model/DataStructure.js";
 let _programmaticRouteChange = false;
 export function isProgrammaticRouteChange() { return _programmaticRouteChange; }
 export function clearProgrammaticRouteChange() { _programmaticRouteChange = false; }
+export function markAsProgrammaticRouteChange() { _programmaticRouteChange = true; }
 
 /**
  * Ordered list of tool configs - controls display order in

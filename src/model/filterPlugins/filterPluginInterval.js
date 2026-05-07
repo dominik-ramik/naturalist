@@ -15,13 +15,15 @@ import { buildRangeFilterLabel, buildOperatorInputUi, formatResultCount, renderS
 import { renderHistogramWrap } from "./shared/histogramWidget.js";
 
 import "./shared/numericDropdown.css";
+import { mdiContain, mdiDeleteOutline, mdiVectorDifference, mdiVectorIntersection } from "@mdi/js";
+import { Icon } from "../../components/Icon.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 export const intervalFilters = {
-  contains:     { operation: "contains",     icon: "contains",     values: 1, comparer: (from, to, t1)     => from <= t1 && t1 <= to },
-  overlaps:     { operation: "overlaps",     icon: "overlaps",     values: 2, comparer: (from, to, t1, t2) => from <= t2 && to >= t1 },
-  fully_inside: { operation: "fully_inside", icon: "fully_inside", values: 2, comparer: (from, to, t1, t2) => from >= t1 && to <= t2 },
+  contains: { operation: "contains", icon: mdiContain, values: 1, comparer: (from, to, t1) => from <= t1 && t1 <= to },
+  overlaps: { operation: "overlaps", icon: mdiVectorDifference, values: 2, comparer: (from, to, t1, t2) => from <= t2 && to >= t1 },
+  fully_inside: { operation: "fully_inside", icon: mdiVectorIntersection, values: 2, comparer: (from, to, t1, t2) => from >= t1 && to <= t2 },
 };
 
 const intervalFilterOperations = ["contains", "overlaps", "fully_inside"];
@@ -54,8 +56,8 @@ let DropdownInterval = function (initialVnode) {
 
   const thresholdState = {
     initialThresholds: [null, null, null],
-    actualThresholds:  [null, null, null],
-    thresholdsShown:   0,
+    actualThresholds: [null, null, null],
+    thresholdsShown: 0,
   };
   let actualOperation = "contains";
 
@@ -64,14 +66,14 @@ let DropdownInterval = function (initialVnode) {
     if (!opDef) return false;
     for (let i = 1; i <= opDef.values; i++) {
       if (typeof thresholdState.actualThresholds[i] !== "number" ||
-          isNaN(thresholdState.actualThresholds[i])) return false;
+        isNaN(thresholdState.actualThresholds[i])) return false;
     }
     return !(opDef.values === 2 && thresholdState.actualThresholds[2] < thresholdState.actualThresholds[1]);
   }
 
   function getFilteredPairs() {
     const opDef = intervalFilters[actualOperation];
-    const all   = Checklist.filter.data[dataPath].possible || [];
+    const all = Checklist.filter.data[dataPath].possible || [];
     if (!inputsOk() || !opDef) return all;
     return all.filter(([from, to]) =>
       opDef.comparer(from, to, thresholdState.actualThresholds[1], thresholdState.actualThresholds[2])
@@ -79,14 +81,14 @@ let DropdownInterval = function (initialVnode) {
   }
 
   function countResults() { return inputsOk() ? getFilteredPairs().length : 0; }
-  function canApply()     { return inputsOk() && countResults() > 0; }
+  function canApply() { return inputsOk() && countResults() > 0; }
 
   const numericInput = makeNumericInputFn({
-    state:        thresholdState,
+    state: thresholdState,
     dropdownId,
     getOperation: () => actualOperation,
     getPlaceholder(thresholdNumber) {
-      const fd  = Checklist.filter.data[dataPath];
+      const fd = Checklist.filter.data[dataPath];
       const min = fd.min ?? fd.globalMin ?? null;
       const max = fd.max ?? fd.globalMax ?? null;
       return getIntervalPlaceholder(thresholdNumber, actualOperation, min, max);
@@ -94,8 +96,8 @@ let DropdownInterval = function (initialVnode) {
     getExtraError(thresholdNumber, thresholds, _op) {
       const opDef = intervalFilters[actualOperation];
       if (opDef?.values === 2 && thresholdNumber === 2 &&
-          thresholds[2] !== null && thresholds[1] !== null &&
-          thresholds[2] < thresholds[1]) return true;
+        thresholds[2] !== null && thresholds[1] !== null &&
+        thresholds[2] < thresholds[1]) return true;
       return false;
     },
   });
@@ -103,7 +105,7 @@ let DropdownInterval = function (initialVnode) {
   let _lastHistogramKey = "";
 
   function redrawHistogram() {
-    const fd  = Checklist.filter.data[dataPath];
+    const fd = Checklist.filter.data[dataPath];
     const key = JSON.stringify([(fd.possible || []).length, actualOperation, thresholdState.actualThresholds]);
     if (key === _lastHistogramKey) return;
     _lastHistogramKey = key;
@@ -115,10 +117,10 @@ let DropdownInterval = function (initialVnode) {
   return {
     oninit(vnode) {
       dataPath = vnode.attrs.dataPath;
-      const fd    = Checklist.filter.data[dataPath];
+      const fd = Checklist.filter.data[dataPath];
       const saved = fd.numeric.operation;
       thresholdState.initialThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
-      thresholdState.actualThresholds  = [null, fd.numeric.threshold1, fd.numeric.threshold2];
+      thresholdState.actualThresholds = [null, fd.numeric.threshold1, fd.numeric.threshold2];
       actualOperation = intervalFilterOperations.includes(saved) ? saved : "contains";
     },
     oncreate: redrawHistogram,
@@ -128,11 +130,11 @@ let DropdownInterval = function (initialVnode) {
       dataPath = vnode.attrs.dataPath;
       thresholdState.thresholdsShown = 0;
 
-      const fd       = Checklist.filter.data[dataPath];
+      const fd = Checklist.filter.data[dataPath];
       const allPairs = fd.possible || [];
-      const bounds   = { min: fd.min ?? fd.globalMin ?? 0, max: fd.max ?? fd.globalMax ?? 100 };
-      const unit     = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
-      const unitTag  = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
+      const bounds = { min: fd.min ?? fd.globalMin ?? 0, max: fd.max ?? fd.globalMax ?? 100 };
+      const unit = getUnitFromTemplate(Checklist.getMetaForDataPath(dataPath));
+      const unitTag = unit ? m("span.filter-unit-suffix", m.trust(" " + unitToHtml(unit))) : null;
 
       let inputUi = buildOperatorInputUi(actualOperation, numericInput, bounds.min, bounds.max, intervalFilters, "interval_filter_");
       if (unit && inputUi) inputUi = [...inputUi, m("span.filter-unit", m.trust(unitToHtml(unit)))];
@@ -149,7 +151,9 @@ let DropdownInterval = function (initialVnode) {
                   if (el) { el.focus(); el.select?.(); }
                 }, 200);
               },
-            }, m("img[src=img/ui/search/interval_" + getIntervalOperationIcon(opKey) + ".svg]"))
+            },
+              m(Icon, { path: getIntervalOperationIcon(opKey, intervalFilters) }),
+            )
           )
         ),
 
@@ -159,12 +163,12 @@ let DropdownInterval = function (initialVnode) {
           m(".clear-button.clickable", {
             onclick() {
               thresholdState.initialThresholds = [null, null, null];
-              thresholdState.actualThresholds  = [null, null, null];
+              thresholdState.actualThresholds = [null, null, null];
               actualOperation = "contains";
               fd.numeric = { operation: "", threshold1: null, threshold2: null };
               Checklist.filter.commit();
             },
-          }, m("img[src=img/ui/search/clear_filter_dark.svg]")),
+          }, m(Icon, { path: mdiDeleteOutline }),),
         ]),
 
         // Apply
@@ -172,7 +176,7 @@ let DropdownInterval = function (initialVnode) {
           onclick() {
             if (!canApply()) return;
             fd.numeric = {
-              operation:  actualOperation,
+              operation: actualOperation,
               threshold1: thresholdState.actualThresholds[1],
               threshold2: thresholdState.actualThresholds[2],
             };
@@ -233,7 +237,7 @@ export const filterPluginInterval = {
 
   describeSerializedValue(dataPath, serialized, opts = {}) {
     if (!serialized?.o) return "";
-    const open  = opts.html ? "<strong>" : "";
+    const open = opts.html ? "<strong>" : "";
     const close = opts.html ? "</strong>" : "";
     return buildRangeFilterLabel(
       dataPath, serialized.o, serialized.a, serialized.b,
@@ -262,8 +266,8 @@ export const filterPluginInterval = {
 
   clearPossible(fd) {
     fd.possible = [];
-    fd.min      = null;
-    fd.max      = null;
+    fd.min = null;
+    fd.max = null;
   },
 
   accumulatePossible(fd, _rawValue, leafValues) {
@@ -290,7 +294,7 @@ export const filterPluginInterval = {
 
   deserializeFromQuery(fd, val) {
     if (val && typeof val === "object") {
-      fd.numeric.operation  = val.o;
+      fd.numeric.operation = val.o;
       fd.numeric.threshold1 = val.a;
       if ("b" in val) fd.numeric.threshold2 = val.b;
     }
