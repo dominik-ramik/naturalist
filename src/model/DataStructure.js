@@ -90,7 +90,7 @@ export const CUSTOMIZATION_ITEMS = {
     */
 };
 
-export const nlDataStructureSheets = {
+export const DataStructure = {
     content: {
         name: "nl_content",
         required: true,
