@@ -412,7 +412,7 @@ table.results-table td.region-color {
 }
 
 table.rd-table {
-  table-layout: fixed;
+  table-layout: auto;
   width: 100%;
 }
 
@@ -433,6 +433,7 @@ table.rd-table .rd-cell-name {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  max-width: 6em;
 }
 
 table.rd-table .rd-cell-value,
