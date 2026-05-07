@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx-js-style"
-import { nlDataStructureSheets } from "./DataStructure";
+import { DataStructure } from "./DataStructure";
 
 export function exportTemplateSpreadsheetFilled() {
   localExportSpreadsheetFromNLData(nlDataStructure, false);
@@ -329,5 +329,5 @@ export let nlDataStructure = {
 
     _columnInfosCache: {}, // Add cache object
   },
-  sheets: nlDataStructureSheets,
+  sheets: DataStructure,
 };
