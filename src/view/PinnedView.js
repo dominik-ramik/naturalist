@@ -1,9 +1,12 @@
 import m from "mithril";
 import { t, tf } from 'virtual:i18n-self';
+import "./PinnedView.css";
 import { routeTo } from "../components/Utils.js";
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
-import { validateActiveToolState } from "./analysisTools/index.js";
+import { validateActiveToolState, markAsProgrammaticRouteChange } from "./analysisTools/index.js";
+import { Icon } from "../components/Icon.js";
+import { mdiDeleteOutline, mdiPinOutline } from "@mdi/js";
 
 
 
@@ -16,7 +19,7 @@ export let PinnedView = {
           : {
             type: "button",
             state: "",
-            icon: "ui/menu/push_pin",
+            icon: mdiPinOutline,
             title: t("pin_this_search"),
             action: function () {
               Settings.pinnedSearches.addCurrent();
@@ -35,22 +38,17 @@ export let PinnedView = {
             Settings.pinnedSearches.matchesCurrent(pinnedItem)
               ? "inactive"
               : "",
-          title: m(
-            "div",
-            m.trust(
-              Settings.pinnedSearches.getHumanNameForSearch(pinnedItem)
-            )
-          ),
+          title: m("span", m.trust(Settings.pinnedSearches.getHumanNameForSearch(pinnedItem))),
           action: function () {
-            if (pinnedItem.v) Settings.viewType(pinnedItem.v);
-            if (pinnedItem.s) Settings.analyticalIntent(pinnedItem.s);
+            if (pinnedItem.params.v) Settings.viewType(pinnedItem.params.v);
+            if (pinnedItem.params.s) Settings.analyticalIntent(pinnedItem.params.s);
             if (Checklist._isDataReady) {
               validateActiveToolState(Checklist.getData());
             }
-            Checklist.filter.setFromQuery(pinnedItem);
-            routeTo("/checklist");
+            markAsProgrammaticRouteChange();
+            routeTo("/checklist", pinnedItem.params.q, pinnedItem.params.l);
           },
-          altActionIcon: "img/ui/menu/remove.svg",
+          altActionIcon: mdiDeleteOutline,
           altAction: function () {
             Settings.pinnedSearches.remove(pinnedItem);
           },
@@ -59,7 +57,7 @@ export let PinnedView = {
     );
 
     return m(
-      ".pinned-menu-items[style=background-color: white; color: black;]",
+      ".pinned-view",
       items.map(function (item) {
         if (!item) {
           return null;
@@ -73,34 +71,35 @@ export let PinnedView = {
         }
 
         if (item.type == "button") {
+          const isInactive = item.state == "inactive";
           return m(
-            ".card.multi-item-menu-button[style=display: flex; flex-direction: row;]",
+            ".pinned-item-card" + (isInactive ? ".inactive" : ""),
             {
               onclick: function (e) {
-                if (item.state != "inactive") {
+                if (!isInactive) {
                   item.action();
-                  open = false;
                 }
               },
             },
             [
-              m(
-                ".menu-item-icon",
-                item.icon ? m("img[src=./img/" + item.icon + ".svg]") : null
+              item.icon
+                ? m(".pinned-item-icon",
+                  m(Icon, {path: item.icon}),
+                  )
+                : null,
+              m(".pinned-item-body",
+                m(".pinned-item-title", item.title)
               ),
-              m(".menu-item" + (item.state == "inactive" ? ".inactive" : ""), [
-                m(".menu-item-title", item.title),
-              ]),
               item.altActionIcon
                 ? m(
-                  ".menu-item.alt-action-item",
+                  ".pinned-item-remove",
                   {
                     onclick: function (e) {
                       item.altAction();
                       e.stopPropagation();
                     },
                   },
-                  m("img[src=" + item.altActionIcon + "]")
+                  m(Icon, { path: item.altActionIcon }),
                 )
                 : null,
             ]

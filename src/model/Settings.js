@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import m from "mithril";
 import { formatList } from "../components/Utils.js";
 import { Checklist } from "./Checklist.js";
 import { dataCustomTypes } from "./customTypes/index.js";
@@ -356,143 +357,162 @@ export let Settings = {
   },
 
   pinnedSearches: {
-    getAll: function () {
-      let storedItem = window.localStorage.getItem("pinned");
-      if (!storedItem) {
-        storedItem = "[]";
-      }
-      let pinned = JSON.parse(storedItem);
+    /*
+     * Storage format: each pin is { params, label }
+     *
+     *   params — the route-param object that routeTo() would build:
+     *            { l, q, v, s }  (language, query, viewType, analyticalIntent)
+     *            Stored verbatim so restoration is a direct m.route.set() call.
+     *            Any future params added to routeTo() are automatically included
+     *            when new pins are saved; old pins simply won't have those keys,
+     *            which is harmless.
+     *
+     *   label  — HTML string computed once at save time (keywords bolded).
+     *            Frozen so it never mutates with dataset changes.
+     *
+     * Any entry that doesn't conform to this shape is silently discarded.
+     */
 
-      let current = null;
-      let others = [];
-
-      pinned.forEach(function (pinnedItem) {
-        if (Settings.pinnedSearches.matchesCurrent(pinnedItem)) {
-          current = pinnedItem;
-        } else {
-          others.push(pinnedItem);
-        }
-      });
-
-      let sortedPinned = [];
-      if (current != null) {
-        sortedPinned.push(current);
-      }
-      if (others.length > 0) {
-        sortedPinned = sortedPinned.concat(others);
-      }
-
-      return sortedPinned;
+    _isValidPin: function (p) {
+      return p !== null &&
+             typeof p === "object" &&
+             typeof p.params === "object" && p.params !== null &&
+             typeof p.label === "string";
     },
-    addCurrent: function () {
-      if (this.isCurrentSearchPinned()) {
-        return;
+
+    _currentParams: function () {
+      return {
+        l: m.route.param("l") || Settings.language() || "",
+        q: Checklist.queryKey(),
+        v: Settings.viewType(),
+        s: Settings.analyticalIntent(),
+      };
+    },
+
+    _paramsMatch: function (a, b) {
+      if (!a || !b) return false;
+      return a.l === b.l &&
+             a.q === b.q &&
+             a.v === b.v &&
+             a.s === b.s;
+    },
+
+    getAll: function () {
+      try {
+        const raw = window.localStorage.getItem("pinned");
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+
+        // Discard any entries that don't match the current format.
+        const valid = parsed.filter(Settings.pinnedSearches._isValidPin);
+        if (valid.length !== parsed.length) {
+          window.localStorage.setItem("pinned", JSON.stringify(valid));
+        }
+
+        // Active pin (if any) sorts to the top.
+        const current = valid.filter(p => Settings.pinnedSearches._paramsMatch(p.params, Settings.pinnedSearches._currentParams()));
+        const others  = valid.filter(p => !Settings.pinnedSearches._paramsMatch(p.params, Settings.pinnedSearches._currentParams()));
+        return current.concat(others);
+      } catch (e) {
+        return [];
       }
+    },
 
-      let pinned = this.getAll();
-      let item = JSON.parse(Checklist.queryKey());
-      item.v = Settings.viewType();
-      item.s = Settings.analyticalIntent();
-      pinned.push(item);
+    addCurrent: function () {
+      if (this.isCurrentSearchPinned()) return;
 
+      const params = Settings.pinnedSearches._currentParams();
+      const label  = Settings.pinnedSearches.getHumanNameForSearch();
+
+      const pinned = this.getAll();
+      pinned.push({ params, label });
       window.localStorage.setItem("pinned", JSON.stringify(pinned));
     },
-getHumanNameForSearch: function (itemObject, usePlainTextOutput) {
-  if (itemObject === undefined) {
-    itemObject = JSON.parse(Checklist.queryKey());
-  }
 
-  // Strip tool/scope keys - only the filter portion matters here
-  const { v: _v, s: pinnedScope, ...filterPart } = itemObject;
-  itemObject = filterPart;
+    /*
+     * Returns the HTML label for a given pin, or computes it for the current
+     * state when called with no argument (used by ChecklistView and others).
+     */
+    getHumanNameForSearch: function (pinnedItem) {
+      if (pinnedItem && typeof pinnedItem.label === "string") {
+        return pinnedItem.label;
+      }
+      return Settings.pinnedSearches._buildLabel();
+    },
 
-  if (Object.keys(itemObject).length === 0) {
-    const scope = pinnedScope || Settings.analyticalIntent();
-    return scope === ANALYTICAL_INTENT_OCCURRENCE ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
-  }
-
-  const opts  = { html: !usePlainTextOutput };
-  const names = [];
-
-  ["taxa", "data"].forEach(function (type) {
-    if (!itemObject.hasOwnProperty(type)) return;
-    Object.keys(itemObject[type]).forEach(function (dataPath) {
-      // Guard: stale pinned searches may reference removed data paths
-      if (type === "data" && !Object.prototype.hasOwnProperty.call(Checklist.getDataMeta(), dataPath)) {
-        Settings.pinnedSearches.remove(itemObject);
-        return;
+    /*
+     * Builds an HTML description of the current filter state.
+     * Keywords are wrapped in <strong>; falls back to scope name when empty.
+     */
+    _buildLabel: function () {
+      let filterPart;
+      try {
+        filterPart = JSON.parse(Checklist.queryKey());
+      } catch (e) {
+        filterPart = {};
       }
 
-      const categoryName = type === "taxa"
-        ? Checklist.getNameOfTaxonLevel(dataPath)
-        : Checklist.getDataMeta()[dataPath].searchCategory;
+      const scope = Settings.analyticalIntent();
+      const names = [];
 
-      // For taxa the filterDef type is always "text"; for data use the column's dataType
-      const dataType = type === "taxa"
-        ? "text"
-        : Checklist.getMetaForDataPath(dataPath).dataType;
+      ["taxa", "data"].forEach(function (type) {
+        if (!Object.prototype.hasOwnProperty.call(filterPart, type)) return;
+        Object.keys(filterPart[type]).forEach(function (dataPath) {
+          if (type === "data" && !Object.prototype.hasOwnProperty.call(Checklist.getDataMeta(), dataPath)) return;
 
-      const plugin = dataCustomTypes[dataType]?.filterPlugin;
-      if (!plugin) return;
+          const categoryName = type === "taxa"
+            ? Checklist.getNameOfTaxonLevel(dataPath)
+            : Checklist.getDataMeta()[dataPath].searchCategory;
 
-      const desc = plugin.describeSerializedValue(
-        dataPath,
-        itemObject[type][dataPath],
-        { ...opts, categoryName }
-      );
-      if (desc) names.push(desc);
-    });
-  });
+          const dataType = type === "taxa"
+            ? "text"
+            : Checklist.getMetaForDataPath(dataPath).dataType;
 
-  if (itemObject.hasOwnProperty("text") && itemObject.text.length > 0) {
-    let textDisplay = itemObject.text;
-    if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
-      const joiner = usePlainTextOutput
-        ? " " + t("crumb_or") + " "
-        : "</strong> " + t("crumb_or") + " <strong>";
-      textDisplay = textDisplay.split(Settings.SEARCH_OR_SEPARATOR).join(joiner);
-    }
-    names.push(
-      t("text_is_list_joiner") + " " +
-      (usePlainTextOutput ? "" : "<strong>") +
-      textDisplay +
-      (usePlainTextOutput ? "" : "</strong>")
-    );
-  }
+          const plugin = dataCustomTypes[dataType]?.filterPlugin;
+          if (!plugin) return;
 
-  const result = formatList(names);
-  if (!result) {
-    const scope = pinnedScope || Settings.analyticalIntent();
-    return scope === ANALYTICAL_INTENT_OCCURRENCE ? t("view_chart_mode_occurrence") : t("view_chart_mode_taxa");
-  }
-  return result;
-},
-    isCurrentSearchPinned: function () {
-      return this.getAll().some(function (pinnedItem) {
-        return Settings.pinnedSearches.matchesCurrent(pinnedItem);
+          const desc = plugin.describeSerializedValue(
+            dataPath,
+            filterPart[type][dataPath],
+            { html: true, categoryName }
+          );
+          if (desc) names.push(desc);
+        });
       });
-    },
-    matchesCurrent: function (pinnedItem) {
-      const { v, s, ...filterPart } = pinnedItem;
-      if (JSON.stringify(filterPart) !== Checklist.queryKey()) return false;
-      if (v && v !== Settings.viewType()) return false;
-      if (s && s !== Settings.analyticalIntent()) return false;
-      return true;
-    },
-    remove: function (itemObject) {
-      let toRemove = JSON.stringify(itemObject);
 
-      let withoutItemToRemove = this.getAll().filter(function (pinnedItem) {
-        if (JSON.stringify(pinnedItem) == toRemove) {
-          return false;
+      if (Object.prototype.hasOwnProperty.call(filterPart, "text") && filterPart.text.length > 0) {
+        let textDisplay = filterPart.text;
+        if (textDisplay.indexOf(Settings.SEARCH_OR_SEPARATOR) !== -1) {
+          textDisplay = textDisplay
+            .split(Settings.SEARCH_OR_SEPARATOR)
+            .join("</strong> " + t("crumb_or") + " <strong>");
         }
-        return true;
-      });
+        names.push(t("text_is_list_joiner") + " <strong>" + textDisplay + "</strong>");
+      }
 
-      window.localStorage.setItem(
-        "pinned",
-        JSON.stringify(withoutItemToRemove)
-      );
+      const result = formatList(names);
+      if (!result) {
+        return scope === ANALYTICAL_INTENT_OCCURRENCE
+          ? t("view_chart_mode_occurrence")
+          : t("view_chart_mode_taxa");
+      }
+      return result;
+    },
+
+    isCurrentSearchPinned: function () {
+      const cur = Settings.pinnedSearches._currentParams();
+      return this.getAll().some(p => Settings.pinnedSearches._paramsMatch(p.params, cur));
+    },
+
+    matchesCurrent: function (pinnedItem) {
+      if (!Settings.pinnedSearches._isValidPin(pinnedItem)) return false;
+      return Settings.pinnedSearches._paramsMatch(pinnedItem.params, Settings.pinnedSearches._currentParams());
+    },
+
+    remove: function (pinnedItem) {
+      const updated = this.getAll().filter(p => !Settings.pinnedSearches._paramsMatch(p.params, pinnedItem.params));
+      window.localStorage.setItem("pinned", JSON.stringify(updated));
     },
   },
 };

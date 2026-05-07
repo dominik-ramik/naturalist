@@ -1,0 +1,102 @@
+/* ==========================================================================
+   Pinned View — page wrapper
+   ========================================================================== */
+.pinned-view {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  color: black;
+}
+
+/* ==========================================================================
+   Pinned item card
+   ========================================================================== */
+.pinned-item-card {
+  /* Match the app-wide card aesthetic */
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+
+  /* Layout */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.18s, background-color 0.15s;
+}
+
+.pinned-item-card:hover {
+  box-shadow: 0.05em 0.05em 0.45em 0.15em #0c0c0c44;
+  background-color: #e6eaed;
+}
+
+/* Active / current search — visually muted, not clickable */
+.pinned-item-card.inactive {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.pinned-item-card.inactive:hover {
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  background-color: #eceff2;
+}
+
+/* ==========================================================================
+   Card regions
+   ========================================================================== */
+
+/* Leading icon area */
+.pinned-item-icon {
+  display: flex;
+  align-items: center;
+  padding: 0.85em 0.5em 0.85em 1em;
+  flex-shrink: 0;
+}
+
+.pinned-item-icon img {
+  height: 1.2em;
+  width: 1.2em;
+  opacity: 0.5;
+}
+
+/* Main text body — grows to fill available space */
+.pinned-item-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.85em 0.75em;
+  min-width: 0; /* allow text to truncate inside flex */
+}
+
+.pinned-item-title {
+  font-size: 0.95em;
+  line-height: 1.35;
+}
+
+/* Trailing remove button — separate tap target, visually quiet */
+.pinned-item-remove {
+  display: flex;
+  align-items: center;
+  padding: 0.85em 1em;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s, background-color 0.15s;
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.pinned-item-remove:hover {
+  opacity: 0.9;
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+.pinned-item-remove img {
+  height: 1.1em;
+  width: 1.1em;
+}
