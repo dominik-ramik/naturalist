@@ -1129,6 +1129,26 @@ export let DataManager = function () {
         }
       );
 
+      // Error when a declared mapregions column has no applicable legend rows at all
+      // (neither column-specific rows nor any global rows with empty columnName).
+      // Such columns will silently render every status value with the built-in
+      // default color, which is almost always unintentional.
+      const hasAnyGlobalRow = meta.mapRegionsLegend.statuses.some(s => !s.columnName);
+      if (!hasAnyGlobalRow) {
+        Object.entries(meta.data)
+          .filter(([, v]) => v.dataType === "mapregions")
+          .forEach(function ([colKey]) {
+            const hasCoverage = meta.mapRegionsLegend.statuses.some(s => s.columnName === colKey);
+            if (!hasCoverage) {
+              Logger.error(
+                'Map regions legend: no legend rows found for mapregions column "' + colKey +
+                '". All status values for this column will render with the built-in default color.',
+                "Map regions legend"
+              );
+            }
+          });
+      }
+
       data.sheets.appearance.tables.mapRegionsNames.data[lang.code].forEach(
         function (row) {
           meta.mapRegionsNames.push({

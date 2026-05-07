@@ -77,7 +77,7 @@ async function autoRebuildFromHandle() {
     const file = await ManageStore.fileHandle.getFile();
     Toast.show(t("auto_rebuild_triggered"), { timeout: 3000 });
     m.redraw();
-    await processFileObject(file, ManageStore.checkAssetsSize);
+    await processFileObject(file, ManageStore.checkAssetsSize, /* isBackgroundRebuild */ true);
   } catch (_e) {
     stopFileWatch();
     m.redraw();
@@ -139,6 +139,9 @@ const ManageStore = {
   // ── Logger observer handle
   loggerObserver: null,
 
+  // ── Internal flag for showing logger messages on watched erroring files
+  _isViewMounted: false,
+
   // ────────────────────────────────────────────────────────────────────────────
 
   reset() {
@@ -174,7 +177,7 @@ const ManageStore = {
 // ─── PIPELINE ─────────────────────────────────────────────────────────────────
 
 /** Read a File object and feed it into the build pipeline. */
-async function processFileObject(file, checkAssetsSize) {
+async function processFileObject(file, checkAssetsSize, isBackgroundRebuild = false) {
   if (!file || !file.name) {
     Logger.error(t("chose_a_file"));
     return;
@@ -202,14 +205,14 @@ async function processFileObject(file, checkAssetsSize) {
     reader.readAsArrayBuffer(file);
   });
 
-  setTimeout(() => _runPipeline(buffer, checkAssetsSize), 50);
+  setTimeout(() => _runPipeline(buffer, checkAssetsSize, undefined, false, isBackgroundRebuild), 50);
 }
 
 /**
  * Core build pipeline: parse → compile → optionally route to DwC.
  * onSuccess is used only by the deep-link flow to redirect to /checklist.
  */
-async function _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo = false) {
+async function _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo = false, isBackgroundRebuild = false) {
   ManageStore.dataman = new DataManager();
   ManageStore.dataman.loadData(new ExcelBridge(buffer), checkAssetsSize);
   const compiled = ManageStore.dataman.getCompiledChecklist();
@@ -219,6 +222,12 @@ async function _runPipeline(buffer, checkAssetsSize, onSuccess, isDemo = false) 
     deepLinkProcessing = false;
     ManageStore.phase = "dirty";
     startFileWatch();
+
+    if (isBackgroundRebuild && !ManageStore._isViewMounted) {
+      routeTo("/manage");
+      return; // skip redraw — mithril will redraw on route change
+    }
+
     m.redraw();
     return;
   }
@@ -865,7 +874,7 @@ function renderReadyResult() {
     ]),
 
     renderPublishSection(),
-    
+
     hasDwc ? renderDwcSection(compiled, dwcHasErrors, dwcSucceeded, dwcResult) : null,
   ];
 }
@@ -1180,6 +1189,7 @@ export let ManageView = {
   },
 
   oncreate() {
+    ManageStore._isViewMounted = true;
     ManageStore.checkPHPPresent();
 
     if (!ManageStore.loggerObserver) {
@@ -1200,6 +1210,7 @@ export let ManageView = {
   },
 
   onremove() {
+    ManageStore._isViewMounted = false;
     if (ManageStore.loggerObserver) {
       Logger.removeObserver(ManageStore.loggerObserver);
     }

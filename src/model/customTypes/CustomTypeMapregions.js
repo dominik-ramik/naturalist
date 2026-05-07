@@ -812,9 +812,10 @@ function renderRegionsList(data, uiContext, hl) {
     const numericStatus = parseNumericStatus(status);
     const statusRange = fd?.statusFilter || null;
     const statusIsInNumericRange = numericStatus !== null &&
-      (statusRange?.rangeMin !== null || statusRange?.rangeMax !== null) &&
-      (statusRange?.rangeMin === null || numericStatus >= statusRange.rangeMin) &&
-      (statusRange?.rangeMax === null || numericStatus <= statusRange.rangeMax);
+      statusRange !== null &&
+      (statusRange.rangeMin !== null || statusRange.rangeMax !== null) &&
+      (statusRange.rangeMin === null || numericStatus >= statusRange.rangeMin) &&
+      (statusRange.rangeMax === null || numericStatus <= statusRange.rangeMax);
 
     const regionContent = [m("strong", applyHighlight(regionName, hl))];
     if (footnoteIndices.length > 0) regionContent.push(m("sup", footnoteIndices.sort((a, b) => a - b).join(",")));
