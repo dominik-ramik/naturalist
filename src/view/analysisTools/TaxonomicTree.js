@@ -247,6 +247,14 @@ function ChecklistTree() {
                 const visibilityByContent = showEmptyTaxa || branchHasOccurrences(node);
 
                 return visibilityByLevel && visibilityByContent;
+            }).sort(function (a, b) {
+                // Mirror TaxonView.js sortedChildKeys: occurrences (no-taxon rows
+                // that land directly under the root) must appear before real taxa.
+                const aIsOccurrence = cachedTree.children[a].taxonMetaIndex === occurrenceMetaIndex;
+                const bIsOccurrence = cachedTree.children[b].taxonMetaIndex === occurrenceMetaIndex;
+                if (aIsOccurrence && !bIsOccurrence) return -1;
+                if (!aIsOccurrence && bIsOccurrence) return 1;
+                return 0;
             });
 
             return m(".listed-taxa", [

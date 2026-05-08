@@ -1,4 +1,5 @@
 {
   "in_taxon_group": "{0} {1}",
-  "item": "Élément"
+  "item": "Élément",
+  "not_identified": "(indet.)"
 }

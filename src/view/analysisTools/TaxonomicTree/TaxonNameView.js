@@ -23,6 +23,7 @@ export let TaxonNameView = {
 
     const taxaMetaKeys = Object.keys(Checklist.getTaxaMeta());
     const isSparse = vnode.attrs.parents.length < vnode.attrs.currentTaxonLevel;
+    const isOccurrenceLevel = vnode.attrs.currentTaxonLevel === Checklist.getOccurrenceMetaIndex();
 
     let parentTaxonIndicator;
     if (isSparse) {
@@ -101,25 +102,27 @@ export let TaxonNameView = {
           ),
         ])
         : null,
-      vnode.attrs.currentTaxonLevel > 0 &&
-        inverseTaxonLevel >= 1 &&
-        parentTaxonIndicator !== null
-        ? m(
-          ".parent-taxon-indicator.clickable",
-          {
-            onclick: function (e) {
-              Checklist.filter.clear();
-              Checklist.filter.taxa[
-                parentTaxonIndicator.rankColumnName
-              ].selected = [parentTaxonIndicator.taxon.name];
-              Checklist.filter.commit("/checklist");
+      vnode.attrs.currentTaxonLevel > 0 && inverseTaxonLevel >= 1
+        ? parentTaxonIndicator !== null
+          ? m(
+            ".parent-taxon-indicator.clickable",
+            {
+              onclick: function (e) {
+                Checklist.filter.clear();
+                Checklist.filter.taxa[
+                  parentTaxonIndicator.rankColumnName
+                ].selected = [parentTaxonIndicator.taxon.name];
+                Checklist.filter.commit("/checklist");
+              },
             },
-          },
-          t("in_taxon_group", [
-            parentTaxonIndicator.rank.toLowerCase(),
-            parentTaxonIndicator.taxon.name,
-          ])
-        )
+            t("in_taxon_group", [
+              parentTaxonIndicator.rank.toLowerCase(),
+              parentTaxonIndicator.taxon.name,
+            ])
+          )
+          : isOccurrenceLevel
+            ? m(".parent-taxon-indicator", t("not_identified"))
+            : null
         : null
     );
   },
