@@ -170,8 +170,11 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
     taxonLeaf.name + (authority ? "\x00" + authority : "")
   );
 
-  // Summary tab is only meaningful for taxa that exist in the database.
-  if (isInChecklist) {
+  // Summary tab is only meaningful for taxa that exist in the database
+  // and have at least one non-occurrence taxon level populated.
+  const occurrenceMetaIndex = Checklist.getOccurrenceMetaIndex();
+  const hasTaxa = taxon.t.some((entry, i) => i !== occurrenceMetaIndex && entry != null);
+  if (isInChecklist && hasTaxa) {
     tabs["summary"] = new TabsContainerTab(
       TabSummary(taxon, taxonName),
       getUiForTab("summary").icon,
