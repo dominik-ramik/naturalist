@@ -1,5 +1,4 @@
 import m from "mithril";
-import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
 
 import { Settings } from "../../../model/Settings.js";
 import { copyToClipboard, routeTo } from "../../../components/Utils.js";
@@ -8,7 +7,7 @@ import { TaxonDataView } from "./TaxonDataView.js";
 import { TaxonNameView } from "./TaxonNameView.js";
 
 import "./TaxonView.css";
-import { mdiImageOutline, mdiKeyVariant, mdiMagnify } from "@mdi/js";
+import { mdiKeyVariant, mdiMagnify } from "@mdi/js";
 import { Icon } from "../../../components/Icon.js";
 import { getUiForTab } from "../../../components/TabsUi.js";
 

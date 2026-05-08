@@ -178,7 +178,7 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
     tabs["summary"] = new TabsContainerTab(
       TabSummary(taxon, taxonName),
       getUiForTab("summary").icon,
-      t(getUiForTab("summary").text),
+      getUiForTab("summary").text,
       function () {
         Settings.currentDetailsTab("summary");
         routeTo("/details/" + taxonRouteParam + "/summary");
@@ -216,7 +216,7 @@ function TabsForDetails(detailsTabs, taxon, taxonName) {
     tabs[key] = new TabsContainerTab(
       tabData,
       getUiForTab(key).icon,
-      t(getUiForTab(key).text),
+      getUiForTab(key).text,
       function () {
         Settings.currentDetailsTab(key);
         routeTo("/details/" + taxonRouteParam + "/" + Settings.currentDetailsTab());

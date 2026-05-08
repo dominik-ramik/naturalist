@@ -1,4 +1,5 @@
 import { mdiBookOpenVariantOutline, mdiCloudSearchOutline, mdiImageOutline, mdiMapOutline, mdiTextBoxSearchOutline } from "@mdi/js";
+import { t } from 'virtual:i18n-self';
 
 export function getUiForTab(tabId) {
 
@@ -6,27 +7,27 @@ export function getUiForTab(tabId) {
         case "summary":
             return {
                 icon: mdiTextBoxSearchOutline,
-                text: "tab_title_summary"
+                text: t("tab_title_summary")
             }
         case "externalsearch":
             return {
                 icon: mdiCloudSearchOutline,
-                text: "tab_title_externalsearch"
+                text: t("tab_title_externalsearch")
             }
         case "media":
             return {
                 icon: mdiImageOutline,
-                text: "tab_title_media"
+                text: t("tab_title_media")
             }
         case "map":
             return {
                 icon: mdiMapOutline,
-                text: "tab_title_map"
+                text: t("tab_title_map")
             }
         case "text":
             return {
                 icon: mdiBookOpenVariantOutline,
-                text: "tab_title_text"
+                text: t("tab_title_text")
             }
 
         default:
