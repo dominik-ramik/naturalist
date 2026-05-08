@@ -12,6 +12,7 @@
         "dm_month_names_duplicates": "Customization item 'Month names' for language '{0}' contains duplicate month names: {1}.",
         "dm_column_names_duplicate": "Multiple columns in the project data sheet have the header {0}, only one column should be called so in order to avoid ambiguities",
         "dm_incomplete_taxa_info_row": "In project data sheet {0} on line {1} review the content of taxa columns (in particular {2}); each line should have a complete set of taxonomic units from the topmost down to the level you choose, but the levels in between need to be filled",
+        "dm_row_no_taxa_no_occurrence": "Row {0} in the data sheet has no taxon information and no occurrence ID. Every row must have at least one taxon column filled in or a valid occurrence ID.",
         "dm_wrong_belongs_to": "In sheet {0} on row {1}: column {2} is declared as {3} data but this row is a {4} row. The two cannot be combined.",
         "dm_value_cannot_be_empty": "Value in column {0} in table {1} cannot be empty",
         "dm_incorrect_list": "Incorrect value {0} in column {1} (table {2}); allowed values are: {3}",

@@ -11,6 +11,7 @@
     "dm_month_names_duplicates": "L'item de personnalisation 'Month names' pour la langue '{0}' contient des noms de mois en double : {1}.",
     "dm_column_names_duplicate": "Plusieurs colonnes dans la feuille de données du projet ont l'en-tête {0}, une seule colonne devrait être appelée ainsi pour éviter les ambiguïtés",
     "dm_incomplete_taxa_info_row": "Dans la feuille de données du projet à la ligne {0} vérifiez le contenu des colonnes de taxons (en particulier {1}); chaque ligne devrait avoir un ensemble complet d'unités taxonomiques du plus haut niveau jusqu'au niveau que vous choisissez, mais les niveaux intermédiaires doivent être remplis",
+    "dm_row_no_taxa_no_occurrence": "La ligne {0} de la feuille de données n'a ni information de taxon ni identifiant d'occurrence. Chaque ligne doit avoir au moins une colonne de taxon renseignée ou un identifiant d'occurrence valide.",
     "dm_wrong_belongs_to": "Ligne {0} : la colonne {1} est déclarée comme données {2} mais cette ligne est une ligne de {3}. Les deux ne peuvent pas être combinées.",
     "dm_value_cannot_be_empty": "La valeur de la colonne {0} dans la table {1} ne peut pas être vide",
     "dm_incorrect_list": "Valeur incorrecte {0} dans la colonne {1} (table {2}) ; les valeurs autorisées sont : {3}",

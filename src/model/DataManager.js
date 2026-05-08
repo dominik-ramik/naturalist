@@ -1654,6 +1654,16 @@ export let DataManager = function () {
           );
         });
 
+        // Report rows that have neither taxon data nor an occurrence ID.
+        // A completely blank spreadsheet row (all cells empty) is silently
+        // ignored because such rows are commonly used as visual spacers.
+        if (rowObj.t.length === 0 &&
+            row.some(cell => cell != null && cell.toString().trim() !== "")) {
+          Logger.error(
+            tf("dm_row_no_taxa_no_occurrence", [(row._sourceRow ?? rowIndex + 1)])
+          );
+        }
+
         data.sheets.checklist.data[lang.code].push(rowObj);
       }
       const seenPaths = new Map(); // path string -> first row number
