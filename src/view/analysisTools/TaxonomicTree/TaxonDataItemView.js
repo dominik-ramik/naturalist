@@ -81,18 +81,6 @@ export let TaxonDataItemView = {
         break;
     }
 
-    // Detect whether child items are a media type (image, map).
-    // Array items are keyed as dataPath+"1", dataPath+"2" etc.
-    // We probe "1" - the first slot - to read the child dataType from meta.
-    // If the child dataType is a visual media type, append .media-item-list so
-    // CSS can render them as a wrapped row of inline-blocks on a new line,
-    // independent of the title. Non-media items are unaffected.
-    const MEDIA_DATA_TYPES = new Set(["image", "map"]);
-    const childMeta1 = Checklist.getMetaForDataPath(dataPath + "1");
-    if (childMeta1 && MEDIA_DATA_TYPES.has(childMeta1.dataType)) {
-      listDisplayType += ".media-item-list";
-    }
-
     if (itemType == "array") {
       // Filter out null/empty items first
       let filteredData = data.filter((item) => item !== null && item != "");

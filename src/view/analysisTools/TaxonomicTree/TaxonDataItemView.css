@@ -157,6 +157,34 @@ span.simple-value h4 {
   width: auto;
 }
 
+/* ── Single (non-array) media items ──────────────────────────────────────────
+ * A lone image or map is rendered as either:
+ *   span.simple-wrapper > span.simple-value > .fullscreenable-image   (simple)
+ *   span.simple-wrapper > .fullscreenable-image                       (object)
+ *
+ * Goals mirror the array media-item-list rules above:
+ *   1. Title sits on its own line above the media item.
+ *   2. The item does not stretch to fill the full container width.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Switch the outer wrapper to block so title and media stack vertically. */
+.data-item-view span.simple-wrapper:has(> span.simple-value > .fullscreenable-image),
+.data-item-view span.simple-wrapper:has(> .fullscreenable-image) {
+  display: inline-block;
+}
+
+/* 2. Keep the inner simple-value wrapper shrink-wrapped around the image. */
+.data-item-view span.simple-wrapper:has(> span.simple-value > .fullscreenable-image) > span.simple-value {
+  display: inline-block;
+}
+
+/* 3. Override the 100% width that FullscreenableMedia.css sets, same as the
+ *    array rule above. */
+.data-item-view span.simple-wrapper:has(> span.simple-value > .fullscreenable-image) .fullscreenable-image,
+.data-item-view span.simple-wrapper:has(> .fullscreenable-image) .fullscreenable-image {
+  display: inline-block;
+}
+
 .data-item-view span.separator {
   margin: 0;
   padding: 0;
