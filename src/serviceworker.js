@@ -104,7 +104,10 @@ self.addEventListener('fetch', function (e) {
 
     // D. Cache-First Strategy for all other assets (App Shell & Images)
     e.respondWith((async function () {
-        const r = await caches.match(e.request);
+        // Use URL string + ignoreVary so that request.mode differences
+        // (e.g. 'navigate' on Android <object> vs 'same-origin' from CACHE_ASSETS)
+        // don't cause a cache miss.
+        const r = await caches.match(e.request.url, { ignoreVary: true });
         if (r) { return r; }
 
         const response = await fetch(e.request).then(function (response) {

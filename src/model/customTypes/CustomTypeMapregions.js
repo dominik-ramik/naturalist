@@ -420,7 +420,7 @@ function renderDetailsMap(data, uiContext) {
     m(".media-map-card", [
       m(FullscreenableMedia, {
         type: 'svg-object',
-        fullSrc: `usercontent/${source}`,
+        fullSrc: `./usercontent/${source}`,
         svgId: mapId,
         oncreate: function (vnode) {
           // Native listener avoids a Mithril auto-redraw on SVG load.
