@@ -94,12 +94,14 @@ export let FilterDropdown = function (initialVnode) {
         m(".label" + (showOrb ? ".active-filter[style=background-color: " + color + "]" : ""), {
           onclick() {
             setOpen(!isOpen());
+            /*
             if (isOpen()) {
               window.setTimeout(() => {
                 const inner = document.getElementById(filterDropdownId + "_inner_text");
                 if (inner) inner.focus();
               }, 200);
             }
+              */
           },
         }, [
           m(".arrow",
