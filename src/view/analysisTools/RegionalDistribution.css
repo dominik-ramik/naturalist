@@ -336,6 +336,12 @@ table.results-table td.region-color {
   flex: 3 1 280px;
 }
 
+/* Groups checkbox sits below the map dropdown inside the same column */
+.rd-groups-checkbox {
+  margin-top: 6px;
+  font-size: 0.85em;
+}
+
 .rd-checkbox-label {
   display: flex;
   align-items: center;
