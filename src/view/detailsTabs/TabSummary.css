@@ -164,7 +164,7 @@
 /* Sibling aside: "+5 others" */
 .sp-level-aside {
   font-size: 0.75em;
-  color: #aaa;
+  color: #000000;
   white-space: nowrap;
   align-self: center;
 }
@@ -243,6 +243,10 @@
   width: 100%;
 }
 
+.sp-cat-badge{
+  font-size: 0.85em;
+}
+
 /* The badge is produced by readerCategory.render() as
    <span class="category" style="background:…; color:…">label</span>
    We just ensure consistent sizing here. */
@@ -251,7 +255,6 @@
   padding: 0.1em 0.5em;
   border-radius: 1em;
   border: 1px solid transparent;
-  font-size: 0.7em;
   white-space: nowrap;
 }
 

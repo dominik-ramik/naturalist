@@ -8,6 +8,7 @@
   "sp_taxonomy": "Taxonomie",
   "sp_spec_own": "Directes",
   "sp_spec_total": "Totales",
+  "sp_cat_total": "Total {0}",
   "sp_cat_col_value": "Catégorie",
   "sp_cat_col_count": "Nombre",
   "sp_cat_col_pct": "%",

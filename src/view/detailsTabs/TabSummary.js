@@ -900,13 +900,15 @@ function renderLevelHeader(row, p) {
     ? m("span.sp-level-name.sp-level-name--count", (row.count > 0 ? tf("sp_children_taxa", [row.count], true) : ""))
     : m("span.sp-level-name", row.name);
 
-  // Sibling count only shown in taxonomy perspective
+  // Sibling count only shown in taxonomy perspective; total shown in category perspective
   const aside = (p.type === "taxonomy"
     && row.kind !== "descendant"
     && row.siblingCount > 1)
     ? m("span.sp-level-aside",
       "+" + (row.siblingCount - 1) + "\u00a0" + t("sp_in_group"))
-    : null;
+    : (p.type === "category" && row.total != null)
+      ? m("span.sp-level-aside", tf("sp_cat_total", [row.total], true))
+      : null;
 
   return m(".sp-level-header", [
     m("span.sp-level-rank", row.levelName),
