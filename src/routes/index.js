@@ -247,7 +247,7 @@ function onMatchGuard(attrs, requestedPath) {
         AppLayoutView.display = "details";
         console.log("Rendering about app with version: " + appVersion);
         return componentRender(m(AppLayoutView, [
-          m(AboutView, { text: t("about_app", appVersion) }),
+          m(AboutView, { text: tf("about_app", [appVersion]) }),
         ]));
       },
       onmatch: onMatchGuard,

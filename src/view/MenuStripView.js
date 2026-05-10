@@ -149,7 +149,7 @@ function menuPanel() {
         ]),
       m(".version-info",
         [
-          m("div", "Naturalist v" + import.meta.env.VITE_APP_VERSION),
+          m("div", "NaturaList v" + import.meta.env.VITE_APP_VERSION),
           Checklist.getLastUpdatedTimestamp()
             ? m("div",
               "Checklist " + Checklist.getLastUpdatedTimestamp() + " · " +
