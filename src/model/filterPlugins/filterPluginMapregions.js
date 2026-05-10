@@ -270,29 +270,31 @@ let DropdownMapregions = function () {
 
         renderSearchInput(dropdownId, val => { filter = val; }),
 
-        showStatusFilter
-          ? m(".mapregions-status-filter", [
-            m(".mapregions-status-filter-title", t("mapregions_status_filter")),
-            hasNumericMode
-              ? _renderStatusRangeSection(
-                sf,
-                filterDef.globalStatusMin ?? null,
-                filterDef.globalStatusMax ?? null,
-                type, dataPath
-              )
-              : null,
-            allCatRows.length > 0
-              ? _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath)
-              : null,
-          ])
-          : null,
+        m(".mapregions-scroll-body", [
+          showStatusFilter
+            ? m(".mapregions-status-filter", [
+              m(".mapregions-status-filter-title", t("mapregions_status_filter")),
+              hasNumericMode
+                ? _renderStatusRangeSection(
+                  sf,
+                  filterDef.globalStatusMin ?? null,
+                  filterDef.globalStatusMax ?? null,
+                  type, dataPath
+                )
+                : null,
+              allCatRows.length > 0
+                ? _renderStatusCategorySection(allCatRows, sf, possibleSt, type, dataPath)
+                : null,
+            ])
+            : null,
 
-        renderOptionsSections(
-          { showSelected, selected: selectedItems, showPossible, possible: possibleItems, showImpossible, impossible: impossibleItems, itemsOverflowing },
-          () => { itemsOverflowLimit += INITIAL_LIMIT; },
-          INITIAL_LIMIT,
-          ".mapregions-regions"
-        ),
+          renderOptionsSections(
+            { showSelected, selected: selectedItems, showPossible, possible: possibleItems, showImpossible, impossible: impossibleItems, itemsOverflowing },
+            () => { itemsOverflowLimit += INITIAL_LIMIT; },
+            INITIAL_LIMIT,
+            ".mapregions-regions"
+          ),
+        ]),
 
         renderCheckAllShown(filter, totalPossibleUnchecked, () => {
           filterDef.selected = [...new Set([...filterDef.selected, ...filteredPossible])];
