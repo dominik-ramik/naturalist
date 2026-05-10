@@ -117,7 +117,7 @@ const ManageStore = {
 
   // ── URL source
   urlInputValue: Settings.spreadsheetUrl() || "",
-  corsWarningAcknowledged: false,
+  corsWarningAcknowledged: Settings.corsWarningAcknowledged(),
 
   // ── Compiled artefacts
   dataman: null,
@@ -158,7 +158,7 @@ const ManageStore = {
 
   setSourceMode(mode) {
     this.sourceMode = mode;
-    this.corsWarningAcknowledged = false;
+    this.corsWarningAcknowledged = Settings.corsWarningAcknowledged();
     Settings.manageUploadMode(mode);
   },
 
@@ -771,7 +771,7 @@ function renderUrlPicker() {
         label: t("static_hosting_cors_acknowledge"),
         primary: true,
         block: true,
-        onclick: () => { ManageStore.corsWarningAcknowledged = true; },
+        onclick: () => { ManageStore.corsWarningAcknowledged = true; Settings.corsWarningAcknowledged(true); },
       }),
     ]);
   }

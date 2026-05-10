@@ -338,6 +338,21 @@ export let Settings = {
   },
  
   /**
+   * Persist whether the user has acknowledged the static-hosting CORS notice.
+   */
+  corsWarningAcknowledged: function (value) {
+    if (value === undefined) {
+      return window.localStorage.getItem("corsWarningAcknowledged") === "true";
+    } else {
+      if (value) {
+        window.localStorage.setItem("corsWarningAcknowledged", "true");
+      } else {
+        window.localStorage.removeItem("corsWarningAcknowledged");
+      }
+    }
+  },
+
+  /**
    * Persist which upload source tab the user last used ('file' | 'url').
    */
   manageUploadMode: function (value) {
