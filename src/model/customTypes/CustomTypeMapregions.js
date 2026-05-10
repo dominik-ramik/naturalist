@@ -608,7 +608,7 @@ function renderMapLegend(legendConfig, datasetStats, data) {
         }, [
           t.legend,
           t.resolved != null
-            ? m('span.map-gradient-label-value', ` (${fmtNum(t.resolved)})`)
+            ? m('span.map-gradient-label-value', ` (${isFirst ? '\u2264' : isLast ? '\u2265' : ''}${fmtNum(t.resolved)})`)
             : null,
         ]);
       };
