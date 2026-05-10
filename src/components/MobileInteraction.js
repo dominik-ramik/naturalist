@@ -17,10 +17,21 @@ import { Settings } from "../model/Settings.js";
  * as a raw onscroll handler without incurring a redraw on every scroll tick.
  */
 export function collapsePaneAndDismissKeyboard() {
-  // Unconditionally blur - cheap, and the surest way to hide the soft keyboard
-  // regardless of which element currently holds focus.
-  if (document.activeElement && document.activeElement !== document.body) {
-    document.activeElement.blur();
+  const active = document.activeElement;
+
+  // If the pane is already collapsed and the user is focused inside the filter
+  // pane (e.g. actively typing in the search box), a spurious scroll event
+  // caused by the mobile keyboard resizing the viewport must not steal focus.
+  const activeIsInFilterPane = active && active !== document.body
+    && active.closest('.interaction-area') !== null;
+
+  if (!InteractionAreaView.isExpanded && activeIsInFilterPane) {
+    return;
+  }
+
+  // For all other cases, blur the active element to dismiss the soft keyboard.
+  if (active && active !== document.body) {
+    active.blur();
   }
 
   // Only touch Mithril state (and pay for a redraw) when actually needed.
