@@ -458,7 +458,7 @@ function welcomeCardContent() {
 
 function renderPanelSummary(colTraitName, rowDimLabel) {
   const chip = (text, muted) =>
-    m("span.tm-summary-chip" + (muted ? ".tm-summary-chip--muted" : ""), text);
+    m("span.tm-summary-chip" + (muted ? ".tm-summary-chip--muted" : ""), m.trust(text));
   const sep = m("span.tm-summary-sep", "·");
 
   if (!categoryToView) {
