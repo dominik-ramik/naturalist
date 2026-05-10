@@ -138,6 +138,26 @@ ul.filter-buttons.full-width li {
     height: 1em;
 }
 
+/* Active filter count badge on the mobile toggle button */
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #689F38;
+    color: white;
+    border-radius: 50%;
+    min-width: 1.5em;
+    height: 1.75em;
+    font-size: 0.72em;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0 0.2em;
+    margin-left: 0.75em;
+    margin-right: 0.5em;
+    /* Ensure it never collapses on single-digit counts */
+    flex-shrink: 0;
+}
+
 /* MOBILE LAYOUT AND CLEANUP (Max Width 1000px) */
 @media (max-width: 1000px) {
 

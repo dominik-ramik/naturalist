@@ -123,6 +123,36 @@ function renderFilterGroups(groups, fullWidth) {
     );
 }
 
+/**
+ * Returns the total number of currently active filters (taxa, data, and free
+ * text) so the mobile toggle button can display a live count badge.
+ *
+ * Each filter slot (taxa or data) is considered "active" when its value array
+ * is non-empty. The free-text field counts as 1 when non-blank.
+ */
+function getActiveFilterCount() {
+    let count = 0;
+
+    // Free-text search
+    if (Checklist.filter.text && Checklist.filter.text.trim().length > 0) {
+        count++;
+    }
+
+    // Taxa-level filters
+    for (const f of Object.values(Checklist.filter.taxa)) {
+        const v = f.value ?? f.values ?? f.selected;
+        if (Array.isArray(v) ? v.length > 0 : Boolean(v)) count++;
+    }
+
+    // Data-column filters
+    for (const f of Object.values(Checklist.filter.data)) {
+        const v = f.value ?? f.values ?? f.selected;
+        if (Array.isArray(v) ? v.length > 0 : Boolean(v)) count++;
+    }
+
+    return count;
+}
+
 export let SearchView = {
 
     view: function () {
@@ -216,6 +246,11 @@ let SearchBox = {
         return m(".search-box", [
             m("input[id=free-text][autocomplete=off][type=search][placeholder=" + tf("free_text_search", [Settings.SEARCH_OR_SEPARATOR], true) + "]", {
                 value: displayValue,
+                onfocus: function () {
+                    if (isExpanded) {
+                        toggleHandler();
+                    }
+                },
                 oninput: function (e) {
                     const newText = e.target.value;
 
@@ -263,6 +298,10 @@ let SearchBox = {
             }, [
                 m(Icon, { path: mdiTune }),
                 t("filters"),
+                (() => {
+                    const n = getActiveFilterCount();
+                    return n > 0 ? m("span.filter-count-badge", n) : null;
+                })(),
                 m(Icon, { path: isExpanded ? mdiChevronDown : mdiChevronUp }),
             ]),
 
