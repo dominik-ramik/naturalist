@@ -175,5 +175,14 @@
     inset: 0;
     background-color: rgba(0, 0, 0, 0.45);
     z-index: 998;
+    /*
+     * Pseudo-elements are not DOM nodes: a click on ::before reports
+     * .filter-dropdown itself as event.target, which makes the outside-click
+     * handler think the click was inside the dropdown and bail. With
+     * pointer-events:none the click falls through to whatever real element is
+     * underneath; the capture-phase handler sees that target, correctly
+     * identifies it as outside, and closes the dropdown.
+     */
+    pointer-events: none;
   }
 }
