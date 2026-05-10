@@ -284,7 +284,7 @@ function menuTopBar() {
         // ── Scope icon + label ───────
         Checklist.availableIntents().length > 1 && activeScope && [
           m("span.global-indicator-sep"),
-          m(Icon, { path: activeScope.icon, fill: "#ffffff", class: "global-indicator-img" }),
+          m(Icon, { path: activeScope.icon, size: 16, fill: "#ffffff", class: "global-indicator-img" }),
           m("span.global-indicator-label", activeScope.label),
         ],
 

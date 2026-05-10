@@ -13,5 +13,5 @@
     "keys": "Single-access keys",
     "storage_persistent": "Media available offline",
     "storage_not_persistent": "Media online only",
-    "configure_view": "Current view"
+    "configure_view": "View"
   }
