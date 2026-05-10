@@ -196,6 +196,17 @@ span.simple-value h4 {
   width: 100%;
 }
 
+.data-item-view .map-regions-data .region-group-label {
+  color: var(--nlblue);
+  text-transform: uppercase;
+  font-size: 0.85em;
+  margin-right: 0.5em;
+}
+
+.data-item-view .map-regions-data .region-name {
+  font-weight: bold;
+}
+
 .data-item-view .map-regions-data p {
   display: inline;
 }

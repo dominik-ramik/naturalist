@@ -768,7 +768,62 @@ function renderRegionsList(data, uiContext, hl) {
     return uniqueNotesMap.get(processed);
   }
 
-  const renderedRegions = Object.keys(data).map(regionCode => {
+  // ── Determine ordered region codes ────────────────────────────────────────
+  // Each item: { regionCode: string, groupLabel: string|null }
+  // groupLabel is non-null only on the first region of each new group.
+  const orderedItems = [];
+  const meta = Checklist.getMetaForDataPath(dataPath);
+  const searchCategoryOrder = meta?.searchCategoryOrder;
+  const hasOrder = Array.isArray(searchCategoryOrder) && searchCategoryOrder.length > 0;
+
+  if (hasOrder) {
+    // searchCategoryOrder entries use region *names* as their title (matching what
+    // extractFilterLeafValues and the filter dropdown expose to the user), not the
+    // raw region codes that key the data object.  Build a reverse name→code map so
+    // we can resolve each entry back to a data key.
+    const nameToCode = new Map();
+    Object.keys(data).forEach(code => {
+      nameToCode.set(Checklist.nameForMapRegion(code), code);
+    });
+
+    // Unique sentinel: ensures the very first group always emits its label.
+    const UNSET = Symbol();
+    let prevGroup = UNSET;
+    const coveredCodes = new Set();
+
+    for (const entry of searchCategoryOrder) {
+      const code = nameToCode.get(entry.title); // entry.title is the region name
+      if (code === undefined) continue; // name not present in this taxon's data
+      coveredCodes.add(code);
+      // Treat a missing/empty group string as null (no label).
+      const group = (entry.group != null && entry.group !== "") ? entry.group : null;
+      // Emit the group label only when the group changes.
+      const groupLabel = (group !== prevGroup) ? group : null;
+      orderedItems.push({ regionCode: code, groupLabel });
+      prevGroup = group;
+    }
+
+    // Append any region codes present in data but absent from searchCategoryOrder,
+    // preserving their original insertion order (same as the no-order path).
+    Object.keys(data)
+      .filter(code => !coveredCodes.has(code))
+      .forEach(code => orderedItems.push({ regionCode: code, groupLabel: null }));
+  } else {
+    // No searchCategoryOrder: preserve existing Object.keys insertion order.
+    Object.keys(data).forEach(code => orderedItems.push({ regionCode: code, groupLabel: null }));
+  }
+
+  if (!orderedItems.length) return null;
+
+  // ── Render regions, interleaving group labels ──────────────────────────────
+  const fd = uiContext?.filterDef || Checklist.filter.data[uiContext.dataPath] || null;
+  const sfStatuses = fd?.statusFilter?.selectedStatuses;
+  const statusRange = fd?.statusFilter || null;
+
+  const contentItems = [];
+  let isFirst = true;
+
+  orderedItems.forEach(({ regionCode, groupLabel }) => {
     const regionInfo = data[regionCode];
     const status = regionInfo.status ?? "";
     const resolved = getCachedRegionColor(status, legendConfig, datasetStats, dataPath);
@@ -802,22 +857,18 @@ function renderRegionsList(data, uiContext, hl) {
     const notesArray = Array.isArray(regionInfo.notes) ? regionInfo.notes : (regionInfo.notes ? [regionInfo.notes] : []);
     const footnoteIndices = notesArray.map(registerNote).filter(i => i !== null);
 
-    const hl = uiContext?.highlightRegex || null;
     // For the region filter, fd.selected contains names - the hl regex covers them.
     // For the status filter, check exact match against the raw status code to avoid
     // substring false-positives (e.g. "v" matching inside "vagrant").
-    const fd = uiContext?.filterDef || Checklist.filter.data[uiContext.dataPath] || null;
-    const sfStatuses = fd?.statusFilter?.selectedStatuses;
     const statusIsSelected = sfStatuses?.length > 0 && sfStatuses.includes(status);
     const numericStatus = parseNumericStatus(status);
-    const statusRange = fd?.statusFilter || null;
     const statusIsInNumericRange = numericStatus !== null &&
       statusRange !== null &&
       (statusRange.rangeMin !== null || statusRange.rangeMax !== null) &&
       (statusRange.rangeMin === null || numericStatus >= statusRange.rangeMin) &&
       (statusRange.rangeMax === null || numericStatus <= statusRange.rangeMax);
 
-    const regionContent = [m("strong", applyHighlight(regionName, hl))];
+    const regionContent = [m("span.region-name", applyHighlight(regionName, hl))];
     if (footnoteIndices.length > 0) regionContent.push(m("sup", footnoteIndices.sort((a, b) => a - b).join(",")));
     if (appendedLegend) {
       regionContent.push(
@@ -827,10 +878,13 @@ function renderRegionsList(data, uiContext, hl) {
       );
     }
 
-    return m("span", regionContent);
+    // Comma separator before every region except the first; no comma before a new group.
+    if (!isFirst) contentItems.push(groupLabel != null ? " " : ", ");
+    // Group label (plain text, followed by ": ") at the start of each new group.
+    if (groupLabel != null) contentItems.push(m("span.region-group-label", groupLabel));
+    contentItems.push(m("span.region-content", regionContent));
+    isFirst = false;
   });
-
-  if (!renderedRegions.length) return null;
 
   const footnotesElements = uniqueNotesList.map((noteHtml, index) =>
     m(".region-footnote", [
@@ -841,11 +895,7 @@ function renderRegionsList(data, uiContext, hl) {
   );
 
   return m(".map-regions-data", [
-    m("span", renderedRegions.reduce((acc, region, index) => {
-      if (index > 0) acc.push(", ");
-      acc.push(region);
-      return acc;
-    }, [])),
+    m("span", contentItems),
     footnotesElements.length ? m(".region-footnotes", footnotesElements) : null,
   ]);
 }
