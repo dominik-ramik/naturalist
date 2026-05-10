@@ -56,7 +56,7 @@
 }
 
 /* ── Responsive: stack columns below 1000 px ────────────────────────────── */
-@media (max-width: 1000px) {
+@media (max-width: 640px) {
     .middle-row {
         flex-direction: column;
     }
