@@ -1,0 +1,87 @@
+/* ==========================================================================
+   CollapsibleCard – shared collapsible config card
+   Based on RegionalDistribution's collapsible card (preferred pattern).
+   ========================================================================== */
+
+.collapsible-card {
+  background-color: #eceff2;
+  border: 1px solid white;
+  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
+  border-radius: var(--pad-large, 1em);
+  margin: 10px;
+  overflow: hidden; /* clips child backgrounds to rounded corners */
+  flex-shrink: 0;   /* never let the card shrink inside a flex column */
+}
+
+/* ── Header base ──────────────────────────────────────────────────────────── */
+
+.collapsible-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 10px 15px;
+  user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Expanded: whole header is the click target to collapse */
+.collapsible-card-header--expanded {
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.collapsible-card-header--expanded:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Collapsed: whole header is also the click target to expand.
+   No border-bottom – the footer's border-top acts as the separator. */
+.collapsible-card-header--collapsed {
+  cursor: pointer;
+  transition: background-color 0.12s;
+  border-bottom: none;
+}
+
+.collapsible-card-header--collapsed:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* ── Header internals ─────────────────────────────────────────────────────── */
+
+.collapsible-card-title {
+  font-weight: bold;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #444;
+  flex: 1; /* grows to push toggle indicator to the right */
+}
+
+.collapsible-card-toggle {
+  font-size: 0.75em;
+  color: #777;
+  flex-shrink: 0;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+
+/* Minimal container – each consumer adds layout via an extra bodyClass */
+.collapsible-card-body {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+/* Always-visible area below the collapsible body (e.g. verb sentence).
+   Shown regardless of collapsed state. */
+.collapsible-card-footer {
+  padding: 8px 15px 10px;
+  font-size: 0.85em;
+  color: #444;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}

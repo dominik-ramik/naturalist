@@ -12,6 +12,7 @@ import { Settings } from '../../../model/Settings.js';
 import { NUMERIC_OPERATIONS, getOperationMeta } from './aggregate.js';
 import { ANALYTICAL_INTENT_OCCURRENCE, OCCURRENCE_IDENTIFIER } from '../../../model/DataStructure.js';
 import { t, tf } from 'virtual:i18n-self';
+import { CollapsibleCard } from '../../shared/CollapsibleCard.js';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const segBtn = (label, active, onClick) =>
@@ -55,16 +56,17 @@ export function renderConfigPanel({
   const showThresh = showOp && opMeta.usesThreshold;
   const showDenom = !filterIsEmpty && (segmentTrack !== 'numeric' || opMeta.usesDenominator);
 
-  return m('.rd-config-card', [
+  const verbFooter = currentMap
+    ? m.trust(buildVerb({ currentMap, segments, mapState, filteredCount, mode, filterIsEmpty }))
+    : null;
 
-    // ── Collapsible header ──
-    m('.rd-config-header', { onclick: onToggleCollapse }, [
-      m('span.rd-config-title', t('rd_config_title')),
-      m('span.rd-config-toggle', configCollapsed ? '▼' : '▲'),
-    ]),
-
-    // ── Body (collapses) ──
-    configCollapsed ? null : m('.rd-config-body', [
+  return m(CollapsibleCard, {
+    title: t('rd_config_title'),
+    collapsed: configCollapsed,
+    onToggle: onToggleCollapse,
+    footer: verbFooter,
+    bodyClass: 'rd-config-body',
+  }, [
 
       // Map selector + groups toggle - these form a logical unit
       m('.chart-control-group.rd-control-map', [
@@ -145,12 +147,6 @@ export function renderConfigPanel({
         ]) : null,
 
       ], // end currentMap-gated block
-    ]), // end body
-
-    // ── Verb sentence (always visible) ──
-    currentMap ? m('.rd-verb-box',
-      m.trust(buildVerb({ currentMap, segments, mapState, filteredCount, mode, filterIsEmpty }))
-    ) : null,
   ]);
 }
 

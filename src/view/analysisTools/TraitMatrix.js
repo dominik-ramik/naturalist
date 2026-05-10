@@ -12,8 +12,9 @@ import {
 import { Checklist } from "../../model/Checklist.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA, OCCURRENCE_IDENTIFIER } from "../../model/DataStructure.js";
 import { getDataFromDataPath } from "../../model/DataPath.js";
-import { mdiArrowUpThin, mdiChartBarStacked, mdiChevronDown, mdiChevronUp } from "@mdi/js";
+import { mdiArrowUpThin, mdiChartBarStacked } from "@mdi/js";
 import { Icon } from "../../components/Icon.js";
+import { CollapsibleCard } from "../shared/CollapsibleCard.js";
 
 
 
@@ -702,32 +703,18 @@ function categoryChart(filteredTaxa, dataContextRevision) {
 
   // ── Collapsible panel (primary controls + living panel + refine strip) ────
 
-  const panelHeader = isCollapsed
-    ? m(".tm-panel-header.tm-panel-header--collapsed", { onclick: togglePanel }, [
-      renderPanelSummary(colTraitName, rowDimLabel),
-      m("button.tm-panel-edit-btn", {
-        onclick: e => { e.stopPropagation(); togglePanel(); }
-      }, [
-            m(Icon, { path: mdiChevronDown, size: 16, style: { "vertical-align": "middle" } }),
-        t("tm_panel_edit")]),
-    ])
-    : m(".tm-panel-header.tm-panel-header--expanded", [
-      m("span.tm-panel-title", t("tm_panel_title")),
-      m("button.tm-help-btn", {
-        title: t("tm_recall_info"),
-        onclick: e => { e.stopPropagation(); tmInfoOverlayVisible = !tmInfoOverlayVisible; }
-      }, "?"),
-      categoryToView !== ""
-        ? m("button.tm-panel-collapse-btn", { onclick: togglePanel },
-          [
-            m(Icon, { path: mdiChevronUp, size: 16, style: { "vertical-align": "middle" } }),
-            t("tm_panel_edit_close")
-          ]
-        )
-        : null,
-    ]);
-
-  const panelBody = isCollapsed ? null : m(".tm-panel-body", [
+  result.push(m(CollapsibleCard, {
+    title: t("tm_panel_title"),
+    collapsed: isCollapsed,
+    onToggle: togglePanel,
+    canCollapse: categoryToView !== "",
+    summary: renderPanelSummary(colTraitName, rowDimLabel),
+    headerActions: m("button.tm-help-btn", {
+      title: t("tm_recall_info"),
+      onclick: e => { e.stopPropagation(); tmInfoOverlayVisible = !tmInfoOverlayVisible; },
+    }, "?"),
+    bodyClass: "tm-panel-body",
+  }, [
 
     // Primary controls ───────────────────────────────────────────────────────
     m(".tm-controls-inner", [
@@ -861,11 +848,7 @@ function categoryChart(filteredTaxa, dataContextRevision) {
 
     ]) : null,
 
-  ]);
-
-  result.push(m(".tm-panel", [panelHeader, panelBody]));
-
-  // ── Empty state (no trait chosen) ─────────────────────────────────────────
+  ]));
 
   if (categoryToView === "") {
     result.push(m(".tm-empty-state", welcomeCardContent()));

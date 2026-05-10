@@ -308,48 +308,8 @@ table.results-table td.region-color {
 
 /* ── Config card ─────────────────────────────────────────────────────────── */
 
-.rd-config-card {
-  background-color: #eceff2;
-  border: 1px solid white;
-  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-  border-radius: var(--pad-large, 1em);
-  margin: 10px;
-}
-
-.rd-config-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  cursor: pointer;
-  user-select: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: var(--pad-large, 1em) var(--pad-large, 1em) 0 0;
-}
-
-/* When body is absent (collapsed), header bottom rounds too */
-.rd-config-header:only-child,
-.rd-config-header:last-child {
-  border-radius: var(--pad-large, 1em);
-  border-bottom: none;
-}
-
-.rd-config-header:hover {
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
-.rd-config-title {
-  font-weight: bold;
-  font-size: 0.85em;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #444;
-}
-
-.rd-config-toggle {
-  font-size: 0.75em;
-  color: #777;
-}
+/* Card shell is provided by CollapsibleCard (shared/CollapsibleCard.css).
+   Only RD-specific layout overrides are declared here. */
 
 .rd-config-body {
   display: flex;
@@ -374,25 +334,6 @@ table.results-table td.region-color {
 
 .rd-config-body .rd-control-segment {
   flex: 3 1 280px;
-}
-
-/* Groups checkbox sits below the map dropdown inside the same column */
-.rd-groups-checkbox {
-  margin-top: 6px;
-  font-size: 0.85em;
-}
-
-/* Verb sentence - always visible, bottom of card */
-.rd-verb-box {
-  padding: 8px 15px 10px;
-  font-size: 0.85em;
-  color: #444;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  background: rgba(255, 255, 255, 0.5);
-  line-height: 1.5;
-  border-radius: 0 0 var(--pad-large, 1em) var(--pad-large, 1em);
-  word-break: break-word;
-  overflow-wrap: break-word;
 }
 
 .rd-checkbox-label {

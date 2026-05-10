@@ -474,99 +474,10 @@ table.category-view .header-row {
 
 /* ==========================================================================
    Collapsible Controls Panel
-   Mirrors .sak-card: #eceff2, white border, shadow, large border-radius.
-   flex-shrink:0 ensures it never steals space from the table below.
+   Card shell (background, border, shadow, border-radius, margin) is provided
+   by CollapsibleCard (shared/CollapsibleCard.css).
+   Only TM-specific layout rules for the panel body live here.
    ========================================================================== */
-.tm-panel {
-  flex-shrink: 0;
-  background-color: #eceff2;
-  border: 1px solid white;
-  box-shadow: 0.05em 0.05em 0.25em 0.1em #0c0c0c33;
-  border-radius: var(--pad-large, 1em);
-  margin: 10px 10px 6px 10px;
-  overflow: hidden;
-  /* keeps rounded corners on children */
-}
-
-/* Expanded header: title + ? + ▲ */
-.tm-panel-header--expanded {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 8px 12px;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  min-height: 2.4em;
-}
-
-/* Collapsed header: summary chips + Edit button. Whole row is clickable. */
-.tm-panel-header--collapsed {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 8px 12px;
-  cursor: pointer;
-  user-select: none;
-  min-height: 2.4em;
-  transition: background-color 0.12s;
-}
-
-.tm-panel-header--collapsed:hover {
-  background-color: rgba(255, 255, 255, 0.55);
-}
-
-.tm-panel-title {
-  font-size: 0.78em;
-  font-weight: bold;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  flex: 1;
-}
-
-/* ▲ Collapse button */
-.tm-panel-collapse-btn {
-  flex-shrink: 0;
-  padding: 4px 8px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  background-color: rgba(255, 255, 255, 0.7);
-  color: #666;
-  font-size: 0.82em;
-  cursor: pointer;
-  line-height: 1;
-  transition: background-color 0.15s;
-}
-
-.tm-panel-collapse-btn:hover {
-  background-color: white;
-  color: #333;
-}
-
-.tm-panel-collapse-img {
-  height: 1.2em;
-  width: 1.2em;
-  vertical-align: text-top;
-}
-
-/* "▼ Edit settings" button in collapsed header */
-.tm-panel-edit-btn {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 20px;
-  border: 1px solid var(--nlblue, #55769b);
-  background-color: rgba(85, 118, 155, 0.08);
-  color: var(--nlblue, #55769b);
-  font-size: 0.82em;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s;
-}
-
-.tm-panel-edit-btn:hover {
-  background-color: rgba(85, 118, 155, 0.15);
-}
 
 /* Panel body - contains primary controls + living panel + refine strip */
 .tm-panel-body {
