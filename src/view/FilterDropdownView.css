@@ -28,7 +28,7 @@
 /* ── Backdrop (modal overlay when dropdown is open) ─────────────────────── */
 
 .filter-dropdown-backdrop {
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
@@ -161,5 +161,19 @@
   .filter-dropdown .inner-dropdown-area {
     max-height: 100%;
     height: 100%;
+  }
+
+  /*
+   * CSS-only backdrop: fires whenever .dropdown-area is present in the DOM
+   * (i.e. the dropdown is open). The pseudo-element is fixed to the viewport,
+   * sits just below the panel (z-index 998 vs panel's 999), and visually
+   * dims everything behind the open dropdown.
+   */
+  .filter-dropdown:has(.dropdown-area)::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    z-index: 998;
   }
 }

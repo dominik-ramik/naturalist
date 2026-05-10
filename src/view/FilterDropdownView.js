@@ -41,7 +41,7 @@ export let FilterDropdown = function (initialVnode) {
     syncMenuClosingEventListener() {
       if (!_open) {
         if (outsideClickHandler) {
-          document.removeEventListener("click", outsideClickHandler);
+          document.removeEventListener("click", outsideClickHandler, true);
           outsideClickHandler = null;
         }
         return;
@@ -52,10 +52,15 @@ export let FilterDropdown = function (initialVnode) {
         const thisDropdown = document.getElementById(filterDropdownId);
         if (!thisDropdown) return;
         if (event.target === thisDropdown || thisDropdown.contains(event.target)) return;
+        // Capture phase: stop the event here so nothing underneath receives it.
+        // This is especially important on mobile where the panel is fixed over
+        // the map / list and a dismissal tap must not trigger those elements.
+        event.stopPropagation();
         setOpen(false);
         m.redraw();
       };
-      document.addEventListener("click", outsideClickHandler);
+      // useCapture:true — intercept before the event reaches any element below.
+      document.addEventListener("click", outsideClickHandler, true);
     },
 
     oninit(vnode) {
@@ -69,7 +74,7 @@ export let FilterDropdown = function (initialVnode) {
     onupdate() { this.syncMenuClosingEventListener(); },
     onremove() {
       if (outsideClickHandler) {
-        document.removeEventListener("click", outsideClickHandler);
+        document.removeEventListener("click", outsideClickHandler, true);
         outsideClickHandler = null;
       }
     },
