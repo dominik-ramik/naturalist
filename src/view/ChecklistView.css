@@ -127,6 +127,23 @@
 }
 
 /* ==========================================================================
+   Notices wrapper
+   Stacks all active notices in a block that sticks to the top of the
+   .checklist-results-wrapper scroll viewport.  Because that container is the
+   overflow root (overflow-y: auto), position:sticky works relative to it -
+   notices stay visible no matter how far the content list is scrolled.
+   ========================================================================== */
+
+.notices-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  /* Subtle shadow so notices feel elevated above scrolling content */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* ==========================================================================
    Notices
    All notices share the same card-strip base: white background with a
    colored left border - consistent with .chart-info-box and .tm-living-panel
@@ -137,21 +154,21 @@
 .temporary-notice {
   font-family: var(--font-light);
   padding: 0.55em 0.9em;
-  background-color: var(--notice-bg, rgba(255, 255, 255, 0.88));
+  background-color: var(--notice-bg);
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.6em;
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  border-left: 3px solid var(--notice-accent, var(--nlblue, #55769b));
+  border-left: 3px solid var(--notice-accent);
   flex-shrink: 0;
 }
 
 .temporary-notice .notice {
   flex-grow: 1;
   font-size: 85%;
-  color: var(--notice-text, #2d4a6a);
+  color: var(--notice-text);
   line-height: 1.4;
 }
 
@@ -164,9 +181,9 @@
   gap: 0.35em;
   padding: 3px 10px;
   background-color: transparent;
-  border: 1px solid var(--notice-accent, var(--nlblue, #55769b));
+  border: 1px solid var(--notice-accent);
   border-radius: 20px;
-  color: var(--notice-accent, var(--nlblue, #55769b));
+  color: var(--notice-accent);
   font-size: 0.82em;
   font-weight: 600;
   cursor: pointer;
@@ -175,7 +192,7 @@
 }
 
 .temporary-notice button.show-all:hover {
-  background-color: var(--notice-btn-hover-bg, rgba(85, 118, 155, 0.1));
+  background-color: var(--notice-btn-hover-bg);
 }
 
 .temporary-notice .notice-icon {
@@ -188,10 +205,9 @@
   display: none;
 }
 
-/* ── Params modified notice: blue-info ────────────────────────────────────────
-   Communicates "you customised this view" - not a warning, just a reminder.
-   Uses the same nlblue accent as the base .temporary-notice; distinguished
-   from the filter notice by its content and the Reset button.
+/* ── Params-modified notice: reset button ────────────────────────────────────
+   Shares pill layout with .show-all; colour driven by --notice-accent like
+   all other notice buttons. Theme is set to blue (see NOTICE_THEMES in JS).
    ─────────────────────────────────────────────────────────────────────────── */
 .notice-reset-btn {
   flex-shrink: 0;
@@ -200,9 +216,9 @@
   gap: 0.3em;
   padding: 3px 10px;
   background: transparent;
-  border: 1px solid var(--notice-accent, var(--nlblue, #55769b));
+  border: 1px solid var(--notice-accent);
   border-radius: 20px;
-  color: var(--notice-accent, var(--nlblue, #55769b));
+  color: var(--notice-accent);
   font-size: 0.82em;
   font-weight: 600;
   cursor: pointer;
@@ -211,7 +227,7 @@
 }
 
 .notice-reset-btn:hover {
-  background-color: var(--notice-btn-hover-bg, rgba(85, 118, 155, 0.1));
+  background-color: var(--notice-btn-hover-bg);
 }
 
 /* ==========================================================================

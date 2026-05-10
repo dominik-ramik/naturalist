@@ -170,11 +170,13 @@ export let ChecklistView = {
             }, t("nothing_found_reset_btn")),
           ])
           : m(".checklist-results-wrapper", [
-            Checklist._isDraft ? draftNotice() : null,
-            !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
-            // Show the non-default params notice whenever the active tool has
-            // params that deviate from their declared defaults.
-            tool ? modifiedParamsNotice(tool) : null,
+            m(".notices-wrapper", [
+              Checklist._isDraft ? draftNotice() : null,
+              !Checklist.filter.isEmpty() ? mobileFilterOnNotice() : null,
+              // Show the non-default params notice whenever the active tool has
+              // params that deviate from their declared defaults.
+              tool ? modifiedParamsNotice(tool) : null,
+            ]),
             specificView,
           ]),
       ])
@@ -213,25 +215,7 @@ function filterOutOccurrenceTaxa(taxa) {
 // value, signalling to the user that the view is "customised".  A "Reset"
 // button returns all params to their declared defaults in one click.
 //
-// Visual contract: .params-modified-notice uses amber/warning tones to
-// distinguish it from the blue filter notice and the red draft notice.
-// Suggested CSS (add to ChecklistView.css):
-//
-//   .params-modified-notice {
-//     background: #fef3c7;  /* amber-100 */
-//     border-left: 3px solid #f59e0b; /* amber-400 */
-//     color: #78350f; /* amber-900 */
-//   }
-//   .params-modified-notice .notice-reset-btn {
-//     background: transparent;
-//     border: 1px solid currentColor;
-//     border-radius: 4px;
-//     cursor: pointer;
-//     font-size: 0.8em;
-//     margin-left: 0.5em;
-//     padding: 2px 8px;
-//     white-space: nowrap;
-//   }
+// Uses the default blue theme - informational, not a warning.
 
 function modifiedParamsNotice(tool) {
   if (!tool.parameters?.length) return null;
@@ -243,46 +227,86 @@ function modifiedParamsNotice(tool) {
 
   const summaryText = descriptions.join(" · ");
 
-  return m(".temporary-notice.params-modified-notice", [
-    m(".notice", [
-      m("strong", "Modified view: "),
-      summaryText,
-    ]),
-    m("button.notice-reset-btn", {
-      onclick: (e) => {
+  return m(Notice, {
+    additionalClasses: "params-modified-notice",
+    notice: [m("strong", "Modified view: "), summaryText],
+    additionalButton: {
+      btnClass: "notice-reset-btn",
+      action: (e) => {
         e.stopPropagation();
         resetAllToDefaults(tool.parameters);
       },
-    }, "↺ Reset to defaults"),
-  ]);
+      text: "↺ Reset to defaults",
+    },
+  });
 }
 
-// ─── Existing notices (unchanged) ────────────────────────────────────────────
+// ─── Notice themes ────────────────────────────────────────────────────────────
+//
+// All colour information for notices lives here.  CSS only holds structural
+// rules; these objects are injected as inline CSS custom properties by Notice.
+//
+// To add a theme: add a key below and pass theme: "<key>" to Notice.
+
+const NOTICE_THEMES = {
+  blue: {
+    accent:     "#55769b",
+    bg:         "rgba(255, 255, 255, 0.88)",
+    text:       "#2d4a6a",
+    btnHoverBg: "rgba(85, 118, 155, 0.1)",
+  },
+  amber: {
+    accent:     "#d97706",
+    bg:         "rgba(254, 243, 199, 0.92)",
+    text:       "#78350f",
+    btnHoverBg: "rgba(217, 119, 6, 0.08)",
+  },
+};
+
+// ─── Notice component ─────────────────────────────────────────────────────────
+//
+// Props:
+//   theme            - "blue" (default) | "amber" | any key in NOTICE_THEMES
+//   notice           - vnode or string for the .notice body
+//   action           - optional onclick on the whole strip
+//   additionalClasses- extra CSS class(es) appended to .temporary-notice
+//   noticeIcon       - optional src string for a leading <img class="notice-icon">
+//   additionalButton - optional { text, action, btnClass?, icon? }
+//                      btnClass defaults to "show-all"
 
 let Notice = {
   view: function (vnode) {
-    const { accent, bg, text, btnHoverBg } = vnode.attrs;
-    const style = {};
-    if (accent)      style["--notice-accent"]       = accent;
-    if (bg)         style["--notice-bg"]            = bg;
-    if (text)       style["--notice-text"]          = text;
-    if (btnHoverBg) style["--notice-btn-hover-bg"]  = btnHoverBg;
+    const theme = NOTICE_THEMES[vnode.attrs.theme] ?? NOTICE_THEMES.blue;
+
+    // Inline CSS vars drive all notice colours; CSS holds only structure.
+    const style = {
+      "--notice-accent":       theme.accent,
+      "--notice-bg":           theme.bg,
+      "--notice-text":         theme.text,
+      "--notice-btn-hover-bg": theme.btnHoverBg,
+    };
+
+    const btn = vnode.attrs.additionalButton;
+    const btnClass = btn?.btnClass ?? "show-all";
+
     return m(
       ".temporary-notice" +
       (vnode.attrs.additionalClasses === undefined
         ? ""
         : "." + vnode.attrs.additionalClasses),
-      {
-        onclick: vnode.attrs.action,
-        style,
-      },
+      { onclick: vnode.attrs.action, style },
       [
+        vnode.attrs.noticeIcon
+          ? m("img.notice-icon", { src: vnode.attrs.noticeIcon })
+          : null,
         m(".notice", vnode.attrs.notice),
-        vnode.attrs.additionalButton === undefined
+        btn === undefined
           ? null
-          : m("button.show-all", { onclick: vnode.attrs.additionalButton.action }, [
-            m(Icon, { path: vnode.attrs.additionalButton.icon, size: 18, color: vnode.attrs.accent }),
-            vnode.attrs.additionalButton.text,
+          : m("button." + btnClass, { onclick: btn.action }, [
+            btn.icon
+              ? m(Icon, { path: btn.icon, size: 18, color: theme.accent })
+              : null,
+            btn.text,
           ]),
       ]
     );
@@ -291,7 +315,7 @@ let Notice = {
 
 function mobileFilterOnNotice() {
   return m(Notice, {
-    additionalClasses: ".mobile-filter-on",
+    additionalClasses: "mobile-filter-on",
     action: function () { Settings.checklistDisplayLevel(""); },
     notice: m.trust(
       tf("mobile_filter_notice", [Settings.pinnedSearches.getHumanNameForSearch()], true)
@@ -302,10 +326,7 @@ function mobileFilterOnNotice() {
 function draftNotice() {
   return m(Notice, {
     additionalClasses: "draft-notice",
-    accent:      "#d97706",
-    bg:          "rgba(254, 243, 199, 0.92)",
-    text:        "#78350f",
-    btnHoverBg:  "rgba(217, 119, 6, 0.08)",
+    theme: "amber",
     action: function () { Settings.checklistDisplayLevel(""); },
     notice: t("draft_notice"),
     additionalButton: {
