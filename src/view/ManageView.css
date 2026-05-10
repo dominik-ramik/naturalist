@@ -902,3 +902,43 @@
 .manage-log-group-body .manage-log-item:last-child {
   border-bottom: none;
 }
+
+/* ==========================================================================
+   Mobile layout fix (≤ 1000px)
+   On desktop, ManageView uses a two-zone pinned layout: the workflow zone
+   scrolls internally and the log zone is pinned to the bottom via flex.
+   That requires the parent (.interaction-area) to have overflow-y: hidden
+   and a real pixel height — neither of which holds on mobile.
+
+   On mobile we abandon the two-zone approach: the entire .interaction-area
+   scrolls as one column, and each zone flows at its natural height.
+   ========================================================================== */
+@media (max-width: 1000px) {
+
+  /* 1. Restore scrollability on the panel itself.
+        .manage-layout-active sets overflow-y: hidden !important for the
+        desktop two-zone trick; that must be reversed on mobile. */
+  .interaction-area.manage-layout-active {
+    overflow-y: auto !important;
+  }
+
+  /* 2. Let .manage-view grow to its content height.
+        height: 100% collapses when the parent has no fixed height (auto). */
+  .manage-view {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* 3. Workflow zone: no internal scroll — the parent panel handles it. */
+  .manage-workflow {
+    flex: none;
+    min-height: 0;
+    overflow-y: visible;
+  }
+
+  /* 4. Log zone: flow at natural height, remove the desktop 35% cap. */
+  .manage-log-zone {
+    flex: none;
+    max-height: none;
+  }
+}

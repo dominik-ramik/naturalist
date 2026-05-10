@@ -316,6 +316,7 @@ async function fetchAndProcessUrl(url, checkAssetsSize, onSuccess, isDemo = fals
     buffer = await res.arrayBuffer();
   } catch (ex) {
     Logger.error(t("url_fetch_failed") + (ex.message ? " (" + ex.message + ")" : ""));
+    console.error("File could not be fetched: ", url, ex);
     ManageStore.phase = "dirty";
     m.redraw();
     return;
