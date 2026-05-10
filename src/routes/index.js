@@ -15,6 +15,7 @@ import { CacheManager, CacheScope } from "../model/CacheManager.js";
 import { validateActiveToolState, TOOL_REGISTRY, isProgrammaticRouteChange, clearProgrammaticRouteChange } from "../view/analysisTools/index.js";
 import { ManageView, deepLinkProcessing } from "../view/ManageView.js";
 import { FullscreenManager } from "../components/FullscreenManager.js";
+import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/DataStructure.js";
 
 let RenderTracker;
 const TRACE_RENDERING = false; // Set to true to enable render tracking in development mode
@@ -117,7 +118,7 @@ export function setupRoutes(appVersion) {
     if (toolParam && TOOL_REGISTRY[toolParam]) {
       Settings.viewType(toolParam);
     }
-    if (scopeParam && (scopeParam === "T" || scopeParam === "S")) {
+    if (scopeParam && (scopeParam === ANALYTICAL_INTENT_TAXA || scopeParam === ANALYTICAL_INTENT_OCCURRENCE)) {
       Settings.analyticalIntent(scopeParam);
     }
 

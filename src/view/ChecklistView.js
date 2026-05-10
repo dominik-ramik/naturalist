@@ -6,7 +6,7 @@ import { routeTo, updateRouteParams, isInDemoMode } from "../components/Utils.js
 import { Checklist } from "../model/Checklist.js";
 import { Settings } from "../model/Settings.js";
 import { CacheManager } from "../model/CacheManager.js";
-import { getCurrentTool } from "./analysisTools/index.js";
+import { getCurrentTool, markAsProgrammaticRouteChange } from "./analysisTools/index.js";
 import { describeNonDefaultParams, resetAllToDefaults } from "./shared/ToolParams.js";
 import { ANALYTICAL_INTENT_OCCURRENCE, ANALYTICAL_INTENT_TAXA } from "../model/DataStructure.js";
 import { collapsePaneAndDismissKeyboard } from "../components/MobileInteraction.js";
@@ -46,6 +46,7 @@ export let ChecklistView = {
 
     if (!intents.includes(intent)) {
       Settings.analyticalIntent(intents[0] ?? ANALYTICAL_INTENT_TAXA);
+      markAsProgrammaticRouteChange();
       updateRouteParams();
     }
   },
