@@ -3,7 +3,7 @@ import { nlDataStructure } from "../DataManagerData.js";
 import { dataPath } from "../DataPath.js";
 import { Checklist } from "../Checklist.js";
 import { relativeToUsercontent } from "../../components/Utils.js";
-import { Logger } from "../../components/Logger.js";
+import { report } from "./reporter.js";
 import { CacheManager, CacheScope } from "../CacheManager.js";
 
 const data = nlDataStructure;
@@ -72,7 +72,7 @@ export const helpers = {
           compiledTemplate = Handlebars.compile(rowTemplate);
           this._compiledTemplateCache.set(rowTemplate, compiledTemplate);
         } catch (ex) {
-          Logger.error("Handlebars error compiling preload template: " + ex, "Template content");
+          report("error", "Handlebars error compiling preload template: " + ex, "Template content");
           return relativeToUsercontent(source);
         }
       }
@@ -88,7 +88,7 @@ export const helpers = {
         source = compiledTemplate(templateData);
       } catch (ex) {
         this._compiledTemplateCache.delete(rowTemplate);
-        Logger.error("Handlebars error executing preload template: " + ex, "Template content");
+        report("error", "Handlebars error executing preload template: " + ex, "Template content");
         return relativeToUsercontent(source);
       }
     }
@@ -161,7 +161,8 @@ export const helpers = {
       });
 
       if (hasEntriesForColumn) {
-        Logger.warning(
+        report(
+          "warning",
           "Value '" +
           value +
           "' in column '" +
@@ -303,14 +304,14 @@ export const helpers = {
     try {
       fullResolved = relativeToUsercontent(compiledTemplate(fullData));
     } catch (ex) {
-      Logger.error("Handlebars error executing template (full variant): " + ex, "Template content");
+      report("error", "Handlebars error executing template (full variant): " + ex, "Template content");
       fullResolved = relativeToUsercontent(source);
     }
 
     try {
       thumbResolved = relativeToUsercontent(compiledTemplate(thumbData));
     } catch (ex) {
-      Logger.error("Handlebars error executing template (thumb variant): " + ex, "Template content");
+      report("error", "Handlebars error executing template (thumb variant): " + ex, "Template content");
       thumbResolved = relativeToUsercontent(source);
     }
 

@@ -1,4 +1,10 @@
 import { Logger } from "../../components/Logger.js";
+import { setReporter } from "./reporter.js";
+
+// Hook the reporter to Logger once, before any readData calls are made.
+// This is the only place inside customTypes/ that couples to Logger directly;
+// all plugin files use the report() abstraction from reporter.js.
+setReporter((level, msg, groupTitle) => Logger[level](msg, groupTitle));
 
 // Helper function to build readers object indexed by dataType
 function buildReaders(...readerObjects) {

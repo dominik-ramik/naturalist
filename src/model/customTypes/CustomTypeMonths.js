@@ -25,7 +25,7 @@ import m from "mithril";
 import { t, tf } from 'virtual:i18n-self';
 import { Checklist } from "../Checklist.js";
 import { MONTH_KEYS } from "../MonthNames.js";
-import { Logger } from "../../components/Logger.js";
+import { report } from "./reporter.js";
 import { filterPluginMonths } from "../filterPlugins/filterPluginMonths.js";
 import { textMatchesHighlight } from "../HighlightUtils.js";
 
@@ -47,7 +47,8 @@ function parseMonthToken(token, uiContext = {}) {
   const num = parseInt(trimmed, 10);
   if (!isNaN(num)) {
     if (String(num) !== trimmed) {
-      Logger.error(
+      report(
+        "error",
         `Month token "${token}" is not a clean integer string`,
         "Invalid months syntax"
       );
@@ -56,7 +57,8 @@ function parseMonthToken(token, uiContext = {}) {
     if (num >= 1 && num <= 12) {
       return num;
     }
-    Logger.error(
+    report(
+      "error",
       `Invalid month number "${token}" - expected 1..12`,
       "Invalid months syntax"
     );
@@ -67,7 +69,7 @@ function parseMonthToken(token, uiContext = {}) {
   const idx = MONTH_KEYS.indexOf(trimmed);
   if (idx >= 0) return idx + 1; // convert to 1-based
 
-  Logger.error(`Unrecognised month token "${token}". Use one of: ${MONTH_KEYS.join(", ")} or 1-12 to denote months`, "Invalid months syntax");
+  report("error", `Unrecognised month token "${token}". Use one of: ${MONTH_KEYS.join(", ")} or 1-12 to denote months`, "Invalid months syntax");
   return null;
 }
 
@@ -87,7 +89,7 @@ function expandSegment(token, uiContext = {}) {
   }
 
   if (dashIdx === 0) {
-    Logger.error(`Malformed month segment "${trimmed}" - missing start`, "Invalid months syntax");
+    report("error", `Malformed month segment "${trimmed}" - missing start`, "Invalid months syntax");
     return [];
   }
 

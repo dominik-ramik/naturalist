@@ -1,5 +1,5 @@
 {
-  "dm_mapregions_unknown_region_code": "Le code de région '{0}' dans la colonne '{1}' n'a pas de nom de région défini dans la table 'informations sur les régions'. Les codes de région ne peuvent être composés que de lettres minuscules a-z. Les données sont {2}",
+  "dm_mapregions_unknown_region_code": "Le code de région '{0}' dans la colonne '{1}' de la feuille des données n'a pas de nom de région défini dans la table 'Map regions information'. Les codes de région ne peuvent être composés que de lettres minuscules a-z. Les données sont {2}",
   "dm_mapregions_names_table_not_loaded": "mapregions: cannot validate region codes for column '{0}' - Map Regions Information table is not loaded for language '{1}'.",
   "map_data_table": "Tableau de données",
   "map_data_table_count": "{0} régions",

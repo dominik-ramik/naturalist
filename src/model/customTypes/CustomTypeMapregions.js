@@ -16,7 +16,7 @@ import { t, tf } from 'virtual:i18n-self';
 import { nlDataStructure } from "../DataManagerData.js";
 import { Checklist } from "../Checklist.js";
 import { processMarkdownWithBibliography, htmlToPlainText } from "../../components/Utils.js";
-import { Logger } from "../../components/Logger.js";
+import { report } from "./reporter.js";
 import { colorSVGMap } from "../../components/ColorSVGMap.js";
 import { FullscreenableMedia } from "../../components/FullscreenableMedia.js";
 import { applyHighlight, highlightHtml } from "../HighlightUtils.js";
@@ -208,7 +208,8 @@ async function fetchSvgClasses(svgUrl) {
   try {
     const response = await fetch(svgUrl);
     if (!response.ok) {
-      Logger.error(
+      report(
+        "error",
         `Mapregions: SVG file not found (HTTP ${response.status}): "${svgUrl}". ` +
         "Ensure the file exists at the path produced by the column's template."
       );
@@ -216,7 +217,8 @@ async function fetchSvgClasses(svgUrl) {
     }
     text = await response.text();
   } catch (err) {
-    Logger.error(
+    report(
+      "error",
       `Mapregions: SVG file could not be fetched: "${svgUrl}". ${err}`
     );
     return null;
@@ -273,7 +275,8 @@ async function validateRegionCodesInSvg(svgUrl, regionCodes) {
   });
 
   if (missingCodes.length > 0) {
-    Logger.error(
+    report(
+      "error",
       `Mapregions: SVG "${svgUrl}" has no element with class matching region code(s): ` +
       missingCodes.join(", ") +
       ". Verify that the SVG contains <... class=\"regionCode\"> for each used code."
@@ -307,12 +310,12 @@ export let customTypeMapregions = {
 
     const regionNamesData = nlData.sheets.appearance.tables.mapRegionsNames.data[langCode];
     if (!regionNamesData) {
-      Logger.error(tf("dm_mapregions_names_table_not_loaded", [computedPath, langCode]));
+      report("error", tf("dm_mapregions_names_table_not_loaded", [computedPath, langCode]));
     } else {
       const knownCodes = getKnownCodeSet(langCode);
       Object.keys(resultObject).forEach(code => {
         if (!knownCodes.has(code)) {
-          Logger.error(tf("dm_mapregions_unknown_region_code", [code, computedPath, JSON.stringify(resultObject)]));
+          report("error", tf("dm_mapregions_unknown_region_code", [code, computedPath, JSON.stringify(resultObject)]));
         }
       });
     }

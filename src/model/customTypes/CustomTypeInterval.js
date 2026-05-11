@@ -42,7 +42,7 @@
 
 import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-import { Logger } from "../../components/Logger.js";
+import { report } from "./reporter.js";
 import { helpers } from "./helpers.js";
 import { filterPluginInterval, intervalFilters } from "../filterPlugins/filterPluginInterval.js";
 import { applyHighlight, highlightHtml, textMatchesHighlight } from "../HighlightUtils.js";
@@ -63,14 +63,15 @@ function parseIntervalNumber(raw) {
   const hasComma = s.includes(",");
 
   if (hasPeriod && hasComma) {
-    Logger.error(
+    report(
+      "error",
       `interval: ambiguous decimal separator in "${s}" - contains both "." and ","`
     );
     return NaN;
   }
 
   const n = parseFloat(hasComma ? s.replace(",", ".") : s);
-  if (isNaN(n)) Logger.warning(`interval: non-numeric value "${s}" - skipped`);
+  if (isNaN(n)) report("warning", `interval: non-numeric value "${s}" - skipped`);
   return n;
 }
 
@@ -95,7 +96,8 @@ function buildInterval(fromRaw, toRaw, source) {
   const to = parsedTo ?? parsedFrom;
 
   if (from > to) {
-    Logger.error(
+    report(
+      "error",
       `interval: from (${from}) > to (${to}) in "${source}"`
     );
     return null;

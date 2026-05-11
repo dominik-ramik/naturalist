@@ -1,6 +1,6 @@
 import m from "mithril";
 import { registerMessages, selfKey, t, tf } from 'virtual:i18n-self';
-import { Logger } from "../../components/Logger.js";
+import { report } from "./reporter.js";
 import { helpers } from "./helpers.js";
 import { applyHighlight } from "../HighlightUtils.js";
 
@@ -104,7 +104,7 @@ function parseISO6709Part(s, intDeg) {
     if (intLen <= intDeg) {
       const v = parseFloat(abs);
       if (isNaN(v)) {
-        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * v;                                                                                                     // ±DD.D
@@ -113,7 +113,7 @@ function parseISO6709Part(s, intDeg) {
       const deg = parseInt(abs.slice(0, intDeg));
       const minute = parseFloat(abs.slice(intDeg));
       if (isNaN(deg) || isNaN(minute)) {
-        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * (deg + minute / 60);                  // ±DDMM.M
@@ -123,7 +123,7 @@ function parseISO6709Part(s, intDeg) {
       const min = parseInt(abs.slice(intDeg, intDeg + 2));
       const sec = parseFloat(abs.slice(intDeg + 2));
       if (isNaN(deg) || isNaN(min) || isNaN(sec)) {
-        Logger.error(`Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 numeric part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * (deg + min / 60 + sec / 3600); // ±DDMMSS.S
@@ -133,7 +133,7 @@ function parseISO6709Part(s, intDeg) {
     if (intLen <= intDeg) {
       const v = parseInt(abs);
       if (isNaN(v)) {
-        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * v;                                                                                                       // ±DD
@@ -142,7 +142,7 @@ function parseISO6709Part(s, intDeg) {
       const deg = parseInt(abs.slice(0, intDeg));
       const min = parseInt(abs.slice(intDeg));
       if (isNaN(deg) || isNaN(min)) {
-        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * (deg + min / 60);                  // ±DDMM
@@ -152,7 +152,7 @@ function parseISO6709Part(s, intDeg) {
       const min = parseInt(abs.slice(intDeg, intDeg + 2));
       const sec = parseInt(abs.slice(intDeg + 2));
       if (isNaN(deg) || isNaN(min) || isNaN(sec)) {
-        Logger.error(`Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
+        report("error", `Invalid ISO6709 integer part "${s}"`, "Invalid geopoint");
         return null;
       }
       return sign * (deg + min / 60 + sec / 3600); // ±DDMMSS
@@ -272,7 +272,8 @@ export let customTypeGeopoint = {
       const lat = parseOneCoord(latStr);
       const lon = parseOneCoord(lonStr);
       if (lat === null || lon === null) {
-        Logger.warning(
+        report(
+          "warning",
           "Unparseable multi-column coordinates for path <strong>" + computedPath + "</strong> - values were: " + latStr + " and " + lonStr, "Cannot parse coordinates"
         );
         return null;
@@ -281,7 +282,8 @@ export let customTypeGeopoint = {
     }
 
     if (latIdx >= 0 || lonIdx >= 0) {
-      Logger.warning(
+      report(
+        "warning",
         "Only one of .lat or .long found for path <strong>" + computedPath + "</strong>; both columns are required for multi-column mode"
       );
     }
@@ -302,7 +304,8 @@ export let customTypeGeopoint = {
       if (lat === null || lon === null) {
         console.log("Failed to parse pipe-separated coordinates:", { latStr, lonStr }, "with string value:", cellValue, lat, lon);
 
-        Logger.warning(
+        report(
+          "warning",
           "Unparseable pipe-separated coordinates for path <strong>" + computedPath + "</strong> - value was: " + cellValue, "Cannot parse coordinates"
         );
         return null;
@@ -312,7 +315,8 @@ export let customTypeGeopoint = {
 
     const parsed = parseSingleCell(cellValue);
     if (!parsed) {
-      Logger.warning(
+      report(
+        "warning",
         "Unparseable single-cell coordinate for path <strong>" + computedPath + "</strong> - value was: " + cellValue, "Cannot parse coordinates"
       );
       return null;
@@ -347,22 +351,12 @@ export let customTypeGeopoint = {
   render(data, uiContext) {
     if (!data || data.lat == null || data.long == null) return null;
 
-    const template = uiContext?.meta?.template;
+    const template = uiContext?.meta?.template || GOOGLE_MAPS_FALLBACK;
 
-    if (!template) {
-      Logger.info("No map URL template configured; falling back to Google Maps");
-      // Optional: keep buildMapUrl just for the fallback, or define the fallback purely in Handlebars syntax
-    } else {
-      const hasLat = /\{\{\s*lat\s*\}\}/i.test(template);
-      const hasLong = /\{\{\s*long\s*\}\}/i.test(template);
 
-      if (!hasLat || !hasLong) {
-        Logger.warning(
-          `Map URL template might be malformed. It is missing {{ lat }} and/or {{ long }} placeholders. Template: "${template}"`,
-          "Geopoint Template Warning"
-        );
-      }
-    }
+    const hasLat = /\{\{\s*lat\s*\}\}/i.test(template);
+    const hasLong = /\{\{\s*long\s*\}\}/i.test(template);
+
 
     // Prepare the exact variables we want Handlebars to know about
     const additionalParams = {

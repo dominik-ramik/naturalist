@@ -1,5 +1,5 @@
 {
-  "dm_mapregions_unknown_region_code": "Region code '{0}' in column '{1}' doesn't have any Region name set in the table 'mapregions information'. Region codes can be only composed of lowercase letters a-z. The data is {2}",
+  "dm_mapregions_unknown_region_code": "Region code '{0}' in data sheet column '{1}' doesn't have any Region name set in the table 'Map regions information'. Region codes can be only composed of lowercase letters a-z. The data is {2}",
   "dm_mapregions_names_table_not_loaded": "mapregions: cannot validate region codes for column '{0}' - Map Regions Information table is not loaded for language '{1}'.",
   "map_data_table": "Data table",
   "map_data_table_count": "{0} regions",
