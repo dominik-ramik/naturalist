@@ -177,6 +177,110 @@ export function getLegendConfig(dataPath) {
   return _legendConfigCache[dataPath];
 }
 
+// ─── SVG class validation cache ───────────────────────────────────────────────
+//
+// Maps resolved SVG URL → Promise<Set<string> | null>.
+//
+// Storing the Promise (rather than the resolved Set) is deliberate: concurrent
+// calls that arrive before the first fetch completes all await the same Promise
+// instead of each launching their own fetch.  null means the file was
+// inaccessible and the error has already been logged.
+//
+// Scope: DATASET only - SVG structure is independent of the active language.
+// The cache is intentionally NOT keyed by language; the same SVG URL always
+// produces the same class set regardless of which language triggered the check.
+
+const _svgClassCache = CacheManager.managedMap("customTypes.mapregions.svgClassCache", {
+  scopes: [CacheScope.DATASET],
+  description: "SVG class sets (Promise<Set<string>|null>) keyed by URL for mapregions region-code validation.",
+});
+
+/**
+ * Fetch an SVG file and return the deduplicated set of every CSS class token
+ * referenced in any class="..." attribute across all nodes.  Returns null and
+ * logs a Logger.error when the file cannot be retrieved.
+ *
+ * @param {string} svgUrl - Fully resolved URL of the SVG file.
+ * @returns {Promise<Set<string>|null>}
+ */
+async function fetchSvgClasses(svgUrl) {
+  let text;
+  try {
+    const response = await fetch(svgUrl);
+    if (!response.ok) {
+      Logger.error(
+        `Mapregions: SVG file not found (HTTP ${response.status}): "${svgUrl}". ` +
+        "Ensure the file exists at the path produced by the column's template."
+      );
+      return null;
+    }
+    text = await response.text();
+  } catch (err) {
+    Logger.error(
+      `Mapregions: SVG file could not be fetched: "${svgUrl}". ${err}`
+    );
+    return null;
+  }
+
+  // Extract every individual class token from class="first second ..." attributes.
+  // SVG class attributes follow the same space-separated token syntax as HTML.
+  const classes = new Set();
+  const classAttrRe = /\bclass=["']([^"']*)["']/g;
+  let m;
+  while ((m = classAttrRe.exec(text)) !== null) {
+    m[1].split(/\s+/).forEach(token => {
+      if (token) classes.add(token);
+    });
+  }
+
+  return classes;
+}
+
+/**
+ * Async side-effect: verify that every region code used in a mapregions entry
+ * is present as a CSS class on at least one element in the given SVG file.
+ *
+ * Applies the same world-map code remapping used in buildRegionColors
+ * (fr→frx, nl→nlx, cn→cnx) so that world-map SVGs are validated correctly.
+ *
+ * Results are cached per URL so the same file is never fetched more than once
+ * within a dataset lifetime, even when thousands of entries share one SVG.
+ *
+ * @param {string}   svgUrl      - Resolved URL of the SVG.
+ * @param {string[]} regionCodes - Region codes present in the data entry.
+ */
+async function validateRegionCodesInSvg(svgUrl, regionCodes) {
+  // First call for this URL starts the fetch and caches the Promise.
+  // Subsequent calls reuse the cached Promise - no duplicate fetches.
+  if (!_svgClassCache.has(svgUrl)) {
+    _svgClassCache.set(svgUrl, fetchSvgClasses(svgUrl));
+  }
+
+  const classes = await _svgClassCache.get(svgUrl);
+  if (!classes) return; // file-not-found already logged by fetchSvgClasses
+
+  const isWorld = svgUrl.toLowerCase().endsWith("world.svg");
+
+  const missingCodes = regionCodes.filter(code => {
+    // Mirror the key transformation applied in buildRegionColors for world maps.
+    let svgCode = code;
+    if (isWorld) {
+      if (svgCode === "fr") svgCode = "frx";
+      else if (svgCode === "nl") svgCode = "nlx";
+      else if (svgCode === "cn") svgCode = "cnx";
+    }
+    return !classes.has(svgCode);
+  });
+
+  if (missingCodes.length > 0) {
+    Logger.error(
+      `Mapregions: SVG "${svgUrl}" has no element with class matching region code(s): ` +
+      missingCodes.join(", ") +
+      ". Verify that the SVG contains <... class=\"regionCode\"> for each used code."
+    );
+  }
+}
+
 // ─── Public plugin interface ──────────────────────────────────────────────────
 
 export let customTypeMapregions = {
@@ -219,7 +323,30 @@ export let customTypeMapregions = {
   getPreloadableAssetPaths: function (mediaItem, rowTemplate, entry) {
     // mapregions: source comes entirely from the template evaluated against
     // the entry - the mediaItem itself carries no source path.
-    return [helpers.processSourceForPreload("", rowTemplate, entry)];
+    const svgPath = helpers.processSourceForPreload("", rowTemplate, entry);
+
+    // Side-effect: asynchronously verify that (a) the SVG file exists and
+    // (b) every region code present in this entry appears as a CSS class on at
+    // least one SVG element.  Runs fire-and-forget so the synchronous
+    // gatherPreloadableAssets loop is never blocked.
+    //
+    // Guards:
+    //  - Only run when the resolved path looks like an actual SVG file.
+    //  - Only run when there are region codes to check (mediaItem is the
+    //    processed mapregions object; its keys are the region codes).
+    if (svgPath && svgPath.toLowerCase().endsWith(".svg")) {
+      const regionCodes = (mediaItem && typeof mediaItem === "object")
+        ? Object.keys(mediaItem)
+        : [];
+
+      if (regionCodes.length > 0) {
+        // validateRegionCodesInSvg is async; the returned Promise is
+        // intentionally not awaited - errors surface via Logger.error.
+        validateRegionCodesInSvg(svgPath, regionCodes);
+      }
+    }
+
+    return [svgPath];
   },
 
   getSearchableText: function (data, uiContext) {
