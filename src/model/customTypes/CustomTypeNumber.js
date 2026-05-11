@@ -117,7 +117,7 @@ export let customTypeNumber = {
     const displayData = helpers.processTemplate(data, uiContext);
 
     if (typeof displayData === "number") {
-      const localeStr = displayData?.toLocaleString?.() ?? rawStr;
+      const localeStr = displayData?.toString?.() ?? rawStr;
       const highlighted = applyHighlight(localeStr, uiContext?.highlightRegex);
       if (Array.isArray(highlighted)) {
         return m("span", highlighted);
