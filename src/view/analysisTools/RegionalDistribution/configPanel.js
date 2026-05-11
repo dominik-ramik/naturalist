@@ -200,5 +200,5 @@ function buildVerb({ currentMap, segments, mapState, filteredCount, mode, filter
   // - Map name -
   const mapLabel = ' (' + currentMap.title + ')';
 
-  return action + ' ' + scope + denomClause + mapLabel;
+  return (currentMap.title ? "<strong>" + currentMap.title + "</strong>" : action) + ' ' + scope + denomClause;
 }

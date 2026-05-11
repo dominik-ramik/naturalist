@@ -1,6 +1,6 @@
 {
   "rd_col_region": "Région",
-  "rd_col_count": "Enregistrements",
+  "rd_col_count": "Nombre",
   "rd_row_click_hint": "Cliquez pour voir les enregistrements individuels",
   "rd_click_row_hint": "Cliquez sur une ligne pour voir les enregistrements individuels",
   "rd_no_data_message": "Aucune donnée pour la sélection actuelle. Essayez de changer le filtre, le segment ou l'opération.",

@@ -1,6 +1,6 @@
 {
   "rd_col_region": "Region",
-  "rd_col_count": "Records",
+  "rd_col_count": "Count",
   "rd_row_click_hint": "Click to see individual records",
   "rd_click_row_hint": "Click a row to see individual records",
   "rd_no_data_message": "No data for the current selection. Try changing the filter, segment, or operation.",

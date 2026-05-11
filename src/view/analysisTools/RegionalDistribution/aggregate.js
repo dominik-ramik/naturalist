@@ -32,7 +32,7 @@ import { resolveToHex } from '../../../components/Utils.js';
  */
 export function detectSegments(legendConfig) {
   const { numericMode, categoryRows, fallbackRow } = legendConfig;
-  const namedCategories = categoryRows.filter(r => r.status);
+  const namedCategories = categoryRows.filter(r => r.status && r.status !== '\0');
   return {
     hasNumeric: numericMode !== null,
     numericMode,
